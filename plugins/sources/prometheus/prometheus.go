@@ -20,13 +20,15 @@ import (
 type prometheusMetricsSource struct {
 	metricsURL string
 	prefix     string
+	source     string
 	client     *http.Client
 }
 
-func NewPrometheusMetricsSource(metricsURL, prefix string) MetricsSource {
+func NewPrometheusMetricsSource(metricsURL, prefix, source string) MetricsSource {
 	return &prometheusMetricsSource{
 		metricsURL: metricsURL,
 		prefix:     prefix,
+		source:     source,
 		client:     &http.Client{Timeout: time.Second * 10},
 	}
 }
@@ -127,17 +129,17 @@ func (src *prometheusMetricsSource) buildPoint(name string, m *dto.Metric, now i
 	var result []*MetricPoint
 	if m.Gauge != nil {
 		if !math.IsNaN(m.GetGauge().GetValue()) {
-			point := src.metricPoint(name+".gauge", float64(m.GetGauge().GetValue()), now, "prom_source", tags)
+			point := src.metricPoint(name+".gauge", float64(m.GetGauge().GetValue()), now, src.source, tags)
 			result = append(result, point)
 		}
 	} else if m.Counter != nil {
 		if !math.IsNaN(m.GetCounter().GetValue()) {
-			point := src.metricPoint(name+".counter", float64(m.GetCounter().GetValue()), now, "prom_source", tags)
+			point := src.metricPoint(name+".counter", float64(m.GetCounter().GetValue()), now, src.source, tags)
 			result = append(result, point)
 		}
 	} else if m.Untyped != nil {
 		if !math.IsNaN(m.GetUntyped().GetValue()) {
-			point := src.metricPoint(name+".value", float64(m.GetUntyped().GetValue()), now, "prom_source", tags)
+			point := src.metricPoint(name+".value", float64(m.GetUntyped().GetValue()), now, src.source, tags)
 			result = append(result, point)
 		}
 	}
@@ -150,13 +152,13 @@ func (src *prometheusMetricsSource) buildQuantiles(name string, m *dto.Metric, n
 	var result []*MetricPoint
 	for _, q := range m.GetSummary().Quantile {
 		if !math.IsNaN(q.GetValue()) {
-			point := src.metricPoint(name+"."+fmt.Sprint(q.GetQuantile()), float64(q.GetValue()), now, "prom_source", tags)
+			point := src.metricPoint(name+"."+fmt.Sprint(q.GetQuantile()), float64(q.GetValue()), now, src.source, tags)
 			result = append(result, point)
 		}
 	}
-	point := src.metricPoint(name+".count", float64(m.GetSummary().GetSampleCount()), now, "prom_source", tags)
+	point := src.metricPoint(name+".count", float64(m.GetSummary().GetSampleCount()), now, src.source, tags)
 	result = append(result, point)
-	point = src.metricPoint(name+".sum", float64(m.GetSummary().GetSampleSum()), now, "prom_source", tags)
+	point = src.metricPoint(name+".sum", float64(m.GetSummary().GetSampleSum()), now, src.source, tags)
 	result = append(result, point)
 
 	return result
@@ -166,12 +168,12 @@ func (src *prometheusMetricsSource) buildQuantiles(name string, m *dto.Metric, n
 func (src *prometheusMetricsSource) buildHistos(name string, m *dto.Metric, now int64, tags map[string]string) []*MetricPoint {
 	var result []*MetricPoint
 	for _, b := range m.GetHistogram().Bucket {
-		point := src.metricPoint(name+"."+fmt.Sprint(b.GetUpperBound()), float64(b.GetCumulativeCount()), now, "prom_source", tags)
+		point := src.metricPoint(name+"."+fmt.Sprint(b.GetUpperBound()), float64(b.GetCumulativeCount()), now, src.source, tags)
 		result = append(result, point)
 	}
-	point := src.metricPoint(name+".count", float64(m.GetHistogram().GetSampleCount()), now, "prom_source", tags)
+	point := src.metricPoint(name+".count", float64(m.GetHistogram().GetSampleCount()), now, src.source, tags)
 	result = append(result, point)
-	point = src.metricPoint(name+".sum", float64(m.GetHistogram().GetSampleSum()), now, "prom_source", tags)
+	point = src.metricPoint(name+".sum", float64(m.GetHistogram().GetSampleSum()), now, src.source, tags)
 	result = append(result, point)
 	return result
 }
@@ -188,12 +190,13 @@ func (src *prometheusMetricsSource) buildTags(m *dto.Metric) map[string]string {
 type prometheusProvider struct {
 	urls   []string
 	prefix string
+	source string
 }
 
 func (p *prometheusProvider) GetMetricsSources() []MetricsSource {
 	sources := []MetricsSource{}
 	for _, metricsURL := range p.urls {
-		sources = append(sources, NewPrometheusMetricsSource(metricsURL, p.prefix))
+		sources = append(sources, NewPrometheusMetricsSource(metricsURL, p.prefix, p.source))
 	}
 	return sources
 }
@@ -214,8 +217,14 @@ func NewPrometheusProvider(uri *url.URL) (MetricsSourceProvider, error) {
 		prefix = vals["prefix"][0]
 	}
 
+	source := "prom_source"
+	if len(vals["source"]) > 0 {
+		source = vals["source"][0]
+	}
+
 	return &prometheusProvider{
 		urls:   vals["url"],
 		prefix: prefix,
+		source: source,
 	}, nil
 }

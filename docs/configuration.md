@@ -19,6 +19,7 @@ See [configs.go](https://github.com/wavefronthq/wavefront-kubernetes-collector/t
 ## Prometheus Source
 - `url`: The URL for a Prometheus metrics endpoint. Service URLs work across namespaces.
 - `prefix`: The prefix (dot suffixed such as `prom.`) to be applied to all metrics for this source. Defaults to empty string.
+- `source`: The source to set for the metrics from this source. Defaults to `prom_source`.
 
 Example Usage:
 ```
