@@ -60,6 +60,7 @@ func (c *WavefrontDirectClient) flushPoints(points []string) {
 	resp, err := c.reporter.Report("wavefront", pointLines)
 	if err != nil {
 		glog.Errorf("Error reporting points to Wavefront: %q", err)
+		return
 	}
 	if resp.StatusCode >= 300 {
 		glog.Errorf("Error reporting points to Wavefront: %d", resp.StatusCode)
