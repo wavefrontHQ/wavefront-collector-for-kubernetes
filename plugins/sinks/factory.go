@@ -20,7 +20,6 @@ import (
 	"github.com/golang/glog"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/flags"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
-	logsink "github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sinks/log"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sinks/wavefront"
 )
 
@@ -29,8 +28,6 @@ type SinkFactory struct {
 
 func (this *SinkFactory) Build(uri flags.Uri) (metrics.DataSink, error) {
 	switch uri.Key {
-	case "log":
-		return logsink.NewLogSink(), nil
 	case "wavefront":
 		return wavefront.NewWavefrontSink(&uri.Val)
 	default:
