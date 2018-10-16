@@ -2,6 +2,28 @@
 
 This page documents advanced configuration options for various aspects of the Wavefront Kubernetes Collector.
 
+## Wavefront Collector
+```
+Usage of ./wavefront-collector:
+      --alsologtostderr                     log to standard error as well as files
+      --ignore-label strings                ignore this label when joining labels
+      --label-separator string              separator used for joining labels (default ",")
+      --log-backtrace-at traceLocation      when logging hits line file:N, emit a stack trace (default :0)
+      --log-dir string                      If non-empty, write log files in this directory
+      --log-flush-frequency duration        Maximum number of seconds between log flushes (default 5s)
+      --logtostderr                         log to standard error instead of files (default true)
+      --max-procs int                       max number of CPUs that can be used simultaneously. Less than 1 for default (number of cores)
+      --metric-resolution duration          The resolution at which the collector will retain metrics. (default 1m0s)
+      --sink *flags.Uris                    external sink(s) that receive data (default [])
+      --sink-export-data-timeout duration   Timeout for exporting data to a sink (default 20s)
+      --source *flags.Uris                  source(s) to watch (default [])
+      --stderrthreshold severity            logs at or above this threshold go to stderr (default 2)
+      --store-label strings                 store this label separately from joined labels with the same name (name) or with different name (newName=name)
+  -v, --v Level                             log level for V logs
+      --version                             print version info and exit
+      --vmodule moduleSpec                  comma-separated list of pattern=N settings for file-filtered logging
+```
+
 ## Kubernetes Source
 - `kubeletPort`: Defaults to 10255. Use 10250 for the secure port.
 - `kubeletHttps`: Defaults to false. Set to true if `kubeletPort` set to 10250.
@@ -23,7 +45,8 @@ See [configs.go](https://github.com/wavefronthq/wavefront-kubernetes-collector/t
 
 Example Usage:
 ```
---source=prometheus:''?url=http://kube-state-metrics.kube-system.svc.cluster.local:8080/metrics&prefix=prom.```
+--source=prometheus:''?url=http://kube-state-metrics.kube-system.svc.cluster.local:8080/metrics&prefix=prom.
+```
 
 ## Wavefront Sink
 - `server`: The Wavefront URL of the form `https://YOUR_INSTANCE.wavefront.com`. Only required for direct ingestion.
@@ -36,9 +59,9 @@ Example Usage:
 
 Example Usages:
 ```
-# Direct Ingestion
+## Direct Ingestion
 --sink=wavefront:?server=https://YOUR_INSTANCE.wavefront.com&token=YOUR_TOKEN&clusterName=k8s-cluster&includeLabels=true
 
-# Proxy
+## Proxy
 --sink=wavefront:?proxyAddress=wavefront-proxy.default.svc.cluster.local:2878&clusterName=k8s-cluster&includeLabels=true
 ```
