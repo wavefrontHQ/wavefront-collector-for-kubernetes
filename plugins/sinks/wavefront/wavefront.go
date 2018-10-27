@@ -10,7 +10,7 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/pkg/client"
+	"github.com/wavefronthq/wavefront-sdk-go/senders"
 )
 
 const (
@@ -20,7 +20,7 @@ const (
 var excludeTagList = [...]string{"namespace_id", "host_id", "pod_id", "hostname"}
 
 type wavefrontSink struct {
-	WavefrontClient   client.WavefrontMetricSender
+	WavefrontClient   senders.Sender
 	ClusterName       string
 	Prefix            string
 	IncludeLabels     bool
@@ -37,14 +37,18 @@ func (sink *wavefrontSink) Stop() {
 	sink.WavefrontClient.Close()
 }
 
-func (sink *wavefrontSink) sendPoint(metricName string, metricValStr string, ts string, source string, tagStr string) {
+func (sink *wavefrontSink) sendPoint(metricName string, value float64, ts int64, source string, tags map[string]string) {
 	if sink.testMode {
-		line := fmt.Sprintf("%s %s %s source=\"%s\" %s\n", metricName, metricValStr, ts, source, tagStr)
+		tagStr := ""
+		for k, v := range tags {
+			tagStr += k + "=\"" + v + "\" "
+		}
+		line := fmt.Sprintf("%s %f %d source=\"%s\" %s\n", metricName, value, ts, source, tagStr)
 		sink.testReceivedLines = append(sink.testReceivedLines, line)
 		glog.Infoln(line)
 		return
 	}
-	sink.WavefrontClient.SendMetric(metricName, metricValStr, ts, source, tagStr)
+	sink.WavefrontClient.SendMetric(metricName, value, ts, source, tags)
 }
 
 func (sink *wavefrontSink) cleanMetricName(metricType string, metricName string) string {
@@ -83,11 +87,8 @@ func (sink *wavefrontSink) send(batch *metrics.DataBatch) {
 func (sink *wavefrontSink) processMetricPoints(points []*metrics.MetricPoint) {
 	glog.V(2).Infof("received metric points: %d", len(points))
 	for _, point := range points {
-		metricValStr := fmt.Sprintf("%f", point.Value)
-		ts := strconv.FormatInt(point.Timestamp, 10)
 		point.Tags["cluster"] = sink.ClusterName
-		tagStr := tagsToString(point.Tags)
-		sink.sendPoint(point.Metric, metricValStr, ts, point.Source, tagStr)
+		sink.sendPoint(point.Metric, point.Value, point.Timestamp, point.Source, point.Tags)
 	}
 }
 
@@ -115,52 +116,48 @@ func (sink *wavefrontSink) processMetricSets(metricSets map[string]*metrics.Metr
 			continue
 		}
 		for _, metricName := range sortedMetricValueKeys(ms.MetricValues) {
-			var metricValStr string
 			metricValue := ms.MetricValues[metricName]
+			var value float64
 			if metrics.ValueInt64 == metricValue.ValueType {
-				metricValStr = fmt.Sprintf("%d", metricValue.IntValue)
-			} else if metrics.ValueFloat == metricValue.ValueType { // W
-				metricValStr = fmt.Sprintf("%f", metricValue.FloatValue)
+				value = float64(metricValue.IntValue)
+			} else if metrics.ValueFloat == metricValue.ValueType {
+				value = metricValue.FloatValue
 			} else {
-				//do nothing for now
-				metricValStr = ""
+				continue
 			}
-			if metricValStr != "" {
-				ts := strconv.FormatInt(ts.Unix(), 10)
-				source := ""
-				if metricType == "cluster" {
-					source = sink.ClusterName
-				} else if metricType == "ns" {
-					source = tags["namespace_name"] + "-ns"
-				} else {
-					source = tags["hostname"]
-				}
-				tagStr := tagsToString(tags)
-				sink.sendPoint(sink.cleanMetricName(metricType, metricName), metricValStr, ts, source, tagStr)
-				metricCounter = metricCounter + 1
+
+			ts := ts.Unix()
+			source := ""
+			if metricType == "cluster" {
+				source = sink.ClusterName
+			} else if metricType == "ns" {
+				source = tags["namespace_name"] + "-ns"
+			} else {
+				source = tags["hostname"]
 			}
+			processTags(tags)
+			sink.sendPoint(sink.cleanMetricName(metricType, metricName), value, ts, source, tags)
+			metricCounter = metricCounter + 1
 		}
 		for _, metric := range ms.LabeledMetrics {
 			metricName := sink.cleanMetricName(metricType, metric.Name)
-			metricValStr := ""
+			var value float64
 			if metrics.ValueInt64 == metric.ValueType {
-				metricValStr = fmt.Sprintf("%d", metric.IntValue)
-			} else if metrics.ValueFloat == metric.ValueType { // W
-				metricValStr = fmt.Sprintf("%f", metric.FloatValue)
+				value = float64(metric.IntValue)
+			} else if metrics.ValueFloat == metric.ValueType {
+				value = metric.FloatValue
 			} else {
-				//do nothing for now
-				metricValStr = ""
+				continue
 			}
-			if metricValStr != "" {
-				ts := strconv.FormatInt(ts.Unix(), 10)
-				source := tags["hostname"]
-				tagStr := tagsToString(tags)
-				for labelName, labelValue := range metric.Labels {
-					tagStr += labelName + "=\"" + labelValue + "\" "
-				}
-				metricCounter = metricCounter + 1
-				sink.sendPoint(metricName, metricValStr, ts, source, tagStr)
+
+			ts := ts.Unix()
+			source := tags["hostname"]
+			for labelName, labelValue := range metric.Labels {
+				tags[labelName] = labelValue
 			}
+			processTags(tags)
+			metricCounter = metricCounter + 1
+			sink.sendPoint(metricName, value, ts, source, tags)
 		}
 	}
 }
@@ -173,22 +170,7 @@ func (sink *wavefrontSink) ExportData(batch *metrics.DataBatch) {
 		sink.send(batch)
 		return
 	}
-
-	//make sure we're Connected before sending a real batch
-	err := sink.connect()
-	if err != nil {
-		glog.Warning(err)
-	}
 	sink.send(batch)
-}
-
-func (sink *wavefrontSink) connect() error {
-	err := sink.WavefrontClient.Connect()
-	if err != nil {
-		glog.Warning(err.Error())
-		return err
-	}
-	return nil
 }
 
 func NewWavefrontSink(uri *url.URL) (metrics.DataSink, error) {
@@ -212,7 +194,20 @@ func NewWavefrontSink(uri *url.URL) (metrics.DataSink, error) {
 	vals := uri.Query()
 
 	if len(vals["proxyAddress"]) > 0 {
-		storage.WavefrontClient = client.NewWavefrontProxyClient(vals["proxyAddress"][0])
+		s := strings.Split(vals["proxyAddress"][0], ":")
+		host, portStr := s[0], s[1]
+		port, err := strconv.Atoi(portStr)
+
+		if err != nil {
+			return nil, fmt.Errorf("error parsing proxy port: %s", err.Error())
+		}
+		storage.WavefrontClient, err = senders.NewProxySender(&senders.ProxyConfiguration{
+			Host:        host,
+			MetricsPort: port,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("error creating proxy sender: %s", err.Error())
+		}
 	}
 
 	if len(vals["server"]) > 0 {
@@ -221,7 +216,15 @@ func NewWavefrontSink(uri *url.URL) (metrics.DataSink, error) {
 			return nil, fmt.Errorf("token missing for Wavefront sink")
 		}
 		token := vals["token"][0]
-		storage.WavefrontClient = client.NewWavefrontDirectClient(server, token)
+
+		var err error
+		storage.WavefrontClient, err = senders.NewDirectSender(&senders.DirectConfiguration{
+			Server: server,
+			Token:  token,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("error creating direct sender: %s", err.Error())
+		}
 	}
 
 	if storage.WavefrontClient == nil {
@@ -264,15 +267,13 @@ func NewWavefrontSink(uri *url.URL) (metrics.DataSink, error) {
 	return storage, nil
 }
 
-func tagsToString(tags map[string]string) string {
-	tagStr := ""
+func processTags(tags map[string]string) {
 	for k, v := range tags {
 		// ignore tags with empty values as well so the data point doesn't fail validation
-		if excludeTag(k) == false && len(v) > 0 {
-			tagStr += k + "=\"" + v + "\" "
+		if excludeTag(k) || len(v) == 0 {
+			delete(tags, k)
 		}
 	}
-	return tagStr
 }
 
 func excludeTag(a string) bool {

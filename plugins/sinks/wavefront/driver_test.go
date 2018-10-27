@@ -1,6 +1,7 @@
 package wavefront
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	"net/url"
@@ -89,6 +90,7 @@ func TestValidateLines(t *testing.T) {
 
 		//all remaining parts are tags and must be key value pairs (containing "=")
 		tags := parts[4:]
+		fmt.Println(tags)
 		for _, v := range tags {
 			assert.True(t, strings.Contains(v, "="))
 		}
