@@ -1,5 +1,5 @@
 PREFIX?=wavefronthq
-DOCKER_IMAGE=wavefront-collector
+DOCKER_IMAGE=wavefront-kubernetes-collector
 ARCH?=amd64
 GOLANG_VERSION?=1.11
 
@@ -9,7 +9,7 @@ ifndef TEMP_DIR
 TEMP_DIR:=$(shell mktemp -d /tmp/wavefront.XXXXXX)
 endif
 
-VERSION?=v0.9.1
+VERSION?=0.9.1
 GIT_COMMIT:=$(shell git rev-parse --short HEAD)
 
 REPO_DIR:=$(shell pwd)
@@ -35,10 +35,10 @@ container:
 		&& GOARCH=$(ARCH) CGO_ENABLED=0 go build -ldflags \"$(LDFLAGS)\" -o /build/$(BINARY_NAME) github.com/wavefronthq/wavefront-kubernetes-collector/cmd/wavefront-collector/"
 
 	cp deploy/docker/Dockerfile $(TEMP_DIR)
-	docker build --pull -t $(PREFIX)/$(DOCKER_IMAGE)-$(ARCH):$(VERSION) $(TEMP_DIR)
+	docker build --pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(TEMP_DIR)
 	rm -rf $(TEMP_DIR)
 ifneq ($(OVERRIDE_IMAGE_NAME),)
-	docker tag $(PREFIX)/$(DOCKER_IMAGE)-$(ARCH):$(VERSION) $(OVERRIDE_IMAGE_NAME)
+	docker tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OVERRIDE_IMAGE_NAME)
 endif
 
 clean:
