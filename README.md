@@ -1,4 +1,4 @@
-# wavefront-kubernetes-collector [![build status][ci-img]][ci]
+# wavefront-kubernetes-collector [![build status][ci-img]][ci] [![Go Report Card][go-report-img]][go-report] [![Docker Pulls][docker-pull-img]][docker-img]
 
 This collector enables monitoring Kubernetes clusters and sending metrics to [Wavefront](https://www.wavefront.com).
 
@@ -55,3 +55,7 @@ kubectl logs -f COLLECTOR_POD_NAME -n wavefront-collector
 
 [ci-img]: https://travis-ci.com/wavefrontHQ/wavefront-kubernetes-collector.svg?branch=master
 [ci]: https://travis-ci.com/wavefrontHQ/wavefront-kubernetes-collector
+[go-report-img]: https://goreportcard.com/badge/github.com/wavefronthq/wavefront-kubernetes-collector
+[go-report]: https://goreportcard.com/report/github.com/wavefronthq/wavefront-kubernetes-collector
+[docker-pull-img]: https://img.shields.io/docker/pulls/wavefronthq/wavefront-kubernetes-collector.svg?logo=docker
+[docker-img]: https://hub.docker.com/r/wavefronthq/wavefront-kubernetes-collector/
