@@ -1,0 +1,40 @@
+language: go
+
+# workaround for case sensitive build issues with wavefrontHQ
+go_import_path: github.com/wavefronthq/wavefront-kubernetes-adapter
+
+go:
+  - "1.9.x"
+  - "1.10.x"
+  - "1.11.x"
+  - master 
+
+env:
+  - DEP_VERSION="0.5.0"
+
+before_install:
+  # Download the binary to bin folder in $GOPATH
+  - curl -L -s https://github.com/golang/dep/releases/download/v${DEP_VERSION}/dep-linux-amd64 -o $GOPATH/bin/dep
+  # Make the binary executable
+  - chmod +x $GOPATH/bin/dep
+
+install:
+  - dep ensure
+
+matrix:
+  # It's ok if our code fails on unstable development versions of Go.
+  allow_failures:
+    - go: master
+  # Don't wait for tip tests to finish. Mark the test run green if the
+  # tests pass on the stable versions of Go.
+  fast_finish: true
+
+# Don't email me the results of the test runs.
+notifications:
+  email: false
+
+# script always run to completion (set +e).
+script:
+  - diff -u <(echo -n) <(gofmt -d $(find . -type f -name '*.go' -not -path "./vendor/*"))
+  - go test -v -race ./...                   # Run all the tests with the race detector enabled
+  - go vet -composites=false ./...           # go vet is the official Go static analyzer
