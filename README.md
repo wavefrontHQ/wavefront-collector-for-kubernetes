@@ -1,4 +1,4 @@
-# wavefront-kubernetes-collector
+# wavefront-kubernetes-collector [![build status][ci-img]][ci]
 
 This collector enables monitoring Kubernetes clusters and sending metrics to [Wavefront](https://www.wavefront.com).
 
@@ -52,3 +52,6 @@ To verify the installation, find the pod name of the deployed `wavefront-collect
 ```
 kubectl logs -f COLLECTOR_POD_NAME -n wavefront-collector
 ```
+
+[ci-img]: https://travis-ci.com/wavefrontHQ/wavefront-kubernetes-collector.svg?branch=master
+[ci]: https://travis-ci.com/wavefrontHQ/wavefront-kubernetes-collector
