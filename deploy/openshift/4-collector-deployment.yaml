@@ -23,7 +23,7 @@ spec:
         imagePullPolicy: Always
         command:
         - /wavefront-collector
-        - --source=kubernetes.summary_api:''
+        - --source=kubernetes.summary_api:https://172.0.0.1:10250
         - --source=prometheus:''?url=http://kube-state-metrics.kube-system.svc.cluster.local:8080/metrics
         - --sink=wavefront:?server=https://YOUR_INSTANCE.wavefront.com&token=YOUR_TOKEN&clusterName=k8s-cluster&includeLabels=true
         - --v=2
