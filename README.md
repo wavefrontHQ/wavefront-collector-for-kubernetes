@@ -26,6 +26,7 @@ Following sources are currently supported and can be configured using the `--sou
 --source=prometheus:''?url=http://kube-state-metrics.kube-system.svc.cluster.local:8080/metrics
 ```
 Multiple prometheus sources can be added to scrape additional endpoints.
+
 3. Openshift source to collect performance metrics from the kubelet `/stats/summary` metrics API:
 ```
 --source=kubernetes.summary_api:https://172.0.0.1:10250
@@ -49,7 +50,7 @@ Multiple prometheus sources can be added to scrape additional endpoints.
 --sink=wavefront:?server=https://<YOUR_INSTANCE>.wavefront.com&token=<YOUR_TOKEN>&clusterName=k8s-cluster&includeLabels=true
 ```
 
-## Installation in Kubernetes
+## Installation on Kubernetes
 
 1. Clone this repo.
 2. Edit the `wavefront` sink in `deploy/kubernetes/4-collector-deployment.yaml`.
@@ -62,7 +63,7 @@ To verify the installation, find the pod name of the deployed `wavefront-collect
 kubectl logs -f COLLECTOR_POD_NAME -n wavefront-collector
 ```
 
-## Installation in Openshift
+## Installation on Openshift
 
 1. On Openshift web console create a new project called `wavefront-collector`
 1. Deploy [kube-state-metrics](https://github.com/kubernetes/kube-state-metrics) on your Openshift
@@ -71,4 +72,4 @@ kubectl logs -f COLLECTOR_POD_NAME -n wavefront-collector
 1. Edit the `kubernetes` sink in the above file if you are running OKD.
 1. Run `kubectl apply -f deploy/openshift`
 
-To verify the installation, find the pod name of the deployed `wavefront-collector` and run:
+To verify the installation, find the running pod on the web console and take a look of the logs.
