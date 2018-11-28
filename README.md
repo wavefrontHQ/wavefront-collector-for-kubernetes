@@ -27,7 +27,7 @@ Following sources are currently supported and can be configured using the `--sou
 ```
 Multiple prometheus sources can be added to scrape additional endpoints.
 
-3. Openshift source to collect performance metrics from the kubelet `/stats/summary` metrics API:
+3. OpenShift source to collect performance metrics from the kubelet `/stats/summary` metrics API:
 ```
 --source=kubernetes.summary_api:https://172.0.0.1:10250
 ```
@@ -63,9 +63,9 @@ To verify the installation, find the pod name of the deployed `wavefront-collect
 kubectl logs -f COLLECTOR_POD_NAME -n wavefront-collector
 ```
 
-## Installation on Openshift
+## Installation on OpenShift
 
-1. On Openshift web console create a new project called `wavefront-collector`
+1. On OpenShift web console create a new project called `wavefront-collector`
 1. Deploy [kube-state-metrics](https://github.com/kubernetes/kube-state-metrics) on your Openshift
 1. Clone this repo.
 1. Edit the `wavefront` sink in `deploy/openshift/4-collector-deployment.yaml`.
