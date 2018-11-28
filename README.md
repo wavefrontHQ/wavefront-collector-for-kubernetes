@@ -69,7 +69,7 @@ kubectl logs -f COLLECTOR_POD_NAME -n wavefront-collector
 1. Deploy [kube-state-metrics](https://github.com/kubernetes/kube-state-metrics) on your Openshift
 1. Clone this repo.
 1. Edit the `wavefront` sink in `deploy/openshift/4-collector-deployment.yaml`.
-1. Edit the `kubernetes` sink in the above file if you are running OKD.
+1. Edit the `kubernetes.summary_api` sink in the above file if you are running OKD.
 1. Run `kubectl apply -f deploy/openshift`
 
 To verify the installation, find the running pod on the web console and take a look of the logs.
