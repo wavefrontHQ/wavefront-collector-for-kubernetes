@@ -57,7 +57,7 @@ Multiple prometheus sources can be added to scrape additional endpoints.
 
 1. Clone this repo.
 2. Edit the `wavefront` sink in `deploy/kubernetes/4-collector-deployment.yaml`.
-3. Edit or remove the `prometheus` sink in the above file. (see [Prometheus Sources](#PrometheusSources))
+3. Edit or remove the `prometheus` sink in the above file. (see [Prometheus Sources](#Prometheus-Sources))
 4. Run `kubectl apply -f deploy/kubernetes`
 
 To verify the installation, find the pod name of the deployed `wavefront-collector` and run:
@@ -72,7 +72,7 @@ kubectl logs -f COLLECTOR_POD_NAME -n wavefront-collector
 1. Deploy [kube-state-metrics](https://github.com/kubernetes/kube-state-metrics) on your Openshift
 1. Clone this repo.
 1. Edit the `wavefront` sink in `deploy/openshift/4-collector-deployment.yaml`.
-1. Edit the `kubernetes.summary_api` sink in the above file if you are running OKD. (see [Sources for OKD](#SourcesforOKD))
+1. Edit the `kubernetes.summary_api` sink in the above file if you are running OKD. (see [Sources for OKD](#Sources-for-OKD))
 1. Run `kubectl apply -f deploy/openshift`
 
 To verify the installation, find the running pod on the web console and take a look of the logs.
