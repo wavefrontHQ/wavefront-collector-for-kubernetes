@@ -62,8 +62,10 @@ kubectl logs -f COLLECTOR_POD_NAME -n wavefront-collector
 cd deploy/openshift
 oc create -f collector-namespace.yaml
 ```
-Note: Step 5 and 6 are needed if you are planning to use Wavefront Proxy else go to step 7
+Note: Step 5 and 6 are needed if you are planning to use Wavefront Proxy else go to step 7.
+
 5. Login into Openshift web console and create storage under `wavefront-collector`. Select Access Mode as `RWX` and Size as `5 GiB`, give name to the storage and make a note of it.
+
 6. Replace YOUR_CLUSTER, YOUR_API_TOKEN and STORAGE_NAME in wavefront-proxy.yaml and run:
 ```
 oc create -f wavefront-proxy.yaml
@@ -72,7 +74,7 @@ oc create -f wavefront-proxy.yaml
 ```
 oc create -f kube-state.yaml
 ```
-8. Edit the `wavefront` sink and cluster name in `4-collector-deployment.yaml` based on the metric sending mechanism as given below.
+8. Edit the `wavefront` sink and `cluster name` in `4-collector-deployment.yaml` based on the metric sending mechanism as given below.
 #### Using Wavefront Proxy
 
 ```
