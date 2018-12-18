@@ -66,7 +66,7 @@ Note: Step 5 and 6 are needed if you are planning to use Wavefront Proxy else go
 
 5. Login into Openshift web console and create storage under `wavefront-collector`. Select Access Mode as `RWX` and Size as `5 GiB`, give name to the storage and make a note of it.
 
-6. Replace YOUR_CLUSTER, YOUR_API_TOKEN and STORAGE_NAME in wavefront-proxy.yaml and run:
+6. Replace YOUR_CLUSTER, YOUR_API_TOKEN and STORAGE_NAME in `1-wavefront-proxy.yaml` and run:
 ```
 oc create -f 1-wavefront-proxy.yaml
 ```
@@ -74,7 +74,7 @@ oc create -f 1-wavefront-proxy.yaml
 ```
 oc create -f 2-kube-state.yaml
 ```
-8. Edit the `wavefront` sink and `cluster name` in `collector/3-collector-deployment.yaml` based on the metric sending mechanism as given below.
+8. Edit the `wavefront` sink and `cluster name` in `collector/3-collector-deployment.yaml` based on the selected metric ingestion approach as given below.
 #### Using Wavefront Proxy
 
 ```
