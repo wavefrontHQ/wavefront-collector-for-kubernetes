@@ -415,7 +415,7 @@ func (this *summaryProvider) GetMetricsSources() []MetricsSource {
 }
 
 func (this *summaryProvider) Name() string {
-	return "Kubernetes Summary Provider"
+	return "kubernetes_summary_provider"
 }
 
 func (this *summaryProvider) getNodeInfo(node *kube_api.Node) (NodeInfo, error) {

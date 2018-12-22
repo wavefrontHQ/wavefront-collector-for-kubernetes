@@ -18,6 +18,7 @@ type CollectorRunOptions struct {
 	IgnoredLabels         []string
 	StoredLabels          []string
 	SinkExportDataTimeout time.Duration
+	DiscoveryConfigFile   string
 }
 
 func NewCollectorRunOptions() *CollectorRunOptions {
@@ -35,4 +36,5 @@ func (h *CollectorRunOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringSliceVar(&h.IgnoredLabels, "ignore_label", []string{}, "ignore this label when joining labels")
 	fs.StringSliceVar(&h.StoredLabels, "store_label", []string{}, "store this label separately from joined labels with the same name (name) or with different name (newName=name)")
 	fs.DurationVar(&h.SinkExportDataTimeout, "sink_export_data_timeout", 20*time.Second, "Timeout for exporting data to a sink")
+	fs.StringVar(&h.DiscoveryConfigFile, "discovery_config", "", "Auto discovery/scraping configuration file")
 }
