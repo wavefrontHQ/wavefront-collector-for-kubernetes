@@ -2,9 +2,10 @@ package discovery
 
 import (
 	"fmt"
+	"net/url"
+
 	"github.com/golang/glog"
 	"k8s.io/api/core/v1"
-	"net/url"
 )
 
 func ScrapeURL(pod *v1.Pod, cfg PrometheusConfig, checkScrapeAnnotation bool) (*url.URL, error) {
@@ -16,8 +17,7 @@ func ScrapeURL(pod *v1.Pod, cfg PrometheusConfig, checkScrapeAnnotation bool) (*
 	}
 	scrape := getParam(pod, "prometheus.io/scrape", "", "false")
 	if checkScrapeAnnotation && scrape != "true" {
-		//TODO: verify this works
-		glog.Info("scrape annotation is not true for pod ", pod.Name, " scrape=", scrape, pod.Annotations)
+		glog.Info("scrape annotation false for pod=", pod.Name, " annotations=", pod.Annotations)
 		return nil, nil
 	}
 
@@ -57,9 +57,11 @@ func encodePod(urlStr string, pod *v1.Pod) string {
 }
 
 func encodeLabels(urlStr string, labels map[string]string) string {
-	//TODO: exclude pod-template-hash?
 	for k, v := range labels {
-		urlStr = fmt.Sprintf("%s&tag=%s:%s", urlStr, k, v)
+		// exclude pod-template-hash
+		if k != "pod-template-hash" {
+			urlStr = fmt.Sprintf("%s&tag=%s:%s", urlStr, k, v)
+		}
 	}
 	return urlStr
 }

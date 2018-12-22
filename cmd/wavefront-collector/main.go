@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/discovery"
 	"net/url"
 	"os"
 	"runtime"
@@ -17,10 +16,12 @@ import (
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/options"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/discovery"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/manager"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/processors"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sinks"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources"
+
 	"k8s.io/apiserver/pkg/util/flag"
 	"k8s.io/apiserver/pkg/util/logs"
 	kube_client "k8s.io/client-go/kubernetes"
@@ -69,9 +70,7 @@ func main() {
 	podLister := getPodListerOrDie(kubeClient)
 	dataProcessors := createDataProcessorsOrDie(kubernetesUrl, podLister, labelCopier)
 
-	//TODO: separate enable flag, defaults to true
-	// and configuration file is an optional component
-	if opt.DiscoveryConfigFile != "" {
+	if opt.EnableDiscovery {
 		handler := sourceManager.(metrics.DynamicProviderHandler)
 		createDiscoveryManagerOrDie(kubeClient, podLister, opt.DiscoveryConfigFile, handler)
 	}
