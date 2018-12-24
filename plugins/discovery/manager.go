@@ -6,8 +6,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources"
+	prom_discovery "github.com/wavefronthq/wavefront-kubernetes-collector/plugins/discovery/prometheus"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/prometheus"
 
 	"github.com/golang/glog"
@@ -26,7 +27,6 @@ type discoveryManager struct {
 	kubeClient      kubernetes.Interface
 	cfgModTime      time.Time
 	podLister       v1listers.PodLister
-	sourceFactory   *sources.SourceFactory
 	providerHandler metrics.DynamicProviderHandler
 	done            chan struct{}
 	channel         chan struct{}
@@ -39,7 +39,6 @@ func NewDiscoveryManager(client kubernetes.Interface, podLister v1listers.PodLis
 	mgr := &discoveryManager{
 		kubeClient:      client,
 		podLister:       podLister,
-		sourceFactory:   sources.NewSourceFactory(),
 		providerHandler: handler,
 		registeredPods:  make(map[string]bool),
 		done:            make(chan struct{}),
@@ -62,11 +61,11 @@ func (dm *discoveryManager) Run(cfgFile string) {
 	podInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			pod := obj.(*apiv1.Pod)
-			dm.add(pod, PrometheusConfig{}, true)
+			dm.add(pod, discovery.PrometheusConfig{}, true)
 		},
 		UpdateFunc: func(_, obj interface{}) {
 			pod := obj.(*apiv1.Pod)
-			dm.add(pod, PrometheusConfig{}, true)
+			dm.add(pod, discovery.PrometheusConfig{}, true)
 		},
 		DeleteFunc: func(obj interface{}) {
 			pod := obj.(*apiv1.Pod)
@@ -103,7 +102,7 @@ func (dm *discoveryManager) load(cfgFile string) {
 }
 
 // processes the discovery configuration rules
-func (dm *discoveryManager) process(cfg Config) {
+func (dm *discoveryManager) process(cfg discovery.Config) {
 	syncInterval := 10 * time.Minute
 	if cfg.Global.DiscoveryInterval != 0 {
 		syncInterval = cfg.Global.DiscoveryInterval
@@ -114,7 +113,7 @@ func (dm *discoveryManager) process(cfg Config) {
 	glog.V(8).Info("ended discovery config processing")
 }
 
-func (dm *discoveryManager) add(pod *apiv1.Pod, config PrometheusConfig, checkScrapeAnnotation bool) error {
+func (dm *discoveryManager) add(pod *apiv1.Pod, config discovery.PrometheusConfig, checkScrapeAnnotation bool) error {
 	glog.V(5).Infof("pod added/updated: %s namespace=%s", pod.Name, pod.Namespace)
 
 	if dm.registered(pod.Name) {
@@ -122,7 +121,7 @@ func (dm *discoveryManager) add(pod *apiv1.Pod, config PrometheusConfig, checkSc
 		return fmt.Errorf("pod already registered %s", pod.Name)
 	}
 
-	scrapeURL, err := ScrapeURL(pod, config, checkScrapeAnnotation)
+	scrapeURL, err := prom_discovery.ScrapeURL(pod, config, checkScrapeAnnotation)
 	if err != nil {
 		glog.Error(err)
 		return err
@@ -149,7 +148,7 @@ func (dm *discoveryManager) delete(pod *apiv1.Pod) {
 	}
 }
 
-func (dm *discoveryManager) processPromConfigs(promCfgs []PrometheusConfig) {
+func (dm *discoveryManager) processPromConfigs(promCfgs []discovery.PrometheusConfig) {
 	if len(promCfgs) == 0 {
 		glog.V(2).Infof("empty prometheus discovery configs")
 		return
@@ -188,7 +187,7 @@ func (dm *discoveryManager) registered(name string) bool {
 	return ok
 }
 
-func (dm *discoveryManager) listPods(cfg PrometheusConfig) ([]*apiv1.Pod, error) {
+func (dm *discoveryManager) listPods(cfg discovery.PrometheusConfig) ([]*apiv1.Pod, error) {
 	if cfg.Namespace == "" {
 		return dm.podLister.List(labels.SelectorFromSet(cfg.Labels))
 	}

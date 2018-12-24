@@ -1,14 +1,16 @@
-package discovery
+package prometheus
 
 import (
 	"fmt"
 	"net/url"
 
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
+
 	"github.com/golang/glog"
 	"k8s.io/api/core/v1"
 )
 
-func ScrapeURL(pod *v1.Pod, cfg PrometheusConfig, checkScrapeAnnotation bool) (*url.URL, error) {
+func ScrapeURL(pod *v1.Pod, cfg discovery.PrometheusConfig, checkScrapeAnnotation bool) (*url.URL, error) {
 	glog.V(4).Infof("podName=%s podIP=%s podNS=%s", pod.Name, pod.Status.PodIP, pod.Namespace)
 
 	ip := pod.Status.PodIP
