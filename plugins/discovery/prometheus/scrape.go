@@ -10,24 +10,31 @@ import (
 	"k8s.io/api/core/v1"
 )
 
-func ScrapeURL(pod *v1.Pod, cfg discovery.PrometheusConfig, checkScrapeAnnotation bool) (*url.URL, error) {
-	glog.V(4).Infof("podName=%s podIP=%s podNS=%s", pod.Name, pod.Status.PodIP, pod.Namespace)
+const (
+	scrapeAnnotation = "prometheus.io/scrape"
+	schemeAnnotation = "prometheus.io/scheme"
+	pathAnnotation   = "prometheus.io/path"
+	portAnnotation   = "prometheus.io/port"
+	prefixAnnotation = "prometheus.io/prefix"
+	labelsAnnotation = "prometheus.io/includeLabels"
+)
 
+func scrapeURL(pod *v1.Pod, cfg discovery.PrometheusConfig, checkAnnotation bool) (*url.URL, error) {
 	ip := pod.Status.PodIP
 	if ip == "" {
 		return nil, fmt.Errorf("missing pod ip for %s", pod.Name)
 	}
-	scrape := getParam(pod, "prometheus.io/scrape", "", "false")
-	if checkScrapeAnnotation && scrape != "true" {
-		glog.Info("scrape annotation false for pod=", pod.Name, " annotations=", pod.Annotations)
+	scrape := param(pod, scrapeAnnotation, "", "false")
+	if checkAnnotation && scrape != "true" {
+		glog.Infof("scrape=false for pod=%s annotations=%q", pod.Name, pod.Annotations)
 		return nil, nil
 	}
 
-	scheme := getParam(pod, "prometheus.io/scheme", cfg.Scheme, "http")
-	path := getParam(pod, "prometheus.io/path", cfg.Path, "/metrics")
-	port := getParam(pod, "prometheus.io/port", cfg.Port, "")
-	prefix := getParam(pod, "prometheus.io/prefix", cfg.Prefix, "")
-	includeLabels := getParam(pod, "prometheus.io/includeLabels", cfg.IncludeLabels, "true")
+	scheme := param(pod, schemeAnnotation, cfg.Scheme, "http")
+	path := param(pod, pathAnnotation, cfg.Path, "/metrics")
+	port := param(pod, portAnnotation, cfg.Port, "")
+	prefix := param(pod, prefixAnnotation, cfg.Prefix, "")
+	includeLabels := param(pod, labelsAnnotation, cfg.IncludeLabels, "true")
 
 	urlStr := baseURL(scheme, ip, port, path, pod.Name, prefix)
 	urlStr = encodePod(urlStr, pod)
@@ -39,7 +46,7 @@ func ScrapeURL(pod *v1.Pod, cfg discovery.PrometheusConfig, checkScrapeAnnotatio
 	if err != nil {
 		return nil, err
 	}
-	glog.V(4).Infof("scrapeURL=%s", u)
+	glog.V(5).Infof("scrapeURL=%s", u)
 	return u, nil
 }
 
@@ -68,7 +75,7 @@ func encodeLabels(urlStr string, labels map[string]string) string {
 	return urlStr
 }
 
-func getParam(pod *v1.Pod, annotation, cfgVal, defaultVal string) string {
+func param(pod *v1.Pod, annotation, cfgVal, defaultVal string) string {
 	// give precedence to pod annotation
 	value := pod.GetAnnotations()[annotation]
 	if value == "" {
