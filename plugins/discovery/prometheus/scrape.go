@@ -26,7 +26,7 @@ func scrapeURL(pod *v1.Pod, cfg discovery.PrometheusConfig, checkAnnotation bool
 	}
 	scrape := param(pod, scrapeAnnotation, "", "false")
 	if checkAnnotation && scrape != "true" {
-		glog.Infof("scrape=false for pod=%s annotations=%q", pod.Name, pod.Annotations)
+		glog.V(5).Infof("scrape=false for pod=%s annotations=%q", pod.Name, pod.Annotations)
 		return nil, nil
 	}
 
@@ -46,7 +46,7 @@ func scrapeURL(pod *v1.Pod, cfg discovery.PrometheusConfig, checkAnnotation bool
 	if err != nil {
 		return nil, err
 	}
-	glog.V(5).Infof("scrapeURL=%s", u)
+	glog.V(4).Infof("scrapeURL=%s", u)
 	return u, nil
 }
 

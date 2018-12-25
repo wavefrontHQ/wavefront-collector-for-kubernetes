@@ -38,13 +38,13 @@ func (d *discoverer) Process(cfg discovery.Config) error {
 		return nil
 	}
 	for _, promCfg := range cfg.PromConfigs {
-		glog.V(5).Info("lookup pods labels=", promCfg.Labels)
+		glog.V(4).Info("lookup pods for labels=", promCfg.Labels)
 		pods, err := d.manager.ListPods(promCfg.Namespace, promCfg.Labels)
 		if err != nil {
 			glog.Error(err)
 			continue
 		}
-		glog.V(5).Infof("%d pods discovered", len(pods))
+		glog.V(4).Infof("%d pods discovered", len(pods))
 
 		for _, pod := range pods {
 			d.discover(pod, promCfg, false)
@@ -57,7 +57,7 @@ func (d *discoverer) discover(pod *v1.Pod, config discovery.PrometheusConfig, ch
 	glog.V(5).Infof("pod added|updated: %s namespace=%s", pod.Name, pod.Namespace)
 
 	if d.manager.Registered(pod.Name) {
-		glog.Infof("pod already registered %s", pod.Name)
+		glog.V(2).Infof("pod already registered %s", pod.Name)
 		return nil
 	}
 
