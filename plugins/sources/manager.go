@@ -33,8 +33,12 @@ const (
 )
 
 func NewSourceManager(metricsSourceProviders []MetricsSourceProvider, metricsScrapeTimeout time.Duration) (MetricsSource, error) {
+	providers := make(map[string]MetricsSourceProvider)
+	for _, provider := range metricsSourceProviders {
+		providers[provider.Name()] = provider
+	}
 	return &sourceManager{
-		metricsSourceProviders: metricsSourceProviders,
+		metricsSourceProviders: providers,
 		metricsScrapeTimeout:   metricsScrapeTimeout,
 	}, nil
 }
@@ -42,7 +46,7 @@ func NewSourceManager(metricsSourceProviders []MetricsSourceProvider, metricsScr
 type sourceManager struct {
 	metricsScrapeTimeout   time.Duration
 	mtx                    sync.RWMutex
-	metricsSourceProviders []MetricsSourceProvider
+	metricsSourceProviders map[string]MetricsSourceProvider
 }
 
 func (this *sourceManager) Name() string {
@@ -52,25 +56,15 @@ func (this *sourceManager) Name() string {
 func (this *sourceManager) AddProvider(provider MetricsSourceProvider) {
 	this.mtx.Lock()
 	defer this.mtx.Unlock()
-	this.metricsSourceProviders = append(this.metricsSourceProviders, provider)
-	glog.V(4).Infof("add provider: %s", provider.Name())
+	this.metricsSourceProviders[provider.Name()] = provider
+	glog.V(4).Infof("added provider: %s", provider.Name())
 }
 
 func (this *sourceManager) DeleteProvider(name string) {
 	this.mtx.Lock()
 	defer this.mtx.Unlock()
-
-	delIdx := -1
-	for idx, sourceProvider := range this.metricsSourceProviders {
-		if sourceProvider.Name() == name {
-			delIdx = idx
-			break
-		}
-	}
-	if delIdx != -1 {
-		glog.V(5).Infof("deleting provider %s", name)
-		this.metricsSourceProviders = append(this.metricsSourceProviders[:delIdx], this.metricsSourceProviders[delIdx+1:]...)
-	}
+	delete(this.metricsSourceProviders, name)
+	glog.V(4).Infof("deleted provider %s", name)
 }
 
 func (this *sourceManager) ScrapeMetrics(start, end time.Time) (*DataBatch, error) {

@@ -30,7 +30,7 @@ type discoveryManager struct {
 	done            chan struct{}
 	channel         chan struct{}
 	mtx             sync.RWMutex
-	registeredPods  map[string]bool
+	registeredPods  map[string]string
 }
 
 func NewDiscoveryManager(client kubernetes.Interface, podLister v1listers.PodLister, cfgFile string,
@@ -39,7 +39,7 @@ func NewDiscoveryManager(client kubernetes.Interface, podLister v1listers.PodLis
 		kubeClient:      client,
 		podLister:       podLister,
 		providerHandler: handler,
-		registeredPods:  make(map[string]bool),
+		registeredPods:  make(map[string]string),
 		done:            make(chan struct{}),
 		channel:         make(chan struct{}),
 	}
@@ -119,9 +119,9 @@ func (dm *discoveryManager) process(cfg discovery.Config) {
 	glog.V(8).Info("ended discovery config processing")
 }
 
-func (dm *discoveryManager) RegisterProvider(podName string, provider metrics.MetricsSourceProvider) {
+func (dm *discoveryManager) RegisterProvider(podName string, provider metrics.MetricsSourceProvider, obj string) {
 	dm.providerHandler.AddProvider(provider)
-	dm.registerPod(podName)
+	dm.registerPod(podName, obj)
 }
 
 func (dm *discoveryManager) UnregisterProvider(podName, providerName string) {
@@ -130,10 +130,10 @@ func (dm *discoveryManager) UnregisterProvider(podName, providerName string) {
 	dm.unregisterPod(podName)
 }
 
-func (dm *discoveryManager) registerPod(name string) {
+func (dm *discoveryManager) registerPod(name string, obj string) {
 	dm.mtx.Lock()
 	defer dm.mtx.Unlock()
-	dm.registeredPods[name] = true
+	dm.registeredPods[name] = obj
 }
 
 func (dm *discoveryManager) unregisterPod(name string) {
@@ -142,11 +142,10 @@ func (dm *discoveryManager) unregisterPod(name string) {
 	delete(dm.registeredPods, name)
 }
 
-func (dm *discoveryManager) Registered(name string) bool {
+func (dm *discoveryManager) Registered(name string) string {
 	dm.mtx.RLock()
 	defer dm.mtx.RUnlock()
-	_, ok := dm.registeredPods[name]
-	return ok
+	return dm.registeredPods[name]
 }
 
 func (dm *discoveryManager) ListPods(ns string, l map[string]string) ([]*apiv1.Pod, error) {

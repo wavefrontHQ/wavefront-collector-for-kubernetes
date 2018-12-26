@@ -107,7 +107,7 @@ func (src *prometheusMetricsSource) buildPoints(metricFamilies map[string]*dto.M
 		}
 	}
 
-	glog.V(5).Infof("%s total points: %d", src.Name(), len(result))
+	glog.V(4).Infof("%s total points: %d", src.Name(), len(result))
 	if glog.V(9) {
 		for _, i := range result {
 			glog.Infof("%s %f src=%s %q \n", i.Metric, i.Value, i.Source, i.Tags)
@@ -231,9 +231,12 @@ func NewPrometheusProvider(uri *url.URL) (MetricsSourceProvider, error) {
 		source = vals["source"][0]
 	}
 
-	name := ProviderName
+	name := ""
 	if len(vals["name"]) > 0 {
-		name = fmt.Sprintf("%s: %s", name, vals["name"][0])
+		name = fmt.Sprintf("%s: %s", ProviderName, vals["name"][0])
+	}
+	if name == "" {
+		name = fmt.Sprintf("%s: %s", ProviderName, vals["url"][0])
 	}
 
 	// tags of the form "tag=key:value"

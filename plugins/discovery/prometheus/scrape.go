@@ -22,7 +22,8 @@ const (
 func scrapeURL(pod *v1.Pod, cfg discovery.PrometheusConfig, checkAnnotation bool) (*url.URL, error) {
 	ip := pod.Status.PodIP
 	if ip == "" {
-		return nil, fmt.Errorf("missing pod ip for %s", pod.Name)
+		glog.V(5).Infof("missing pod ip for %s", pod.Name)
+		return nil, nil
 	}
 	scrape := param(pod, scrapeAnnotation, "", "false")
 	if checkAnnotation && scrape != "true" {
@@ -46,7 +47,6 @@ func scrapeURL(pod *v1.Pod, cfg discovery.PrometheusConfig, checkAnnotation bool
 	if err != nil {
 		return nil, err
 	}
-	glog.V(4).Infof("scrapeURL=%s", u)
 	return u, nil
 }
 

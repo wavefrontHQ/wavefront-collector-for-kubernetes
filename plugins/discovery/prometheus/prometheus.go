@@ -26,7 +26,7 @@ func (d *discoverer) Discover(pod *v1.Pod) error {
 
 func (d *discoverer) Delete(pod *v1.Pod) {
 	glog.V(5).Infof("pod deleted: %s", pod.Name)
-	if d.manager.Registered(pod.Name) {
+	if d.manager.Registered(pod.Name) != "" {
 		providerName := fmt.Sprintf("%s: %s", prometheus.ProviderName, pod.Name)
 		d.manager.UnregisterProvider(pod.Name, providerName)
 	}
@@ -34,7 +34,7 @@ func (d *discoverer) Delete(pod *v1.Pod) {
 
 func (d *discoverer) Process(cfg discovery.Config) error {
 	if len(cfg.PromConfigs) == 0 {
-		glog.V(2).Infof("empty prometheus discovery configs")
+		glog.V(2).Info("empty prometheus discovery configs")
 		return nil
 	}
 	for _, promCfg := range cfg.PromConfigs {
@@ -44,7 +44,7 @@ func (d *discoverer) Process(cfg discovery.Config) error {
 			glog.Error(err)
 			continue
 		}
-		glog.V(4).Infof("%d pods discovered", len(pods))
+		glog.V(4).Infof("%d pods found", len(pods))
 
 		for _, pod := range pods {
 			d.discover(pod, promCfg, false)
@@ -55,11 +55,6 @@ func (d *discoverer) Process(cfg discovery.Config) error {
 
 func (d *discoverer) discover(pod *v1.Pod, config discovery.PrometheusConfig, checkAnnotation bool) error {
 	glog.V(5).Infof("pod added|updated: %s namespace=%s", pod.Name, pod.Namespace)
-
-	if d.manager.Registered(pod.Name) {
-		glog.V(2).Infof("pod already registered %s", pod.Name)
-		return nil
-	}
 
 	scrapeURL, err := scrapeURL(pod, config, checkAnnotation)
 	if err != nil {
@@ -72,7 +67,12 @@ func (d *discoverer) discover(pod *v1.Pod, config discovery.PrometheusConfig, ch
 			glog.Error(err)
 			return err
 		}
-		d.manager.RegisterProvider(pod.Name, provider)
+		registeredURL := d.manager.Registered(pod.Name)
+		urlStr := scrapeURL.Query()["url"][0]
+		if urlStr != registeredURL {
+			glog.V(4).Infof("scrapeURL: %s\nregisteredURL: %s", urlStr, registeredURL)
+			d.manager.RegisterProvider(pod.Name, provider, urlStr)
+		}
 	}
 	return nil
 }

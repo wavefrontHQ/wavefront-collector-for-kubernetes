@@ -23,7 +23,7 @@ type PrometheusConfig struct {
 	// map of labels to select pods by
 	Labels map[string]string `yaml:"labels"`
 
-	// the namespace to filter pods by
+	// the optional namespace to filter pods by.
 	Namespace string `yaml:"namespace"`
 
 	// the port to scrape for prometheus metrics. If omitted, defaults to a port-free target.

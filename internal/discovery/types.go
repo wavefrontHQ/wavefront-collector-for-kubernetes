@@ -7,8 +7,8 @@ import (
 
 type Manager interface {
 	ListPods(ns string, labels map[string]string) ([]*v1.Pod, error)
-	Registered(name string) bool
-	RegisterProvider(podName string, provider metrics.MetricsSourceProvider)
+	Registered(name string) string
+	RegisterProvider(podName string, provider metrics.MetricsSourceProvider, obj string)
 	UnregisterProvider(podName, providerName string)
 }
 
