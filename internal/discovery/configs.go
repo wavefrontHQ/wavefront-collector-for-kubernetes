@@ -38,6 +38,9 @@ type PrometheusConfig struct {
 	// prefix for metrics collected using this rule.
 	Prefix string `yaml:"prefix"`
 
+	// optional map of custom tags to include with the reported metrics.
+	Tags map[string]string `yaml:"tags"`
+
 	// whether to include pod labels with the reported metrics. defaults to "true".
 	IncludeLabels string `yaml:"includeLabels"`
 }

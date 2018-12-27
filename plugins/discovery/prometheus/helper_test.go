@@ -18,14 +18,14 @@ func TestBaseURL(t *testing.T) {
 	}
 }
 
-func TestEncodeLabels(t *testing.T) {
+func TestEncodeTags(t *testing.T) {
 	labels := make(map[string]string)
 	labels["a"] = "a"
 	labels["b"] = "b"
-	encoded := encodeLabels("testUrl", labels)
+	encoded := encodeTags("testUrl", labels)
 	expected := "testUrl&tag=a:a&tag=b:b"
 	if encoded != expected {
-		t.Errorf("invalid encodedLabels. expected=%s encoded=%s", expected, encoded)
+		t.Errorf("invalid encodedTags. expected=%s encoded=%s", expected, encoded)
 	}
 }
 

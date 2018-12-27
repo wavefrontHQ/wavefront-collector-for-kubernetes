@@ -39,8 +39,9 @@ func scrapeURL(pod *v1.Pod, cfg discovery.PrometheusConfig, checkAnnotation bool
 
 	u := baseURL(scheme, ip, port, path, pod.Name, prefix)
 	u = encodePod(u, pod)
+	u = encodeTags(u, cfg.Tags)
 	if includeLabels == "true" {
-		u = encodeLabels(u, pod.Labels)
+		u = encodeTags(u, pod.Labels)
 	}
 	return u
 }
@@ -60,20 +61,20 @@ func encodePod(urlStr string, pod *v1.Pod) string {
 	return fmt.Sprintf("%s&tag=pod:%s&tag=namespace:%s", urlStr, pod.Name, pod.Namespace)
 }
 
-func encodeLabels(urlStr string, labels map[string]string) string {
-	if len(labels) == 0 {
+func encodeTags(urlStr string, tags map[string]string) string {
+	if len(tags) == 0 {
 		return urlStr
 	}
 
 	var keys []string
-	for k := range labels {
+	for k := range tags {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
 	for _, k := range keys {
 		// exclude pod-template-hash
 		if k != "pod-template-hash" {
-			urlStr = fmt.Sprintf("%s&tag=%s:%s", urlStr, k, labels[k])
+			urlStr = fmt.Sprintf("%s&tag=%s:%s", urlStr, k, tags[k])
 		}
 	}
 	return urlStr
