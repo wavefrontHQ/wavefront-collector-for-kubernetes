@@ -2,11 +2,12 @@ package prometheus
 
 import (
 	"fmt"
+	"net/url"
 
-	"github.com/golang/glog"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/prometheus"
 
+	"github.com/golang/glog"
 	"k8s.io/api/core/v1"
 )
 
@@ -33,6 +34,7 @@ func (d *discoverer) Delete(pod *v1.Pod) {
 }
 
 func (d *discoverer) Process(cfg discovery.Config) error {
+	glog.V(2).Info("loading discovery configuration")
 	if len(cfg.PromConfigs) == 0 {
 		glog.V(2).Info("empty prometheus discovery configs")
 		return nil
@@ -45,7 +47,6 @@ func (d *discoverer) Process(cfg discovery.Config) error {
 			continue
 		}
 		glog.V(4).Infof("%d pods found", len(pods))
-
 		for _, pod := range pods {
 			d.discover(pod, promCfg, false)
 		}
@@ -54,25 +55,24 @@ func (d *discoverer) Process(cfg discovery.Config) error {
 }
 
 func (d *discoverer) discover(pod *v1.Pod, config discovery.PrometheusConfig, checkAnnotation bool) error {
-	glog.V(5).Infof("pod added|updated: %s namespace=%s", pod.Name, pod.Namespace)
+	glog.V(5).Infof("pod: %s added | updated namespace: %s", pod.Name, pod.Namespace)
 
-	scrapeURL, err := scrapeURL(pod, config, checkAnnotation)
-	if err != nil {
-		glog.Error(err)
-		return err
-	}
-	if scrapeURL != nil {
-		provider, err := prometheus.NewPrometheusProvider(scrapeURL)
+	registeredURL := d.manager.Registered(pod.Name)
+	scrapeURL := scrapeURL(pod, config, checkAnnotation)
+	if scrapeURL != "" && scrapeURL != registeredURL {
+		glog.V(4).Infof("scrapeURL: %s", scrapeURL)
+		glog.V(4).Infof("registeredURL: %s", registeredURL)
+		u, err := url.Parse(scrapeURL)
 		if err != nil {
 			glog.Error(err)
 			return err
 		}
-		registeredURL := d.manager.Registered(pod.Name)
-		urlStr := scrapeURL.Query()["url"][0]
-		if urlStr != registeredURL {
-			glog.V(4).Infof("scrapeURL: %s\nregisteredURL: %s", urlStr, registeredURL)
-			d.manager.RegisterProvider(pod.Name, provider, urlStr)
+		provider, err := prometheus.NewPrometheusProvider(u)
+		if err != nil {
+			glog.Error(err)
+			return err
 		}
+		d.manager.RegisterProvider(pod.Name, provider, scrapeURL)
 	}
 	return nil
 }

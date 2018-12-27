@@ -2,7 +2,7 @@ package prometheus
 
 import (
 	"fmt"
-	"net/url"
+	"sort"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
 
@@ -19,16 +19,16 @@ const (
 	labelsAnnotation = "prometheus.io/includeLabels"
 )
 
-func scrapeURL(pod *v1.Pod, cfg discovery.PrometheusConfig, checkAnnotation bool) (*url.URL, error) {
+func scrapeURL(pod *v1.Pod, cfg discovery.PrometheusConfig, checkAnnotation bool) string {
 	ip := pod.Status.PodIP
 	if ip == "" {
 		glog.V(5).Infof("missing pod ip for %s", pod.Name)
-		return nil, nil
+		return ""
 	}
 	scrape := param(pod, scrapeAnnotation, "", "false")
 	if checkAnnotation && scrape != "true" {
 		glog.V(5).Infof("scrape=false for pod=%s annotations=%q", pod.Name, pod.Annotations)
-		return nil, nil
+		return ""
 	}
 
 	scheme := param(pod, schemeAnnotation, cfg.Scheme, "http")
@@ -37,17 +37,12 @@ func scrapeURL(pod *v1.Pod, cfg discovery.PrometheusConfig, checkAnnotation bool
 	prefix := param(pod, prefixAnnotation, cfg.Prefix, "")
 	includeLabels := param(pod, labelsAnnotation, cfg.IncludeLabels, "true")
 
-	urlStr := baseURL(scheme, ip, port, path, pod.Name, prefix)
-	urlStr = encodePod(urlStr, pod)
+	u := baseURL(scheme, ip, port, path, pod.Name, prefix)
+	u = encodePod(u, pod)
 	if includeLabels == "true" {
-		urlStr = encodeLabels(urlStr, pod.Labels)
+		u = encodeLabels(u, pod.Labels)
 	}
-
-	u, err := url.Parse(urlStr)
-	if err != nil {
-		return nil, err
-	}
-	return u, nil
+	return u
 }
 
 func baseURL(scheme, ip, port, path, name, prefix string) string {
@@ -66,10 +61,19 @@ func encodePod(urlStr string, pod *v1.Pod) string {
 }
 
 func encodeLabels(urlStr string, labels map[string]string) string {
-	for k, v := range labels {
+	if len(labels) == 0 {
+		return urlStr
+	}
+
+	var keys []string
+	for k := range labels {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
 		// exclude pod-template-hash
 		if k != "pod-template-hash" {
-			urlStr = fmt.Sprintf("%s&tag=%s:%s", urlStr, k, v)
+			urlStr = fmt.Sprintf("%s&tag=%s:%s", urlStr, k, labels[k])
 		}
 	}
 	return urlStr
