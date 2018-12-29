@@ -17,6 +17,7 @@ const (
 	portAnnotation   = "prometheus.io/port"
 	prefixAnnotation = "prometheus.io/prefix"
 	labelsAnnotation = "prometheus.io/includeLabels"
+	sourceAnnotation = "prometheus.io/source"
 )
 
 func scrapeURL(pod *v1.Pod, cfg discovery.PrometheusConfig, checkAnnotation bool) string {
@@ -35,9 +36,10 @@ func scrapeURL(pod *v1.Pod, cfg discovery.PrometheusConfig, checkAnnotation bool
 	path := param(pod, pathAnnotation, cfg.Path, "/metrics")
 	port := param(pod, portAnnotation, cfg.Port, "")
 	prefix := param(pod, prefixAnnotation, cfg.Prefix, "")
+	source := param(pod, sourceAnnotation, cfg.Source, "")
 	includeLabels := param(pod, labelsAnnotation, cfg.IncludeLabels, "true")
 
-	u := baseURL(scheme, ip, port, path, pod.Name, prefix)
+	u := baseURL(scheme, ip, port, path, pod.Name, source, prefix)
 	u = encodePod(u, pod)
 	u = encodeTags(u, cfg.Tags)
 	if includeLabels == "true" {
@@ -46,11 +48,14 @@ func scrapeURL(pod *v1.Pod, cfg discovery.PrometheusConfig, checkAnnotation bool
 	return u
 }
 
-func baseURL(scheme, ip, port, path, name, prefix string) string {
+func baseURL(scheme, ip, port, path, name, source, prefix string) string {
 	if port != "" {
 		port = fmt.Sprintf(":%s", port)
 	}
 	base := fmt.Sprintf("?url=%s://%s%s%s&name=%s", scheme, ip, port, path, name)
+	if source != "" {
+		base = fmt.Sprintf("%s&source=%s", base, source)
+	}
 	if prefix != "" {
 		base = fmt.Sprintf("%s&prefix=%s", base, prefix)
 	}

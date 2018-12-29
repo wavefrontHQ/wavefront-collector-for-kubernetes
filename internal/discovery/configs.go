@@ -41,6 +41,9 @@ type PrometheusConfig struct {
 	// optional map of custom tags to include with the reported metrics.
 	Tags map[string]string `yaml:"tags"`
 
+	// optional source for metrics collected using this rule. defaults to "prom_source".
+	Source string `yaml:"source"`
+
 	// whether to include pod labels with the reported metrics. defaults to "true".
 	IncludeLabels string `yaml:"includeLabels"`
 }

@@ -11,8 +11,8 @@ import (
 )
 
 func TestBaseURL(t *testing.T) {
-	base := baseURL("http", "192.168.0.1", "9102", "/metrics", "test", "test.")
-	expected := fmt.Sprintf("?url=%s://%s%s%s&name=%s&prefix=%s", "http", "192.168.0.1", ":9102", "/metrics", "test", "test.")
+	base := baseURL("http", "192.168.0.1", "9102", "/metrics", "test", "test_source", "test.")
+	expected := fmt.Sprintf("?url=%s://%s%s%s&name=%s&source=%s&prefix=%s", "http", "192.168.0.1", ":9102", "/metrics", "test", "test_source", "test.")
 	if base != expected {
 		t.Errorf("invalid baseURL. expected=%s actual=%s", expected, base)
 	}
