@@ -32,18 +32,18 @@ type PrometheusConfig struct {
 	// Optional. Defaults to "/metrics".
 	Path string `yaml:"path"`
 
-	// the scheme to use. defaults to "http".
+	// the scheme to use. Defaults to "http".
 	Scheme string `yaml:"scheme"`
 
-	// prefix for metrics collected using this rule.
+	// prefix for metrics collected using this rule. Defaults to empty string.
 	Prefix string `yaml:"prefix"`
 
 	// optional map of custom tags to include with the reported metrics.
 	Tags map[string]string `yaml:"tags"`
 
-	// optional source for metrics collected using this rule. defaults to "prom_source".
+	// optional source for metrics collected using this rule. Defaults to "prom_source".
 	Source string `yaml:"source"`
 
-	// whether to include pod labels with the reported metrics. defaults to "true".
+	// whether to include pod labels with the reported metrics. Defaults to "true".
 	IncludeLabels string `yaml:"includeLabels"`
 }
