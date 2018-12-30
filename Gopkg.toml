@@ -31,7 +31,7 @@
 
 [[constraint]]
   name = "github.com/wavefronthq/wavefront-sdk-go"
-  revision = "d102bbafcb9e89eb70ff5f1401a254b209cce31a"
+  revision = "7821ac6d8ae05fe70c6d090ebda380c64f1416e4"
 
 [[constraint]]
   branch = "master"
