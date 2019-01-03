@@ -103,7 +103,7 @@ func (src *prometheusMetricsSource) parseMetrics(buf []byte, header http.Header)
 func (src *prometheusMetricsSource) buildPoints(metricFamilies map[string]*dto.MetricFamily) ([]*MetricPoint, error) {
 
 	now := time.Now().Unix()
-	result := []*MetricPoint{}
+	var result []*MetricPoint
 
 	for metricName, mf := range metricFamilies {
 		for _, m := range mf.Metric {
@@ -215,7 +215,7 @@ type prometheusProvider struct {
 }
 
 func (p *prometheusProvider) GetMetricsSources() []MetricsSource {
-	sources := []MetricsSource{}
+	var sources []MetricsSource
 	for _, metricsURL := range p.urls {
 		sources = append(sources, NewPrometheusMetricsSource(metricsURL, p.prefix, p.source, p.tags))
 	}

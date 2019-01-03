@@ -266,7 +266,6 @@ func NewWavefrontSink(uri *url.URL) (metrics.DataSink, error) {
 		storage.Prefix = vals["prefix"][0]
 	}
 	if len(vals["includeLabels"]) > 0 {
-		incLabels := false
 		incLabels, err := strconv.ParseBool(vals["includeLabels"][0])
 		if err != nil {
 			glog.Warning("Unable to parse the includeLabels argument. This argument is a boolean, please pass \"true\" or \"false\"")
@@ -275,7 +274,6 @@ func NewWavefrontSink(uri *url.URL) (metrics.DataSink, error) {
 		storage.IncludeLabels = incLabels
 	}
 	if len(vals["includeContainers"]) > 0 {
-		incContainers := false
 		incContainers, err := strconv.ParseBool(vals["includeContainers"][0])
 		if err != nil {
 			glog.Warning("Unable to parse the includeContainers argument. This argument is a boolean, please pass \"true\" or \"false\"")
@@ -284,7 +282,6 @@ func NewWavefrontSink(uri *url.URL) (metrics.DataSink, error) {
 		storage.IncludeContainers = incContainers
 	}
 	if len(vals["testMode"]) > 0 {
-		testMode := false
 		testMode, err := strconv.ParseBool(vals["testMode"][0])
 		if err != nil {
 			glog.Warning("Unable to parse the testMode argument. This argument is a boolean, please pass \"true\" or \"false\"")
