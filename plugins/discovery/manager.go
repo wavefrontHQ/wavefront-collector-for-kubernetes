@@ -70,7 +70,7 @@ func (dm *discoveryManager) Run(cfgFile string) {
 			return p.Watch(options)
 		},
 	}
-	podInformer := cache.NewSharedInformer(plw, &apiv1.Pod{}, 110*time.Minute)
+	podInformer := cache.NewSharedInformer(plw, &apiv1.Pod{}, 10*time.Minute)
 	podInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			pod := obj.(*apiv1.Pod)
