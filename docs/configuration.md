@@ -6,6 +6,8 @@ This page documents advanced configuration options for various aspects of the Wa
 ```
 Usage of ./wavefront-collector:
       --alsologtostderr                     log to standard error as well as files
+      --discovery-config string             optional discovery configuration file
+      --enable-discovery                    enable pod discovery (default true)
       --ignore-label strings                ignore this label when joining labels
       --label-separator string              separator used for joining labels (default ",")
       --log-backtrace-at traceLocation      when logging hits line file:N, emit a stack trace (default :0)
@@ -39,9 +41,10 @@ Example Usage:
 See [configs.go](https://github.com/wavefronthq/wavefront-kubernetes-collector/tree/master/internal/kubernetes/configs.go) for how these properties are used.
 
 ## Prometheus Source
-- `url`: The URL for a Prometheus metrics endpoint. Service URLs work across namespaces.
+- `url`: The URL for a Prometheus metrics endpoint. Kubernetes Service URLs work across namespaces.
 - `prefix`: The prefix (dot suffixed such as `prom.`) to be applied to all metrics for this source. Defaults to empty string.
 - `source`: The source to set for the metrics from this source. Defaults to `prom_source`.
+- `tag`: Custom tags to include with metrics reported by this source, of the form `tag=key1:val1&tag=key2:val2`.
 
 Example Usage:
 ```

@@ -18,6 +18,7 @@ package sources
 
 import (
 	"math/rand"
+	"sync"
 	"time"
 
 	. "github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
@@ -32,28 +33,50 @@ const (
 )
 
 func NewSourceManager(metricsSourceProviders []MetricsSourceProvider, metricsScrapeTimeout time.Duration) (MetricsSource, error) {
+	providers := make(map[string]MetricsSourceProvider)
+	for _, provider := range metricsSourceProviders {
+		providers[provider.Name()] = provider
+	}
 	return &sourceManager{
-		metricsSourceProviders: metricsSourceProviders,
+		metricsSourceProviders: providers,
 		metricsScrapeTimeout:   metricsScrapeTimeout,
 	}, nil
 }
 
 type sourceManager struct {
-	metricsSourceProviders []MetricsSourceProvider
 	metricsScrapeTimeout   time.Duration
+	mtx                    sync.RWMutex
+	metricsSourceProviders map[string]MetricsSourceProvider
 }
 
 func (this *sourceManager) Name() string {
 	return "source_manager"
 }
 
+func (this *sourceManager) AddProvider(provider MetricsSourceProvider) {
+	this.mtx.Lock()
+	defer this.mtx.Unlock()
+	this.metricsSourceProviders[provider.Name()] = provider
+	glog.V(4).Infof("added provider: %s", provider.Name())
+}
+
+func (this *sourceManager) DeleteProvider(name string) {
+	this.mtx.Lock()
+	defer this.mtx.Unlock()
+	delete(this.metricsSourceProviders, name)
+	glog.V(4).Infof("deleted provider %s", name)
+}
+
 func (this *sourceManager) ScrapeMetrics(start, end time.Time) (*DataBatch, error) {
 	glog.V(1).Infof("Scraping metrics start: %s, end: %s", start, end)
+
 	sources := []MetricsSource{}
+	this.mtx.RLock()
 	for _, sourceProvider := range this.metricsSourceProviders {
 		glog.V(2).Infof("Scraping sources from provider: %s", sourceProvider.Name())
 		sources = append(sources, sourceProvider.GetMetricsSources()...)
 	}
+	this.mtx.RUnlock()
 
 	responseChannel := make(chan *DataBatch)
 	startTime := time.Now()
@@ -135,7 +158,7 @@ responseloop:
 
 	glog.V(1).Infof("ScrapeMetrics: time: %s size: %d", time.Since(startTime), len(response.MetricSets))
 	for i, value := range latencies {
-		glog.V(3).Infof("   scrape  bucket %d: %d", i, value)
+		glog.V(5).Infof("   scrape bucket %d: %d", i, value)
 	}
 	return &response, nil
 }

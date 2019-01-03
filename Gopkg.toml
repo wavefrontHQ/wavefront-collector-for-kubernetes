@@ -30,6 +30,10 @@
   version = "2.8.0"
 
 [[constraint]]
+  name = "github.com/wavefronthq/wavefront-sdk-go"
+  revision = "7821ac6d8ae05fe70c6d090ebda380c64f1416e4"
+
+[[constraint]]
   branch = "master"
   name = "github.com/golang/glog"
 

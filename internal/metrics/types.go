@@ -167,10 +167,17 @@ type DataProcessor interface {
 	Process(*DataBatch) (*DataBatch, error)
 }
 
+// Represents a single point in Wavefront metric format.
 type MetricPoint struct {
 	Metric    string
 	Value     float64
 	Timestamp int64
 	Source    string
 	Tags      map[string]string
+}
+
+// Interface for dynamically adding and removing MetricsSourceProviders
+type DynamicProviderHandler interface {
+	AddProvider(provider MetricsSourceProvider)
+	DeleteProvider(name string)
 }

@@ -16,10 +16,12 @@ import (
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/options"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/discovery"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/manager"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/processors"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sinks"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources"
+
 	"k8s.io/apiserver/pkg/util/flag"
 	"k8s.io/apiserver/pkg/util/logs"
 	kube_client "k8s.io/client-go/kubernetes"
@@ -64,8 +66,14 @@ func main() {
 	sourceManager := createSourceManagerOrDie(opt.Sources)
 	sinkManager := createAndInitSinksOrDie(opt.Sinks, opt.SinkExportDataTimeout)
 
-	podLister := getPodListerOrDie(kubernetesUrl)
+	kubeClient := createKubeClientOrDie(kubernetesUrl)
+	podLister := getPodListerOrDie(kubeClient)
 	dataProcessors := createDataProcessorsOrDie(kubernetesUrl, podLister, labelCopier)
+
+	if opt.EnableDiscovery {
+		handler := sourceManager.(metrics.DynamicProviderHandler)
+		createDiscoveryManagerOrDie(kubeClient, podLister, opt.DiscoveryConfigFile, handler)
+	}
 
 	man, err := manager.NewManager(sourceManager, dataProcessors, sinkManager,
 		opt.MetricResolution, manager.DefaultScrapeOffset, manager.DefaultMaxParallelism)
@@ -105,9 +113,12 @@ func createAndInitSinksOrDie(sinkAddresses flags.Uris, sinkExportDataTimeout tim
 	return sinkManager
 }
 
-func getPodListerOrDie(kubernetesUrl *url.URL) v1listers.PodLister {
-	kubeClient := createKubeClientOrDie(kubernetesUrl)
+func createDiscoveryManagerOrDie(client *kube_client.Clientset, podLister v1listers.PodLister, cfgFile string,
+	handler metrics.DynamicProviderHandler) {
+	discovery.NewDiscoveryManager(client, podLister, cfgFile, handler)
+}
 
+func getPodListerOrDie(kubeClient *kube_client.Clientset) v1listers.PodLister {
 	podLister, err := util.GetPodLister(kubeClient)
 	if err != nil {
 		glog.Fatalf("Failed to create podLister: %v", err)

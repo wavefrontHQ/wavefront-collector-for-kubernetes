@@ -21,14 +21,16 @@ type prometheusMetricsSource struct {
 	metricsURL string
 	prefix     string
 	source     string
+	tags       map[string]string
 	client     *http.Client
 }
 
-func NewPrometheusMetricsSource(metricsURL, prefix, source string) MetricsSource {
+func NewPrometheusMetricsSource(metricsURL, prefix, source string, tags map[string]string) MetricsSource {
 	return &prometheusMetricsSource{
 		metricsURL: metricsURL,
 		prefix:     prefix,
 		source:     source,
+		tags:       tags,
 		client:     &http.Client{Timeout: time.Second * 10},
 	}
 }
@@ -105,7 +107,7 @@ func (src *prometheusMetricsSource) buildPoints(metricFamilies map[string]*dto.M
 		}
 	}
 
-	glog.V(5).Infof("%s total points: %d", src.Name(), len(result))
+	glog.V(4).Infof("%s total points: %d", src.Name(), len(result))
 	if glog.V(9) {
 		for _, i := range result {
 			glog.Infof("%s %f src=%s %q \n", i.Metric, i.Value, i.Source, i.Tags)
@@ -181,6 +183,9 @@ func (src *prometheusMetricsSource) buildHistos(name string, m *dto.Metric, now 
 // Get labels from metric
 func (src *prometheusMetricsSource) buildTags(m *dto.Metric) map[string]string {
 	result := map[string]string{}
+	for k, v := range src.tags {
+		result[k] = v
+	}
 	for _, lp := range m.Label {
 		result[lp.GetName()] = lp.GetValue()
 	}
@@ -191,19 +196,23 @@ type prometheusProvider struct {
 	urls   []string
 	prefix string
 	source string
+	name   string
+	tags   map[string]string
 }
 
 func (p *prometheusProvider) GetMetricsSources() []MetricsSource {
 	sources := []MetricsSource{}
 	for _, metricsURL := range p.urls {
-		sources = append(sources, NewPrometheusMetricsSource(metricsURL, p.prefix, p.source))
+		sources = append(sources, NewPrometheusMetricsSource(metricsURL, p.prefix, p.source, p.tags))
 	}
 	return sources
 }
 
 func (p *prometheusProvider) Name() string {
-	return "Prometheus Metrics Provider"
+	return p.name
 }
+
+const ProviderName = "prometheus_metrics_provider"
 
 func NewPrometheusProvider(uri *url.URL) (MetricsSourceProvider, error) {
 	vals := uri.Query()
@@ -222,9 +231,35 @@ func NewPrometheusProvider(uri *url.URL) (MetricsSourceProvider, error) {
 		source = vals["source"][0]
 	}
 
+	name := ""
+	if len(vals["name"]) > 0 {
+		name = fmt.Sprintf("%s: %s", ProviderName, vals["name"][0])
+	}
+	if name == "" {
+		name = fmt.Sprintf("%s: %s", ProviderName, vals["url"][0])
+	}
+
+	// tags of the form "tag=key:value"
+	var tags map[string]string
+	if len(vals["tag"]) > 0 {
+		tags = make(map[string]string)
+		tagList := vals["tag"]
+		for _, tag := range tagList {
+			s := strings.Split(tag, ":")
+			if len(s) == 2 {
+				k, v := s[0], s[1]
+				tags[k] = v
+			} else {
+				glog.Warning("invalid tag ", tag)
+			}
+		}
+	}
+
 	return &prometheusProvider{
 		urls:   vals["url"],
 		prefix: prefix,
 		source: source,
+		name:   name,
+		tags:   tags,
 	}, nil
 }

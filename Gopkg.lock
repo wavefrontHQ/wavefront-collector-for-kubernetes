@@ -185,15 +185,14 @@
   version = "v1.2.2"
 
 [[projects]]
-  branch = "master"
-  digest = "1:f9ea509f86cc725fd29b827047fd95707e1fc8822334304d7f817998c074f8ba"
+  digest = "1:634e03daf54aa2b7c7404356b02086384815cc102cbb03c48dc9bc82613e1937"
   name = "github.com/wavefronthq/wavefront-sdk-go"
   packages = [
     "internal",
     "senders",
   ]
   pruneopts = "UT"
-  revision = "4b58dd2c06ffae0121572a16715428e0d70be7b3"
+  revision = "7821ac6d8ae05fe70c6d090ebda380c64f1416e4"
 
 [[projects]]
   branch = "master"
@@ -455,14 +454,17 @@
     "github.com/stretchr/testify/assert",
     "github.com/stretchr/testify/require",
     "github.com/wavefronthq/wavefront-sdk-go/senders",
+    "gopkg.in/yaml.v2",
     "k8s.io/api/core/v1",
     "k8s.io/apimachinery/pkg/api/resource",
     "k8s.io/apimachinery/pkg/apis/meta/v1",
     "k8s.io/apimachinery/pkg/fields",
     "k8s.io/apimachinery/pkg/labels",
+    "k8s.io/apimachinery/pkg/runtime",
     "k8s.io/apimachinery/pkg/runtime/schema",
     "k8s.io/apimachinery/pkg/util/net",
     "k8s.io/apimachinery/pkg/util/wait",
+    "k8s.io/apimachinery/pkg/watch",
     "k8s.io/apiserver/pkg/util/flag",
     "k8s.io/apiserver/pkg/util/logs",
     "k8s.io/client-go/kubernetes",

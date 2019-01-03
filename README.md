@@ -2,7 +2,7 @@
 
 This collector enables monitoring Kubernetes clusters and sending metrics to [Wavefront](https://www.wavefront.com).
 
-The collector scrapes the Kubelet summary API for Kubernetes metrics (based on [heapster](https://github.com/wavefronthq/wavefront-kubernetes-collector/tree/master/docs/heapster.md)). It additionally supports scraping Prometheus metrics format endpoints.
+The collector scrapes the Kubelet summary API for Kubernetes metrics (similar to [heapster](https://github.com/wavefronthq/wavefront-kubernetes-collector/tree/master/docs/heapster.md)). It additionally supports scraping Prometheus metrics format endpoints.
 
 ## Prerequisites
 - Kubernetes 1.9+
@@ -26,6 +26,9 @@ Following sources are currently supported and can be configured using the `--sou
 --source=prometheus:''?url=http://kube-state-metrics.kube-system.svc.cluster.local:8080/metrics
 ```
 Multiple prometheus sources can be added to scrape additional endpoints.
+
+### Pod Auto Discovery
+The collector can auto discover pods that export Prometheus format metrics. See the [discovery documentation](https://github.com/wavefronthq/wavefront-kubernetes-collector/tree/master/docs/discovery.md) for details.
 
 ### Sending metrics to Wavefront
 
