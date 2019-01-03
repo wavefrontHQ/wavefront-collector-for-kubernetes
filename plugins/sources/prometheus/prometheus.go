@@ -11,11 +11,21 @@ import (
 	"strings"
 	"time"
 
+	. "github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
+
 	"github.com/golang/glog"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/expfmt"
-	. "github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
+	"github.com/rcrowley/go-metrics"
 )
+
+var (
+	scrapeErrors metrics.Counter
+)
+
+func init() {
+	scrapeErrors = metrics.GetOrRegisterCounter("source.prometheus.scrape.errors", metrics.DefaultRegistry)
+}
 
 type prometheusMetricsSource struct {
 	metricsURL string
@@ -47,20 +57,24 @@ func (src *prometheusMetricsSource) ScrapeMetrics(start, end time.Time) (*DataBa
 
 	resp, err := src.client.Get(src.metricsURL)
 	if err != nil {
+		scrapeErrors.Inc(1)
 		return nil, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
+		scrapeErrors.Inc(1)
 		return nil, fmt.Errorf("error retrieving prometheus metrics from %s", src.metricsURL)
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
+		scrapeErrors.Inc(1)
 		return nil, err
 	}
 	points, err := src.parseMetrics(body, resp.Header)
 	if err != nil {
+		scrapeErrors.Inc(1)
 		return result, err
 	}
 	result.MetricPoints = points

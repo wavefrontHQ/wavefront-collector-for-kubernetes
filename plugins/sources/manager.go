@@ -24,6 +24,7 @@ import (
 	. "github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 
 	"github.com/golang/glog"
+	"github.com/rcrowley/go-metrics"
 )
 
 const (
@@ -32,11 +33,22 @@ const (
 	DelayPerSourceMs            = 8
 )
 
+var (
+	providerCount metrics.Gauge
+	sourceCount   metrics.Gauge
+)
+
+func init() {
+	providerCount = metrics.GetOrRegisterGauge("source.manager.providers", metrics.DefaultRegistry)
+	sourceCount = metrics.GetOrRegisterGauge("source.manager.sources", metrics.DefaultRegistry)
+}
+
 func NewSourceManager(metricsSourceProviders []MetricsSourceProvider, metricsScrapeTimeout time.Duration) (MetricsSource, error) {
 	providers := make(map[string]MetricsSourceProvider)
 	for _, provider := range metricsSourceProviders {
 		providers[provider.Name()] = provider
 	}
+	providerCount.Update(int64(len(providers)))
 	return &sourceManager{
 		metricsSourceProviders: providers,
 		metricsScrapeTimeout:   metricsScrapeTimeout,
@@ -76,7 +88,10 @@ func (this *sourceManager) ScrapeMetrics(start, end time.Time) (*DataBatch, erro
 		glog.V(2).Infof("Scraping sources from provider: %s", sourceProvider.Name())
 		sources = append(sources, sourceProvider.GetMetricsSources()...)
 	}
+	providerCount.Update(int64(len(this.metricsSourceProviders)))
 	this.mtx.RUnlock()
+
+	sourceCount.Update(int64(len(sources)))
 
 	responseChannel := make(chan *DataBatch)
 	startTime := time.Now()

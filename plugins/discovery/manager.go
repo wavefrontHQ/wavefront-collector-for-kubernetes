@@ -5,10 +5,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/golang/glog"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/discovery/prometheus"
+
+	"github.com/golang/glog"
+	gm "github.com/rcrowley/go-metrics"
 
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -20,6 +22,16 @@ import (
 	v1listers "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/tools/cache"
 )
+
+var (
+	podCount         gm.Gauge
+	discoveryEnabled gm.Counter
+)
+
+func init() {
+	podCount = gm.GetOrRegisterGauge("discovery.pods.registered", gm.DefaultRegistry)
+	discoveryEnabled = gm.GetOrRegisterCounter("discovery.enabled", gm.DefaultRegistry)
+}
 
 type discoveryManager struct {
 	kubeClient      kubernetes.Interface
@@ -47,6 +59,7 @@ func NewDiscoveryManager(client kubernetes.Interface, podLister v1listers.PodLis
 }
 
 func (dm *discoveryManager) Run(cfgFile string) {
+	discoveryEnabled.Inc(1)
 	dm.discoverer = prometheus.New(dm)
 	p := dm.kubeClient.CoreV1().Pods(apiv1.NamespaceAll)
 	plw := &cache.ListWatch{
@@ -73,6 +86,13 @@ func (dm *discoveryManager) Run(cfgFile string) {
 		},
 	})
 	go podInformer.Run(dm.done)
+
+	// update the internal pod counter once a minute
+	go wait.Forever(func() {
+		dm.mtx.RLock()
+		defer dm.mtx.RUnlock()
+		podCount.Update(int64(len(dm.registeredPods)))
+	}, 1*time.Minute)
 
 	if cfgFile != "" {
 		dm.load(cfgFile)

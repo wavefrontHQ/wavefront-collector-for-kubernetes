@@ -8,8 +8,17 @@ import (
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/prometheus"
 
 	"github.com/golang/glog"
+	"github.com/rcrowley/go-metrics"
 	"k8s.io/api/core/v1"
 )
+
+var (
+	rulesCount metrics.Gauge
+)
+
+func init() {
+	rulesCount = metrics.GetOrRegisterGauge("discovery.prometheus.rules.count", metrics.DefaultRegistry)
+}
 
 type discoverer struct {
 	manager discovery.Manager
@@ -51,6 +60,7 @@ func (d *discoverer) Process(cfg discovery.Config) error {
 			d.discover(pod, promCfg, false)
 		}
 	}
+	rulesCount.Update(int64(len(cfg.PromConfigs)))
 	return nil
 }
 

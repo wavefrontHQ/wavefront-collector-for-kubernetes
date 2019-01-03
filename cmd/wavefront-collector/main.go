@@ -5,10 +5,12 @@ import (
 	"net/url"
 	"os"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/golang/glog"
+	gm "github.com/rcrowley/go-metrics"
 	"github.com/spf13/pflag"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/flags"
@@ -47,6 +49,8 @@ func main() {
 	logs.InitLogs()
 	defer logs.FlushLogs()
 
+	registerVersion()
+
 	labelCopier, err := util.NewLabelCopier(opt.LabelSeparator, opt.StoredLabels, opt.IgnoredLabels)
 	if err != nil {
 		glog.Fatalf("Failed to initialize label copier: %v", err)
@@ -82,6 +86,17 @@ func main() {
 	}
 	man.Start()
 	waitForStop()
+}
+
+func registerVersion() {
+	parts := strings.Split(version, ".")
+	friendly := fmt.Sprintf("%s.%s%s", parts[0], parts[1], parts[2])
+	f, err := strconv.ParseFloat(friendly, 2)
+	if err != nil {
+		f = 0.0
+	}
+	m := gm.GetOrRegisterGaugeFloat64("version", gm.DefaultRegistry)
+	m.Update(f)
 }
 
 func createSourceManagerOrDie(src flags.Uris) metrics.MetricsSource {

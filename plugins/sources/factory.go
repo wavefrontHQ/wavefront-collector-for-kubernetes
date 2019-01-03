@@ -16,18 +16,20 @@ package sources
 
 import (
 	"fmt"
-	"github.com/golang/glog"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/prometheus"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/flags"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/prometheus"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/stats"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/summary"
+
+	"github.com/golang/glog"
 )
 
 type SourceFactory struct {
 }
 
-func (this *SourceFactory) Build(uri flags.Uri) (metrics.MetricsSourceProvider, error) {
+func (sf *SourceFactory) Build(uri flags.Uri) (metrics.MetricsSourceProvider, error) {
 	switch uri.Key {
 	case "kubernetes.summary_api":
 		provider, err := summary.NewSummaryProvider(&uri.Val)
@@ -40,22 +42,21 @@ func (this *SourceFactory) Build(uri flags.Uri) (metrics.MetricsSourceProvider, 
 	}
 }
 
-func (this *SourceFactory) BuildAll(uris flags.Uris) []metrics.MetricsSourceProvider {
-
+func (sf *SourceFactory) BuildAll(uris flags.Uris) []metrics.MetricsSourceProvider {
 	result := make([]metrics.MetricsSourceProvider, 0, len(uris))
-
 	for _, uri := range uris {
-		source, err := this.Build(uri)
+		source, err := sf.Build(uri)
 		if err != nil {
 			glog.Errorf("Failed to create %v source: %v", uri, err)
 			continue
 		}
 		result = append(result, source)
 	}
-
 	if len([]flags.Uri(uris)) != 0 && len(result) == 0 {
 		glog.Fatal("No available source to use")
 	}
+	provider, _ := stats.NewInternalStatsProvider()
+	result = append(result, provider)
 	return result
 }
 
