@@ -24,6 +24,13 @@ func (f *FakeManager) ListPods(ns string, labels map[string]string) ([]*v1.Pod, 
 	return pods, nil
 }
 
+func (f *FakeManager) ListServices(ns string, labels map[string]string) ([]*v1.Service, error) {
+	services := make([]*v1.Service, 2)
+	services[0] = FakeService("svc1", "ns", "123")
+	services[1] = FakeService("svc2", "ns", "124")
+	return services, nil
+}
+
 func (f *FakeManager) Registered(name string) string {
 	return f.registeredPods[name]
 }
@@ -34,6 +41,19 @@ func (f *FakeManager) RegisterProvider(podName string, provider metrics.MetricsS
 
 func (f *FakeManager) UnregisterProvider(podName, providerName string) {
 	delete(f.registeredPods, podName)
+}
+
+func FakeService(name, namespace, ip string) *v1.Service {
+	service := v1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		Spec: v1.ServiceSpec{
+			ClusterIP: ip,
+		},
+	}
+	return &service
 }
 
 func FakePod(name, namespace, ip string) *v1.Pod {

@@ -7,7 +7,7 @@ import (
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
 
 	"github.com/golang/glog"
-	"k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
@@ -20,30 +20,30 @@ const (
 	sourceAnnotation = "prometheus.io/source"
 )
 
-func scrapeURL(pod *v1.Pod, cfg discovery.PrometheusConfig, checkAnnotation bool) string {
-	ip := pod.Status.PodIP
+func scrapeURL(ip, resType string, obj metav1.ObjectMeta, cfg discovery.PrometheusConfig, checkAnnotation bool) string {
+
 	if ip == "" {
-		glog.V(5).Infof("missing pod ip for %s", pod.Name)
+		glog.V(5).Infof("missing pod ip for %s", obj.Name)
 		return ""
 	}
-	scrape := param(pod, scrapeAnnotation, "", "false")
+	scrape := param(obj, scrapeAnnotation, "", "false")
 	if checkAnnotation && scrape != "true" {
-		glog.V(5).Infof("scrape=false for pod=%s annotations=%q", pod.Name, pod.Annotations)
+		glog.V(5).Infof("scrape=false for pod=%s annotations=%q", obj.Name, obj.Annotations)
 		return ""
 	}
 
-	scheme := param(pod, schemeAnnotation, cfg.Scheme, "http")
-	path := param(pod, pathAnnotation, cfg.Path, "/metrics")
-	port := param(pod, portAnnotation, cfg.Port, "")
-	prefix := param(pod, prefixAnnotation, cfg.Prefix, "")
-	source := param(pod, sourceAnnotation, cfg.Source, "")
-	includeLabels := param(pod, labelsAnnotation, cfg.IncludeLabels, "true")
+	scheme := param(obj, schemeAnnotation, cfg.Scheme, "http")
+	path := param(obj, pathAnnotation, cfg.Path, "/metrics")
+	port := param(obj, portAnnotation, cfg.Port, "")
+	prefix := param(obj, prefixAnnotation, cfg.Prefix, "")
+	source := param(obj, sourceAnnotation, cfg.Source, "")
+	includeLabels := param(obj, labelsAnnotation, cfg.IncludeLabels, "true")
 
-	u := baseURL(scheme, ip, port, path, pod.Name, source, prefix)
-	u = encodePod(u, pod)
+	u := baseURL(scheme, ip, port, path, obj.Name, source, prefix)
+	u = encodeMeta(u, resType, obj)
 	u = encodeTags(u, cfg.Tags)
 	if includeLabels == "true" {
-		u = encodeTags(u, pod.Labels)
+		u = encodeTags(u, obj.Labels)
 	}
 	return u
 }
@@ -62,8 +62,8 @@ func baseURL(scheme, ip, port, path, name, source, prefix string) string {
 	return base
 }
 
-func encodePod(urlStr string, pod *v1.Pod) string {
-	return fmt.Sprintf("%s&tag=pod:%s&tag=namespace:%s", urlStr, pod.Name, pod.Namespace)
+func encodeMeta(urlStr, resType string, obj metav1.ObjectMeta) string {
+	return fmt.Sprintf("%s&tag=%s:%s&tag=namespace:%s", urlStr, resType, obj.Name, obj.Namespace)
 }
 
 func encodeTags(urlStr string, tags map[string]string) string {
@@ -85,9 +85,9 @@ func encodeTags(urlStr string, tags map[string]string) string {
 	return urlStr
 }
 
-func param(pod *v1.Pod, annotation, cfgVal, defaultVal string) string {
-	// give precedence to pod annotation
-	value := pod.GetAnnotations()[annotation]
+func param(obj metav1.ObjectMeta, annotation, cfgVal, defaultVal string) string {
+	// give precedence to annotation
+	value := obj.GetAnnotations()[annotation]
 	if value == "" {
 		// then config
 		value = cfgVal

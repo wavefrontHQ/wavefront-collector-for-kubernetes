@@ -11,7 +11,7 @@ func TestDiscover(t *testing.T) {
 	discoverer := New(mgr)
 
 	pod := discovery.FakePod("pod1", "ns", "123")
-	err := discoverer.Discover(pod)
+	err := discoverer.Discover("123", "pod", pod.ObjectMeta)
 	if err != nil {
 		t.Error(err)
 	}
@@ -25,7 +25,7 @@ func TestDiscover(t *testing.T) {
 	pod.Annotations = map[string]string{
 		"prometheus.io/scrape": "true",
 	}
-	err = discoverer.Discover(pod)
+	err = discoverer.Discover("123", "pod", pod.ObjectMeta)
 	if err != nil {
 		t.Error(err)
 	}
@@ -45,7 +45,7 @@ func TestDelete(t *testing.T) {
 
 	discoverer := New(mgr)
 	pod := discovery.FakePod("pod1", "ns", "123")
-	discoverer.Delete(pod)
+	discoverer.Delete("pod", pod.ObjectMeta)
 	if mgr.Registered("pod1") != "" {
 		t.Error("deleted failed")
 	}

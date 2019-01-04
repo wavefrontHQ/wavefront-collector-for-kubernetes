@@ -15,15 +15,19 @@ type GlobalConfig struct {
 	DiscoveryInterval time.Duration `yaml:"discovery_interval"`
 }
 
-// Describes rules for auto discovering pods and configuring relevant prometheus sources for metrics collection.
+// Describes rules for auto discovering resources and configuring relevant prometheus sources for metrics collection.
 type PrometheusConfig struct {
 	// name of the rule
 	Name string `yaml:"name"`
 
-	// map of labels to select pods by
+	// the resource type to discover. defaults to pod.
+	// one of "pod|service".
+	ResourceType string `yaml:"resourceType"`
+
+	// map of labels to select resources by
 	Labels map[string]string `yaml:"labels"`
 
-	// the optional namespace to filter pods by.
+	// the optional namespace to filter resources by.
 	Namespace string `yaml:"namespace"`
 
 	// the port to scrape for prometheus metrics. If omitted, defaults to a port-free target.
@@ -44,6 +48,6 @@ type PrometheusConfig struct {
 	// optional source for metrics collected using this rule. Defaults to "prom_source".
 	Source string `yaml:"source"`
 
-	// whether to include pod labels with the reported metrics. Defaults to "true".
+	// whether to include resource labels with the reported metrics. Defaults to "true".
 	IncludeLabels string `yaml:"includeLabels"`
 }

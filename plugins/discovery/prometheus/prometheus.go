@@ -9,7 +9,7 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/rcrowley/go-metrics"
-	"k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var (
@@ -30,15 +30,15 @@ func New(manager discovery.Manager) discovery.Discoverer {
 	}
 }
 
-func (d *discoverer) Discover(pod *v1.Pod) error {
-	return d.discover(pod, discovery.PrometheusConfig{}, true)
+func (d *discoverer) Discover(ip, resType string, obj metav1.ObjectMeta) error {
+	return d.discover(ip, resType, obj, discovery.PrometheusConfig{}, true)
 }
 
-func (d *discoverer) Delete(pod *v1.Pod) {
-	glog.V(5).Infof("pod deleted: %s", pod.Name)
-	if d.manager.Registered(pod.Name) != "" {
-		providerName := fmt.Sprintf("%s: %s", prometheus.ProviderName, pod.Name)
-		d.manager.UnregisterProvider(pod.Name, providerName)
+func (d *discoverer) Delete(resType string, obj metav1.ObjectMeta) {
+	glog.V(5).Infof("%s deleted: %s", resType, obj.Name)
+	if d.manager.Registered(obj.Name) != "" {
+		providerName := fmt.Sprintf("%s: %s", prometheus.ProviderName, obj.Name)
+		d.manager.UnregisterProvider(obj.Name, providerName)
 	}
 }
 
@@ -49,29 +49,56 @@ func (d *discoverer) Process(cfg discovery.Config) error {
 		return nil
 	}
 	for _, promCfg := range cfg.PromConfigs {
-		glog.V(4).Info("lookup pods for labels=", promCfg.Labels)
-		pods, err := d.manager.ListPods(promCfg.Namespace, promCfg.Labels)
-		if err != nil {
-			glog.Error(err)
-			continue
+		// default to pod
+		if promCfg.ResourceType == "" {
+			promCfg.ResourceType = discovery.PodType.String()
 		}
-		glog.V(4).Infof("%d pods found", len(pods))
-		for _, pod := range pods {
-			d.discover(pod, promCfg, false)
+		glog.V(4).Infof("%s lookup labels=%v", promCfg.ResourceType, promCfg.Labels)
+		switch promCfg.ResourceType {
+		case discovery.PodType.String():
+			d.discoverPods(promCfg)
+		case discovery.ServiceType.String():
+			d.discoverServices(promCfg)
+		default:
+			glog.V(2).Infof("unknown type: %s for rule: %s", promCfg.ResourceType, promCfg.Name)
 		}
 	}
 	rulesCount.Update(int64(len(cfg.PromConfigs)))
 	return nil
 }
 
-func (d *discoverer) discover(pod *v1.Pod, config discovery.PrometheusConfig, checkAnnotation bool) error {
-	glog.V(5).Infof("pod: %s added | updated namespace: %s", pod.Name, pod.Namespace)
+func (d *discoverer) discoverPods(promCfg discovery.PrometheusConfig) error {
+	pods, err := d.manager.ListPods(promCfg.Namespace, promCfg.Labels)
+	if err != nil {
+		return err
+	}
+	glog.V(4).Infof("%d pods found", len(pods))
+	for _, pod := range pods {
+		d.discover(pod.Status.PodIP, discovery.PodType.String(), pod.ObjectMeta, promCfg, false)
+	}
+	return nil
+}
 
-	registeredURL := d.manager.Registered(pod.Name)
-	scrapeURL := scrapeURL(pod, config, checkAnnotation)
-	if scrapeURL != "" && scrapeURL != registeredURL {
+func (d *discoverer) discoverServices(promCfg discovery.PrometheusConfig) error {
+	services, err := d.manager.ListServices(promCfg.Namespace, promCfg.Labels)
+	if err != nil {
+		return err
+	}
+	glog.V(4).Infof("%d services found", len(services))
+	for _, service := range services {
+		d.discover(service.Spec.ClusterIP, discovery.ServiceType.String(), service.ObjectMeta, promCfg, false)
+	}
+	return nil
+}
+
+func (d *discoverer) discover(ip, resType string, obj metav1.ObjectMeta, config discovery.PrometheusConfig, checkAnnotation bool) error {
+	glog.V(5).Infof("%s: %s added | updated namespace: %s", resType, obj.Name, obj.Namespace)
+
+	cachedURL := d.manager.Registered(obj.Name)
+	scrapeURL := scrapeURL(ip, resType, obj, config, checkAnnotation)
+	if scrapeURL != "" && scrapeURL != cachedURL {
 		glog.V(4).Infof("scrapeURL: %s", scrapeURL)
-		glog.V(4).Infof("registeredURL: %s", registeredURL)
+		glog.V(4).Infof("cachedURL: %s", cachedURL)
 		u, err := url.Parse(scrapeURL)
 		if err != nil {
 			glog.Error(err)
@@ -82,7 +109,7 @@ func (d *discoverer) discover(pod *v1.Pod, config discovery.PrometheusConfig, ch
 			glog.Error(err)
 			return err
 		}
-		d.manager.RegisterProvider(pod.Name, provider, scrapeURL)
+		d.manager.RegisterProvider(obj.Name, provider, scrapeURL)
 	}
 	return nil
 }

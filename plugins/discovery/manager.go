@@ -13,23 +13,19 @@ import (
 	gm "github.com/rcrowley/go-metrics"
 
 	apiv1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 	v1listers "k8s.io/client-go/listers/core/v1"
-	"k8s.io/client-go/tools/cache"
 )
 
 var (
-	podCount         gm.Gauge
+	objCount         gm.Gauge
 	discoveryEnabled gm.Counter
 )
 
 func init() {
-	podCount = gm.GetOrRegisterGauge("discovery.pods.registered", gm.DefaultRegistry)
+	objCount = gm.GetOrRegisterGauge("discovery.objects.registered", gm.DefaultRegistry)
 	discoveryEnabled = gm.GetOrRegisterCounter("discovery.enabled", gm.DefaultRegistry)
 }
 
@@ -37,22 +33,23 @@ type discoveryManager struct {
 	kubeClient      kubernetes.Interface
 	cfgModTime      time.Time
 	podLister       v1listers.PodLister
+	serviceLister   v1listers.ServiceLister
 	providerHandler metrics.DynamicProviderHandler
 	discoverer      discovery.Discoverer
 	done            chan struct{}
 	channel         chan struct{}
 	mtx             sync.RWMutex
-	registeredPods  map[string]string
+	registeredObjs  map[string]string
 }
 
-func NewDiscoveryManager(client kubernetes.Interface, podLister v1listers.PodLister, cfgFile string,
-	handler metrics.DynamicProviderHandler) {
+func NewDiscoveryManager(client kubernetes.Interface, podLister v1listers.PodLister,
+	serviceLister v1listers.ServiceLister, cfgFile string, handler metrics.DynamicProviderHandler) {
 	mgr := &discoveryManager{
 		kubeClient:      client,
 		podLister:       podLister,
+		serviceLister:   serviceLister,
 		providerHandler: handler,
-		registeredPods:  make(map[string]string),
-		done:            make(chan struct{}),
+		registeredObjs:  make(map[string]string),
 		channel:         make(chan struct{}),
 	}
 	mgr.Run(cfgFile)
@@ -61,37 +58,16 @@ func NewDiscoveryManager(client kubernetes.Interface, podLister v1listers.PodLis
 func (dm *discoveryManager) Run(cfgFile string) {
 	discoveryEnabled.Inc(1)
 	dm.discoverer = prometheus.New(dm)
-	p := dm.kubeClient.CoreV1().Pods(apiv1.NamespaceAll)
-	plw := &cache.ListWatch{
-		ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
-			return p.List(options)
-		},
-		WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
-			return p.Watch(options)
-		},
-	}
-	podInformer := cache.NewSharedInformer(plw, &apiv1.Pod{}, 10*time.Minute)
-	podInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
-			pod := obj.(*apiv1.Pod)
-			dm.discoverer.Discover(pod)
-		},
-		UpdateFunc: func(_, obj interface{}) {
-			pod := obj.(*apiv1.Pod)
-			dm.discoverer.Discover(pod)
-		},
-		DeleteFunc: func(obj interface{}) {
-			pod := obj.(*apiv1.Pod)
-			dm.discoverer.Delete(pod)
-		},
-	})
-	go podInformer.Run(dm.done)
 
-	// update the internal pod counter once a minute
+	// init discovery handlers
+	NewPodHandler(dm.kubeClient, dm.discoverer)
+	NewServiceHandler(dm.kubeClient, dm.discoverer)
+
+	// update the internal object counter once a minute
 	go wait.Forever(func() {
 		dm.mtx.RLock()
 		defer dm.mtx.RUnlock()
-		podCount.Update(int64(len(dm.registeredPods)))
+		objCount.Update(int64(len(dm.registeredObjs)))
 	}, 1*time.Minute)
 
 	if cfgFile != "" {
@@ -104,7 +80,7 @@ func (dm *discoveryManager) load(cfgFile string) {
 	initial := true
 	go wait.Until(func() {
 		if initial {
-			// wait for podLister to index pods
+			// wait for listers to index pods and services
 			initial = false
 			time.Sleep(30 * time.Second)
 		}
@@ -139,33 +115,33 @@ func (dm *discoveryManager) process(cfg discovery.Config) {
 	glog.V(8).Info("ended discovery config processing")
 }
 
-func (dm *discoveryManager) RegisterProvider(podName string, provider metrics.MetricsSourceProvider, obj string) {
+func (dm *discoveryManager) RegisterProvider(objName string, provider metrics.MetricsSourceProvider, obj string) {
 	dm.providerHandler.AddProvider(provider)
-	dm.registerPod(podName, obj)
+	dm.register(objName, obj)
 }
 
-func (dm *discoveryManager) UnregisterProvider(podName, providerName string) {
+func (dm *discoveryManager) UnregisterProvider(objName, providerName string) {
 	glog.V(2).Infof("deleting provider: %s", providerName)
 	dm.providerHandler.DeleteProvider(providerName)
-	dm.unregisterPod(podName)
+	dm.unregister(objName)
 }
 
-func (dm *discoveryManager) registerPod(name string, obj string) {
+func (dm *discoveryManager) register(name string, obj string) {
 	dm.mtx.Lock()
 	defer dm.mtx.Unlock()
-	dm.registeredPods[name] = obj
+	dm.registeredObjs[name] = obj
 }
 
-func (dm *discoveryManager) unregisterPod(name string) {
+func (dm *discoveryManager) unregister(name string) {
 	dm.mtx.Lock()
 	defer dm.mtx.Unlock()
-	delete(dm.registeredPods, name)
+	delete(dm.registeredObjs, name)
 }
 
 func (dm *discoveryManager) Registered(name string) string {
 	dm.mtx.RLock()
 	defer dm.mtx.RUnlock()
-	return dm.registeredPods[name]
+	return dm.registeredObjs[name]
 }
 
 func (dm *discoveryManager) ListPods(ns string, l map[string]string) ([]*apiv1.Pod, error) {
@@ -173,5 +149,13 @@ func (dm *discoveryManager) ListPods(ns string, l map[string]string) ([]*apiv1.P
 		return dm.podLister.List(labels.SelectorFromSet(l))
 	}
 	nsLister := dm.podLister.Pods(ns)
+	return nsLister.List(labels.SelectorFromSet(l))
+}
+
+func (dm *discoveryManager) ListServices(ns string, l map[string]string) ([]*apiv1.Service, error) {
+	if ns == "" {
+		return dm.serviceLister.List(labels.SelectorFromSet(l))
+	}
+	nsLister := dm.serviceLister.Services(ns)
 	return nsLister.List(labels.SelectorFromSet(l))
 }
