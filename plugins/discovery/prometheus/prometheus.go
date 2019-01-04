@@ -30,15 +30,16 @@ func New(manager discovery.Manager) discovery.Discoverer {
 	}
 }
 
-func (d *discoverer) Discover(ip, resType string, obj metav1.ObjectMeta) error {
-	return d.discover(ip, resType, obj, discovery.PrometheusConfig{}, true)
+func (d *discoverer) Discover(ip, resourceType string, obj metav1.ObjectMeta) error {
+	return d.discover(ip, resourceType, obj, discovery.PrometheusConfig{}, true)
 }
 
-func (d *discoverer) Delete(resType string, obj metav1.ObjectMeta) {
-	glog.V(5).Infof("%s deleted: %s", resType, obj.Name)
-	if d.manager.Registered(obj.Name) != "" {
-		providerName := fmt.Sprintf("%s: %s", prometheus.ProviderName, obj.Name)
-		d.manager.UnregisterProvider(obj.Name, providerName)
+func (d *discoverer) Delete(resourceType string, obj metav1.ObjectMeta) {
+	name := resourceName(resourceType, obj)
+	glog.V(5).Infof("%s deleted", name)
+	if d.manager.Registered(name) != "" {
+		providerName := fmt.Sprintf("%s: %s", prometheus.ProviderName, name)
+		d.manager.UnregisterProvider(name, providerName)
 	}
 }
 
@@ -91,11 +92,12 @@ func (d *discoverer) discoverServices(promCfg discovery.PrometheusConfig) error 
 	return nil
 }
 
-func (d *discoverer) discover(ip, resType string, obj metav1.ObjectMeta, config discovery.PrometheusConfig, checkAnnotation bool) error {
-	glog.V(5).Infof("%s: %s added | updated namespace: %s", resType, obj.Name, obj.Namespace)
+func (d *discoverer) discover(ip, resourceType string, obj metav1.ObjectMeta, config discovery.PrometheusConfig, checkAnnotation bool) error {
+	glog.V(5).Infof("%s: %s added | updated namespace: %s", resourceType, obj.Name, obj.Namespace)
 
-	cachedURL := d.manager.Registered(obj.Name)
-	scrapeURL := scrapeURL(ip, resType, obj, config, checkAnnotation)
+	name := resourceName(resourceType, obj)
+	cachedURL := d.manager.Registered(name)
+	scrapeURL := scrapeURL(ip, resourceType, obj, config, checkAnnotation)
 	if scrapeURL != "" && scrapeURL != cachedURL {
 		glog.V(4).Infof("scrapeURL: %s", scrapeURL)
 		glog.V(4).Infof("cachedURL: %s", cachedURL)
@@ -109,7 +111,7 @@ func (d *discoverer) discover(ip, resType string, obj metav1.ObjectMeta, config 
 			glog.Error(err)
 			return err
 		}
-		d.manager.RegisterProvider(obj.Name, provider, scrapeURL)
+		d.manager.RegisterProvider(name, provider, scrapeURL)
 	}
 	return nil
 }

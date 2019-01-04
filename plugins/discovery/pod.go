@@ -24,7 +24,7 @@ func NewPodHandler(kubeClient kubernetes.Interface, discoverer discovery.Discove
 			return p.Watch(options)
 		},
 	}
-	inf := cache.NewSharedInformer(lw, &v1.Service{}, 10*time.Minute)
+	inf := cache.NewSharedInformer(lw, &v1.Pod{}, 10*time.Minute)
 
 	inf.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
@@ -36,7 +36,7 @@ func NewPodHandler(kubeClient kubernetes.Interface, discoverer discovery.Discove
 			discoverer.Discover(pod.Status.PodIP, discovery.PodType.String(), pod.ObjectMeta)
 		},
 		DeleteFunc: func(obj interface{}) {
-			pod := obj.(*v1.Service)
+			pod := obj.(*v1.Pod)
 			discoverer.Delete(discovery.PodType.String(), pod.ObjectMeta)
 		},
 	})

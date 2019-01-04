@@ -34,12 +34,12 @@ type Manager interface {
 	ListPods(ns string, labels map[string]string) ([]*v1.Pod, error)
 	ListServices(ns string, labels map[string]string) ([]*v1.Service, error)
 	Registered(name string) string
-	RegisterProvider(objName string, provider metrics.MetricsSourceProvider, obj string)
-	UnregisterProvider(objName, providerName string)
+	RegisterProvider(resourceName string, provider metrics.MetricsSourceProvider, obj string)
+	UnregisterProvider(resourceName, providerName string)
 }
 
 type Discoverer interface {
-	Discover(ip, role string, obj metav1.ObjectMeta) error
-	Delete(role string, obj metav1.ObjectMeta)
+	Discover(ip, resourceType string, obj metav1.ObjectMeta) error
+	Delete(resourceType string, obj metav1.ObjectMeta)
 	Process(config Config) error
 }

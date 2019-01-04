@@ -30,27 +30,27 @@ func init() {
 }
 
 type discoveryManager struct {
-	kubeClient      kubernetes.Interface
-	cfgModTime      time.Time
-	podLister       v1listers.PodLister
-	serviceLister   v1listers.ServiceLister
-	providerHandler metrics.DynamicProviderHandler
-	discoverer      discovery.Discoverer
-	done            chan struct{}
-	channel         chan struct{}
-	mtx             sync.RWMutex
-	registeredObjs  map[string]string
+	kubeClient          kubernetes.Interface
+	cfgModTime          time.Time
+	podLister           v1listers.PodLister
+	serviceLister       v1listers.ServiceLister
+	providerHandler     metrics.DynamicProviderHandler
+	discoverer          discovery.Discoverer
+	done                chan struct{}
+	channel             chan struct{}
+	mtx                 sync.RWMutex
+	registeredResources map[string]string
 }
 
 func NewDiscoveryManager(client kubernetes.Interface, podLister v1listers.PodLister,
 	serviceLister v1listers.ServiceLister, cfgFile string, handler metrics.DynamicProviderHandler) {
 	mgr := &discoveryManager{
-		kubeClient:      client,
-		podLister:       podLister,
-		serviceLister:   serviceLister,
-		providerHandler: handler,
-		registeredObjs:  make(map[string]string),
-		channel:         make(chan struct{}),
+		kubeClient:          client,
+		podLister:           podLister,
+		serviceLister:       serviceLister,
+		providerHandler:     handler,
+		registeredResources: make(map[string]string),
+		channel:             make(chan struct{}),
 	}
 	mgr.Run(cfgFile)
 }
@@ -67,7 +67,7 @@ func (dm *discoveryManager) Run(cfgFile string) {
 	go wait.Forever(func() {
 		dm.mtx.RLock()
 		defer dm.mtx.RUnlock()
-		objCount.Update(int64(len(dm.registeredObjs)))
+		objCount.Update(int64(len(dm.registeredResources)))
 	}, 1*time.Minute)
 
 	if cfgFile != "" {
@@ -115,33 +115,33 @@ func (dm *discoveryManager) process(cfg discovery.Config) {
 	glog.V(8).Info("ended discovery config processing")
 }
 
-func (dm *discoveryManager) RegisterProvider(objName string, provider metrics.MetricsSourceProvider, obj string) {
+func (dm *discoveryManager) RegisterProvider(resourceName string, provider metrics.MetricsSourceProvider, obj string) {
 	dm.providerHandler.AddProvider(provider)
-	dm.register(objName, obj)
+	dm.register(resourceName, obj)
 }
 
-func (dm *discoveryManager) UnregisterProvider(objName, providerName string) {
+func (dm *discoveryManager) UnregisterProvider(resourceName, providerName string) {
 	glog.V(2).Infof("deleting provider: %s", providerName)
 	dm.providerHandler.DeleteProvider(providerName)
-	dm.unregister(objName)
+	dm.unregister(resourceName)
 }
 
 func (dm *discoveryManager) register(name string, obj string) {
 	dm.mtx.Lock()
 	defer dm.mtx.Unlock()
-	dm.registeredObjs[name] = obj
+	dm.registeredResources[name] = obj
 }
 
 func (dm *discoveryManager) unregister(name string) {
 	dm.mtx.Lock()
 	defer dm.mtx.Unlock()
-	delete(dm.registeredObjs, name)
+	delete(dm.registeredResources, name)
 }
 
 func (dm *discoveryManager) Registered(name string) string {
 	dm.mtx.RLock()
 	defer dm.mtx.RUnlock()
-	return dm.registeredObjs[name]
+	return dm.registeredResources[name]
 }
 
 func (dm *discoveryManager) ListPods(ns string, l map[string]string) ([]*apiv1.Pod, error) {
