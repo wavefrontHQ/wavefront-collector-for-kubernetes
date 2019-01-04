@@ -54,7 +54,7 @@ func (d *discoverer) Process(cfg discovery.Config) error {
 		if promCfg.ResourceType == "" {
 			promCfg.ResourceType = discovery.PodType.String()
 		}
-		glog.V(4).Infof("%s lookup labels=%v", promCfg.ResourceType, promCfg.Labels)
+		glog.V(4).Infof("%s lookup rule=%s labels=%v", promCfg.ResourceType, promCfg.Name, promCfg.Labels)
 		switch promCfg.ResourceType {
 		case discovery.PodType.String():
 			d.discoverPods(promCfg)
