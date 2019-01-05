@@ -2,7 +2,6 @@ package discovery
 
 import (
 	"os"
-	"sync"
 	"time"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
@@ -20,55 +19,42 @@ import (
 )
 
 var (
-	objCount         gm.Gauge
 	discoveryEnabled gm.Counter
 )
 
 func init() {
-	objCount = gm.GetOrRegisterGauge("discovery.objects.registered", gm.DefaultRegistry)
 	discoveryEnabled = gm.GetOrRegisterCounter("discovery.enabled", gm.DefaultRegistry)
 }
 
 type discoveryManager struct {
-	kubeClient          kubernetes.Interface
-	cfgModTime          time.Time
-	podLister           v1listers.PodLister
-	serviceLister       v1listers.ServiceLister
-	providerHandler     metrics.DynamicProviderHandler
-	discoverer          discovery.Discoverer
-	done                chan struct{}
-	channel             chan struct{}
-	mtx                 sync.RWMutex
-	registeredResources map[string]string
+	kubeClient      kubernetes.Interface
+	cfgModTime      time.Time
+	podLister       v1listers.PodLister
+	serviceLister   v1listers.ServiceLister
+	providerHandler metrics.DynamicProviderHandler
+	discoverer      discovery.Discoverer
+	channel         chan struct{}
 }
 
 func NewDiscoveryManager(client kubernetes.Interface, podLister v1listers.PodLister,
 	serviceLister v1listers.ServiceLister, cfgFile string, handler metrics.DynamicProviderHandler) {
 	mgr := &discoveryManager{
-		kubeClient:          client,
-		podLister:           podLister,
-		serviceLister:       serviceLister,
-		providerHandler:     handler,
-		registeredResources: make(map[string]string),
-		channel:             make(chan struct{}),
+		kubeClient:      client,
+		podLister:       podLister,
+		serviceLister:   serviceLister,
+		providerHandler: handler,
+		channel:         make(chan struct{}),
 	}
+	mgr.discoverer = prometheus.New(mgr)
 	mgr.Run(cfgFile)
 }
 
 func (dm *discoveryManager) Run(cfgFile string) {
 	discoveryEnabled.Inc(1)
-	dm.discoverer = prometheus.New(dm)
 
 	// init discovery handlers
 	NewPodHandler(dm.kubeClient, dm.discoverer)
 	NewServiceHandler(dm.kubeClient, dm.discoverer)
-
-	// update the internal object counter once a minute
-	go wait.Forever(func() {
-		dm.mtx.RLock()
-		defer dm.mtx.RUnlock()
-		objCount.Update(int64(len(dm.registeredResources)))
-	}, 1*time.Minute)
 
 	if cfgFile != "" {
 		dm.load(cfgFile)
@@ -115,33 +101,13 @@ func (dm *discoveryManager) process(cfg discovery.Config) {
 	glog.V(8).Info("ended discovery config processing")
 }
 
-func (dm *discoveryManager) RegisterProvider(resourceName string, provider metrics.MetricsSourceProvider, obj string) {
+func (dm *discoveryManager) RegisterProvider(provider metrics.MetricsSourceProvider) {
 	dm.providerHandler.AddProvider(provider)
-	dm.register(resourceName, obj)
 }
 
-func (dm *discoveryManager) UnregisterProvider(resourceName, providerName string) {
+func (dm *discoveryManager) UnregisterProvider(providerName string) {
 	glog.V(2).Infof("deleting provider: %s", providerName)
 	dm.providerHandler.DeleteProvider(providerName)
-	dm.unregister(resourceName)
-}
-
-func (dm *discoveryManager) register(name string, obj string) {
-	dm.mtx.Lock()
-	defer dm.mtx.Unlock()
-	dm.registeredResources[name] = obj
-}
-
-func (dm *discoveryManager) unregister(name string) {
-	dm.mtx.Lock()
-	defer dm.mtx.Unlock()
-	delete(dm.registeredResources, name)
-}
-
-func (dm *discoveryManager) Registered(name string) string {
-	dm.mtx.RLock()
-	defer dm.mtx.RUnlock()
-	return dm.registeredResources[name]
 }
 
 func (dm *discoveryManager) ListPods(ns string, l map[string]string) ([]*apiv1.Pod, error) {

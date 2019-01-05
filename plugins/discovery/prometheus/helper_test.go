@@ -73,7 +73,7 @@ func TestScrapeURL(t *testing.T) {
 	}
 
 	// should return nil without pod IP
-	u := scrapeURL("", "pod", pod.ObjectMeta, discovery.PrometheusConfig{}, false)
+	u := scrapeURL("", "pod", pod.ObjectMeta, discovery.PrometheusConfig{})
 	if u != "" {
 		t.Errorf("expected empty scrapeURL. actual: %s", u)
 	}
@@ -82,22 +82,22 @@ func TestScrapeURL(t *testing.T) {
 		PodIP: "10.2.3.4",
 	}
 
-	// should return nil if checkAnnotation is true and there is no scrape annotation
-	u = scrapeURL("10.2.3.4", "pod", pod.ObjectMeta, discovery.PrometheusConfig{}, true)
+	// should return nil if empty cfg and no scrape annotation
+	u = scrapeURL("10.2.3.4", "pod", pod.ObjectMeta, discovery.PrometheusConfig{})
 	if u != "" {
 		t.Errorf("expected empty scrapeURL. actual: %s", u)
 	}
 
 	// should return nil if scrape annotation is set to false
 	pod.Annotations = map[string]string{"prometheus.io/scrape": "false"}
-	u = scrapeURL("10.2.3.4", "pod", pod.ObjectMeta, discovery.PrometheusConfig{}, true)
+	u = scrapeURL("10.2.3.4", "pod", pod.ObjectMeta, discovery.PrometheusConfig{})
 	if u != "" {
 		t.Errorf("expected empty scrapeURL. actual: %s", u)
 	}
 
 	// expect non-empty when scrape annotation set to true
 	pod.Annotations["prometheus.io/scrape"] = "true"
-	u = scrapeURL("10.2.3.4", "pod", pod.ObjectMeta, discovery.PrometheusConfig{}, true)
+	u = scrapeURL("10.2.3.4", "pod", pod.ObjectMeta, discovery.PrometheusConfig{})
 	if u == "" {
 		t.Error("expected non-empty scrapeURL.")
 	}
@@ -110,7 +110,7 @@ func TestScrapeURL(t *testing.T) {
 	pod.Annotations[prefixAnnotation] = "test."
 	pod.Annotations[labelsAnnotation] = "false"
 
-	u = scrapeURL("10.2.3.4", "pod", pod.ObjectMeta, discovery.PrometheusConfig{}, true)
+	u = scrapeURL("10.2.3.4", "pod", pod.ObjectMeta, discovery.PrometheusConfig{})
 	if u == "" {
 		t.Error("expected non-empty scrapeURL.")
 	}
@@ -123,6 +123,7 @@ func TestScrapeURL(t *testing.T) {
 
 	// validate cfg is picked up
 	cfg := discovery.PrometheusConfig{
+		Name:          "test",
 		Scheme:        "https",
 		Path:          "/path",
 		Port:          "9103",
@@ -131,7 +132,7 @@ func TestScrapeURL(t *testing.T) {
 	}
 	pod.Annotations = map[string]string{}
 
-	actual = scrapeURL("10.2.3.4", "pod", pod.ObjectMeta, cfg, false)
+	actual = scrapeURL("10.2.3.4", "pod", pod.ObjectMeta, cfg)
 	expected = fmt.Sprintf("?url=https://%s:9103/path&name=%s&prefix=foo.&tag=pod:test&tag=namespace:test", pod.Status.PodIP, resName)
 
 	if actual != expected {

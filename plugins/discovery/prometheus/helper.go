@@ -20,15 +20,15 @@ const (
 	sourceAnnotation = "prometheus.io/source"
 )
 
-func scrapeURL(ip, resourceType string, obj metav1.ObjectMeta, cfg discovery.PrometheusConfig, checkAnnotation bool) string {
+func scrapeURL(ip, kind string, obj metav1.ObjectMeta, cfg discovery.PrometheusConfig) string {
 
 	if ip == "" {
 		glog.V(5).Infof("missing pod ip for %s", obj.Name)
 		return ""
 	}
 	scrape := param(obj, scrapeAnnotation, "", "false")
-	if checkAnnotation && scrape != "true" {
-		glog.V(5).Infof("scrape=false for %s=%s annotations=%q", resourceType, obj.Name, obj.Annotations)
+	if cfg.Name == "" && scrape != "true" {
+		glog.V(5).Infof("scrape=false for %s=%s annotations=%q", kind, obj.Name, obj.Annotations)
 		return ""
 	}
 
@@ -39,9 +39,9 @@ func scrapeURL(ip, resourceType string, obj metav1.ObjectMeta, cfg discovery.Pro
 	source := param(obj, sourceAnnotation, cfg.Source, "")
 	includeLabels := param(obj, labelsAnnotation, cfg.IncludeLabels, "true")
 
-	name := resourceName(resourceType, obj)
+	name := resourceName(kind, obj)
 	u := baseURL(scheme, ip, port, path, name, source, prefix)
-	u = encodeMeta(u, resourceType, obj)
+	u = encodeMeta(u, kind, obj)
 	u = encodeTags(u, cfg.Tags)
 	if includeLabels == "true" {
 		u = encodeTags(u, obj.Labels)
@@ -63,8 +63,8 @@ func baseURL(scheme, ip, port, path, name, source, prefix string) string {
 	return base
 }
 
-func encodeMeta(urlStr, resourceType string, obj metav1.ObjectMeta) string {
-	return fmt.Sprintf("%s&tag=%s:%s&tag=namespace:%s", urlStr, resourceType, obj.Name, obj.Namespace)
+func encodeMeta(urlStr, kind string, obj metav1.ObjectMeta) string {
+	return fmt.Sprintf("%s&tag=%s:%s&tag=namespace:%s", urlStr, kind, obj.Name, obj.Namespace)
 }
 
 func encodeTags(urlStr string, tags map[string]string) string {
@@ -100,9 +100,9 @@ func param(obj metav1.ObjectMeta, annotation, cfgVal, defaultVal string) string 
 	return value
 }
 
-func resourceName(resourceType string, obj metav1.ObjectMeta) string {
-	if resourceType == discovery.ServiceType.String() {
-		return obj.Namespace + "-" + resourceType + "-" + obj.Name
+func resourceName(kind string, obj metav1.ObjectMeta) string {
+	if kind == discovery.ServiceType.String() {
+		return obj.Namespace + "-" + kind + "-" + obj.Name
 	}
-	return resourceType + "-" + obj.Name
+	return kind + "-" + obj.Name
 }

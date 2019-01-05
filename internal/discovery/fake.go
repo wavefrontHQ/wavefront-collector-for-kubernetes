@@ -35,12 +35,10 @@ func (f *FakeManager) Registered(name string) string {
 	return f.registeredPods[name]
 }
 
-func (f *FakeManager) RegisterProvider(podName string, provider metrics.MetricsSourceProvider, obj string) {
-	f.registeredPods[podName] = obj
+func (f *FakeManager) RegisterProvider(provider metrics.MetricsSourceProvider) {
 }
 
-func (f *FakeManager) UnregisterProvider(podName, providerName string) {
-	delete(f.registeredPods, podName)
+func (f *FakeManager) UnregisterProvider(providerName string) {
 }
 
 func FakeService(name, namespace, ip string) *v1.Service {

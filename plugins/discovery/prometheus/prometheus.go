@@ -1,14 +1,11 @@
 package prometheus
 
 import (
-	"fmt"
-	"net/url"
-
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/prometheus"
+	"sync"
 
 	"github.com/golang/glog"
 	"github.com/rcrowley/go-metrics"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -21,97 +18,91 @@ func init() {
 }
 
 type discoverer struct {
-	manager discovery.Manager
+	manager        discovery.Manager
+	runtimeHandler *targetHandler
+	configMutex    sync.Mutex
+	rules          map[string]*ruleHandler
+	targetMutex    sync.RWMutex
+	targets        map[string]*targetHandler
 }
 
 func New(manager discovery.Manager) discovery.Discoverer {
-	return &discoverer{
+	d := &discoverer{
 		manager: manager,
+		targets: make(map[string]*targetHandler),
+		rules:   make(map[string]*ruleHandler),
 	}
+	d.runtimeHandler = newTargetHandler(d)
+	return d
 }
 
-func (d *discoverer) Discover(ip, resourceType string, obj metav1.ObjectMeta) error {
-	return d.discover(ip, resourceType, obj, discovery.PrometheusConfig{}, true)
+func (d *discoverer) Discover(ip, kind string, obj metav1.ObjectMeta) {
+	d.runtimeHandler.discover(ip, kind, obj, discovery.PrometheusConfig{})
 }
 
-func (d *discoverer) Delete(resourceType string, obj metav1.ObjectMeta) {
-	name := resourceName(resourceType, obj)
-	glog.V(5).Infof("%s deleted", name)
-	if d.manager.Registered(name) != "" {
-		providerName := fmt.Sprintf("%s: %s", prometheus.ProviderName, name)
-		d.manager.UnregisterProvider(name, providerName)
-	}
+func (d *discoverer) Delete(kind string, obj metav1.ObjectMeta) {
+	name := resourceName(kind, obj)
+	d.runtimeHandler.unregister(name)
 }
 
-func (d *discoverer) Process(cfg discovery.Config) error {
+func (d *discoverer) Process(cfg discovery.Config) {
 	glog.V(2).Info("loading discovery configuration")
 	if len(cfg.PromConfigs) == 0 {
 		glog.V(2).Info("empty prometheus discovery configs")
-		return nil
 	}
+
+	d.configMutex.Lock()
+	defer d.configMutex.Unlock()
+
+	// delete rules that were removed or renamed
+	rules := make(map[string]bool, len(cfg.PromConfigs))
 	for _, promCfg := range cfg.PromConfigs {
-		// default to pod
-		if promCfg.ResourceType == "" {
-			promCfg.ResourceType = discovery.PodType.String()
+		rules[promCfg.Name] = true
+	}
+	for name, handler := range d.rules {
+		if _, exists := rules[name]; !exists {
+			delete(d.rules, name)
+			handler.delete()
 		}
-		glog.V(4).Infof("%s lookup rule=%s labels=%v", promCfg.ResourceType, promCfg.Name, promCfg.Labels)
-		switch promCfg.ResourceType {
-		case discovery.PodType.String():
-			d.discoverPods(promCfg)
-		case discovery.ServiceType.String():
-			d.discoverServices(promCfg)
-		default:
-			glog.V(2).Infof("unknown type: %s for rule: %s", promCfg.ResourceType, promCfg.Name)
+	}
+
+	// then process current set of rules
+	for _, promCfg := range cfg.PromConfigs {
+		handler, exists := d.rules[promCfg.Name]
+		if !exists {
+			handler = newRuleHandler(d)
+			d.rules[promCfg.Name] = handler
+		}
+		err := handler.handle(promCfg)
+		if err != nil {
+			glog.Errorf("error processing rule %s err=%v", promCfg.Name, err)
 		}
 	}
 	rulesCount.Update(int64(len(cfg.PromConfigs)))
-	return nil
 }
 
-func (d *discoverer) discoverPods(promCfg discovery.PrometheusConfig) error {
-	pods, err := d.manager.ListPods(promCfg.Namespace, promCfg.Labels)
-	if err != nil {
-		return err
-	}
-	glog.V(4).Infof("%d pods found", len(pods))
-	for _, pod := range pods {
-		d.discover(pod.Status.PodIP, discovery.PodType.String(), pod.ObjectMeta, promCfg, false)
-	}
-	return nil
+func (d *discoverer) register(name string, th *targetHandler) {
+	d.targetMutex.Lock()
+	defer d.targetMutex.Unlock()
+	d.targets[name] = th
 }
 
-func (d *discoverer) discoverServices(promCfg discovery.PrometheusConfig) error {
-	services, err := d.manager.ListServices(promCfg.Namespace, promCfg.Labels)
-	if err != nil {
-		return err
-	}
-	glog.V(4).Infof("%d services found", len(services))
-	for _, service := range services {
-		d.discover(service.Spec.ClusterIP, discovery.ServiceType.String(), service.ObjectMeta, promCfg, false)
-	}
-	return nil
+func (d *discoverer) unregister(name string) {
+	d.targetMutex.Lock()
+	defer d.targetMutex.Unlock()
+	delete(d.targets, name)
 }
 
-func (d *discoverer) discover(ip, resourceType string, obj metav1.ObjectMeta, config discovery.PrometheusConfig, checkAnnotation bool) error {
-	glog.V(5).Infof("%s: %s added | updated namespace: %s", resourceType, obj.Name, obj.Namespace)
+func (d *discoverer) registered(name string) *targetHandler {
+	d.targetMutex.RLock()
+	defer d.targetMutex.RUnlock()
+	return d.targets[name]
+}
 
-	name := resourceName(resourceType, obj)
-	cachedURL := d.manager.Registered(name)
-	scrapeURL := scrapeURL(ip, resourceType, obj, config, checkAnnotation)
-	if scrapeURL != "" && scrapeURL != cachedURL {
-		glog.V(4).Infof("scrapeURL: %s", scrapeURL)
-		glog.V(4).Infof("cachedURL: %s", cachedURL)
-		u, err := url.Parse(scrapeURL)
-		if err != nil {
-			glog.Error(err)
-			return err
-		}
-		provider, err := prometheus.NewPrometheusProvider(u)
-		if err != nil {
-			glog.Error(err)
-			return err
-		}
-		d.manager.RegisterProvider(name, provider, scrapeURL)
+func (d *discoverer) registeredURL(name string) string {
+	handler := d.registered(name)
+	if handler != nil {
+		return handler.get(name).scrapeURL
 	}
-	return nil
+	return ""
 }

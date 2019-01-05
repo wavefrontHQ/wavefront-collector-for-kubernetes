@@ -33,13 +33,12 @@ func (resType ResourceType) String() string {
 type Manager interface {
 	ListPods(ns string, labels map[string]string) ([]*v1.Pod, error)
 	ListServices(ns string, labels map[string]string) ([]*v1.Service, error)
-	Registered(name string) string
-	RegisterProvider(resourceName string, provider metrics.MetricsSourceProvider, obj string)
-	UnregisterProvider(resourceName, providerName string)
+	RegisterProvider(provider metrics.MetricsSourceProvider)
+	UnregisterProvider(providerName string)
 }
 
 type Discoverer interface {
-	Discover(ip, resourceType string, obj metav1.ObjectMeta) error
-	Delete(resourceType string, obj metav1.ObjectMeta)
-	Process(config Config) error
+	Discover(ip, kind string, obj metav1.ObjectMeta)
+	Delete(kind string, obj metav1.ObjectMeta)
+	Process(config Config)
 }
