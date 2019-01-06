@@ -3,40 +3,46 @@ package prometheus
 import (
 	"github.com/golang/glog"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // handles a single prometheus discovery rule
 type ruleHandler struct {
-	delegate *discoverer
-	th       *targetHandler
+	lister discovery.ResourceLister
+	th     *targetHandler
 }
 
-func newRuleHandler(d *discoverer) *ruleHandler {
+// Gets a new prometheus rule handler
+func NewRuleHandler(rl discovery.ResourceLister, ph metrics.DynamicProviderHandler) discovery.RuleHandler {
 	return &ruleHandler{
-		delegate: d,
-		th:       newTargetHandler(d),
+		lister: rl,
+		th:     newTargetHandler(ph),
 	}
 }
 
-func (rh *ruleHandler) handle(cfg discovery.PrometheusConfig) error {
+func (rh *ruleHandler) Handle(cfg interface{}) error {
+	rule := cfg.(discovery.PrometheusConfig)
+
 	// default to pod
-	if cfg.ResourceType == "" {
-		cfg.ResourceType = discovery.PodType.String()
+	if rule.ResourceType == "" {
+		rule.ResourceType = discovery.PodType.String()
 	}
-	glog.V(4).Infof("rule=%s type=%s labels=%v", cfg.Name, cfg.ResourceType, cfg.Labels)
+	glog.V(4).Infof("rule=%s type=%s labels=%v", rule.Name, rule.ResourceType, rule.Labels)
 
 	// build a new set of targets
 	targets := make(map[string]bool)
-	switch cfg.ResourceType {
+	switch rule.ResourceType {
 	case discovery.PodType.String():
-		rh.findPods(cfg, targets)
+		rh.findPods(rule, targets)
 	case discovery.ServiceType.String():
-		rh.findServices(cfg, targets)
+		rh.findServices(rule, targets)
 	default:
-		glog.Errorf("unknown type: %s for rule: %s", cfg.ResourceType, cfg.Name)
+		glog.Errorf("unknown type=%s for rule=%s", rule.ResourceType, rule.Name)
 	}
 
-	// delete providers that no longer apply to the rule
+	// delete targets that no longer apply to this rule
 	for k := range rh.th.all() {
 		if _, exists := targets[k]; !exists {
 			rh.th.unregister(k)
@@ -45,36 +51,38 @@ func (rh *ruleHandler) handle(cfg discovery.PrometheusConfig) error {
 	return nil
 }
 
-func (rh *ruleHandler) delete() {
+func (rh *ruleHandler) Delete() {
 	for k := range rh.th.all() {
 		rh.th.unregister(k)
 	}
 }
 
-func (rh *ruleHandler) findPods(cfg discovery.PrometheusConfig, targets map[string]bool) {
-	pods, err := rh.delegate.manager.ListPods(cfg.Namespace, cfg.Labels)
+func (rh *ruleHandler) findPods(rule discovery.PrometheusConfig, targets map[string]bool) {
+	pods, err := rh.lister.ListPods(rule.Namespace, rule.Labels)
 	if err != nil {
-		glog.Errorf("error listing pods: %v", err)
+		glog.Errorf("rule=%s error listing pods: %v", rule.Name, err)
 		return
 	}
-	glog.V(4).Infof("rule=%s %d pods found", cfg.Name, len(pods))
+	glog.V(4).Infof("rule=%s %d pods found", rule.Name, len(pods))
 	for _, pod := range pods {
-		name := resourceName(discovery.PodType.String(), pod.ObjectMeta)
-		rh.th.discover(pod.Status.PodIP, discovery.PodType.String(), pod.ObjectMeta, cfg)
-		targets[name] = true
+		rh.discover(pod.Status.PodIP, discovery.PodType.String(), pod.ObjectMeta, rule, targets)
 	}
 }
 
-func (rh *ruleHandler) findServices(cfg discovery.PrometheusConfig, targets map[string]bool) {
-	services, err := rh.delegate.manager.ListServices(cfg.Namespace, cfg.Labels)
+func (rh *ruleHandler) findServices(rule discovery.PrometheusConfig, targets map[string]bool) {
+	services, err := rh.lister.ListServices(rule.Namespace, rule.Labels)
 	if err != nil {
-		glog.Errorf("error listing services: %v", err)
+		glog.Errorf("rule=%s error listing services: %v", rule.Name, err)
 		return
 	}
-	glog.V(4).Infof("rule=%s %d services found", cfg.Name, len(services))
+	glog.V(4).Infof("rule=%s %d services found", rule.Name, len(services))
 	for _, service := range services {
-		name := resourceName(discovery.ServiceType.String(), service.ObjectMeta)
-		rh.th.discover(service.Spec.ClusterIP, discovery.ServiceType.String(), service.ObjectMeta, cfg)
-		targets[name] = true
+		rh.discover(service.Spec.ClusterIP, discovery.ServiceType.String(), service.ObjectMeta, rule, targets)
 	}
+}
+
+func (rh *ruleHandler) discover(ip, kind string, meta metav1.ObjectMeta, rule discovery.PrometheusConfig, targets map[string]bool) {
+	name := resourceName(kind, meta)
+	targets[name] = true
+	rh.th.discover(ip, kind, meta, rule)
 }

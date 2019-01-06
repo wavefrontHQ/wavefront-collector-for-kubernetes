@@ -3,8 +3,6 @@ package discovery
 import (
 	"fmt"
 
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
-
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -30,15 +28,20 @@ func (resType ResourceType) String() string {
 	}
 }
 
-type Manager interface {
+type ResourceLister interface {
 	ListPods(ns string, labels map[string]string) ([]*v1.Pod, error)
 	ListServices(ns string, labels map[string]string) ([]*v1.Service, error)
-	RegisterProvider(provider metrics.MetricsSourceProvider)
-	UnregisterProvider(providerName string)
 }
 
 type Discoverer interface {
-	Discover(ip, kind string, obj metav1.ObjectMeta)
-	Delete(kind string, obj metav1.ObjectMeta)
-	Process(config Config)
+	Discover(ip, kind string, meta metav1.ObjectMeta)
+	Delete(kind string, meta metav1.ObjectMeta)
+}
+
+// Handles a single discovery rule
+type RuleHandler interface {
+	// Handle a single discovery rule
+	Handle(cfg interface{}) error
+	// Delete the rule and discovered targets
+	Delete()
 }

@@ -1,44 +1,36 @@
 package discovery
 
 import (
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
-
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type FakeManager struct {
+type FakeResourceLister struct {
+	count          int
 	registeredPods map[string]string
 }
 
-func NewFakeManager() *FakeManager {
-	return &FakeManager{
+func NewFakeResourceLister(count int) *FakeResourceLister {
+	return &FakeResourceLister{
+		count:          count,
 		registeredPods: make(map[string]string),
 	}
 }
 
-func (f *FakeManager) ListPods(ns string, labels map[string]string) ([]*v1.Pod, error) {
-	pods := make([]*v1.Pod, 2)
-	pods[0] = FakePod("pod1", "ns", "123")
-	pods[1] = FakePod("pod2", "ns", "124")
+func (f *FakeResourceLister) ListPods(ns string, labels map[string]string) ([]*v1.Pod, error) {
+	pods := make([]*v1.Pod, f.count)
+	for i := 0; i < f.count; i++ {
+		pods[i] = FakePod("pod"+string(i), "ns", "123")
+	}
 	return pods, nil
 }
 
-func (f *FakeManager) ListServices(ns string, labels map[string]string) ([]*v1.Service, error) {
-	services := make([]*v1.Service, 2)
-	services[0] = FakeService("svc1", "ns", "123")
-	services[1] = FakeService("svc2", "ns", "124")
+func (f *FakeResourceLister) ListServices(ns string, labels map[string]string) ([]*v1.Service, error) {
+	services := make([]*v1.Service, f.count)
+	for i := 0; i < f.count; i++ {
+		services[i] = FakeService("svc"+string(i), "ns", "123")
+	}
 	return services, nil
-}
-
-func (f *FakeManager) Registered(name string) string {
-	return f.registeredPods[name]
-}
-
-func (f *FakeManager) RegisterProvider(provider metrics.MetricsSourceProvider) {
-}
-
-func (f *FakeManager) UnregisterProvider(providerName string) {
 }
 
 func FakeService(name, namespace, ip string) *v1.Service {

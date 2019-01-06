@@ -26,14 +26,14 @@ func newTarget(name, u string) target {
 }
 
 type targetHandler struct {
-	d       *discoverer
+	ph      metrics.DynamicProviderHandler
 	mtx     sync.RWMutex
 	targets map[string]string
 }
 
-func newTargetHandler(d *discoverer) *targetHandler {
+func newTargetHandler(providerHandler metrics.DynamicProviderHandler) *targetHandler {
 	return &targetHandler{
-		d:       d,
+		ph:      providerHandler,
 		targets: make(map[string]string),
 	}
 }
@@ -67,11 +67,11 @@ func (th *targetHandler) delete(name string) {
 	delete(th.targets, name)
 }
 
-func (th *targetHandler) discover(ip, kind string, obj metav1.ObjectMeta, config discovery.PrometheusConfig) {
-	glog.V(5).Infof("%s: %s namespace: %s", kind, obj.Name, obj.Namespace)
-	name := resourceName(kind, obj)
-	cachedURL := th.d.registeredURL(name)
-	scrapeURL := scrapeURL(ip, kind, obj, config)
+func (th *targetHandler) discover(ip, kind string, meta metav1.ObjectMeta, rule discovery.PrometheusConfig) {
+	glog.V(5).Infof("%s: %s namespace: %s", kind, meta.Name, meta.Namespace)
+	name := resourceName(kind, meta)
+	cachedURL := registry.registeredURL(name)
+	scrapeURL := scrapeURL(ip, kind, meta, rule)
 	if scrapeURL != "" && scrapeURL != cachedURL {
 		glog.V(4).Infof("scrapeURL: %s", scrapeURL)
 		glog.V(4).Infof("cachedURL: %s", cachedURL)
@@ -91,16 +91,16 @@ func (th *targetHandler) discover(ip, kind string, obj metav1.ObjectMeta, config
 
 func (th *targetHandler) register(name, url string, provider metrics.MetricsSourceProvider) {
 	th.add(name, url)
-	th.d.manager.RegisterProvider(provider)
-	th.d.register(name, th)
+	th.ph.AddProvider(provider)
+	registry.register(name, th)
 }
 
 func (th *targetHandler) unregister(name string) {
 	th.delete(name)
-	if th.d.registered(name) != nil {
+	if registry.registered(name) != nil {
 		providerName := fmt.Sprintf("%s: %s", prometheus.ProviderName, name)
-		th.d.manager.UnregisterProvider(providerName)
-		th.d.unregister(name)
+		th.ph.DeleteProvider(providerName)
+		registry.unregister(name)
 	}
 	glog.V(5).Infof("%s deleted", name)
 }

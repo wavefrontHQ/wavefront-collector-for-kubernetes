@@ -20,31 +20,30 @@ const (
 	sourceAnnotation = "prometheus.io/source"
 )
 
-func scrapeURL(ip, kind string, obj metav1.ObjectMeta, cfg discovery.PrometheusConfig) string {
-
+func scrapeURL(ip, kind string, meta metav1.ObjectMeta, rule discovery.PrometheusConfig) string {
 	if ip == "" {
-		glog.V(5).Infof("missing pod ip for %s", obj.Name)
+		glog.V(5).Infof("missing pod ip for %s", meta.Name)
 		return ""
 	}
-	scrape := param(obj, scrapeAnnotation, "", "false")
-	if cfg.Name == "" && scrape != "true" {
-		glog.V(5).Infof("scrape=false for %s=%s annotations=%q", kind, obj.Name, obj.Annotations)
+	scrape := param(meta, scrapeAnnotation, "", "false")
+	if rule.Name == "" && scrape != "true" {
+		glog.V(5).Infof("scrape=false for %s=%s annotations=%q", kind, meta.Name, meta.Annotations)
 		return ""
 	}
 
-	scheme := param(obj, schemeAnnotation, cfg.Scheme, "http")
-	path := param(obj, pathAnnotation, cfg.Path, "/metrics")
-	port := param(obj, portAnnotation, cfg.Port, "")
-	prefix := param(obj, prefixAnnotation, cfg.Prefix, "")
-	source := param(obj, sourceAnnotation, cfg.Source, "")
-	includeLabels := param(obj, labelsAnnotation, cfg.IncludeLabels, "true")
+	scheme := param(meta, schemeAnnotation, rule.Scheme, "http")
+	path := param(meta, pathAnnotation, rule.Path, "/metrics")
+	port := param(meta, portAnnotation, rule.Port, "")
+	prefix := param(meta, prefixAnnotation, rule.Prefix, "")
+	source := param(meta, sourceAnnotation, rule.Source, "")
+	includeLabels := param(meta, labelsAnnotation, rule.IncludeLabels, "true")
 
-	name := resourceName(kind, obj)
+	name := resourceName(kind, meta)
 	u := baseURL(scheme, ip, port, path, name, source, prefix)
-	u = encodeMeta(u, kind, obj)
-	u = encodeTags(u, cfg.Tags)
+	u = encodeMeta(u, kind, meta)
+	u = encodeTags(u, rule.Tags)
 	if includeLabels == "true" {
-		u = encodeTags(u, obj.Labels)
+		u = encodeTags(u, meta.Labels)
 	}
 	return u
 }
@@ -63,8 +62,8 @@ func baseURL(scheme, ip, port, path, name, source, prefix string) string {
 	return base
 }
 
-func encodeMeta(urlStr, kind string, obj metav1.ObjectMeta) string {
-	return fmt.Sprintf("%s&tag=%s:%s&tag=namespace:%s", urlStr, kind, obj.Name, obj.Namespace)
+func encodeMeta(urlStr, kind string, meta metav1.ObjectMeta) string {
+	return fmt.Sprintf("%s&tag=%s:%s&tag=namespace:%s", urlStr, kind, meta.Name, meta.Namespace)
 }
 
 func encodeTags(urlStr string, tags map[string]string) string {
@@ -86,9 +85,9 @@ func encodeTags(urlStr string, tags map[string]string) string {
 	return urlStr
 }
 
-func param(obj metav1.ObjectMeta, annotation, cfgVal, defaultVal string) string {
+func param(meta metav1.ObjectMeta, annotation, cfgVal, defaultVal string) string {
 	// give precedence to annotation
-	value := obj.GetAnnotations()[annotation]
+	value := meta.GetAnnotations()[annotation]
 	if value == "" {
 		// then config
 		value = cfgVal
@@ -100,9 +99,9 @@ func param(obj metav1.ObjectMeta, annotation, cfgVal, defaultVal string) string 
 	return value
 }
 
-func resourceName(kind string, obj metav1.ObjectMeta) string {
+func resourceName(kind string, meta metav1.ObjectMeta) string {
 	if kind == discovery.ServiceType.String() {
-		return obj.Namespace + "-" + kind + "-" + obj.Name
+		return meta.Namespace + "-" + kind + "-" + meta.Name
 	}
-	return kind + "-" + obj.Name
+	return kind + "-" + meta.Name
 }

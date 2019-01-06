@@ -140,3 +140,15 @@ func NewDummyDataProcessor(latency time.Duration) *DummyDataProcessor {
 		latency: latency,
 	}
 }
+
+type DummyProviderHandler struct {
+	count int
+}
+
+func (d *DummyProviderHandler) AddProvider(provider MetricsSourceProvider) {
+	d.count += 1
+}
+
+func (d *DummyProviderHandler) DeleteProvider(name string) {
+	d.count -= 1
+}
