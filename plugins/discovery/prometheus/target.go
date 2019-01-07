@@ -13,22 +13,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type target struct {
-	name      string
-	scrapeURL string
-}
-
-func newTarget(name, u string) target {
-	return target{
-		name:      name,
-		scrapeURL: u,
-	}
-}
-
 type targetHandler struct {
-	ph      metrics.DynamicProviderHandler
-	mtx     sync.RWMutex
-	targets map[string]string
+	ph             metrics.DynamicProviderHandler
+	useAnnotations bool
+	mtx            sync.RWMutex
+	targets        map[string]string
 }
 
 func newTargetHandler(providerHandler metrics.DynamicProviderHandler) *targetHandler {
@@ -44,15 +33,10 @@ func (th *targetHandler) all() map[string]string {
 	return th.targets
 }
 
-func (th *targetHandler) get(name string) target {
+func (th *targetHandler) get(name string) string {
 	th.mtx.RLock()
-	val := th.targets[name]
-	th.mtx.RUnlock()
-
-	if val != "" {
-		return newTarget(name, val)
-	}
-	return target{}
+	defer th.mtx.RUnlock()
+	return th.targets[name]
 }
 
 func (th *targetHandler) add(name, url string) {
@@ -72,6 +56,8 @@ func (th *targetHandler) discover(ip, kind string, meta metav1.ObjectMeta, rule 
 	name := resourceName(kind, meta)
 	cachedURL := registry.registeredURL(name)
 	scrapeURL := scrapeURL(ip, kind, meta, rule)
+
+	// add target if scrapeURL is non-empty and has changed
 	if scrapeURL != "" && scrapeURL != cachedURL {
 		glog.V(4).Infof("scrapeURL: %s", scrapeURL)
 		glog.V(4).Infof("cachedURL: %s", cachedURL)
@@ -86,6 +72,14 @@ func (th *targetHandler) discover(ip, kind string, meta metav1.ObjectMeta, rule 
 			return
 		}
 		th.register(name, scrapeURL, provider)
+	}
+
+	// delete target if scrape annotation is false/absent and handler is annotation based
+	if scrapeURL == "" && cachedURL != "" && th.useAnnotations && th.get(name) != "" {
+		if param(meta, scrapeAnnotation, "", "false") == "false" {
+			glog.V(2).Infof("deleting target %s as scrape is false.", name)
+			th.unregister(name)
+		}
 	}
 }
 

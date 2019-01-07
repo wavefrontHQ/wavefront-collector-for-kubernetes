@@ -101,7 +101,7 @@ func (dm *discoveryManager) reload(cfg discovery.Config) {
 	go wait.Until(func() {
 		dm.load(cfg)
 	}, syncInterval, dm.channel)
-	glog.V(8).Info("discovery reloading terminated")
+	glog.V(5).Info("discovery reloading terminated")
 }
 
 func (dm *discoveryManager) load(cfg discovery.Config) {
@@ -121,6 +121,7 @@ func (dm *discoveryManager) load(cfg discovery.Config) {
 	}
 	for name, handler := range dm.rules {
 		if _, exists := rules[name]; !exists {
+			glog.V(2).Infof("deleting discovery rule %s", name)
 			delete(dm.rules, name)
 			handler.Delete()
 		}

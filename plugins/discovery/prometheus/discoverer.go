@@ -15,6 +15,7 @@ func NewDiscoverer(providerHandler metrics.DynamicProviderHandler) discovery.Dis
 	d := &discoverer{
 		runtimeHandler: newTargetHandler(providerHandler),
 	}
+	d.runtimeHandler.useAnnotations = true
 	return d
 }
 
@@ -23,7 +24,6 @@ func (d *discoverer) Discover(ip, kind string, meta metav1.ObjectMeta) {
 }
 
 func (d *discoverer) Delete(kind string, meta metav1.ObjectMeta) {
-	//TODO: consider delegating to the runtime handlers
 	name := resourceName(kind, meta)
 	d.runtimeHandler.unregister(name)
 }

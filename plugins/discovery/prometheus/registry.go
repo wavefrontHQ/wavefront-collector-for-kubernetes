@@ -1,19 +1,34 @@
 package prometheus
 
-import "sync"
+import (
+	"k8s.io/apimachinery/pkg/util/wait"
+	"sync"
+	"time"
+
+	"github.com/rcrowley/go-metrics"
+)
 
 type targetRegistry struct {
 	mtx     sync.RWMutex
 	targets map[string]*targetHandler
 }
 
-// singleton target registry
-var registry *targetRegistry
+var (
+	// singleton target registry
+	registry    *targetRegistry
+	targetCount metrics.Gauge
+)
 
 func init() {
 	registry = &targetRegistry{
 		targets: make(map[string]*targetHandler),
 	}
+	targetCount = metrics.GetOrRegisterGauge("discovery.targets.registered", metrics.DefaultRegistry)
+
+	// update the target counter once a minute
+	go wait.Forever(func() {
+		targetCount.Update(int64(registry.count()))
+	}, 1*time.Minute)
 }
 
 func (d *targetRegistry) register(name string, th *targetHandler) {
@@ -37,7 +52,13 @@ func (d *targetRegistry) registered(name string) *targetHandler {
 func (d *targetRegistry) registeredURL(name string) string {
 	handler := d.registered(name)
 	if handler != nil {
-		return handler.get(name).scrapeURL
+		return handler.get(name)
 	}
 	return ""
+}
+
+func (d *targetRegistry) count() int {
+	d.mtx.RLock()
+	defer d.mtx.RUnlock()
+	return len(d.targets)
 }
