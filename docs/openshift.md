@@ -8,7 +8,7 @@
 cd deploy/openshift
 oc create -f 0-collector-namespace.yaml
 ```
-Note: Step 5 and 6 are needed if you are planning to use Wavefront Proxy else go to step 7.
+Note: Steps 5 and 6 are needed if you are planning to use Wavefront Proxy else go to step 7.
 
 5. Login into Openshift web console and create storage under `wavefront-collector`. Select Access Mode as `RWX` and Size as `5 GiB`, give name to the storage and make a note of it.
 
