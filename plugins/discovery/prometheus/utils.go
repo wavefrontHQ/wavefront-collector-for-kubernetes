@@ -41,9 +41,9 @@ func scrapeURL(ip, kind string, meta metav1.ObjectMeta, rule discovery.Prometheu
 	name := resourceName(kind, meta)
 	u := baseURL(scheme, ip, port, path, name, source, prefix)
 	u = encodeMeta(u, kind, meta)
-	u = encodeTags(u, rule.Tags)
+	u = encodeTags(u, "", rule.Tags)
 	if includeLabels == "true" {
-		u = encodeTags(u, meta.Labels)
+		u = encodeTags(u, "label.", meta.Labels)
 	}
 	return u
 }
@@ -66,7 +66,7 @@ func encodeMeta(urlStr, kind string, meta metav1.ObjectMeta) string {
 	return fmt.Sprintf("%s&tag=%s:%s&tag=namespace:%s", urlStr, kind, meta.Name, meta.Namespace)
 }
 
-func encodeTags(urlStr string, tags map[string]string) string {
+func encodeTags(urlStr, prefix string, tags map[string]string) string {
 	if len(tags) == 0 {
 		return urlStr
 	}
@@ -79,7 +79,7 @@ func encodeTags(urlStr string, tags map[string]string) string {
 	for _, k := range keys {
 		// exclude pod-template-hash
 		if k != "pod-template-hash" {
-			urlStr = fmt.Sprintf("%s&tag=%s:%s", urlStr, k, tags[k])
+			urlStr = fmt.Sprintf("%s&tag=%s%s:%s", urlStr, prefix, k, tags[k])
 		}
 	}
 	return urlStr
