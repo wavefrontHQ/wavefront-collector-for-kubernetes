@@ -14,8 +14,8 @@ rules:
   - events
   - namespaces
   - nodes
+  - nodes/stats
   - pods
-  - services
   verbs:
   - get
   - list
