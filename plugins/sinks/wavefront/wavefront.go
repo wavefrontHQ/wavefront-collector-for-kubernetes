@@ -131,6 +131,7 @@ func (sink *wavefrontSink) processMetricSets(metricSets map[string]*metrics.Metr
 		tags["cluster"] = sink.ClusterName
 		// Add pod labels as tags
 		sink.addLabelTags(ms, tags)
+		hostname := tags["hostname"]
 		metricType := tags["type"]
 		if strings.Contains(tags["container_name"], sysSubContainerName) {
 			//don't send system subcontainers
@@ -158,7 +159,7 @@ func (sink *wavefrontSink) processMetricSets(metricSets map[string]*metrics.Metr
 			} else if metricType == "ns" {
 				source = tags["namespace_name"] + "-ns"
 			} else {
-				source = tags["hostname"]
+				source = hostname
 			}
 			processTags(tags)
 			sink.sendPoint(sink.cleanMetricName(metricType, metricName), value, ts, source, tags)
@@ -176,7 +177,7 @@ func (sink *wavefrontSink) processMetricSets(metricSets map[string]*metrics.Metr
 			}
 
 			ts := ts.Unix()
-			source := tags["hostname"]
+			source := hostname
 			for labelName, labelValue := range metric.Labels {
 				tags[labelName] = labelValue
 			}
