@@ -22,7 +22,7 @@ const (
 
 func scrapeURL(ip, kind string, meta metav1.ObjectMeta, rule discovery.PrometheusConfig) string {
 	if ip == "" {
-		glog.V(5).Infof("missing pod ip for %s", meta.Name)
+		glog.V(5).Infof("missing ip for %s=%s", kind, meta.Name)
 		return ""
 	}
 	scrape := param(meta, scrapeAnnotation, "", "false")

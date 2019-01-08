@@ -43,18 +43,14 @@ func (rh *ruleHandler) Handle(cfg interface{}) error {
 	}
 
 	// delete targets that no longer apply to this rule
-	for k := range rh.th.all() {
-		if _, exists := targets[k]; !exists {
-			rh.th.unregister(k)
-		}
-	}
+	rh.th.deleteMissing(targets)
+
 	return nil
 }
 
 func (rh *ruleHandler) Delete() {
-	for k := range rh.th.all() {
-		rh.th.unregister(k)
-	}
+	// delete all targets
+	rh.th.deleteMissing(nil)
 }
 
 func (rh *ruleHandler) findPods(rule discovery.PrometheusConfig, targets map[string]bool) {

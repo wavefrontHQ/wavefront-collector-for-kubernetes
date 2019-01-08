@@ -27,10 +27,17 @@ func newTargetHandler(providerHandler metrics.DynamicProviderHandler) *targetHan
 	}
 }
 
-func (th *targetHandler) all() map[string]string {
-	th.mtx.RLock()
-	defer th.mtx.RUnlock()
-	return th.targets
+// deletes targets that do not exist in the input map
+func (th *targetHandler) deleteMissing(input map[string]bool) {
+	th.mtx.Lock()
+	defer th.mtx.Unlock()
+	for k := range th.targets {
+		if _, exists := input[k]; !exists {
+			// delete directly rather than call unregister to prevent recursive locking
+			delete(th.targets, k)
+			th.deleteProvider(k)
+		}
+	}
 }
 
 func (th *targetHandler) get(name string) string {
@@ -43,12 +50,6 @@ func (th *targetHandler) add(name, url string) {
 	th.mtx.Lock()
 	defer th.mtx.Unlock()
 	th.targets[name] = url
-}
-
-func (th *targetHandler) delete(name string) {
-	th.mtx.Lock()
-	defer th.mtx.Unlock()
-	delete(th.targets, name)
 }
 
 func (th *targetHandler) discover(ip, kind string, meta metav1.ObjectMeta, rule discovery.PrometheusConfig) {
@@ -90,7 +91,13 @@ func (th *targetHandler) register(name, url string, provider metrics.MetricsSour
 }
 
 func (th *targetHandler) unregister(name string) {
-	th.delete(name)
+	th.mtx.Lock()
+	delete(th.targets, name)
+	th.mtx.Unlock()
+	th.deleteProvider(name)
+}
+
+func (th *targetHandler) deleteProvider(name string) {
 	if registry.registered(name) != nil {
 		providerName := fmt.Sprintf("%s: %s", prometheus.ProviderName, name)
 		th.ph.DeleteProvider(providerName)
