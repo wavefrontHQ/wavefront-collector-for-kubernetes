@@ -27,8 +27,8 @@ Following sources are currently supported and can be configured using the `--sou
 ```
 Multiple prometheus sources can be added to scrape additional endpoints.
 
-### Pod Auto Discovery
-The collector can auto discover pods that export Prometheus format metrics. See the [discovery documentation](https://github.com/wavefronthq/wavefront-kubernetes-collector/tree/master/docs/discovery.md) for details.
+### Auto Discovery
+The collector can auto discover pods and services that export Prometheus format metrics. See the [discovery documentation](https://github.com/wavefronthq/wavefront-kubernetes-collector/tree/master/docs/discovery.md) for details.
 
 ### Sending metrics to Wavefront
 

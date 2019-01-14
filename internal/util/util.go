@@ -31,7 +31,6 @@ func GetNodeLister(kubeClient *kube_client.Clientset) (v1listers.NodeLister, *ca
 	nodeLister := v1listers.NewNodeLister(store)
 	reflector := cache.NewReflector(lw, &kube_api.Node{}, store, time.Hour)
 	go reflector.Run(wait.NeverStop)
-
 	return nodeLister, reflector, nil
 }
 
@@ -42,4 +41,13 @@ func GetPodLister(kubeClient *kube_client.Clientset) (v1listers.PodLister, error
 	reflector := cache.NewReflector(lw, &kube_api.Pod{}, store, time.Hour)
 	go reflector.Run(wait.NeverStop)
 	return podLister, nil
+}
+
+func GetServiceLister(kubeClient *kube_client.Clientset) (v1listers.ServiceLister, error) {
+	lw := cache.NewListWatchFromClient(kubeClient.CoreV1().RESTClient(), "services", kube_api.NamespaceAll, fields.Everything())
+	store := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc})
+	serviceLister := v1listers.NewServiceLister(store)
+	reflector := cache.NewReflector(lw, &kube_api.Service{}, store, time.Hour)
+	go reflector.Run(wait.NeverStop)
+	return serviceLister, nil
 }

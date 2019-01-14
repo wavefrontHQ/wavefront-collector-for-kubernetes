@@ -10,7 +10,7 @@ ifndef TEMP_DIR
 TEMP_DIR:=$(shell mktemp -d /tmp/wavefront.XXXXXX)
 endif
 
-VERSION?=0.9.3
+VERSION?=0.9.4
 GIT_COMMIT:=$(shell git rev-parse --short HEAD)
 
 REPO_DIR:=$(shell pwd)

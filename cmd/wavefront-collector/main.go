@@ -76,7 +76,8 @@ func main() {
 
 	if opt.EnableDiscovery {
 		handler := sourceManager.(metrics.DynamicProviderHandler)
-		createDiscoveryManagerOrDie(kubeClient, podLister, opt.DiscoveryConfigFile, handler)
+		serviceLister := getServiceListerOrDie(kubeClient)
+		createDiscoveryManagerOrDie(kubeClient, podLister, serviceLister, opt.DiscoveryConfigFile, handler)
 	}
 
 	man, err := manager.NewManager(sourceManager, dataProcessors, sinkManager,
@@ -128,9 +129,9 @@ func createAndInitSinksOrDie(sinkAddresses flags.Uris, sinkExportDataTimeout tim
 	return sinkManager
 }
 
-func createDiscoveryManagerOrDie(client *kube_client.Clientset, podLister v1listers.PodLister, cfgFile string,
-	handler metrics.DynamicProviderHandler) {
-	discovery.NewDiscoveryManager(client, podLister, cfgFile, handler)
+func createDiscoveryManagerOrDie(client *kube_client.Clientset, podLister v1listers.PodLister,
+	serviceLister v1listers.ServiceLister, cfgFile string, handler metrics.DynamicProviderHandler) {
+	discovery.NewDiscoveryManager(client, podLister, serviceLister, cfgFile, handler)
 }
 
 func getPodListerOrDie(kubeClient *kube_client.Clientset) v1listers.PodLister {
@@ -139,6 +140,14 @@ func getPodListerOrDie(kubeClient *kube_client.Clientset) v1listers.PodLister {
 		glog.Fatalf("Failed to create podLister: %v", err)
 	}
 	return podLister
+}
+
+func getServiceListerOrDie(kubeClient *kube_client.Clientset) v1listers.ServiceLister {
+	serviceLister, err := util.GetServiceLister(kubeClient)
+	if err != nil {
+		glog.Fatalf("Failed to create serviceLister: %v", err)
+	}
+	return serviceLister
 }
 
 func createKubeClientOrDie(kubernetesUrl *url.URL) *kube_client.Clientset {

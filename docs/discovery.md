@@ -1,11 +1,11 @@
-# Pod Auto Discovery
+# Auto Discovery
 
-The Wavefront Kubernetes Collector can auto discover pods that expose prometheus format metrics and dynamically configure [Prometheus scrape targets](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/docs/configuration.md#prometheus-source) for the pods.
+The Wavefront Kubernetes Collector can auto discover pods and services that expose prometheus format metrics and dynamically configure [Prometheus scrape targets](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/docs/configuration.md#prometheus-source) for the targets.
 
-Pods are discovered based on pod annotations and based on discovery rules provided using a configuration file.
+Pods/Services are discovered based on annotations and based on discovery rules provided using a configuration file.
 
 ## Annotations Based Discovery
-Pods annotated with `prometheus.io/scrape` set to **true** will be auto discovered.
+Pods/Services annotated with `prometheus.io/scrape` set to **true** will be auto discovered.
 
 Additional annotations that apply:
 - `prometheus.io/scheme`: Defaults to **http**.
@@ -16,7 +16,7 @@ Additional annotations that apply:
 - `prometheus.io/source`: Optional source for the reported metrics. Defaults to **prom_source**.
 
 ## Rules Based Discovery
-Discovery rules enable discovery based on pod labels and namespaces. Prometheus scrape options similar to the annotations above are supported.
+Discovery rules enable discovery based on labels and namespaces. Prometheus scrape options similar to the annotations above are supported.
 
 The rules are provided to the collector using the optional `--discovery-config` flag. When provided, the collector watches for configuration changes and automatically reloads configurations without having to restart the collector.
 
@@ -38,6 +38,7 @@ prom_configs:
   namespace: my-app-namespace
   prefix: my-app.
 ```
+See the [Prometheus Configuration](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/internal/discovery/configs.go#L19) for details.
 
 ## Use Cases
 Together, annotation and rule based discovery can be used to easily collect metrics from the Kubernetes control plane (kube-dns etc), NGINX ingresses, and any application that exposes a Prometheus scrape endpoint.

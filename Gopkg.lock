@@ -193,14 +193,14 @@
   version = "v1.2.2"
 
 [[projects]]
-  digest = "1:634e03daf54aa2b7c7404356b02086384815cc102cbb03c48dc9bc82613e1937"
+  digest = "1:3ac6859433ba7add249d2f6ed8296787bdb9b34594de7f051feab33b23e3dd75"
   name = "github.com/wavefronthq/wavefront-sdk-go"
   packages = [
     "internal",
     "senders",
   ]
   pruneopts = "UT"
-  revision = "7821ac6d8ae05fe70c6d090ebda380c64f1416e4"
+  revision = "b7a66ceb0066049f1dbc792349f6844dbf779833"
 
 [[projects]]
   branch = "master"
