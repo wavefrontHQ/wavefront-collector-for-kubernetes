@@ -3,6 +3,7 @@ package prometheus
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
 
@@ -39,6 +40,7 @@ func scrapeURL(ip, kind string, meta metav1.ObjectMeta, rule discovery.Prometheu
 	includeLabels := param(meta, labelsAnnotation, rule.IncludeLabels, "true")
 
 	name := resourceName(kind, meta)
+	port = sanitizePort(meta.Name, port)
 	u := baseURL(scheme, ip, port, path, name, source, prefix)
 	u = encodeMeta(u, kind, meta)
 	u = encodeTags(u, "", rule.Tags)
@@ -104,4 +106,12 @@ func resourceName(kind string, meta metav1.ObjectMeta) string {
 		return meta.Namespace + "-" + kind + "-" + meta.Name
 	}
 	return kind + "-" + meta.Name
+}
+
+func sanitizePort(name, port string) string {
+	if strings.Contains(name, "kube-state-metrics") && port == "" {
+		glog.V(5).Infof("using port 8080 for %s", name)
+		return "8080"
+	}
+	return port
 }

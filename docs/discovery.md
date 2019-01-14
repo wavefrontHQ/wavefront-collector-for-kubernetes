@@ -38,6 +38,7 @@ prom_configs:
   namespace: my-app-namespace
   prefix: my-app.
 ```
+See the [Prometheus Configuration](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/internal/discovery/configs.go#L19) for details.
 
 ## Use Cases
 Together, annotation and rule based discovery can be used to easily collect metrics from the Kubernetes control plane (kube-dns etc), NGINX ingresses, and any application that exposes a Prometheus scrape endpoint.
