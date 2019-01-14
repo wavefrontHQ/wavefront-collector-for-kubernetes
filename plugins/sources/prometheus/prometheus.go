@@ -198,10 +198,14 @@ func (src *prometheusMetricsSource) buildHistos(name string, m *dto.Metric, now 
 func (src *prometheusMetricsSource) buildTags(m *dto.Metric) map[string]string {
 	result := map[string]string{}
 	for k, v := range src.tags {
-		result[k] = v
+		if len(v) > 0 {
+			result[k] = v
+		}
 	}
 	for _, lp := range m.Label {
-		result[lp.GetName()] = lp.GetValue()
+		if len(lp.GetValue()) > 0 {
+			result[lp.GetName()] = lp.GetValue()
+		}
 	}
 	return result
 }
