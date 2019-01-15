@@ -24,7 +24,6 @@ spec:
         command:
         - /wavefront-collector
         - --source=kubernetes.summary_api:''
-        - --source=prometheus:''?url=http://kube-state-metrics.kube-system.svc.cluster.local:8080/metrics
         - --sink=wavefront:?proxyAddress=wavefront-proxy.default.svc.cluster.local:2878&clusterName=k8s-cluster&includeLabels=true
         - --v=2
         volumeMounts:
