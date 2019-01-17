@@ -302,7 +302,6 @@ func (this *summaryMetricsSource) decodeNetworkStats(metrics *MetricSet, network
 	this.addIntMetric(metrics, &MetricNetworkRxErrors, network.RxErrors)
 	this.addIntMetric(metrics, &MetricNetworkTx, network.TxBytes)
 	this.addIntMetric(metrics, &MetricNetworkTxErrors, network.TxErrors)
-
 }
 
 func (this *summaryMetricsSource) decodeFsStats(metrics *MetricSet, fsKey string, fs *stats.FsStats) {
