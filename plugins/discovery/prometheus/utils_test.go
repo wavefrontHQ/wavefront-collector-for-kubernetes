@@ -115,7 +115,7 @@ func TestScrapeURL(t *testing.T) {
 		t.Error("expected non-empty scrapeURL.")
 	}
 	resName := resourceName(discovery.PodType.String(), pod.ObjectMeta)
-	expected := fmt.Sprintf("?url=https://%s:9102/prometheus&name=%s&prefix=test.&tag=pod:test&tag=namespace:test", pod.Status.PodIP, resName)
+	expected := fmt.Sprintf("?url=https://%s:9102/prometheus&name=%s&source=test&prefix=test.&tag=pod:test&tag=namespace:test", pod.Status.PodIP, resName)
 	actual := u
 	if actual != expected {
 		t.Errorf("annotations not encoded. expected: %s actual: %s", expected, actual)
@@ -133,7 +133,7 @@ func TestScrapeURL(t *testing.T) {
 	pod.Annotations = map[string]string{}
 
 	actual = scrapeURL("10.2.3.4", "pod", pod.ObjectMeta, cfg)
-	expected = fmt.Sprintf("?url=https://%s:9103/path&name=%s&prefix=foo.&tag=pod:test&tag=namespace:test", pod.Status.PodIP, resName)
+	expected = fmt.Sprintf("?url=https://%s:9103/path&name=%s&source=test&prefix=foo.&tag=pod:test&tag=namespace:test", pod.Status.PodIP, resName)
 
 	if actual != expected {
 		t.Errorf("cfg not encoded. expected: %s actual: %s", expected, actual)
