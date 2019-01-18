@@ -45,7 +45,7 @@ type PrometheusConfig struct {
 	// optional map of custom tags to include with the reported metrics.
 	Tags map[string]string `yaml:"tags"`
 
-	// optional source for metrics collected using this rule. Defaults to "prom_source".
+	// optional source for metrics collected using this rule. Defaults to the name of the Kubernetes resource.
 	Source string `yaml:"source"`
 
 	// whether to include resource labels with the reported metrics. Defaults to "true".

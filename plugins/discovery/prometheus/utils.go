@@ -39,6 +39,10 @@ func scrapeURL(ip, kind string, meta metav1.ObjectMeta, rule discovery.Prometheu
 	source := param(meta, sourceAnnotation, rule.Source, "")
 	includeLabels := param(meta, labelsAnnotation, rule.IncludeLabels, "true")
 
+	if source == "" {
+		source = meta.Name
+	}
+
 	name := resourceName(kind, meta)
 	port = sanitizePort(meta.Name, port)
 	u := baseURL(scheme, ip, port, path, name, source, prefix)

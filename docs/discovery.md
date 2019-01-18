@@ -13,7 +13,7 @@ Additional annotations that apply:
 - `prometheus.io/port`: Defaults to a port free target if omitted.
 - `prometheus.io/prefix`: Dot suffixed string to prefix reported metrics. Defaults to an empty string.
 - `prometheus.io/includeLabels`: Whether to include pod labels as tags on reported metrics. Defaults to **true**.
-- `prometheus.io/source`: Optional source for the reported metrics. Defaults to **prom_source**.
+- `prometheus.io/source`: Optional source for the reported metrics. Defaults to the name of the Kubernetes resource.
 
 ## Rules Based Discovery
 Discovery rules enable discovery based on labels and namespaces. Prometheus scrape options similar to the annotations above are supported.
