@@ -85,8 +85,9 @@ func (this *summaryMetricsSource) ScrapeMetrics(start, end time.Time) (*DataBatc
 }
 
 const (
-	RootFsKey = "/"
-	LogsKey   = "logs"
+	RootFsKey           = "/"
+	LogsKey             = "logs"
+	NetworkInterfaceKey = "interface_name"
 )
 
 // For backwards compatibility, map summary system names into original names.
@@ -289,6 +290,14 @@ func (this *summaryMetricsSource) decodeNetworkStats(metrics *MetricSet, network
 		return
 	}
 
+	for _, netInterface := range network.Interfaces {
+		glog.V(9).Infof("Processing metrics for network interface %s", netInterface.Name)
+		intfLabels := map[string]string{NetworkInterfaceKey: netInterface.Name}
+		this.addLabeledIntMetric(metrics, &MetricNetworkRx, intfLabels, netInterface.RxBytes)
+		this.addLabeledIntMetric(metrics, &MetricNetworkRxErrors, intfLabels, netInterface.RxErrors)
+		this.addLabeledIntMetric(metrics, &MetricNetworkTx, intfLabels, netInterface.TxBytes)
+		this.addLabeledIntMetric(metrics, &MetricNetworkTxErrors, intfLabels, netInterface.TxErrors)
+	}
 	this.addIntMetric(metrics, &MetricNetworkRx, network.RxBytes)
 	this.addIntMetric(metrics, &MetricNetworkRxErrors, network.RxErrors)
 	this.addIntMetric(metrics, &MetricNetworkTx, network.TxBytes)
