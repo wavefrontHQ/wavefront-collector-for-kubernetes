@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: discovery-config
+  namespace: wavefront-collector
+data:
+  config.yaml: |
+    global:
+      discovery_interval: 5m
+    prom_configs:
+    - name: kube-dns-discovery
+      labels:
+        k8s-app: kube-dns
+      port: 10054
+      path: /metrics
+      scheme: http
+      prefix: kube.dns.
+      tags:
+        env: prod
