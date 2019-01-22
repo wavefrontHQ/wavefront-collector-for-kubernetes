@@ -57,7 +57,7 @@ kubectl logs -f COLLECTOR_POD_NAME -n wavefront-collector
 ```
 
 ## OpenShift
-This collector supports monitoring of Openshift Origin 3.9 clusters. See [openshift.md](https://github.com/wavefronthq/wavefront-kubernetes-collector/tree/master/docs/openshift.md) for detailed installation and configuration steps.
+This collector supports monitoring of Openshift Origin 3.9 clusters. See [openshift.md](https://github.com/wavefronthq/wavefront-kubernetes-collector/tree/master/docs/openshift.md) for detailed installation instructions.
 
 [ci-img]: https://travis-ci.com/wavefrontHQ/wavefront-kubernetes-collector.svg?branch=master
 [ci]: https://travis-ci.com/wavefrontHQ/wavefront-kubernetes-collector

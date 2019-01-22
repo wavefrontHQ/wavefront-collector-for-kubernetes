@@ -1,16 +1,22 @@
 # Installation and configuration on OpenShift Origin 3.9
 
-1. Login into Openshift master node.
-2. Login into Openshift cluster `oc login -u <ADMIN_USER>`
+1. Log in to the Openshift master node.
+2. Log in to the Openshift cluster:
+```
+oc login -u <ADMIN_USER>
+```
 3. Clone this Repo.
 4. Create `wavefront-collector` namespace:
 ```
 cd deploy/openshift
 oc create -f 0-collector-namespace.yaml
 ```
-Note: Steps 5 and 6 are needed if you are planning to use Wavefront Proxy else go to step 7.
+**Note**: If you are planning to use the Wavefront proxy steps 5 and 6 are needed. if you're doing direct ingestion, go to step 7.
 
-5. Login into Openshift web console and create storage under `wavefront-collector`. Select Access Mode as `RWX` and Size as `5 GiB`, give name to the storage and make a note of it.
+5. Log in to the Openshift web console and create storage under `wavefront-collector`:
+  1. Select **Access Mode** as `RWX`
+  2. Set **Size** to `5 GiB`
+  3. Give a name to the storage and make a note of it.
 
 6. Replace YOUR_CLUSTER, YOUR_API_TOKEN and STORAGE_NAME in `1-wavefront-proxy.yaml` and run:
 ```
@@ -20,7 +26,7 @@ oc create -f 1-wavefront-proxy.yaml
 ```
 oc create -f 2-kube-state.yaml
 ```
-8. Edit the `wavefront` sink and `cluster name` in `collector/3-collector-deployment.yaml` based on the selected metric ingestion approach as given below.
+8. Edit the `wavefront` sink and `clusterName` in `collector/3-collector-deployment.yaml` based on the selected metric ingestion approach as given below.
 #### Using Wavefront Proxy
 
 ```
