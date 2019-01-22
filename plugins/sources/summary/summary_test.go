@@ -620,3 +620,10 @@ func TestScrapeSummaryMetrics(t *testing.T) {
 	assert.Nil(t, err, "scrape error")
 	assert.Equal(t, res.MetricSets["node:test"].Labels[core.LabelMetricSetType.Key], core.MetricSetTypeNode)
 }
+
+func TestDecodeEphemeralStorageStatsForContainer(t *testing.T) {
+	ms := testingSummaryMetricsSource()
+	rootFs := &stats.FsStats{}
+	logs := &stats.FsStats{}
+	ms.decodeEphemeralStorageStatsForContainer(nil, rootFs, logs)
+}
