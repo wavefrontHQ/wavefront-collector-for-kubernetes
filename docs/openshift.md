@@ -14,9 +14,9 @@ oc create -f 0-collector-namespace.yaml
 **Note**: If you are planning to use the Wavefront proxy steps 5 and 6 are needed. if you're doing direct ingestion, go to step 7.
 
 5. Log in to the Openshift web console and create storage under `wavefront-collector`:
-  1. Select **Access Mode** as `RWX`
-  2. Set **Size** to `5 GiB`
-  3. Give a name to the storage and make a note of it.
+   * Select **Access Mode** as `RWX`
+   * Set **Size** to `5 GiB`
+   * Give a name to the storage and make a note of it.
 
 6. Replace YOUR_CLUSTER, YOUR_API_TOKEN and STORAGE_NAME in `1-wavefront-proxy.yaml` and run:
 ```
