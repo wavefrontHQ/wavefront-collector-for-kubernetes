@@ -18,7 +18,7 @@ Additional annotations that apply:
 ## Rules Based Discovery
 Discovery rules enable discovery based on labels and namespaces. Prometheus scrape options similar to the annotations above are supported.
 
-The rules are provided to the collector using the optional `--discovery-config` flag. When provided, the collector watches for configuration changes and automatically reloads configurations without having to restart the collector.
+The rules are provided to the collector using the optional `--discovery-config` flag. When provided, the collector watches for configuration changes and automatically reloads configurations without having to restart it.
 
 The sample configuration below enables discovery of `kube-dns` pods and a `my-app` application pods:
 ```yaml
@@ -38,7 +38,7 @@ prom_configs:
   namespace: my-app-namespace
   prefix: my-app.
 ```
-See the [Prometheus Configuration](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/internal/discovery/configs.go#L19) for details.
+See the [Prometheus Configuration](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/internal/discovery/configs.go#L19) and [sample deployment](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/tree/master/deploy/discovery-examples) for details.
 
 ## Use Cases
 Together, annotation and rule based discovery can be used to easily collect metrics from the Kubernetes control plane (kube-dns etc), NGINX ingresses, and any application that exposes a Prometheus scrape endpoint.
