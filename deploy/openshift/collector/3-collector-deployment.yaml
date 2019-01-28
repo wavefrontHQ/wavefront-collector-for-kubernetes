@@ -24,5 +24,6 @@ spec:
         command:
         - /wavefront-collector
         - --source=kubernetes.summary_api:${MASTER_URL}?useServiceAccount=true&kubeletHttps=true&kubeletPort=10250
+        - --source=prometheus:''?url=http://kube-state-metrics.kube-system.svc.cluster.local:8080/metrics
         - --sink=wavefront:?proxyAddress=wavefront-proxy.wavefront-collector.svc.cluster.local:2878&clusterName=openshift-cluster&includeLabels=true
         - --v=2
