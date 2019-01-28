@@ -27,6 +27,7 @@ oc create -f 1-wavefront-proxy.yaml
 oc create -f 2-kube-state.yaml
 ```
 8. Edit the `wavefront` sink and `clusterName` in `collector/3-collector-deployment.yaml` based on the selected metric ingestion approach as given below.
+
 #### Using Wavefront Proxy
 
 ```
