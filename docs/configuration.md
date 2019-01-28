@@ -33,9 +33,9 @@ Usage of ./wavefront-collector:
 - `useServiceAccount`: Defaults to false.
 - `auth`: If using secure kubelet port, this can be set to a valid kubeConfig file provided using a config map.
 
-Example Usage:
+Example usage using secure port and service account:
 ```
---source=kubernetes.summary_api:https://kubernetes.default.svc?kubeletPort=10250&kubeletHttps=true&inClusterConfig=false&auth=/etc/kubernetes/kubeconfig.conf
+--source=kubernetes.summary_api:https://kubernetes.default.svc?useServiceAccount=true&kubeletHttps=true&kubeletPort=10250&insecure=true
 ```
 
 See [configs.go](https://github.com/wavefronthq/wavefront-kubernetes-collector/tree/master/internal/kubernetes/configs.go) for how these properties are used.
