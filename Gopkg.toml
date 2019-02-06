@@ -1,37 +1,10 @@
-# Gopkg.toml example
-#
-# Refer to https://golang.github.io/dep/docs/Gopkg.toml.html
-# for detailed Gopkg.toml documentation.
-#
-# required = ["github.com/user/thing/cmd/thing"]
-# ignored = ["github.com/user/project/pkgX", "bitbucket.org/user/project/pkgA/pkgY"]
-#
-# [[constraint]]
-#   name = "github.com/user/project"
-#   version = "1.0.0"
-#
-# [[constraint]]
-#   name = "github.com/user/project2"
-#   branch = "dev"
-#   source = "github.com/myfork/project2"
-#
-# [[override]]
-#   name = "github.com/x/y"
-#   version = "2.4.0"
-#
-# [prune]
-#   non-go = false
-#   go-tests = true
-#   unused-packages = true
-
-
 [[override]]
   name = "github.com/emicklei/go-restful"
   version = "2.8.0"
 
 [[constraint]]
   name = "github.com/wavefronthq/wavefront-sdk-go"
-  revision = "b7a66ceb0066049f1dbc792349f6844dbf779833"
+  revision = "5e0e1d7d46ed0c3c182d73f7a12679cd13188e51"
 
 [[constraint]]
   branch = "master"

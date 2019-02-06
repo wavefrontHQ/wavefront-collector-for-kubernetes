@@ -2,6 +2,14 @@
 
 
 [[projects]]
+  digest = "1:780d1a5df3a9a227bf07e7beb6c851ec6ad2614555b1d015d9e2f136d13ad8a7"
+  name = "github.com/caio/go-tdigest"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "f3c8d94f65d3096ac96eda54ffcd10c0fe1477f1"
+  version = "v2.3.0"
+
+[[projects]]
   digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
@@ -193,14 +201,15 @@
   version = "v1.2.2"
 
 [[projects]]
-  digest = "1:3ac6859433ba7add249d2f6ed8296787bdb9b34594de7f051feab33b23e3dd75"
+  digest = "1:98b349b345518331aa3bf9dc638acfcfc4a621cafa1f1940edb69ce36632c21c"
   name = "github.com/wavefronthq/wavefront-sdk-go"
   packages = [
+    "histogram",
     "internal",
     "senders",
   ]
   pruneopts = "UT"
-  revision = "b7a66ceb0066049f1dbc792349f6844dbf779833"
+  revision = "5e0e1d7d46ed0c3c182d73f7a12679cd13188e51"
 
 [[projects]]
   branch = "master"
