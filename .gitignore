@@ -1,3 +1,4 @@
 vendor
 .idea
 _output
+.DS_Store
