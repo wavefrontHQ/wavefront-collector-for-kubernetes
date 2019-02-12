@@ -74,7 +74,7 @@ func TestDeleteTags(t *testing.T) {
 	}
 }
 
-func TestNamePass(t *testing.T) {
+func TestMetricWhitelist(t *testing.T) {
 	cfg := Config{
 		MetricWhitelist: []string{"foo"},
 	}
@@ -97,7 +97,7 @@ func TestNamePass(t *testing.T) {
 	}
 }
 
-func TestNameDrop(t *testing.T) {
+func TestMetricBlacklist(t *testing.T) {
 	cfg := Config{
 		MetricBlacklist: []string{"foo"},
 	}
@@ -114,7 +114,7 @@ func TestNameDrop(t *testing.T) {
 	}
 }
 
-func TestTagPass(t *testing.T) {
+func TestMetricTagWhitelist(t *testing.T) {
 	cfg := Config{
 		MetricTagWhitelist: map[string][]string{
 			"foo": {"va*"},
@@ -132,7 +132,7 @@ func TestTagPass(t *testing.T) {
 	}
 }
 
-func TestTagDrop(t *testing.T) {
+func TestMetricTagBlacklist(t *testing.T) {
 	cfg := Config{
 		MetricTagBlacklist: map[string][]string{
 			"foo": {"va*"},
