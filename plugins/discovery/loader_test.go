@@ -19,11 +19,18 @@ prom_configs:
       env: prod
     filters:
       metricWhitelist:
-        - '*foo*'
-        - 'bar*'
+      - '*foo*'
+      - 'bar*'
       metricBlacklist:
-        - 'kube.dns.go.*'
-        - 'kube.dns.probe.*'
+      - 'kube.dns.go.*'
+      - 'kube.dns.probe.*'
+      metricTagWhitelist:
+        env:
+        - 'prod1*'
+        - 'prod2*'
+        service:
+        - 'app1*'
+        - '?app2*'
 `
 
 func TestFromYAML(t *testing.T) {
@@ -39,6 +46,9 @@ func TestFromYAML(t *testing.T) {
 		t.Errorf("error parsing filters")
 	}
 	if len(cfg.PromConfigs[0].Filters.MetricBlacklist) != 2 {
+		t.Errorf("error parsing filters")
+	}
+	if len(cfg.PromConfigs[0].Filters.MetricTagWhitelist) != 2 {
 		t.Errorf("error parsing filters")
 	}
 }
