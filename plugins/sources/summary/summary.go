@@ -396,7 +396,6 @@ func (this *summaryMetricsSource) getSystemContainerName(c *stats.ContainerStats
 	return c.Name
 }
 
-// TODO: The summaryProvider duplicates a lot of code from kubeletProvider, and should be refactored.
 type summaryProvider struct {
 	nodeLister       v1listers.NodeLister
 	reflector        *cache.Reflector

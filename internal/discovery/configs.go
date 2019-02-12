@@ -1,6 +1,10 @@
 package discovery
 
-import "time"
+import (
+	"time"
+
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
+)
 
 // configuration for auto discovery
 type Config struct {
@@ -50,4 +54,6 @@ type PrometheusConfig struct {
 
 	// whether to include resource labels with the reported metrics. Defaults to "true".
 	IncludeLabels string `yaml:"includeLabels"`
+
+	Filters filter.Config `yaml:"filters"`
 }

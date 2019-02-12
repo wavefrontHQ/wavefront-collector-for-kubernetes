@@ -2,6 +2,7 @@ package wavefront
 
 import (
 	"fmt"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
 	"net/url"
 	"strconv"
 	"strings"
@@ -25,6 +26,7 @@ var (
 	sentPoints     gm.Counter
 	errPoints      gm.Counter
 	msCount        gm.Counter
+	filteredPoints gm.Counter
 	clientType     gm.Gauge
 )
 
@@ -32,6 +34,7 @@ func init() {
 	sentPoints = gm.GetOrRegisterCounter("wavefront.points.sent.count", gm.DefaultRegistry)
 	errPoints = gm.GetOrRegisterCounter("wavefront.points.errors.count", gm.DefaultRegistry)
 	msCount = gm.GetOrRegisterCounter("wavefront.points.metric-sets.count", gm.DefaultRegistry)
+	filteredPoints = gm.GetOrRegisterCounter("wavefront.points.filtered.count", gm.DefaultRegistry)
 	clientType = gm.GetOrRegisterGauge("wavefront.sender.type", gm.DefaultRegistry)
 }
 
@@ -41,6 +44,7 @@ type wavefrontSink struct {
 	Prefix            string
 	IncludeLabels     bool
 	IncludeContainers bool
+	filters           filter.Filter
 	testMode          bool
 	testReceivedLines []string
 }
@@ -54,6 +58,12 @@ func (sink *wavefrontSink) Stop() {
 }
 
 func (sink *wavefrontSink) sendPoint(metricName string, value float64, ts int64, source string, tags map[string]string) {
+	if sink.filters != nil && !sink.filters.Match(metricName, tags) {
+		filteredPoints.Inc(1)
+		glog.V(5).Infof("dropping metric: %s", metricName)
+		return
+	}
+
 	if sink.testMode {
 		tagStr := ""
 		for k, v := range tags {
@@ -282,6 +292,9 @@ func NewWavefrontSink(uri *url.URL) (metrics.DataSink, error) {
 		}
 		storage.IncludeContainers = incContainers
 	}
+
+	storage.filters = filter.FromQuery(vals)
+
 	if len(vals["testMode"]) > 0 {
 		testMode, err := strconv.ParseBool(vals["testMode"][0])
 		if err != nil {
