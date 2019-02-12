@@ -9,8 +9,8 @@ func TestFromQuery(t *testing.T) {
 	}
 	vals[MetricWhitelist] = []string{"foo*", "bar*"}
 	vals[MetricBlacklist] = []string{"drop*", "etc*"}
-	vals[MetricTagWhitelist] = []string{"foo*", "bar*"}
-	vals[MetricTagBlacklist] = []string{"drop*", "etc*"}
+	vals[MetricTagWhitelist] = []string{"env:[foo*,bar*]", "type:[bar*]"}
+	vals[MetricTagBlacklist] = []string{"env:[drop*,etc*]"}
 	vals[TagInclude] = []string{"key1*", "key2*"}
 	vals[TagExclude] = []string{"key3*", "key4*"}
 
@@ -23,8 +23,8 @@ func TestFromQuery(t *testing.T) {
 		t.Errorf("error creating filter")
 	}
 
-	if gf.namePass == nil || gf.nameDrop == nil || gf.tagPass == nil || gf.tagDrop == nil ||
-		gf.tagInclude == nil || gf.tagExclude == nil {
+	if gf.metricWhitelist == nil || gf.metricBlacklist == nil || gf.metricTagWhitelist == nil ||
+		gf.metricTagBlacklist == nil || gf.tagInclude == nil || gf.tagExclude == nil {
 		t.Errorf("error creating filter")
 	}
 }

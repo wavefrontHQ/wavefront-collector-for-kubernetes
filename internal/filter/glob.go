@@ -11,22 +11,22 @@ type Filter interface {
 }
 
 type globFilter struct {
-	namePass   glob.Glob
-	nameDrop   glob.Glob
-	tagPass    map[string]glob.Glob
-	tagDrop    map[string]glob.Glob
-	tagInclude glob.Glob
-	tagExclude glob.Glob
+	metricWhitelist    glob.Glob
+	metricBlacklist    glob.Glob
+	metricTagWhitelist map[string]glob.Glob
+	metricTagBlacklist map[string]glob.Glob
+	tagInclude         glob.Glob
+	tagExclude         glob.Glob
 }
 
 func NewGlobFilter(cfg Config) Filter {
 	return &globFilter{
-		namePass:   compile(cfg.MetricWhitelist),
-		nameDrop:   compile(cfg.MetricBlacklist),
-		tagPass:    multiCompile(cfg.MetricTagWhitelist),
-		tagDrop:    multiCompile(cfg.MetricTagBlacklist),
-		tagInclude: compile(cfg.TagInclude),
-		tagExclude: compile(cfg.TagExclude),
+		metricWhitelist:    compile(cfg.MetricWhitelist),
+		metricBlacklist:    compile(cfg.MetricBlacklist),
+		metricTagWhitelist: multiCompile(cfg.MetricTagWhitelist),
+		metricTagBlacklist: multiCompile(cfg.MetricTagBlacklist),
+		tagInclude:         compile(cfg.TagInclude),
+		tagExclude:         compile(cfg.TagExclude),
 	}
 }
 
@@ -57,17 +57,17 @@ func multiCompile(filters map[string][]string) map[string]glob.Glob {
 }
 
 func (gf *globFilter) Match(name string, tags map[string]string) bool {
-	if gf.namePass != nil && !gf.namePass.Match(name) {
+	if gf.metricWhitelist != nil && !gf.metricWhitelist.Match(name) {
 		return false
 	}
-	if gf.nameDrop != nil && gf.nameDrop.Match(name) {
+	if gf.metricBlacklist != nil && gf.metricBlacklist.Match(name) {
 		return false
 	}
 
-	if gf.tagPass != nil && !matchesTags(gf.tagPass, tags) {
+	if gf.metricTagWhitelist != nil && !matchesTags(gf.metricTagWhitelist, tags) {
 		return false
 	}
-	if gf.tagDrop != nil && matchesTags(gf.tagDrop, tags) {
+	if gf.metricTagBlacklist != nil && matchesTags(gf.metricTagBlacklist, tags) {
 		return false
 	}
 
