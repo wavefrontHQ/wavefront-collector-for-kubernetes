@@ -3,8 +3,8 @@ package prometheus
 import (
 	"github.com/golang/glog"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/kubernetes"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -38,6 +38,8 @@ func (rh *ruleHandler) Handle(cfg interface{}) error {
 		rh.findPods(rule, targets)
 	case discovery.ServiceType.String():
 		rh.findServices(rule, targets)
+	case discovery.ApiServerType.String():
+		rh.discoverAPIServer(rule, targets)
 	default:
 		glog.Errorf("unknown type=%s for rule=%s", rule.ResourceType, rule.Name)
 	}
@@ -51,6 +53,17 @@ func (rh *ruleHandler) Handle(cfg interface{}) error {
 func (rh *ruleHandler) Delete() {
 	// delete all targets
 	rh.th.deleteMissing(nil)
+}
+
+func (rh *ruleHandler) discoverAPIServer(rule discovery.PrometheusConfig, targets map[string]bool) {
+	if rule.Port == "" {
+		rule.Port = "443"
+	}
+	if rule.Scheme == "" {
+		rule.Scheme = "https"
+	}
+	rh.discover(kubernetes.DefaultAPIService, discovery.ApiServerType.String(),
+		metav1.ObjectMeta{Name: "kube-apiserver"}, rule, targets)
 }
 
 func (rh *ruleHandler) findPods(rule discovery.PrometheusConfig, targets map[string]bool) {

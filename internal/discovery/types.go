@@ -10,9 +10,10 @@ import (
 type ResourceType int
 
 const (
-	PodType     ResourceType = 1
-	ServiceType ResourceType = 2
-	IngressType ResourceType = 3
+	PodType       ResourceType = 1
+	ServiceType   ResourceType = 2
+	IngressType   ResourceType = 3
+	ApiServerType ResourceType = 4
 )
 
 func (resType ResourceType) String() string {
@@ -23,6 +24,8 @@ func (resType ResourceType) String() string {
 		return "service"
 	case IngressType:
 		return "ingress"
+	case ApiServerType:
+		return "apiserver"
 	default:
 		return fmt.Sprintf("%d", int(resType))
 	}

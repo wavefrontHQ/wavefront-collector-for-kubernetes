@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
 	"io/ioutil"
 	"math"
 	"net/http"
@@ -12,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/httputil"
 	. "github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 
 	"github.com/golang/glog"
@@ -46,8 +47,27 @@ func NewPrometheusMetricsSource(metricsURL, prefix, source string, tags map[stri
 		source:     source,
 		tags:       tags,
 		filters:    filters,
-		client:     &http.Client{Timeout: time.Second * 10},
+		client:     httpClient(metricsURL),
 	}
+}
+
+func httpClient(metricsURL string) *http.Client {
+	if strings.Contains(metricsURL, "kubernetes.default.svc.cluster.local") {
+		client, err := httputil.NewClient(httputil.ClientConfig{
+			TLSConfig: httputil.TLSConfig{
+				CAFile:             "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt",
+				InsecureSkipVerify: true,
+			},
+			BearerTokenFile: "/var/run/secrets/kubernetes.io/serviceaccount/token",
+		})
+		if err != nil {
+			//TODO: error handling
+			glog.Errorf("error creating client", err)
+		}
+		glog.V(2).Info("using secure client for kubernetes api service")
+		return client
+	}
+	return &http.Client{Timeout: time.Second * 10}
 }
 
 func (src *prometheusMetricsSource) Name() string {
