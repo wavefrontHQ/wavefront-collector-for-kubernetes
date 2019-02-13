@@ -2,6 +2,7 @@ package prometheus
 
 import (
 	"fmt"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
 	"testing"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
@@ -40,6 +41,41 @@ func TestEncodePod(t *testing.T) {
 	expected := "testUrl&tag=pod:test&tag=namespace:test-ns"
 	if encoded != expected {
 		t.Errorf("invalid encodeMeta. expected=%s encoded=%s", expected, encoded)
+	}
+}
+
+func TestEncodeFilter(t *testing.T) {
+	encoded := encodeFilter("testUrl", filter.MetricWhitelist, []string{"foo*", "bar*"})
+	expected := fmt.Sprintf("testUrl&%s=foo*&%s=bar*", filter.MetricWhitelist, filter.MetricWhitelist)
+	if encoded != expected {
+		t.Errorf("error encoding filter. expected=%s encoded=%s", expected, encoded)
+	}
+}
+
+func TestEncodeFilterMap(t *testing.T) {
+	actual := encodeFilterMap("testUrl", filter.MetricBlacklist, map[string][]string{
+		"env":     {"dev*", "staging*"},
+		"cluster": {"*west", "*east"},
+	})
+	expected := fmt.Sprintf("testUrl&%s=cluster:[*west,*east]&%s=env:[dev*,staging*]", filter.MetricBlacklist, filter.MetricBlacklist)
+	if actual != expected {
+		t.Error("error encoding filter map")
+	}
+}
+
+func TestEncodeFilters(t *testing.T) {
+	actual := encodeFilters("testUrl", filter.Config{
+		MetricWhitelist:    []string{"kube.dns.http.*"},
+		MetricBlacklist:    []string{"kube.dns.probe.*"},
+		MetricTagWhitelist: map[string][]string{"env": {"prod*"}},
+		MetricTagBlacklist: map[string][]string{"env": {"dev*"}},
+		TagInclude:         []string{"cluster"},
+		TagExclude:         []string{"pod-template-hash"},
+	})
+	expected := fmt.Sprintf("testUrl&%s=kube.dns.http.*&%s=kube.dns.probe.*&%s=env:[prod*]&%s=env:[dev*]&%s=cluster&%s=pod-template-hash",
+		filter.MetricWhitelist, filter.MetricBlacklist, filter.MetricTagWhitelist, filter.MetricTagBlacklist, filter.TagInclude, filter.TagExclude)
+	if actual != expected {
+		t.Error("error encoding filters")
 	}
 }
 

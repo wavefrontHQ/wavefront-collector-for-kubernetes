@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
 
 	"github.com/golang/glog"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -51,6 +52,7 @@ func scrapeURL(ip, kind string, meta metav1.ObjectMeta, rule discovery.Prometheu
 	if includeLabels == "true" {
 		u = encodeTags(u, "label.", meta.Labels)
 	}
+	u = encodeFilters(u, rule.Filters)
 	return u
 }
 
@@ -76,7 +78,6 @@ func encodeTags(urlStr, prefix string, tags map[string]string) string {
 	if len(tags) == 0 {
 		return urlStr
 	}
-
 	var keys []string
 	for k := range tags {
 		keys = append(keys, k)
@@ -87,6 +88,42 @@ func encodeTags(urlStr, prefix string, tags map[string]string) string {
 		if k != "pod-template-hash" {
 			urlStr = fmt.Sprintf("%s&tag=%s%s:%s", urlStr, prefix, k, tags[k])
 		}
+	}
+	return urlStr
+}
+
+func encodeFilters(urlStr string, cfg filter.Config) string {
+	if cfg.Empty() {
+		return urlStr
+	}
+	urlStr = encodeFilter(urlStr, filter.MetricWhitelist, cfg.MetricWhitelist)
+	urlStr = encodeFilter(urlStr, filter.MetricBlacklist, cfg.MetricBlacklist)
+	urlStr = encodeFilterMap(urlStr, filter.MetricTagWhitelist, cfg.MetricTagWhitelist)
+	urlStr = encodeFilterMap(urlStr, filter.MetricTagBlacklist, cfg.MetricTagBlacklist)
+	urlStr = encodeFilter(urlStr, filter.TagInclude, cfg.TagInclude)
+	urlStr = encodeFilter(urlStr, filter.TagExclude, cfg.TagExclude)
+	return urlStr
+}
+
+func encodeFilterMap(urlStr, name string, filters map[string][]string) string {
+	if len(filters) == 0 {
+		return urlStr
+	}
+	var keys []string
+	for k := range filters {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		patterns := "[" + strings.Join(filters[k], ",") + "]"
+		urlStr = fmt.Sprintf("%s&%s=%s:%s", urlStr, name, k, patterns)
+	}
+	return urlStr
+}
+
+func encodeFilter(urlStr, name string, slice []string) string {
+	for _, val := range slice {
+		urlStr = fmt.Sprintf("%s&%s=%s", urlStr, name, val)
 	}
 	return urlStr
 }
