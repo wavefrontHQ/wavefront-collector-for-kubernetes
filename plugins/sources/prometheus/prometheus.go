@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
 	"io/ioutil"
 	"math"
 	"net/http"
@@ -12,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/httputil"
 	. "github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 
 	"github.com/golang/glog"
@@ -39,15 +40,35 @@ type prometheusMetricsSource struct {
 	client     *http.Client
 }
 
-func NewPrometheusMetricsSource(metricsURL, prefix, source string, tags map[string]string, filters filter.Filter) MetricsSource {
+func NewPrometheusMetricsSource(metricsURL, prefix, source string, tags map[string]string, filters filter.Filter) (MetricsSource, error) {
+	client, err := httpClient(metricsURL)
+	if err != nil {
+		glog.Errorf("error creating http client: %q", err)
+		return nil, err
+	}
 	return &prometheusMetricsSource{
 		metricsURL: metricsURL,
 		prefix:     prefix,
 		source:     source,
 		tags:       tags,
 		filters:    filters,
-		client:     &http.Client{Timeout: time.Second * 10},
+		client:     client,
+	}, nil
+}
+
+func httpClient(metricsURL string) (*http.Client, error) {
+	if strings.Contains(metricsURL, "kubernetes.default.svc.cluster.local") {
+		client, err := httputil.NewClient(httputil.ClientConfig{
+			TLSConfig: httputil.TLSConfig{
+				CAFile:             "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt",
+				InsecureSkipVerify: true,
+			},
+			BearerTokenFile: "/var/run/secrets/kubernetes.io/serviceaccount/token",
+		})
+		glog.V(2).Info("using default client for kubernetes api service")
+		return client, err
 	}
+	return &http.Client{Timeout: time.Second * 10}, nil
 }
 
 func (src *prometheusMetricsSource) Name() string {
@@ -234,7 +255,10 @@ type prometheusProvider struct {
 func (p *prometheusProvider) GetMetricsSources() []MetricsSource {
 	var sources []MetricsSource
 	for _, metricsURL := range p.urls {
-		sources = append(sources, NewPrometheusMetricsSource(metricsURL, p.prefix, p.source, p.tags, p.filters))
+		source, err := NewPrometheusMetricsSource(metricsURL, p.prefix, p.source, p.tags, p.filters)
+		if err == nil {
+			sources = append(sources, source)
+		}
 	}
 	return sources
 }

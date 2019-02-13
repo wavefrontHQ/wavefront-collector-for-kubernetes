@@ -27,7 +27,8 @@ import (
 )
 
 const (
-	APIVersion = "v1"
+	APIVersion        = "v1"
+	DefaultAPIService = "kubernetes.default.svc.cluster.local"
 
 	defaultKubeletPort        = 10255
 	defaultKubeletHttps       = false
