@@ -40,18 +40,23 @@ type prometheusMetricsSource struct {
 	client     *http.Client
 }
 
-func NewPrometheusMetricsSource(metricsURL, prefix, source string, tags map[string]string, filters filter.Filter) MetricsSource {
+func NewPrometheusMetricsSource(metricsURL, prefix, source string, tags map[string]string, filters filter.Filter) (MetricsSource, error) {
+	client, err := httpClient(metricsURL)
+	if err != nil {
+		glog.Errorf("error creating http client: %q", err)
+		return nil, err
+	}
 	return &prometheusMetricsSource{
 		metricsURL: metricsURL,
 		prefix:     prefix,
 		source:     source,
 		tags:       tags,
 		filters:    filters,
-		client:     httpClient(metricsURL),
-	}
+		client:     client,
+	}, nil
 }
 
-func httpClient(metricsURL string) *http.Client {
+func httpClient(metricsURL string) (*http.Client, error) {
 	if strings.Contains(metricsURL, "kubernetes.default.svc.cluster.local") {
 		client, err := httputil.NewClient(httputil.ClientConfig{
 			TLSConfig: httputil.TLSConfig{
@@ -60,14 +65,10 @@ func httpClient(metricsURL string) *http.Client {
 			},
 			BearerTokenFile: "/var/run/secrets/kubernetes.io/serviceaccount/token",
 		})
-		if err != nil {
-			//TODO: error handling
-			glog.Errorf("error creating client", err)
-		}
-		glog.V(2).Info("using secure client for kubernetes api service")
-		return client
+		glog.V(2).Info("using default client for kubernetes api service")
+		return client, err
 	}
-	return &http.Client{Timeout: time.Second * 10}
+	return &http.Client{Timeout: time.Second * 10}, nil
 }
 
 func (src *prometheusMetricsSource) Name() string {
@@ -254,7 +255,10 @@ type prometheusProvider struct {
 func (p *prometheusProvider) GetMetricsSources() []MetricsSource {
 	var sources []MetricsSource
 	for _, metricsURL := range p.urls {
-		sources = append(sources, NewPrometheusMetricsSource(metricsURL, p.prefix, p.source, p.tags, p.filters))
+		source, err := NewPrometheusMetricsSource(metricsURL, p.prefix, p.source, p.tags, p.filters)
+		if err == nil {
+			sources = append(sources, source)
+		}
 	}
 	return sources
 }
