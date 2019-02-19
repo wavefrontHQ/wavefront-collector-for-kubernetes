@@ -218,7 +218,7 @@
   version = "v1.2.2"
 
 [[projects]]
-  digest = "1:98b349b345518331aa3bf9dc638acfcfc4a621cafa1f1940edb69ce36632c21c"
+  digest = "1:254829cf52eeead367bc2048c98b8c7f58a6b794e0e84d09af832b370ae953c5"
   name = "github.com/wavefronthq/wavefront-sdk-go"
   packages = [
     "histogram",
@@ -226,7 +226,8 @@
     "senders",
   ]
   pruneopts = "UT"
-  revision = "5e0e1d7d46ed0c3c182d73f7a12679cd13188e51"
+  revision = "fa87530cd02a8ad08bd179e1c39fb319a0cc0dae"
+  version = "v0.9.2"
 
 [[projects]]
   branch = "master"
