@@ -69,6 +69,7 @@ global:
   discovery_interval: 10m
 prom_configs:
 - name: kube-apiserver
+  resourceType: apiserver
   scheme: https
   port: 443
   prefix: kube.apiserver.
