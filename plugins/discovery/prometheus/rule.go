@@ -67,6 +67,10 @@ func (rh *ruleHandler) discoverAPIServer(rule discovery.PrometheusConfig, target
 }
 
 func (rh *ruleHandler) findPods(rule discovery.PrometheusConfig, targets map[string]bool) {
+	if rule.Namespace == "" && len(rule.Labels) == 0 {
+		glog.Errorf("rule=%s missing namespace and labels", rule.Name)
+		return
+	}
 	pods, err := rh.lister.ListPods(rule.Namespace, rule.Labels)
 	if err != nil {
 		glog.Errorf("rule=%s error listing pods: %v", rule.Name, err)
@@ -79,6 +83,9 @@ func (rh *ruleHandler) findPods(rule discovery.PrometheusConfig, targets map[str
 }
 
 func (rh *ruleHandler) findServices(rule discovery.PrometheusConfig, targets map[string]bool) {
+	if rule.Namespace == "" && len(rule.Labels) == 0 {
+		glog.Errorf("rule=%s missing namespace and labels", rule.Name)
+	}
 	services, err := rh.lister.ListServices(rule.Namespace, rule.Labels)
 	if err != nil {
 		glog.Errorf("rule=%s error listing services: %v", rule.Name, err)

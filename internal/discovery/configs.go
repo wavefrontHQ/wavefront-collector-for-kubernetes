@@ -25,7 +25,7 @@ type PrometheusConfig struct {
 	Name string `yaml:"name"`
 
 	// the resource type to discover. defaults to pod.
-	// one of "pod|service".
+	// one of "pod|service|apiserver".
 	ResourceType string `yaml:"resourceType"`
 
 	// map of labels to select resources by
