@@ -76,7 +76,7 @@ func combine(prefix, name string) string {
 
 func point(name string, value float64, ts int64, source string, tags map[string]string) *MetricPoint {
 	return &MetricPoint{
-		Metric:    "kubernetes.collector." + strings.Replace(name, "_", ".", -1),
+		Metric:    statsPrefix + "collector." + strings.Replace(name, "_", ".", -1),
 		Value:     value,
 		Timestamp: ts,
 		Source:    source,

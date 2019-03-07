@@ -20,6 +20,7 @@ type CollectorRunOptions struct {
 	SinkExportDataTimeout time.Duration
 	EnableDiscovery       bool
 	DiscoveryConfigFile   string
+	InternalStatsPrefix   string
 }
 
 func NewCollectorRunOptions() *CollectorRunOptions {
@@ -39,4 +40,5 @@ func (h *CollectorRunOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.DurationVar(&h.SinkExportDataTimeout, "sink_export_data_timeout", 20*time.Second, "Timeout for exporting data to a sink")
 	fs.BoolVar(&h.EnableDiscovery, "enable-discovery", true, "enable auto discovery")
 	fs.StringVar(&h.DiscoveryConfigFile, "discovery_config", "", "optional discovery configuration file")
+	fs.StringVar(&h.InternalStatsPrefix, "internal_stats_prefix", "kubernetes.", "optional prefix for internal collector stats")
 }

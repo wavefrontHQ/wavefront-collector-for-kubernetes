@@ -67,7 +67,7 @@ func main() {
 	if err != nil {
 		glog.Fatalf("Failed to get kubernetes address: %v", err)
 	}
-	sourceManager := createSourceManagerOrDie(opt.Sources)
+	sourceManager := createSourceManagerOrDie(opt.Sources, opt.InternalStatsPrefix)
 	sinkManager := createAndInitSinksOrDie(opt.Sinks, opt.SinkExportDataTimeout)
 
 	kubeClient := createKubeClientOrDie(kubernetesUrl)
@@ -100,9 +100,9 @@ func registerVersion() {
 	m.Update(f)
 }
 
-func createSourceManagerOrDie(src flags.Uris) metrics.MetricsSource {
+func createSourceManagerOrDie(src flags.Uris, statsPrefix string) metrics.MetricsSource {
 	sourceFactory := sources.NewSourceFactory()
-	sourceList := sourceFactory.BuildAll(src)
+	sourceList := sourceFactory.BuildAll(src, statsPrefix)
 
 	for _, source := range sourceList {
 		glog.Infof("Starting with source %s", source.Name())

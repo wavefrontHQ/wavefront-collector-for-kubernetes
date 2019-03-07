@@ -42,7 +42,7 @@ func (sf *SourceFactory) Build(uri flags.Uri) (metrics.MetricsSourceProvider, er
 	}
 }
 
-func (sf *SourceFactory) BuildAll(uris flags.Uris) []metrics.MetricsSourceProvider {
+func (sf *SourceFactory) BuildAll(uris flags.Uris, statsPrefix string) []metrics.MetricsSourceProvider {
 	result := make([]metrics.MetricsSourceProvider, 0, len(uris))
 	for _, uri := range uris {
 		source, err := sf.Build(uri)
@@ -55,7 +55,7 @@ func (sf *SourceFactory) BuildAll(uris flags.Uris) []metrics.MetricsSourceProvid
 	if len([]flags.Uri(uris)) != 0 && len(result) == 0 {
 		glog.Fatal("No available source to use")
 	}
-	provider, _ := stats.NewInternalStatsProvider()
+	provider, _ := stats.NewInternalStatsProvider(statsPrefix)
 	result = append(result, provider)
 	return result
 }

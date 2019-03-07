@@ -9,6 +9,8 @@ import (
 	"github.com/rcrowley/go-metrics"
 )
 
+var statsPrefix string
+
 type internalMetricsSource struct{}
 
 func (src *internalMetricsSource) Name() string {
@@ -31,10 +33,13 @@ func (h *statsProvider) Name() string {
 	return "internal_stats_provider"
 }
 
-func NewInternalStatsProvider() (MetricsSourceProvider, error) {
+func NewInternalStatsProvider(prefix string) (MetricsSourceProvider, error) {
 	sources := make([]MetricsSource, 1)
 	sources[0] = &internalMetricsSource{}
 	metrics.RegisterRuntimeMemStats(metrics.DefaultRegistry)
+
+	// temp workaround. remove once sink level prefix is applied to all metrics.
+	statsPrefix = prefix
 
 	return &statsProvider{
 		sources: sources,
