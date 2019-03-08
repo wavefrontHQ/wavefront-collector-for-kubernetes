@@ -20,7 +20,7 @@ spec:
       containers:
       - name: wavefront-proxy
         # TODO: change this
-        image: wavefronthq/proxy:latest
+        image: wavefronthq/proxy:4.35
         imagePullPolicy: Always
         env:
         - name: WAVEFRONT_URL
@@ -30,6 +30,8 @@ spec:
             secretKeyRef:
               name: wavefront-secret
               key: wavefront-token
+        - name: WAVEFRONT_PROXY_ARGS
+          value: "--prefix pks."
         ports:
         - containerPort: 2878
           protocol: TCP
@@ -43,8 +45,6 @@ metadata:
   namespace: pks-system
   labels:
     k8s-app: wavefront-proxy
-  annotations:
-    prometheus.io/scrape: 'true'
 spec:
   ports:
   - name: http-metrics
@@ -75,12 +75,12 @@ spec:
       serviceAccountName: wavefront-collector
       containers:
       - name: wavefront-collector
-        image: wavefronthq/wavefront-kubernetes-collector:0.9.6
+        image: wavefronthq/wavefront-kubernetes-collector:0.9.7
         imagePullPolicy: Always
         command:
         - /wavefront-collector
         - --source=kubernetes.summary_api:''
-        - --source=prometheus:''?url=http://kube-state-metrics.pks-system.svc.cluster.local:8080/metrics&prefix=pks.heapster.
+        - --source=prometheus:''?url=http://kube-state-metrics.pks-system.svc.cluster.local:8080/metrics
         - --sink=wavefront:?proxyAddress=wavefront-proxy.pks-system.svc.cluster.local:2878&clusterName=sophia-test&includeLabels=true
         - --v=2
         volumeMounts:
