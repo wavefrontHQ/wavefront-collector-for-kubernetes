@@ -19,8 +19,7 @@ spec:
       serviceAccountName: wavefront-collector
       containers:
       - name: wavefront-proxy
-        # TODO: change this
-        image: wavefronthq/proxy:4.35
+        image: wavefronthq/proxy:4.36
         imagePullPolicy: Always
         env:
         - name: WAVEFRONT_URL
