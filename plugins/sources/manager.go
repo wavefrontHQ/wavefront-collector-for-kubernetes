@@ -25,22 +25,30 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/rcrowley/go-metrics"
+	"github.com/wavefronthq/go-metrics-wavefront/reporting"
 )
 
 const (
-	DefaultMetricsScrapeTimeout = 20 * time.Second
-	MaxDelayMs                  = 4 * 1000
-	DelayPerSourceMs            = 8
+	MaxDelayMs       = 4 * 1000
+	DelayPerSourceMs = 8
 )
 
 var (
-	providerCount metrics.Gauge
-	sourceCount   metrics.Gauge
+	providerCount  metrics.Gauge
+	sourceCount    metrics.Gauge
+	scrapeTimeout  metrics.Gauge
+	scrapeErrors   metrics.Counter
+	scrapeTimeouts metrics.Counter
+	scrapeLatency  metrics.Histogram
 )
 
 func init() {
 	providerCount = metrics.GetOrRegisterGauge("source.manager.providers", metrics.DefaultRegistry)
 	sourceCount = metrics.GetOrRegisterGauge("source.manager.sources", metrics.DefaultRegistry)
+	scrapeErrors = metrics.GetOrRegisterCounter("source.manager.scrape.errors", metrics.DefaultRegistry)
+	scrapeTimeouts = metrics.GetOrRegisterCounter("source.manager.scrape.timeouts", metrics.DefaultRegistry)
+	scrapeLatency = reporting.NewHistogram()
+	_ = metrics.Register("source.manager.scrape.latency", scrapeLatency)
 }
 
 func NewSourceManager(metricsSourceProviders []MetricsSourceProvider, metricsScrapeTimeout time.Duration) (MetricsSource, error) {
@@ -104,7 +112,7 @@ func (this *sourceManager) ScrapeMetrics(start, end time.Time) (*DataBatch, erro
 
 	for _, source := range sources {
 
-		go func(source MetricsSource, channel chan *DataBatch, start, end, timeoutTime time.Time, delayInMs int) {
+		go func(source MetricsSource, channel chan *DataBatch, start, end, timeoutTime, scrapeStart time.Time, delayInMs int) {
 
 			// Prevents network congestion.
 			time.Sleep(time.Duration(rand.Intn(delayMs)) * time.Millisecond)
@@ -112,12 +120,17 @@ func (this *sourceManager) ScrapeMetrics(start, end time.Time) (*DataBatch, erro
 			glog.V(2).Infof("Querying source: %s", source.Name())
 			metrics, err := scrape(source, start, end)
 			if err != nil {
+				scrapeErrors.Inc(1)
 				glog.Errorf("Error in scraping containers from %s: %v", source.Name(), err)
 				return
 			}
 
 			now := time.Now()
+			latency := now.Sub(scrapeStart).Nanoseconds()
+			scrapeLatency.Update(latency)
+
 			if !now.Before(timeoutTime) {
+				scrapeTimeouts.Inc(1)
 				glog.Warningf("Failed to get %s response in time", source)
 				return
 			}
@@ -128,17 +141,16 @@ func (this *sourceManager) ScrapeMetrics(start, end time.Time) (*DataBatch, erro
 				// passed the response correctly.
 				return
 			case <-time.After(timeForResponse):
+				scrapeTimeouts.Inc(1)
 				glog.Warningf("Failed to send the response back %s", source)
 				return
 			}
-		}(source, responseChannel, start, end, timeoutTime, delayMs)
+		}(source, responseChannel, start, end, timeoutTime, startTime, delayMs)
 	}
 	response := DataBatch{
 		Timestamp:  end,
 		MetricSets: map[string]*MetricSet{},
 	}
-
-	latencies := make([]int, 11)
 
 responseloop:
 	for i := range sources {
@@ -158,23 +170,13 @@ responseloop:
 					response.MetricPoints = append(response.MetricPoints, dataBatch.MetricPoints...)
 				}
 			}
-			latency := now.Sub(startTime)
-			bucket := int(latency.Seconds())
-			if bucket >= len(latencies) {
-				bucket = len(latencies) - 1
-			}
-			latencies[bucket]++
 
 		case <-time.After(timeoutTime.Sub(now)):
 			glog.Warningf("Failed to get all responses in time (got %d/%d)", i, len(sources))
 			break responseloop
 		}
 	}
-
 	glog.V(1).Infof("ScrapeMetrics: time: %s size: %d", time.Since(startTime), len(response.MetricSets))
-	for i, value := range latencies {
-		glog.V(5).Infof("   scrape bucket %d: %d", i, value)
-	}
 	return &response, nil
 }
 

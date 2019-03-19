@@ -62,7 +62,7 @@
   revision = "23def4e6c14b4da8ac2ed8007337bc5eb5007998"
 
 [[projects]]
-  digest = "1:4c0989ca0bcd10799064318923b9bc2db6b4d6338dd75f3f2d86c3511aaaf5cf"
+  digest = "1:239c4c7fd2159585454003d9be7207167970194216193a8a210b8d29576f19c9"
   name = "github.com/golang/protobuf"
   packages = [
     "proto",
@@ -72,8 +72,8 @@
     "ptypes/timestamp",
   ]
   pruneopts = "UT"
-  revision = "aa810b61a9c79d51363740d207bb46cf8e620ed5"
-  version = "v1.2.0"
+  revision = "b5d812f8a3706043e23a9cd5babf2e5423744d30"
+  version = "v1.3.1"
 
 [[projects]]
   digest = "1:9118e942f3b2aa6d3b3c2fd87673fe7a5cc150df6d37b34db3ccf2df4df90afc"
@@ -104,15 +104,15 @@
   version = "v0.2.0"
 
 [[projects]]
-  digest = "1:8ec8d88c248041a6df5f6574b87bc00e7e0b493881dad2e7ef47b11dc69093b5"
+  digest = "1:d15ee511aa0f56baacc1eb4c6b922fa1c03b38413b6be18166b996d82a0156ea"
   name = "github.com/hashicorp/golang-lru"
   packages = [
     ".",
     "simplelru",
   ]
   pruneopts = "UT"
-  revision = "20f1fb78b0740ba8c3cb143a61e86ba5c8669768"
-  version = "v0.5.0"
+  revision = "7087cb70de9f7a8bc0a10c375cb0d2280a8edf9c"
+  version = "v0.5.1"
 
 [[projects]]
   branch = "master"
@@ -131,12 +131,12 @@
   version = "v0.3.7"
 
 [[projects]]
-  digest = "1:3e551bbb3a7c0ab2a2bf4660e7fcad16db089fdcfbb44b0199e62838038623ea"
+  digest = "1:f5a2051c55d05548d2d4fd23d244027b59fbd943217df8aa3b5e170ac2fd6e1b"
   name = "github.com/json-iterator/go"
   packages = ["."]
   pruneopts = "UT"
-  revision = "1624edc4454b8682399def8740d46db5e4362ba4"
-  version = "v1.1.5"
+  revision = "0ff49de124c6f76f8494e194af75bde0f1a49a29"
+  version = "v1.1.6"
 
 [[projects]]
   digest = "1:ff5ebae34cfbf047d505ee150de27e60570e8c394b3b8fdbb720ff6ac71985fc"
@@ -218,9 +218,18 @@
   version = "v1.3.0"
 
 [[projects]]
-  digest = "1:254829cf52eeead367bc2048c98b8c7f58a6b794e0e84d09af832b370ae953c5"
+  branch = "master"
+  digest = "1:2280e07b45fd1738935db641e4b0b135aa4ca7248e353d535485638b0f73e21e"
+  name = "github.com/wavefronthq/go-metrics-wavefront"
+  packages = ["reporting"]
+  pruneopts = "UT"
+  revision = "9e50dfd34d67628bcc887f4728df4d57c9fc963a"
+
+[[projects]]
+  digest = "1:f8fa24dccae1fe5bb5e9dbd7adc11588cc6e0a2767576251318835bc4998f13d"
   name = "github.com/wavefronthq/wavefront-sdk-go"
   packages = [
+    "application",
     "histogram",
     "internal",
     "senders",
@@ -231,15 +240,15 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:fde12c4da6237363bf36b81b59aa36a43d28061167ec4acb0d41fc49464e28b9"
+  digest = "1:058e9504b9a79bfe86092974d05bb3298d2aa0c312d266d43148de289a5065d9"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
   pruneopts = "UT"
-  revision = "a4c6cb3142f211c99e4bf4cd769535b29a9b616f"
+  revision = "a1f597ede03a7bef967a422b5b3a5bd08805a01e"
 
 [[projects]]
   branch = "master"
-  digest = "1:9edb1388850880d4d9ce2296fe215740fb1ed0f799990d60cef1daa0dbfafd75"
+  digest = "1:c9f70fa85ce8a5e7a0a3b4b5de59dd945cdd2d1478ee1de95c2be0ad372be223"
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -249,18 +258,18 @@
     "idna",
   ]
   pruneopts = "UT"
-  revision = "3a22650c66bd7f4fb6d1e8072ffd7b75c8a27898"
+  revision = "9f648a60d9775ef5c977e7669d1673a7a67bef33"
 
 [[projects]]
   branch = "master"
-  digest = "1:0d703f14f9bbbe1070ff0ce86d749dcbc9d68fb0ae554252c09bd4bb37a072e7"
+  digest = "1:ed708ad22c955df62e7eaba9ddd9edd3afc7818a4a72d9680bf797ac6c5ae3a8"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = "UT"
-  revision = "153ac476189d567564fda94622d7a8c0fb338f6b"
+  revision = "a2f829d7f35f2ed1c3520c553a6226495455cae0"
 
 [[projects]]
   digest = "1:a2ab62866c75542dd18d2b069fec854577a20211d7c0ea6ae746072a1dccdd18"
@@ -291,7 +300,7 @@
   name = "golang.org/x/time"
   packages = ["rate"]
   pruneopts = "UT"
-  revision = "85acf8d2951cb2a3bde7632f9ff273ef0379bcbd"
+  revision = "9d24e82272b4f38b78bc8cff74fa936d31ccd8ef"
 
 [[projects]]
   digest = "1:2d1fbdc6777e5408cabeb02bf336305e724b925ff4546ded0fa8715a7267922a"
@@ -473,8 +482,8 @@
   name = "k8s.io/kubernetes"
   packages = ["pkg/kubelet/apis/stats/v1alpha1"]
   pruneopts = "UT"
-  revision = "721bfa751924da8d1680787490c54b9179b1fed0"
-  version = "v1.13.3"
+  revision = "c27b913fddd1a6c480c229191a087698aa92f0b1"
+  version = "v1.13.4"
 
 [solve-meta]
   analyzer-name = "dep"
@@ -490,6 +499,7 @@
     "github.com/spf13/pflag",
     "github.com/stretchr/testify/assert",
     "github.com/stretchr/testify/require",
+    "github.com/wavefronthq/go-metrics-wavefront/reporting",
     "github.com/wavefronthq/wavefront-sdk-go/senders",
     "gopkg.in/yaml.v2",
     "k8s.io/api/core/v1",

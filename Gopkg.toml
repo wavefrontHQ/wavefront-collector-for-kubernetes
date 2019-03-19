@@ -8,6 +8,10 @@
 
 [[constraint]]
   branch = "master"
+  name = "github.com/rcrowley/go-metrics"
+
+[[constraint]]
+  branch = "master"
   name = "github.com/golang/glog"
 
 [[constraint]]

@@ -32,16 +32,16 @@ func internalStats() (*DataBatch, error) {
 			points = append(points, point(name, metric.Value(), now.Unix(), source, nil))
 		case metrics.Timer:
 			timer := metric.Snapshot()
-			addHisto(name, timer.Min(), timer.Max(), timer.Mean(),
-				timer.Percentiles([]float64{0.5, 0.75, 0.95, 0.99, 0.999}), now.Unix())
-			addRate(name, timer.Count(), timer.Rate1(), timer.RateMean(), now.Unix())
+			points = append(points, addHisto(name, timer.Min(), timer.Max(), timer.Mean(),
+				timer.Percentiles([]float64{0.5, 0.75, 0.95, 0.99, 0.999}), now.Unix())...)
+			points = append(points, addRate(name, timer.Count(), timer.Rate1(), timer.RateMean(), now.Unix())...)
 		case metrics.Histogram:
 			histo := metric.Snapshot()
-			addHisto(name, histo.Min(), histo.Max(), histo.Mean(),
-				histo.Percentiles([]float64{0.5, 0.75, 0.95, 0.99, 0.999}), now.Unix())
+			points = append(points, addHisto(name, histo.Min(), histo.Max(), histo.Mean(),
+				histo.Percentiles([]float64{0.5, 0.75, 0.95, 0.99, 0.999}), now.Unix())...)
 		case metrics.Meter:
 			meter := metric.Snapshot()
-			addRate(name, meter.Count(), meter.Rate1(), meter.RateMean(), now.Unix())
+			points = append(points, addRate(name, meter.Count(), meter.Rate1(), meter.RateMean(), now.Unix())...)
 		}
 	})
 	result.MetricPoints = points
