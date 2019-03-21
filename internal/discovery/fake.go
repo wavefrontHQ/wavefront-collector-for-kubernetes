@@ -20,7 +20,7 @@ func NewFakeResourceLister(count int) *FakeResourceLister {
 func (f *FakeResourceLister) ListPods(ns string, labels map[string]string) ([]*v1.Pod, error) {
 	pods := make([]*v1.Pod, f.count)
 	for i := 0; i < f.count; i++ {
-		pods[i] = FakePod("pod"+string(i), "ns", "123")
+		pods[i] = FakePod("pod"+string(i), "ns", "192.168.0.123")
 	}
 	return pods, nil
 }
@@ -28,7 +28,7 @@ func (f *FakeResourceLister) ListPods(ns string, labels map[string]string) ([]*v
 func (f *FakeResourceLister) ListServices(ns string, labels map[string]string) ([]*v1.Service, error) {
 	services := make([]*v1.Service, f.count)
 	for i := 0; i < f.count; i++ {
-		services[i] = FakeService("svc"+string(i), "ns", "123")
+		services[i] = FakeService("svc"+string(i), "ns", "192.168.0.123")
 	}
 	return services, nil
 }
