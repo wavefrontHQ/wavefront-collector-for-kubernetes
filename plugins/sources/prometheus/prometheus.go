@@ -68,7 +68,7 @@ func httpClient(metricsURL string) (*http.Client, error) {
 		glog.V(2).Info("using default client for kubernetes api service")
 		return client, err
 	}
-	return &http.Client{Timeout: time.Second * 10}, nil
+	return &http.Client{Timeout: time.Second * 30}, nil
 }
 
 func (src *prometheusMetricsSource) Name() string {

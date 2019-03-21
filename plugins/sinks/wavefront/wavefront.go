@@ -28,6 +28,7 @@ var (
 	msCount        gm.Counter
 	filteredPoints gm.Counter
 	clientType     gm.Gauge
+	sanitizedChars = strings.NewReplacer("+", "-")
 )
 
 func init() {
@@ -58,6 +59,7 @@ func (sink *wavefrontSink) Stop() {
 }
 
 func (sink *wavefrontSink) sendPoint(metricName string, value float64, ts int64, source string, tags map[string]string) {
+	metricName = sanitizedChars.Replace(metricName)
 	if sink.filters != nil && !sink.filters.Match(metricName, tags) {
 		filteredPoints.Inc(1)
 		glog.V(5).Infof("dropping metric: %s", metricName)
