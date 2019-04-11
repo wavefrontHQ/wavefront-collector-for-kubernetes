@@ -2,12 +2,12 @@ package wavefront
 
 import (
 	"fmt"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	"github.com/wavefronthq/wavefront-sdk-go/senders"
 

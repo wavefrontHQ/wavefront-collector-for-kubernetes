@@ -18,13 +18,23 @@ import (
 	"sync"
 	"time"
 
-	"github.com/golang/glog"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
+
+	"github.com/golang/glog"
+	gm "github.com/rcrowley/go-metrics"
 )
 
 const (
 	DefaultSinkStopTimeout = 60 * time.Second
 )
+
+var (
+	sinkTimeouts gm.Counter
+)
+
+func init() {
+	sinkTimeouts = gm.GetOrRegisterCounter("sink.manager.timeouts", gm.DefaultRegistry)
+}
 
 type sinkHolder struct {
 	sink             metrics.DataSink
@@ -85,6 +95,7 @@ func (this *sinkManager) ExportData(data *metrics.DataBatch) {
 				glog.V(2).Infof("Data push completed: %s", sh.sink.Name())
 				// everything ok
 			case <-time.After(this.exportDataTimeout):
+				sinkTimeouts.Inc(1)
 				glog.Warningf("Failed to push data to sink: %s", sh.sink.Name())
 			}
 		}(sh, &wg)
