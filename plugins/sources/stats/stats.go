@@ -2,6 +2,7 @@ package stats
 
 import (
 	"fmt"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
 	"strings"
 	"time"
 
@@ -10,7 +11,14 @@ import (
 	"github.com/rcrowley/go-metrics"
 )
 
-const source = "wavefront-kubernetes-collector"
+var source string
+
+func init() {
+	source = util.GetNodeName()
+	if source == "" {
+		source = "wavefront-kubernetes-collector"
+	}
+}
 
 func internalStats() (*DataBatch, error) {
 	now := time.Now()

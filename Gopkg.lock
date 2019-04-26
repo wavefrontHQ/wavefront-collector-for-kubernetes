@@ -62,6 +62,14 @@
   revision = "23def4e6c14b4da8ac2ed8007337bc5eb5007998"
 
 [[projects]]
+  branch = "master"
+  digest = "1:b7cb6054d3dff43b38ad2e92492f220f57ae6087ee797dca298139776749ace8"
+  name = "github.com/golang/groupcache"
+  packages = ["lru"]
+  pruneopts = "UT"
+  revision = "5b532d6fd5efaf7fa130d4e859a2fde0fc3a9e1b"
+
+[[projects]]
   digest = "1:239c4c7fd2159585454003d9be7207167970194216193a8a210b8d29576f19c9"
   name = "github.com/golang/protobuf"
   packages = [
@@ -357,7 +365,7 @@
 
 [[projects]]
   branch = "release-1.10"
-  digest = "1:84da4ce0ecdb4438fcd265025c4439685f6cb81550e9b8021bf67bfdb98585e7"
+  digest = "1:3c4730b192a7011305780da53ef3d00392b534132a7d01187568399d68f07dd3"
   name = "k8s.io/apimachinery"
   packages = [
     "pkg/api/errors",
@@ -388,15 +396,18 @@
     "pkg/util/framer",
     "pkg/util/intstr",
     "pkg/util/json",
+    "pkg/util/mergepatch",
     "pkg/util/net",
     "pkg/util/runtime",
     "pkg/util/sets",
+    "pkg/util/strategicpatch",
     "pkg/util/validation",
     "pkg/util/validation/field",
     "pkg/util/wait",
     "pkg/util/yaml",
     "pkg/version",
     "pkg/watch",
+    "third_party/forked/golang/json",
     "third_party/forked/golang/reflect",
   ]
   pruneopts = "UT"
@@ -415,7 +426,7 @@
 
 [[projects]]
   branch = "release-7.0"
-  digest = "1:66351bb7558d020b259dcb0f41a6b645af5d555df2ed727ae47e280bc978c338"
+  digest = "1:2de450ab02045c0b7c13ad012e6bcb0b87aa09b8b04a9d4349b2b96aa8a47b46"
   name = "k8s.io/client-go"
   packages = [
     "discovery",
@@ -462,8 +473,11 @@
     "tools/clientcmd/api",
     "tools/clientcmd/api/latest",
     "tools/clientcmd/api/v1",
+    "tools/leaderelection",
+    "tools/leaderelection/resourcelock",
     "tools/metrics",
     "tools/pager",
+    "tools/record",
     "tools/reference",
     "transport",
     "util/buffer",
@@ -478,12 +492,28 @@
   revision = "36368dede29baa5ecd253416d70ddc0c76bde69b"
 
 [[projects]]
-  digest = "1:28bd5730cb4627d07f487e50ac717aa3a58b57d4f620a00003d53898bd824294"
+  digest = "1:c696379ad201c1e86591785579e16bf6cf886c362e9a7534e8eb0d1028b20582"
+  name = "k8s.io/klog"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "e531227889390a39d9533dde61f590fe9f4b0035"
+  version = "v0.3.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:22abb5d4204ab1a0dcc9cda64906a31c43965ff5159e8b9f766c9d2a162dbed5"
+  name = "k8s.io/kube-openapi"
+  packages = ["pkg/util/proto"]
+  pruneopts = "UT"
+  revision = "6b3d3b2d5666c5912bab8b7bf26bf50f75a8f887"
+
+[[projects]]
+  digest = "1:b0fff724703ef33ae08fb9c6899b3814a74ac04225bd59156c529897b4500362"
   name = "k8s.io/kubernetes"
   packages = ["pkg/kubelet/apis/stats/v1alpha1"]
   pruneopts = "UT"
-  revision = "c27b913fddd1a6c480c229191a087698aa92f0b1"
-  version = "v1.13.4"
+  revision = "b7394102d6ef778017f2ca4046abbaa23b88c290"
+  version = "v1.14.1"
 
 [solve-meta]
   analyzer-name = "dep"
@@ -515,13 +545,18 @@
     "k8s.io/apiserver/pkg/util/flag",
     "k8s.io/apiserver/pkg/util/logs",
     "k8s.io/client-go/kubernetes",
+    "k8s.io/client-go/kubernetes/typed/core/v1",
     "k8s.io/client-go/listers/core/v1",
     "k8s.io/client-go/rest",
     "k8s.io/client-go/tools/cache",
     "k8s.io/client-go/tools/clientcmd",
     "k8s.io/client-go/tools/clientcmd/api",
+    "k8s.io/client-go/tools/leaderelection",
+    "k8s.io/client-go/tools/leaderelection/resourcelock",
+    "k8s.io/client-go/tools/record",
     "k8s.io/client-go/transport",
     "k8s.io/client-go/util/testing",
+    "k8s.io/klog",
     "k8s.io/kubernetes/pkg/kubelet/apis/stats/v1alpha1",
   ]
   solver-name = "gps-cdcl"

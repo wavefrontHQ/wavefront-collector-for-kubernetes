@@ -51,10 +51,6 @@
   name = "k8s.io/client-go"
 
 [[override]]
-  name = "github.com/prometheus/client_golang"
-  revision = "ae27198cdd90bf12cd134ad79d1366a6cf49f632"
-
-[[override]]
   name = "github.com/golang/protobuf"
   version = "v1.2.0"
 

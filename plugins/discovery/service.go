@@ -8,13 +8,17 @@ import (
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 )
 
-func NewServiceHandler(kubeClient kubernetes.Interface, discoverer discovery.Discoverer) {
+type serviceHandler struct {
+	ch       chan struct{}
+	informer cache.SharedInformer
+}
+
+func newServiceHandler(kubeClient kubernetes.Interface, discoverer discovery.Discoverer) *serviceHandler {
 	s := kubeClient.CoreV1().Services(v1.NamespaceAll)
 	lw := &cache.ListWatch{
 		ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
@@ -40,5 +44,16 @@ func NewServiceHandler(kubeClient kubernetes.Interface, discoverer discovery.Dis
 			discoverer.Delete(discovery.ServiceType.String(), service.ObjectMeta)
 		},
 	})
-	go inf.Run(wait.NeverStop)
+	return &serviceHandler{
+		informer: inf,
+	}
+}
+
+func (handler *serviceHandler) start() {
+	handler.ch = make(chan struct{})
+	go handler.informer.Run(handler.ch)
+}
+
+func (handler *serviceHandler) stop() {
+	close(handler.ch)
 }

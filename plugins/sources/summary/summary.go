@@ -449,6 +449,7 @@ func (this *summaryProvider) getNodeInfo(node *kube_api.Node) (NodeInfo, error) 
 		},
 		KubeletVersion: node.Status.NodeInfo.KubeletVersion,
 	}
+	glog.V(2).Infof("nodeInfo: [nodeName:%s hostname:%s hostID:%s ip:%s]", node.Name, hostname, hostID, ip)
 	return info, nil
 }
 

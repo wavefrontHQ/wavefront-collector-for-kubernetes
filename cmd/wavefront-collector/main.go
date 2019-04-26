@@ -49,6 +49,12 @@ func main() {
 	logs.InitLogs()
 	defer logs.FlushLogs()
 
+	nodeName := os.Getenv(util.NodeNameEnvVar)
+	if nodeName == "" {
+		glog.Fatalf("node name environment variable %s not provided", util.NodeNameEnvVar)
+	}
+	glog.V(2).Infof("%s: %s", util.NodeNameEnvVar, nodeName)
+
 	registerVersion()
 
 	labelCopier, err := util.NewLabelCopier(opt.LabelSeparator, opt.StoredLabels, opt.IgnoredLabels)
