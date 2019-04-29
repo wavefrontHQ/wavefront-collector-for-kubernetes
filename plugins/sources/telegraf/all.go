@@ -9,5 +9,5 @@ import (
 	_ "github.com/influxdata/telegraf/plugins/inputs/net"
 	_ "github.com/influxdata/telegraf/plugins/inputs/processes"
 	_ "github.com/influxdata/telegraf/plugins/inputs/swap"
-	_ "github.com/influxdata/telegraf/plugins/inputs/system"
+	// _ "github.com/influxdata/telegraf/plugins/inputs/system"
 )
