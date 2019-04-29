@@ -111,12 +111,12 @@
   version = "v0.31.0"
 
 [[projects]]
-  branch = "master"
-  digest = "1:3ee90c0d94da31b442dde97c99635aaafec68d0b8a3c12ee2075c6bdabeec6bb"
+  digest = "1:a6181aca1fd5e27103f9a920876f29ac72854df7345a39f3b01e61c8c94cc8af"
   name = "github.com/google/gofuzz"
   packages = ["."]
   pruneopts = "UT"
-  revision = "24818f796faf91cd76ec7bddd72458fbced7a6c1"
+  revision = "f140a6486e521aad38f5917de355cbf147cc0496"
+  version = "v1.0.0"
 
 [[projects]]
   digest = "1:65c4414eeb350c47b8de71110150d0ea8a281835b1f386eacaa3ad7325929c21"
@@ -158,7 +158,7 @@
   version = "v0.3.7"
 
 [[projects]]
-  digest = "1:5b75bc4d3b8d4d49e4ce239309022b41b875910114e973f838ec026e81c6b62b"
+  digest = "1:cface0aec27f49b9244654c32435de92748594fd3308bc3e6684b2aa7e67e81f"
   name = "github.com/influxdata/telegraf"
   packages = [
     ".",
@@ -169,6 +169,11 @@
     "plugins/inputs/disk",
     "plugins/inputs/diskio",
     "plugins/inputs/kernel",
+    "plugins/inputs/linux_sysctl_fs",
+    "plugins/inputs/mem",
+    "plugins/inputs/net",
+    "plugins/inputs/processes",
+    "plugins/inputs/swap",
     "plugins/inputs/system",
   ]
   pruneopts = "UT"
@@ -232,8 +237,8 @@
     "model",
   ]
   pruneopts = "UT"
-  revision = "cfeb6f9992ffa54aaa4f2170ade4067ee478b250"
-  version = "v0.2.0"
+  revision = "a82f4c12f983cc2649298185f296632953e50d3e"
+  version = "v0.3.0"
 
 [[projects]]
   branch = "master"
@@ -302,7 +307,7 @@
   name = "github.com/wavefronthq/go-metrics-wavefront"
   packages = ["reporting"]
   pruneopts = "UT"
-  revision = "9e50dfd34d67628bcc887f4728df4d57c9fc963a"
+  revision = "e86b11d2e81bbf4e48f1fde1fe8ad5e4b8b5e40e"
 
 [[projects]]
   digest = "1:f8fa24dccae1fe5bb5e9dbd7adc11588cc6e0a2767576251318835bc4998f13d"
@@ -319,15 +324,15 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:058e9504b9a79bfe86092974d05bb3298d2aa0c312d266d43148de289a5065d9"
+  digest = "1:bbe51412d9915d64ffaa96b51d409e070665efc5194fcf145c4a27d4133107a4"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
   pruneopts = "UT"
-  revision = "a1f597ede03a7bef967a422b5b3a5bd08805a01e"
+  revision = "a29dc8fdc73485234dbef99ebedb95d2eced08de"
 
 [[projects]]
   branch = "master"
-  digest = "1:c9f70fa85ce8a5e7a0a3b4b5de59dd945cdd2d1478ee1de95c2be0ad372be223"
+  digest = "1:b8c5023d876c0e40eca8729fb4516dcb62887e11524de5a38de8a2067b69a4ec"
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -337,27 +342,29 @@
     "idna",
   ]
   pruneopts = "UT"
-  revision = "9f648a60d9775ef5c977e7669d1673a7a67bef33"
+  revision = "4829fb13d2c62012c17688fa7f629f371014946d"
 
 [[projects]]
   branch = "master"
-  digest = "1:ed708ad22c955df62e7eaba9ddd9edd3afc7818a4a72d9680bf797ac6c5ae3a8"
+  digest = "1:1a4cf0c4cbbda6ef0b6f168acc112df2a8e182945d71dc8367593a3b378db106"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = "UT"
-  revision = "a2f829d7f35f2ed1c3520c553a6226495455cae0"
+  revision = "2cc0cad0ac78f3ede1f4d2b6ca16ea3038641af4"
 
 [[projects]]
-  digest = "1:a2ab62866c75542dd18d2b069fec854577a20211d7c0ea6ae746072a1dccdd18"
+  digest = "1:8d8faad6b12a3a4c819a3f9618cb6ee1fa1cfc33253abeeea8b55336721e3405"
   name = "golang.org/x/text"
   packages = [
     "collate",
     "collate/build",
     "internal/colltab",
     "internal/gen",
+    "internal/language",
+    "internal/language/compact",
     "internal/tag",
     "internal/triegen",
     "internal/ucd",
@@ -370,8 +377,8 @@
     "unicode/rangetable",
   ]
   pruneopts = "UT"
-  revision = "f21a4dfb5e38f5895301dc265a8def02365cc3d0"
-  version = "v0.3.0"
+  revision = "342b2e1fbaa52c93f31447ad2c6abc048c63e475"
+  version = "v0.3.2"
 
 [[projects]]
   branch = "master"
@@ -557,12 +564,12 @@
   revision = "36368dede29baa5ecd253416d70ddc0c76bde69b"
 
 [[projects]]
-  digest = "1:28bd5730cb4627d07f487e50ac717aa3a58b57d4f620a00003d53898bd824294"
+  digest = "1:b0fff724703ef33ae08fb9c6899b3814a74ac04225bd59156c529897b4500362"
   name = "k8s.io/kubernetes"
   packages = ["pkg/kubelet/apis/stats/v1alpha1"]
   pruneopts = "UT"
-  revision = "c27b913fddd1a6c480c229191a087698aa92f0b1"
-  version = "v1.13.4"
+  revision = "b7394102d6ef778017f2ca4046abbaa23b88c290"
+  version = "v1.14.1"
 
 [solve-meta]
   analyzer-name = "dep"
@@ -577,6 +584,11 @@
     "github.com/influxdata/telegraf/plugins/inputs/disk",
     "github.com/influxdata/telegraf/plugins/inputs/diskio",
     "github.com/influxdata/telegraf/plugins/inputs/kernel",
+    "github.com/influxdata/telegraf/plugins/inputs/mem",
+    "github.com/influxdata/telegraf/plugins/inputs/net",
+    "github.com/influxdata/telegraf/plugins/inputs/processes",
+    "github.com/influxdata/telegraf/plugins/inputs/swap",
+    "github.com/influxdata/telegraf/plugins/inputs/system",
     "github.com/json-iterator/go",
     "github.com/prometheus/client_model/go",
     "github.com/prometheus/common/expfmt",

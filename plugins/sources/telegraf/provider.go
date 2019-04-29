@@ -12,10 +12,6 @@ import (
 
 	"github.com/influxdata/telegraf"
 	telegrafInputs "github.com/influxdata/telegraf/plugins/inputs"
-	"github.com/influxdata/telegraf/plugins/inputs/cpu"
-	"github.com/influxdata/telegraf/plugins/inputs/disk"
-	"github.com/influxdata/telegraf/plugins/inputs/diskio"
-	"github.com/influxdata/telegraf/plugins/inputs/kernel"
 	wf "github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 )
 
@@ -23,12 +19,11 @@ import (
 func NewProvider(uri *url.URL) (wf.MetricsSourceProvider, error) {
 	glog.Infof("[telegraf.NewProvider] - inputs: %v -------------", telegrafInputs.Inputs)
 
-	sources := []wf.MetricsSource{
-		newTelegrafPluginSource("CPUStats", telegrafInputs.Inputs["cpu"]().(*cpu.CPUStats)),
-		newTelegrafPluginSource("DiskStats", telegrafInputs.Inputs["disk"]().(*disk.DiskStats)),
-		newTelegrafPluginSource("DiskIO", telegrafInputs.Inputs["diskio"]().(*diskio.DiskIO)),
-		newTelegrafPluginSource("Kernel", telegrafInputs.Inputs["kernel"]().(*kernel.Kernel)),
+	var sources []wf.MetricsSource
+	for plugin, creator := range telegrafInputs.Inputs {
+		sources = append(sources, newTelegrafPluginSource(plugin+" plugin", creator()))
 	}
+
 	return &telegrafProvider{sources: sources}, nil
 }
 
@@ -68,7 +63,7 @@ func newTelegrafPluginSource(name string, plugin telegraf.Input) *telegrafPlugin
 			case <-ticker.C:
 				err := plugin.Gather(tsp)
 				if err != nil {
-					glog.Fatal(err)
+					glog.Errorf("Error on Gather - plugin '%s' - error: %v", name, err)
 				}
 			}
 		}
@@ -106,6 +101,8 @@ func (t *telegrafPluginSource) preparePoints(measurement string, fields map[stri
 	for metric, v := range fields {
 		var value float64
 		switch v.(type) {
+		case int:
+			value = float64(v.(int))
 		case uint64:
 			value = float64(v.(uint64))
 		case int64:
