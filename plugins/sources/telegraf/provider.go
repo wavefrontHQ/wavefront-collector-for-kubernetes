@@ -17,6 +17,11 @@ import (
 
 // NewProvider creates a Telegraf source
 func NewProvider(uri *url.URL) (wf.MetricsSourceProvider, error) {
+
+	for _, pair := range os.Environ() {
+		glog.Infof("env: %v", pair)
+	}
+
 	glog.Infof("[telegraf.NewProvider] - inputs: %v -------------", telegrafInputs.Inputs)
 
 	var sources []wf.MetricsSource
@@ -48,11 +53,7 @@ type telegrafPluginSource struct {
 }
 
 func newTelegrafPluginSource(name string, plugin telegraf.Input) *telegrafPluginSource {
-	hostname, err := os.Hostname()
-	if err != nil {
-		glog.Fatal(err)
-	}
-
+	hostname := os.Getenv("POD_NODE_NAME")
 	glog.Infof("hostname: '%s'", hostname)
 
 	tsp := &telegrafPluginSource{name: name, plugin: plugin, source: hostname}
