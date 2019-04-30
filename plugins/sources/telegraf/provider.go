@@ -8,6 +8,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/influxdata/telegraf/plugins/inputs/procstat"
+
 	"github.com/golang/glog"
 
 	"github.com/influxdata/telegraf"
@@ -25,8 +27,12 @@ func NewProvider(uri *url.URL) (wf.MetricsSourceProvider, error) {
 	glog.Infof("[telegraf.NewProvider] - inputs: %v -------------", telegrafInputs.Inputs)
 
 	var sources []wf.MetricsSource
-	for plugin, creator := range telegrafInputs.Inputs {
-		sources = append(sources, newTelegrafPluginSource(plugin+" plugin", creator()))
+	for name, creator := range telegrafInputs.Inputs {
+		plugin := creator()
+		if name == "procstat" {
+			plugin.(*procstat.Procstat).PidFile = "/var/run/docker.pid"
+		}
+		sources = append(sources, newTelegrafPluginSource(name+" plugin", plugin))
 	}
 
 	return &telegrafProvider{sources: sources}, nil
@@ -111,7 +117,7 @@ func (t *telegrafPluginSource) preparePoints(measurement string, fields map[stri
 		case float64:
 			value = v.(float64)
 		default:
-			glog.Errorf("Error, unsupported type '%v'", reflect.TypeOf(v))
+			glog.Errorf("Error, unsupported type '%v' metric: '%v' - value: '%v'", reflect.TypeOf(v), metric, v)
 			continue
 		}
 

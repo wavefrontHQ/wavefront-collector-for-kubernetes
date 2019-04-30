@@ -1,4 +1,4 @@
-FROM scratch
+FROM ubuntu:18.04
 
 COPY wavefront-collector /
 COPY ca-certificates.crt /etc/ssl/certs/

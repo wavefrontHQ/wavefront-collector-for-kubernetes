@@ -158,7 +158,7 @@
   version = "v0.3.7"
 
 [[projects]]
-  digest = "1:cface0aec27f49b9244654c32435de92748594fd3308bc3e6684b2aa7e67e81f"
+  digest = "1:044a1e15bac05189ad3a9b29cbaf3d3a55acb0803b9c0e02dd4470ed09f84161"
   name = "github.com/influxdata/telegraf"
   packages = [
     ".",
@@ -173,6 +173,7 @@
     "plugins/inputs/mem",
     "plugins/inputs/net",
     "plugins/inputs/processes",
+    "plugins/inputs/procstat",
     "plugins/inputs/swap",
     "plugins/inputs/system",
   ]
@@ -346,11 +347,13 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:1a4cf0c4cbbda6ef0b6f168acc112df2a8e182945d71dc8367593a3b378db106"
+  digest = "1:8cf84e9f53f3403a54b19a2699048aee0cb8a062cf94f73e944321997c07102d"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
+    "windows/svc",
+    "windows/svc/mgr",
   ]
   pruneopts = "UT"
   revision = "2cc0cad0ac78f3ede1f4d2b6ca16ea3038641af4"
@@ -587,12 +590,14 @@
     "github.com/influxdata/telegraf/plugins/inputs/mem",
     "github.com/influxdata/telegraf/plugins/inputs/net",
     "github.com/influxdata/telegraf/plugins/inputs/processes",
+    "github.com/influxdata/telegraf/plugins/inputs/procstat",
     "github.com/influxdata/telegraf/plugins/inputs/swap",
-    "github.com/influxdata/telegraf/plugins/inputs/system",
     "github.com/json-iterator/go",
     "github.com/prometheus/client_model/go",
     "github.com/prometheus/common/expfmt",
     "github.com/rcrowley/go-metrics",
+    "github.com/shirou/gopsutil/host",
+    "github.com/shirou/gopsutil/load",
     "github.com/spf13/pflag",
     "github.com/stretchr/testify/assert",
     "github.com/stretchr/testify/require",
