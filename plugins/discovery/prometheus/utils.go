@@ -60,7 +60,7 @@ func baseURL(scheme, ip, port, path, name, source, prefix string) string {
 	if port != "" {
 		port = fmt.Sprintf(":%s", port)
 	}
-	base := fmt.Sprintf("?url=%s://%s%s%s&name=%s", scheme, ip, port, path, name)
+	base := fmt.Sprintf("?url=%s://%s%s%s&name=%s&discovered=true", scheme, ip, port, path, name)
 	if source != "" {
 		base = fmt.Sprintf("%s&source=%s", base, source)
 	}

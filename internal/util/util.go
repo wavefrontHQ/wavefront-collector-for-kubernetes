@@ -17,6 +17,7 @@ package util
 import (
 	"github.com/golang/glog"
 	"os"
+	"sync"
 	"time"
 
 	kube_api "k8s.io/api/core/v1"
@@ -32,17 +33,31 @@ const (
 	NamespaceNameEnvVar = "POD_NAMESPACE_NAME"
 )
 
-//TODO: verify how these listers are used
+var (
+	lock       sync.Mutex
+	nodeLister v1listers.NodeLister
+	reflector  *cache.Reflector
+)
+
 func GetNodeLister(kubeClient *kube_client.Clientset) (v1listers.NodeLister, *cache.Reflector, error) {
+	lock.Lock()
+	defer lock.Unlock()
+
+	// init just one instance per collector agent
+	if nodeLister != nil {
+		return nodeLister, reflector, nil
+	}
+
 	fieldSelector := GetFieldSelector("nodes")
 	lw := cache.NewListWatchFromClient(kubeClient.CoreV1().RESTClient(), "nodes", kube_api.NamespaceAll, fieldSelector)
 	store := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc})
-	nodeLister := v1listers.NewNodeLister(store)
-	reflector := cache.NewReflector(lw, &kube_api.Node{}, store, time.Hour)
+	nodeLister = v1listers.NewNodeLister(store)
+	reflector = cache.NewReflector(lw, &kube_api.Node{}, store, time.Hour)
 	go reflector.Run(wait.NeverStop)
 	return nodeLister, reflector, nil
 }
 
+//TODO: verify how these listers are used
 func GetPodLister(kubeClient *kube_client.Clientset) (v1listers.PodLister, error) {
 	fieldSelector := GetFieldSelector("pods")
 	lw := cache.NewListWatchFromClient(kubeClient.CoreV1().RESTClient(), "pods", kube_api.NamespaceAll, fieldSelector)

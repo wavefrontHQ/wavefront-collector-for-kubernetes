@@ -8,11 +8,13 @@ import (
 	"math"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/httputil"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/leadership"
 	. "github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 
 	"github.com/golang/glog"
@@ -244,15 +246,20 @@ func (src *prometheusMetricsSource) filterAppend(slice []*MetricPoint, point *Me
 }
 
 type prometheusProvider struct {
-	urls    []string
-	prefix  string
-	source  string
-	name    string
-	tags    map[string]string
-	filters filter.Filter
+	urls       []string
+	prefix     string
+	source     string
+	name       string
+	discovered bool
+	tags       map[string]string
+	filters    filter.Filter
 }
 
 func (p *prometheusProvider) GetMetricsSources() []MetricsSource {
+	if !p.discovered && !leadership.Leading() {
+		glog.V(2).Infof("not scraping sources from: %s. current leader: %s", p.name, leadership.Leader())
+		return nil
+	}
 	var sources []MetricsSource
 	for _, metricsURL := range p.urls {
 		source, err := NewPrometheusMetricsSource(metricsURL, p.prefix, p.source, p.tags, p.filters)
@@ -294,6 +301,16 @@ func NewPrometheusProvider(uri *url.URL) (MetricsSourceProvider, error) {
 		name = fmt.Sprintf("%s: %s", ProviderName, vals["url"][0])
 	}
 
+	discovered := false
+	if len(vals["discovered"]) > 0 {
+		var err error
+		discovered, err = strconv.ParseBool(vals["discovered"][0])
+		if err != nil {
+			return nil, err
+		}
+		glog.V(4).Infof("name: %s discovered: %t", name, discovered)
+	}
+
 	// tags of the form "tag=key:value"
 	var tags map[string]string
 	if len(vals["tag"]) > 0 {
@@ -313,11 +330,12 @@ func NewPrometheusProvider(uri *url.URL) (MetricsSourceProvider, error) {
 	filters := filter.FromQuery(vals)
 
 	return &prometheusProvider{
-		urls:    vals["url"],
-		prefix:  prefix,
-		source:  source,
-		name:    name,
-		tags:    tags,
-		filters: filters,
+		urls:       vals["url"],
+		prefix:     prefix,
+		source:     source,
+		name:       name,
+		discovered: discovered,
+		tags:       tags,
+		filters:    filters,
 	}, nil
 }
