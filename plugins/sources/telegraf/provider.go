@@ -1,6 +1,7 @@
 package telegraf
 
 import (
+	"fmt"
 	"net/url"
 	"os"
 	"reflect"
@@ -30,9 +31,16 @@ func NewProvider(uri *url.URL) (wf.MetricsSourceProvider, error) {
 	for name, creator := range telegrafInputs.Inputs {
 		plugin := creator()
 		if name == "procstat" {
-			plugin.(*procstat.Procstat).PidFile = "/var/run/docker.pid"
+			continue // I hate me ;-)
 		}
 		sources = append(sources, newTelegrafPluginSource(name+" plugin", plugin))
+	}
+
+	for _, exe := range []string{"wavefront-collector", "dockerd"} {
+		procstat := telegrafInputs.Inputs["procstat"]().(*procstat.Procstat)
+		procstat.Exe = exe
+		procstat.PidFinder = "native"
+		sources = append(sources, newTelegrafPluginSource("procstat '"+exe+"' plugin", procstat))
 	}
 
 	return &telegrafProvider{sources: sources}, nil
@@ -90,6 +98,7 @@ func (t *telegrafPluginSource) ScrapeMetrics(start, end time.Time) (*wf.DataBatc
 
 	t.mux.Lock()
 	result.MetricPoints = t.points
+	glog.Errorf("[ScrapeMetrics] plugin: '%v' metrics: '%v'", t.name, len(t.points))
 	t.points = nil
 	t.mux.Unlock()
 
@@ -107,18 +116,16 @@ func (t *telegrafPluginSource) preparePoints(measurement string, fields map[stri
 
 	for metric, v := range fields {
 		var value float64
+		var err error
 		switch v.(type) {
-		case int:
-			value = float64(v.(int))
-		case uint64:
-			value = float64(v.(uint64))
-		case int64:
-			value = float64(v.(int64))
-		case float64:
-			value = v.(float64)
-		default:
-			glog.Errorf("Error, unsupported type '%v' metric: '%v' - value: '%v'", reflect.TypeOf(v), metric, v)
+		case string:
 			continue
+		default:
+			value, err = getFloat(v)
+			if err != nil {
+				glog.Errorf("Error, unsupported type '%v' - plugin: '%v' - metric: '%v' - value: '%v' - error: '%v'", reflect.TypeOf(v), t.name, metric, v, err)
+				continue
+			}
 		}
 
 		point := &wf.MetricPoint{
@@ -184,4 +191,16 @@ func (t *telegrafPluginSource) AddError(err error) {
 func (t *telegrafPluginSource) WithTracking(maxTracked int) telegraf.TrackingAccumulator {
 	glog.Fatal("not supported")
 	return nil
+}
+
+var floatType = reflect.TypeOf(float64(0))
+
+func getFloat(unk interface{}) (float64, error) {
+	v := reflect.ValueOf(unk)
+	v = reflect.Indirect(v)
+	if !v.Type().ConvertibleTo(floatType) {
+		return 0, fmt.Errorf("cannot convert %v to float64", v.Type())
+	}
+	fv := v.Convert(floatType)
+	return fv.Float(), nil
 }
