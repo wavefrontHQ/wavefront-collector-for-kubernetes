@@ -492,14 +492,6 @@
   revision = "36368dede29baa5ecd253416d70ddc0c76bde69b"
 
 [[projects]]
-  digest = "1:c696379ad201c1e86591785579e16bf6cf886c362e9a7534e8eb0d1028b20582"
-  name = "k8s.io/klog"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "e531227889390a39d9533dde61f590fe9f4b0035"
-  version = "v0.3.0"
-
-[[projects]]
   branch = "master"
   digest = "1:22abb5d4204ab1a0dcc9cda64906a31c43965ff5159e8b9f766c9d2a162dbed5"
   name = "k8s.io/kube-openapi"
@@ -556,7 +548,6 @@
     "k8s.io/client-go/tools/record",
     "k8s.io/client-go/transport",
     "k8s.io/client-go/util/testing",
-    "k8s.io/klog",
     "k8s.io/kubernetes/pkg/kubelet/apis/stats/v1alpha1",
   ]
   solver-name = "gps-cdcl"

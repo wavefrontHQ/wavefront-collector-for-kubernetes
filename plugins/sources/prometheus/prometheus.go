@@ -16,6 +16,7 @@ import (
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/httputil"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/leadership"
 	. "github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
 
 	"github.com/golang/glog"
 	dto "github.com/prometheus/client_model/go"
@@ -288,9 +289,12 @@ func NewPrometheusProvider(uri *url.URL) (MetricsSourceProvider, error) {
 		prefix = vals["prefix"][0]
 	}
 
-	source := "prom_source"
+	source := util.GetNodeName()
 	if len(vals["source"]) > 0 {
 		source = vals["source"][0]
+	}
+	if source == "" {
+		source = "prom_source"
 	}
 
 	name := ""

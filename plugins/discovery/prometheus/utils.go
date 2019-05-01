@@ -2,6 +2,7 @@ package prometheus
 
 import (
 	"fmt"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
 	"sort"
 	"strings"
 
@@ -22,6 +23,13 @@ const (
 	sourceAnnotation = "prometheus.io/source"
 )
 
+// used as source for discovered resources
+var nodeName string
+
+func init() {
+	nodeName = util.GetNodeName()
+}
+
 func scrapeURL(ip, kind string, meta metav1.ObjectMeta, rule discovery.PrometheusConfig) string {
 	if ip == "" {
 		glog.V(5).Infof("missing ip for %s=%s", kind, meta.Name)
@@ -37,7 +45,7 @@ func scrapeURL(ip, kind string, meta metav1.ObjectMeta, rule discovery.Prometheu
 	path := param(meta, pathAnnotation, rule.Path, "/metrics")
 	port := param(meta, portAnnotation, rule.Port, "")
 	prefix := param(meta, prefixAnnotation, rule.Prefix, "")
-	source := param(meta, sourceAnnotation, rule.Source, "")
+	source := param(meta, sourceAnnotation, rule.Source, nodeName)
 	includeLabels := param(meta, labelsAnnotation, rule.IncludeLabels, "true")
 
 	if source == "" {
