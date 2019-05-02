@@ -17,15 +17,41 @@ import (
 
 // NewProvider creates a Telegraf source
 func NewProvider(uri *url.URL) (metrics.MetricsSourceProvider, error) {
-
 	for _, pair := range os.Environ() {
 		glog.Infof("env: %v", pair)
 	}
 
+	glog.Errorf("[NewProvider] uri: '%v'", uri)
+	vals := uri.Query()
+	glog.Infof("[NewProvider] vals: '%v'", vals)
+
+	prefix := ""
+	if len(vals["prefix"]) > 0 {
+		prefix = vals["prefix"][0]
+		prefix = strings.Trim(prefix, ".")
+	}
+
+	var plugins []string
+	for _, pluginList := range vals["plugins"] {
+		plugins = append(plugins, strings.Split(pluginList, ",")...)
+	}
+	if len(plugins) == 0 {
+		plugins = []string{"mem", "net", "netstat", "linux_sysctl_fs", "swap", "cpu", "disk", "diskio", "system", "kernel", "processes"}
+	}
+
 	var sources []metrics.MetricsSource
-	for name, creator := range telegrafPlugins.Inputs {
-		plugin := creator()
-		sources = append(sources, newTelegrafPluginSource(name+" plugin", plugin))
+	for _, name := range plugins {
+		creator := telegrafPlugins.Inputs[strings.Trim(name, " ")]
+		if creator != nil {
+			sources = append(sources, newTelegrafPluginSource(name+" plugin", creator(), prefix))
+		} else {
+			glog.Errorf("[NewProvider] Error, plugin '%v' not Found", name)
+			var availablePlugins []string
+			for name := range telegrafPlugins.Inputs {
+				availablePlugins = append(availablePlugins, name)
+			}
+			glog.Infof("[NewProvider] Available plugins: '%v'", availablePlugins)
+		}
 	}
 
 	return &telegrafProvider{sources: sources}, nil
@@ -46,12 +72,13 @@ func (p telegrafProvider) Name() string {
 type telegrafPluginSource struct {
 	name   string
 	source string
+	prefix string
 	plugin telegraf.Input
 }
 
-func newTelegrafPluginSource(name string, plugin telegraf.Input) *telegrafPluginSource {
+func newTelegrafPluginSource(name string, plugin telegraf.Input, prefix string) *telegrafPluginSource {
 	hostname := os.Getenv("POD_NODE_NAME")
-	tsp := &telegrafPluginSource{name: name, plugin: plugin, source: hostname}
+	tsp := &telegrafPluginSource{name: name, plugin: plugin, source: hostname, prefix: prefix}
 	return tsp
 }
 
@@ -101,8 +128,14 @@ func (t *telegrafDataBatch) preparePoints(measurement string, fields map[string]
 			}
 		}
 
+		metricName := measurement + "." + metric
+		metricName = strings.Replace(metricName, "_", ".", -1)
+		if len(t.source.prefix) > 0 {
+			metricName = t.source.prefix + "." + metricName
+		}
+
 		point := &metrics.MetricPoint{
-			Metric:    measurement + "." + strings.Replace(metric, "_", ".", -1),
+			Metric:    metricName,
 			Value:     value,
 			Timestamp: ts.UnixNano() / 1000,
 			Source:    t.source.source,

@@ -29,6 +29,7 @@ spec:
         command:
         - /wavefront-collector
         - --source=kubernetes.summary_api:''
+        # - --source=telegraf:?prefix=tururu&plugins=cpu,tururu
         - --source=telegraf:''
         - --sink=wavefront:?proxyAddress=wavefront-proxy.default.svc.cluster.local:2878&clusterName=glaullon&includeLabels=true
         - --v=4
