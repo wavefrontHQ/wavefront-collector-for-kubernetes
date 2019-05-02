@@ -1,13 +1,12 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: DaemonSet
 metadata:
+  name: wavefront-collector
+  namespace: wavefront-collector
   labels:
     k8s-app: wavefront-collector
     name: wavefront-collector
-  name: wavefront-collector
-  namespace: wavefront-collector
 spec:
-  replicas: 1
   selector:
     matchLabels:
       k8s-app: wavefront-collector
@@ -16,10 +15,19 @@ spec:
       labels:
         k8s-app: wavefront-collector
     spec:
+      tolerations:
+      - effect: NoSchedule
+        key: node.alpha.kubernetes.io/role
+        operator: Exists
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/master
+        operator: Exists
+
       serviceAccountName: wavefront-collector
+
       containers:
       - name: wavefront-collector
-        image: wavefronthq/wavefront-kubernetes-collector:latest
+        image: wavefronthq/wavefront-kubernetes-collector:0.9.8-rc2
         imagePullPolicy: Always
         command:
         - /wavefront-collector
@@ -30,6 +38,23 @@ spec:
         - name: ssl-certs
           mountPath: /etc/ssl/certs
           readOnly: true
+        - mountPath: /etc/collector/
+          name: config
+          readOnly: true
+        ports:
+        - containerPort: 8088
+          protocol: TCP
+        env:
+        - name: POD_NODE_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: spec.nodeName
+        - name: POD_NAMESPACE_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
       volumes:
       - name: ssl-certs
         hostPath:
