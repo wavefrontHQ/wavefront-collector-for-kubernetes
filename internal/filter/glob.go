@@ -21,16 +21,16 @@ type globFilter struct {
 
 func NewGlobFilter(cfg Config) Filter {
 	return &globFilter{
-		metricWhitelist:    compile(cfg.MetricWhitelist),
-		metricBlacklist:    compile(cfg.MetricBlacklist),
+		metricWhitelist:    Compile(cfg.MetricWhitelist),
+		metricBlacklist:    Compile(cfg.MetricBlacklist),
 		metricTagWhitelist: multiCompile(cfg.MetricTagWhitelist),
 		metricTagBlacklist: multiCompile(cfg.MetricTagBlacklist),
-		tagInclude:         compile(cfg.TagInclude),
-		tagExclude:         compile(cfg.TagExclude),
+		tagInclude:         Compile(cfg.TagInclude),
+		tagExclude:         Compile(cfg.TagExclude),
 	}
 }
 
-func compile(filters []string) glob.Glob {
+func Compile(filters []string) glob.Glob {
 	if len(filters) == 0 {
 		return nil
 	}
@@ -48,7 +48,7 @@ func multiCompile(filters map[string][]string) map[string]glob.Glob {
 	}
 	globs := make(map[string]glob.Glob, len(filters))
 	for k, v := range filters {
-		g := compile(v)
+		g := Compile(v)
 		if g != nil {
 			globs[k] = g
 		}

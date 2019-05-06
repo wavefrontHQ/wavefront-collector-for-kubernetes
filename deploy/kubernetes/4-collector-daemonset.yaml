@@ -32,19 +32,23 @@ spec:
         command:
         - /wavefront-collector
         - --source=kubernetes.summary_api:''
+        # - --source=telegraf:?prefix=tururu&plugins=cpu,tururu
+        - --source=telegraf:''
         - --sink=wavefront:?proxyAddress=wavefront-proxy.default.svc.cluster.local:2878&clusterName=k8s-cluster&includeLabels=true
         - --v=2
         volumeMounts:
+        - name: procfs
+          mountPath: /host/proc
+          readOnly: true
         - name: ssl-certs
           mountPath: /etc/ssl/certs
-          readOnly: true
-        - mountPath: /etc/collector/
-          name: config
           readOnly: true
         ports:
         - containerPort: 8088
           protocol: TCP
         env:
+        - name: HOST_PROC
+          value: /host/proc
         - name: POD_NODE_NAME
           valueFrom:
             fieldRef:
@@ -56,6 +60,9 @@ spec:
               apiVersion: v1
               fieldPath: metadata.namespace
       volumes:
+      - name: procfs
+        hostPath:
+          path: /proc
       - name: ssl-certs
         hostPath:
           path: /etc/ssl/certs

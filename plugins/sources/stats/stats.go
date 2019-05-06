@@ -33,7 +33,7 @@ func internalStats() (*DataBatch, error) {
 	metrics.DefaultRegistry.Each(func(name string, i interface{}) {
 		switch metric := i.(type) {
 		case metrics.Counter:
-			points = append(points, point(name, float64(metric.Count()), now.Unix(), source, nil))
+			points = filterAppend(points, point(name, float64(metric.Count()), now.Unix(), source, nil))
 		case metrics.Gauge:
 			points = append(points, point(name, float64(metric.Value()), now.Unix(), source, nil))
 		case metrics.GaugeFloat64:
@@ -83,6 +83,11 @@ func combine(prefix, name string) string {
 }
 
 func point(name string, value float64, ts int64, source string, tags map[string]string) *MetricPoint {
+	if filterName(name) && value == 0.0 {
+		// don't emit internal counts with zero values
+		return nil
+	}
+
 	return &MetricPoint{
 		Metric:    statsPrefix + "collector." + strings.Replace(name, "_", ".", -1),
 		Value:     value,
@@ -90,4 +95,15 @@ func point(name string, value float64, ts int64, source string, tags map[string]
 		Source:    source,
 		Tags:      tags,
 	}
+}
+
+func filterAppend(slice []*MetricPoint, point *MetricPoint) []*MetricPoint {
+	if point == nil {
+		return slice
+	}
+	return append(slice, point)
+}
+
+func filterName(name string) bool {
+	return strings.HasSuffix(name, "filtered.count") || strings.HasSuffix(name, "errors.count")
 }

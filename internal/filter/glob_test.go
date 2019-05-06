@@ -195,7 +195,7 @@ func point(name string, value float64, ts int64, source string, tags map[string]
 }
 
 func compileGlob(filter []string, t *testing.T) glob.Glob {
-	matcher := compile(filter)
+	matcher := Compile(filter)
 	if matcher == nil {
 		t.Errorf("error creating matcher: %q", filter)
 	}

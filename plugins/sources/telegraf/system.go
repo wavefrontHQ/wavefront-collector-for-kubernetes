@@ -14,6 +14,12 @@ import (
 	"github.com/shirou/gopsutil/load"
 )
 
+func init() {
+	inputs.Add("system", func() telegraf.Input {
+		return &SystemStats{}
+	})
+}
+
 type SystemStats struct{}
 
 func (_ *SystemStats) Description() string {
@@ -88,10 +94,4 @@ func formatUptime(uptime uint64) string {
 
 	w.Flush()
 	return buf.String()
-}
-
-func init() {
-	inputs.Add("system", func() telegraf.Input {
-		return &SystemStats{}
-	})
 }
