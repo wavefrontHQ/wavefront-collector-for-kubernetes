@@ -7,6 +7,10 @@
   version = "0.9.2"
 
 [[constraint]]
+  name = "github.com/influxdata/telegraf"
+  version = "1.10.3"
+
+[[constraint]]
   branch = "master"
   name = "github.com/rcrowley/go-metrics"
 

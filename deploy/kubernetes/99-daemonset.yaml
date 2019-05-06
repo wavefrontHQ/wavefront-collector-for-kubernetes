@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: wavefront-collector
+  namespace: wavefront-collector
+  labels:
+    k8s-app: wavefront-collector
+    name: wavefront-collector
+spec:
+  selector:
+    matchLabels:
+      k8s-app: wavefront-collector
+  template:
+    metadata:
+      labels:
+        k8s-app: wavefront-collector
+    spec:
+      tolerations:
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/master
+        operator: Exists
+      serviceAccountName: wavefront-collector
+
+      containers:
+      - name: wavefront-collector
+        image: glaullon/wavefront-collector:latest
+        #image: wavefronthq/wavefront-kubernetes-collector:0.9.8-rc1
+        imagePullPolicy: Always
+        command:
+        - /wavefront-collector
+        - --source=kubernetes.summary_api:''
+        # - --source=telegraf:?prefix=tururu&plugins=cpu,tururu
+        - --source=telegraf:''
+        - --sink=wavefront:?proxyAddress=wavefront-proxy.default.svc.cluster.local:2878&clusterName=glaullon&includeLabels=true
+        - --v=4
+        # - --discovery-config=/etc/collector/config.yaml
+        volumeMounts:
+          - name: procfs
+            mountPath: /host/proc
+            readOnly: true
+        # - name: ssl-certs
+        #   mountPath: /etc/ssl/certs
+        #   readOnly: true   
+        # - mountPath: /etc/collector/
+        #   name: config
+        #   readOnly: true
+        ports:
+        - containerPort: 8088
+          protocol: TCP
+        env:
+        - name: HOST_PROC
+          value: /host/proc
+        - name: POD_NODE_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: spec.nodeName
+        - name: POD_NAMESPACE_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+      volumes:
+      - name: procfs
+        hostPath:
+          path: /proc
+      - name: ssl-certs
+        hostPath:
+          path: /etc/ssl/certs
+      - name: config
+        configMap:
+          name: discovery-config
