@@ -27,16 +27,19 @@ spec:
 
       containers:
       - name: wavefront-collector
-        image: wavefronthq/wavefront-kubernetes-collector:0.9.8-rc2
+        image: wavefronthq/wavefront-kubernetes-collector:0.9.8-rc3
         imagePullPolicy: Always
         command:
         - /wavefront-collector
         - --source=kubernetes.summary_api:''
-        # - --source=telegraf:?prefix=tururu&plugins=cpu,tururu
         - --source=telegraf:''
+        - --source=systemd:''
         - --sink=wavefront:?proxyAddress=wavefront-proxy.default.svc.cluster.local:2878&clusterName=k8s-cluster&includeLabels=true
         - --v=2
         volumeMounts:
+        - name: system-dbus-socket
+          mountPath: /var/run/dbus/system_bus_socket
+          readOnly: true
         - name: procfs
           mountPath: /host/proc
           readOnly: true
@@ -60,6 +63,9 @@ spec:
               apiVersion: v1
               fieldPath: metadata.namespace
       volumes:
+      - name: system-dbus-socket
+        hostPath:
+          path: /var/run/dbus/system_bus_socket
       - name: procfs
         hostPath:
           path: /proc

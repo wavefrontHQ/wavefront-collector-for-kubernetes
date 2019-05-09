@@ -51,6 +51,31 @@ Example Usage:
 --source=prometheus:''?url=http://kube-state-metrics.kube-system.svc.cluster.local:8080/metrics&prefix=prom.
 ```
 
+## Telegraf Source
+- `prefix`: The prefix to be applied to all metrics for this source. Defaults to empty string.
+- `plugins`: Comma separated list of telegraf plugins to collect metrics from. Defaults to collecting from all plugins.
+
+The list of plugins that are supported:
+- mem, net, netstat, linux_sysctl_fs, swap, cpu, disk, diskio, system, kernel, processes.
+
+Example Usage:
+```
+--source=telegraf:''?prefix=telegraf.&plugins=cpu,netstat,disk,diskio
+```
+
+## Systemd Source
+- `prefix`: The prefix to be applied to all metrics for this source. Defaults to `kubernetes.systemd.`.
+- `taskMetrics`: Defaults to true. Set to false to not collect systemd unit task metrics.
+- `startTimeMetrics`: Defaults to true. Set to false to not collect system unit start time metrics.
+- `restartMetrics`: Defaults to false. Set to true to collect systemd unit restart metrics.
+- `unitWhitelist`: List of glob patterns. Only unit names matching the whitelist are monitored. Defaults to all units.
+- `unitBlacklist`: List of glob patterns. Unit names matching the blacklist are not monitored. Defaults to empty string.
+
+Example Usage:
+```
+--source=systemd:''?prefix=kubernetes.systemd.&restartMetrics=true&unitWhitelist=*docker*&unitWhitelist=*kubelet*
+```
+
 ## Wavefront Sink
 - `server`: The Wavefront URL of the form `https://YOUR_INSTANCE.wavefront.com`. Only required for direct ingestion.
 - `token`: The Wavefront API token with direct data ingestion permission. Only required for direct ingestion.
