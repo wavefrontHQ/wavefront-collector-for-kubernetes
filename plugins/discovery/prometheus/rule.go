@@ -13,13 +13,15 @@ import (
 type ruleHandler struct {
 	lister discovery.ResourceLister
 	th     *targetHandler
+	daemon bool
 }
 
 // Gets a new prometheus rule handler
-func NewRuleHandler(rl discovery.ResourceLister, ph metrics.DynamicProviderHandler) discovery.RuleHandler {
+func NewRuleHandler(rl discovery.ResourceLister, ph metrics.DynamicProviderHandler, daemon bool) discovery.RuleHandler {
 	return &ruleHandler{
 		lister: rl,
 		th:     newTargetHandler(ph),
+		daemon: daemon,
 	}
 }
 
@@ -57,7 +59,7 @@ func (rh *ruleHandler) Delete() {
 }
 
 func (rh *ruleHandler) discoverAPIServer(rule discovery.PrometheusConfig, targets map[string]bool) {
-	if !leadership.Leading() {
+	if rh.daemon && !leadership.Leading() {
 		glog.V(2).Infof("apiserver discovery disabled. current leader: %s", leadership.Leader())
 		return
 	}
@@ -88,7 +90,7 @@ func (rh *ruleHandler) findPods(rule discovery.PrometheusConfig, targets map[str
 }
 
 func (rh *ruleHandler) findServices(rule discovery.PrometheusConfig, targets map[string]bool) {
-	if !leadership.Leading() {
+	if rh.daemon && !leadership.Leading() {
 		glog.V(2).Infof("service discovery disabled. current leader: %s", leadership.Leader())
 		return
 	}

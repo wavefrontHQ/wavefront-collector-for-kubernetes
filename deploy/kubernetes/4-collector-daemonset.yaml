@@ -31,6 +31,7 @@ spec:
         imagePullPolicy: Always
         command:
         - /wavefront-collector
+        #- --daemon=true
         - --source=kubernetes.summary_api:''
         - --source=telegraf:''
         - --source=systemd:''

@@ -22,6 +22,7 @@ type CollectorRunOptions struct {
 	DiscoveryConfigFile   string
 	InternalStatsPrefix   string
 	ScrapeTimeout         time.Duration
+	Daemon                bool
 }
 
 func NewCollectorRunOptions() *CollectorRunOptions {
@@ -42,4 +43,5 @@ func (h *CollectorRunOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&h.DiscoveryConfigFile, "discovery_config", "", "optional discovery configuration file")
 	fs.StringVar(&h.InternalStatsPrefix, "internal_stats_prefix", "kubernetes.", "optional prefix for internal collector stats")
 	fs.DurationVar(&h.ScrapeTimeout, "scrape_timeout", 20*time.Second, "The per-source scrape timeout")
+	fs.BoolVar(&h.Daemon, "daemon", false, "enable daemon mode")
 }

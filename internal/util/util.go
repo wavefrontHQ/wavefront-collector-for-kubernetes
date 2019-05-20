@@ -32,6 +32,7 @@ import (
 const (
 	NodeNameEnvVar      = "POD_NODE_NAME"
 	NamespaceNameEnvVar = "POD_NAMESPACE_NAME"
+	DaemonModeEnvVar    = "DAEMON_MODE"
 )
 
 var (
@@ -58,7 +59,6 @@ func GetNodeLister(kubeClient *kube_client.Clientset) (v1listers.NodeLister, *ca
 	return nodeLister, reflector, nil
 }
 
-//TODO: verify how these listers are used
 func GetPodLister(kubeClient *kube_client.Clientset) (v1listers.PodLister, error) {
 	fieldSelector := GetFieldSelector("pods")
 	lw := cache.NewListWatchFromClient(kubeClient.CoreV1().RESTClient(), "pods", kube_api.NamespaceAll, fieldSelector)
@@ -81,7 +81,7 @@ func GetServiceLister(kubeClient *kube_client.Clientset) (v1listers.ServiceListe
 func GetFieldSelector(resourceType string) fields.Selector {
 	fieldSelector := fields.Everything()
 	nodeName := GetNodeName()
-	if nodeName != "" {
+	if os.Getenv(DaemonModeEnvVar) != "" && nodeName != "" {
 		switch resourceType {
 		case "pods":
 			fieldSelector = fields.ParseSelectorOrDie("spec.nodeName=" + nodeName)
