@@ -147,5 +147,5 @@ func Leader() string {
 func Leading() bool {
 	lock.RLock()
 	defer lock.RUnlock()
-	return isLeader
+	return util.GetDaemonMode() == "" || isLeader
 }

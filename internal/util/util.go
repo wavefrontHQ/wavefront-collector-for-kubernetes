@@ -95,6 +95,10 @@ func GetFieldSelector(resourceType string) fields.Selector {
 	return fieldSelector
 }
 
+func GetDaemonMode() string {
+	return os.Getenv(DaemonModeEnvVar)
+}
+
 func GetNodeName() string {
 	return os.Getenv(NodeNameEnvVar)
 }
