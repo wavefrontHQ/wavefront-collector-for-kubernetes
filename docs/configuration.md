@@ -6,6 +6,7 @@ This page documents advanced configuration options for various aspects of the Wa
 ```
 Usage of ./wavefront-collector:
       --alsologtostderr                     log to standard error as well as files
+      --daemon                              enable daemon mode (default false)
       --discovery-config string             optional discovery configuration file
       --enable-discovery                    enable pod discovery (default true)
       --ignore-label strings                ignore this label when joining labels
@@ -73,15 +74,15 @@ Example Usage:
 
 The list of metrics collected by the systemd source are:
 ```
-systemd.unit.state: Unit state (active, inactive etc)
-systemd.unit.start.time.seconds: Start time of the unit since unix epoch in seconds
-systemd.system.running: Whether the system is operational (see 'systemctl is-system-running')
-systemd.units: Top level summary of systemd unit states (# of active, inactive units etc)
-systemd.service.restart.total: Service unit count of Restart triggers
-systemd.timer.last.trigger.seconds: Seconds since epoch of last trigger
-systemd.socket.accepted.connections.total: Total number of accepted socket connections
-systemd.socket.current.connections: Current number of socket connections
-systemd_socket_refused_connections_total: Total number of refused socket connections
+kubernetes.systemd.unit.state: Unit state (active, inactive etc)
+kubernetes.systemd.unit.start.time.seconds: Start time of the unit since unix epoch in seconds
+kubernetes.systemd.system.running: Whether the system is operational (see 'systemctl is-system-running')
+kubernetes.systemd.units: Top level summary of systemd unit states (# of active, inactive units etc)
+kubernetes.systemd.service.restart.total: Service unit count of Restart triggers
+kubernetes.systemd.timer.last.trigger.seconds: Seconds since epoch of last trigger
+kubernetes.systemd.socket.accepted.connections.total: Total number of accepted socket connections
+kubernetes.systemd.socket.current.connections: Current number of socket connections
+kubernetes.systemd_socket_refused_connections_total: Total number of refused socket connections
 ```
 
 Example Usage:
