@@ -22,6 +22,8 @@ import (
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/prometheus"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/stats"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/summary"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/systemd"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/telegraf"
 
 	"github.com/golang/glog"
 )
@@ -36,6 +38,12 @@ func (sf *SourceFactory) Build(uri flags.Uri) (metrics.MetricsSourceProvider, er
 		return provider, err
 	case "prometheus":
 		provider, err := prometheus.NewPrometheusProvider(&uri.Val)
+		return provider, err
+	case "telegraf":
+		provider, err := telegraf.NewProvider(&uri.Val)
+		return provider, err
+	case "systemd":
+		provider, err := systemd.NewProvider(&uri.Val)
 		return provider, err
 	default:
 		return nil, fmt.Errorf("source not recognized: %s", uri.Key)

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/leadership"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/discovery/prometheus"
 
@@ -29,18 +30,21 @@ func init() {
 
 type discoveryManager struct {
 	modTime         time.Time
+	daemon          bool
 	kubeClient      kubernetes.Interface
 	resourceLister  discovery.ResourceLister
 	providerHandler metrics.DynamicProviderHandler
 	discoverer      discovery.Discoverer
+	serviceListener *serviceHandler
 	channel         chan struct{}
 	mtx             sync.Mutex
 	rules           map[string]discovery.RuleHandler
 }
 
 func NewDiscoveryManager(client kubernetes.Interface, podLister v1listers.PodLister,
-	serviceLister v1listers.ServiceLister, cfgFile string, handler metrics.DynamicProviderHandler) {
+	serviceLister v1listers.ServiceLister, cfgFile string, handler metrics.DynamicProviderHandler, daemon bool) {
 	mgr := &discoveryManager{
+		daemon:          daemon,
 		kubeClient:      client,
 		resourceLister:  newResourceLister(podLister, serviceLister),
 		providerHandler: handler,
@@ -55,8 +59,34 @@ func (dm *discoveryManager) Run(cfgFile string) {
 	discoveryEnabled.Inc(1)
 
 	// init discovery handlers
-	NewPodHandler(dm.kubeClient, dm.discoverer)
-	NewServiceHandler(dm.kubeClient, dm.discoverer)
+	newPodHandler(dm.kubeClient, dm.discoverer)
+	dm.serviceListener = newServiceHandler(dm.kubeClient, dm.discoverer)
+
+	if !dm.daemon {
+		dm.serviceListener.start()
+	} else {
+		// in daemon mode, service discovery is performed by only one collector agent in a cluster
+		// kick off leader election to determine if this agent should handle it
+		ch, err := leadership.Subscribe(dm.kubeClient.CoreV1())
+		if err != nil {
+			glog.Errorf("discovery: leader election error: %q", err)
+		} else {
+			go func() {
+				for {
+					select {
+					case isLeader := <-ch:
+						if isLeader {
+							glog.V(2).Infof("elected leader: %s starting service discovery", leadership.Leader())
+							dm.serviceListener.start()
+						} else {
+							glog.V(2).Infof("stopping service discovery. new leader: %s", leadership.Leader())
+							dm.serviceListener.stop()
+						}
+					}
+				}
+			}()
+		}
+	}
 
 	if cfgFile != "" {
 		dm.loadWatch(cfgFile)
@@ -131,7 +161,7 @@ func (dm *discoveryManager) load(cfg discovery.Config) {
 	for _, rule := range cfg.PromConfigs {
 		handler, exists := dm.rules[rule.Name]
 		if !exists {
-			handler = prometheus.NewRuleHandler(dm.resourceLister, dm.providerHandler)
+			handler = prometheus.NewRuleHandler(dm.resourceLister, dm.providerHandler, dm.daemon)
 			dm.rules[rule.Name] = handler
 		}
 		err := handler.Handle(rule)

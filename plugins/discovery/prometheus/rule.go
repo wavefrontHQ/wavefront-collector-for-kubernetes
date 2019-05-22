@@ -4,6 +4,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/kubernetes"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/leadership"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -12,13 +13,15 @@ import (
 type ruleHandler struct {
 	lister discovery.ResourceLister
 	th     *targetHandler
+	daemon bool
 }
 
 // Gets a new prometheus rule handler
-func NewRuleHandler(rl discovery.ResourceLister, ph metrics.DynamicProviderHandler) discovery.RuleHandler {
+func NewRuleHandler(rl discovery.ResourceLister, ph metrics.DynamicProviderHandler, daemon bool) discovery.RuleHandler {
 	return &ruleHandler{
 		lister: rl,
 		th:     newTargetHandler(ph),
+		daemon: daemon,
 	}
 }
 
@@ -56,6 +59,10 @@ func (rh *ruleHandler) Delete() {
 }
 
 func (rh *ruleHandler) discoverAPIServer(rule discovery.PrometheusConfig, targets map[string]bool) {
+	if rh.daemon && !leadership.Leading() {
+		glog.V(2).Infof("apiserver discovery disabled. current leader: %s", leadership.Leader())
+		return
+	}
 	if rule.Port == "" {
 		rule.Port = "443"
 	}
@@ -83,6 +90,10 @@ func (rh *ruleHandler) findPods(rule discovery.PrometheusConfig, targets map[str
 }
 
 func (rh *ruleHandler) findServices(rule discovery.PrometheusConfig, targets map[string]bool) {
+	if rh.daemon && !leadership.Leading() {
+		glog.V(2).Infof("service discovery disabled. current leader: %s", leadership.Leader())
+		return
+	}
 	if rule.Namespace == "" && len(rule.Labels) == 0 {
 		glog.Errorf("error processing rule=%s err=missing namespace and labels", rule.Name)
 		return

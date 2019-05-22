@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: wavefront-collector
+  namespace: wavefront-collector
+  labels:
+    k8s-app: wavefront-collector
+    name: wavefront-collector
+spec:
+  selector:
+    matchLabels:
+      k8s-app: wavefront-collector
+  template:
+    metadata:
+      labels:
+        k8s-app: wavefront-collector
+    spec:
+      tolerations:
+      - effect: NoSchedule
+        key: node.alpha.kubernetes.io/role
+        operator: Exists
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/master
+        operator: Exists
+
+      serviceAccountName: wavefront-collector
+
+      containers:
+      - name: wavefront-collector
+        image: wavefronthq/wavefront-kubernetes-collector:0.9.8-rc3
+        imagePullPolicy: Always
+        command:
+        - /wavefront-collector
+        #- --daemon=true
+        - --source=kubernetes.summary_api:''
+        - --source=telegraf:''
+        - --source=systemd:''
+        - --sink=wavefront:?proxyAddress=wavefront-proxy.default.svc.cluster.local:2878&clusterName=k8s-cluster&includeLabels=true
+        - --v=2
+        volumeMounts:
+        - name: system-dbus-socket
+          mountPath: /var/run/dbus/system_bus_socket
+          readOnly: true
+        - name: procfs
+          mountPath: /host/proc
+          readOnly: true
+        - name: ssl-certs
+          mountPath: /etc/ssl/certs
+          readOnly: true
+        ports:
+        - containerPort: 8088
+          protocol: TCP
+        env:
+        - name: HOST_PROC
+          value: /host/proc
+        - name: POD_NODE_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: spec.nodeName
+        - name: POD_NAMESPACE_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+      volumes:
+      - name: system-dbus-socket
+        hostPath:
+          path: /var/run/dbus/system_bus_socket
+      - name: procfs
+        hostPath:
+          path: /proc
+      - name: ssl-certs
+        hostPath:
+          path: /etc/ssl/certs

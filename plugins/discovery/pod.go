@@ -4,26 +4,18 @@ import (
 	"time"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
 
 	"k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 )
 
-func NewPodHandler(kubeClient kubernetes.Interface, discoverer discovery.Discoverer) {
-	p := kubeClient.CoreV1().Pods(v1.NamespaceAll)
-	lw := &cache.ListWatch{
-		ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
-			return p.List(options)
-		},
-		WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
-			return p.Watch(options)
-		},
-	}
+func newPodHandler(kubeClient kubernetes.Interface, discoverer discovery.Discoverer) {
+	client := kubeClient.CoreV1().RESTClient()
+	fieldSelector := util.GetFieldSelector("pods")
+	lw := cache.NewListWatchFromClient(client, "pods", v1.NamespaceAll, fieldSelector)
 	inf := cache.NewSharedInformer(lw, &v1.Pod{}, 10*time.Minute)
 
 	inf.AddEventHandler(cache.ResourceEventHandlerFuncs{

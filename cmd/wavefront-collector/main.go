@@ -49,6 +49,18 @@ func main() {
 	logs.InitLogs()
 	defer logs.FlushLogs()
 
+	if opt.Daemon {
+		nodeName := os.Getenv(util.NodeNameEnvVar)
+		if nodeName == "" {
+			glog.Fatalf("node name environment variable %s not provided", util.NodeNameEnvVar)
+		}
+		err := os.Setenv(util.DaemonModeEnvVar, "true")
+		if err != nil {
+			glog.Fatalf("could not set daemon_mode environment variable")
+		}
+		glog.V(2).Infof("%s: %s", util.NodeNameEnvVar, nodeName)
+	}
+
 	registerVersion()
 
 	labelCopier, err := util.NewLabelCopier(opt.LabelSeparator, opt.StoredLabels, opt.IgnoredLabels)
@@ -77,7 +89,7 @@ func main() {
 	if opt.EnableDiscovery {
 		handler := sourceManager.(metrics.DynamicProviderHandler)
 		serviceLister := getServiceListerOrDie(kubeClient)
-		createDiscoveryManagerOrDie(kubeClient, podLister, serviceLister, opt.DiscoveryConfigFile, handler)
+		createDiscoveryManagerOrDie(kubeClient, podLister, serviceLister, opt.DiscoveryConfigFile, handler, opt.Daemon)
 	}
 
 	man, err := manager.NewManager(sourceManager, dataProcessors, sinkManager,
@@ -130,8 +142,8 @@ func createAndInitSinksOrDie(sinkAddresses flags.Uris, sinkExportDataTimeout tim
 }
 
 func createDiscoveryManagerOrDie(client *kube_client.Clientset, podLister v1listers.PodLister,
-	serviceLister v1listers.ServiceLister, cfgFile string, handler metrics.DynamicProviderHandler) {
-	discovery.NewDiscoveryManager(client, podLister, serviceLister, cfgFile, handler)
+	serviceLister v1listers.ServiceLister, cfgFile string, handler metrics.DynamicProviderHandler, daemon bool) {
+	discovery.NewDiscoveryManager(client, podLister, serviceLister, cfgFile, handler, daemon)
 }
 
 func getPodListerOrDie(kubeClient *kube_client.Clientset) v1listers.PodLister {
