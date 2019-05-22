@@ -93,7 +93,7 @@ Example Usage:
 ## Wavefront Sink
 - `server`: The Wavefront URL of the form `https://YOUR_INSTANCE.wavefront.com`. Only required for direct ingestion.
 - `token`: The Wavefront API token with direct data ingestion permission. Only required for direct ingestion.
-- `proxyAddress`: The Wavefront proxy service address of the form `wavefront-proxy.default.svc.cluster.local:2878`. Requires the proxy to be deployed in Kubernetes.
+- `proxyAddress`: The Wavefront proxy service address of the form `wavefront-proxy.default.svc.cluster.local:2878`.
 - `clusterName`: A unique identifier for your Kubernetes cluster. Defaults to `k8s-cluster`. This is included as a point tag on all metrics sent to Wavefront.
 - `includeLabels`: If set to true, any Kubernetes labels will be applied to metrics as tags. Defaults to false.
 - `includeContainers`: If set to true, all container metrics will be sent to Wavefront. When set to false, container level metrics are skipped (pod level and above are still sent to Wavefront). Defaults to true.
