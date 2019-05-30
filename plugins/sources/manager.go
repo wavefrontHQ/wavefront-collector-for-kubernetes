@@ -1,3 +1,6 @@
+// Based on https://github.com/kubernetes-retired/heapster/blob/master/metrics/sources/manager.go
+// Diff against master for changes to the original code.
+
 // Copyright 2015 Google Inc. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
