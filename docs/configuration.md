@@ -72,19 +72,6 @@ Example Usage:
 - `unitWhitelist`: List of glob patterns. Only unit names matching the whitelist are monitored. Defaults to all units.
 - `unitBlacklist`: List of glob patterns. Unit names matching the blacklist are not monitored. Defaults to empty string.
 
-The list of metrics collected by the systemd source are:
-```
-kubernetes.systemd.unit.state: Unit state (active, inactive etc)
-kubernetes.systemd.unit.start.time.seconds: Start time of the unit since unix epoch in seconds
-kubernetes.systemd.system.running: Whether the system is operational (see 'systemctl is-system-running')
-kubernetes.systemd.units: Top level summary of systemd unit states (# of active, inactive units etc)
-kubernetes.systemd.service.restart.total: Service unit count of Restart triggers
-kubernetes.systemd.timer.last.trigger.seconds: Seconds since epoch of last trigger
-kubernetes.systemd.socket.accepted.connections.total: Total number of accepted socket connections
-kubernetes.systemd.socket.current.connections: Current number of socket connections
-kubernetes.systemd_socket_refused_connections_total: Total number of refused socket connections
-```
-
 Example Usage:
 ```
 --source=systemd:''?prefix=kubernetes.systemd.&restartMetrics=true&unitWhitelist=*docker*&unitWhitelist=*kubelet*

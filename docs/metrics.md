@@ -65,3 +65,36 @@ Metrics collected per type:
 | accelerator.duty_cycle | Duty cycle of an accelerator. |
 | accelerator.request | Number of accelerator devices requested by container. |
 | uptime  | Number of milliseconds since the container was started. |
+
+## Prometheus Source
+Varies by scrape target.
+
+## Systemd Source
+
+| Metric Name | Description |
+|------------|-------------|
+| systemd.unit.state | Unit state (active, inactive etc). |
+| systemd.unit.start.time.seconds | Start time of the unit since epoch in seconds. |
+| systemd.system.running | Whether the system is operational (`systemctl is-system-running`). |
+| systemd.units | Top level summary of systemd unit states (# of active, inactive units etc). |
+| systemd.service.restart.total | Service unit count of Restart triggers. |
+| systemd.timer.last.trigger.seconds | Seconds since epoch of last trigger. |
+| systemd.socket.accepted.connections.total | Total number of accepted socket connections. |
+| systemd.socket.current.connections | Current number of socket connections. |
+| systemd_socket_refused_connections_total | Total number of refused socket connections. |
+
+## Telegraf Source
+
+| Metric Prefix | Metrics Collected |
+|------------|-------------|
+| mem. | [metrics list](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/mem#metrics) |
+| net. | [metrics list](https://github.com/influxdata/telegraf/blob/master/plugins/inputs/net/NET_README.md#measurements--fields) |
+| netstat. | [metrics list](https://github.com/influxdata/telegraf/blob/master/plugins/inputs/net/NETSTAT_README.md#measurements) |
+| linux.sysctl.fs. | [metrics list](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/linux_sysctl_fs#linux-sysctl-fs-input) |
+| swap. | [metrics list](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/swap#metrics) |
+| cpu. | [metrics list](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/cpu#measurements) |
+| disk. | [metrics list](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/disk#metrics) |
+| diskio. | [metrics list](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/diskio#metrics) |
+| system. | [metrics list](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/system#metrics) |
+| kernel. | [metrics list](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/kernel#measurements--fields) |
+| processes. | [metrics list](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/processes#measurements--fields) |
