@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
 	"github.com/golang/glog"
 	gm "github.com/rcrowley/go-metrics"
 	"github.com/spf13/pflag"
@@ -24,10 +26,11 @@ import (
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sinks"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources"
 
-	"k8s.io/apiserver/pkg/util/flag"
+	kubeFlag "k8s.io/apiserver/pkg/util/flag"
 	"k8s.io/apiserver/pkg/util/logs"
 	kube_client "k8s.io/client-go/kubernetes"
 	v1listers "k8s.io/client-go/listers/core/v1"
+	"k8s.io/klog"
 )
 
 var (
@@ -36,10 +39,22 @@ var (
 )
 
 func main() {
+	// Create go-kit logger (wrapper around glog)
+	logger := log.NewLogfmtLogger(log.NewSyncWriter(os.Stdout))
+	logger = log.With(logger, "ts", log.DefaultTimestamp)
+	logger = level.NewFilter(logger, level.AllowDebug())
+
+	// Overriding the default glog with our go-kit glog implementation.
+	// Thus we need to pass it our go-kit logger object.
+	glog.ClampLevel(6)
+	glog.SetLogger(logger)
+
+	klog.ClampLevel(6)
+	klog.SetLogger(logger)
+
 	opt := options.NewCollectorRunOptions()
 	opt.AddFlags(pflag.CommandLine)
-
-	flag.InitFlags()
+	kubeFlag.InitFlags()
 
 	if opt.Version {
 		fmt.Println(fmt.Sprintf("version: %s\ncommit: %s", version, commit))

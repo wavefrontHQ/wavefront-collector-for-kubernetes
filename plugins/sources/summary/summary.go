@@ -438,8 +438,8 @@ func (this *summaryProvider) getNodeInfo(node *kube_api.Node) (NodeInfo, error) 
 	if hostname == "" {
 		hostname = node.Name
 	}
-	hostID := node.Spec.ExternalID
-	if hostID == "" && this.hostIDAnnotation != "" {
+	hostID := ""
+	if this.hostIDAnnotation != "" {
 		hostID = node.Annotations[this.hostIDAnnotation]
 	}
 	info := NodeInfo{

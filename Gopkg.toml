@@ -15,10 +15,6 @@
   name = "github.com/rcrowley/go-metrics"
 
 [[constraint]]
-  branch = "master"
-  name = "github.com/golang/glog"
-
-[[constraint]]
   name = "github.com/google/cadvisor"
   version = "0.31.0"
 
@@ -35,24 +31,24 @@
   version = "1.2.2"
 
 [[constraint]]
-  branch = "release-1.10"
+  branch = "release-1.14"
   name = "k8s.io/api"
 
 [[constraint]]
-  branch = "release-1.10"
+  branch = "release-1.14"
   name = "k8s.io/apimachinery"
 
 [[constraint]]
-  branch = "release-1.10"
-  name = "k8s.io/apiserver"
-
-[[constraint]]
-  name = "k8s.io/kubernetes"
-  version = "1.10.0"
-
-[[constraint]]
-  branch = "release-7.0"
+  branch = "release-11.0"
   name = "k8s.io/client-go"
+
+[[override]]
+  name = "github.com/golang/glog"
+  source = "github.com/kubermatic/glog-gokit"
+
+[[override]]
+  name = "k8s.io/klog"
+  source = "github.com/simonpasquier/klog-gokit" 
 
 [[override]]
   name = "github.com/golang/protobuf"
