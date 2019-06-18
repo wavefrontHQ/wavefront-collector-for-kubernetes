@@ -58,10 +58,25 @@ func (t *telegrafDataBatch) preparePoints(measurement string, fields map[string]
 			Value:     value,
 			Timestamp: ts.UnixNano() / 1000,
 			Source:    t.source.source,
-			Tags:      tags,
+			Tags:      t.buildTags(tags),
 		}
 		t.MetricPoints = t.filterAppend(t.MetricPoints, point)
 	}
+}
+
+func (t *telegrafDataBatch) buildTags(pointTags map[string]string) map[string]string {
+	result := make(map[string]string)
+	for k, v := range t.source.tags {
+		if len(v) > 0 {
+			result[k] = v
+		}
+	}
+	for k, v := range pointTags {
+		if len(v) > 0 {
+			result[k] = v
+		}
+	}
+	return result
 }
 
 func (t *telegrafDataBatch) filterAppend(slice []*metrics.MetricPoint, point *metrics.MetricPoint) []*metrics.MetricPoint {
@@ -114,7 +129,9 @@ func (t *telegrafDataBatch) SetPrecision(precision time.Duration) {
 
 // Report an error.
 func (t *telegrafDataBatch) AddError(err error) {
-	glog.Fatal("not supported")
+	if err != nil {
+		glog.Error(err)
+	}
 }
 
 // Upgrade to a TrackingAccumulator with space for maxTracked metrics/batches.

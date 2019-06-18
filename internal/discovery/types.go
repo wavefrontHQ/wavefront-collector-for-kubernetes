@@ -7,6 +7,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const PrefixAnnotation = "wavefront.com/prefix"
+
 type ResourceType int
 
 const (
@@ -31,14 +33,29 @@ func (resType ResourceType) String() string {
 	}
 }
 
+type IntegrationType int
+
+const (
+	Redis IntegrationType = 1
+)
+
+type Resource struct {
+	Kind string
+	IP   string
+	Meta metav1.ObjectMeta
+
+	PodSpec     v1.PodSpec
+	ServiceSpec v1.ServiceSpec
+}
+
 type ResourceLister interface {
 	ListPods(ns string, labels map[string]string) ([]*v1.Pod, error)
 	ListServices(ns string, labels map[string]string) ([]*v1.Service, error)
 }
 
 type Discoverer interface {
-	Discover(ip, kind string, meta metav1.ObjectMeta)
-	Delete(kind string, meta metav1.ObjectMeta)
+	Discover(resource Resource)
+	Delete(resource Resource)
 }
 
 // Handles a single discovery rule
@@ -47,4 +64,26 @@ type RuleHandler interface {
 	Handle(cfg interface{}) error
 	// Delete the rule and discovered targets
 	Delete()
+}
+
+type Encoder interface {
+	Encode(ip, kind string, meta metav1.ObjectMeta, rule interface{}) string
+}
+
+// Handles discovery of targets
+type TargetHandler interface {
+	Handle(resource Resource, cfg interface{})
+	Encoding(name string) string
+	Delete(name string)
+	DeleteMissing(input map[string]bool)
+	Count() int
+}
+
+// Registry for tracking discovered targets
+type TargetRegistry interface {
+	Register(name string, handler TargetHandler)
+	Unregister(name string)
+	Handler(name string) TargetHandler
+	Encoding(name string) string
+	Count() int
 }

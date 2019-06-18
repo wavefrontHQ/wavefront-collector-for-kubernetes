@@ -1,26 +1,27 @@
 package prometheus
 
 import (
-	"github.com/golang/glog"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/kubernetes"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/leadership"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
+
+	"github.com/golang/glog"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // handles a single prometheus discovery rule
 type ruleHandler struct {
 	lister discovery.ResourceLister
-	th     *targetHandler
+	th     discovery.TargetHandler
 	daemon bool
 }
 
 // Gets a new prometheus rule handler
-func NewRuleHandler(rl discovery.ResourceLister, ph metrics.DynamicProviderHandler, daemon bool) discovery.RuleHandler {
+func NewRuleHandler(rl discovery.ResourceLister, ph metrics.ProviderHandler, daemon bool) discovery.RuleHandler {
 	return &ruleHandler{
 		lister: rl,
-		th:     newTargetHandler(ph),
+		th:     NewTargetHandler(ph, false),
 		daemon: daemon,
 	}
 }
@@ -48,14 +49,14 @@ func (rh *ruleHandler) Handle(cfg interface{}) error {
 	}
 
 	// delete targets that no longer apply to this rule
-	rh.th.deleteMissing(targets)
+	rh.th.DeleteMissing(targets)
 
 	return nil
 }
 
 func (rh *ruleHandler) Delete() {
 	// delete all targets
-	rh.th.deleteMissing(nil)
+	rh.th.DeleteMissing(nil)
 }
 
 func (rh *ruleHandler) discoverAPIServer(rule discovery.PrometheusConfig, targets map[string]bool) {
@@ -110,7 +111,7 @@ func (rh *ruleHandler) findServices(rule discovery.PrometheusConfig, targets map
 }
 
 func (rh *ruleHandler) discover(ip, kind string, meta metav1.ObjectMeta, rule discovery.PrometheusConfig, targets map[string]bool) {
-	name := resourceName(kind, meta)
+	name := discovery.ResourceName(kind, meta)
 	targets[name] = true
-	rh.th.discover(ip, kind, meta, rule)
+	rh.th.Handle(discovery.Resource{IP: ip, Kind: kind, Meta: meta}, rule)
 }

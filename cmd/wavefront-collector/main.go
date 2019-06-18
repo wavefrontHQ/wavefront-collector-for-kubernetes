@@ -102,7 +102,7 @@ func main() {
 	dataProcessors := createDataProcessorsOrDie(kubernetesUrl, podLister, labelCopier)
 
 	if opt.EnableDiscovery {
-		handler := sourceManager.(metrics.DynamicProviderHandler)
+		handler := sourceManager.(metrics.ProviderHandler)
 		serviceLister := getServiceListerOrDie(kubeClient)
 		createDiscoveryManagerOrDie(kubeClient, podLister, serviceLister, opt.DiscoveryConfigFile, handler, opt.Daemon)
 	}
@@ -157,7 +157,7 @@ func createAndInitSinksOrDie(sinkAddresses flags.Uris, sinkExportDataTimeout tim
 }
 
 func createDiscoveryManagerOrDie(client *kube_client.Clientset, podLister v1listers.PodLister,
-	serviceLister v1listers.ServiceLister, cfgFile string, handler metrics.DynamicProviderHandler, daemon bool) {
+	serviceLister v1listers.ServiceLister, cfgFile string, handler metrics.ProviderHandler, daemon bool) {
 	discovery.NewDiscoveryManager(client, podLister, serviceLister, cfgFile, handler, daemon)
 }
 

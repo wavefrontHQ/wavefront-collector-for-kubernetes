@@ -33,7 +33,7 @@ type discoveryManager struct {
 	daemon          bool
 	kubeClient      kubernetes.Interface
 	resourceLister  discovery.ResourceLister
-	providerHandler metrics.DynamicProviderHandler
+	providerHandler metrics.ProviderHandler
 	discoverer      discovery.Discoverer
 	serviceListener *serviceHandler
 	channel         chan struct{}
@@ -42,13 +42,13 @@ type discoveryManager struct {
 }
 
 func NewDiscoveryManager(client kubernetes.Interface, podLister v1listers.PodLister,
-	serviceLister v1listers.ServiceLister, cfgFile string, handler metrics.DynamicProviderHandler, daemon bool) {
+	serviceLister v1listers.ServiceLister, cfgFile string, handler metrics.ProviderHandler, daemon bool) {
 	mgr := &discoveryManager{
 		daemon:          daemon,
 		kubeClient:      client,
 		resourceLister:  newResourceLister(podLister, serviceLister),
 		providerHandler: handler,
-		discoverer:      prometheus.NewDiscoverer(handler),
+		discoverer:      NewDiscoverer(handler),
 		channel:         make(chan struct{}),
 		rules:           make(map[string]discovery.RuleHandler),
 	}

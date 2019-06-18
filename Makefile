@@ -28,6 +28,10 @@ fmt:
 build: clean fmt
 	GOARCH=$(ARCH) CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o $(OUT_DIR)/$(ARCH)/$(BINARY_NAME) ./cmd/wavefront-collector/
 
+# test driver for local development
+driver: clean fmt
+	GOARCH=$(ARCH) CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o $(OUT_DIR)/$(ARCH)/$(BINARY_NAME)-test ./cmd/test-driver/
+
 container:
 	# Run build in a container in order to have reproducible builds
 	# Also, fetch the latest ca certificates
@@ -44,5 +48,6 @@ endif
 
 clean:
 	rm -f $(BINARY_NAME)
+	rm -f $(BINARY_NAME)-test
 
 .PHONY: all fmt container clean

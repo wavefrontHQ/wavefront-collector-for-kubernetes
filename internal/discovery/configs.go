@@ -8,8 +8,9 @@ import (
 
 // configuration for auto discovery
 type Config struct {
-	Global      GlobalConfig       `yaml:"global"`
-	PromConfigs []PrometheusConfig `yaml:"prom_configs"`
+	Global         GlobalConfig       `yaml:"global"`
+	ServiceConfigs []ServiceConfig    `yaml:"service_configs"`
+	PromConfigs    []PrometheusConfig `yaml:"prom_configs"`
 }
 
 // Describes global rules that define the default discovery behavior
@@ -19,9 +20,23 @@ type GlobalConfig struct {
 	DiscoveryInterval time.Duration `yaml:"discovery_interval"`
 }
 
+// Describes rules for auto discovering supported services
+type ServiceConfig struct {
+	// the service type
+	Type string `yaml:"type"`
+
+	// the container image to match against specified as a glob pattern string. Ex: 'redis*'
+	Image string `yaml:"image"`
+
+	// the port to be exposed on the container
+	Port string `yaml:"port"`
+
+	Filters filter.Config `yaml:"filters"`
+}
+
 // Describes rules for auto discovering resources and configuring relevant prometheus sources for metrics collection.
 type PrometheusConfig struct {
-	// name of the rule
+	// unique name of the rule
 	Name string `yaml:"name"`
 
 	// the resource type to discover. defaults to pod.

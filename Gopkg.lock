@@ -72,6 +72,22 @@
   version = "v1.2.4"
 
 [[projects]]
+  digest = "1:c950e574951c7199fb3d990d0e7a61996f40f8e646ba7cf8a557878d4c737f53"
+  name = "github.com/go-redis/redis"
+  packages = [
+    ".",
+    "internal",
+    "internal/consistenthash",
+    "internal/hashtag",
+    "internal/pool",
+    "internal/proto",
+    "internal/util",
+  ]
+  pruneopts = "UT"
+  revision = "75795aa4236dc7341eefac3bbe945e68c99ef9df"
+  version = "v6.15.3"
+
+[[projects]]
   digest = "1:9ae31ce33b4bab257668963e844d98765b44160be4ee98cafc44637a213e530d"
   name = "github.com/gobwas/glob"
   packages = [
@@ -186,12 +202,13 @@
   version = "v0.3.7"
 
 [[projects]]
-  digest = "1:cface0aec27f49b9244654c32435de92748594fd3308bc3e6684b2aa7e67e81f"
+  digest = "1:e35e024485c5da08e39647b6a2a24e9ebe5ae15c11b7086ae911744bc589fa98"
   name = "github.com/influxdata/telegraf"
   packages = [
     ".",
     "filter",
     "internal",
+    "internal/tls",
     "plugins/inputs",
     "plugins/inputs/cpu",
     "plugins/inputs/disk",
@@ -201,6 +218,7 @@
     "plugins/inputs/mem",
     "plugins/inputs/net",
     "plugins/inputs/processes",
+    "plugins/inputs/redis",
     "plugins/inputs/swap",
     "plugins/inputs/system",
   ]
@@ -716,6 +734,7 @@
     "github.com/influxdata/telegraf/plugins/inputs/mem",
     "github.com/influxdata/telegraf/plugins/inputs/net",
     "github.com/influxdata/telegraf/plugins/inputs/processes",
+    "github.com/influxdata/telegraf/plugins/inputs/redis",
     "github.com/influxdata/telegraf/plugins/inputs/swap",
     "github.com/json-iterator/go",
     "github.com/prometheus/client_model/go",

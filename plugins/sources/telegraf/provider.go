@@ -1,8 +1,8 @@
 package telegraf
 
 import (
+	"fmt"
 	"net/url"
-	"os"
 	"strings"
 	"time"
 
@@ -11,24 +11,29 @@ import (
 	telegrafPlugins "github.com/influxdata/telegraf/plugins/inputs"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/flags"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
+	wfTelegraf "github.com/wavefronthq/wavefront-kubernetes-collector/internal/telegraf"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/telegraf/redis"
 )
 
 type telegrafPluginSource struct {
 	name    string
 	source  string
 	prefix  string
+	tags    map[string]string
 	plugin  telegraf.Input
 	filters filter.Filter
 }
 
-func newTelegrafPluginSource(name string, plugin telegraf.Input, prefix string, filters filter.Filter) *telegrafPluginSource {
+func newTelegrafPluginSource(name string, plugin telegraf.Input, prefix string, tags map[string]string, filters filter.Filter) *telegrafPluginSource {
 	tsp := &telegrafPluginSource{
-		name:    name,
+		name:    name + "_plugin",
 		plugin:  plugin,
 		source:  util.GetNodeName(),
 		prefix:  prefix,
+		tags:    tags,
 		filters: filters,
 	}
 	return tsp
@@ -55,6 +60,7 @@ func (t *telegrafPluginSource) ScrapeMetrics(start, end time.Time) (*metrics.Dat
 
 // Telegraf provider
 type telegrafProvider struct {
+	name    string
 	sources []metrics.MetricsSource
 }
 
@@ -63,14 +69,16 @@ func (p telegrafProvider) GetMetricsSources() []metrics.MetricsSource {
 }
 
 func (p telegrafProvider) Name() string {
-	return "telegraf_provider"
+	return p.name
 }
+
+const ProviderName = "telegraf_provider"
 
 // NewProvider creates a Telegraf source
 func NewProvider(uri *url.URL) (metrics.MetricsSourceProvider, error) {
-	for _, pair := range os.Environ() {
-		glog.V(4).Infof("env: %v", pair)
-	}
+	//for _, pair := range os.Environ() {
+	//	glog.V(4).Infof("env: %v", pair)
+	//}
 	vals := uri.Query()
 
 	prefix := ""
@@ -88,12 +96,21 @@ func NewProvider(uri *url.URL) (metrics.MetricsSourceProvider, error) {
 	}
 
 	filters := filter.FromQuery(vals)
+	tags := flags.DecodeTags(vals)
 
 	var sources []metrics.MetricsSource
 	for _, name := range plugins {
 		creator := telegrafPlugins.Inputs[strings.Trim(name, " ")]
 		if creator != nil {
-			sources = append(sources, newTelegrafPluginSource(name+"_plugin", creator(), prefix, filters))
+			plugin := creator()
+			if handler, ok := handlers[name]; ok {
+				err := handler.Init(plugin, vals)
+				if err != nil {
+					// bail if the plugin has special handlers
+					return nil, err
+				}
+			}
+			sources = append(sources, newTelegrafPluginSource(name, plugin, prefix, tags, filters))
 		} else {
 			glog.Errorf("telegraf plugin %s not found", name)
 			var availablePlugins []string
@@ -103,5 +120,24 @@ func NewProvider(uri *url.URL) (metrics.MetricsSourceProvider, error) {
 			glog.Infof("available telegraf plugins: '%v'", availablePlugins)
 		}
 	}
-	return &telegrafProvider{sources: sources}, nil
+
+	name := ""
+	if len(vals["name"]) > 0 {
+		name = fmt.Sprintf("%s: %s", ProviderName, vals["name"][0])
+	}
+	if name == "" {
+		name = fmt.Sprintf("%s: default", ProviderName)
+	}
+
+	return &telegrafProvider{
+		name:    name,
+		sources: sources,
+	}, nil
+}
+
+var handlers map[string]wfTelegraf.PluginHandler
+
+func init() {
+	handlers = make(map[string]wfTelegraf.PluginHandler)
+	handlers["redis"] = redis.NewPluginHandler()
 }

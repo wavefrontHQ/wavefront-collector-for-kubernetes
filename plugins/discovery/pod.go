@@ -21,15 +21,30 @@ func newPodHandler(kubeClient kubernetes.Interface, discoverer discovery.Discove
 	inf.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			pod := obj.(*v1.Pod)
-			discoverer.Discover(pod.Status.PodIP, discovery.PodType.String(), pod.ObjectMeta)
+			discoverer.Discover(discovery.Resource{
+				Kind:    discovery.PodType.String(),
+				IP:      pod.Status.PodIP,
+				Meta:    pod.ObjectMeta,
+				PodSpec: pod.Spec,
+			})
 		},
 		UpdateFunc: func(_, obj interface{}) {
 			pod := obj.(*v1.Pod)
-			discoverer.Discover(pod.Status.PodIP, discovery.PodType.String(), pod.ObjectMeta)
+			discoverer.Discover(discovery.Resource{
+				Kind:    discovery.PodType.String(),
+				IP:      pod.Status.PodIP,
+				Meta:    pod.ObjectMeta,
+				PodSpec: pod.Spec,
+			})
 		},
 		DeleteFunc: func(obj interface{}) {
 			pod := obj.(*v1.Pod)
-			discoverer.Delete(discovery.PodType.String(), pod.ObjectMeta)
+			discoverer.Delete(discovery.Resource{
+				Kind:    discovery.PodType.String(),
+				IP:      pod.Status.PodIP,
+				Meta:    pod.ObjectMeta,
+				PodSpec: pod.Spec,
+			})
 		},
 	})
 	go inf.Run(wait.NeverStop)

@@ -10,4 +10,7 @@ import (
 	_ "github.com/influxdata/telegraf/plugins/inputs/net"
 	_ "github.com/influxdata/telegraf/plugins/inputs/processes"
 	_ "github.com/influxdata/telegraf/plugins/inputs/swap"
+
+	// service related plugins
+	_ "github.com/influxdata/telegraf/plugins/inputs/redis"
 )

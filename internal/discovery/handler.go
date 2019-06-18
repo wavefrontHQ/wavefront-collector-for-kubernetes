@@ -1,0 +1,152 @@
+package discovery
+
+import (
+	"fmt"
+	"net/url"
+	"sync"
+
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
+
+	"github.com/golang/glog"
+)
+
+type ProviderInfo struct {
+	Handler metrics.ProviderHandler
+	Factory metrics.ProviderFactory
+	Encoder Encoder
+}
+
+type defaultHandler struct {
+	info           ProviderInfo
+	registry       TargetRegistry
+	rh             func(r Resource) bool
+	useAnnotations bool
+
+	mtx     sync.RWMutex
+	targets map[string]string
+}
+
+type HandlerOption func(TargetHandler)
+
+func UseAnnotations(use bool) HandlerOption {
+	return func(handler TargetHandler) {
+		if h, ok := handler.(*defaultHandler); ok {
+			h.useAnnotations = use
+		}
+	}
+}
+
+func SetRegistrationHandler(f func(resource Resource) bool) HandlerOption {
+	return func(handler TargetHandler) {
+		if h, ok := handler.(*defaultHandler); ok {
+			h.rh = f
+		}
+	}
+}
+
+// Gets a new target handler for handling discovered targets
+func NewHandler(info ProviderInfo, registry TargetRegistry, setters ...HandlerOption) TargetHandler {
+	handler := &defaultHandler{
+		info:     info,
+		registry: registry,
+		targets:  make(map[string]string),
+	}
+	for _, setter := range setters {
+		setter(handler)
+	}
+	return handler
+}
+
+func (d *defaultHandler) Encoding(name string) string {
+	d.mtx.RLock()
+	defer d.mtx.RUnlock()
+	return d.targets[name]
+}
+
+func (d *defaultHandler) add(name, url string) {
+	d.mtx.Lock()
+	defer d.mtx.Unlock()
+	d.targets[name] = url
+}
+
+func (d *defaultHandler) Delete(name string) {
+	d.unregister(name)
+}
+
+// deletes targets that do not exist in the input map
+func (d *defaultHandler) DeleteMissing(input map[string]bool) {
+	d.mtx.Lock()
+	defer d.mtx.Unlock()
+	for k := range d.targets {
+		if _, exists := input[k]; !exists {
+			// delete directly rather than call unregister to prevent recursive locking
+			delete(d.targets, k)
+			d.deleteProvider(k)
+		}
+	}
+}
+
+func (d *defaultHandler) Handle(resource Resource, rule interface{}) {
+	kind := resource.Kind
+	ip := resource.IP
+	meta := resource.Meta
+
+	glog.Infof("%s: %s namespace: %s", kind, meta.Name, meta.Namespace)
+
+	name := ResourceName(kind, meta)
+	cachedEncoding := d.registry.Encoding(name)
+	encoding := d.info.Encoder.Encode(ip, kind, meta, rule)
+
+	// add target if encoding is non-empty and has changed
+	if encoding != "" && encoding != cachedEncoding {
+		glog.V(4).Infof("encoding: %s", encoding)
+		glog.V(4).Infof("cachedEncoding: %s", cachedEncoding)
+		u, err := url.Parse(encoding)
+		if err != nil {
+			glog.Error(err)
+			return
+		}
+		provider, err := d.info.Factory.Build(u)
+		if err != nil {
+			glog.Error(err)
+			return
+		}
+		d.register(name, encoding, provider)
+	}
+
+	// delete target if scrape annotation is false/absent and handler is annotation based
+	if encoding == "" && cachedEncoding != "" && d.useAnnotations && d.Encoding(name) != "" {
+		if d.rh != nil && d.rh(resource) {
+			glog.V(2).Infof("deleting target %s as annotation has changed", name)
+			d.unregister(name)
+		}
+	}
+}
+
+func (d *defaultHandler) register(name, url string, provider metrics.MetricsSourceProvider) {
+	d.add(name, url)
+	d.info.Handler.AddProvider(provider)
+	d.registry.Register(name, d)
+}
+
+func (d *defaultHandler) unregister(name string) {
+	d.mtx.Lock()
+	delete(d.targets, name)
+	d.mtx.Unlock()
+	d.deleteProvider(name)
+}
+
+func (d *defaultHandler) deleteProvider(name string) {
+	if d.registry.Handler(name) != nil {
+		providerName := fmt.Sprintf("%s: %s", d.info.Factory.Name(), name)
+		d.info.Handler.DeleteProvider(providerName)
+		d.registry.Unregister(name)
+	}
+	glog.V(5).Infof("%s deleted", name)
+}
+
+func (d *defaultHandler) Count() int {
+	d.mtx.RLock()
+	defer d.mtx.RUnlock()
+	return len(d.targets)
+}
