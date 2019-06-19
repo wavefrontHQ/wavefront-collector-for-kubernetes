@@ -1,6 +1,8 @@
 package integrations
 
 import (
+	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/discovery/integrations/telegraf"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/discovery/integrations/telegraf/memcached"
 	"strings"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
@@ -22,8 +24,13 @@ func NewDiscoverer(handler metrics.ProviderHandler) discovery.Discoverer {
 func makeDelegates(handler metrics.ProviderHandler) map[string]discovery.Discoverer {
 	//TODO: make this configurable
 	delegates := make(map[string]discovery.Discoverer)
-	delegates["redis"] = discovery.NewDiscoverer(redis.NewTargetHandler(handler))
+	delegates["redis"] = makeDiscoverer(handler, redis.NewEncoder(), "redis")
+	delegates["memcached"] = makeDiscoverer(handler, memcached.NewEncoder(), "memcached")
 	return delegates
+}
+
+func makeDiscoverer(handler metrics.ProviderHandler, delegate discovery.Encoder, name string) discovery.Discoverer {
+	return discovery.NewDiscoverer(telegraf.NewTargetHandler(handler, delegate, discovery.NewRegistry(name)))
 }
 
 func (d *discoverer) Discover(resource discovery.Resource) {
@@ -36,6 +43,9 @@ func (d *discoverer) Discover(resource discovery.Resource) {
 	for _, container := range containers {
 		if strings.Contains(container.Image, "redis") {
 			d.delegates["redis"].Discover(resource)
+		}
+		if strings.Contains(container.Image, "memcached") {
+			d.delegates["memcached"].Discover(resource)
 		}
 	}
 }
@@ -50,6 +60,9 @@ func (d *discoverer) Delete(resource discovery.Resource) {
 	for _, container := range containers {
 		if strings.Contains(container.Image, "redis") {
 			d.delegates["redis"].Delete(resource)
+		}
+		if strings.Contains(container.Image, "memcached") {
+			d.delegates["memcached"].Delete(resource)
 		}
 	}
 }

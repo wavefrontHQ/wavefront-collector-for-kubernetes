@@ -202,7 +202,7 @@
   version = "v0.3.7"
 
 [[projects]]
-  digest = "1:e35e024485c5da08e39647b6a2a24e9ebe5ae15c11b7086ae911744bc589fa98"
+  digest = "1:f20a6cc7050b79d54484b401f70bc66d33b3bfc4a016764df2e99e0778b3f3da"
   name = "github.com/influxdata/telegraf"
   packages = [
     ".",
@@ -216,6 +216,7 @@
     "plugins/inputs/kernel",
     "plugins/inputs/linux_sysctl_fs",
     "plugins/inputs/mem",
+    "plugins/inputs/memcached",
     "plugins/inputs/net",
     "plugins/inputs/processes",
     "plugins/inputs/redis",
@@ -732,6 +733,7 @@
     "github.com/influxdata/telegraf/plugins/inputs/diskio",
     "github.com/influxdata/telegraf/plugins/inputs/kernel",
     "github.com/influxdata/telegraf/plugins/inputs/mem",
+    "github.com/influxdata/telegraf/plugins/inputs/memcached",
     "github.com/influxdata/telegraf/plugins/inputs/net",
     "github.com/influxdata/telegraf/plugins/inputs/processes",
     "github.com/influxdata/telegraf/plugins/inputs/redis",

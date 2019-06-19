@@ -2,6 +2,7 @@ package telegraf
 
 import (
 	"fmt"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/telegraf/memcached"
 	"net/url"
 	"strings"
 	"time"
@@ -140,4 +141,5 @@ var handlers map[string]wfTelegraf.PluginHandler
 func init() {
 	handlers = make(map[string]wfTelegraf.PluginHandler)
 	handlers["redis"] = redis.NewPluginHandler()
+	handlers["memcached"] = memcached.NewPluginHandler()
 }
