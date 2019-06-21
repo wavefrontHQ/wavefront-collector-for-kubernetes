@@ -21,8 +21,8 @@ func (r handler) Init(input telegraf.Input, vals map[string][]string) error {
 		return fmt.Errorf("invalid input type: %s", input.Description())
 	}
 
-	if len(vals["server"]) > 0 {
-		redisPlugin.Servers = []string{vals["server"][0]}
+	if len(vals["servers"]) > 0 {
+		redisPlugin.Servers = []string{vals["servers"][0]}
 	} else {
 		return fmt.Errorf("missing redis server address")
 	}

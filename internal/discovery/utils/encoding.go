@@ -69,8 +69,11 @@ func EncodeMeta(urlStr, kind string, meta metav1.ObjectMeta) string {
 }
 
 func Param(meta metav1.ObjectMeta, annotation, cfgVal, defaultVal string) string {
+	value := ""
 	// give precedence to annotation
-	value := meta.GetAnnotations()[annotation]
+	if annotation != "" {
+		value = meta.GetAnnotations()[annotation]
+	}
 	if value == "" {
 		// then config
 		value = cfgVal

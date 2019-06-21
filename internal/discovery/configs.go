@@ -8,9 +8,9 @@ import (
 
 // configuration for auto discovery
 type Config struct {
-	Global         GlobalConfig       `yaml:"global"`
-	ServiceConfigs []ServiceConfig    `yaml:"service_configs"`
-	PromConfigs    []PrometheusConfig `yaml:"prom_configs"`
+	Global        GlobalConfig       `yaml:"global"`
+	PluginConfigs []PluginConfig     `yaml:"plugin_configs"`
+	PromConfigs   []PrometheusConfig `yaml:"prom_configs"`
 }
 
 // Describes global rules that define the default discovery behavior
@@ -21,15 +21,20 @@ type GlobalConfig struct {
 }
 
 // Describes rules for auto discovering supported services
-type ServiceConfig struct {
-	// the service type
+type PluginConfig struct {
+	// the plugin type
 	Type string `yaml:"type"`
 
-	// the container image to match against specified as a glob pattern string. Ex: 'redis*'
-	Image string `yaml:"image"`
+	// the container images to match against specified as a list of glob pattern strings. Ex: 'redis*'
+	Images []string `yaml:"images"`
 
-	// the port to be exposed on the container
+	// the port to be monitored on the container
 	Port string `yaml:"port"`
+
+	// the scheme to use. Defaults to "http".
+	Scheme string `yaml:"scheme"`
+
+	Conf map[string]string `yaml:"conf"`
 
 	Filters filter.Config `yaml:"filters"`
 }

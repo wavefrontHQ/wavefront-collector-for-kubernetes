@@ -48,10 +48,23 @@ func NewDiscoveryManager(client kubernetes.Interface, podLister v1listers.PodLis
 		kubeClient:      client,
 		resourceLister:  newResourceLister(podLister, serviceLister),
 		providerHandler: handler,
-		discoverer:      NewDiscoverer(handler),
 		channel:         make(chan struct{}),
 		rules:           make(map[string]discovery.RuleHandler),
 	}
+
+	// load config here to init runtime discovery based on container images
+	// rule based discovery is handled within the Run() flow
+	var plugins []discovery.PluginConfig
+	if cfgFile != "" {
+		cfg, err := FromFile(cfgFile)
+		if err != nil {
+			glog.Fatalf("invalid discovery file: %q", err)
+		}
+		plugins = cfg.PluginConfigs
+	}
+	mgr.discoverer = newDiscoverer(handler, plugins)
+
+	// Run the manager
 	mgr.Run(cfgFile)
 }
 

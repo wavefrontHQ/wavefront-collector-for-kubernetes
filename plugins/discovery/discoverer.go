@@ -3,32 +3,33 @@ package discovery
 import (
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/discovery/integrations"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/discovery/prometheus"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/discovery/telegraf"
 )
 
 type discoverer struct {
-	discs []discovery.Discoverer
+	delegates []discovery.Discoverer
 }
 
-func NewDiscoverer(handler metrics.ProviderHandler) discovery.Discoverer {
-	d := &discoverer{}
-	d.discs = make([]discovery.Discoverer, 2)
-	d.discs[0] = discovery.NewDiscoverer(prometheus.NewTargetHandler(handler, true))
-	d.discs[1] = integrations.NewDiscoverer(handler)
+func newDiscoverer(handler metrics.ProviderHandler, plugins []discovery.PluginConfig) discovery.Discoverer {
+	d := &discoverer{
+		delegates: make([]discovery.Discoverer, 2),
+	}
+	d.delegates[0] = discovery.NewDiscoverer(prometheus.NewTargetHandler(handler, true))
+	d.delegates[1] = telegraf.NewDiscoverer(handler, plugins)
 	return d
 }
 
 func (d *discoverer) Discover(resource discovery.Resource) {
 	//TODO: make async?
-	for _, disc := range d.discs {
-		disc.Discover(resource)
+	for _, delegate := range d.delegates {
+		delegate.Discover(resource)
 	}
 }
 
 func (d *discoverer) Delete(resource discovery.Resource) {
 	//TODO: make async?
-	for _, disc := range d.discs {
-		disc.Delete(resource)
+	for _, delegate := range d.delegates {
+		delegate.Delete(resource)
 	}
 }
