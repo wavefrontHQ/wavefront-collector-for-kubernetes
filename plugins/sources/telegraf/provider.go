@@ -2,7 +2,6 @@ package telegraf
 
 import (
 	"fmt"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/telegraf/memcached"
 	"net/url"
 	"strings"
 	"time"
@@ -14,9 +13,7 @@ import (
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/flags"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
-	wfTelegraf "github.com/wavefronthq/wavefront-kubernetes-collector/internal/telegraf"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/telegraf/redis"
 )
 
 type telegrafPluginSource struct {
@@ -75,6 +72,8 @@ func (p telegrafProvider) Name() string {
 
 const ProviderName = "telegraf_provider"
 
+var defaultPlugins = []string{"mem", "net", "netstat", "linux_sysctl_fs", "swap", "cpu", "disk", "diskio", "system", "kernel", "processes"}
+
 // NewProvider creates a Telegraf source
 func NewProvider(uri *url.URL) (metrics.MetricsSourceProvider, error) {
 	//for _, pair := range os.Environ() {
@@ -93,21 +92,23 @@ func NewProvider(uri *url.URL) (metrics.MetricsSourceProvider, error) {
 		plugins = append(plugins, strings.Split(pluginList, ",")...)
 	}
 	if len(plugins) == 0 {
-		plugins = []string{"mem", "net", "netstat", "linux_sysctl_fs", "swap", "cpu", "disk", "diskio", "system", "kernel", "processes"}
+		plugins = defaultPlugins
 	}
 
 	filters := filter.FromQuery(vals)
 	tags := flags.DecodeTags(vals)
+	discovered := flags.DecodeBoolean(vals, "discovered")
 
 	var sources []metrics.MetricsSource
 	for _, name := range plugins {
 		creator := telegrafPlugins.Inputs[strings.Trim(name, " ")]
 		if creator != nil {
 			plugin := creator()
-			if handler, ok := handlers[name]; ok {
-				err := handler.Init(plugin, vals)
+			if discovered {
+				err := initPlugin(plugin, vals)
 				if err != nil {
-					// bail if the plugin has special handlers
+					// bail if discovered and error initializing
+					glog.Errorf("error creating plugin: %s err: %s", name, err)
 					return nil, err
 				}
 			}
@@ -134,12 +135,4 @@ func NewProvider(uri *url.URL) (metrics.MetricsSourceProvider, error) {
 		name:    name,
 		sources: sources,
 	}, nil
-}
-
-var handlers map[string]wfTelegraf.PluginHandler
-
-func init() {
-	handlers = make(map[string]wfTelegraf.PluginHandler)
-	handlers["redis"] = redis.NewPluginHandler()
-	handlers["memcached"] = memcached.NewPluginHandler()
 }

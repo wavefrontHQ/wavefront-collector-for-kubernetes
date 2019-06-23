@@ -2,6 +2,7 @@ package prometheus
 
 import (
 	"fmt"
+	"net/url"
 	"strings"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
@@ -29,16 +30,30 @@ func init() {
 	nodeName = util.GetNodeName()
 }
 
-func scrapeURL(ip, kind string, meta metav1.ObjectMeta, rule discovery.PrometheusConfig) string {
+type prometheusEncoder struct{}
+
+func (e prometheusEncoder) Encode(ip, kind string, meta metav1.ObjectMeta, rule interface{}) url.Values {
+	cfg := discovery.PrometheusConfig{}
+	if rule != nil {
+		cfg = rule.(discovery.PrometheusConfig)
+	}
+	return scrapeURL(ip, kind, meta, cfg)
+}
+
+func scrapeURL(ip, kind string, meta metav1.ObjectMeta, rule discovery.PrometheusConfig) url.Values {
 	if ip == "" {
 		glog.V(5).Infof("missing ip for %s=%s", kind, meta.Name)
-		return ""
+		return url.Values{}
 	}
+
 	scrape := utils.Param(meta, scrapeAnnotation, "", "false")
 	if rule.Name == "" && scrape != "true" {
 		glog.V(5).Infof("scrape=false for %s=%s annotations=%q", kind, meta.Name, meta.Annotations)
-		return ""
+		return url.Values{}
 	}
+
+	values := url.Values{}
+	values.Set("discovered", "true")
 
 	scheme := utils.Param(meta, schemeAnnotation, rule.Scheme, "http")
 	path := utils.Param(meta, pathAnnotation, rule.Path, "/metrics")
@@ -50,31 +65,32 @@ func scrapeURL(ip, kind string, meta metav1.ObjectMeta, rule discovery.Prometheu
 	if source == "" {
 		source = meta.Name
 	}
-
 	name := discovery.ResourceName(kind, meta)
 	port = sanitizePort(meta.Name, port)
-	u := baseURL(scheme, ip, port, path, name, source, prefix)
-	u = utils.EncodeMeta(u, kind, meta)
-	u = utils.EncodeTags(u, "", rule.Tags)
+
+	encodeBase(values, scheme, ip, port, path, name, source, prefix)
+	utils.EncodeMeta(values, kind, meta)
+	utils.EncodeTags(values, "", rule.Tags)
 	if includeLabels == "true" {
-		u = utils.EncodeTags(u, "label.", meta.Labels)
+		utils.EncodeTags(values, "label.", meta.Labels)
 	}
-	u = utils.EncodeFilters(u, rule.Filters)
-	return u
+	utils.EncodeFilters(values, rule.Filters)
+	return values
 }
 
-func baseURL(scheme, ip, port, path, name, source, prefix string) string {
+func encodeBase(values url.Values, scheme, ip, port, path, name, source, prefix string) {
 	if port != "" {
 		port = fmt.Sprintf(":%s", port)
 	}
-	base := fmt.Sprintf("?url=%s://%s%s%s&name=%s&discovered=true", scheme, ip, port, path, name)
+	values.Set("url", fmt.Sprintf("%s://%s%s%s", scheme, ip, port, path))
+	values.Add("name", name)
+
 	if source != "" {
-		base = fmt.Sprintf("%s&source=%s", base, source)
+		values.Add("source", source)
 	}
 	if prefix != "" {
-		base = fmt.Sprintf("%s&prefix=%s", base, prefix)
+		values.Add("prefix", prefix)
 	}
-	return base
 }
 
 func sanitizePort(name, port string) string {

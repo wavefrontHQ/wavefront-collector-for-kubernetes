@@ -12,6 +12,9 @@ import (
 	_ "github.com/influxdata/telegraf/plugins/inputs/swap"
 
 	// service related plugins
+	_ "github.com/influxdata/telegraf/plugins/inputs/apache"
+	_ "github.com/influxdata/telegraf/plugins/inputs/consul"
+	_ "github.com/influxdata/telegraf/plugins/inputs/elasticsearch"
 	_ "github.com/influxdata/telegraf/plugins/inputs/memcached"
 	_ "github.com/influxdata/telegraf/plugins/inputs/redis"
 )

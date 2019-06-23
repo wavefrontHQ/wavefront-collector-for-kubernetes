@@ -14,15 +14,15 @@ plugin_configs:
     - '*redis*'
     port: 6379
     scheme: "tcp"
-    conf:
-      servers: ${server}
-      password: bar
+    conf: |
+      servers = [${server}]
+      password = bar
   - type: telegraf/memcached
     images:
     - 'memcached:*'
     port: 11211
-    conf:
-      servers: ${server}
+    conf: |
+      servers = ${server}
 prom_configs:
   - name: kube-dns-discovery
     labels:

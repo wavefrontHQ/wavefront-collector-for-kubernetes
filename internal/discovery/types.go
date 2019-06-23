@@ -2,12 +2,16 @@ package discovery
 
 import (
 	"fmt"
+	"net/url"
 
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const PrefixAnnotation = "wavefront.com/prefix"
+const (
+	PrefixAnnotation = "wavefront.com/prefix"
+	LabelsAnnotation = "wavefront.com/includeLabels"
+)
 
 type ResourceType int
 
@@ -67,7 +71,7 @@ type RuleHandler interface {
 }
 
 type Encoder interface {
-	Encode(ip, kind string, meta metav1.ObjectMeta, rule interface{}) string
+	Encode(ip, kind string, meta metav1.ObjectMeta, rule interface{}) url.Values
 }
 
 // Handles discovery of targets

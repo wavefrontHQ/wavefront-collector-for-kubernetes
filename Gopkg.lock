@@ -18,6 +18,14 @@
   revision = "2efee857e7cfd4f3d0138cc3cbb1b4966962b93a"
 
 [[projects]]
+  branch = "master"
+  digest = "1:7a9140c806333a78122763d08ec6c0d7358c7fff1df8cfbb01881c5dc46e24e5"
+  name = "github.com/armon/go-metrics"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "ec5e00d3c878b2a97bbe0884ef45ffd1b4f669f5"
+
+[[projects]]
   digest = "1:780d1a5df3a9a227bf07e7beb6c851ec6ad2614555b1d015d9e2f136d13ad8a7"
   name = "github.com/caio/go-tdigest"
   packages = ["."]
@@ -183,6 +191,38 @@
   version = "v0.2.0"
 
 [[projects]]
+  digest = "1:3db4f016af6ec500e79f6987c6ad284143b21effd504a2a8462be6c41b8198f5"
+  name = "github.com/hashicorp/consul"
+  packages = ["api"]
+  pruneopts = "UT"
+  revision = "40cec98468b829e5cdaacb0629b3e23a028db688"
+  version = "v1.5.1"
+
+[[projects]]
+  digest = "1:af105c7c5dc0b4ae41991f122cae860b9600f7d226072c2a83127048c991660c"
+  name = "github.com/hashicorp/go-cleanhttp"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "eda1e5db218aad1db63ca4642c8906b26bcf2744"
+  version = "v0.5.1"
+
+[[projects]]
+  digest = "1:6e9806a06d00f4d1f90806d7b5cfb11e35dca76503390ca6e704b05ea7051bff"
+  name = "github.com/hashicorp/go-immutable-radix"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "7dd1121b595e4e1bd6dd5caa78e0f5c454740379"
+  version = "v1.1.0"
+
+[[projects]]
+  digest = "1:7b893c9e1181e224506c523777dea0d16f4bd20a7627b100cc800e14229f405c"
+  name = "github.com/hashicorp/go-rootcerts"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "df8e78a645e18d56ed7bb9ae10ffb8174ab892e2"
+  version = "v1.0.1"
+
+[[projects]]
   digest = "1:d15ee511aa0f56baacc1eb4c6b922fa1c03b38413b6be18166b996d82a0156ea"
   name = "github.com/hashicorp/golang-lru"
   packages = [
@@ -194,6 +234,14 @@
   version = "v0.5.1"
 
 [[projects]]
+  digest = "1:acc81e4e4289587b257ccdfccbc6eaf16d4c2fb57dda73c6bb349bf50f02501f"
+  name = "github.com/hashicorp/serf"
+  packages = ["coordinate"]
+  pruneopts = "UT"
+  revision = "15cfd05de3dffb3664aa37b06e91f970b825e380"
+  version = "v0.8.3"
+
+[[projects]]
   digest = "1:a0cefd27d12712af4b5018dc7046f245e1e3b5760e2e848c30b171b570708f9b"
   name = "github.com/imdario/mergo"
   packages = ["."]
@@ -202,17 +250,21 @@
   version = "v0.3.7"
 
 [[projects]]
-  digest = "1:f20a6cc7050b79d54484b401f70bc66d33b3bfc4a016764df2e99e0778b3f3da"
+  digest = "1:89ce9a2fee99d965c609e170767922fb84efb66ba1f4815a2c11234428a24ce3"
   name = "github.com/influxdata/telegraf"
   packages = [
     ".",
     "filter",
     "internal",
     "internal/tls",
+    "metric",
     "plugins/inputs",
+    "plugins/inputs/apache",
+    "plugins/inputs/consul",
     "plugins/inputs/cpu",
     "plugins/inputs/disk",
     "plugins/inputs/diskio",
+    "plugins/inputs/elasticsearch",
     "plugins/inputs/kernel",
     "plugins/inputs/linux_sysctl_fs",
     "plugins/inputs/mem",
@@ -222,10 +274,22 @@
     "plugins/inputs/redis",
     "plugins/inputs/swap",
     "plugins/inputs/system",
+    "plugins/parsers/json",
   ]
   pruneopts = "UT"
   revision = "294bb6668f4c76ee3913613936e74b52dc5d3bda"
   version = "1.10.3"
+
+[[projects]]
+  branch = "master"
+  digest = "1:fcbba1015d71a1e5d676fbe021049b4dbdb349b72d8521dcf188c755fad4af0a"
+  name = "github.com/influxdata/toml"
+  packages = [
+    ".",
+    "ast",
+  ]
+  pruneopts = "UT"
+  revision = "2a2e3012f7cfbef64091cc79776311e65dfa211b"
 
 [[projects]]
   digest = "1:f5a2051c55d05548d2d4fd23d244027b59fbd943217df8aa3b5e170ac2fd6e1b"
@@ -252,6 +316,22 @@
   version = "v1.0.1"
 
 [[projects]]
+  digest = "1:5d231480e1c64a726869bc4142d270184c419749d34f167646baa21008eb0a79"
+  name = "github.com/mitchellh/go-homedir"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "af06845cf3004701891bf4fdb884bfe4920b3727"
+  version = "v1.1.0"
+
+[[projects]]
+  digest = "1:53bc4cd4914cd7cd52139990d5170d6dc99067ae31c56530621b18b35fc30318"
+  name = "github.com/mitchellh/mapstructure"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "3536a929edddb9a5b34bd6861dc4a9647cb459fe"
+  version = "v1.1.2"
+
+[[projects]]
   digest = "1:33422d238f147d247752996a26574ac48dcf472976eda7f5134015f06bf16563"
   name = "github.com/modern-go/concurrent"
   packages = ["."]
@@ -266,6 +346,14 @@
   pruneopts = "UT"
   revision = "4b7aa43c6742a2c18fdef89dd197aaae7dac7ccd"
   version = "1.0.1"
+
+[[projects]]
+  digest = "1:b56c589214f01a5601e0821387db484617392d0042f26234bf2da853a2f498a1"
+  name = "github.com/naoina/go-stringutil"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "6b638e95a32d0c1131db0e7fe83775cbea4a0d0b"
+  version = "v0.1.0"
 
 [[projects]]
   digest = "1:0028cb19b2e4c3112225cd871870f2d9cf49b9b4276531f03438a88e94be86fe"
@@ -355,6 +443,30 @@
   pruneopts = "UT"
   revision = "ffdc059bfe9ce6a4e144ba849dbedead332c6053"
   version = "v1.3.0"
+
+[[projects]]
+  digest = "1:7df351557a6d5c30804e7d6f7ed87f2fccb0619c08fcc84869a93f22bec96c11"
+  name = "github.com/tidwall/gjson"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "eee0b6226f0d1db2675a176fdfaa8419bcad4ca8"
+  version = "v1.2.1"
+
+[[projects]]
+  digest = "1:8453ddbed197809ee8ca28b06bd04e127bec9912deb4ba451fea7a1eca578328"
+  name = "github.com/tidwall/match"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "33827db735fff6510490d69a8622612558a557ed"
+  version = "v1.0.1"
+
+[[projects]]
+  digest = "1:ddfe0a54e5f9b29536a6d7b2defa376f2cb2b6e4234d676d7ff214d5b097cb50"
+  name = "github.com/tidwall/pretty"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "1166b9ac2b65e46a43d8618d30d1554f4652d49b"
+  version = "v1.0.0"
 
 [[projects]]
   branch = "master"
@@ -728,9 +840,12 @@
     "github.com/google/cadvisor/info/v1",
     "github.com/influxdata/telegraf",
     "github.com/influxdata/telegraf/plugins/inputs",
+    "github.com/influxdata/telegraf/plugins/inputs/apache",
+    "github.com/influxdata/telegraf/plugins/inputs/consul",
     "github.com/influxdata/telegraf/plugins/inputs/cpu",
     "github.com/influxdata/telegraf/plugins/inputs/disk",
     "github.com/influxdata/telegraf/plugins/inputs/diskio",
+    "github.com/influxdata/telegraf/plugins/inputs/elasticsearch",
     "github.com/influxdata/telegraf/plugins/inputs/kernel",
     "github.com/influxdata/telegraf/plugins/inputs/mem",
     "github.com/influxdata/telegraf/plugins/inputs/memcached",
@@ -738,6 +853,7 @@
     "github.com/influxdata/telegraf/plugins/inputs/processes",
     "github.com/influxdata/telegraf/plugins/inputs/redis",
     "github.com/influxdata/telegraf/plugins/inputs/swap",
+    "github.com/influxdata/toml",
     "github.com/json-iterator/go",
     "github.com/prometheus/client_model/go",
     "github.com/prometheus/common/expfmt",

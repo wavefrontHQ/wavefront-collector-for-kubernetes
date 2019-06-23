@@ -90,32 +90,36 @@ func (d *defaultHandler) Handle(resource Resource, rule interface{}) {
 	kind := resource.Kind
 	ip := resource.IP
 	meta := resource.Meta
-
 	glog.Infof("%s: %s namespace: %s", kind, meta.Name, meta.Namespace)
 
 	name := ResourceName(kind, meta)
-	cachedEncoding := d.registry.Encoding(name)
-	encoding := d.info.Encoder.Encode(ip, kind, meta, rule)
+	currEncoding := d.registry.Encoding(name)
 
-	// add target if encoding is non-empty and has changed
-	if encoding != "" && encoding != cachedEncoding {
-		glog.V(4).Infof("encoding: %s", encoding)
-		glog.V(4).Infof("cachedEncoding: %s", cachedEncoding)
-		u, err := url.Parse(encoding)
+	values := d.info.Encoder.Encode(ip, kind, meta, rule)
+	newEncoding := values.Encode()
+
+	// add target if newEncoding is non-empty and has changed
+	if len(newEncoding) > 0 && newEncoding != currEncoding {
+		glog.V(4).Infof("newEncoding: %s", newEncoding)
+		glog.V(4).Infof("currEncoding: %s", currEncoding)
+
+		u, err := url.Parse("?")
 		if err != nil {
-			glog.Error(err)
+			glog.Errorf("error parsing url: %q", err)
 			return
 		}
+		u.RawQuery = newEncoding
+
 		provider, err := d.info.Factory.Build(u)
 		if err != nil {
 			glog.Error(err)
 			return
 		}
-		d.register(name, encoding, provider)
+		d.register(name, newEncoding, provider)
 	}
 
 	// delete target if scrape annotation is false/absent and handler is annotation based
-	if encoding == "" && cachedEncoding != "" && d.useAnnotations && d.Encoding(name) != "" {
+	if newEncoding == "" && currEncoding != "" && d.useAnnotations && d.Encoding(name) != "" {
 		if d.rh != nil && d.rh(resource) {
 			glog.V(2).Infof("deleting target %s as annotation has changed", name)
 			d.unregister(name)

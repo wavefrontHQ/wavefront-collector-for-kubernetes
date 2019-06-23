@@ -22,7 +22,7 @@ type GlobalConfig struct {
 
 // Describes rules for auto discovering supported services
 type PluginConfig struct {
-	// the plugin type
+	// the plugin type, for example: 'telegraf/redis'
 	Type string `yaml:"type"`
 
 	// the container images to match against specified as a list of glob pattern strings. Ex: 'redis*'
@@ -34,7 +34,18 @@ type PluginConfig struct {
 	// the scheme to use. Defaults to "http".
 	Scheme string `yaml:"scheme"`
 
-	Conf map[string]string `yaml:"conf"`
+	// telegraf configuration provided in toml format: https://github.com/toml-lang/toml
+	// parsed using https://github.com/influxdata/toml
+	Conf string `yaml:"conf"`
+
+	// prefix for metrics collected using this rule. Defaults to empty string.
+	Prefix string `yaml:"prefix"`
+
+	// optional map of custom tags to include with the reported metrics
+	Tags map[string]string `yaml:"tags"`
+
+	// whether to include resource labels with the reported metrics. Defaults to "true".
+	IncludeLabels string `yaml:"includeLabels"`
 
 	Filters filter.Config `yaml:"filters"`
 }

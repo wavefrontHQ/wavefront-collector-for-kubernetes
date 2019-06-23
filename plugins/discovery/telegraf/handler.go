@@ -2,6 +2,7 @@ package telegraf
 
 import (
 	"fmt"
+	"net/url"
 	"strings"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
@@ -28,32 +29,45 @@ func newTargetHandler(handler metrics.ProviderHandler, plugin string) discovery.
 
 type telegrafEncoder struct{}
 
-func (e telegrafEncoder) Encode(ip, kind string, meta metav1.ObjectMeta, rule interface{}) string {
-	if ip == "" {
-		return ""
-	}
-	name := discovery.ResourceName(kind, meta)
-	prefix := utils.Param(meta, discovery.PrefixAnnotation, "", "")
+func NewEncoder() discovery.Encoder {
+	return telegrafEncoder{}
+}
 
+func (e telegrafEncoder) Encode(ip, kind string, meta metav1.ObjectMeta, rule interface{}) url.Values {
+	if ip == "" {
+		return url.Values{}
+	}
+
+	// panics if rule is not of expected type
 	cfg := rule.(discovery.PluginConfig)
+	name := discovery.ResourceName(kind, meta)
+	pluginName := strings.Replace(cfg.Type, "telegraf/", "", -1)
+
+	values := url.Values{}
+	values.Set("discovered", "true")
+	values.Set("plugins", pluginName)
+	values.Set("name", name)
+
+	// parse telegraf configuration
+	//TODO: optimize?
 	scheme := utils.Param(meta, "", cfg.Scheme, "http")
 	server := fmt.Sprintf("%s://%s:%s", scheme, ip, cfg.Port)
+	conf := strings.Replace(cfg.Conf, "${server}", server, -1)
+	conf = strings.Replace(conf, "${host}", ip, -1)
+	conf = strings.Replace(conf, "${port}", cfg.Port, -1)
+	values.Set("tg.conf", conf)
 
-	telegrafCfg := ""
-	for k, v := range cfg.Conf {
-		//TODO: optimize
-		v = strings.Replace(v, "${server}", server, -1)
-		v = strings.Replace(v, "${host}", ip, -1)
-		v = strings.Replace(v, "${port}", cfg.Port, -1)
-		telegrafCfg = fmt.Sprintf("%s=%s", k, v)
+	// parse prefix, tags, labels and filters
+	prefix := utils.Param(meta, discovery.PrefixAnnotation, cfg.Prefix, "")
+	includeLabels := utils.Param(meta, discovery.LabelsAnnotation, cfg.IncludeLabels, "true")
+
+	values.Set("prefix", prefix)
+	utils.EncodeMeta(values, kind, meta)
+	utils.EncodeTags(values, "", cfg.Tags)
+	if includeLabels == "true" {
+		utils.EncodeTags(values, "label.", meta.Labels)
 	}
-	pluginName := strings.Replace(cfg.Type, "telegraf/", "", -1)
-	pluginConf := fmt.Sprintf("plugins=%s&%s", pluginName, telegrafCfg)
+	utils.EncodeFilters(values, cfg.Filters)
 
-	//TODO: include prefix, tags and filters into the encoding
-
-	u := fmt.Sprintf("?prefix=%s&name=%s&%s", prefix, name, pluginConf)
-	u = utils.EncodeMeta(u, kind, meta)
-	u = utils.EncodeTags(u, "label.", meta.Labels)
-	return u
+	return values
 }

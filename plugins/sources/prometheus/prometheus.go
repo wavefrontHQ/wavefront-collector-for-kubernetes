@@ -9,7 +9,6 @@ import (
 	"math"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
 	"time"
 
@@ -306,15 +305,8 @@ func NewPrometheusProvider(uri *url.URL) (MetricsSourceProvider, error) {
 		name = fmt.Sprintf("%s: %s", ProviderName, vals["url"][0])
 	}
 
-	discovered := false
-	if len(vals["discovered"]) > 0 {
-		var err error
-		discovered, err = strconv.ParseBool(vals["discovered"][0])
-		if err != nil {
-			return nil, err
-		}
-		glog.V(4).Infof("name: %s discovered: %t", name, discovered)
-	}
+	discovered := flags.DecodeBoolean(vals, "discovered")
+	glog.V(4).Infof("name: %s discovered: %t", name, discovered)
 
 	// tags of the form "tag=key:value"
 	tags := flags.DecodeTags(vals)

@@ -2,6 +2,7 @@ package prometheus
 
 import (
 	"fmt"
+	"net/url"
 	"testing"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
@@ -11,11 +12,14 @@ import (
 )
 
 func TestBaseURL(t *testing.T) {
-	base := baseURL("http", "192.168.0.1", "9102", "/metrics", "test", "test_source", "test.")
-	expected := fmt.Sprintf("?url=%s://%s%s%s&name=%s&discovered=true&source=%s&prefix=%s", "http", "192.168.0.1", ":9102", "/metrics", "test", "test_source", "test.")
-	if base != expected {
-		t.Errorf("invalid baseURL. expected=%s actual=%s", expected, base)
-	}
+	values := url.Values{}
+	encodeBase(values, "http", "192.168.0.1", "9102", "/metrics", "test", "test_source", "test.")
+
+	expected := fmt.Sprintf("%s://%s%s%s", "http", "192.168.0.1", ":9102", "/metrics")
+	checkValue(values, "url", expected, t)
+	checkValue(values, "source", "test_source", t)
+	checkValue(values, "name", "test", t)
+	checkValue(values, "prefix", "test.", t)
 }
 
 func TestScrapeURL(t *testing.T) {
@@ -27,9 +31,9 @@ func TestScrapeURL(t *testing.T) {
 	}
 
 	// should return nil without pod IP
-	u := scrapeURL("", "pod", pod.ObjectMeta, discovery.PrometheusConfig{})
-	if u != "" {
-		t.Errorf("expected empty scrapeURL. actual: %s", u)
+	values := scrapeURL("", "pod", pod.ObjectMeta, discovery.PrometheusConfig{})
+	if len(values) != 0 {
+		t.Errorf("expected empty scrapeURL. actual: %s", values)
 	}
 
 	pod.Status = v1.PodStatus{
@@ -37,22 +41,22 @@ func TestScrapeURL(t *testing.T) {
 	}
 
 	// should return nil if empty cfg and no scrape annotation
-	u = scrapeURL("10.2.3.4", "pod", pod.ObjectMeta, discovery.PrometheusConfig{})
-	if u != "" {
-		t.Errorf("expected empty scrapeURL. actual: %s", u)
+	values = scrapeURL("10.2.3.4", "pod", pod.ObjectMeta, discovery.PrometheusConfig{})
+	if len(values) != 0 {
+		t.Errorf("expected empty scrapeURL. actual: %s", values)
 	}
 
 	// should return nil if scrape annotation is set to false
 	pod.Annotations = map[string]string{"prometheus.io/scrape": "false"}
-	u = scrapeURL("10.2.3.4", "pod", pod.ObjectMeta, discovery.PrometheusConfig{})
-	if u != "" {
-		t.Errorf("expected empty scrapeURL. actual: %s", u)
+	values = scrapeURL("10.2.3.4", "pod", pod.ObjectMeta, discovery.PrometheusConfig{})
+	if len(values) != 0 {
+		t.Errorf("expected empty scrapeURL. actual: %s", values)
 	}
 
 	// expect non-empty when scrape annotation set to true
 	pod.Annotations["prometheus.io/scrape"] = "true"
-	u = scrapeURL("10.2.3.4", "pod", pod.ObjectMeta, discovery.PrometheusConfig{})
-	if u == "" {
+	values = scrapeURL("10.2.3.4", "pod", pod.ObjectMeta, discovery.PrometheusConfig{})
+	if len(values) == 0 {
 		t.Error("expected non-empty scrapeURL.")
 	}
 
@@ -64,16 +68,20 @@ func TestScrapeURL(t *testing.T) {
 	pod.Annotations[prefixAnnotation] = "test."
 	pod.Annotations[labelsAnnotation] = "false"
 
-	u = scrapeURL("10.2.3.4", "pod", pod.ObjectMeta, discovery.PrometheusConfig{})
-	if u == "" {
+	values = scrapeURL("10.2.3.4", "pod", pod.ObjectMeta, discovery.PrometheusConfig{})
+	if len(values) == 0 {
 		t.Error("expected non-empty scrapeURL.")
 	}
 	resName := discovery.ResourceName(discovery.PodType.String(), pod.ObjectMeta)
-	expected := fmt.Sprintf("?url=https://%s:9102/prometheus&name=%s&discovered=true&source=test&prefix=test.&tag=pod:test&tag=namespace:test", pod.Status.PodIP, resName)
-	actual := u
-	if actual != expected {
-		t.Errorf("annotations not encoded. expected: %s actual: %s", expected, actual)
-	}
+	checkValue(values, "url", fmt.Sprintf("https://%s:9102/prometheus", pod.Status.PodIP), t)
+	checkValue(values, "name", resName, t)
+	checkValue(values, "discovered", "true", t)
+	checkValue(values, "source", "test", t)
+	checkValue(values, "prefix", "test.", t)
+	checkTag(values, "pod:test", t)
+	checkTag(values, "namespace:test", t)
+
+	//expected := fmt.Sprintf("?&tag=pod:test&tag=namespace:test", pod.Status.PodIP, resName)
 
 	// validate cfg is picked up
 	cfg := discovery.PrometheusConfig{
@@ -86,10 +94,33 @@ func TestScrapeURL(t *testing.T) {
 	}
 	pod.Annotations = map[string]string{}
 
-	actual = scrapeURL("10.2.3.4", "pod", pod.ObjectMeta, cfg)
-	expected = fmt.Sprintf("?url=https://%s:9103/path&name=%s&discovered=true&source=test&prefix=foo.&tag=pod:test&tag=namespace:test", pod.Status.PodIP, resName)
+	values = scrapeURL("10.2.3.4", "pod", pod.ObjectMeta, cfg)
+	checkValue(values, "url", fmt.Sprintf("https://%s:9103/path", pod.Status.PodIP), t)
+	checkValue(values, "name", resName, t)
+	checkValue(values, "discovered", "true", t)
+	checkValue(values, "source", "test", t)
+	checkValue(values, "prefix", "foo.", t)
+	checkTag(values, "pod:test", t)
+	checkTag(values, "namespace:test", t)
+	//expected = fmt.Sprintf("?url=https://%s:9103/path&name=%s&discovered=true&source=test&prefix=foo.&tag=pod:test&tag=namespace:test", pod.Status.PodIP, resName)
 
-	if actual != expected {
-		t.Errorf("cfg not encoded. expected: %s actual: %s", expected, actual)
+}
+
+func checkTag(values url.Values, val string, t *testing.T) {
+	if len(values["tag"]) == 0 {
+		t.Error("missing tags")
+	}
+	tags := values["tag"]
+	for _, tag := range tags {
+		if tag == val {
+			return
+		}
+	}
+	t.Errorf("missing tag: %s", val)
+}
+
+func checkValue(values url.Values, name, val string, t *testing.T) {
+	if values.Get(name) != val {
+		t.Errorf("key:%s expected:%s actual:%s", name, val, values.Get(name))
 	}
 }

@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"fmt"
+	"net/url"
 	"testing"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
@@ -14,11 +14,10 @@ func TestEncodeTags(t *testing.T) {
 	labels := make(map[string]string)
 	labels["a"] = "a"
 	labels["b"] = "b"
-	encoded := EncodeTags("testUrl", "label.", labels)
-	expected := "testUrl&tag=label.a:a&tag=label.b:b"
-	if encoded != expected {
-		t.Errorf("invalid encodedTags. expected=%s encoded=%s", expected, encoded)
-	}
+	values := url.Values{}
+	EncodeTags(values, "label.", labels)
+	checkValues(values, "tag", "label.a:a", t)
+	checkValues(values, "tag", "label.b:b", t)
 }
 
 func TestEncodePod(t *testing.T) {
@@ -28,34 +27,32 @@ func TestEncodePod(t *testing.T) {
 			Namespace: "test-ns",
 		},
 	}
-	encoded := EncodeMeta("testUrl", "pod", pod.ObjectMeta)
-	expected := "testUrl&tag=pod:test&tag=namespace:test-ns"
-	if encoded != expected {
-		t.Errorf("invalid encodeMeta. expected=%s encoded=%s", expected, encoded)
-	}
+	values := url.Values{}
+	EncodeMeta(values, "pod", pod.ObjectMeta)
+	checkValues(values, "tag", "pod:test", t)
+	checkValues(values, "tag", "namespace:test-ns", t)
 }
 
 func TestEncodeFilter(t *testing.T) {
-	encoded := encodeFilter("testUrl", filter.MetricWhitelist, []string{"foo*", "bar*"})
-	expected := fmt.Sprintf("testUrl&%s=foo*&%s=bar*", filter.MetricWhitelist, filter.MetricWhitelist)
-	if encoded != expected {
-		t.Errorf("error encoding filter. expected=%s encoded=%s", expected, encoded)
-	}
+	values := url.Values{}
+	encodeFilter(values, filter.MetricWhitelist, []string{"foo*", "bar*"})
+	checkValues(values, filter.MetricWhitelist, "foo*", t)
+	checkValues(values, filter.MetricWhitelist, "bar*", t)
 }
 
 func TestEncodeFilterMap(t *testing.T) {
-	actual := encodeFilterMap("testUrl", filter.MetricBlacklist, map[string][]string{
+	values := url.Values{}
+	encodeFilterMap(values, filter.MetricBlacklist, map[string][]string{
 		"env":     {"dev*", "staging*"},
 		"cluster": {"*west", "*east"},
 	})
-	expected := fmt.Sprintf("testUrl&%s=cluster:[*west,*east]&%s=env:[dev*,staging*]", filter.MetricBlacklist, filter.MetricBlacklist)
-	if actual != expected {
-		t.Error("error encoding filter map")
-	}
+	checkValues(values, filter.MetricBlacklist, "env:[dev*,staging*]", t)
+	checkValues(values, filter.MetricBlacklist, "cluster:[*west,*east]", t)
 }
 
 func TestEncodeFilters(t *testing.T) {
-	actual := EncodeFilters("testUrl", filter.Config{
+	values := url.Values{}
+	EncodeFilters(values, filter.Config{
 		MetricWhitelist:    []string{"kube.dns.http.*"},
 		MetricBlacklist:    []string{"kube.dns.probe.*"},
 		MetricTagWhitelist: map[string][]string{"env": {"prod*"}},
@@ -63,11 +60,12 @@ func TestEncodeFilters(t *testing.T) {
 		TagInclude:         []string{"cluster"},
 		TagExclude:         []string{"pod-template-hash"},
 	})
-	expected := fmt.Sprintf("testUrl&%s=kube.dns.http.*&%s=kube.dns.probe.*&%s=env:[prod*]&%s=env:[dev*]&%s=cluster&%s=pod-template-hash",
-		filter.MetricWhitelist, filter.MetricBlacklist, filter.MetricTagWhitelist, filter.MetricTagBlacklist, filter.TagInclude, filter.TagExclude)
-	if actual != expected {
-		t.Error("error encoding filters")
-	}
+	checkValue(values, filter.MetricWhitelist, "kube.dns.http.*", t)
+	checkValue(values, filter.MetricBlacklist, "kube.dns.probe.*", t)
+	checkValues(values, filter.MetricTagWhitelist, "env:[prod*]", t)
+	checkValues(values, filter.MetricTagBlacklist, "env:[dev*]", t)
+	checkValue(values, filter.TagInclude, "cluster", t)
+	checkValue(values, filter.TagExclude, "pod-template-hash", t)
 }
 
 func TestParam(t *testing.T) {
@@ -88,5 +86,24 @@ func TestParam(t *testing.T) {
 	p = Param(pod.ObjectMeta, "key2", "", "defaultValue")
 	if p != "defaultValue" {
 		t.Errorf("expected default value: %s actual: %s", "defaultValue", p)
+	}
+}
+
+func checkValues(values url.Values, name, val string, t *testing.T) {
+	if len(values[name]) == 0 {
+		t.Errorf("missing %s", name)
+	}
+	tags := values[name]
+	for _, tag := range tags {
+		if tag == val {
+			return
+		}
+	}
+	t.Errorf("missing %s: %s", name, val)
+}
+
+func checkValue(values url.Values, name, val string, t *testing.T) {
+	if values.Get(name) != val {
+		t.Errorf("key:%s expected:%s actual:%s", name, val, values.Get(name))
 	}
 }

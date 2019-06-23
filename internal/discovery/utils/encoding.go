@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"net/url"
 	"sort"
 	"strings"
 
@@ -10,22 +11,21 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func EncodeFilters(urlStr string, cfg filter.Config) string {
+func EncodeFilters(values url.Values, cfg filter.Config) {
 	if cfg.Empty() {
-		return urlStr
+		return
 	}
-	urlStr = encodeFilter(urlStr, filter.MetricWhitelist, cfg.MetricWhitelist)
-	urlStr = encodeFilter(urlStr, filter.MetricBlacklist, cfg.MetricBlacklist)
-	urlStr = encodeFilterMap(urlStr, filter.MetricTagWhitelist, cfg.MetricTagWhitelist)
-	urlStr = encodeFilterMap(urlStr, filter.MetricTagBlacklist, cfg.MetricTagBlacklist)
-	urlStr = encodeFilter(urlStr, filter.TagInclude, cfg.TagInclude)
-	urlStr = encodeFilter(urlStr, filter.TagExclude, cfg.TagExclude)
-	return urlStr
+	encodeFilter(values, filter.MetricWhitelist, cfg.MetricWhitelist)
+	encodeFilter(values, filter.MetricBlacklist, cfg.MetricBlacklist)
+	encodeFilterMap(values, filter.MetricTagWhitelist, cfg.MetricTagWhitelist)
+	encodeFilterMap(values, filter.MetricTagBlacklist, cfg.MetricTagBlacklist)
+	encodeFilter(values, filter.TagInclude, cfg.TagInclude)
+	encodeFilter(values, filter.TagExclude, cfg.TagExclude)
 }
 
-func encodeFilterMap(urlStr, name string, filters map[string][]string) string {
+func encodeFilterMap(values url.Values, name string, filters map[string][]string) {
 	if len(filters) == 0 {
-		return urlStr
+		return
 	}
 	var keys []string
 	for k := range filters {
@@ -34,21 +34,19 @@ func encodeFilterMap(urlStr, name string, filters map[string][]string) string {
 	sort.Strings(keys)
 	for _, k := range keys {
 		patterns := "[" + strings.Join(filters[k], ",") + "]"
-		urlStr = fmt.Sprintf("%s&%s=%s:%s", urlStr, name, k, patterns)
+		values.Add(name, fmt.Sprintf("%s:%s", k, patterns))
 	}
-	return urlStr
 }
 
-func encodeFilter(urlStr, name string, slice []string) string {
+func encodeFilter(values url.Values, name string, slice []string) {
 	for _, val := range slice {
-		urlStr = fmt.Sprintf("%s&%s=%s", urlStr, name, val)
+		values.Add(name, val)
 	}
-	return urlStr
 }
 
-func EncodeTags(urlStr, prefix string, tags map[string]string) string {
+func EncodeTags(values url.Values, prefix string, tags map[string]string) {
 	if len(tags) == 0 {
-		return urlStr
+		return
 	}
 	var keys []string
 	for k := range tags {
@@ -58,14 +56,14 @@ func EncodeTags(urlStr, prefix string, tags map[string]string) string {
 	for _, k := range keys {
 		// exclude pod-template-hash
 		if k != "pod-template-hash" {
-			urlStr = fmt.Sprintf("%s&tag=%s%s:%s", urlStr, prefix, k, tags[k])
+			values.Add("tag", fmt.Sprintf("%s%s:%s", prefix, k, tags[k]))
 		}
 	}
-	return urlStr
 }
 
-func EncodeMeta(urlStr, kind string, meta metav1.ObjectMeta) string {
-	return fmt.Sprintf("%s&tag=%s:%s&tag=namespace:%s", urlStr, kind, meta.Name, meta.Namespace)
+func EncodeMeta(values url.Values, kind string, meta metav1.ObjectMeta) {
+	values.Add("tag", fmt.Sprintf("%s:%s", kind, meta.Name))
+	values.Add("tag", fmt.Sprintf("%s:%s", "namespace", meta.Namespace))
 }
 
 func Param(meta metav1.ObjectMeta, annotation, cfgVal, defaultVal string) string {
