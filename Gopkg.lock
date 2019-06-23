@@ -42,6 +42,36 @@
   version = "v19"
 
 [[projects]]
+  branch = "master"
+  digest = "1:0353baca92bd20ede554a25d306a739f4dfe8fc8d5bd055241844b8ffcf6b005"
+  name = "github.com/couchbase/go-couchbase"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "95401dac8eb62376e2ac0bf1cb778f04da1d68a9"
+
+[[projects]]
+  branch = "master"
+  digest = "1:2707d0d14f4ce15a566c28ee5f29dbc1f3dddd5c69582599c6b92157d5e11f1a"
+  name = "github.com/couchbase/gomemcached"
+  packages = [
+    ".",
+    "client",
+  ]
+  pruneopts = "UT"
+  revision = "c4b4ca0eb21d09e22adf9d4324fc8f291fb62848"
+
+[[projects]]
+  branch = "master"
+  digest = "1:e0facb427cc5f4cca7dac015f9d0cf9a2b8692294bd23063a989389faf4a79a5"
+  name = "github.com/couchbase/goutils"
+  packages = [
+    "logging",
+    "scramsha",
+  ]
+  pruneopts = "UT"
+  revision = "f9d42b11473b9742bc6c51ab502820cd2c279343"
+
+[[projects]]
   digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
@@ -94,6 +124,14 @@
   pruneopts = "UT"
   revision = "75795aa4236dc7341eefac3bbe945e68c99ef9df"
   version = "v6.15.3"
+
+[[projects]]
+  digest = "1:ec6f9bf5e274c833c911923c9193867f3f18788c461f76f05f62bb1510e0ae65"
+  name = "github.com/go-sql-driver/mysql"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "72cd26f257d44c1114970e19afddcd812016007e"
+  version = "v1.4.1"
 
 [[projects]]
   digest = "1:9ae31ce33b4bab257668963e844d98765b44160be4ee98cafc44637a213e530d"
@@ -250,7 +288,7 @@
   version = "v0.3.7"
 
 [[projects]]
-  digest = "1:89ce9a2fee99d965c609e170767922fb84efb66ba1f4815a2c11234428a24ce3"
+  digest = "1:8ae72843409c09a0dc95edc027977a41845d8e147964b7a2090673868776b6c8"
   name = "github.com/influxdata/telegraf"
   packages = [
     ".",
@@ -259,21 +297,35 @@
     "internal/tls",
     "metric",
     "plugins/inputs",
+    "plugins/inputs/activemq",
     "plugins/inputs/apache",
     "plugins/inputs/consul",
+    "plugins/inputs/couchbase",
+    "plugins/inputs/couchdb",
     "plugins/inputs/cpu",
     "plugins/inputs/disk",
     "plugins/inputs/diskio",
     "plugins/inputs/elasticsearch",
+    "plugins/inputs/haproxy",
+    "plugins/inputs/jolokia2",
     "plugins/inputs/kernel",
     "plugins/inputs/linux_sysctl_fs",
     "plugins/inputs/mem",
     "plugins/inputs/memcached",
+    "plugins/inputs/mongodb",
+    "plugins/inputs/mysql",
+    "plugins/inputs/mysql/v1",
     "plugins/inputs/net",
+    "plugins/inputs/nginx",
+    "plugins/inputs/nginx_plus",
+    "plugins/inputs/postgresql",
     "plugins/inputs/processes",
+    "plugins/inputs/rabbitmq",
     "plugins/inputs/redis",
+    "plugins/inputs/riak",
     "plugins/inputs/swap",
     "plugins/inputs/system",
+    "plugins/inputs/zookeeper",
     "plugins/parsers/json",
   ]
   pruneopts = "UT"
@@ -290,6 +342,22 @@
   ]
   pruneopts = "UT"
   revision = "2a2e3012f7cfbef64091cc79776311e65dfa211b"
+
+[[projects]]
+  digest = "1:d6efaec4c4a8b7009b1a6afe98534a2322b5be0c200a7f733f1def4a1a261b94"
+  name = "github.com/jackc/pgx"
+  packages = [
+    ".",
+    "chunkreader",
+    "internal/sanitize",
+    "pgio",
+    "pgproto3",
+    "pgtype",
+    "stdlib",
+  ]
+  pruneopts = "UT"
+  revision = "8faa4453fc7051d1076053f8854077753ab912f2"
+  version = "v3.4.0"
 
 [[projects]]
   digest = "1:f5a2051c55d05548d2d4fd23d244027b59fbd943217df8aa3b5e170ac2fd6e1b"
@@ -354,6 +422,14 @@
   pruneopts = "UT"
   revision = "6b638e95a32d0c1131db0e7fe83775cbea4a0d0b"
   version = "v0.1.0"
+
+[[projects]]
+  digest = "1:cf31692c14422fa27c83a05292eb5cbe0fb2775972e8f1f8446a71549bd8980b"
+  name = "github.com/pkg/errors"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "ba968bfe8b2f7e042a574c888954fccecfa385b4"
+  version = "v0.8.1"
 
 [[projects]]
   digest = "1:0028cb19b2e4c3112225cd871870f2d9cf49b9b4276531f03438a88e94be86fe"
@@ -491,9 +567,12 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:bbe51412d9915d64ffaa96b51d409e070665efc5194fcf145c4a27d4133107a4"
+  digest = "1:35ce874cf16f78a2da908ab28b0277497e36603d289db00d39da5200bc8ace08"
   name = "golang.org/x/crypto"
-  packages = ["ssh/terminal"]
+  packages = [
+    "pbkdf2",
+    "ssh/terminal",
+  ]
   pruneopts = "UT"
   revision = "a29dc8fdc73485234dbef99ebedb95d2eced08de"
 
@@ -535,11 +614,13 @@
   revision = "2cc0cad0ac78f3ede1f4d2b6ca16ea3038641af4"
 
 [[projects]]
-  digest = "1:8d8faad6b12a3a4c819a3f9618cb6ee1fa1cfc33253abeeea8b55336721e3405"
+  digest = "1:5f1559c4cee44069f81517430ebba19589869f3d4d4648213a4d5ddd199b11d8"
   name = "golang.org/x/text"
   packages = [
+    "cases",
     "collate",
     "collate/build",
+    "internal",
     "internal/colltab",
     "internal/gen",
     "internal/language",
@@ -548,12 +629,15 @@
     "internal/triegen",
     "internal/ucd",
     "language",
+    "runes",
     "secure/bidirule",
+    "secure/precis",
     "transform",
     "unicode/bidi",
     "unicode/cldr",
     "unicode/norm",
     "unicode/rangetable",
+    "width",
   ]
   pruneopts = "UT"
   revision = "342b2e1fbaa52c93f31447ad2c6abc048c63e475"
@@ -568,9 +652,10 @@
   revision = "9d24e82272b4f38b78bc8cff74fa936d31ccd8ef"
 
 [[projects]]
-  digest = "1:6eb6e3b6d9fffb62958cf7f7d88dbbe1dd6839436b0802e194c590667a40412a"
+  digest = "1:7e8b9c5ae49011b12ae8473834ac1a7bb8ac029ba201270c723e4c280c9e4855"
   name = "google.golang.org/appengine"
   packages = [
+    "cloudsql",
     "internal",
     "internal/base",
     "internal/datastore",
@@ -590,6 +675,20 @@
   pruneopts = "UT"
   revision = "d2d2541c53f18d2a059457998ce2876cc8e67cbf"
   version = "v0.9.1"
+
+[[projects]]
+  branch = "v2"
+  digest = "1:988de7520a09024d5d94cd99bd545afbf194893994ec759b1cda0a0bbb6adb80"
+  name = "gopkg.in/mgo.v2"
+  packages = [
+    ".",
+    "bson",
+    "internal/json",
+    "internal/sasl",
+    "internal/scram",
+  ]
+  pruneopts = "UT"
+  revision = "9856a29383ce1c59f308dd1cf0363a79b5bef6b5"
 
 [[projects]]
   digest = "1:4d2e5a73dc1500038e504a8d78b986630e3626dc027bc030ba5c75da257cdb96"
@@ -840,19 +939,32 @@
     "github.com/google/cadvisor/info/v1",
     "github.com/influxdata/telegraf",
     "github.com/influxdata/telegraf/plugins/inputs",
+    "github.com/influxdata/telegraf/plugins/inputs/activemq",
     "github.com/influxdata/telegraf/plugins/inputs/apache",
     "github.com/influxdata/telegraf/plugins/inputs/consul",
+    "github.com/influxdata/telegraf/plugins/inputs/couchbase",
+    "github.com/influxdata/telegraf/plugins/inputs/couchdb",
     "github.com/influxdata/telegraf/plugins/inputs/cpu",
     "github.com/influxdata/telegraf/plugins/inputs/disk",
     "github.com/influxdata/telegraf/plugins/inputs/diskio",
     "github.com/influxdata/telegraf/plugins/inputs/elasticsearch",
+    "github.com/influxdata/telegraf/plugins/inputs/haproxy",
+    "github.com/influxdata/telegraf/plugins/inputs/jolokia2",
     "github.com/influxdata/telegraf/plugins/inputs/kernel",
     "github.com/influxdata/telegraf/plugins/inputs/mem",
     "github.com/influxdata/telegraf/plugins/inputs/memcached",
+    "github.com/influxdata/telegraf/plugins/inputs/mongodb",
+    "github.com/influxdata/telegraf/plugins/inputs/mysql",
     "github.com/influxdata/telegraf/plugins/inputs/net",
+    "github.com/influxdata/telegraf/plugins/inputs/nginx",
+    "github.com/influxdata/telegraf/plugins/inputs/nginx_plus",
+    "github.com/influxdata/telegraf/plugins/inputs/postgresql",
     "github.com/influxdata/telegraf/plugins/inputs/processes",
+    "github.com/influxdata/telegraf/plugins/inputs/rabbitmq",
     "github.com/influxdata/telegraf/plugins/inputs/redis",
+    "github.com/influxdata/telegraf/plugins/inputs/riak",
     "github.com/influxdata/telegraf/plugins/inputs/swap",
+    "github.com/influxdata/telegraf/plugins/inputs/zookeeper",
     "github.com/influxdata/toml",
     "github.com/json-iterator/go",
     "github.com/prometheus/client_model/go",
