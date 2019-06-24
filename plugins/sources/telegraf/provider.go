@@ -2,6 +2,7 @@ package telegraf
 
 import (
 	"fmt"
+	"github.com/wavefronthq/go-metrics-wavefront/reporting"
 	"net/url"
 	"strings"
 	"time"
@@ -9,6 +10,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/influxdata/telegraf"
 	telegrafPlugins "github.com/influxdata/telegraf/plugins/inputs"
+	gm "github.com/rcrowley/go-metrics"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/flags"
@@ -23,16 +25,28 @@ type telegrafPluginSource struct {
 	tags    map[string]string
 	plugin  telegraf.Input
 	filters filter.Filter
+
+	pointsCollected gm.Counter
+	pointsFiltered  gm.Counter
+	errors          gm.Counter
 }
 
 func newTelegrafPluginSource(name string, plugin telegraf.Input, prefix string, tags map[string]string, filters filter.Filter) *telegrafPluginSource {
+	pt := map[string]string{"type": "telegraf." + name}
+	collected := reporting.EncodeKey("source.points.collected", pt)
+	filtered := reporting.EncodeKey("source.points.filtered", pt)
+	errors := reporting.EncodeKey("source.collect.errors", pt)
+
 	tsp := &telegrafPluginSource{
-		name:    name + "_plugin",
-		plugin:  plugin,
-		source:  util.GetNodeName(),
-		prefix:  prefix,
-		tags:    tags,
-		filters: filters,
+		name:            name + "_plugin",
+		plugin:          plugin,
+		source:          util.GetNodeName(),
+		prefix:          prefix,
+		tags:            tags,
+		filters:         filters,
+		pointsCollected: gm.GetOrRegisterCounter(collected, gm.DefaultRegistry),
+		pointsFiltered:  gm.GetOrRegisterCounter(filtered, gm.DefaultRegistry),
+		errors:          gm.GetOrRegisterCounter(errors, gm.DefaultRegistry),
 	}
 	return tsp
 }
@@ -50,9 +64,12 @@ func (t *telegrafPluginSource) ScrapeMetrics(start, end time.Time) (*metrics.Dat
 	// Gather invokes callbacks on telegrafDataBatch
 	err := t.plugin.Gather(result)
 	if err != nil {
+		t.errors.Inc(1)
 		glog.Errorf("error gathering %s metrics. error: %v", t.name, err)
 	}
-	glog.Infof("%s metrics: %d", t.name, len(result.MetricPoints))
+	count := len(result.MetricPoints)
+	glog.Infof("%s metrics: %d", t.Name(), count)
+	t.pointsCollected.Inc(int64(count))
 	return &result.DataBatch, nil
 }
 

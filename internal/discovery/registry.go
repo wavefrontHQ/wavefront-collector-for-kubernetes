@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/rcrowley/go-metrics"
+	"github.com/wavefronthq/go-metrics-wavefront/reporting"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -15,9 +16,10 @@ type defaultRegistry struct {
 }
 
 func NewRegistry(name string) TargetRegistry {
+	gaugeName := reporting.EncodeKey("discovery.targets.registered", map[string]string{"type": name})
 	registry := &defaultRegistry{
 		targets: make(map[string]TargetHandler),
-		count:   metrics.GetOrRegisterGauge("discovery."+name+".targets.registered", metrics.DefaultRegistry),
+		count:   metrics.GetOrRegisterGauge(gaugeName, metrics.DefaultRegistry),
 	}
 
 	// update the target counter once a minute

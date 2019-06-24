@@ -8,16 +8,9 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/influxdata/telegraf"
-	gm "github.com/rcrowley/go-metrics"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 )
-
-var filteredPoints gm.Counter
-
-func init() {
-	filteredPoints = gm.GetOrRegisterCounter("source.telegraf.points.filtered.count", gm.DefaultRegistry)
-}
 
 // Implements the telegraf Accumulator interface
 type telegrafDataBatch struct {
@@ -83,7 +76,7 @@ func (t *telegrafDataBatch) filterAppend(slice []*metrics.MetricPoint, point *me
 	if t.source.filters == nil || t.source.filters.Match(point.Metric, point.Tags) {
 		return append(slice, point)
 	}
-	filteredPoints.Inc(1)
+	t.source.pointsFiltered.Inc(1)
 	glog.V(4).Infof("dropping metric: %s", point.Metric)
 	return slice
 }
@@ -130,6 +123,7 @@ func (t *telegrafDataBatch) SetPrecision(precision time.Duration) {
 // Report an error.
 func (t *telegrafDataBatch) AddError(err error) {
 	if err != nil {
+		t.source.errors.Inc(1)
 		glog.Error(err)
 	}
 }

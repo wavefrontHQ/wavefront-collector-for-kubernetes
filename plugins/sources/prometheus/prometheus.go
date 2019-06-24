@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/flags"
 	"io/ioutil"
 	"math"
 	"net/http"
@@ -13,6 +12,7 @@ import (
 	"time"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/flags"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/httputil"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/leadership"
 	. "github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
@@ -22,16 +22,20 @@ import (
 	dto "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/expfmt"
 	"github.com/rcrowley/go-metrics"
+	"github.com/wavefronthq/go-metrics-wavefront/reporting"
 )
 
 var (
-	scrapeErrors   metrics.Counter
-	filteredPoints metrics.Counter
+	collectErrors   metrics.Counter
+	filteredPoints  metrics.Counter
+	collectedPoints metrics.Counter
 )
 
 func init() {
-	scrapeErrors = metrics.GetOrRegisterCounter("source.prometheus.scrape.errors", metrics.DefaultRegistry)
-	filteredPoints = metrics.GetOrRegisterCounter("source.prometheus.points.filtered.count", metrics.DefaultRegistry)
+	pt := map[string]string{"type": "prometheus"}
+	collectedPoints = metrics.GetOrRegisterCounter(reporting.EncodeKey("source.points.collected", pt), metrics.DefaultRegistry)
+	filteredPoints = metrics.GetOrRegisterCounter(reporting.EncodeKey("source.points.filtered", pt), metrics.DefaultRegistry)
+	collectErrors = metrics.GetOrRegisterCounter(reporting.EncodeKey("source.collect.errors", pt), metrics.DefaultRegistry)
 }
 
 type prometheusMetricsSource struct {
@@ -79,34 +83,34 @@ func (src *prometheusMetricsSource) Name() string {
 }
 
 func (src *prometheusMetricsSource) ScrapeMetrics(start, end time.Time) (*DataBatch, error) {
-
 	result := &DataBatch{
 		Timestamp: time.Now(),
 	}
 
 	resp, err := src.client.Get(src.metricsURL)
 	if err != nil {
-		scrapeErrors.Inc(1)
+		collectErrors.Inc(1)
 		return nil, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		scrapeErrors.Inc(1)
+		collectErrors.Inc(1)
 		return nil, fmt.Errorf("error retrieving prometheus metrics from %s", src.metricsURL)
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		scrapeErrors.Inc(1)
+		collectErrors.Inc(1)
 		return nil, err
 	}
 	points, err := src.parseMetrics(body, resp.Header)
 	if err != nil {
-		scrapeErrors.Inc(1)
+		collectErrors.Inc(1)
 		return result, err
 	}
 	result.MetricPoints = points
+	collectedPoints.Inc(int64(len(points)))
 
 	return result, nil
 }
