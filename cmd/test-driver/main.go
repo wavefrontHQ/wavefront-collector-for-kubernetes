@@ -2,9 +2,7 @@ package main
 
 import (
 	"fmt"
-	"net/url"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/go-kit/kit/log"
@@ -15,10 +13,9 @@ import (
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/flags"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/options"
-	pluginsDiscovery "github.com/wavefronthq/wavefront-kubernetes-collector/plugins/discovery"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/manager"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sinks"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources"
-	pluginsTelegraf "github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/telegraf"
 
 	kubeFlag "k8s.io/apiserver/pkg/util/flag"
 	"k8s.io/apiserver/pkg/util/logs"
@@ -56,72 +53,16 @@ func main() {
 	logs.InitLogs()
 	defer logs.FlushLogs()
 
-	testDiscovery()
+	sourceManager := createSourceManagerOrDie(opt.Sources, opt.InternalStatsPrefix, opt.ScrapeTimeout)
+	sinkManager := createAndInitSinksOrDie(opt.Sinks, opt.SinkExportDataTimeout)
 
-	//sourceManager := createSourceManagerOrDie(opt.Sources, opt.InternalStatsPrefix, opt.ScrapeTimeout)
-	//sinkManager := createAndInitSinksOrDie(opt.Sinks, opt.SinkExportDataTimeout)
-	//
-	//man, err := manager.NewManager(sourceManager, nil, sinkManager,
-	//	opt.MetricResolution, manager.DefaultScrapeOffset, manager.DefaultMaxParallelism)
-	//if err != nil {
-	//	glog.Fatalf("Failed to create main manager: %v", err)
-	//}
-	//man.Start()
-	//waitForStop()
-}
-
-func testDiscovery() {
-	var sampleFile = `
-global:
-  discovery_interval: 5m
-plugin_configs:
-  - type: telegraf/redis
-    images:
-    - 'redis:*'
-    - '*redis*'
-    port: 6379
-    scheme: "tcp"
-    conf: |
-      servers = ["${server}"]
-      password = "bar"
-  - type: telegraf/memcached
-    images:
-    - 'memcached:*'
-    port: 11211
-    conf: |
-      servers: ${server}
-`
-	cfg, err := pluginsDiscovery.FromYAML([]byte(sampleFile))
+	man, err := manager.NewManager(sourceManager, nil, sinkManager,
+		opt.MetricResolution, manager.DefaultScrapeOffset, manager.DefaultMaxParallelism)
 	if err != nil {
-		glog.Fatalf("error loading discovery: %q", err)
+		glog.Fatalf("Failed to create main manager: %v", err)
 	}
-	//encoder := telegraf.NewEncoder()
-
-	for _, pluginCfg := range cfg.PluginConfigs {
-		u, err := url.Parse("?")
-		if err != nil {
-			glog.Fatalf("error parsing url: %q", err)
-		}
-		v := url.Values{}
-		v.Add("plugins", strings.Replace(pluginCfg.Type, "telegraf/", "", -1))
-		v.Add("tg.conf", pluginCfg.Conf)
-		u.RawQuery = v.Encode()
-
-		fmt.Println("url", u.String())
-
-		if _, err := pluginsTelegraf.NewFactory().Build(u); err != nil {
-			glog.Errorf("error creating telegraf plugin: %q", err)
-		}
-
-		//encoding := encoder.Encode("123", discovery.PodType.String(), metav1.ObjectMeta{}, pluginCfg)
-		//fmt.Printf("encoding: %s", encoding)
-		//u, err := url.Parse(encoding)
-		//if err != nil {
-		//	glog.Error(err)
-		//	return
-		//}
-		//pluginsTelegraf.NewFactory().Build(u)
-	}
+	man.Start()
+	waitForStop()
 }
 
 func createSourceManagerOrDie(src flags.Uris, statsPrefix string, scrapeTimeout time.Duration) metrics.MetricsSource {
