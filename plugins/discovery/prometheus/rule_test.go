@@ -20,7 +20,7 @@ func TestAdd(t *testing.T) {
 		t.Errorf("rule add error expected: 4 actual: %d", rh.th.Count())
 	}
 	// clear registry
-	rh.Delete()
+	rh.Delete("")
 }
 
 func TestDelete(t *testing.T) {
@@ -36,7 +36,7 @@ func TestDelete(t *testing.T) {
 		t.Errorf("rule delete error expected: 2 actual: %d", rh.th.Count())
 	}
 	// clear registry
-	rh.Delete()
+	rh.Delete("")
 }
 
 func handler(count int) *ruleHandler {

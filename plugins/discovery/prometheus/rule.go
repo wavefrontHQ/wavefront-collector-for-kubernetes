@@ -54,7 +54,7 @@ func (rh *ruleHandler) Handle(cfg interface{}) error {
 	return nil
 }
 
-func (rh *ruleHandler) Delete() {
+func (rh *ruleHandler) Delete(name string) {
 	// delete all targets
 	rh.th.DeleteMissing(nil)
 }

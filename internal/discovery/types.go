@@ -67,7 +67,7 @@ type RuleHandler interface {
 	// Handle a single discovery rule
 	Handle(cfg interface{}) error
 	// Delete the rule and discovered targets
-	Delete()
+	Delete(name string)
 }
 
 type Encoder interface {

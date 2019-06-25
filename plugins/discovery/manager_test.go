@@ -10,25 +10,25 @@ import (
 func TestRuleDelete(t *testing.T) {
 	d := manager()
 	d.load(config(4))
-	if len(d.rules) != 4 {
-		t.Errorf("delete rule error. expected: 4 actual:%d", len(d.rules))
+	if len(d.promRules) != 4 {
+		t.Errorf("delete rule error. expected: 4 actual:%d", len(d.promRules))
 	}
 
 	d.load(config(2))
-	if len(d.rules) != 2 {
-		t.Errorf("delete rule error. expected: 2 actual:%d", len(d.rules))
+	if len(d.promRules) != 2 {
+		t.Errorf("delete rule error. expected: 2 actual:%d", len(d.promRules))
 	}
 }
 
 func TestRuleAdd(t *testing.T) {
 	d := manager()
 	d.load(config(2))
-	if len(d.rules) != 2 {
-		t.Errorf("add rule error. expected: 2 actual:%d", len(d.rules))
+	if len(d.promRules) != 2 {
+		t.Errorf("add rule error. expected: 2 actual:%d", len(d.promRules))
 	}
 	d.load(config(4))
-	if len(d.rules) != 4 {
-		t.Errorf("add rule error. expected: 2 actual:%d", len(d.rules))
+	if len(d.promRules) != 4 {
+		t.Errorf("add rule error. expected: 2 actual:%d", len(d.promRules))
 	}
 }
 
@@ -36,7 +36,7 @@ func manager() *discoveryManager {
 	return &discoveryManager{
 		resourceLister:  discovery.NewFakeResourceLister(2),
 		providerHandler: &util.DummyProviderHandler{},
-		rules:           make(map[string]discovery.RuleHandler),
+		promRules:       make(map[string]discovery.RuleHandler),
 	}
 }
 

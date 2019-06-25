@@ -13,8 +13,9 @@ import (
 )
 
 var (
-	source  string
-	filters []string
+	source          string
+	filters         []string
+	pointsCollected metrics.Counter
 )
 
 func init() {
@@ -22,6 +23,8 @@ func init() {
 	if source == "" {
 		source = "wavefront-kubernetes-collector"
 	}
+
+	// filter out if zero valued
 	filters = []string{
 		"filtered.count",
 		"errors.count",
@@ -30,6 +33,10 @@ func init() {
 		"points.filtered",
 		"points.collected",
 	}
+
+	// internal stats pps
+	name := reporting.EncodeKey("source.points.collected", map[string]string{"type": "internal"})
+	pointsCollected = metrics.GetOrRegisterCounter(name, metrics.DefaultRegistry)
 }
 
 func internalStats() (*DataBatch, error) {
@@ -64,6 +71,7 @@ func internalStats() (*DataBatch, error) {
 			points = append(points, addRate(name, meter.Count(), meter.Rate1(), meter.RateMean(), now.Unix())...)
 		}
 	})
+	pointsCollected.Inc(int64(len(points)))
 	result.MetricPoints = points
 	return result, nil
 }
