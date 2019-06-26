@@ -60,3 +60,8 @@ func FakePod(name, namespace, ip string) *v1.Pod {
 	}
 	return &pod
 }
+
+type FakeDiscoverer struct{}
+
+func (f *FakeDiscoverer) Discover(resource Resource) {}
+func (f *FakeDiscoverer) Delete(resource Resource)   {}

@@ -32,15 +32,14 @@ func init() {
 
 type prometheusEncoder struct{}
 
-func (e prometheusEncoder) Encode(ip, kind string, meta metav1.ObjectMeta, rule interface{}) url.Values {
-	cfg := discovery.PrometheusConfig{}
-	if rule != nil {
-		cfg = rule.(discovery.PrometheusConfig)
+func (e prometheusEncoder) Encode(ip, kind string, meta metav1.ObjectMeta, cfg interface{}) url.Values {
+	rule := discovery.PluginConfig{}
+	discoveryType := "annotation"
+	if cfg != nil {
+		rule = cfg.(discovery.PluginConfig)
+		discoveryType = "rule"
 	}
-	return scrapeURL(ip, kind, meta, cfg)
-}
 
-func scrapeURL(ip, kind string, meta metav1.ObjectMeta, rule discovery.PrometheusConfig) url.Values {
 	if ip == "" {
 		glog.V(5).Infof("missing ip for %s=%s", kind, meta.Name)
 		return url.Values{}
@@ -48,12 +47,12 @@ func scrapeURL(ip, kind string, meta metav1.ObjectMeta, rule discovery.Prometheu
 
 	scrape := utils.Param(meta, scrapeAnnotation, "", "false")
 	if rule.Name == "" && scrape != "true" {
-		glog.V(5).Infof("scrape=false for %s=%s annotations=%q", kind, meta.Name, meta.Annotations)
+		glog.V(5).Infof("prometheus scrape=false for %s=%s", kind, meta.Name)
 		return url.Values{}
 	}
 
 	values := url.Values{}
-	values.Set("discovered", "true")
+	values.Set("discovered", discoveryType)
 
 	scheme := utils.Param(meta, schemeAnnotation, rule.Scheme, "http")
 	path := utils.Param(meta, pathAnnotation, rule.Path, "/metrics")

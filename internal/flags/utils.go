@@ -1,7 +1,6 @@
 package flags
 
 import (
-	"strconv"
 	"strings"
 
 	"github.com/golang/glog"
@@ -29,14 +28,10 @@ func DecodeTags(vals map[string][]string) map[string]string {
 	return tags
 }
 
-func DecodeBoolean(vals map[string][]string, name string) bool {
-	value := false
+func DecodeValue(vals map[string][]string, name string) string {
+	value := ""
 	if len(vals[name]) > 0 {
-		var err error
-		value, err = strconv.ParseBool(vals[name][0])
-		if err != nil {
-			return false
-		}
+		value = vals[name][0]
 	}
 	return value
 }

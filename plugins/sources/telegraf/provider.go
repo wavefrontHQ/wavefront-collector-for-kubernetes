@@ -2,7 +2,6 @@ package telegraf
 
 import (
 	"fmt"
-	"github.com/wavefronthq/go-metrics-wavefront/reporting"
 	"net/url"
 	"strings"
 	"time"
@@ -11,6 +10,7 @@ import (
 	"github.com/influxdata/telegraf"
 	telegrafPlugins "github.com/influxdata/telegraf/plugins/inputs"
 	gm "github.com/rcrowley/go-metrics"
+	"github.com/wavefronthq/go-metrics-wavefront/reporting"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/flags"
@@ -29,9 +29,11 @@ type telegrafPluginSource struct {
 	pointsCollected gm.Counter
 	pointsFiltered  gm.Counter
 	errors          gm.Counter
+	targetPPS       gm.Counter
+	targetEPS       gm.Counter
 }
 
-func newTelegrafPluginSource(name string, plugin telegraf.Input, prefix string, tags map[string]string, filters filter.Filter) *telegrafPluginSource {
+func newTelegrafPluginSource(name string, plugin telegraf.Input, prefix string, tags map[string]string, filters filter.Filter, discovered string) *telegrafPluginSource {
 	pt := map[string]string{"type": "telegraf." + name}
 	collected := reporting.EncodeKey("source.points.collected", pt)
 	filtered := reporting.EncodeKey("source.points.filtered", pt)
@@ -48,7 +50,26 @@ func newTelegrafPluginSource(name string, plugin telegraf.Input, prefix string, 
 		pointsFiltered:  gm.GetOrRegisterCounter(filtered, gm.DefaultRegistry),
 		errors:          gm.GetOrRegisterCounter(errors, gm.DefaultRegistry),
 	}
+	if discovered != "" {
+		pt = extractTags(tags, name, discovered)
+		tsp.targetPPS = gm.GetOrRegisterCounter(reporting.EncodeKey("target.points.collected", pt), gm.DefaultRegistry)
+		tsp.targetEPS = gm.GetOrRegisterCounter(reporting.EncodeKey("target.collect.errors", pt), gm.DefaultRegistry)
+	}
 	return tsp
+}
+
+func extractTags(tags map[string]string, name, discovered string) map[string]string {
+	result := make(map[string]string)
+	for k, v := range tags {
+		if k == "pod" || k == "service" || k == "namespace" {
+			result[k] = v
+		}
+	}
+	if discovered != "" {
+		result["discovered"] = discovered
+	}
+	result["type"] = "telegraf." + name
+	return result
 }
 
 func (t *telegrafPluginSource) Name() string {
@@ -65,11 +86,17 @@ func (t *telegrafPluginSource) ScrapeMetrics(start, end time.Time) (*metrics.Dat
 	err := t.plugin.Gather(result)
 	if err != nil {
 		t.errors.Inc(1)
+		if t.targetEPS != nil {
+			t.targetEPS.Inc(1)
+		}
 		glog.Errorf("error gathering %s metrics. error: %v", t.name, err)
 	}
 	count := len(result.MetricPoints)
 	glog.Infof("%s metrics: %d", t.Name(), count)
 	t.pointsCollected.Inc(int64(count))
+	if t.targetPPS != nil {
+		t.targetPPS.Inc(int64(count))
+	}
 	return &result.DataBatch, nil
 }
 
@@ -93,9 +120,6 @@ var defaultPlugins = []string{"mem", "net", "netstat", "linux_sysctl_fs", "swap"
 
 // NewProvider creates a Telegraf source
 func NewProvider(uri *url.URL) (metrics.MetricsSourceProvider, error) {
-	//for _, pair := range os.Environ() {
-	//	glog.V(4).Infof("env: %v", pair)
-	//}
 	vals := uri.Query()
 
 	prefix := ""
@@ -114,14 +138,14 @@ func NewProvider(uri *url.URL) (metrics.MetricsSourceProvider, error) {
 
 	filters := filter.FromQuery(vals)
 	tags := flags.DecodeTags(vals)
-	discovered := flags.DecodeBoolean(vals, "discovered")
+	discovered := flags.DecodeValue(vals, "discovered")
 
 	var sources []metrics.MetricsSource
 	for _, name := range plugins {
 		creator := telegrafPlugins.Inputs[strings.Trim(name, " ")]
 		if creator != nil {
 			plugin := creator()
-			if discovered {
+			if discovered != "" {
 				err := initPlugin(plugin, vals)
 				if err != nil {
 					// bail if discovered and error initializing
@@ -129,7 +153,7 @@ func NewProvider(uri *url.URL) (metrics.MetricsSourceProvider, error) {
 					return nil, err
 				}
 			}
-			sources = append(sources, newTelegrafPluginSource(name, plugin, prefix, tags, filters))
+			sources = append(sources, newTelegrafPluginSource(name, plugin, prefix, tags, filters, discovered))
 		} else {
 			glog.Errorf("telegraf plugin %s not found", name)
 			var availablePlugins []string

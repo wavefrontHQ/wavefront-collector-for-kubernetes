@@ -16,7 +16,7 @@ func TestDiscover(t *testing.T) {
 		IP:   "123",
 		Kind: discovery.PodType.String(),
 		Meta: pod.ObjectMeta,
-	}, discovery.PrometheusConfig{})
+	}, discovery.PluginConfig{})
 
 	// should not be discovered without annotations
 	if th.Count() != 0 {
@@ -31,7 +31,7 @@ func TestDiscover(t *testing.T) {
 		IP:   "123",
 		Kind: discovery.PodType.String(),
 		Meta: pod.ObjectMeta,
-	}, discovery.PrometheusConfig{})
+	}, discovery.PluginConfig{})
 
 	// should be discovered
 	if th.Count() != 1 {

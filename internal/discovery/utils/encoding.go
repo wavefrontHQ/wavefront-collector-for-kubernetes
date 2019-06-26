@@ -63,7 +63,9 @@ func EncodeTags(values url.Values, prefix string, tags map[string]string) {
 
 func EncodeMeta(values url.Values, kind string, meta metav1.ObjectMeta) {
 	values.Add("tag", fmt.Sprintf("%s:%s", kind, meta.Name))
-	values.Add("tag", fmt.Sprintf("%s:%s", "namespace", meta.Namespace))
+	if meta.Namespace != "" {
+		values.Add("tag", fmt.Sprintf("%s:%s", "namespace", meta.Namespace))
+	}
 }
 
 func Param(meta metav1.ObjectMeta, annotation, cfgVal, defaultVal string) string {

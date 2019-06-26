@@ -45,14 +45,21 @@ type prometheusMetricsSource struct {
 	tags       map[string]string
 	filters    filter.Filter
 	client     *http.Client
+	pps        metrics.Counter
+	eps        metrics.Counter
 }
 
-func NewPrometheusMetricsSource(metricsURL, prefix, source string, tags map[string]string, filters filter.Filter) (MetricsSource, error) {
+func NewPrometheusMetricsSource(metricsURL, prefix, source, discovered string, tags map[string]string, filters filter.Filter) (MetricsSource, error) {
 	client, err := httpClient(metricsURL)
 	if err != nil {
 		glog.Errorf("error creating http client: %q", err)
 		return nil, err
 	}
+
+	pt := extractTags(tags, discovered)
+	ppsKey := reporting.EncodeKey("target.points.collected", pt)
+	epsKey := reporting.EncodeKey("target.collect.errors", pt)
+
 	return &prometheusMetricsSource{
 		metricsURL: metricsURL,
 		prefix:     prefix,
@@ -60,7 +67,23 @@ func NewPrometheusMetricsSource(metricsURL, prefix, source string, tags map[stri
 		tags:       tags,
 		filters:    filters,
 		client:     client,
+		pps:        metrics.GetOrRegisterCounter(ppsKey, metrics.DefaultRegistry),
+		eps:        metrics.GetOrRegisterCounter(epsKey, metrics.DefaultRegistry),
 	}, nil
+}
+
+func extractTags(tags map[string]string, discovered string) map[string]string {
+	result := make(map[string]string)
+	for k, v := range tags {
+		if k == "pod" || k == "service" || k == "apiserver" || k == "namespace" {
+			result[k] = v
+		}
+	}
+	if discovered != "" {
+		result["discovered"] = discovered
+	}
+	result["type"] = "prometheus"
+	return result
 }
 
 func httpClient(metricsURL string) (*http.Client, error) {
@@ -90,27 +113,32 @@ func (src *prometheusMetricsSource) ScrapeMetrics(start, end time.Time) (*DataBa
 	resp, err := src.client.Get(src.metricsURL)
 	if err != nil {
 		collectErrors.Inc(1)
+		src.eps.Inc(1)
 		return nil, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		collectErrors.Inc(1)
+		src.eps.Inc(1)
 		return nil, fmt.Errorf("error retrieving prometheus metrics from %s", src.metricsURL)
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		collectErrors.Inc(1)
+		src.eps.Inc(1)
 		return nil, err
 	}
 	points, err := src.parseMetrics(body, resp.Header)
 	if err != nil {
 		collectErrors.Inc(1)
+		src.eps.Inc(1)
 		return result, err
 	}
 	result.MetricPoints = points
 	collectedPoints.Inc(int64(len(points)))
+	src.pps.Inc(int64(len(points)))
 
 	return result, nil
 }
@@ -255,24 +283,18 @@ type prometheusProvider struct {
 	prefix     string
 	source     string
 	name       string
-	discovered bool
+	discovered string
+	sources    []MetricsSource
 	tags       map[string]string
 	filters    filter.Filter
 }
 
 func (p *prometheusProvider) GetMetricsSources() []MetricsSource {
-	if !p.discovered && !leadership.Leading() {
+	if p.discovered != "" && !leadership.Leading() {
 		glog.V(2).Infof("not scraping sources from: %s. current leader: %s", p.name, leadership.Leader())
 		return nil
 	}
-	var sources []MetricsSource
-	for _, metricsURL := range p.urls {
-		source, err := NewPrometheusMetricsSource(metricsURL, p.prefix, p.source, p.tags, p.filters)
-		if err == nil {
-			sources = append(sources, source)
-		}
-	}
-	return sources
+	return p.sources
 }
 
 func (p *prometheusProvider) Name() string {
@@ -309,13 +331,23 @@ func NewPrometheusProvider(uri *url.URL) (MetricsSourceProvider, error) {
 		name = fmt.Sprintf("%s: %s", ProviderName, vals["url"][0])
 	}
 
-	discovered := flags.DecodeBoolean(vals, "discovered")
-	glog.V(4).Infof("name: %s discovered: %t", name, discovered)
+	discovered := flags.DecodeValue(vals, "discovered")
+	glog.V(4).Infof("name: %s discovered: %s", name, discovered)
 
 	// tags of the form "tag=key:value"
 	tags := flags.DecodeTags(vals)
 
 	filters := filter.FromQuery(vals)
+
+	var sources []MetricsSource
+	for _, metricsURL := range vals["url"] {
+		metricsSource, err := NewPrometheusMetricsSource(metricsURL, prefix, source, discovered, tags, filters)
+		if err == nil {
+			sources = append(sources, metricsSource)
+		} else {
+			glog.Errorf("error creating source: %v", err)
+		}
+	}
 
 	return &prometheusProvider{
 		urls:       vals["url"],
@@ -323,6 +355,7 @@ func NewPrometheusProvider(uri *url.URL) (MetricsSourceProvider, error) {
 		source:     source,
 		name:       name,
 		discovered: discovered,
+		sources:    sources,
 		tags:       tags,
 		filters:    filters,
 	}, nil

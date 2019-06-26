@@ -22,7 +22,7 @@ func TestBaseURL(t *testing.T) {
 	checkValue(values, "prefix", "test.", t)
 }
 
-func TestScrapeURL(t *testing.T) {
+func TestEncode(t *testing.T) {
 	pod := v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test",
@@ -30,8 +30,10 @@ func TestScrapeURL(t *testing.T) {
 		},
 	}
 
+	encoder := prometheusEncoder{}
+
 	// should return nil without pod IP
-	values := scrapeURL("", "pod", pod.ObjectMeta, discovery.PrometheusConfig{})
+	values := encoder.Encode("", "pod", pod.ObjectMeta, discovery.PluginConfig{})
 	if len(values) != 0 {
 		t.Errorf("expected empty scrapeURL. actual: %s", values)
 	}
@@ -41,21 +43,21 @@ func TestScrapeURL(t *testing.T) {
 	}
 
 	// should return nil if empty cfg and no scrape annotation
-	values = scrapeURL("10.2.3.4", "pod", pod.ObjectMeta, discovery.PrometheusConfig{})
+	values = encoder.Encode("10.2.3.4", "pod", pod.ObjectMeta, discovery.PluginConfig{})
 	if len(values) != 0 {
 		t.Errorf("expected empty scrapeURL. actual: %s", values)
 	}
 
 	// should return nil if scrape annotation is set to false
 	pod.Annotations = map[string]string{"prometheus.io/scrape": "false"}
-	values = scrapeURL("10.2.3.4", "pod", pod.ObjectMeta, discovery.PrometheusConfig{})
+	values = encoder.Encode("10.2.3.4", "pod", pod.ObjectMeta, discovery.PluginConfig{})
 	if len(values) != 0 {
 		t.Errorf("expected empty scrapeURL. actual: %s", values)
 	}
 
 	// expect non-empty when scrape annotation set to true
 	pod.Annotations["prometheus.io/scrape"] = "true"
-	values = scrapeURL("10.2.3.4", "pod", pod.ObjectMeta, discovery.PrometheusConfig{})
+	values = encoder.Encode("10.2.3.4", "pod", pod.ObjectMeta, discovery.PluginConfig{})
 	if len(values) == 0 {
 		t.Error("expected non-empty scrapeURL.")
 	}
@@ -68,23 +70,21 @@ func TestScrapeURL(t *testing.T) {
 	pod.Annotations[prefixAnnotation] = "test."
 	pod.Annotations[labelsAnnotation] = "false"
 
-	values = scrapeURL("10.2.3.4", "pod", pod.ObjectMeta, discovery.PrometheusConfig{})
+	values = encoder.Encode("10.2.3.4", "pod", pod.ObjectMeta, discovery.PluginConfig{})
 	if len(values) == 0 {
 		t.Error("expected non-empty scrapeURL.")
 	}
 	resName := discovery.ResourceName(discovery.PodType.String(), pod.ObjectMeta)
 	checkValue(values, "url", fmt.Sprintf("https://%s:9102/prometheus", pod.Status.PodIP), t)
 	checkValue(values, "name", resName, t)
-	checkValue(values, "discovered", "true", t)
+	checkValue(values, "discovered", "rule", t)
 	checkValue(values, "source", "test", t)
 	checkValue(values, "prefix", "test.", t)
 	checkTag(values, "pod:test", t)
 	checkTag(values, "namespace:test", t)
 
-	//expected := fmt.Sprintf("?&tag=pod:test&tag=namespace:test", pod.Status.PodIP, resName)
-
 	// validate cfg is picked up
-	cfg := discovery.PrometheusConfig{
+	cfg := discovery.PluginConfig{
 		Name:          "test",
 		Scheme:        "https",
 		Path:          "/path",
@@ -94,16 +94,14 @@ func TestScrapeURL(t *testing.T) {
 	}
 	pod.Annotations = map[string]string{}
 
-	values = scrapeURL("10.2.3.4", "pod", pod.ObjectMeta, cfg)
+	values = encoder.Encode("10.2.3.4", "pod", pod.ObjectMeta, cfg)
 	checkValue(values, "url", fmt.Sprintf("https://%s:9103/path", pod.Status.PodIP), t)
 	checkValue(values, "name", resName, t)
-	checkValue(values, "discovered", "true", t)
+	checkValue(values, "discovered", "rule", t)
 	checkValue(values, "source", "test", t)
 	checkValue(values, "prefix", "foo.", t)
 	checkTag(values, "pod:test", t)
 	checkTag(values, "namespace:test", t)
-	//expected = fmt.Sprintf("?url=https://%s:9103/path&name=%s&discovered=true&source=test&prefix=foo.&tag=pod:test&tag=namespace:test", pod.Status.PodIP, resName)
-
 }
 
 func checkTag(values url.Values, val string, t *testing.T) {

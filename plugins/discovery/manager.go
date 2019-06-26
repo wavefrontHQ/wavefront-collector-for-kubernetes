@@ -1,71 +1,54 @@
 package discovery
 
 import (
-	"github.com/wavefronthq/go-metrics-wavefront/reporting"
 	"os"
 	"sync"
 	"time"
 
+	"github.com/golang/glog"
+	gm "github.com/rcrowley/go-metrics"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/leadership"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/discovery/prometheus"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/discovery/telegraf"
-
-	"github.com/golang/glog"
-	gm "github.com/rcrowley/go-metrics"
 
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
-	v1listers "k8s.io/client-go/listers/core/v1"
 )
 
 var (
 	discoveryEnabled gm.Counter
-	promRulesCount   gm.Gauge
-	pluginRulesCount gm.Gauge
+	rulesCount       gm.Gauge
 )
 
 func init() {
 	discoveryEnabled = gm.GetOrRegisterCounter("discovery.enabled", gm.DefaultRegistry)
-
-	name := reporting.EncodeKey("discovery.rules.count", map[string]string{"type": "prometheus"})
-	promRulesCount = gm.GetOrRegisterGauge(name, gm.DefaultRegistry)
-
-	name = reporting.EncodeKey("discovery.rules.count", map[string]string{"type": "plugins"})
-	pluginRulesCount = gm.GetOrRegisterGauge(name, gm.DefaultRegistry)
+	rulesCount = gm.GetOrRegisterGauge("discovery.rules.count", gm.DefaultRegistry)
 }
 
 type discoveryManager struct {
-	modTime             time.Time
-	daemon              bool
-	kubeClient          kubernetes.Interface
-	resourceLister      discovery.ResourceLister
-	providerHandler     metrics.ProviderHandler
-	discoverer          discovery.Discoverer
-	telegrafRuleHandler discovery.RuleHandler
-	serviceListener     *serviceHandler
-	channel             chan struct{}
+	modTime         time.Time
+	daemon          bool
+	kubeClient      kubernetes.Interface
+	providerHandler metrics.ProviderHandler
+	discoverer      discovery.Discoverer
+	ruleHandler     discovery.RuleHandler
+	serviceListener *serviceHandler
+	channel         chan struct{}
 
-	mtx         sync.Mutex
-	promRules   map[string]discovery.RuleHandler
-	pluginRules map[string]discovery.RuleHandler
+	mtx   sync.Mutex
+	rules map[string]bool
 }
 
-func NewDiscoveryManager(client kubernetes.Interface, podLister v1listers.PodLister,
-	serviceLister v1listers.ServiceLister, cfgFile string, handler metrics.ProviderHandler, daemon bool) {
+func NewDiscoveryManager(client kubernetes.Interface, cfgFile string, handler metrics.ProviderHandler, daemon bool) {
 	mgr := &discoveryManager{
 		daemon:          daemon,
 		kubeClient:      client,
-		resourceLister:  newResourceLister(podLister, serviceLister),
 		providerHandler: handler,
 		channel:         make(chan struct{}),
-		promRules:       make(map[string]discovery.RuleHandler),
-		pluginRules:     make(map[string]discovery.RuleHandler),
+		rules:           make(map[string]bool),
 	}
 
-	// load config here to init runtime discovery based on container images
-	// rule based discovery is handled within the Run() flow
+	// load config to init runtime discovery
 	var plugins []discovery.PluginConfig
 	if cfgFile != "" {
 		cfg, err := FromFile(cfgFile)
@@ -74,11 +57,8 @@ func NewDiscoveryManager(client kubernetes.Interface, podLister v1listers.PodLis
 		}
 		plugins = cfg.PluginConfigs
 	}
-
-	prometheusDiscoverer := discovery.NewDiscoverer(prometheus.NewTargetHandler(handler, true))
-	telegrafDiscoverer := telegraf.NewDiscoverer(handler, plugins)
-	mgr.discoverer = newDiscoverer(prometheusDiscoverer, telegrafDiscoverer)
-	mgr.telegrafRuleHandler = telegraf.NewRuleHandler(telegrafDiscoverer, handler)
+	mgr.discoverer = newDiscoverer(handler, plugins)
+	mgr.ruleHandler = newRuleHandler(mgr.discoverer, handler, daemon)
 
 	// Run the manager
 	mgr.Run(cfgFile)
@@ -169,54 +149,33 @@ func (dm *discoveryManager) load(cfg discovery.Config) {
 	dm.mtx.Lock()
 	defer dm.mtx.Unlock()
 
-	// delete prometheus rules that were removed/renamed
-	rules := make(map[string]bool, len(cfg.PromConfigs))
-	for _, rule := range cfg.PromConfigs {
+	// delete rules that were removed/renamed
+	rules := make(map[string]bool, len(cfg.PluginConfigs))
+	for _, rule := range cfg.PluginConfigs {
 		rules[rule.Name] = true
 	}
-	pruneRules(dm.promRules, rules)
+	dm.pruneRules(rules)
 
-	// process current prometheus rules
-	for _, rule := range cfg.PromConfigs {
-		handler, exists := dm.promRules[rule.Name]
-		if !exists {
-			handler = prometheus.NewRuleHandler(dm.resourceLister, dm.providerHandler, dm.daemon)
-			dm.promRules[rule.Name] = handler
-		}
-		err := handler.Handle(rule)
-		if err != nil {
-			glog.Errorf("error processing rule=%s err=%v", rule.Name, err)
-		}
-	}
-	promRulesCount.Update(int64(len(cfg.PromConfigs)))
-
-	// delete plugin rules that were removed/renamed
-	rules = make(map[string]bool, len(cfg.PluginConfigs))
+	// process current rules
 	for _, rule := range cfg.PluginConfigs {
-		rules[rule.Type] = true
-	}
-	pruneRules(dm.pluginRules, rules)
-
-	// process current plugin rules
-	for _, rule := range cfg.PluginConfigs {
-		_, exists := dm.pluginRules[rule.Type]
+		_, exists := dm.rules[rule.Name]
 		if !exists {
-			dm.pluginRules[rule.Type] = dm.telegrafRuleHandler
+			dm.rules[rule.Name] = true
 		}
-		err := dm.telegrafRuleHandler.Handle(rule)
+		err := dm.ruleHandler.Handle(rule)
 		if err != nil {
-			glog.Errorf("error processing rule=%s err=%v", rule.Type, err)
+			glog.Errorf("error processing rule=%s type=%s err=%v", rule.Name, rule.Type, err)
 		}
 	}
-	pluginRulesCount.Update(int64(len(cfg.PluginConfigs)))
+	rulesCount.Update(int64(len(cfg.PluginConfigs)))
 }
 
-func pruneRules(rules map[string]discovery.RuleHandler, newRules map[string]bool) {
-	for name, handler := range rules {
+func (dm *discoveryManager) pruneRules(newRules map[string]bool) {
+	for name := range dm.rules {
 		if _, exists := newRules[name]; !exists {
 			glog.V(2).Infof("deleting discovery rule %s", name)
-			delete(rules, name)
-			handler.Delete(name)
+			delete(dm.rules, name)
+			dm.ruleHandler.Delete(name)
 		}
 	}
 }

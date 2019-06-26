@@ -23,8 +23,8 @@ func NewGlobFilter(cfg Config) Filter {
 	return &globFilter{
 		metricWhitelist:    Compile(cfg.MetricWhitelist),
 		metricBlacklist:    Compile(cfg.MetricBlacklist),
-		metricTagWhitelist: multiCompile(cfg.MetricTagWhitelist),
-		metricTagBlacklist: multiCompile(cfg.MetricTagBlacklist),
+		metricTagWhitelist: MultiCompile(cfg.MetricTagWhitelist),
+		metricTagBlacklist: MultiCompile(cfg.MetricTagBlacklist),
 		tagInclude:         Compile(cfg.TagInclude),
 		tagExclude:         Compile(cfg.TagExclude),
 	}
@@ -42,7 +42,7 @@ func Compile(filters []string) glob.Glob {
 	return g
 }
 
-func multiCompile(filters map[string][]string) map[string]glob.Glob {
+func MultiCompile(filters map[string][]string) map[string]glob.Glob {
 	if len(filters) == 0 {
 		return nil
 	}

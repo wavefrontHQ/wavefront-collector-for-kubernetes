@@ -124,6 +124,9 @@ func (t *telegrafDataBatch) SetPrecision(precision time.Duration) {
 func (t *telegrafDataBatch) AddError(err error) {
 	if err != nil {
 		t.source.errors.Inc(1)
+		if t.source.targetEPS != nil {
+			t.source.targetEPS.Inc(1)
+		}
 		glog.Error(err)
 	}
 }

@@ -7,12 +7,6 @@ import (
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/prometheus"
 )
 
-var registry discovery.TargetRegistry
-
-func init() {
-	registry = discovery.NewRegistry("prometheus")
-}
-
 func NewTargetHandler(handler metrics.ProviderHandler, useAnnotations bool) discovery.TargetHandler {
 	return discovery.NewHandler(
 		discovery.ProviderInfo{
@@ -20,7 +14,7 @@ func NewTargetHandler(handler metrics.ProviderHandler, useAnnotations bool) disc
 			Factory: prometheus.NewFactory(),
 			Encoder: prometheusEncoder{},
 		},
-		registry,
+		discovery.NewRegistry("prometheus"),
 		discovery.UseAnnotations(useAnnotations),
 		discovery.SetRegistrationHandler(unregister),
 	)

@@ -9,24 +9,30 @@ global:
   discovery_interval: 5m
 plugin_configs:
   - type: telegraf/redis
-    images:
-    - 'redis:*'
-    - '*redis*'
+    name: "redis"
+    selectors:
+      images:
+      - 'redis:*'
+      - '*redis*'
     port: 6379
     scheme: "tcp"
     conf: |
       servers = [${server}]
       password = bar
   - type: telegraf/memcached
-    images:
-    - 'memcached:*'
+    name: "memcached"
+    selectors:
+      images:
+      - 'memcached:*'
     port: 11211
     conf: |
       servers = ${server}
-prom_configs:
-  - name: kube-dns-discovery
-    labels:
-      k8s-app: kube-dns
+  - type: prometheus
+    name: kube-dns
+    selectors:
+      labels:
+        k8s-app: 
+        - kube-dns      
     port: 10054
     path: /metrics
     scheme: http
@@ -55,22 +61,19 @@ func TestFromYAML(t *testing.T) {
 		t.Errorf("error loading yaml: %q", err)
 		return
 	}
-	if len(cfg.PromConfigs) != 1 {
-		t.Errorf("error parsing yaml")
+	if len(cfg.PluginConfigs) != 3 {
+		t.Errorf("invalid number of plugins")
 	}
-	if len(cfg.PromConfigs[0].Filters.MetricWhitelist) != 2 {
+	if len(cfg.PluginConfigs[2].Filters.MetricWhitelist) != 2 {
 		t.Errorf("error parsing filters")
 	}
-	if len(cfg.PromConfigs[0].Filters.MetricBlacklist) != 2 {
+	if len(cfg.PluginConfigs[2].Filters.MetricBlacklist) != 2 {
 		t.Errorf("error parsing filters")
 	}
-	if len(cfg.PromConfigs[0].Filters.MetricTagWhitelist) != 2 {
+	if len(cfg.PluginConfigs[2].Filters.MetricTagWhitelist) != 2 {
 		t.Errorf("error parsing filters")
 	}
-	if len(cfg.PluginConfigs) != 2 {
-		t.Errorf("error parsing plugins")
-	}
-	if len(cfg.PluginConfigs[0].Images) != 2 {
+	if len(cfg.PluginConfigs[0].Selectors.Images) != 2 {
 		t.Errorf("error parsing plugin images")
 	}
 }

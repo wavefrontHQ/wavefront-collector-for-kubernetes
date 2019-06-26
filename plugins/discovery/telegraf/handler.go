@@ -15,7 +15,7 @@ import (
 
 var defaultEncoder = telegrafEncoder{}
 
-func newTargetHandler(handler metrics.ProviderHandler, plugin string) discovery.TargetHandler {
+func NewTargetHandler(handler metrics.ProviderHandler, plugin string) discovery.TargetHandler {
 	registryName := strings.Replace(plugin, "/", ".", -1)
 	return discovery.NewHandler(
 		discovery.ProviderInfo{
@@ -44,12 +44,11 @@ func (e telegrafEncoder) Encode(ip, kind string, meta metav1.ObjectMeta, rule in
 	pluginName := strings.Replace(cfg.Type, "telegraf/", "", -1)
 
 	values := url.Values{}
-	values.Set("discovered", "true")
+	values.Set("discovered", "rule")
 	values.Set("plugins", pluginName)
 	values.Set("name", name)
 
 	// parse telegraf configuration
-	//TODO: optimize?
 	scheme := utils.Param(meta, "", cfg.Scheme, "http")
 	server := fmt.Sprintf("%s://%s:%s", scheme, ip, cfg.Port)
 	conf := strings.Replace(cfg.Conf, "${server}", server, -1)

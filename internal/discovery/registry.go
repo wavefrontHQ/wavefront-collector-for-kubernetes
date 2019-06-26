@@ -9,6 +9,13 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
+var regMtx sync.Mutex
+var registries map[string]TargetRegistry
+
+func init() {
+	registries = make(map[string]TargetRegistry)
+}
+
 type defaultRegistry struct {
 	count   metrics.Gauge
 	mtx     sync.RWMutex
@@ -16,11 +23,19 @@ type defaultRegistry struct {
 }
 
 func NewRegistry(name string) TargetRegistry {
-	gaugeName := reporting.EncodeKey("discovery.targets.registered", map[string]string{"type": name})
+	regMtx.Lock()
+	defer regMtx.Unlock()
+
+	if registry, exists := registries[name]; exists {
+		return registry
+	}
+
+	key := reporting.EncodeKey("discovery.targets.registered", map[string]string{"type": name})
 	registry := &defaultRegistry{
 		targets: make(map[string]TargetHandler),
-		count:   metrics.GetOrRegisterGauge(gaugeName, metrics.DefaultRegistry),
+		count:   metrics.GetOrRegisterGauge(key, metrics.DefaultRegistry),
 	}
+	registries[name] = registry
 
 	// update the target counter once a minute
 	go wait.Forever(func() {
