@@ -22,7 +22,7 @@ type GlobalConfig struct {
 // Describes rules for auto discovering supported services
 type PluginConfig struct {
 	// the unique name for this configuration rule. Used internally as map keys and needs to be unique per rule.
-	Name string `yaml: "name"`
+	Name string `yaml:"name"`
 
 	// the plugin type, for example: 'prometheus' or 'telegraf/redis'
 	Type string `yaml:"type"`
