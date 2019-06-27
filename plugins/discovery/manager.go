@@ -5,17 +5,14 @@ import (
 	"sync"
 	"time"
 
+	"github.com/golang/glog"
+	gm "github.com/rcrowley/go-metrics"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/leadership"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/discovery/prometheus"
-
-	"github.com/golang/glog"
-	gm "github.com/rcrowley/go-metrics"
 
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
-	v1listers "k8s.io/client-go/listers/core/v1"
 )
 
 var (
@@ -32,26 +29,38 @@ type discoveryManager struct {
 	modTime         time.Time
 	daemon          bool
 	kubeClient      kubernetes.Interface
-	resourceLister  discovery.ResourceLister
-	providerHandler metrics.DynamicProviderHandler
+	providerHandler metrics.ProviderHandler
 	discoverer      discovery.Discoverer
+	ruleHandler     discovery.RuleHandler
 	serviceListener *serviceHandler
 	channel         chan struct{}
-	mtx             sync.Mutex
-	rules           map[string]discovery.RuleHandler
+
+	mtx   sync.Mutex
+	rules map[string]bool
 }
 
-func NewDiscoveryManager(client kubernetes.Interface, podLister v1listers.PodLister,
-	serviceLister v1listers.ServiceLister, cfgFile string, handler metrics.DynamicProviderHandler, daemon bool) {
+func NewDiscoveryManager(client kubernetes.Interface, cfgFile string, handler metrics.ProviderHandler, daemon bool) {
 	mgr := &discoveryManager{
 		daemon:          daemon,
 		kubeClient:      client,
-		resourceLister:  newResourceLister(podLister, serviceLister),
 		providerHandler: handler,
-		discoverer:      prometheus.NewDiscoverer(handler),
 		channel:         make(chan struct{}),
-		rules:           make(map[string]discovery.RuleHandler),
+		rules:           make(map[string]bool),
 	}
+
+	// load config to init runtime discovery
+	var plugins []discovery.PluginConfig
+	if cfgFile != "" {
+		cfg, err := FromFile(cfgFile)
+		if err != nil {
+			glog.Fatalf("invalid discovery file: %q", err)
+		}
+		plugins = cfg.PluginConfigs
+	}
+	mgr.discoverer = newDiscoverer(handler, plugins)
+	mgr.ruleHandler = newRuleHandler(mgr.discoverer, handler, daemon)
+
+	// Run the manager
 	mgr.Run(cfgFile)
 }
 
@@ -122,7 +131,7 @@ func (dm *discoveryManager) loadWatch(cfgFile string) {
 	}, 1*time.Minute, wait.NeverStop)
 }
 
-// reloads the rules now and every discovery interval
+// reloads the promRules now and every discovery interval
 func (dm *discoveryManager) reload(cfg discovery.Config) {
 	syncInterval := 10 * time.Minute
 	if cfg.Global.DiscoveryInterval != 0 {
@@ -135,39 +144,38 @@ func (dm *discoveryManager) reload(cfg discovery.Config) {
 }
 
 func (dm *discoveryManager) load(cfg discovery.Config) {
-	glog.V(2).Info("loading discovery rules")
-	if len(cfg.PromConfigs) == 0 {
-		glog.V(2).Info("found no discovery rules")
-		return
-	}
+	glog.V(2).Info("loading discovery configuration")
 
 	dm.mtx.Lock()
 	defer dm.mtx.Unlock()
 
 	// delete rules that were removed/renamed
-	rules := make(map[string]bool, len(cfg.PromConfigs))
-	for _, rule := range cfg.PromConfigs {
+	rules := make(map[string]bool, len(cfg.PluginConfigs))
+	for _, rule := range cfg.PluginConfigs {
 		rules[rule.Name] = true
 	}
-	for name, handler := range dm.rules {
-		if _, exists := rules[name]; !exists {
-			glog.V(2).Infof("deleting discovery rule %s", name)
-			delete(dm.rules, name)
-			handler.Delete()
-		}
-	}
+	dm.pruneRules(rules)
 
 	// process current rules
-	for _, rule := range cfg.PromConfigs {
-		handler, exists := dm.rules[rule.Name]
+	for _, rule := range cfg.PluginConfigs {
+		_, exists := dm.rules[rule.Name]
 		if !exists {
-			handler = prometheus.NewRuleHandler(dm.resourceLister, dm.providerHandler, dm.daemon)
-			dm.rules[rule.Name] = handler
+			dm.rules[rule.Name] = true
 		}
-		err := handler.Handle(rule)
+		err := dm.ruleHandler.Handle(rule)
 		if err != nil {
-			glog.Errorf("error processing rule=%s err=%v", rule.Name, err)
+			glog.Errorf("error processing rule=%s type=%s err=%v", rule.Name, rule.Type, err)
 		}
 	}
-	rulesCount.Update(int64(len(cfg.PromConfigs)))
+	rulesCount.Update(int64(len(cfg.PluginConfigs)))
+}
+
+func (dm *discoveryManager) pruneRules(newRules map[string]bool) {
+	for name := range dm.rules {
+		if _, exists := newRules[name]; !exists {
+			glog.V(2).Infof("deleting discovery rule %s", name)
+			delete(dm.rules, name)
+			dm.ruleHandler.Delete(name)
+		}
+	}
 }

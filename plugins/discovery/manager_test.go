@@ -33,22 +33,23 @@ func TestRuleAdd(t *testing.T) {
 }
 
 func manager() *discoveryManager {
+	ph := &util.DummyProviderHandler{}
 	return &discoveryManager{
-		resourceLister:  discovery.NewFakeResourceLister(2),
-		providerHandler: &util.DummyProviderHandler{},
-		rules:           make(map[string]discovery.RuleHandler),
+		providerHandler: ph,
+		rules:           make(map[string]bool),
+		ruleHandler:     newRuleHandler(newDiscoverer(ph, nil), &util.DummyProviderHandler{}, true),
 	}
 }
 
 func config(num int) discovery.Config {
-	var rules []discovery.PrometheusConfig
+	var rules []discovery.PluginConfig
 	for i := 0; i < num; i++ {
-		rule := discovery.PrometheusConfig{
+		rule := discovery.PluginConfig{
 			Name: "rule" + string(i),
 		}
 		rules = append(rules, rule)
 	}
 	return discovery.Config{
-		PromConfigs: rules,
+		PluginConfigs: rules,
 	}
 }

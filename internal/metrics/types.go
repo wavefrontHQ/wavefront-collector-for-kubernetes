@@ -20,6 +20,7 @@
 package metrics
 
 import (
+	"net/url"
 	"time"
 )
 
@@ -180,7 +181,12 @@ type MetricPoint struct {
 }
 
 // Interface for dynamically adding and removing MetricsSourceProviders
-type DynamicProviderHandler interface {
+type ProviderHandler interface {
 	AddProvider(provider MetricsSourceProvider)
 	DeleteProvider(name string)
+}
+
+type ProviderFactory interface {
+	Name() string
+	Build(uri *url.URL) (MetricsSourceProvider, error)
 }

@@ -2,6 +2,7 @@ package wavefront
 
 import (
 	"fmt"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/flags"
 	"net/url"
 	"strconv"
 	"strings"
@@ -45,6 +46,7 @@ type wavefrontSink struct {
 	Prefix            string
 	IncludeLabels     bool
 	IncludeContainers bool
+	globalTags        map[string]string
 	filters           filter.Filter
 	testMode          bool
 	testReceivedLines []string
@@ -66,6 +68,8 @@ func (sink *wavefrontSink) sendPoint(metricName string, value float64, ts int64,
 		return
 	}
 
+	tags = combineGlobalTags(tags, sink.globalTags)
+
 	if sink.testMode {
 		tagStr := ""
 		for k, v := range tags {
@@ -83,6 +87,23 @@ func (sink *wavefrontSink) sendPoint(metricName string, value float64, ts int64,
 	} else {
 		sentPoints.Inc(1)
 	}
+}
+
+func combineGlobalTags(tags, globalTags map[string]string) map[string]string {
+	if tags == nil || len(tags) == 0 {
+		return globalTags
+	}
+	if globalTags == nil || len(globalTags) == 0 {
+		return tags
+	}
+
+	for k, v := range globalTags {
+		// add global tag if key is missing from tags
+		if _, exists := tags[k]; !exists {
+			tags[k] = v
+		}
+	}
+	return tags
 }
 
 func (sink *wavefrontSink) cleanMetricName(metricType string, metricName string) string {
@@ -271,6 +292,8 @@ func NewWavefrontSink(uri *url.URL) (metrics.DataSink, error) {
 	if storage.WavefrontClient == nil {
 		return nil, fmt.Errorf("proxyAddress or server property required for Wavefront sink")
 	}
+
+	storage.globalTags = flags.DecodeTags(vals)
 
 	if len(vals["clusterName"]) > 0 {
 		storage.ClusterName = vals["clusterName"][0]

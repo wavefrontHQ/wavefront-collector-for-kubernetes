@@ -24,7 +24,7 @@ func TestMatchesTag(t *testing.T) {
 }
 
 func TestMatchesTags(t *testing.T) {
-	matchers := multiCompile(map[string][]string{
+	matchers := MultiCompile(map[string][]string{
 		"env":  {"?rod1*", "prod2*"},
 		"type": {"pod", "service"},
 		"node": {"10.2.*", "10.3.*"},

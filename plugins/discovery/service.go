@@ -33,15 +33,27 @@ func newServiceHandler(kubeClient kubernetes.Interface, discoverer discovery.Dis
 	inf.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			service := obj.(*v1.Service)
-			discoverer.Discover(service.Spec.ClusterIP, discovery.ServiceType.String(), service.ObjectMeta)
+			discoverer.Discover(discovery.Resource{
+				Kind: discovery.ServiceType.String(),
+				IP:   service.Spec.ClusterIP,
+				Meta: service.ObjectMeta,
+			})
 		},
 		UpdateFunc: func(_, obj interface{}) {
 			service := obj.(*v1.Service)
-			discoverer.Discover(service.Spec.ClusterIP, discovery.ServiceType.String(), service.ObjectMeta)
+			discoverer.Discover(discovery.Resource{
+				Kind: discovery.ServiceType.String(),
+				IP:   service.Spec.ClusterIP,
+				Meta: service.ObjectMeta,
+			})
 		},
 		DeleteFunc: func(obj interface{}) {
 			service := obj.(*v1.Service)
-			discoverer.Delete(discovery.ServiceType.String(), service.ObjectMeta)
+			discoverer.Discover(discovery.Resource{
+				Kind: discovery.ServiceType.String(),
+				IP:   service.Spec.ClusterIP,
+				Meta: service.ObjectMeta,
+			})
 		},
 	})
 	return &serviceHandler{
