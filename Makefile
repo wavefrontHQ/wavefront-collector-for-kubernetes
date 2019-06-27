@@ -16,7 +16,7 @@ GIT_COMMIT:=$(shell git rev-parse --short HEAD)
 REPO_DIR:=$(shell pwd)
 
 # for testing, the built image will also be tagged with this name
-OVERRIDE_IMAGE_NAME?=vikramraman/wavefront-collector:0.9.9-rc1
+OVERRIDE_IMAGE_NAME?=vikramraman/wavefront-collector:0.9.9-rc2
 
 LDFLAGS=-w -X main.version=$(VERSION) -X main.commit=$(GIT_COMMIT)
 
@@ -47,7 +47,7 @@ ifneq ($(OVERRIDE_IMAGE_NAME),)
 endif
 
 clean:
-	rm -f $(BINARY_NAME)
-	rm -f $(BINARY_NAME)-test
+	rm -f $(OUT_DIR)/$(ARCH)/$(BINARY_NAME)
+	rm -f $(OUT_DIR)/$(ARCH)/$(BINARY_NAME)-test
 
 .PHONY: all fmt container clean

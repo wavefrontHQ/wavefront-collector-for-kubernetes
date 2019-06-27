@@ -2,13 +2,12 @@ package wavefront
 
 import (
 	"fmt"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/flags"
 	"net/url"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/flags"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	"github.com/wavefronthq/wavefront-sdk-go/senders"
 
@@ -17,9 +16,8 @@ import (
 )
 
 const (
-	sysSubContainerName = "system.slice/"
-	proxyClient         = 1
-	directClient        = 2
+	proxyClient  = 1
+	directClient = 2
 )
 
 var (
@@ -44,8 +42,6 @@ type wavefrontSink struct {
 	WavefrontClient   senders.Sender
 	ClusterName       string
 	Prefix            string
-	IncludeLabels     bool
-	IncludeContainers bool
 	globalTags        map[string]string
 	filters           filter.Filter
 	testMode          bool
@@ -106,36 +102,9 @@ func combineGlobalTags(tags, globalTags map[string]string) map[string]string {
 	return tags
 }
 
-func (sink *wavefrontSink) cleanMetricName(metricType string, metricName string) string {
-	return sink.Prefix + metricType + "." + strings.Replace(metricName, "/", ".", -1)
-}
-
-func (sink *wavefrontSink) addLabelTags(ms *metrics.MetricSet, tags map[string]string) {
-	for _, labelName := range sortedLabelKeys(ms.Labels) {
-		labelValue := ms.Labels[labelName]
-		if labelName == "labels" {
-			//only parse labels if IncludeLabels == true
-			if sink.IncludeLabels {
-				for _, label := range strings.Split(labelValue, ",") {
-					//labels = app:webproxy,version:latest
-					tagParts := strings.SplitN(label, ":", 2)
-					if len(tagParts) == 2 {
-						tags["label."+tagParts[0]] = tagParts[1]
-					}
-				}
-			}
-		} else {
-			tags[labelName] = labelValue
-		}
-	}
-}
-
 func (sink *wavefrontSink) send(batch *metrics.DataBatch) {
 	if len(batch.MetricPoints) > 0 {
 		sink.processMetricPoints(batch.MetricPoints)
-	}
-	if len(batch.MetricSets) > 0 {
-		sink.processMetricSets(batch.MetricSets, batch.Timestamp)
 	}
 }
 
@@ -150,80 +119,7 @@ func (sink *wavefrontSink) processMetricPoints(points []*metrics.MetricPoint) {
 	}
 }
 
-func (sink *wavefrontSink) processMetricSets(metricSets map[string]*metrics.MetricSet, ts time.Time) {
-	glog.V(2).Infof("received metric sets: %d", len(metricSets))
-
-	metricCounter := 0
-
-	for _, key := range sortedMetricSetKeys(metricSets) {
-		ms := metricSets[key]
-
-		// Populate tag map
-		tags := make(map[string]string)
-		// Make sure all metrics are tagged with the cluster name
-		tags["cluster"] = sink.ClusterName
-		// Add pod labels as tags
-		sink.addLabelTags(ms, tags)
-		hostname := tags["hostname"]
-		metricType := tags["type"]
-		if strings.Contains(tags["container_name"], sysSubContainerName) {
-			//don't send system subcontainers
-			continue
-		}
-		if sink.IncludeContainers == false && strings.Contains(metricType, "pod_container") {
-			// the user doesn't want to include container metrics (only pod and above)
-			continue
-		}
-		for _, metricName := range sortedMetricValueKeys(ms.MetricValues) {
-			metricValue := ms.MetricValues[metricName]
-			var value float64
-			if metrics.ValueInt64 == metricValue.ValueType {
-				value = float64(metricValue.IntValue)
-			} else if metrics.ValueFloat == metricValue.ValueType {
-				value = metricValue.FloatValue
-			} else {
-				continue
-			}
-
-			ts := ts.Unix()
-			source := ""
-			if metricType == "cluster" {
-				source = sink.ClusterName
-			} else if metricType == "ns" {
-				source = tags["namespace_name"] + "-ns"
-			} else {
-				source = hostname
-			}
-			processTags(tags)
-			sink.sendPoint(sink.cleanMetricName(metricType, metricName), value, ts, source, tags)
-			metricCounter = metricCounter + 1
-		}
-		for _, metric := range ms.LabeledMetrics {
-			metricName := sink.cleanMetricName(metricType, metric.Name)
-			var value float64
-			if metrics.ValueInt64 == metric.ValueType {
-				value = float64(metric.IntValue)
-			} else if metrics.ValueFloat == metric.ValueType {
-				value = metric.FloatValue
-			} else {
-				continue
-			}
-
-			ts := ts.Unix()
-			source := hostname
-			for labelName, labelValue := range metric.Labels {
-				tags[labelName] = labelValue
-			}
-			processTags(tags)
-			metricCounter = metricCounter + 1
-			sink.sendPoint(metricName, value, ts, source, tags)
-		}
-	}
-	msCount.Inc(int64(metricCounter))
-}
-
 func (sink *wavefrontSink) ExportData(batch *metrics.DataBatch) {
-
 	if sink.testMode {
 		//clear lines from last batch
 		sink.testReceivedLines = sink.testReceivedLines[:0]
@@ -234,7 +130,6 @@ func (sink *wavefrontSink) ExportData(batch *metrics.DataBatch) {
 }
 
 func NewWavefrontSink(uri *url.URL) (metrics.DataSink, error) {
-
 	if len(uri.Scheme) > 0 {
 		return nil, fmt.Errorf("scheme should not be set for Wavefront sink")
 	}
@@ -244,11 +139,8 @@ func NewWavefrontSink(uri *url.URL) (metrics.DataSink, error) {
 	}
 
 	storage := &wavefrontSink{
-		ClusterName:       "k8s-cluster",
-		Prefix:            "kubernetes.",
-		IncludeLabels:     false,
-		IncludeContainers: true,
-		testMode:          false,
+		ClusterName: "k8s-cluster",
+		testMode:    false,
 	}
 
 	vals := uri.Query()
@@ -300,22 +192,6 @@ func NewWavefrontSink(uri *url.URL) (metrics.DataSink, error) {
 	}
 	if len(vals["prefix"]) > 0 {
 		storage.Prefix = vals["prefix"][0]
-	}
-	if len(vals["includeLabels"]) > 0 {
-		incLabels, err := strconv.ParseBool(vals["includeLabels"][0])
-		if err != nil {
-			glog.Warning("Unable to parse the includeLabels argument. This argument is a boolean, please pass \"true\" or \"false\"")
-			return nil, err
-		}
-		storage.IncludeLabels = incLabels
-	}
-	if len(vals["includeContainers"]) > 0 {
-		incContainers, err := strconv.ParseBool(vals["includeContainers"][0])
-		if err != nil {
-			glog.Warning("Unable to parse the includeContainers argument. This argument is a boolean, please pass \"true\" or \"false\"")
-			return nil, err
-		}
-		storage.IncludeContainers = incContainers
 	}
 
 	storage.filters = filter.FromQuery(vals)
