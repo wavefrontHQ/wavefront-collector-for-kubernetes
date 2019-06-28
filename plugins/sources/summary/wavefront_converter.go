@@ -124,6 +124,7 @@ func (converter *pointConverter) Process(batch *metrics.DataBatch) (*metrics.Dat
 			converter.collectedPoints.Inc(1)
 		}
 	}
+	batch.MetricSets = nil
 	return batch, nil
 }
 
