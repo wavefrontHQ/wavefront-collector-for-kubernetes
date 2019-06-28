@@ -27,6 +27,8 @@ import (
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/summary/kubelet"
 
 	"github.com/golang/glog"
+	gm "github.com/rcrowley/go-metrics"
+	"github.com/wavefronthq/go-metrics-wavefront/reporting"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
 	kube_api "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -38,6 +40,13 @@ import (
 
 // Prefix used for the LabelResourceID for volume metrics.
 const VolumeResourcePrefix = "Volume:"
+
+var collectErrors gm.Counter
+
+func init() {
+	pt := map[string]string{"type": "kubernetes.summary_api"}
+	collectErrors = gm.GetOrRegisterCounter(reporting.EncodeKey("source.collect.errors", pt), gm.DefaultRegistry)
+}
 
 type NodeInfo struct {
 	kubelet.Host
@@ -79,6 +88,7 @@ func (this *summaryMetricsSource) ScrapeMetrics(start, end time.Time) (*DataBatc
 	}()
 
 	if err != nil {
+		collectErrors.Inc(1)
 		return nil, err
 	}
 

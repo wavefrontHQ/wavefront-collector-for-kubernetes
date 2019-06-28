@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/summary"
 	"net/url"
 	"os"
 	"runtime"
@@ -97,9 +98,14 @@ func main() {
 	sourceManager := createSourceManagerOrDie(opt.Sources, opt.InternalStatsPrefix, opt.ScrapeTimeout)
 	sinkManager := createAndInitSinksOrDie(opt.Sinks, opt.SinkExportDataTimeout)
 
+	sinkUrl, err := getWavefrontAddress(opt.Sinks)
+	if err != nil {
+		glog.Fatalf("Failed to get wavefront sink address: %v", err)
+	}
+
 	kubeClient := createKubeClientOrDie(kubernetesUrl)
 	podLister := getPodListerOrDie(kubeClient)
-	dataProcessors := createDataProcessorsOrDie(kubernetesUrl, podLister, labelCopier)
+	dataProcessors := createDataProcessorsOrDie(kubernetesUrl, sinkUrl, podLister, labelCopier)
 
 	if opt.EnableDiscovery {
 		handler := sourceManager.(metrics.ProviderHandler)
@@ -175,7 +181,7 @@ func createKubeClientOrDie(kubernetesUrl *url.URL) *kube_client.Clientset {
 	return kube_client.NewForConfigOrDie(kubeConfig)
 }
 
-func createDataProcessorsOrDie(kubernetesUrl *url.URL, podLister v1listers.PodLister, labelCopier *util.LabelCopier) []metrics.DataProcessor {
+func createDataProcessorsOrDie(kubernetesUrl, sinkUrl *url.URL, podLister v1listers.PodLister, labelCopier *util.LabelCopier) []metrics.DataProcessor {
 	dataProcessors := []metrics.DataProcessor{
 		// Convert cumulative to rate
 		processors.NewRateCalculator(metrics.RateMetricsMapping),
@@ -229,7 +235,26 @@ func createDataProcessorsOrDie(kubernetesUrl *url.URL, podLister v1listers.PodLi
 		glog.Fatalf("Failed to create NodeAutoscalingEnricher: %v", err)
 	}
 	dataProcessors = append(dataProcessors, nodeAutoscalingEnricher)
+
+	// this always needs to be the last processor
+	cluster := flags.DecodeValue(sinkUrl.Query(), "clusterName")
+	wavefrontCoverter, err := summary.NewPointConverter(kubernetesUrl, cluster)
+	if err != nil {
+		glog.Fatalf("Failed to create WavefrontPointConverter: %v", err)
+	}
+	dataProcessors = append(dataProcessors, wavefrontCoverter)
+
 	return dataProcessors
+}
+
+// Gets the address of the wavefront sink from the list of sink URIs.
+func getWavefrontAddress(args flags.Uris) (*url.URL, error) {
+	for _, uri := range args {
+		if uri.Key == "wavefront" {
+			return &uri.Val, nil
+		}
+	}
+	return nil, fmt.Errorf("no wavefront sink found")
 }
 
 // Gets the address of the kubernetes source from the list of source URIs.
