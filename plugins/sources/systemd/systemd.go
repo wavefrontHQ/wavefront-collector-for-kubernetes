@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	. "github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
 
@@ -56,7 +57,7 @@ func (src *systemdMetricsSource) Name() string {
 	return "systemd_metrics_source"
 }
 
-func (src *systemdMetricsSource) ScrapeMetrics(start, end time.Time) (*DataBatch, error) {
+func (src *systemdMetricsSource) ScrapeMetrics() (*DataBatch, error) {
 	// gathers metrics from systemd using dbus. collection is done in parallel to reduce wait time for responses.
 	conn, err := dbus.New()
 	if err != nil {
@@ -391,6 +392,7 @@ func (src *systemdMetricsSource) metricPoint(name string, value float64, ts int6
 }
 
 type systemdProvider struct {
+	metrics.DefaultMetricsSourceProvider
 	sources []MetricsSource
 }
 

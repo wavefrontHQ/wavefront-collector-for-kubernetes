@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources"
 
 	"github.com/golang/glog"
 )
@@ -36,7 +37,7 @@ type Manager interface {
 }
 
 type realManager struct {
-	source                 metrics.MetricsSource
+	sourceManager          sources.SourceManager
 	processors             []metrics.DataProcessor
 	sink                   metrics.DataSink
 	resolution             time.Duration
@@ -46,10 +47,10 @@ type realManager struct {
 	housekeepTimeout       time.Duration
 }
 
-func NewManager(source metrics.MetricsSource, processors []metrics.DataProcessor, sink metrics.DataSink, resolution time.Duration,
+func NewManager(source sources.SourceManager, processors []metrics.DataProcessor, sink metrics.DataSink, resolution time.Duration,
 	scrapeOffset time.Duration, maxParallelism int) (Manager, error) {
 	manager := realManager{
-		source:                 source,
+		sourceManager:          source,
 		processors:             processors,
 		sink:                   sink,
 		resolution:             resolution,
@@ -110,25 +111,21 @@ func (rm *realManager) housekeep(start, end time.Time) {
 	go func(rm *realManager) {
 		// should always give back the semaphore
 		defer func() { rm.housekeepSemaphoreChan <- struct{}{} }()
-		data, err := rm.source.ScrapeMetrics(start, end)
+		dataList := rm.sourceManager.GetPendingMetrics()
 
-		if err != nil {
-			glog.Errorf("Error in scraping metrics for %s: %v", rm.source.Name(), err)
-			return
-		}
-
-		for _, p := range rm.processors {
-			newData, err := process(p, data)
-			if err == nil {
-				data = newData
-			} else {
-				glog.Errorf("Error in processor: %v", err)
-				return
+		for _, data := range dataList {
+			for _, p := range rm.processors {
+				newData, err := process(p, data)
+				if err == nil {
+					data = newData
+				} else {
+					glog.Errorf("Error in processor: %v", err)
+					return
+				}
 			}
+			// Export data to sinks
+			rm.sink.ExportData(data)
 		}
-
-		// Export data to sinks
-		rm.sink.ExportData(data)
 	}(rm)
 }
 

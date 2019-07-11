@@ -6,7 +6,7 @@ import (
 
 	. "github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 
-	"github.com/rcrowley/go-metrics"
+	metrics "github.com/rcrowley/go-metrics"
 )
 
 var statsPrefix string
@@ -17,7 +17,7 @@ func (src *internalMetricsSource) Name() string {
 	return "internal_stats_source"
 }
 
-func (src *internalMetricsSource) ScrapeMetrics(start, end time.Time) (*DataBatch, error) {
+func (src *internalMetricsSource) ScrapeMetrics() (*DataBatch, error) {
 	return internalStats()
 }
 
@@ -31,6 +31,14 @@ func (h *statsProvider) GetMetricsSources() []MetricsSource {
 
 func (h *statsProvider) Name() string {
 	return "internal_stats_provider"
+}
+
+func (h *statsProvider) CollectionInterval() time.Duration {
+	return time.Duration(10 * time.Second)
+}
+
+func (h *statsProvider) TimeOut() time.Duration {
+	return time.Duration(10 * time.Second)
 }
 
 func NewInternalStatsProvider(prefix string) (MetricsSourceProvider, error) {

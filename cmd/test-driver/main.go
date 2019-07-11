@@ -65,12 +65,12 @@ func main() {
 	waitForStop()
 }
 
-func createSourceManagerOrDie(src flags.Uris, statsPrefix string, scrapeTimeout time.Duration) metrics.MetricsSource {
+func createSourceManagerOrDie(src flags.Uris, statsPrefix string, scrapeTimeout time.Duration) *sources.SourceManager {
 	sourceFactory := sources.NewSourceFactory()
 	sourceList := sourceFactory.BuildAll(src, statsPrefix)
 
 	for _, source := range sourceList {
-		glog.Infof("Starting with source %s", source.Name())
+		glog.Infof("Starting with source %s", source.Provider.Name())
 	}
 
 	sourceManager, err := sources.NewSourceManager(sourceList, scrapeTimeout)

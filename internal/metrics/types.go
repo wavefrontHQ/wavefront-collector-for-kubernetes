@@ -20,6 +20,7 @@
 package metrics
 
 import (
+	"fmt"
 	"net/url"
 	"time"
 )
@@ -147,13 +148,15 @@ type DataBatch struct {
 // A place from where the metrics should be scraped.
 type MetricsSource interface {
 	Name() string
-	ScrapeMetrics(start, end time.Time) (*DataBatch, error)
+	ScrapeMetrics() (*DataBatch, error) // TODO: remove 'start' and 'end'
 }
 
 // Provider of list of sources to be scraped.
 type MetricsSourceProvider interface {
 	GetMetricsSources() []MetricsSource
 	Name() string
+	CollectionInterval() time.Duration
+	TimeOut() time.Duration // TODO: TimeOut
 }
 
 type DataSink interface {
@@ -189,4 +192,49 @@ type ProviderHandler interface {
 type ProviderFactory interface {
 	Name() string
 	Build(uri *url.URL) (MetricsSourceProvider, error)
+}
+
+type ConfigurabeMetricsSourceProvider interface {
+	Configure(uri *url.URL) error
+}
+
+type DefaultMetricsSourceProvider struct {
+	collectionInterval time.Duration
+	timeOut            time.Duration
+}
+
+func (dp *DefaultMetricsSourceProvider) CollectionInterval() time.Duration {
+	return dp.collectionInterval
+}
+
+func (dp *DefaultMetricsSourceProvider) TimeOut() time.Duration {
+	return dp.timeOut
+}
+
+func (dp *DefaultMetricsSourceProvider) Configure(uri *url.URL) error {
+	vals := uri.Query()
+	var err error
+
+	dp.collectionInterval, err = parseDuration(vals, "collectionInterval", time.Duration(10*time.Second))
+	if err != nil {
+		return err
+	}
+
+	dp.timeOut, err = parseDuration(vals, "timeOut", time.Duration(10*time.Second))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func parseDuration(vals url.Values, prop string, def time.Duration) (time.Duration, error) {
+	if len(vals[prop]) > 0 {
+		res, err := time.ParseDuration(vals[prop][0])
+		if err != nil {
+			return def, fmt.Errorf("error parsing '%s': %v", prop, err)
+		}
+		return res, nil
+	}
+	return def, nil
 }

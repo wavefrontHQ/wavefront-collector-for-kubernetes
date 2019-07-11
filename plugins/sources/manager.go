@@ -1,6 +1,3 @@
-// Based on https://github.com/kubernetes-retired/heapster/blob/master/metrics/sources/manager.go
-// Diff against master for changes to the original code.
-
 // Copyright 2015 Google Inc. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,169 +17,209 @@
 package sources
 
 import (
+	"fmt"
 	"math/rand"
 	"sync"
 	"time"
 
-	. "github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/flags"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/prometheus"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/stats"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/summary"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/systemd"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/telegraf"
 
 	"github.com/golang/glog"
-	"github.com/rcrowley/go-metrics"
+	gometrics "github.com/rcrowley/go-metrics"
 	"github.com/wavefronthq/go-metrics-wavefront/reporting"
 )
 
 const (
-	MaxDelayMs       = 4 * 1000
-	DelayPerSourceMs = 8
+	jitterMs = 4
 )
 
 var (
-	providerCount  metrics.Gauge
-	sourceCount    metrics.Gauge
-	scrapeTimeout  metrics.Gauge
-	scrapeErrors   metrics.Counter
-	scrapeTimeouts metrics.Counter
-	scrapeLatency  metrics.Histogram
+	providerCount  gometrics.Gauge
+	sourceCount    gometrics.Gauge
+	scrapeTimeout  gometrics.Gauge
+	scrapeErrors   gometrics.Counter
+	scrapeTimeouts gometrics.Counter
+	scrapeLatency  gometrics.Histogram
 )
 
 func init() {
-	providerCount = metrics.GetOrRegisterGauge("source.manager.providers", metrics.DefaultRegistry)
-	sourceCount = metrics.GetOrRegisterGauge("source.manager.sources", metrics.DefaultRegistry)
-	scrapeErrors = metrics.GetOrRegisterCounter("source.manager.scrape.errors", metrics.DefaultRegistry)
-	scrapeTimeouts = metrics.GetOrRegisterCounter("source.manager.scrape.timeouts", metrics.DefaultRegistry)
+	providerCount = gometrics.GetOrRegisterGauge("source.manager.providers", gometrics.DefaultRegistry)
+	sourceCount = gometrics.GetOrRegisterGauge("source.manager.sources", gometrics.DefaultRegistry)
+	scrapeErrors = gometrics.GetOrRegisterCounter("source.manager.scrape.errors", gometrics.DefaultRegistry)
+	scrapeTimeouts = gometrics.GetOrRegisterCounter("source.manager.scrape.timeouts", gometrics.DefaultRegistry)
 	scrapeLatency = reporting.NewHistogram()
-	_ = metrics.Register("source.manager.scrape.latency", scrapeLatency)
+	_ = gometrics.Register("source.manager.scrape.latency", scrapeLatency)
 }
 
-func NewSourceManager(metricsSourceProviders []MetricsSourceProvider, metricsScrapeTimeout time.Duration) (MetricsSource, error) {
-	providers := make(map[string]MetricsSourceProvider)
-	for _, provider := range metricsSourceProviders {
-		providers[provider.Name()] = provider
+// SourceManager ProviderHandler with gometrics gatherin support
+type SourceManager interface {
+	metrics.ProviderHandler
+	GetPendingMetrics() []*metrics.DataBatch
+}
+
+type sourceManagerImpl struct {
+	mtx                      sync.RWMutex
+	gometricsSourceProviders map[string]metrics.MetricsSourceProvider
+	responseChannel          chan *metrics.DataBatch
+	response                 []*metrics.DataBatch
+	responseMtx              sync.Mutex
+}
+
+// NewEmptySourceManager creates a new empty SourceManager
+func NewEmptySourceManager() SourceManager {
+	sm := &sourceManagerImpl{
+		responseChannel:          make(chan *metrics.DataBatch),
+		gometricsSourceProviders: make(map[string]metrics.MetricsSourceProvider),
 	}
-	providerCount.Update(int64(len(providers)))
-	return &sourceManager{
-		metricsSourceProviders: providers,
-		metricsScrapeTimeout:   metricsScrapeTimeout,
-	}, nil
+
+	sm.rotateResponse()
+	go sm.run()
+
+	return sm
 }
 
-type sourceManager struct {
-	metricsScrapeTimeout   time.Duration
-	mtx                    sync.RWMutex
-	metricsSourceProviders map[string]MetricsSourceProvider
+// NewSourceManager creates a new NewSourceManager with the configured goMetricsSourceProviders
+func NewSourceManager(src flags.Uris, statsPrefix string) SourceManager {
+	sm := NewEmptySourceManager()
+
+	gometricsSourceProviders := buildProviders(src, statsPrefix)
+	providerCount.Update(int64(len(gometricsSourceProviders)))
+	for _, runtime := range gometricsSourceProviders {
+		sm.AddProvider(runtime)
+	}
+
+	return sm
 }
 
-func (this *sourceManager) Name() string {
-	return "source_manager"
-}
-
-func (this *sourceManager) AddProvider(provider MetricsSourceProvider) {
-	this.mtx.Lock()
-	defer this.mtx.Unlock()
-	this.metricsSourceProviders[provider.Name()] = provider
+// AddProvider register and start a new goMetricsSourceProvider
+func (sm *sourceManagerImpl) AddProvider(provider metrics.MetricsSourceProvider) {
+	sm.mtx.Lock()
+	defer sm.mtx.Unlock()
+	sm.gometricsSourceProviders[provider.Name()] = provider
 	glog.V(4).Infof("added provider: %s", provider.Name())
+
+	for _, source := range provider.GetMetricsSources() { // TODO: move loop to the scrape?
+		go scrape(source, sm.responseChannel, provider.TimeOut())
+	}
+
+	ticker := time.NewTicker(provider.CollectionInterval())
+	go func() {
+		for range ticker.C {
+			for _, source := range provider.GetMetricsSources() {
+				go scrape(source, sm.responseChannel, provider.TimeOut())
+			}
+		}
+	}()
 }
 
-func (this *sourceManager) DeleteProvider(name string) {
-	this.mtx.Lock()
-	defer this.mtx.Unlock()
-	delete(this.metricsSourceProviders, name)
+func (sm *sourceManagerImpl) DeleteProvider(name string) {
+	sm.mtx.Lock()
+	defer sm.mtx.Unlock()
+	delete(sm.gometricsSourceProviders, name)
 	glog.V(4).Infof("deleted provider %s", name)
 }
 
-func (this *sourceManager) ScrapeMetrics(start, end time.Time) (*DataBatch, error) {
-	glog.V(1).Infof("Scraping metrics start: %s, end: %s", start, end)
-
-	sources := []MetricsSource{}
-	this.mtx.RLock()
-	for _, sourceProvider := range this.metricsSourceProviders {
-		glog.V(2).Infof("Scraping sources from provider: %s", sourceProvider.Name())
-		sources = append(sources, sourceProvider.GetMetricsSources()...)
-	}
-	providerCount.Update(int64(len(this.metricsSourceProviders)))
-	this.mtx.RUnlock()
-
-	sourceCount.Update(int64(len(sources)))
-
-	responseChannel := make(chan *DataBatch)
-	startTime := time.Now()
-	timeoutTime := startTime.Add(this.metricsScrapeTimeout)
-
-	delayMs := DelayPerSourceMs * len(sources)
-	if delayMs > MaxDelayMs {
-		delayMs = MaxDelayMs
-	}
-
-	for _, source := range sources {
-
-		go func(source MetricsSource, channel chan *DataBatch, start, end, timeoutTime, scrapeStart time.Time, delayInMs int) {
-
-			// Prevents network congestion.
-			time.Sleep(time.Duration(rand.Intn(delayMs)) * time.Millisecond)
-
-			glog.V(2).Infof("Querying source: %s", source.Name())
-			metrics, err := scrape(source, start, end)
-			if err != nil {
-				scrapeErrors.Inc(1)
-				glog.Errorf("Error in scraping containers from %s: %v", source.Name(), err)
-				return
-			}
-
-			now := time.Now()
-			latency := now.Sub(scrapeStart).Nanoseconds()
-			scrapeLatency.Update(latency)
-
-			if !now.Before(timeoutTime) {
-				scrapeTimeouts.Inc(1)
-				glog.Warningf("Failed to get %s response in time", source)
-				return
-			}
-			timeForResponse := timeoutTime.Sub(now)
-
-			select {
-			case channel <- metrics:
-				// passed the response correctly.
-				return
-			case <-time.After(timeForResponse):
-				scrapeTimeouts.Inc(1)
-				glog.Warningf("Failed to send the response back %s", source)
-				return
-			}
-		}(source, responseChannel, start, end, timeoutTime, startTime, delayMs)
-	}
-	response := DataBatch{
-		Timestamp:  end,
-		MetricSets: map[string]*MetricSet{},
-	}
-
-responseloop:
-	for i := range sources {
-		now := time.Now()
-		if !now.Before(timeoutTime) {
-			glog.Warningf("Failed to get all responses in time (got %d/%d)", i, len(sources))
-			break
-		}
-
-		select {
-		case dataBatch := <-responseChannel:
-			if dataBatch != nil {
-				for key, value := range dataBatch.MetricSets {
-					response.MetricSets[key] = value
-				}
-				if len(dataBatch.MetricPoints) > 0 {
-					response.MetricPoints = append(response.MetricPoints, dataBatch.MetricPoints...)
-				}
-			}
-
-		case <-time.After(timeoutTime.Sub(now)):
-			glog.Warningf("Failed to get all responses in time (got %d/%d)", i, len(sources))
-			break responseloop
+func (sm *sourceManagerImpl) run() {
+	for {
+		dataBatch := <-sm.responseChannel
+		if dataBatch != nil {
+			sm.responseMtx.Lock()
+			sm.response = append(sm.response, dataBatch)
+			sm.responseMtx.Unlock()
 		}
 	}
-	glog.V(1).Infof("ScrapeMetrics: time: %s size: %d", time.Since(startTime), len(response.MetricSets))
-	return &response, nil
 }
 
-func scrape(s MetricsSource, start, end time.Time) (*DataBatch, error) {
-	return s.ScrapeMetrics(start, end)
+func (sm *sourceManagerImpl) rotateResponse() []*metrics.DataBatch {
+	sm.responseMtx.Lock()
+	defer sm.responseMtx.Unlock()
+	response := sm.response
+	sm.response = make([]*metrics.DataBatch, 0)
+	return response
+}
+
+func scrape(source metrics.MetricsSource, channel chan *metrics.DataBatch, timeout time.Duration) {
+	// Prevents network congestion.
+	jitter := time.Duration(rand.Intn(jitterMs)) * time.Millisecond
+	time.Sleep(jitter)
+
+	scrapeStart := time.Now()
+	timeoutTime := scrapeStart.Add(timeout)
+
+	glog.V(2).Infof("Querying source: '%s'", source.Name())
+	gometrics, err := source.ScrapeMetrics()
+	if err != nil {
+		scrapeErrors.Inc(1)
+		glog.Errorf("Error in scraping containers from '%s': %v", source.Name(), err)
+		return
+	}
+
+	now := time.Now()
+	latency := now.Sub(scrapeStart)
+	scrapeLatency.Update(latency.Nanoseconds())
+
+	if !now.Before(timeoutTime) {
+		scrapeTimeouts.Inc(1)
+		glog.Warningf("Failed to get '%s' response in time", source.Name())
+		return
+	}
+	channel <- gometrics
+	glog.V(2).Infof("Done Querying source: '%s' (%v gometrics) (%v latency)", source.Name(), len(gometrics.MetricPoints), latency)
+}
+
+func (sm *sourceManagerImpl) GetPendingMetrics() []*metrics.DataBatch {
+	response := sm.rotateResponse()
+	return response
+}
+
+func buildProviders(uris flags.Uris, statsPrefix string) []metrics.MetricsSourceProvider {
+	result := make([]metrics.MetricsSourceProvider, 0, len(uris))
+	for _, uri := range uris {
+		provider, err := buildProvider(uri)
+		if err == nil {
+			result = append(result, provider)
+		} else {
+			glog.Errorf("Failed to create %v source: %v", uri, err)
+		}
+	}
+
+	if len([]flags.Uri(uris)) != 0 && len(result) == 0 {
+		glog.Fatal("No available source to use")
+	}
+
+	provider, _ := stats.NewInternalStatsProvider(statsPrefix)
+	result = append(result, provider)
+	return result
+}
+
+func buildProvider(uri flags.Uri) (metrics.MetricsSourceProvider, error) {
+	var provider metrics.MetricsSourceProvider
+	var err error
+
+	switch uri.Key {
+	case "kubernetes.summary_api":
+		provider, err = summary.NewSummaryProvider(&uri.Val)
+	case "prometheus":
+		provider, err = prometheus.NewPrometheusProvider(&uri.Val)
+	case "telegraf":
+		provider, err = telegraf.NewProvider(&uri.Val)
+	case "systemd":
+		provider, err = systemd.NewProvider(&uri.Val)
+	default:
+		err = fmt.Errorf("source not recognized: %s", uri.Key)
+	}
+
+	if err == nil {
+		if i, ok := provider.(metrics.ConfigurabeMetricsSourceProvider); ok {
+			i.Configure(&uri.Val)
+		}
+	}
+
+	return provider, err
 }

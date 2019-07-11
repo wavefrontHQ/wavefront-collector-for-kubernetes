@@ -15,9 +15,12 @@
 package util
 
 import (
+	"fmt"
+	"strings"
 	"sync"
 	"time"
 
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	. "github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 )
 
@@ -72,20 +75,29 @@ func NewDummySink(name string, latency time.Duration) *DummySink {
 type DummyMetricsSource struct {
 	latency   time.Duration
 	metricSet MetricSet
+	name      string
 }
 
 func (this *DummyMetricsSource) Name() string {
-	return "dummy"
+	return fmt.Sprintf("dummy %s", this.name)
 }
 
-func (this *DummyMetricsSource) ScrapeMetrics(start, end time.Time) (*DataBatch, error) {
+func (this *DummyMetricsSource) ScrapeMetrics() (*DataBatch, error) {
 	time.Sleep(this.latency)
-	return &DataBatch{
-		Timestamp: end,
-		MetricSets: map[string]*MetricSet{
-			this.metricSet.Labels["name"]: &this.metricSet,
-		},
-	}, nil
+
+	point := &metrics.MetricPoint{
+		Metric:    strings.Replace(this.Name(), " ", ".", -1),
+		Value:     1,
+		Timestamp: time.Now().UnixNano() / 1000,
+		Source:    this.Name(),
+		Tags:      map[string]string{"tag": "tag"},
+	}
+
+	res := &DataBatch{
+		Timestamp: time.Now(),
+	}
+	res.MetricPoints = append(res.MetricPoints, point)
+	return res, nil
 }
 
 func newDummyMetricSet(name string) MetricSet {
@@ -101,11 +113,14 @@ func NewDummyMetricsSource(name string, latency time.Duration) *DummyMetricsSour
 	return &DummyMetricsSource{
 		latency:   latency,
 		metricSet: newDummyMetricSet(name),
+		name:      name,
 	}
 }
 
 type DummyMetricsSourceProvider struct {
-	sources []MetricsSource
+	sources           []MetricsSource
+	collectionIterval time.Duration
+	timeOut           time.Duration
 }
 
 func (this *DummyMetricsSourceProvider) GetMetricsSources() []MetricsSource {
@@ -116,9 +131,19 @@ func (this *DummyMetricsSourceProvider) Name() string {
 	return "dummy"
 }
 
-func NewDummyMetricsSourceProvider(sources ...MetricsSource) *DummyMetricsSourceProvider {
+func (this *DummyMetricsSourceProvider) CollectionInterval() time.Duration {
+	return this.collectionIterval
+}
+
+func (this *DummyMetricsSourceProvider) TimeOut() time.Duration {
+	return this.timeOut
+}
+
+func NewDummyMetricsSourceProvider(collectionIterval, timeOut time.Duration, sources ...MetricsSource) MetricsSourceProvider {
 	return &DummyMetricsSourceProvider{
-		sources: sources,
+		sources:           sources,
+		collectionIterval: collectionIterval,
+		timeOut:           timeOut,
 	}
 }
 

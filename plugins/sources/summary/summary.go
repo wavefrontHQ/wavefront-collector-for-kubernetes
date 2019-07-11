@@ -23,6 +23,7 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	. "github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/summary/kubelet"
 
@@ -77,7 +78,7 @@ func (this *summaryMetricsSource) String() string {
 	return fmt.Sprintf("kubelet_summary:%s:%d", this.node.IP, this.node.Port)
 }
 
-func (this *summaryMetricsSource) ScrapeMetrics(start, end time.Time) (*DataBatch, error) {
+func (this *summaryMetricsSource) ScrapeMetrics() (*DataBatch, error) {
 	result := &DataBatch{
 		Timestamp:  time.Now(),
 		MetricSets: map[string]*MetricSet{},
@@ -410,6 +411,7 @@ func (this *summaryMetricsSource) getSystemContainerName(c *stats.ContainerStats
 }
 
 type summaryProvider struct {
+	metrics.DefaultMetricsSourceProvider
 	nodeLister       v1listers.NodeLister
 	reflector        *cache.Reflector
 	kubeletClient    *kubelet.KubeletClient
