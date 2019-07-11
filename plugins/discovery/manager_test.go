@@ -32,9 +32,9 @@ func TestRuleAdd(t *testing.T) {
 	}
 }
 
-func manager() *discoveryManager {
+func manager() *Manager {
 	ph := &util.DummyProviderHandler{}
-	return &discoveryManager{
+	return &Manager{
 		providerHandler: ph,
 		rules:           make(map[string]bool),
 		ruleHandler:     newRuleHandler(newDiscoverer(ph, nil), &util.DummyProviderHandler{}, true),

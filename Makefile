@@ -16,7 +16,7 @@ GIT_COMMIT:=$(shell git rev-parse --short HEAD)
 REPO_DIR:=$(shell pwd)
 
 # for testing, the built image will also be tagged with this name
-OVERRIDE_IMAGE_NAME?=vikramraman/wavefront-collector:0.9.9-rc2
+OVERRIDE_IMAGE_NAME?=vikramraman/wavefront-collector:0.9.9-rc3
 
 LDFLAGS=-w -X main.version=$(VERSION) -X main.commit=$(GIT_COMMIT)
 

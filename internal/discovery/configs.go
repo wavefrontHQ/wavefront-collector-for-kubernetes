@@ -13,6 +13,7 @@ type Config struct {
 }
 
 // Describes global rules that define the default discovery behavior
+// Deprecated: This configuration is ignored and retained for backwards compatibility
 type GlobalConfig struct {
 	// frequency of evaluating discovery rules. Defaults to 10 minutes.
 	// format is [0-9]+(ms|[smhdwy])

@@ -2,24 +2,14 @@
 package stats
 
 import (
-	"time"
+	"net/url"
 
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/flags"
 	. "github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 
 	"github.com/rcrowley/go-metrics"
 )
-
-var statsPrefix string
-
-type internalMetricsSource struct{}
-
-func (src *internalMetricsSource) Name() string {
-	return "internal_stats_source"
-}
-
-func (src *internalMetricsSource) ScrapeMetrics(start, end time.Time) (*DataBatch, error) {
-	return internalStats()
-}
 
 type statsProvider struct {
 	sources []MetricsSource
@@ -33,13 +23,19 @@ func (h *statsProvider) Name() string {
 	return "internal_stats_provider"
 }
 
-func NewInternalStatsProvider(prefix string) (MetricsSourceProvider, error) {
-	sources := make([]MetricsSource, 1)
-	sources[0] = &internalMetricsSource{}
-	metrics.RegisterRuntimeMemStats(metrics.DefaultRegistry)
+func NewInternalStatsProvider(uri *url.URL) (MetricsSourceProvider, error) {
+	vals := uri.Query()
+	prefix := flags.DecodeDefaultValue(vals, "prefix", "kubernetes.")
+	tags := flags.DecodeTags(vals)
+	filters := filter.FromQuery(vals)
 
-	// temp workaround. remove once sink level prefix is applied to all metrics.
-	statsPrefix = prefix
+	src, err := newInternalMetricsSource(prefix, tags, filters)
+	if err != nil {
+		return nil, err
+	}
+	sources := make([]MetricsSource, 1)
+	sources[0] = src
+	metrics.RegisterRuntimeMemStats(metrics.DefaultRegistry)
 
 	return &statsProvider{
 		sources: sources,

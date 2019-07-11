@@ -124,7 +124,6 @@ func (converter *pointConverter) Process(batch *metrics.DataBatch) (*metrics.Dat
 			converter.collectedPoints.Inc(1)
 		}
 	}
-	batch.MetricSets = nil
 	return batch, nil
 }
 
@@ -141,14 +140,11 @@ func (converter *pointConverter) addLabelTags(ms *metrics.MetricSet, tags map[st
 	for _, labelName := range sortedLabelKeys(ms.Labels) {
 		labelValue := ms.Labels[labelName]
 		if labelName == "labels" {
-			//only parse labels if IncludeLabels == true
-			if converter.includeLabels {
-				for _, label := range strings.Split(labelValue, ",") {
-					//labels = app:webproxy,version:latest
-					tagParts := strings.SplitN(label, ":", 2)
-					if len(tagParts) == 2 {
-						tags["label."+tagParts[0]] = tagParts[1]
-					}
+			for _, label := range strings.Split(labelValue, ",") {
+				//labels = app:webproxy,version:latest
+				tagParts := strings.SplitN(label, ":", 2)
+				if len(tagParts) == 2 {
+					tags["label."+tagParts[0]] = tagParts[1]
 				}
 			}
 		} else {
