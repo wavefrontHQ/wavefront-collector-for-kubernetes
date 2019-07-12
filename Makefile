@@ -25,6 +25,10 @@ all: build
 fmt:
 	find . -type f -name "*.go" | grep -v "./vendor*" | xargs gofmt -s -w
 
+tests:
+	go clean -testcache
+	go test -race ./...
+
 build: clean fmt
 	go vet -composites=false ./...
 	GOARCH=$(ARCH) CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o $(OUT_DIR)/$(ARCH)/$(BINARY_NAME) ./cmd/wavefront-collector/

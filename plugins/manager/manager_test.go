@@ -15,17 +15,26 @@
 package manager
 
 import (
+	"os"
 	"testing"
 	"time"
 
+	"github.com/go-kit/kit/log"
+	"github.com/golang/glog"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources"
 )
 
+func init() {
+	logger := log.NewLogfmtLogger(log.NewSyncWriter(os.Stdout))
+	logger = log.With(logger, "ts", log.DefaultTimestampUTC)
+	glog.SetLogger(logger)
+}
+
 func TestFlow(t *testing.T) {
 	provider := util.NewDummyMetricsSourceProvider(
-		"p1", 10*time.Millisecond, 10*time.Millisecond,
+		"p1", time.Second, 100*time.Millisecond,
 		util.NewDummyMetricsSource("src", time.Millisecond))
 
 	sink := util.NewDummySink("sink", time.Millisecond)
@@ -48,7 +57,7 @@ func TestFlow(t *testing.T) {
 
 func TestThrottling(t *testing.T) {
 	provider := util.NewDummyMetricsSourceProvider(
-		"p1", 10*time.Millisecond, 10*time.Millisecond,
+		"p1", time.Second, 10*time.Millisecond,
 		util.NewDummyMetricsSource("src", time.Millisecond))
 	sink := util.NewDummySink("sink", 4*time.Second)
 	processor := util.NewDummyDataProcessor(5 * time.Millisecond)

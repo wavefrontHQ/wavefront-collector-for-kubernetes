@@ -31,7 +31,6 @@ func init() {
 	logger := log.NewLogfmtLogger(log.NewSyncWriter(os.Stdout))
 	logger = log.With(logger, "ts", log.DefaultTimestampUTC)
 	glog.SetLogger(logger)
-	glog.V(0).Infof("Hi !")
 }
 
 func TestNoTimeOut(t *testing.T) {
@@ -53,6 +52,8 @@ func TestNoTimeOut(t *testing.T) {
 			present[point.Metric] = true
 		}
 	}
+
+	manager.DeleteProvider("dummy")
 
 	assert.True(t, present["dummy.s1"], "s1 not found - present:%v", present)
 	assert.True(t, present["dummy.s1"], "s2 not found - present:%v", present)
@@ -78,6 +79,8 @@ func TestTimeOut(t *testing.T) {
 		}
 	}
 
+	manager.DeleteProvider("dummy")
+
 	assert.True(t, present["dummy.s1"], "s1 not found - present:%v", present)
 	assert.False(t, present["dummy.s2"], "s2 found - present:%v", present)
 }
@@ -98,6 +101,7 @@ func TestMultipleMetrics(t *testing.T) {
 	time.Sleep(95 * time.Millisecond)
 	manager.DeleteProvider("p2")
 	time.Sleep(100 * time.Millisecond)
+	manager.DeleteProvider("p1")
 
 	dataBatchList := manager.GetPendingMetrics()
 
