@@ -38,7 +38,7 @@ func TestNoTimeOut(t *testing.T) {
 		util.NewDummyMetricsSource("s1", 10*time.Millisecond),
 		util.NewDummyMetricsSource("s2", 10*time.Millisecond))
 
-	manager := NewEmptySourceManager()
+	manager := newEmptySourceManager()
 	manager.AddProvider(metricsSourceProvider)
 
 	time.Sleep(200 * time.Millisecond)
@@ -62,7 +62,7 @@ func TestTimeOut(t *testing.T) {
 		util.NewDummyMetricsSource("s1", 50*time.Millisecond),
 		util.NewDummyMetricsSource("s2", 100*time.Millisecond))
 
-	manager := NewEmptySourceManager()
+	manager := newEmptySourceManager()
 	manager.AddProvider(metricsSourceProvider)
 
 	time.Sleep(200 * time.Millisecond)
@@ -86,7 +86,7 @@ func TestMultipleMetrics(t *testing.T) {
 		util.NewDummyMetricsSource("s1", 0),
 		util.NewDummyMetricsSource("s2", 0))
 
-	manager := NewEmptySourceManager()
+	manager := newEmptySourceManager()
 	manager.AddProvider(metricsSourceProvider)
 
 	time.Sleep(199 * time.Millisecond)

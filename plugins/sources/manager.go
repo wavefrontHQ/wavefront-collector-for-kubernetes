@@ -71,8 +71,7 @@ type sourceManagerImpl struct {
 	responseMtx              sync.Mutex
 }
 
-// NewEmptySourceManager creates a new empty SourceManager
-func NewEmptySourceManager() SourceManager {
+func newEmptySourceManager() SourceManager {
 	sm := &sourceManagerImpl{
 		responseChannel:          make(chan *metrics.DataBatch),
 		gometricsSourceProviders: make(map[string]metrics.MetricsSourceProvider),
@@ -86,7 +85,7 @@ func NewEmptySourceManager() SourceManager {
 
 // NewSourceManager creates a new NewSourceManager with the configured goMetricsSourceProviders
 func NewSourceManager(src flags.Uris, statsPrefix string) SourceManager {
-	sm := NewEmptySourceManager()
+	sm := newEmptySourceManager()
 
 	gometricsSourceProviders := buildProviders(src, statsPrefix)
 	providerCount.Update(int64(len(gometricsSourceProviders)))
@@ -170,7 +169,7 @@ func scrape(source metrics.MetricsSource, channel chan *metrics.DataBatch, timeo
 		return
 	}
 	channel <- gometrics
-	glog.V(2).Infof("Done Querying source: '%s' (%v gometrics) (%v latency)", source.Name(), len(gometrics.MetricPoints), latency)
+	glog.V(2).Infof("Done Querying source: '%s' (%v metrics) (%v latency)", source.Name(), len(gometrics.MetricPoints), latency)
 }
 
 func (sm *sourceManagerImpl) GetPendingMetrics() []*metrics.DataBatch {

@@ -20,9 +20,10 @@
 package metrics
 
 import (
-	"fmt"
 	"net/url"
 	"time"
+
+	"github.com/golang/glog"
 )
 
 type MetricType int8
@@ -198,43 +199,37 @@ type ConfigurabeMetricsSourceProvider interface {
 	Configure(uri *url.URL) error
 }
 
+//DefaultMetricsSourceProvider handle the common providers configuration
 type DefaultMetricsSourceProvider struct {
 	collectionInterval time.Duration
 	timeOut            time.Duration
 }
 
+// CollectionInterval return the provider collection interval configuration
 func (dp *DefaultMetricsSourceProvider) CollectionInterval() time.Duration {
 	return dp.collectionInterval
 }
 
+// TimeOut return the provider timeout configuration
 func (dp *DefaultMetricsSourceProvider) TimeOut() time.Duration {
 	return dp.timeOut
 }
 
-func (dp *DefaultMetricsSourceProvider) Configure(uri *url.URL) error {
+// Configure the 'collectionInterval' and 'timeOut' values
+func (dp *DefaultMetricsSourceProvider) Configure(uri *url.URL) {
 	vals := uri.Query()
-	var err error
-
-	dp.collectionInterval, err = parseDuration(vals, "collectionInterval", time.Duration(10*time.Second))
-	if err != nil {
-		return err
-	}
-
-	dp.timeOut, err = parseDuration(vals, "timeOut", time.Duration(10*time.Second))
-	if err != nil {
-		return err
-	}
-
-	return nil
+	dp.collectionInterval = parseDuration(vals, "collectionInterval", time.Duration(10*time.Second))
+	dp.timeOut = parseDuration(vals, "timeOut", time.Duration(10*time.Second))
 }
 
-func parseDuration(vals url.Values, prop string, def time.Duration) (time.Duration, error) {
+func parseDuration(vals url.Values, prop string, def time.Duration) time.Duration {
 	if len(vals[prop]) > 0 {
 		res, err := time.ParseDuration(vals[prop][0])
 		if err != nil {
-			return def, fmt.Errorf("error parsing '%s': %v", prop, err)
+			glog.Errorf("error parsing '%s' propertie: %v", prop, err)
+		} else {
+			return res
 		}
-		return res, nil
 	}
-	return def, nil
+	return def
 }

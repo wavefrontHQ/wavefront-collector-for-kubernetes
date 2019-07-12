@@ -14,7 +14,9 @@
 
 package processors
 
-import "github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
+import (
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
+)
 
 type ClusterAggregator struct {
 	MetricsToAggregate []string
@@ -34,6 +36,10 @@ func (this *ClusterAggregator) Process(batch *metrics.DataBatch) (*metrics.DataB
 				return nil, err
 			}
 		}
+	}
+
+	if batch.MetricSets == nil {
+		batch.MetricSets = map[string]*metrics.MetricSet{}
 	}
 	batch.MetricSets[clusterKey] = cluster
 	return batch, nil
