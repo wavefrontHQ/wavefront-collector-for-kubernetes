@@ -41,7 +41,7 @@ func manager() *Manager {
 	}
 }
 
-func config(num int) discovery.Config {
+func config(num int) []discovery.PluginConfig {
 	var rules []discovery.PluginConfig
 	for i := 0; i < num; i++ {
 		rule := discovery.PluginConfig{
@@ -49,7 +49,5 @@ func config(num int) discovery.Config {
 		}
 		rules = append(rules, rule)
 	}
-	return discovery.Config{
-		PluginConfigs: rules,
-	}
+	return rules
 }

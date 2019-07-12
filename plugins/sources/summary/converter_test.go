@@ -44,7 +44,6 @@ func TestStoreTimeseriesMultipleTimeseriesInput(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	assert.Equal(t, len(data.MetricSets), 0)
 	assert.Equal(t, count, len(data.MetricPoints))
 }
 
@@ -55,7 +54,7 @@ func TestFiltering(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	assert.Equal(t, len(data.MetricSets), 0)
+	assert.Equal(t, 8, len(data.MetricSets))
 	assert.Equal(t, 2, len(data.MetricPoints))
 
 	fakeConverter = fakeWavefrontConverter(t, "?metricBlacklist=kubernetes*cpu*")
@@ -64,7 +63,7 @@ func TestFiltering(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	assert.Equal(t, len(data.MetricSets), 0)
+	assert.Equal(t, 8, len(data.MetricSets))
 	assert.Equal(t, 6, len(data.MetricPoints))
 }
 
