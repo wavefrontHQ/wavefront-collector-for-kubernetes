@@ -67,5 +67,7 @@ func (handler *serviceHandler) start() {
 }
 
 func (handler *serviceHandler) stop() {
-	close(handler.ch)
+	if handler.ch != nil {
+		close(handler.ch)
+	}
 }

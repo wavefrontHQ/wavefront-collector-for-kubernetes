@@ -150,8 +150,17 @@ func loadConfigOrDie(file string) *configuration.Config {
 		glog.Fatalf("error parsing configuration: %v", err)
 		return nil
 	}
+	fillDefaults(cfg)
 
-	// use defaults if no values specified in config file
+	if err := validateCfg(cfg); err != nil {
+		glog.Fatalf("invalid configuration file: %v", err)
+		return nil
+	}
+	return cfg
+}
+
+// use defaults if no values specified in config file
+func fillDefaults(cfg *configuration.Config) {
 	if cfg.CollectionInterval == 0 {
 		cfg.CollectionInterval = 60 * time.Second
 	}
@@ -164,12 +173,6 @@ func loadConfigOrDie(file string) *configuration.Config {
 	if cfg.ClusterName == "" {
 		cfg.ClusterName = "k8s-cluster"
 	}
-
-	if err := validateCfg(cfg); err != nil {
-		glog.Fatalf("invalid configuration file: %v", err)
-		return nil
-	}
-	return cfg
 }
 
 func convertOrDie(opt *options.CollectorRunOptions, cfg *configuration.Config) *options.CollectorRunOptions {
@@ -202,7 +205,6 @@ func addInternalStatsSource(opt *options.CollectorRunOptions) {
 
 func registerListeners(ag *agent.Agent, opt *options.CollectorRunOptions) {
 	handler := &reloader{ag: ag}
-
 	if opt.ConfigFile != "" {
 		listener := configuration.NewFileListener(handler)
 		watcher := util.NewFileWatcher(opt.ConfigFile, listener, 30*time.Second)
@@ -435,9 +437,24 @@ func (r *reloader) Handle(cfg interface{}) {
 
 	switch cfg.(type) {
 	case *configuration.Config:
-		//TODO: support reloading main configuration file too
-		glog.Infof("reloading collector configuration not yet supported")
+		r.handleCollectorCfg(cfg.(*configuration.Config))
 	case *discConfig.Config:
 		r.ag.Handle(cfg)
 	}
+}
+
+func (r *reloader) handleCollectorCfg(cfg *configuration.Config) {
+	glog.Infof("collector configuration changed")
+
+	fillDefaults(cfg)
+
+	opt, err := cfg.Convert()
+	if err != nil {
+		glog.Errorf("configuration error: %v", err)
+		return
+	}
+
+	// stop the previous agent and start a new agent
+	r.ag.Stop()
+	r.ag = createAgentOrDie(opt, cfg)
 }

@@ -62,5 +62,7 @@ func (handler *podHandler) start() {
 }
 
 func (handler *podHandler) stop() {
-	close(handler.ch)
+	if handler.ch != nil {
+		close(handler.ch)
+	}
 }

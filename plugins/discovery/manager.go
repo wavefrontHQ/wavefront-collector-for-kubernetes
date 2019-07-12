@@ -1,6 +1,7 @@
 package discovery
 
 import (
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
 	"sync"
 	"time"
 
@@ -52,6 +53,7 @@ func NewDiscoveryManager(client kubernetes.Interface, plugins []discovery.Plugin
 }
 
 func (dm *Manager) Start() {
+	glog.Infof("Starting discovery manager")
 	discoveryEnabled.Inc(1)
 
 	dm.stopCh = make(chan struct{})
@@ -92,7 +94,13 @@ func (dm *Manager) Start() {
 }
 
 func (dm *Manager) Stop() {
-	// TODO: support stopping / restarting. Need to start / stop leader election too
+	glog.Infof("Stopping discovery manager")
+	discoveryEnabled.Dec(1)
+
+	leadership.Unsubscribe()
+	dm.podListener.stop()
+	dm.serviceListener.stop()
+	close(dm.stopCh)
 }
 
 // implements ConfigHandler interface for handling configuration changes
@@ -102,6 +110,10 @@ func (dm *Manager) Handle(cfg interface{}) {
 		glog.Infof("discovery configuration changed")
 		d := cfg.(*discovery.Config)
 		dm.load(d.PluginConfigs)
+	case *configuration.Config:
+		glog.Infof("discoveryManager: collector configuration changed")
+		c := cfg.(*configuration.Config)
+		dm.load(c.DiscoveryConfigs)
 	default:
 		glog.Errorf("unknown configuration type: %q", cfg)
 	}

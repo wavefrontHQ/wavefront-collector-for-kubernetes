@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"github.com/golang/glog"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/discovery"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/manager"
 )
@@ -24,6 +25,7 @@ func (a *Agent) Handle(cfg interface{}) {
 }
 
 func (a *Agent) Start() {
+	glog.Infof("Starting agent")
 	a.mgr.Start()
 	if a.dm != nil {
 		a.dm.Start()
@@ -31,5 +33,9 @@ func (a *Agent) Start() {
 }
 
 func (a *Agent) Stop() {
-	// not supported for now
+	glog.Infof("Stopping agent")
+	a.mgr.Stop()
+	if a.dm != nil {
+		a.dm.Stop()
+	}
 }
