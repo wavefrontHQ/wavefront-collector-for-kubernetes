@@ -310,15 +310,7 @@ func NewPrometheusProvider(uri *url.URL) (MetricsSourceProvider, error) {
 		return nil, fmt.Errorf("missing prometheus url")
 	}
 
-	prefix := ""
-	if len(vals["prefix"]) > 0 {
-		prefix = vals["prefix"][0]
-	}
-
-	source := util.GetNodeName()
-	if len(vals["source"]) > 0 {
-		source = vals["source"][0]
-	}
+	source := flags.DecodeDefaultValue(vals, "source", util.GetNodeName())
 	if source == "" {
 		source = "prom_source"
 	}
@@ -334,9 +326,8 @@ func NewPrometheusProvider(uri *url.URL) (MetricsSourceProvider, error) {
 	discovered := flags.DecodeValue(vals, "discovered")
 	glog.V(4).Infof("name: %s discovered: %s", name, discovered)
 
-	// tags of the form "tag=key:value"
+	prefix := flags.DecodeValue(vals, "prefix")
 	tags := flags.DecodeTags(vals)
-
 	filters := filter.FromQuery(vals)
 
 	var sources []MetricsSource

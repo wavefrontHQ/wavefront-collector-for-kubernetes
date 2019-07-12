@@ -2,12 +2,12 @@ package main
 
 import (
 	"fmt"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/summary"
 	"net/url"
 	"os"
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/go-kit/kit/log"
@@ -16,6 +16,9 @@ import (
 	gm "github.com/rcrowley/go-metrics"
 	"github.com/spf13/pflag"
 
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/agent"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
+	discConfig "github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/flags"
 	kube_config "github.com/wavefronthq/wavefront-kubernetes-collector/internal/kubernetes"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
@@ -26,6 +29,7 @@ import (
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/processors"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sinks"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/summary"
 
 	kubeFlag "k8s.io/apiserver/pkg/util/flag"
 	"k8s.io/apiserver/pkg/util/logs"
@@ -35,8 +39,9 @@ import (
 )
 
 var (
-	version string
-	commit  string
+	version     string
+	commit      string
+	discWatcher util.FileWatcher
 )
 
 func main() {
@@ -65,60 +70,183 @@ func main() {
 	logs.InitLogs()
 	defer logs.FlushLogs()
 
+	glog.Infof(strings.Join(os.Args, " "))
+	glog.Infof("wavefront-collector version %v", version)
+
+	preRegister(opt)
+	cfg := loadConfigOrDie(opt.ConfigFile)
+	cflags := convertOrDie(opt, cfg)
+	ag := createAgentOrDie(cflags, cfg)
+	registerListeners(ag, opt)
+	waitForStop()
+}
+
+func preRegister(opt *options.CollectorRunOptions) {
 	if opt.Daemon {
 		nodeName := os.Getenv(util.NodeNameEnvVar)
 		if nodeName == "" {
-			glog.Fatalf("node name environment variable %s not provided", util.NodeNameEnvVar)
+			glog.Fatalf("missing environment variable %s", util.NodeNameEnvVar)
 		}
 		err := os.Setenv(util.DaemonModeEnvVar, "true")
 		if err != nil {
-			glog.Fatalf("could not set daemon_mode environment variable")
+			glog.Fatalf("error setting environment variable %s", util.DaemonModeEnvVar)
 		}
-		glog.V(2).Infof("%s: %s", util.NodeNameEnvVar, nodeName)
+		glog.Infof("%s: %s", util.NodeNameEnvVar, nodeName)
 	}
-
-	registerVersion()
-
-	labelCopier, err := util.NewLabelCopier(opt.LabelSeparator, opt.StoredLabels, opt.IgnoredLabels)
-	if err != nil {
-		glog.Fatalf("Failed to initialize label copier: %v", err)
-	}
-
 	setMaxProcs(opt)
-	glog.Infof(strings.Join(os.Args, " "))
-	glog.Infof("wavefront-collector version %v", version)
-	if err := validateFlags(opt); err != nil {
-		glog.Fatal(err)
+	registerVersion()
+}
+
+func createAgentOrDie(opt *options.CollectorRunOptions, cfg *configuration.Config) *agent.Agent {
+	// when invoked from cfg reloads original command flags will be missing
+	// always read from the environment variable
+	opt.Daemon = os.Getenv(util.DaemonModeEnvVar) != ""
+
+	clusterName := ""
+	var plugins []discConfig.PluginConfig
+
+	// if config is missing we will use the flags provided
+	if cfg != nil {
+		clusterName = resolveClusterName(cfg.ClusterName, opt)
+		plugins = cfg.DiscoveryConfigs
 	}
 
-	kubernetesUrl, err := getKubernetesAddress(opt.Sources)
-	if err != nil {
-		glog.Fatalf("Failed to get kubernetes address: %v", err)
-	}
-	sourceManager := createSourceManagerOrDie(opt.Sources, opt.InternalStatsPrefix, opt.ScrapeTimeout)
-	sinkManager := createAndInitSinksOrDie(opt.Sinks, opt.SinkExportDataTimeout)
+	// create source and sink managers
+	sourceManager := createSourceManagerOrDie(opt.Sources, opt.ScrapeTimeout)
+	sinkManager := createSinkManagerOrDie(opt.Sinks, opt.SinkExportDataTimeout)
 
-	sinkUrl, err := getWavefrontAddress(opt.Sinks)
-	if err != nil {
-		glog.Fatalf("Failed to get wavefront sink address: %v", err)
-	}
-
+	// create data processors
+	kubernetesUrl := getKubernetesAddressOrDie(opt.Sources)
 	kubeClient := createKubeClientOrDie(kubernetesUrl)
 	podLister := getPodListerOrDie(kubeClient)
-	dataProcessors := createDataProcessorsOrDie(kubernetesUrl, sinkUrl, podLister, labelCopier)
+	dataProcessors := createDataProcessorsOrDie(kubernetesUrl, clusterName, podLister)
 
-	if opt.EnableDiscovery {
-		handler := sourceManager.(metrics.ProviderHandler)
-		createDiscoveryManagerOrDie(kubeClient, opt.DiscoveryConfigFile, handler, opt.Daemon)
-	}
+	// create discovery manager
+	handler := sourceManager.(metrics.ProviderHandler)
+	dm := createDiscoveryManagerOrDie(kubeClient, plugins, handler, opt)
 
+	// create uber manager
 	man, err := manager.NewManager(sourceManager, dataProcessors, sinkManager,
 		opt.MetricResolution, manager.DefaultScrapeOffset, manager.DefaultMaxParallelism)
 	if err != nil {
 		glog.Fatalf("Failed to create main manager: %v", err)
 	}
-	man.Start()
-	waitForStop()
+
+	// create and start agent
+	ag := agent.NewAgent(man, dm)
+	ag.Start()
+	return ag
+}
+
+func loadConfigOrDie(file string) *configuration.Config {
+	glog.Infof("loading config: %s", file)
+
+	if file == "" {
+		return nil
+	}
+
+	cfg, err := configuration.FromFile(file)
+	if err != nil {
+		glog.Fatalf("error parsing configuration: %v", err)
+		return nil
+	}
+	fillDefaults(cfg)
+
+	if err := validateCfg(cfg); err != nil {
+		glog.Fatalf("invalid configuration file: %v", err)
+		return nil
+	}
+	return cfg
+}
+
+// use defaults if no values specified in config file
+func fillDefaults(cfg *configuration.Config) {
+	if cfg.CollectionInterval == 0 {
+		cfg.CollectionInterval = 60 * time.Second
+	}
+	if cfg.SinkExportDataTimeout == 0 {
+		cfg.SinkExportDataTimeout = 20 * time.Second
+	}
+	if cfg.ScrapeTimeout == 0 {
+		cfg.ScrapeTimeout = 20 * time.Second
+	}
+	if cfg.ClusterName == "" {
+		cfg.ClusterName = "k8s-cluster"
+	}
+}
+
+func convertOrDie(opt *options.CollectorRunOptions, cfg *configuration.Config) *options.CollectorRunOptions {
+	// omit flags if config file is provided
+	if cfg != nil {
+		cflags, err := cfg.Convert()
+		if err != nil {
+			glog.Fatalf("error converting configuration: %v", err)
+		}
+		glog.Infof("using configuration file, omitting flags")
+		return cflags
+	}
+	addInternalStatsSource(opt)
+	return opt
+}
+
+// backwards compatibility: internal stats used to be included by default. It's now config driven.
+func addInternalStatsSource(opt *options.CollectorRunOptions) {
+	values := url.Values{}
+	values.Add("prefix", opt.InternalStatsPrefix)
+
+	u, err := url.Parse("?")
+	if err != nil {
+		glog.Errorf("error adding internal source: %v", err)
+		return
+	}
+	u.RawQuery = values.Encode()
+	opt.Sources = append(opt.Sources, flags.Uri{Key: "internal_stats", Val: *u})
+}
+
+func registerListeners(ag *agent.Agent, opt *options.CollectorRunOptions) {
+	handler := &reloader{ag: ag}
+	if opt.ConfigFile != "" {
+		listener := configuration.NewFileListener(handler)
+		watcher := util.NewFileWatcher(opt.ConfigFile, listener, 30*time.Second)
+		watcher.Watch()
+	}
+	if opt.EnableDiscovery && opt.DiscoveryConfigFile != "" && opt.ConfigFile == "" {
+		listener := discConfig.NewFileListener(handler)
+		discWatcher = util.NewFileWatcher(opt.DiscoveryConfigFile, listener, 30*time.Second)
+		discWatcher.Watch()
+	}
+}
+
+func createDiscoveryManagerOrDie(client *kube_client.Clientset, plugins []discConfig.PluginConfig,
+	handler metrics.ProviderHandler, opt *options.CollectorRunOptions) *discovery.Manager {
+	if opt.EnableDiscovery {
+		// backwards compatibility, discovery config was a separate file
+		if len(plugins) == 0 && opt.DiscoveryConfigFile != "" {
+			plugins = loadPluginsOrDie(opt.DiscoveryConfigFile)
+		}
+		return discovery.NewDiscoveryManager(client, plugins, handler, opt.Daemon)
+	}
+	return nil
+}
+
+// backwards compatibility. clusterName used to be specified on the sink.
+func resolveClusterName(name string, opt *options.CollectorRunOptions) string {
+	if name == "" {
+		sinkUrl, err := getWavefrontAddress(opt.Sinks)
+		if err != nil {
+			glog.Fatalf("Failed to get wavefront sink address: %v", err)
+		}
+		name = flags.DecodeValue(sinkUrl.Query(), "clusterName")
+	}
+	return name
+}
+
+func loadPluginsOrDie(file string) []discConfig.PluginConfig {
+	cfg, err := discConfig.FromFile(file)
+	if err != nil {
+		glog.Fatalf("error loading discovery configuration: %v", err)
+	}
+	return cfg.PluginConfigs
 }
 
 func registerVersion() {
@@ -132,9 +260,9 @@ func registerVersion() {
 	m.Update(f)
 }
 
-func createSourceManagerOrDie(src flags.Uris, statsPrefix string, scrapeTimeout time.Duration) metrics.MetricsSource {
+func createSourceManagerOrDie(src flags.Uris, scrapeTimeout time.Duration) metrics.MetricsSource {
 	sourceFactory := sources.NewSourceFactory()
-	sourceList := sourceFactory.BuildAll(src, statsPrefix)
+	sourceList := sourceFactory.BuildAll(src)
 
 	for _, source := range sourceList {
 		glog.Infof("Starting with source %s", source.Name())
@@ -147,7 +275,7 @@ func createSourceManagerOrDie(src flags.Uris, statsPrefix string, scrapeTimeout 
 	return sourceManager
 }
 
-func createAndInitSinksOrDie(sinkAddresses flags.Uris, sinkExportDataTimeout time.Duration) metrics.DataSink {
+func createSinkManagerOrDie(sinkAddresses flags.Uris, sinkExportDataTimeout time.Duration) metrics.DataSink {
 	sinksFactory := sinks.NewSinkFactory()
 	sinkList := sinksFactory.BuildAll(sinkAddresses)
 
@@ -159,10 +287,6 @@ func createAndInitSinksOrDie(sinkAddresses flags.Uris, sinkExportDataTimeout tim
 		glog.Fatalf("Failed to create sink manager: %v", err)
 	}
 	return sinkManager
-}
-
-func createDiscoveryManagerOrDie(client *kube_client.Clientset, cfgFile string, handler metrics.ProviderHandler, daemon bool) {
-	discovery.NewDiscoveryManager(client, cfgFile, handler, daemon)
 }
 
 func getPodListerOrDie(kubeClient *kube_client.Clientset) v1listers.PodLister {
@@ -181,7 +305,12 @@ func createKubeClientOrDie(kubernetesUrl *url.URL) *kube_client.Clientset {
 	return kube_client.NewForConfigOrDie(kubeConfig)
 }
 
-func createDataProcessorsOrDie(kubernetesUrl, sinkUrl *url.URL, podLister v1listers.PodLister, labelCopier *util.LabelCopier) []metrics.DataProcessor {
+func createDataProcessorsOrDie(kubernetesUrl *url.URL, cluster string, podLister v1listers.PodLister) []metrics.DataProcessor {
+	labelCopier, err := util.NewLabelCopier(",", []string{}, []string{})
+	if err != nil {
+		glog.Fatalf("Failed to initialize label copier: %v", err)
+	}
+
 	dataProcessors := []metrics.DataProcessor{
 		// Convert cumulative to rate
 		processors.NewRateCalculator(metrics.RateMetricsMapping),
@@ -237,7 +366,6 @@ func createDataProcessorsOrDie(kubernetesUrl, sinkUrl *url.URL, podLister v1list
 	dataProcessors = append(dataProcessors, nodeAutoscalingEnricher)
 
 	// this always needs to be the last processor
-	cluster := flags.DecodeValue(sinkUrl.Query(), "clusterName")
 	wavefrontCoverter, err := summary.NewPointConverter(kubernetesUrl, cluster)
 	if err != nil {
 		glog.Fatalf("Failed to create WavefrontPointConverter: %v", err)
@@ -258,19 +386,20 @@ func getWavefrontAddress(args flags.Uris) (*url.URL, error) {
 }
 
 // Gets the address of the kubernetes source from the list of source URIs.
-// Possible kubernetes sources are: 'kubernetes' and 'kubernetes.summary_api'
-func getKubernetesAddress(args flags.Uris) (*url.URL, error) {
+// Possible kubernetes sources are: 'kubernetes.summary_api'
+func getKubernetesAddressOrDie(args flags.Uris) *url.URL {
 	for _, uri := range args {
 		if strings.SplitN(uri.Key, ".", 2)[0] == "kubernetes" {
-			return &uri.Val, nil
+			return &uri.Val
 		}
 	}
-	return nil, fmt.Errorf("no kubernetes source found")
+	glog.Fatal("no kubernetes source found")
+	return nil
 }
 
-func validateFlags(opt *options.CollectorRunOptions) error {
-	if opt.MetricResolution < 5*time.Second {
-		return fmt.Errorf("metric resolution should not be less than 5 seconds - %d", opt.MetricResolution)
+func validateCfg(cfg *configuration.Config) error {
+	if cfg.CollectionInterval < 5*time.Second {
+		return fmt.Errorf("metric resolution should not be less than 5 seconds: %d", cfg.CollectionInterval)
 	}
 	return nil
 }
@@ -294,4 +423,38 @@ func setMaxProcs(opt *options.CollectorRunOptions) {
 
 func waitForStop() {
 	select {}
+}
+
+type reloader struct {
+	mtx sync.Mutex
+	ag  *agent.Agent
+}
+
+// Handles changes to collector or discovery configuration
+func (r *reloader) Handle(cfg interface{}) {
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+
+	switch cfg.(type) {
+	case *configuration.Config:
+		r.handleCollectorCfg(cfg.(*configuration.Config))
+	case *discConfig.Config:
+		r.ag.Handle(cfg)
+	}
+}
+
+func (r *reloader) handleCollectorCfg(cfg *configuration.Config) {
+	glog.Infof("collector configuration changed")
+
+	fillDefaults(cfg)
+
+	opt, err := cfg.Convert()
+	if err != nil {
+		glog.Errorf("configuration error: %v", err)
+		return
+	}
+
+	// stop the previous agent and start a new agent
+	r.ag.Stop()
+	r.ag = createAgentOrDie(opt, cfg)
 }

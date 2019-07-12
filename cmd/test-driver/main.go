@@ -53,7 +53,7 @@ func main() {
 	logs.InitLogs()
 	defer logs.FlushLogs()
 
-	sourceManager := createSourceManagerOrDie(opt.Sources, opt.InternalStatsPrefix, opt.ScrapeTimeout)
+	sourceManager := createSourceManagerOrDie(opt.Sources, opt.ScrapeTimeout)
 	sinkManager := createAndInitSinksOrDie(opt.Sinks, opt.SinkExportDataTimeout)
 
 	man, err := manager.NewManager(sourceManager, nil, sinkManager,
@@ -65,9 +65,9 @@ func main() {
 	waitForStop()
 }
 
-func createSourceManagerOrDie(src flags.Uris, statsPrefix string, scrapeTimeout time.Duration) metrics.MetricsSource {
+func createSourceManagerOrDie(src flags.Uris, scrapeTimeout time.Duration) metrics.MetricsSource {
 	sourceFactory := sources.NewSourceFactory()
-	sourceList := sourceFactory.BuildAll(src, statsPrefix)
+	sourceList := sourceFactory.BuildAll(src)
 
 	for _, source := range sourceList {
 		glog.Infof("Starting with source %s", source.Name())

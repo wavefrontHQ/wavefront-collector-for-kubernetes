@@ -32,16 +32,16 @@ func TestRuleAdd(t *testing.T) {
 	}
 }
 
-func manager() *discoveryManager {
+func manager() *Manager {
 	ph := &util.DummyProviderHandler{}
-	return &discoveryManager{
+	return &Manager{
 		providerHandler: ph,
 		rules:           make(map[string]bool),
 		ruleHandler:     newRuleHandler(newDiscoverer(ph, nil), &util.DummyProviderHandler{}, true),
 	}
 }
 
-func config(num int) discovery.Config {
+func config(num int) []discovery.PluginConfig {
 	var rules []discovery.PluginConfig
 	for i := 0; i < num; i++ {
 		rule := discovery.PluginConfig{
@@ -49,7 +49,5 @@ func config(num int) discovery.Config {
 		}
 		rules = append(rules, rule)
 	}
-	return discovery.Config{
-		PluginConfigs: rules,
-	}
+	return rules
 }

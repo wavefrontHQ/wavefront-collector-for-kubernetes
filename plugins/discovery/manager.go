@@ -1,7 +1,7 @@
 package discovery
 
 import (
-	"os"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
 	"sync"
 	"time"
 
@@ -10,8 +10,6 @@ import (
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/leadership"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
-
-	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -25,51 +23,45 @@ func init() {
 	rulesCount = gm.GetOrRegisterGauge("discovery.rules.count", gm.DefaultRegistry)
 }
 
-type discoveryManager struct {
+type Manager struct {
 	modTime         time.Time
 	daemon          bool
 	kubeClient      kubernetes.Interface
 	providerHandler metrics.ProviderHandler
 	discoverer      discovery.Discoverer
 	ruleHandler     discovery.RuleHandler
+	podListener     *podHandler
 	serviceListener *serviceHandler
-	channel         chan struct{}
+	stopCh          chan struct{}
 
 	mtx   sync.Mutex
 	rules map[string]bool
 }
 
-func NewDiscoveryManager(client kubernetes.Interface, cfgFile string, handler metrics.ProviderHandler, daemon bool) {
-	mgr := &discoveryManager{
+func NewDiscoveryManager(client kubernetes.Interface, plugins []discovery.PluginConfig,
+	handler metrics.ProviderHandler, daemon bool) *Manager {
+	mgr := &Manager{
 		daemon:          daemon,
 		kubeClient:      client,
 		providerHandler: handler,
-		channel:         make(chan struct{}),
+		stopCh:          make(chan struct{}),
 		rules:           make(map[string]bool),
+		discoverer:      newDiscoverer(handler, plugins),
 	}
-
-	// load config to init runtime discovery
-	var plugins []discovery.PluginConfig
-	if cfgFile != "" {
-		cfg, err := FromFile(cfgFile)
-		if err != nil {
-			glog.Fatalf("invalid discovery file: %q", err)
-		}
-		plugins = cfg.PluginConfigs
-	}
-	mgr.discoverer = newDiscoverer(handler, plugins)
 	mgr.ruleHandler = newRuleHandler(mgr.discoverer, handler, daemon)
-
-	// Run the manager
-	mgr.Run(cfgFile)
+	return mgr
 }
 
-func (dm *discoveryManager) Run(cfgFile string) {
+func (dm *Manager) Start() {
+	glog.Infof("Starting discovery manager")
 	discoveryEnabled.Inc(1)
 
+	dm.stopCh = make(chan struct{})
+
 	// init discovery handlers
-	newPodHandler(dm.kubeClient, dm.discoverer)
+	dm.podListener = newPodHandler(dm.kubeClient, dm.discoverer)
 	dm.serviceListener = newServiceHandler(dm.kubeClient, dm.discoverer)
+	dm.podListener.start()
 
 	if !dm.daemon {
 		dm.serviceListener.start()
@@ -91,73 +83,57 @@ func (dm *discoveryManager) Run(cfgFile string) {
 							glog.V(2).Infof("stopping service discovery. new leader: %s", leadership.Leader())
 							dm.serviceListener.stop()
 						}
+					case <-dm.stopCh:
+						glog.Infof("stopping service discovery")
+						return
 					}
 				}
 			}()
 		}
 	}
+}
 
-	if cfgFile != "" {
-		dm.loadWatch(cfgFile)
+func (dm *Manager) Stop() {
+	glog.Infof("Stopping discovery manager")
+	discoveryEnabled.Dec(1)
+
+	leadership.Unsubscribe()
+	dm.podListener.stop()
+	dm.serviceListener.stop()
+	close(dm.stopCh)
+}
+
+// implements ConfigHandler interface for handling configuration changes
+func (dm *Manager) Handle(cfg interface{}) {
+	switch cfg.(type) {
+	case *discovery.Config:
+		glog.Infof("discovery configuration changed")
+		d := cfg.(*discovery.Config)
+		dm.load(d.PluginConfigs)
+	case *configuration.Config:
+		glog.Infof("discoveryManager: collector configuration changed")
+		c := cfg.(*configuration.Config)
+		dm.load(c.DiscoveryConfigs)
+	default:
+		glog.Errorf("unknown configuration type: %q", cfg)
 	}
 }
 
-// loads the config into memory and watches for changes once a minute
-func (dm *discoveryManager) loadWatch(cfgFile string) {
-	initial := true
-	go wait.Until(func() {
-		if initial {
-			// wait for listers to index pods and services
-			initial = false
-			time.Sleep(30 * time.Second)
-		}
-		fileInfo, err := os.Stat(cfgFile)
-		if err != nil {
-			glog.Errorf("error retrieving discovery config file stats: %v", err)
-			return
-		}
-
-		if fileInfo.ModTime().After(dm.modTime) {
-			dm.modTime = fileInfo.ModTime()
-			cfg, err := FromFile(cfgFile)
-			if err != nil {
-				glog.Errorf("error loading discovery config: %v", err)
-			} else {
-				close(dm.channel)
-				dm.channel = make(chan struct{})
-				dm.reload(*cfg)
-			}
-		}
-	}, 1*time.Minute, wait.NeverStop)
-}
-
-// reloads the promRules now and every discovery interval
-func (dm *discoveryManager) reload(cfg discovery.Config) {
-	syncInterval := 10 * time.Minute
-	if cfg.Global.DiscoveryInterval != 0 {
-		syncInterval = cfg.Global.DiscoveryInterval
-	}
-	go wait.Until(func() {
-		dm.load(cfg)
-	}, syncInterval, dm.channel)
-	glog.V(5).Info("discovery reloading terminated")
-}
-
-func (dm *discoveryManager) load(cfg discovery.Config) {
+func (dm *Manager) load(plugins []discovery.PluginConfig) {
 	glog.V(2).Info("loading discovery configuration")
 
 	dm.mtx.Lock()
 	defer dm.mtx.Unlock()
 
 	// delete rules that were removed/renamed
-	rules := make(map[string]bool, len(cfg.PluginConfigs))
-	for _, rule := range cfg.PluginConfigs {
+	rules := make(map[string]bool, len(plugins))
+	for _, rule := range plugins {
 		rules[rule.Name] = true
 	}
 	dm.pruneRules(rules)
 
 	// process current rules
-	for _, rule := range cfg.PluginConfigs {
+	for _, rule := range plugins {
 		_, exists := dm.rules[rule.Name]
 		if !exists {
 			dm.rules[rule.Name] = true
@@ -167,10 +143,10 @@ func (dm *discoveryManager) load(cfg discovery.Config) {
 			glog.Errorf("error processing rule=%s type=%s err=%v", rule.Name, rule.Type, err)
 		}
 	}
-	rulesCount.Update(int64(len(cfg.PluginConfigs)))
+	rulesCount.Update(int64(len(plugins)))
 }
 
-func (dm *discoveryManager) pruneRules(newRules map[string]bool) {
+func (dm *Manager) pruneRules(newRules map[string]bool) {
 	for name := range dm.rules {
 		if _, exists := newRules[name]; !exists {
 			glog.V(2).Infof("deleting discovery rule %s", name)
