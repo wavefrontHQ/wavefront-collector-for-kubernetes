@@ -122,6 +122,7 @@ type DummyMetricsSourceProvider struct {
 	sources           []MetricsSource
 	collectionIterval time.Duration
 	timeOut           time.Duration
+	name              string
 }
 
 func (this *DummyMetricsSourceProvider) GetMetricsSources() []MetricsSource {
@@ -129,7 +130,7 @@ func (this *DummyMetricsSourceProvider) GetMetricsSources() []MetricsSource {
 }
 
 func (this *DummyMetricsSourceProvider) Name() string {
-	return "dummy"
+	return this.name
 }
 
 func (this *DummyMetricsSourceProvider) CollectionInterval() time.Duration {
@@ -140,11 +141,12 @@ func (this *DummyMetricsSourceProvider) TimeOut() time.Duration {
 	return this.timeOut
 }
 
-func NewDummyMetricsSourceProvider(collectionIterval, timeOut time.Duration, sources ...MetricsSource) MetricsSourceProvider {
+func NewDummyMetricsSourceProvider(name string, collectionIterval, timeOut time.Duration, sources ...MetricsSource) MetricsSourceProvider {
 	return &DummyMetricsSourceProvider{
 		sources:           sources,
 		collectionIterval: collectionIterval,
 		timeOut:           timeOut,
+		name:              name,
 	}
 }
 

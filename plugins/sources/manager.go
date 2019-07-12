@@ -64,17 +64,19 @@ type SourceManager interface {
 }
 
 type sourceManagerImpl struct {
-	mtx                      sync.RWMutex
-	gometricsSourceProviders map[string]metrics.MetricsSourceProvider
-	responseChannel          chan *metrics.DataBatch
-	response                 []*metrics.DataBatch
-	responseMtx              sync.Mutex
+	metricsSourcesMtx      sync.Mutex
+	metricsSourceProviders map[string]metrics.MetricsSourceProvider
+	metricsSourceTickers   map[string]*time.Ticker
+	responseChannel        chan *metrics.DataBatch
+	response               []*metrics.DataBatch
+	responseMtx            sync.Mutex
 }
 
 func newEmptySourceManager() SourceManager {
 	sm := &sourceManagerImpl{
-		responseChannel:          make(chan *metrics.DataBatch),
-		gometricsSourceProviders: make(map[string]metrics.MetricsSourceProvider),
+		responseChannel:        make(chan *metrics.DataBatch),
+		metricsSourceProviders: make(map[string]metrics.MetricsSourceProvider),
+		metricsSourceTickers:   make(map[string]*time.Ticker),
 	}
 
 	sm.rotateResponse()
@@ -98,29 +100,41 @@ func NewSourceManager(src flags.Uris, statsPrefix string) SourceManager {
 
 // AddProvider register and start a new goMetricsSourceProvider
 func (sm *sourceManagerImpl) AddProvider(provider metrics.MetricsSourceProvider) {
-	sm.mtx.Lock()
-	defer sm.mtx.Unlock()
-	sm.gometricsSourceProviders[provider.Name()] = provider
-	glog.V(4).Infof("added provider: %s", provider.Name())
-
-	for _, source := range provider.GetMetricsSources() { // TODO: move loop to the scrape?
-		go scrape(source, sm.responseChannel, provider.TimeOut())
+	name := provider.Name()
+	if _, found := sm.metricsSourceProviders[name]; found {
+		glog.Fatalf("Error on 'SourceManager.AddProvider' Duplicate Metrics Source Provider name: '%s'", name)
 	}
 
+	sm.metricsSourcesMtx.Lock()
+	defer sm.metricsSourcesMtx.Unlock()
+
 	ticker := time.NewTicker(provider.CollectionInterval())
+
+	sm.metricsSourceProviders[name] = provider
+	sm.metricsSourceTickers[name] = ticker
+	glog.V(4).Infof("added provider: %s", name)
+
+	go scrape(provider, sm.responseChannel)
 	go func() {
 		for range ticker.C {
-			for _, source := range provider.GetMetricsSources() {
-				go scrape(source, sm.responseChannel, provider.TimeOut())
-			}
+			go scrape(provider, sm.responseChannel)
 		}
 	}()
 }
 
 func (sm *sourceManagerImpl) DeleteProvider(name string) {
-	sm.mtx.Lock()
-	defer sm.mtx.Unlock()
-	delete(sm.gometricsSourceProviders, name)
+	if _, found := sm.metricsSourceProviders[name]; !found {
+		glog.Fatalf("Error on 'SourceManager.DeleteProvider'  Metrics Source Provider '%s' not found", name)
+	}
+
+	sm.metricsSourcesMtx.Lock()
+	defer sm.metricsSourcesMtx.Unlock()
+
+	delete(sm.metricsSourceProviders, name)
+	if tiker, ok := sm.metricsSourceTickers[name]; ok {
+		tiker.Stop()
+		delete(sm.metricsSourceTickers, name)
+	}
 	glog.V(4).Infof("deleted provider %s", name)
 }
 
@@ -143,33 +157,35 @@ func (sm *sourceManagerImpl) rotateResponse() []*metrics.DataBatch {
 	return response
 }
 
-func scrape(source metrics.MetricsSource, channel chan *metrics.DataBatch, timeout time.Duration) {
-	// Prevents network congestion.
-	jitter := time.Duration(rand.Intn(jitterMs)) * time.Millisecond
-	time.Sleep(jitter)
+func scrape(provider metrics.MetricsSourceProvider, channel chan *metrics.DataBatch) {
+	for _, source := range provider.GetMetricsSources() {
+		// Prevents network congestion.
+		jitter := time.Duration(rand.Intn(jitterMs)) * time.Millisecond
+		time.Sleep(jitter)
 
-	scrapeStart := time.Now()
-	timeoutTime := scrapeStart.Add(timeout)
+		scrapeStart := time.Now()
+		timeoutTime := scrapeStart.Add(provider.TimeOut())
 
-	glog.V(2).Infof("Querying source: '%s'", source.Name())
-	gometrics, err := source.ScrapeMetrics()
-	if err != nil {
-		scrapeErrors.Inc(1)
-		glog.Errorf("Error in scraping containers from '%s': %v", source.Name(), err)
-		return
+		glog.V(2).Infof("Querying source: '%s'", source.Name())
+		gometrics, err := source.ScrapeMetrics()
+		if err != nil {
+			scrapeErrors.Inc(1)
+			glog.Errorf("Error in scraping containers from '%s': %v", source.Name(), err)
+			return
+		}
+
+		now := time.Now()
+		latency := now.Sub(scrapeStart)
+		scrapeLatency.Update(latency.Nanoseconds())
+
+		if !now.Before(timeoutTime) {
+			scrapeTimeouts.Inc(1)
+			glog.Warningf("Failed to get '%s' response in time", source.Name())
+			return
+		}
+		channel <- gometrics
+		glog.V(2).Infof("Done Querying source: '%s' (%v metrics) (%v latency)", source.Name(), len(gometrics.MetricPoints), latency)
 	}
-
-	now := time.Now()
-	latency := now.Sub(scrapeStart)
-	scrapeLatency.Update(latency.Nanoseconds())
-
-	if !now.Before(timeoutTime) {
-		scrapeTimeouts.Inc(1)
-		glog.Warningf("Failed to get '%s' response in time", source.Name())
-		return
-	}
-	channel <- gometrics
-	glog.V(2).Infof("Done Querying source: '%s' (%v metrics) (%v latency)", source.Name(), len(gometrics.MetricPoints), latency)
 }
 
 func (sm *sourceManagerImpl) GetPendingMetrics() []*metrics.DataBatch {

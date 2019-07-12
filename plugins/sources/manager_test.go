@@ -33,7 +33,7 @@ func init() {
 }
 
 func TestNoTimeOut(t *testing.T) {
-	metricsSourceProvider := util.NewDummyMetricsSourceProvider(
+	metricsSourceProvider := util.NewDummyMetricsSourceProvider("dummy",
 		time.Minute, 100*time.Millisecond,
 		util.NewDummyMetricsSource("s1", 10*time.Millisecond),
 		util.NewDummyMetricsSource("s2", 10*time.Millisecond))
@@ -58,7 +58,7 @@ func TestNoTimeOut(t *testing.T) {
 
 func TestTimeOut(t *testing.T) {
 	metricsSourceProvider := util.NewDummyMetricsSourceProvider(
-		time.Minute, 75*time.Millisecond,
+		"dummy", time.Minute, 75*time.Millisecond,
 		util.NewDummyMetricsSource("s1", 50*time.Millisecond),
 		util.NewDummyMetricsSource("s2", 100*time.Millisecond))
 
@@ -81,15 +81,21 @@ func TestTimeOut(t *testing.T) {
 }
 
 func TestMultipleMetrics(t *testing.T) {
-	metricsSourceProvider := util.NewDummyMetricsSourceProvider(
-		10*time.Millisecond, 10*time.Millisecond,
-		util.NewDummyMetricsSource("s1", 0),
+	msp1 := util.NewDummyMetricsSourceProvider(
+		"p1", 10*time.Millisecond, 10*time.Millisecond,
+		util.NewDummyMetricsSource("s1", 0))
+
+	msp2 := util.NewDummyMetricsSourceProvider(
+		"p2", 10*time.Millisecond, 10*time.Millisecond,
 		util.NewDummyMetricsSource("s2", 0))
 
 	manager := newEmptySourceManager()
-	manager.AddProvider(metricsSourceProvider)
+	manager.AddProvider(msp1)
+	manager.AddProvider(msp2)
 
-	time.Sleep(199 * time.Millisecond)
+	time.Sleep(95 * time.Millisecond)
+	manager.DeleteProvider("p2")
+	time.Sleep(100 * time.Millisecond)
 
 	dataBatchList := manager.GetPendingMetrics()
 
@@ -101,5 +107,5 @@ func TestMultipleMetrics(t *testing.T) {
 	}
 
 	assert.Equal(t, 20, counts["dummy.s1"], "incorrect s1 count - counts: %vs", counts)
-	assert.Equal(t, 20, counts["dummy.s2"], "incorrect s2 count - counts: %v", counts)
+	assert.Equal(t, 10, counts["dummy.s2"], "incorrect s2 count - counts: %v", counts)
 }
