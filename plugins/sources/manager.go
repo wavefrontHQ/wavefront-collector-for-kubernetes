@@ -233,6 +233,10 @@ func buildProvider(uri flags.Uri) (metrics.MetricsSourceProvider, error) {
 	if err == nil {
 		if i, ok := provider.(metrics.ConfigurabeMetricsSourceProvider); ok {
 			i.Configure(&uri.Val)
+		} else {
+			if provider.CollectionInterval() == 0 {
+				return nil, fmt.Errorf("Provider '%s' have a invalid 'CollectionInterval'", provider.Name())
+			}
 		}
 	}
 

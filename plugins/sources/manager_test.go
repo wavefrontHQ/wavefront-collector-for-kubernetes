@@ -15,6 +15,7 @@
 package sources
 
 import (
+	"net/url"
 	"os"
 	"testing"
 	"time"
@@ -22,6 +23,7 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/golang/glog"
 	"github.com/stretchr/testify/assert"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
 )
 
@@ -108,4 +110,31 @@ func TestMultipleMetrics(t *testing.T) {
 
 	assert.Equal(t, 20, counts["dummy.s1"], "incorrect s1 count - counts: %vs", counts)
 	assert.Equal(t, 10, counts["dummy.s2"], "incorrect s2 count - counts: %v", counts)
+}
+
+func TestConfig(t *testing.T) {
+	var provider metrics.MetricsSourceProvider
+
+	provider = &testProvider{}
+	url, _ := url.Parse("?collectionInterval=1h&timeOut=1m")
+
+	if i, ok := provider.(metrics.ConfigurabeMetricsSourceProvider); ok {
+		i.Configure(url)
+		glog.Infof("Name: %s - CollectionInterval: %v", provider.Name(), provider.CollectionInterval())
+	}
+
+	assert.Equal(t, time.Hour, provider.CollectionInterval(), "incorrect CollectionInterval")
+	assert.Equal(t, time.Minute, provider.TimeOut(), "incorrect TimeOut")
+}
+
+type testProvider struct {
+	metrics.DefaultMetricsSourceProvider
+}
+
+func (this *testProvider) GetMetricsSources() []metrics.MetricsSource {
+	return make([]metrics.MetricsSource, 0)
+}
+
+func (this *testProvider) Name() string {
+	return "testProvider"
 }

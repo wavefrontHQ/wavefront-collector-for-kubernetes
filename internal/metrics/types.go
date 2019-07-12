@@ -196,7 +196,7 @@ type ProviderFactory interface {
 }
 
 type ConfigurabeMetricsSourceProvider interface {
-	Configure(uri *url.URL) error
+	Configure(uri *url.URL)
 }
 
 //DefaultMetricsSourceProvider handle the common providers configuration
