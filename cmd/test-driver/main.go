@@ -53,7 +53,7 @@ func main() {
 	logs.InitLogs()
 	defer logs.FlushLogs()
 
-	sourceManager := createSourceManagerOrDie(opt.Sources, opt.InternalStatsPrefix, opt.ScrapeTimeout)
+	sourceManager := sources.NewSourceManager(opt.Sources, opt.InternalStatsPrefix)
 	sinkManager := createAndInitSinksOrDie(opt.Sinks, opt.SinkExportDataTimeout)
 
 	man, err := manager.NewManager(sourceManager, nil, sinkManager,
@@ -63,21 +63,6 @@ func main() {
 	}
 	man.Start()
 	waitForStop()
-}
-
-func createSourceManagerOrDie(src flags.Uris, statsPrefix string, scrapeTimeout time.Duration) *sources.SourceManager {
-	sourceFactory := sources.NewSourceFactory()
-	sourceList := sourceFactory.BuildAll(src, statsPrefix)
-
-	for _, source := range sourceList {
-		glog.Infof("Starting with source %s", source.Provider.Name())
-	}
-
-	sourceManager, err := sources.NewSourceManager(sourceList, scrapeTimeout)
-	if err != nil {
-		glog.Fatalf("Failed to create source manager: %v", err)
-	}
-	return sourceManager
 }
 
 func createAndInitSinksOrDie(sinkAddresses flags.Uris, sinkExportDataTimeout time.Duration) metrics.DataSink {

@@ -72,7 +72,7 @@ type sourceManagerImpl struct {
 	responseMtx            sync.Mutex
 }
 
-func newEmptySourceManager() SourceManager {
+func NewEmptySourceManager() SourceManager {
 	sm := &sourceManagerImpl{
 		responseChannel:        make(chan *metrics.DataBatch),
 		metricsSourceProviders: make(map[string]metrics.MetricsSourceProvider),
@@ -87,7 +87,7 @@ func newEmptySourceManager() SourceManager {
 
 // NewSourceManager creates a new NewSourceManager with the configured goMetricsSourceProviders
 func NewSourceManager(src flags.Uris, statsPrefix string) SourceManager {
-	sm := newEmptySourceManager()
+	sm := NewEmptySourceManager()
 
 	gometricsSourceProviders := buildProviders(src, statsPrefix)
 	providerCount.Update(int64(len(gometricsSourceProviders)))

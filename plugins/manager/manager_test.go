@@ -20,14 +20,21 @@ import (
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources"
 )
 
 func TestFlow(t *testing.T) {
-	source := util.NewDummyMetricsSource("src", time.Millisecond)
+	provider := util.NewDummyMetricsSourceProvider(
+		"p1", 10*time.Millisecond, 10*time.Millisecond,
+		util.NewDummyMetricsSource("src", time.Millisecond))
+
 	sink := util.NewDummySink("sink", time.Millisecond)
 	processor := util.NewDummyDataProcessor(time.Millisecond)
 
-	manager, _ := NewManager(source, []metrics.DataProcessor{processor}, sink, time.Second, time.Millisecond, 1)
+	sourceManager := sources.NewEmptySourceManager()
+	sourceManager.AddProvider(provider)
+
+	manager, _ := NewManager(sourceManager, []metrics.DataProcessor{processor}, sink, time.Second, time.Millisecond, 1)
 	manager.Start()
 
 	// 4-5 cycles
@@ -40,11 +47,16 @@ func TestFlow(t *testing.T) {
 }
 
 func TestThrottling(t *testing.T) {
-	source := util.NewDummyMetricsSource("src", time.Millisecond)
+	provider := util.NewDummyMetricsSourceProvider(
+		"p1", 10*time.Millisecond, 10*time.Millisecond,
+		util.NewDummyMetricsSource("src", time.Millisecond))
 	sink := util.NewDummySink("sink", 4*time.Second)
 	processor := util.NewDummyDataProcessor(5 * time.Millisecond)
 
-	manager, _ := NewManager(source, []metrics.DataProcessor{processor}, sink, time.Second, time.Millisecond, 1)
+	sourceManager := sources.NewEmptySourceManager()
+	sourceManager.AddProvider(provider)
+
+	manager, _ := NewManager(sourceManager, []metrics.DataProcessor{processor}, sink, time.Second, time.Millisecond, 1)
 	manager.Start()
 
 	// 4-5 cycles

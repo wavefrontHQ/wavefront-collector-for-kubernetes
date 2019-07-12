@@ -42,7 +42,7 @@ func init() {
 func internalStats() (*DataBatch, error) {
 	now := time.Now()
 	result := &DataBatch{
-		Timestamp: now,
+		Timestamp:  now,
 		MetricSets: map[string]*MetricSet{},
 	}
 	var points []*MetricPoint
