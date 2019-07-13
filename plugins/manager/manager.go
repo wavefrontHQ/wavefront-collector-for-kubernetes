@@ -75,6 +75,10 @@ func (rm *realManager) Stop() {
 	rm.stopChan <- struct{}{}
 }
 
+func (rm *realManager) Handle(cfg interface{}) {
+	// no-op
+}
+
 func (rm *realManager) Housekeep() {
 	for {
 		// Always try to get the newest metrics

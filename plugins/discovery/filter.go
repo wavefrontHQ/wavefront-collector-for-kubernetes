@@ -2,9 +2,10 @@ package discovery
 
 import (
 	"fmt"
+	"strconv"
+
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
-	"strconv"
 
 	"github.com/gobwas/glob"
 )

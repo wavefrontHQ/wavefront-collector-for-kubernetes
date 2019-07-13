@@ -15,23 +15,19 @@
 package processors
 
 import (
-	"net/url"
-	"time"
-
 	"github.com/golang/glog"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
+	"net/url"
 
 	kube_config "github.com/wavefronthq/wavefront-kubernetes-collector/internal/kubernetes"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	kube_api "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/fields"
-	"k8s.io/apimachinery/pkg/util/wait"
 	kube_client "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 )
 
 type NamespaceBasedEnricher struct {
-	store     cache.Store
-	reflector *cache.Reflector
+	store cache.Store
 }
 
 func (this *NamespaceBasedEnricher) Name() string {
@@ -83,15 +79,7 @@ func NewNamespaceBasedEnricher(url *url.URL) (*NamespaceBasedEnricher, error) {
 		return nil, err
 	}
 	kubeClient := kube_client.NewForConfigOrDie(kubeConfig)
-
-	// watch nodes
-	lw := cache.NewListWatchFromClient(kubeClient.CoreV1().RESTClient(), "namespaces", kube_api.NamespaceAll, fields.Everything())
-	store := cache.NewStore(cache.MetaNamespaceKeyFunc)
-	reflector := cache.NewReflector(lw, &kube_api.Namespace{}, store, time.Hour)
-	go reflector.Run(wait.NeverStop)
-
 	return &NamespaceBasedEnricher{
-		store:     store,
-		reflector: reflector,
+		store: util.GetNamespaceStore(kubeClient),
 	}, nil
 }

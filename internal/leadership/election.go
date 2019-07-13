@@ -54,6 +54,15 @@ func Subscribe(client v1.CoreV1Interface) (<-chan bool, error) {
 	return ch, nil
 }
 
+func Unsubscribe() {
+	lock.Lock()
+	defer lock.Unlock()
+
+	// assumes a single subscriber at this time
+	subscribers = subscribers[:0]
+	glog.Infof("unsubscribed from leader-election: %d", len(subscribers))
+}
+
 // startLeaderElection starts the election process if not already started
 // this will only be done once per collector instance
 func startLeaderElection(client v1.CoreV1Interface) error {

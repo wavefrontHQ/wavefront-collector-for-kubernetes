@@ -86,10 +86,10 @@ func NewEmptySourceManager() SourceManager {
 }
 
 // NewSourceManager creates a new NewSourceManager with the configured goMetricsSourceProviders
-func NewSourceManager(src flags.Uris, statsPrefix string) SourceManager {
+func NewSourceManager(src flags.Uris) SourceManager {
 	sm := NewEmptySourceManager()
 
-	gometricsSourceProviders := buildProviders(src, statsPrefix)
+	gometricsSourceProviders := buildProviders(src)
 	providerCount.Update(int64(len(gometricsSourceProviders)))
 	for _, runtime := range gometricsSourceProviders {
 		sm.AddProvider(runtime)
@@ -193,7 +193,7 @@ func (sm *sourceManagerImpl) GetPendingMetrics() []*metrics.DataBatch {
 	return response
 }
 
-func buildProviders(uris flags.Uris, statsPrefix string) []metrics.MetricsSourceProvider {
+func buildProviders(uris flags.Uris) []metrics.MetricsSourceProvider {
 	result := make([]metrics.MetricsSourceProvider, 0, len(uris))
 	for _, uri := range uris {
 		provider, err := buildProvider(uri)
@@ -208,8 +208,6 @@ func buildProviders(uris flags.Uris, statsPrefix string) []metrics.MetricsSource
 		glog.Fatal("No available source to use")
 	}
 
-	provider, _ := stats.NewInternalStatsProvider(statsPrefix)
-	result = append(result, provider)
 	return result
 }
 
@@ -226,6 +224,8 @@ func buildProvider(uri flags.Uri) (metrics.MetricsSourceProvider, error) {
 		provider, err = telegraf.NewProvider(&uri.Val)
 	case "systemd":
 		provider, err = systemd.NewProvider(&uri.Val)
+	case "internal_stats":
+		provider, err = stats.NewInternalStatsProvider(&uri.Val)
 	default:
 		err = fmt.Errorf("source not recognized: %s", uri.Key)
 	}

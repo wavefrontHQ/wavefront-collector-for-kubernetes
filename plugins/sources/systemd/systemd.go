@@ -18,6 +18,7 @@ package systemd
 
 import (
 	"fmt"
+	"github.com/wavefronthq/go-metrics-wavefront/reporting"
 	"math"
 	"net/url"
 	"os"
@@ -37,11 +38,6 @@ import (
 )
 
 var unitStatesName = []string{"active", "activating", "deactivating", "inactive", "failed"}
-var filteredPoints gm.Counter
-
-func init() {
-	filteredPoints = gm.GetOrRegisterCounter("source.systemd.points.filtered.count", gm.DefaultRegistry)
-}
 
 type systemdMetricsSource struct {
 	prefix                  string
@@ -51,6 +47,10 @@ type systemdMetricsSource struct {
 	collectRestartMetrics   bool
 	unitsFilter             *unitFilter
 	filters                 filter.Filter
+
+	pps gm.Counter
+	fps gm.Counter
+	eps gm.Counter
 }
 
 func (src *systemdMetricsSource) Name() string {
@@ -61,12 +61,14 @@ func (src *systemdMetricsSource) ScrapeMetrics() (*DataBatch, error) {
 	// gathers metrics from systemd using dbus. collection is done in parallel to reduce wait time for responses.
 	conn, err := dbus.New()
 	if err != nil {
+		src.eps.Inc(1)
 		return nil, fmt.Errorf("couldn't get dbus connection: %s", err)
 	}
 	defer conn.Close()
 
 	allUnits, err := src.getAllUnits(conn)
 	if err != nil {
+		src.eps.Inc(1)
 		return nil, fmt.Errorf("couldn't get units: %s", err)
 	}
 
@@ -139,6 +141,7 @@ func (src *systemdMetricsSource) ScrapeMetrics() (*DataBatch, error) {
 
 	err = src.collectSystemState(conn, gather, now)
 	if err != nil {
+		src.eps.Inc(1)
 		glog.Errorf("error collecting system stats: %v", err)
 	}
 
@@ -150,7 +153,9 @@ func (src *systemdMetricsSource) ScrapeMetrics() (*DataBatch, error) {
 	<-done
 
 	result.MetricPoints = points
-	glog.Infof("%s metrics: %d", "systemd", len(result.MetricPoints))
+	count := len(result.MetricPoints)
+	glog.Infof("%s metrics: %d", "systemd", count)
+	src.pps.Inc(int64(count))
 
 	return result, err
 }
@@ -354,7 +359,7 @@ func (src *systemdMetricsSource) filterAppend(slice []*MetricPoint, point *Metri
 	if src.filters == nil || src.filters.Match(point.Metric, point.Tags) {
 		return append(slice, point)
 	}
-	filteredPoints.Inc(1)
+	src.fps.Inc(1)
 	glog.V(4).Infof("dropping metric: %s", point.Metric)
 	return slice
 }
@@ -452,6 +457,11 @@ func NewProvider(uri *url.URL) (MetricsSourceProvider, error) {
 	unitsFilter := fromQuery(vals)
 	filters := filter.FromQuery(vals)
 
+	pt := map[string]string{"type": "systemd"}
+	ppsKey := reporting.EncodeKey("source.points.collected", pt)
+	fpsKey := reporting.EncodeKey("source.points.filtered", pt)
+	epsKey := reporting.EncodeKey("source.collect.errors", pt)
+
 	sources := make([]MetricsSource, 1)
 	sources[0] = &systemdMetricsSource{
 		prefix:                  prefix,
@@ -461,6 +471,9 @@ func NewProvider(uri *url.URL) (MetricsSourceProvider, error) {
 		collectRestartMetrics:   collectRestartMetrics,
 		unitsFilter:             unitsFilter,
 		filters:                 filters,
+		pps:                     gm.GetOrRegisterCounter(ppsKey, gm.DefaultRegistry),
+		fps:                     gm.GetOrRegisterCounter(fpsKey, gm.DefaultRegistry),
+		eps:                     gm.GetOrRegisterCounter(epsKey, gm.DefaultRegistry),
 	}
 
 	return &systemdProvider{

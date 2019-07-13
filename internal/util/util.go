@@ -42,6 +42,8 @@ var (
 	lock       sync.Mutex
 	nodeLister v1listers.NodeLister
 	reflector  *cache.Reflector
+	podLister  v1listers.PodLister
+	nsStore    cache.Store
 )
 
 func GetNodeLister(kubeClient *kube_client.Clientset) (v1listers.NodeLister, *cache.Reflector, error) {
@@ -63,10 +65,18 @@ func GetNodeLister(kubeClient *kube_client.Clientset) (v1listers.NodeLister, *ca
 }
 
 func GetPodLister(kubeClient *kube_client.Clientset) (v1listers.PodLister, error) {
+	lock.Lock()
+	defer lock.Unlock()
+
+	// init just one instance per collector agent
+	if podLister != nil {
+		return podLister, nil
+	}
+
 	fieldSelector := GetFieldSelector("pods")
 	lw := cache.NewListWatchFromClient(kubeClient.CoreV1().RESTClient(), "pods", kube_api.NamespaceAll, fieldSelector)
 	store := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc})
-	podLister := v1listers.NewPodLister(store)
+	podLister = v1listers.NewPodLister(store)
 	reflector := cache.NewReflector(lw, &kube_api.Pod{}, store, time.Hour)
 	go reflector.Run(wait.NeverStop)
 	return podLister, nil
@@ -79,6 +89,22 @@ func GetServiceLister(kubeClient *kube_client.Clientset) (v1listers.ServiceListe
 	reflector := cache.NewReflector(lw, &kube_api.Service{}, store, time.Hour)
 	go reflector.Run(wait.NeverStop)
 	return serviceLister, nil
+}
+
+func GetNamespaceStore(kubeClient *kube_client.Clientset) cache.Store {
+	lock.Lock()
+	defer lock.Unlock()
+
+	// init just once per collector agent
+	if nsStore != nil {
+		return nsStore
+	}
+
+	lw := cache.NewListWatchFromClient(kubeClient.CoreV1().RESTClient(), "namespaces", kube_api.NamespaceAll, fields.Everything())
+	nsStore = cache.NewStore(cache.MetaNamespaceKeyFunc)
+	reflector := cache.NewReflector(lw, &kube_api.Namespace{}, nsStore, time.Hour)
+	go reflector.Run(wait.NeverStop)
+	return nsStore
 }
 
 func GetFieldSelector(resourceType string) fields.Selector {

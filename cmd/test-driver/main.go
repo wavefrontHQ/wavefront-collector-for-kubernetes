@@ -53,7 +53,7 @@ func main() {
 	logs.InitLogs()
 	defer logs.FlushLogs()
 
-	sourceManager := sources.NewSourceManager(opt.Sources, opt.InternalStatsPrefix)
+	sourceManager := sources.NewSourceManager(opt.Sources)
 	sinkManager := createAndInitSinksOrDie(opt.Sinks, opt.SinkExportDataTimeout)
 
 	man, err := manager.NewManager(sourceManager, nil, sinkManager,

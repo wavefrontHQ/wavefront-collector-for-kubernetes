@@ -7,12 +7,16 @@ import (
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
 
 	"k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 )
 
-func newPodHandler(kubeClient kubernetes.Interface, discoverer discovery.Discoverer) {
+type podHandler struct {
+	ch       chan struct{}
+	informer cache.SharedInformer
+}
+
+func newPodHandler(kubeClient kubernetes.Interface, discoverer discovery.Discoverer) *podHandler {
 	client := kubeClient.CoreV1().RESTClient()
 	fieldSelector := util.GetFieldSelector("pods")
 	lw := cache.NewListWatchFromClient(client, "pods", v1.NamespaceAll, fieldSelector)
@@ -47,5 +51,18 @@ func newPodHandler(kubeClient kubernetes.Interface, discoverer discovery.Discove
 			})
 		},
 	})
-	go inf.Run(wait.NeverStop)
+	return &podHandler{
+		informer: inf,
+	}
+}
+
+func (handler *podHandler) start() {
+	handler.ch = make(chan struct{})
+	go handler.informer.Run(handler.ch)
+}
+
+func (handler *podHandler) stop() {
+	if handler.ch != nil {
+		close(handler.ch)
+	}
 }
