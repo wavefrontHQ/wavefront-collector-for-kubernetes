@@ -170,7 +170,7 @@ func NewProvider(uri *url.URL) (metrics.MetricsSourceProvider, error) {
 		name = fmt.Sprintf("%s: %s", ProviderName, vals["name"][0])
 	}
 	if name == "" {
-		name = fmt.Sprintf("%s: default", ProviderName)
+		name = fmt.Sprintf("%s: %v", ProviderName, plugins)
 	}
 
 	return &telegrafProvider{
