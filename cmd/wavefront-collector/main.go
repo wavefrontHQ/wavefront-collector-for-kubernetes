@@ -50,17 +50,17 @@ func main() {
 	logger = log.With(logger, "ts", log.DefaultTimestamp)
 	logger = level.NewFilter(logger, level.AllowDebug())
 
-	// Overriding the default glog with our go-kit glog implementation.
-	// Thus we need to pass it our go-kit logger object.
-	glog.ClampLevel(6)
-	glog.SetLogger(logger)
-
-	klog.ClampLevel(6)
-	klog.SetLogger(logger)
-
 	opt := options.NewCollectorRunOptions()
 	opt.AddFlags(pflag.CommandLine)
 	kubeFlag.InitFlags()
+
+	// Overriding the default glog with our go-kit glog implementation.
+	// Thus we need to pass it our go-kit logger object.
+	glog.ClampLevel(glog.Level(opt.Verbose))
+	glog.SetLogger(logger)
+
+	klog.ClampLevel(klog.Level(opt.Verbose))
+	klog.SetLogger(logger)
 
 	if opt.Version {
 		fmt.Println(fmt.Sprintf("version: %s\ncommit: %s", version, commit))

@@ -11,6 +11,7 @@ import (
 type CollectorRunOptions struct {
 	MetricResolution      time.Duration
 	MaxProcs              int
+	Verbose               int
 	Sources               flags.Uris
 	Sinks                 flags.Uris
 	Version               bool
@@ -38,4 +39,5 @@ func (h *CollectorRunOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&h.InternalStatsPrefix, "internal_stats_prefix", "kubernetes.", "optional prefix for internal collector stats")
 	fs.BoolVar(&h.Daemon, "daemon", false, "enable daemon mode")
 	fs.StringVar(&h.ConfigFile, "config_file", "", "required configuration file")
+	fs.IntVar(&h.Verbose, "verbose", 0, "log verbose level")
 }
