@@ -34,8 +34,8 @@ func (a *Agent) Start() {
 
 func (a *Agent) Stop() {
 	glog.Infof("Stopping agent")
-	a.mgr.Stop()
 	if a.dm != nil {
 		a.dm.Stop()
 	}
+	a.mgr.Stop()
 }
