@@ -167,9 +167,6 @@ func fillDefaults(cfg *configuration.Config) {
 	if cfg.SinkExportDataTimeout == 0 {
 		cfg.SinkExportDataTimeout = 20 * time.Second
 	}
-	if cfg.ScrapeTimeout == 0 {
-		cfg.ScrapeTimeout = 20 * time.Second
-	}
 	if cfg.ClusterName == "" {
 		cfg.ClusterName = "k8s-cluster"
 	}

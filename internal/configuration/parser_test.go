@@ -17,6 +17,12 @@ sinks:
 kubernetes_source:
   prefix: kubernetes.
 
+telegraf_sources:
+  - plugins: [cpu]
+    collection:
+      interval: 1s
+  - plugins: [mem]
+
 discovery_configs:
   - type: telegraf/redis
     name: "redis"

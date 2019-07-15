@@ -1,9 +1,10 @@
 package configuration
 
 import (
+	"time"
+
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
-	"time"
 )
 
 // The main configuration struct that drives the Wavefront collector
@@ -13,9 +14,6 @@ type Config struct {
 
 	// the timeout for sinks to export data to Wavefront. Defaults to 20 seconds.
 	SinkExportDataTimeout time.Duration `yaml:"sinkExportDataTimeout"`
-
-	// the global per-source scrape timeout
-	ScrapeTimeout time.Duration `yaml:"scrapeTimeout"`
 
 	MaxProcs int `yaml:"maxProcs"`
 
@@ -66,8 +64,15 @@ type WavefrontSinkConfig struct {
 	ClusterName string `yaml:"-"`
 }
 
+type CollectionSourceConfig struct {
+	Interval string `yaml:"interval"`
+	TimeOut  string `yaml:"time_out"`
+}
+
 // Configuration options for the Kubernetes summary source
 type SummaySourceConfig struct {
+	Collection CollectionSourceConfig `yaml:"collection"`
+
 	// Defaults to empty string.
 	URL string `yaml:"url"`
 
@@ -101,6 +106,8 @@ type SummaySourceConfig struct {
 
 // Configuration options for a Prometheus source
 type PrometheusSourceConfig struct {
+	Collection CollectionSourceConfig `yaml:"collection"`
+
 	// The URL for a Prometheus metrics endpoint. Kubernetes Service URLs work across namespaces.
 	URL string `yaml:"url"`
 
@@ -125,6 +132,8 @@ type PrometheusSourceConfig struct {
 
 // Configuration options for a Telegraf source
 type TelegrafSourceConfig struct {
+	Collection CollectionSourceConfig `yaml:"collection"`
+
 	// the list of plugins to be enabled
 	Plugins []string `yaml:"plugins"`
 
@@ -143,6 +152,8 @@ type TelegrafSourceConfig struct {
 }
 
 type SystemdSourceConfig struct {
+	Collection CollectionSourceConfig `yaml:"collection"`
+
 	IncludeTaskMetrics bool `yaml:"taskMetrics"`
 
 	IncludeStartTimeMetrics bool `yaml:"startTimeMetrics"`
@@ -164,6 +175,8 @@ type SystemdSourceConfig struct {
 }
 
 type StatsSourceConfig struct {
+	Collection CollectionSourceConfig `yaml:"collection"`
+
 	// The prefix (dot suffixed) to be added for all metrics. Defaults to "kubernetes.collector.".
 	Prefix string `yaml:"prefix"`
 

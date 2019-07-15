@@ -148,7 +148,10 @@ func buildPromSource() *PrometheusSourceConfig {
 }
 
 func TestTelegrafSource(t *testing.T) {
-	conf := *buildTelegrafSource()
+	conf := TelegrafSourceConfig{
+		Plugins:    []string{"mem", "disk", "diskio"},
+		Collection: CollectionSourceConfig{Interval: "1m", TimeOut: "2m"},
+	}
 	uri, err := conf.convert()
 	if err != nil {
 		t.Errorf("error converting telegraf source: %v", err)
@@ -156,20 +159,21 @@ func TestTelegrafSource(t *testing.T) {
 	assert.Equal(t, "telegraf", uri.Key)
 	vals := uri.Val.Query()
 	assert.Equal(t, 1, len(vals["plugins"]))
+	assert.Equal(t, "1m", vals["collectionInterval"][0])
+	assert.Equal(t, "2m", vals["timeOut"][0])
 
 	conf = TelegrafSourceConfig{
-		Prefix: "k8s-metrics.",
-		Tags:   map[string]string{"env": "test", "version": "1.14"},
-		Filters: filter.Config{
-			MetricWhitelist:    []string{"k8s.*", "kubernetes.*"},
-			MetricBlacklist:    []string{"kops.*", "kube.*"},
-			MetricTagWhitelist: map[string][]string{"env": {"prod"}},
-			MetricTagBlacklist: map[string][]string{"env": {"dev", "test"}},
-			TagInclude:         []string{"env"},
-			TagExclude:         []string{"pod-template-id"},
-		},
+		Plugins: []string{"mem", "disk", "diskio"},
 	}
-	testCommon(t, conf, "telegraf")
+	uri, err = conf.convert()
+	if err != nil {
+		t.Errorf("error converting telegraf source: %v", err)
+	}
+	assert.Equal(t, "telegraf", uri.Key)
+	vals = uri.Val.Query()
+	assert.Equal(t, 1, len(vals["plugins"]))
+	assert.Equal(t, 0, len(vals["collectionInterval"]))
+	assert.Equal(t, 0, len(vals["timeOut"]))
 }
 
 func buildTelegrafSource() *TelegrafSourceConfig {
@@ -217,7 +221,6 @@ func TestFullConversion(t *testing.T) {
 	conf := Config{
 		CollectionInterval:    2 * time.Minute,
 		SinkExportDataTimeout: 20 * time.Second,
-		ScrapeTimeout:         20 * time.Second,
 		MaxProcs:              4,
 		EnableDiscovery:       true,
 		ClusterName:           "prod-cluster",

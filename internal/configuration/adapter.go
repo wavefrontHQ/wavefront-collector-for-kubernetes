@@ -72,7 +72,7 @@ func (w WavefrontSinkConfig) convert() (flags.Uri, error) {
 
 // converts a Kubernetes summary source configuration to a Uri format
 func (k SummaySourceConfig) convert() (flags.Uri, error) {
-	values := url.Values{}
+	values := k.Collection.convert()
 	addVal(values, "kubeletPort", k.KubeletPort)
 	addVal(values, "kubeletHttps", k.KubeletHttps)
 	addVal(values, "inClusterConfig", k.InClusterConfig)
@@ -87,7 +87,7 @@ func (k SummaySourceConfig) convert() (flags.Uri, error) {
 
 // converts a Prometheus source configuration to a Uri format
 func (p PrometheusSourceConfig) convert() (flags.Uri, error) {
-	values := url.Values{}
+	values := p.Collection.convert()
 	addVal(values, "url", p.URL)
 	addVal(values, "prefix", p.Prefix)
 	addVal(values, "source", p.Source)
@@ -98,7 +98,7 @@ func (p PrometheusSourceConfig) convert() (flags.Uri, error) {
 
 // converts a Telegraf source configuration to a Uri format
 func (t TelegrafSourceConfig) convert() (flags.Uri, error) {
-	values := url.Values{}
+	values := t.Collection.convert()
 	addVal(values, "plugins", strings.Join(t.Plugins, ","))
 	addVal(values, "prefix", t.Prefix)
 	utils.EncodeFilters(values, t.Filters)
@@ -108,7 +108,7 @@ func (t TelegrafSourceConfig) convert() (flags.Uri, error) {
 
 // converts a Systemd source configuration to a Uri format
 func (s SystemdSourceConfig) convert() (flags.Uri, error) {
-	values := url.Values{}
+	values := s.Collection.convert()
 	addVal(values, "prefix", s.Prefix)
 	addVal(values, "taskMetrics", strconv.FormatBool(s.IncludeTaskMetrics))
 	addVal(values, "startTimeMetrics", strconv.FormatBool(s.IncludeStartTimeMetrics))
@@ -138,11 +138,19 @@ func buildUri(key, address, rawQuery string) (flags.Uri, error) {
 
 // converts an Internal stats source configuration to a Uri format
 func (s StatsSourceConfig) convert() (flags.Uri, error) {
-	values := url.Values{}
+	values := s.Collection.convert()
 	addVal(values, "prefix", s.Prefix)
 	utils.EncodeFilters(values, s.Filters)
 	utils.EncodeTags(values, "", s.Tags)
 	return buildUri("internal_stats", "", values.Encode())
+}
+
+// converts an Internal stats source configuration to a Uri format
+func (c CollectionSourceConfig) convert() url.Values {
+	values := url.Values{}
+	addVal(values, "collectionInterval", c.Interval)
+	addVal(values, "timeOut", c.TimeOut)
+	return values
 }
 
 func addVal(values url.Values, key, val string) {
