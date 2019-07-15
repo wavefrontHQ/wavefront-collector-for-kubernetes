@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"net/http"
+	_ "net/http/pprof"
 	"net/url"
 	"os"
 	"runtime"
@@ -72,6 +74,7 @@ func main() {
 
 	glog.Infof(strings.Join(os.Args, " "))
 	glog.Infof("wavefront-collector version %v", version)
+	enableProfiling(opt.EnableProfiling)
 
 	preRegister(opt)
 	cfg := loadConfigOrDie(opt.ConfigFile)
@@ -418,6 +421,17 @@ func setMaxProcs(opt *options.CollectorRunOptions) {
 	actualNumProcs := runtime.GOMAXPROCS(0)
 	if actualNumProcs != numProcs {
 		glog.Warningf("Specified max procs of %d but using %d", numProcs, actualNumProcs)
+	}
+}
+
+func enableProfiling(enable bool) {
+	if enable {
+		go func() {
+			glog.Info("Starting pprof server at: http://localhost:9090/debug/pprof")
+			if err := http.ListenAndServe("localhost:9090", nil); err != nil {
+				glog.Errorf("E! %v", err)
+			}
+		}()
 	}
 }
 
