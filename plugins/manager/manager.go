@@ -91,6 +91,7 @@ func (rm *realManager) Housekeep() {
 		case <-time.After(timeToNextSync):
 			rm.housekeep(start, end)
 		case <-rm.stopChan:
+			rm.sourceManager.Stop()
 			rm.sink.Stop()
 			return
 		}

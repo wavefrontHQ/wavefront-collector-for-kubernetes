@@ -61,6 +61,7 @@ func init() {
 type SourceManager interface {
 	metrics.ProviderHandler
 	GetPendingMetrics() []*metrics.DataBatch
+	Stop()
 }
 
 type sourceManagerImpl struct {
@@ -101,6 +102,7 @@ func NewSourceManager(src flags.Uris) SourceManager {
 // AddProvider register and start a new goMetricsSourceProvider
 func (sm *sourceManagerImpl) AddProvider(provider metrics.MetricsSourceProvider) {
 	name := provider.Name()
+	glog.Infof("Adding provider: '%s' - collection iterval: '%v' - timeout: '%v'", name, provider.CollectionInterval(), provider.TimeOut())
 	if _, found := sm.metricsSourceProviders[name]; found {
 		glog.Fatalf("Error on 'SourceManager.AddProvider' Duplicate Metrics Source Provider name: '%s'", name)
 	}
@@ -112,7 +114,7 @@ func (sm *sourceManagerImpl) AddProvider(provider metrics.MetricsSourceProvider)
 
 	sm.metricsSourceProviders[name] = provider
 	sm.metricsSourceTickers[name] = ticker
-	glog.V(4).Infof("added provider: %s", name)
+	glog.V(2).Infof("added provider: %s", name)
 
 	go scrape(provider, sm.responseChannel)
 	go func() {
@@ -135,7 +137,13 @@ func (sm *sourceManagerImpl) DeleteProvider(name string) {
 		tiker.Stop()
 		delete(sm.metricsSourceTickers, name)
 	}
-	glog.V(4).Infof("deleted provider %s", name)
+	glog.Infof("deleted provider %s", name)
+}
+
+func (sm *sourceManagerImpl) Stop() {
+	for provider := range sm.metricsSourceProviders {
+		sm.DeleteProvider(provider)
+	}
 }
 
 func (sm *sourceManagerImpl) run() {
