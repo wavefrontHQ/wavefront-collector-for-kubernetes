@@ -110,7 +110,13 @@ func (sm *sourceManagerImpl) AddProvider(provider metrics.MetricsSourceProvider)
 	sm.metricsSourcesMtx.Lock()
 	defer sm.metricsSourcesMtx.Unlock()
 
-	ticker := time.NewTicker(provider.CollectionInterval())
+	var ticker *time.Ticker
+	if provider.CollectionInterval() != 0 {
+		ticker = time.NewTicker(provider.CollectionInterval())
+	} else {
+		ticker = time.NewTicker(10 * time.Second)
+		glog.Errorf("Provider '%s' have a invalid 'CollectionInterval' using '10s", provider.Name())
+	}
 
 	sm.metricsSourceProviders[name] = provider
 	sm.metricsSourceTickers[name] = ticker
@@ -241,10 +247,6 @@ func buildProvider(uri flags.Uri) (metrics.MetricsSourceProvider, error) {
 	if err == nil {
 		if i, ok := provider.(metrics.ConfigurabeMetricsSourceProvider); ok {
 			i.Configure(&uri.Val)
-		} else {
-			if provider.CollectionInterval() == 0 {
-				return nil, fmt.Errorf("Provider '%s' have a invalid 'CollectionInterval'", provider.Name())
-			}
 		}
 	}
 
