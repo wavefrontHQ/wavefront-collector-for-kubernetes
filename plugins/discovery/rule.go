@@ -69,6 +69,9 @@ func (rh *ruleHandler) DeleteAll() {
 	if err != nil {
 		glog.Errorf("error deleting rules: %v", err)
 	}
+	for _, rh := range rh.d.runtimeHandlers {
+		rh.DeleteMissing(map[string]bool{})
+	}
 }
 
 func (rh *ruleHandler) Delete(name string) {
