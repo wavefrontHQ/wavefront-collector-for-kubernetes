@@ -219,7 +219,7 @@ func buildSystemdSource() *SystemdSourceConfig {
 
 func TestFullConversion(t *testing.T) {
 	conf := Config{
-		CollectionInterval:    2 * time.Minute,
+		PushInterval:          2 * time.Minute,
 		SinkExportDataTimeout: 20 * time.Second,
 		MaxProcs:              4,
 		EnableDiscovery:       true,
@@ -235,7 +235,7 @@ func TestFullConversion(t *testing.T) {
 	if err != nil {
 		t.Errorf("full conversion error: %v", err)
 	}
-	assert.Equal(t, 2*time.Minute, opts.MetricResolution)
+	assert.Equal(t, 2*time.Minute, opts.PushInterval)
 	assert.Equal(t, 20*time.Second, opts.SinkExportDataTimeout)
 	assert.Equal(t, 4, opts.MaxProcs)
 	assert.True(t, opts.EnableDiscovery)

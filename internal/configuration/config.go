@@ -9,8 +9,8 @@ import (
 
 // The main configuration struct that drives the Wavefront collector
 type Config struct {
-	// the global interval at which data is collected. Defaults to 60 seconds.
-	CollectionInterval time.Duration `yaml:"collectionInterval"`
+	// the global interval at which data is pushed. Defaults to 60 seconds.
+	PushInterval time.Duration `yaml:"collectionInterval"`
 
 	// the timeout for sinks to export data to Wavefront. Defaults to 20 seconds.
 	SinkExportDataTimeout time.Duration `yaml:"sinkExportDataTimeout"`

@@ -126,8 +126,7 @@ func createAgentOrDie(opt *options.CollectorRunOptions, cfg *configuration.Confi
 	dm := createDiscoveryManagerOrDie(kubeClient, plugins, handler, opt)
 
 	// create uber manager
-	man, err := manager.NewManager(sourceManager, dataProcessors, sinkManager,
-		opt.MetricResolution, manager.DefaultScrapeOffset, manager.DefaultMaxParallelism)
+	man, err := manager.NewPushManager(sourceManager, dataProcessors, sinkManager, opt.PushInterval)
 	if err != nil {
 		glog.Fatalf("Failed to create main manager: %v", err)
 	}
@@ -161,8 +160,8 @@ func loadConfigOrDie(file string) *configuration.Config {
 
 // use defaults if no values specified in config file
 func fillDefaults(cfg *configuration.Config) {
-	if cfg.CollectionInterval == 0 {
-		cfg.CollectionInterval = 60 * time.Second
+	if cfg.PushInterval == 0 {
+		cfg.PushInterval = 60 * time.Second
 	}
 	if cfg.SinkExportDataTimeout == 0 {
 		cfg.SinkExportDataTimeout = 20 * time.Second
@@ -395,8 +394,8 @@ func getKubernetesAddressOrDie(args flags.Uris) *url.URL {
 }
 
 func validateCfg(cfg *configuration.Config) error {
-	if cfg.CollectionInterval < 5*time.Second {
-		return fmt.Errorf("metric resolution should not be less than 5 seconds: %d", cfg.CollectionInterval)
+	if cfg.PushInterval < 5*time.Second {
+		return fmt.Errorf("metric resolution should not be less than 5 seconds: %d", cfg.PushInterval)
 	}
 	return nil
 }

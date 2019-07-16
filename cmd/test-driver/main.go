@@ -56,8 +56,7 @@ func main() {
 	sourceManager := sources.NewSourceManager(opt.Sources)
 	sinkManager := createAndInitSinksOrDie(opt.Sinks, opt.SinkExportDataTimeout)
 
-	man, err := manager.NewManager(sourceManager, nil, sinkManager,
-		opt.MetricResolution, manager.DefaultScrapeOffset, manager.DefaultMaxParallelism)
+	man, err := manager.NewPushManager(sourceManager, nil, sinkManager, opt.PushInterval)
 	if err != nil {
 		glog.Fatalf("Failed to create main manager: %v", err)
 	}

@@ -22,7 +22,7 @@ func (c Config) Convert() (*options.CollectorRunOptions, error) {
 	// This code can be removed when sources, sinks and discovery code are wired to use configs instead of URLs.
 
 	opts := options.NewCollectorRunOptions()
-	opts.MetricResolution = c.CollectionInterval
+	opts.PushInterval = c.PushInterval
 	opts.SinkExportDataTimeout = c.SinkExportDataTimeout
 	opts.MaxProcs = c.MaxProcs
 	opts.EnableDiscovery = c.EnableDiscovery

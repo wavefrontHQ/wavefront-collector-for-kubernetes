@@ -43,7 +43,7 @@ func TestFlow(t *testing.T) {
 	sourceManager := sources.NewEmptySourceManager()
 	sourceManager.AddProvider(provider)
 
-	manager, _ := NewManager(sourceManager, []metrics.DataProcessor{processor}, sink, time.Second, time.Millisecond, 1)
+	manager, _ := NewPushManager(sourceManager, []metrics.DataProcessor{processor}, sink, time.Second)
 	manager.Start()
 
 	// 4-5 cycles
@@ -51,28 +51,6 @@ func TestFlow(t *testing.T) {
 	manager.Stop()
 
 	if sink.GetExportCount() < 4 || sink.GetExportCount() > 5 {
-		t.Fatalf("Wrong number of exports executed: %d", sink.GetExportCount())
-	}
-}
-
-func TestThrottling(t *testing.T) {
-	provider := util.NewDummyMetricsSourceProvider(
-		"p1", time.Second, 10*time.Millisecond,
-		util.NewDummyMetricsSource("src", time.Millisecond))
-	sink := util.NewDummySink("sink", 4*time.Second)
-	processor := util.NewDummyDataProcessor(5 * time.Millisecond)
-
-	sourceManager := sources.NewEmptySourceManager()
-	sourceManager.AddProvider(provider)
-
-	manager, _ := NewManager(sourceManager, []metrics.DataProcessor{processor}, sink, time.Second, time.Millisecond, 1)
-	manager.Start()
-
-	// 4-5 cycles
-	time.Sleep(time.Millisecond * 9500)
-	manager.Stop()
-
-	if sink.GetExportCount() < 2 || sink.GetExportCount() > 3 {
 		t.Fatalf("Wrong number of exports executed: %d", sink.GetExportCount())
 	}
 }

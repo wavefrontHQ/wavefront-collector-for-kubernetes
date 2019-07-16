@@ -9,7 +9,7 @@ import (
 )
 
 type CollectorRunOptions struct {
-	MetricResolution      time.Duration
+	PushInterval          time.Duration
 	MaxProcs              int
 	Verbose               int
 	Sources               flags.Uris
@@ -30,7 +30,7 @@ func NewCollectorRunOptions() *CollectorRunOptions {
 func (h *CollectorRunOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.Var(&h.Sources, "source", "source(s) to watch")
 	fs.Var(&h.Sinks, "sink", "external sink(s) that receive data")
-	fs.DurationVar(&h.MetricResolution, "metric_resolution", 60*time.Second, "The resolution at which the collector will collect metrics")
+	fs.DurationVar(&h.PushInterval, "Push_interval", 60*time.Second, "The interval at which the collector will send metrics to the skin")
 	fs.IntVar(&h.MaxProcs, "max_procs", 0, "max number of CPUs that can be used simultaneously. Less than 1 for default (number of cores)")
 	fs.BoolVar(&h.Version, "version", false, "print version info and exit")
 	fs.DurationVar(&h.SinkExportDataTimeout, "sink_export_data_timeout", 20*time.Second, "Timeout for exporting data to a sink")
