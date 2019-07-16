@@ -19,6 +19,7 @@ package sources
 import (
 	"fmt"
 	"math/rand"
+	"sort"
 	"sync"
 	"time"
 
@@ -204,6 +205,7 @@ func scrape(provider metrics.MetricsSourceProvider, channel chan *metrics.DataBa
 
 func (sm *sourceManagerImpl) GetPendingMetrics() []*metrics.DataBatch {
 	response := sm.rotateResponse()
+	sort.Slice(response, func(i, j int) bool { return response[i].Timestamp.Before(response[j].Timestamp) })
 	return response
 }
 
