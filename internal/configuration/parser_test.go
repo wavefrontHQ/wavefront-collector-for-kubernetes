@@ -32,6 +32,8 @@ discovery_configs:
       - '*redis*'
     port: 6379
     scheme: "tcp"
+    collection:
+      interval: 1s
     conf: |
       servers = [${server}]
       password = bar

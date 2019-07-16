@@ -61,6 +61,9 @@ func (e telegrafEncoder) Encode(ip, kind string, meta metav1.ObjectMeta, rule in
 	includeLabels := utils.Param(meta, discovery.LabelsAnnotation, cfg.IncludeLabels, "true")
 
 	values.Set("prefix", prefix)
+	values.Set("collectionInterval", cfg.Collection.Interval.String())
+	values.Set("timeOut", cfg.Collection.TimeOut.String())
+
 	utils.EncodeMeta(values, kind, meta)
 	utils.EncodeTags(values, "", cfg.Tags)
 	if includeLabels == "true" {

@@ -115,6 +115,9 @@ func (d *defaultHandler) Handle(resource Resource, rule interface{}) {
 			glog.Error(err)
 			return
 		}
+		if i, ok := provider.(metrics.ConfigurabeMetricsSourceProvider); ok {
+			i.Configure(u)
+		}
 		d.register(name, newEncoding, provider)
 	}
 

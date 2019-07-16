@@ -33,12 +33,16 @@ func init() {
 type prometheusEncoder struct{}
 
 func (e prometheusEncoder) Encode(ip, kind string, meta metav1.ObjectMeta, cfg interface{}) url.Values {
+	values := url.Values{}
 	rule := discovery.PluginConfig{}
 	discoveryType := "annotation"
 	if cfg != nil {
 		rule = cfg.(discovery.PluginConfig)
 		discoveryType = "rule"
+		values.Set("collectionInterval", rule.Collection.Interval.String())
+		values.Set("timeOut", rule.Collection.TimeOut.String())
 	}
+	values.Set("discovered", discoveryType)
 
 	if ip == "" {
 		glog.V(5).Infof("missing ip for %s=%s", kind, meta.Name)
@@ -50,9 +54,6 @@ func (e prometheusEncoder) Encode(ip, kind string, meta metav1.ObjectMeta, cfg i
 		glog.V(5).Infof("prometheus scrape=false for %s=%s", kind, meta.Name)
 		return url.Values{}
 	}
-
-	values := url.Values{}
-	values.Set("discovered", discoveryType)
 
 	scheme := utils.Param(meta, schemeAnnotation, rule.Scheme, "http")
 	path := utils.Param(meta, pathAnnotation, rule.Path, "/metrics")
