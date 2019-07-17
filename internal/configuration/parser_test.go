@@ -7,6 +7,7 @@ import (
 var sampleFile = `
 clusterName: new-collector
 enableDiscovery: true
+defaultCollectionInterval: 10s
 
 sinks:
 - proxyAddress: wavefront-proxy.default.svc.cluster.local:2878

@@ -62,7 +62,7 @@ func (e telegrafEncoder) Encode(ip, kind string, meta metav1.ObjectMeta, rule in
 
 	values.Set("prefix", prefix)
 	values.Set("collectionInterval", cfg.Collection.Interval.String())
-	values.Set("timeOut", cfg.Collection.TimeOut.String())
+	values.Set("timeout", cfg.Collection.Timeout.String())
 
 	utils.EncodeMeta(values, kind, meta)
 	utils.EncodeTags(values, "", cfg.Tags)

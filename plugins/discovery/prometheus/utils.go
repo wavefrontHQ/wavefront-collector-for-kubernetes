@@ -14,13 +14,15 @@ import (
 )
 
 const (
-	scrapeAnnotation = "prometheus.io/scrape"
-	schemeAnnotation = "prometheus.io/scheme"
-	pathAnnotation   = "prometheus.io/path"
-	portAnnotation   = "prometheus.io/port"
-	prefixAnnotation = "prometheus.io/prefix"
-	labelsAnnotation = "prometheus.io/includeLabels"
-	sourceAnnotation = "prometheus.io/source"
+	scrapeAnnotation             = "prometheus.io/scrape"
+	schemeAnnotation             = "prometheus.io/scheme"
+	pathAnnotation               = "prometheus.io/path"
+	portAnnotation               = "prometheus.io/port"
+	prefixAnnotation             = "prometheus.io/prefix"
+	labelsAnnotation             = "prometheus.io/includeLabels"
+	sourceAnnotation             = "prometheus.io/source"
+	collectionIntervalAnnotation = "prometheus.io/collectionInterval"
+	timeoutAnnotation            = "prometheus.io/timeout"
 )
 
 // used as source for discovered resources
@@ -39,8 +41,10 @@ func (e prometheusEncoder) Encode(ip, kind string, meta metav1.ObjectMeta, cfg i
 	if cfg != nil {
 		rule = cfg.(discovery.PluginConfig)
 		discoveryType = "rule"
-		values.Set("collectionInterval", rule.Collection.Interval.String())
-		values.Set("timeOut", rule.Collection.TimeOut.String())
+		collectionInterval := utils.Param(meta, collectionIntervalAnnotation, rule.Collection.Interval.String(), "0s")
+		values.Set("collectionInterval", collectionInterval)
+		timeout := utils.Param(meta, timeoutAnnotation, rule.Collection.Timeout.String(), "0s")
+		values.Set("timeout", timeout)
 	}
 	values.Set("discovered", discoveryType)
 

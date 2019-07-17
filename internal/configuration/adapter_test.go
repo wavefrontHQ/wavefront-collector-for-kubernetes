@@ -150,7 +150,7 @@ func buildPromSource() *PrometheusSourceConfig {
 func TestTelegrafSource(t *testing.T) {
 	conf := TelegrafSourceConfig{
 		Plugins:    []string{"mem", "disk", "diskio"},
-		Collection: CollectionSourceConfig{Interval: "1m", TimeOut: "2m"},
+		Collection: CollectionConfig{Interval: "1m", Timeout: "2m"},
 	}
 	uri, err := conf.convert()
 	if err != nil {
@@ -160,7 +160,7 @@ func TestTelegrafSource(t *testing.T) {
 	vals := uri.Val.Query()
 	assert.Equal(t, 1, len(vals["plugins"]))
 	assert.Equal(t, "1m", vals["collectionInterval"][0])
-	assert.Equal(t, "2m", vals["timeOut"][0])
+	assert.Equal(t, "2m", vals["timeout"][0])
 
 	conf = TelegrafSourceConfig{
 		Plugins: []string{"mem", "disk", "diskio"},
@@ -173,7 +173,7 @@ func TestTelegrafSource(t *testing.T) {
 	vals = uri.Val.Query()
 	assert.Equal(t, 1, len(vals["plugins"]))
 	assert.Equal(t, 0, len(vals["collectionInterval"]))
-	assert.Equal(t, 0, len(vals["timeOut"]))
+	assert.Equal(t, 0, len(vals["timeout"]))
 }
 
 func buildTelegrafSource() *TelegrafSourceConfig {
@@ -219,11 +219,12 @@ func buildSystemdSource() *SystemdSourceConfig {
 
 func TestFullConversion(t *testing.T) {
 	conf := Config{
-		PushInterval:          2 * time.Minute,
-		SinkExportDataTimeout: 20 * time.Second,
-		MaxProcs:              4,
-		EnableDiscovery:       true,
-		ClusterName:           "prod-cluster",
+		FlushInterval:             2 * time.Minute,
+		SinkExportDataTimeout:     20 * time.Second,
+		DefaultCollectionInterval: time.Minute,
+		MaxProcs:                  4,
+		EnableDiscovery:           true,
+		ClusterName:               "prod-cluster",
 
 		Sinks:             []*WavefrontSinkConfig{buildWavefrontSink()},
 		SummaryConfig:     buildSummarySource(),
@@ -235,7 +236,8 @@ func TestFullConversion(t *testing.T) {
 	if err != nil {
 		t.Errorf("full conversion error: %v", err)
 	}
-	assert.Equal(t, 2*time.Minute, opts.PushInterval)
+	assert.Equal(t, 2*time.Minute, opts.FlushInterval)
+	assert.Equal(t, time.Minute, opts.DefaultCollectionInterval)
 	assert.Equal(t, 20*time.Second, opts.SinkExportDataTimeout)
 	assert.Equal(t, 4, opts.MaxProcs)
 	assert.True(t, opts.EnableDiscovery)

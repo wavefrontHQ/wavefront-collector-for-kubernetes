@@ -19,6 +19,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/flags"
+
 	"github.com/go-kit/kit/log"
 	"github.com/golang/glog"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
@@ -34,20 +36,20 @@ func init() {
 
 func TestFlow(t *testing.T) {
 	provider := util.NewDummyMetricsSourceProvider(
-		"p1", time.Second, 100*time.Millisecond,
+		"p1", 100*time.Millisecond, 100*time.Millisecond,
 		util.NewDummyMetricsSource("src", time.Millisecond))
 
 	sink := util.NewDummySink("sink", time.Millisecond)
 	processor := util.NewDummyDataProcessor(time.Millisecond)
 
-	sourceManager := sources.NewEmptySourceManager()
+	sourceManager := sources.NewSourceManager(flags.Uris{}, time.Minute)
 	sourceManager.AddProvider(provider)
 
-	manager, _ := NewPushManager(sourceManager, []metrics.DataProcessor{processor}, sink, time.Second)
+	manager, _ := NewFlushManager(sourceManager, []metrics.DataProcessor{processor}, sink, 100*time.Millisecond)
 	manager.Start()
 
 	// 4-5 cycles
-	time.Sleep(time.Millisecond * 4500)
+	time.Sleep(time.Millisecond * 550)
 	manager.Stop()
 
 	if sink.GetExportCount() < 4 || sink.GetExportCount() > 5 {

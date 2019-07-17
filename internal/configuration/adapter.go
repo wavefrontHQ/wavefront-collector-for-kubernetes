@@ -22,7 +22,8 @@ func (c Config) Convert() (*options.CollectorRunOptions, error) {
 	// This code can be removed when sources, sinks and discovery code are wired to use configs instead of URLs.
 
 	opts := options.NewCollectorRunOptions()
-	opts.PushInterval = c.PushInterval
+	opts.FlushInterval = c.FlushInterval
+	opts.DefaultCollectionInterval = c.DefaultCollectionInterval
 	opts.SinkExportDataTimeout = c.SinkExportDataTimeout
 	opts.MaxProcs = c.MaxProcs
 	opts.EnableDiscovery = c.EnableDiscovery
@@ -146,10 +147,10 @@ func (s StatsSourceConfig) convert() (flags.Uri, error) {
 }
 
 // converts an Internal stats source configuration to a Uri format
-func (c CollectionSourceConfig) convert() url.Values {
+func (c CollectionConfig) convert() url.Values {
 	values := url.Values{}
 	addVal(values, "collectionInterval", c.Interval)
-	addVal(values, "timeOut", c.TimeOut)
+	addVal(values, "timeout", c.Timeout)
 	return values
 }
 

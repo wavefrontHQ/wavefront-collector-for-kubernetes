@@ -57,13 +57,13 @@ type PluginConfig struct {
 	// whether to include resource labels with the reported metrics. Defaults to "true".
 	IncludeLabels string `yaml:"includeLabels"`
 
-	Filters    filter.Config          `yaml:"filters"`
-	Collection CollectionSourceConfig `yaml:"collection"`
+	Filters    filter.Config    `yaml:"filters"`
+	Collection CollectionConfig `yaml:"collection"`
 }
 
-type CollectionSourceConfig struct {
+type CollectionConfig struct {
 	Interval time.Duration `yaml:"interval"`
-	TimeOut  time.Duration `yaml:"time_out"`
+	Timeout  time.Duration `yaml:"time_out"`
 }
 
 // Describes selectors for identifying kubernetes resources

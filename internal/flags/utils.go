@@ -1,8 +1,10 @@
 package flags
 
 import (
+	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/golang/glog"
 )
@@ -55,4 +57,16 @@ func DecodeBoolean(vals map[string][]string, name string) bool {
 		}
 	}
 	return value
+}
+
+func ParseDuration(vals url.Values, prop string, def time.Duration) time.Duration {
+	if len(vals[prop]) > 0 {
+		res, err := time.ParseDuration(vals[prop][0])
+		if err != nil {
+			glog.Errorf("error parsing '%s' propertie: %v", prop, err)
+		} else {
+			return res
+		}
+	}
+	return def
 }

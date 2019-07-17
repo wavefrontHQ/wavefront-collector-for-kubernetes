@@ -7,11 +7,11 @@ import (
 )
 
 type Agent struct {
-	pm manager.PushManager
+	pm manager.FlushManager
 	dm *discovery.Manager
 }
 
-func NewAgent(pm manager.PushManager, dm *discovery.Manager) *Agent {
+func NewAgent(pm manager.FlushManager, dm *discovery.Manager) *Agent {
 	return &Agent{
 		pm: pm,
 		dm: dm,

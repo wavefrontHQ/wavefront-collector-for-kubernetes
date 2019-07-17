@@ -23,7 +23,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/golang/glog"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/flags"
 )
 
 type MetricType int8
@@ -149,7 +149,7 @@ type DataBatch struct {
 // A place from where the metrics should be scraped.
 type MetricsSource interface {
 	Name() string
-	ScrapeMetrics() (*DataBatch, error) // TODO: remove 'start' and 'end'
+	ScrapeMetrics() (*DataBatch, error)
 }
 
 // Provider of list of sources to be scraped.
@@ -157,7 +157,7 @@ type MetricsSourceProvider interface {
 	GetMetricsSources() []MetricsSource
 	Name() string
 	CollectionInterval() time.Duration
-	TimeOut() time.Duration // TODO: TimeOut
+	Timeout() time.Duration
 }
 
 type DataSink interface {
@@ -202,7 +202,7 @@ type ConfigurabeMetricsSourceProvider interface {
 //DefaultMetricsSourceProvider handle the common providers configuration
 type DefaultMetricsSourceProvider struct {
 	collectionInterval time.Duration
-	timeOut            time.Duration
+	timeout            time.Duration
 }
 
 // CollectionInterval return the provider collection interval configuration
@@ -210,26 +210,14 @@ func (dp *DefaultMetricsSourceProvider) CollectionInterval() time.Duration {
 	return dp.collectionInterval
 }
 
-// TimeOut return the provider timeout configuration
-func (dp *DefaultMetricsSourceProvider) TimeOut() time.Duration {
-	return dp.timeOut
+// Timeout return the provider timeout configuration
+func (dp *DefaultMetricsSourceProvider) Timeout() time.Duration {
+	return dp.timeout
 }
 
-// Configure the 'collectionInterval' and 'timeOut' values
+// Configure the 'collectionInterval' and 'timeout' values
 func (dp *DefaultMetricsSourceProvider) Configure(uri *url.URL) {
 	vals := uri.Query()
-	dp.collectionInterval = parseDuration(vals, "collectionInterval", time.Duration(10*time.Second))
-	dp.timeOut = parseDuration(vals, "timeOut", time.Duration(10*time.Second))
-}
-
-func parseDuration(vals url.Values, prop string, def time.Duration) time.Duration {
-	if len(vals[prop]) > 0 {
-		res, err := time.ParseDuration(vals[prop][0])
-		if err != nil {
-			glog.Errorf("error parsing '%s' propertie: %v", prop, err)
-		} else {
-			return res
-		}
-	}
-	return def
+	dp.collectionInterval = flags.ParseDuration(vals, "collectionInterval", 0) // force default collection interval
+	dp.timeout = flags.ParseDuration(vals, "timeout", time.Duration(10*time.Second))
 }

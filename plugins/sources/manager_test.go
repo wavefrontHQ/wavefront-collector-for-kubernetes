@@ -23,6 +23,7 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/golang/glog"
 	"github.com/stretchr/testify/assert"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/flags"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
 )
@@ -33,13 +34,13 @@ func init() {
 	glog.SetLogger(logger)
 }
 
-func TestNoTimeOut(t *testing.T) {
+func TestNoTimeout(t *testing.T) {
 	metricsSourceProvider := util.NewDummyMetricsSourceProvider("dummy",
-		time.Minute, 100*time.Millisecond,
+		100*time.Millisecond, 100*time.Millisecond,
 		util.NewDummyMetricsSource("s1", 10*time.Millisecond),
 		util.NewDummyMetricsSource("s2", 10*time.Millisecond))
 
-	manager := NewEmptySourceManager()
+	manager := NewSourceManager(flags.Uris{}, time.Minute)
 	manager.AddProvider(metricsSourceProvider)
 
 	time.Sleep(200 * time.Millisecond)
@@ -59,13 +60,13 @@ func TestNoTimeOut(t *testing.T) {
 	assert.True(t, present["dummy.s1"], "s2 not found - present:%v", present)
 }
 
-func TestTimeOut(t *testing.T) {
+func TestTimeout(t *testing.T) {
 	metricsSourceProvider := util.NewDummyMetricsSourceProvider(
-		"dummy", time.Minute, 75*time.Millisecond,
+		"dummy", 100*time.Millisecond, 75*time.Millisecond,
 		util.NewDummyMetricsSource("s1", 50*time.Millisecond),
 		util.NewDummyMetricsSource("s2", 100*time.Millisecond))
 
-	manager := NewEmptySourceManager()
+	manager := NewSourceManager(flags.Uris{}, time.Minute)
 	manager.AddProvider(metricsSourceProvider)
 
 	time.Sleep(200 * time.Millisecond)
@@ -94,11 +95,11 @@ func TestMultipleMetrics(t *testing.T) {
 		"p2", 10*time.Millisecond, 10*time.Millisecond,
 		util.NewDummyMetricsSource("s2", 0))
 
-	manager := NewEmptySourceManager()
+	manager := NewSourceManager(flags.Uris{}, time.Minute)
 	manager.AddProvider(msp1)
 	manager.AddProvider(msp2)
 
-	time.Sleep(95 * time.Millisecond)
+	time.Sleep(105 * time.Millisecond)
 	manager.DeleteProvider("p2")
 	time.Sleep(100 * time.Millisecond)
 	manager.DeleteProvider("p1")
@@ -120,7 +121,7 @@ func TestConfig(t *testing.T) {
 	var provider metrics.MetricsSourceProvider
 
 	provider = &testProvider{}
-	url, _ := url.Parse("?collectionInterval=1h&timeOut=1m")
+	url, _ := url.Parse("?collectionInterval=1h&timeout=1m")
 
 	if i, ok := provider.(metrics.ConfigurabeMetricsSourceProvider); ok {
 		i.Configure(url)
@@ -128,7 +129,7 @@ func TestConfig(t *testing.T) {
 	}
 
 	assert.Equal(t, time.Hour, provider.CollectionInterval(), "incorrect CollectionInterval")
-	assert.Equal(t, time.Minute, provider.TimeOut(), "incorrect TimeOut")
+	assert.Equal(t, time.Minute, provider.Timeout(), "incorrect Timeout")
 }
 
 type testProvider struct {

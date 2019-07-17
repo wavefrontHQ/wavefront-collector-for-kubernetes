@@ -121,7 +121,7 @@ func NewDummyMetricsSource(name string, latency time.Duration) *DummyMetricsSour
 type DummyMetricsSourceProvider struct {
 	sources           []MetricsSource
 	collectionIterval time.Duration
-	timeOut           time.Duration
+	timeout           time.Duration
 	name              string
 }
 
@@ -137,15 +137,15 @@ func (this *DummyMetricsSourceProvider) CollectionInterval() time.Duration {
 	return this.collectionIterval
 }
 
-func (this *DummyMetricsSourceProvider) TimeOut() time.Duration {
-	return this.timeOut
+func (this *DummyMetricsSourceProvider) Timeout() time.Duration {
+	return this.timeout
 }
 
-func NewDummyMetricsSourceProvider(name string, collectionIterval, timeOut time.Duration, sources ...MetricsSource) MetricsSourceProvider {
+func NewDummyMetricsSourceProvider(name string, collectionIterval, timeout time.Duration, sources ...MetricsSource) MetricsSourceProvider {
 	return &DummyMetricsSourceProvider{
 		sources:           sources,
 		collectionIterval: collectionIterval,
-		timeOut:           timeOut,
+		timeout:           timeout,
 		name:              name,
 	}
 }

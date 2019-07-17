@@ -66,30 +66,28 @@ type SourceManager interface {
 }
 
 type sourceManagerImpl struct {
+	responseChannel           chan *metrics.DataBatch
+	defaultCollectionInterval time.Duration
+
 	metricsSourcesMtx      sync.Mutex
 	metricsSourceProviders map[string]metrics.MetricsSourceProvider
 	metricsSourceTickers   map[string]*time.Ticker
-	responseChannel        chan *metrics.DataBatch
-	response               []*metrics.DataBatch
-	responseMtx            sync.Mutex
+
+	responseMtx sync.Mutex
+	response    []*metrics.DataBatch
 }
 
-func NewEmptySourceManager() SourceManager {
+// NewSourceManager creates a new NewSourceManager with the configured goMetricsSourceProviders
+func NewSourceManager(src flags.Uris, defaultCollectionInterval time.Duration) SourceManager {
 	sm := &sourceManagerImpl{
-		responseChannel:        make(chan *metrics.DataBatch),
-		metricsSourceProviders: make(map[string]metrics.MetricsSourceProvider),
-		metricsSourceTickers:   make(map[string]*time.Ticker),
+		responseChannel:           make(chan *metrics.DataBatch),
+		metricsSourceProviders:    make(map[string]metrics.MetricsSourceProvider),
+		metricsSourceTickers:      make(map[string]*time.Ticker),
+		defaultCollectionInterval: defaultCollectionInterval,
 	}
 
 	sm.rotateResponse()
 	go sm.run()
-
-	return sm
-}
-
-// NewSourceManager creates a new NewSourceManager with the configured goMetricsSourceProviders
-func NewSourceManager(src flags.Uris) SourceManager {
-	sm := NewEmptySourceManager()
 
 	gometricsSourceProviders := buildProviders(src)
 	providerCount.Update(int64(len(gometricsSourceProviders)))
@@ -103,7 +101,7 @@ func NewSourceManager(src flags.Uris) SourceManager {
 // AddProvider register and start a new goMetricsSourceProvider
 func (sm *sourceManagerImpl) AddProvider(provider metrics.MetricsSourceProvider) {
 	name := provider.Name()
-	glog.Infof("Adding provider: '%s' - collection iterval: '%v' - timeout: '%v'", name, provider.CollectionInterval(), provider.TimeOut())
+	glog.Infof("Adding provider: '%s' - collection iterval: '%v' - timeout: '%v'", name, provider.CollectionInterval(), provider.Timeout())
 	if _, found := sm.metricsSourceProviders[name]; found {
 		glog.Fatalf("Error on 'SourceManager.AddProvider' Duplicate Metrics Source Provider name: '%s'", name)
 	}
@@ -112,18 +110,17 @@ func (sm *sourceManagerImpl) AddProvider(provider metrics.MetricsSourceProvider)
 	defer sm.metricsSourcesMtx.Unlock()
 
 	var ticker *time.Ticker
-	if provider.CollectionInterval() != 0 {
+	if provider.CollectionInterval() > 0 {
 		ticker = time.NewTicker(provider.CollectionInterval())
 	} else {
-		ticker = time.NewTicker(10 * time.Second)
-		glog.Errorf("Provider '%s' have a invalid 'CollectionInterval' using '10s", provider.Name())
+		ticker = time.NewTicker(sm.defaultCollectionInterval)
+		glog.Infof("Provider '%s' have no 'CollectionInterval' using default collection interval '%v", provider.Name(), sm.defaultCollectionInterval)
 	}
 
 	sm.metricsSourceProviders[name] = provider
 	sm.metricsSourceTickers[name] = ticker
 	glog.V(2).Infof("added provider: %s", name)
 
-	go scrape(provider, sm.responseChannel)
 	go func() {
 		for range ticker.C {
 			go scrape(provider, sm.responseChannel)
@@ -140,8 +137,8 @@ func (sm *sourceManagerImpl) DeleteProvider(name string) {
 	defer sm.metricsSourcesMtx.Unlock()
 
 	delete(sm.metricsSourceProviders, name)
-	if tiker, ok := sm.metricsSourceTickers[name]; ok {
-		tiker.Stop()
+	if ticker, ok := sm.metricsSourceTickers[name]; ok {
+		ticker.Stop()
 		delete(sm.metricsSourceTickers, name)
 	}
 	glog.Infof("deleted provider %s", name)
@@ -179,7 +176,7 @@ func scrape(provider metrics.MetricsSourceProvider, channel chan *metrics.DataBa
 		time.Sleep(jitter)
 
 		scrapeStart := time.Now()
-		timeoutTime := scrapeStart.Add(provider.TimeOut())
+		timeoutTime := scrapeStart.Add(provider.Timeout())
 
 		glog.V(2).Infof("Querying source: '%s'", source.Name())
 		gometrics, err := source.ScrapeMetrics()

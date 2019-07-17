@@ -27,40 +27,40 @@ import (
 )
 
 // PushManager deals with data push
-type PushManager interface {
+type FlushManager interface {
 	Start()
 	Stop()
 }
 
-type pushManagerImpl struct {
+type flushManagerImpl struct {
 	sourceManager sources.SourceManager
 	processors    []metrics.DataProcessor
 	sink          metrics.DataSink
-	pushInterval  time.Duration
+	flushInterval time.Duration
 	ticker        *time.Ticker
 	stopChan      chan struct{}
 }
 
-// NewPushManager crates a new PushManager
-func NewPushManager(source sources.SourceManager, processors []metrics.DataProcessor,
-	sink metrics.DataSink, pushInterval time.Duration) (PushManager, error) {
-	manager := pushManagerImpl{
+// NewFlushManager crates a new PushManager
+func NewFlushManager(source sources.SourceManager, processors []metrics.DataProcessor,
+	sink metrics.DataSink, flushInterval time.Duration) (FlushManager, error) {
+	manager := flushManagerImpl{
 		sourceManager: source,
 		processors:    processors,
 		sink:          sink,
-		pushInterval:  pushInterval,
+		flushInterval: flushInterval,
 		stopChan:      make(chan struct{}),
 	}
 
 	return &manager, nil
 }
 
-func (rm *pushManagerImpl) Start() {
-	rm.ticker = time.NewTicker(rm.pushInterval)
+func (rm *flushManagerImpl) Start() {
+	rm.ticker = time.NewTicker(rm.flushInterval)
 	go rm.run()
 }
 
-func (rm *pushManagerImpl) run() {
+func (rm *flushManagerImpl) run() {
 	for {
 		select {
 		case <-rm.ticker.C:
@@ -74,11 +74,11 @@ func (rm *pushManagerImpl) run() {
 	}
 }
 
-func (rm *pushManagerImpl) Stop() {
+func (rm *flushManagerImpl) Stop() {
 	rm.stopChan <- struct{}{}
 }
 
-func (rm *pushManagerImpl) push() {
+func (rm *flushManagerImpl) push() {
 	dataList := rm.sourceManager.GetPendingMetrics()
 	for _, data := range dataList {
 		for _, p := range rm.processors {

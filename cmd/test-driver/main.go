@@ -53,10 +53,10 @@ func main() {
 	logs.InitLogs()
 	defer logs.FlushLogs()
 
-	sourceManager := sources.NewSourceManager(opt.Sources)
+	sourceManager := sources.NewSourceManager(opt.Sources, opt.DefaultCollectionInterval)
 	sinkManager := createAndInitSinksOrDie(opt.Sinks, opt.SinkExportDataTimeout)
 
-	man, err := manager.NewPushManager(sourceManager, nil, sinkManager, opt.PushInterval)
+	man, err := manager.NewFlushManager(sourceManager, nil, sinkManager, opt.FlushInterval)
 	if err != nil {
 		glog.Fatalf("Failed to create main manager: %v", err)
 	}
