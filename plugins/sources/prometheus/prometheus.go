@@ -292,7 +292,7 @@ type prometheusProvider struct {
 }
 
 func (p *prometheusProvider) GetMetricsSources() []MetricsSource {
-	if p.discovered != "" && !leadership.Leading() {
+	if p.discovered == "" && !leadership.Leading() {
 		glog.V(2).Infof("not scraping sources from: %s. current leader: %s", p.name, leadership.Leader())
 		return nil
 	}

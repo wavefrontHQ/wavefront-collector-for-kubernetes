@@ -15,8 +15,8 @@ GIT_COMMIT:=$(shell git rev-parse --short HEAD)
 
 REPO_DIR:=$(shell pwd)
 
-# for testing, the built image will also be tagged with this name
-OVERRIDE_IMAGE_NAME?=glaullon/wavefront-collector:latest
+# for testing, the built image will also be tagged with this name provided via an environment variable
+OVERRIDE_IMAGE_NAME?=${COLLECTOR_TEST_IMAGE}
 
 LDFLAGS=-w -X main.version=$(VERSION) -X main.commit=$(GIT_COMMIT)
 

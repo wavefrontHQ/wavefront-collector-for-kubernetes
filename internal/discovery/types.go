@@ -62,12 +62,18 @@ type Discoverer interface {
 	Delete(resource Resource)
 }
 
-// Handles a single discovery rule
+// Handles the loading of discovery rules
 type RuleHandler interface {
+	// Handles all the discovery rules
+	HandleAll(cfg []PluginConfig) error
 	// Handle a single discovery rule
-	Handle(cfg interface{}) error
+	Handle(cfg PluginConfig) error
+	// Deletes all the rules
+	DeleteAll()
 	// Delete the rule and discovered targets
 	Delete(name string)
+	// Count of currently loaded rules
+	Count() int
 }
 
 type Encoder interface {
