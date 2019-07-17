@@ -17,6 +17,15 @@ sinks:
 kubernetes_source:
   prefix: kubernetes.
 
+prometheus_sources:
+- url: 'https://kubernetes.default.svc.cluster.local:443'
+  httpConfig:
+    bearer_token_file: '/var/run/secrets/kubernetes.io/serviceaccount/token'
+    tls_config:
+      ca_file: '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
+      insecure_skip_verify: true
+  prefix: 'kube.apiserver.'
+
 discovery_configs:
   - type: telegraf/redis
     name: "redis"

@@ -3,6 +3,7 @@ package configuration
 import (
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/httputil"
 	"time"
 )
 
@@ -104,6 +105,9 @@ type PrometheusSourceConfig struct {
 	// The URL for a Prometheus metrics endpoint. Kubernetes Service URLs work across namespaces.
 	URL string `yaml:"url"`
 
+	// Optional HTTP client configuration.
+	HTTPClientConfig httputil.ClientConfig `yaml:"httpConfig"`
+
 	// The prefix (dot suffixed such as prom.) to be applied to all metrics for this source. Defaults to empty string.
 	Prefix string `yaml:"prefix"`
 
@@ -119,8 +123,6 @@ type PrometheusSourceConfig struct {
 	// internal use only
 	Discovered string `yaml:"-"`
 	Name       string `yaml:"-"`
-
-	//TODO: include tls configuration?
 }
 
 // Configuration options for a Telegraf source
