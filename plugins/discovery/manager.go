@@ -96,6 +96,7 @@ func (dm *Manager) Stop() {
 	dm.serviceListener.stop()
 	close(dm.stopCh)
 
+	dm.discoverer.Stop()
 	dm.ruleHandler.DeleteAll()
 }
 

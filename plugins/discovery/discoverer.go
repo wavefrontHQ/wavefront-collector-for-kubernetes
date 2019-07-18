@@ -18,16 +18,20 @@ type delegate struct {
 }
 
 type discoverer struct {
+	queue           chan discovery.Resource
 	runtimeHandlers []discovery.TargetHandler
 	mtx             sync.RWMutex
 	delegates       map[string]*delegate
 }
 
 func newDiscoverer(handler metrics.ProviderHandler, plugins []discovery.PluginConfig) discovery.Discoverer {
-	return &discoverer{
+	d := &discoverer{
+		queue:           make(chan discovery.Resource, 1000),
 		runtimeHandlers: makeRuntimeHandlers(handler),
 		delegates:       makeDelegates(handler, plugins),
 	}
+	go d.process()
+	return d
 }
 
 func makeRuntimeHandlers(handler metrics.ProviderHandler) []discovery.TargetHandler {
@@ -70,8 +74,38 @@ func makeDelegate(handler metrics.ProviderHandler, plugin discovery.PluginConfig
 	}, nil
 }
 
+func (d *discoverer) process() {
+	for {
+		select {
+		case resource, more := <-d.queue:
+			if !more {
+				glog.Infof("stopping resource discovery processing")
+				return
+			}
+			switch resource.Status {
+			case "delete":
+				d.internalDelete(resource)
+			default:
+				d.internalDiscover(resource)
+			}
+		}
+	}
+}
+
+func (d *discoverer) Stop() {
+	close(d.queue)
+}
+
 func (d *discoverer) Discover(resource discovery.Resource) {
-	//TODO: make async?
+	d.queue <- resource
+}
+
+func (d *discoverer) Delete(resource discovery.Resource) {
+	resource.Status = "delete"
+	d.queue <- resource
+}
+
+func (d *discoverer) internalDiscover(resource discovery.Resource) {
 	d.mtx.RLock()
 	defer d.mtx.RUnlock()
 
@@ -87,8 +121,7 @@ func (d *discoverer) Discover(resource discovery.Resource) {
 	}
 }
 
-func (d *discoverer) Delete(resource discovery.Resource) {
-	//TODO: make async?
+func (d *discoverer) internalDelete(resource discovery.Resource) {
 	d.mtx.RLock()
 	defer d.mtx.RUnlock()
 
