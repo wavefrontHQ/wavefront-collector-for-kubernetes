@@ -44,9 +44,9 @@ const (
 )
 
 type Resource struct {
-	Kind string
-	IP   string
-	Meta metav1.ObjectMeta
+	Kind   string
+	IP     string
+	Meta   metav1.ObjectMeta
 	Status string
 
 	PodSpec     v1.PodSpec
