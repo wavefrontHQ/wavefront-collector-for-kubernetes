@@ -38,9 +38,6 @@ func (this *ClusterAggregator) Process(batch *metrics.DataBatch) (*metrics.DataB
 		}
 	}
 
-	if batch.MetricSets == nil {
-		batch.MetricSets = map[string]*metrics.MetricSet{}
-	}
 	batch.MetricSets[clusterKey] = cluster
 	return batch, nil
 }

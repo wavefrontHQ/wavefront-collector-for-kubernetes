@@ -82,12 +82,14 @@ func (rm *flushManagerImpl) push() {
 	dataList := rm.sourceManager.GetPendingMetrics()
 	for _, data := range dataList {
 		for _, p := range rm.processors {
-			newData, err := p.Process(data)
-			if err == nil {
-				data = newData
-			} else {
-				glog.Errorf("Error in processor: %v", err)
-				return
+			if data.MetricSets != nil {
+				newData, err := p.Process(data)
+				if err == nil {
+					data = newData
+				} else {
+					glog.Errorf("Error in processor: %v", err)
+					return
+				}
 			}
 		}
 		// Export data to sinks

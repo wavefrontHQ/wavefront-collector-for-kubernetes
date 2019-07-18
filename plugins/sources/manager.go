@@ -89,9 +89,8 @@ func NewSourceManager(src flags.Uris, defaultCollectionInterval time.Duration) S
 	sm.rotateResponse()
 	go sm.run()
 
-	gometricsSourceProviders := buildProviders(src)
-	providerCount.Update(int64(len(gometricsSourceProviders)))
-	for _, runtime := range gometricsSourceProviders {
+	metricsSourceProviders := buildProviders(src)
+	for _, runtime := range metricsSourceProviders {
 		sm.AddProvider(runtime)
 	}
 
@@ -120,6 +119,8 @@ func (sm *sourceManagerImpl) AddProvider(provider metrics.MetricsSourceProvider)
 	sm.metricsSourceProviders[name] = provider
 	sm.metricsSourceTickers[name] = ticker
 	glog.V(2).Infof("added provider: %s", name)
+
+	providerCount.Update(int64(len(sm.metricsSourceProviders)))
 
 	go func() {
 		for range ticker.C {
@@ -176,7 +177,10 @@ func scrape(provider metrics.MetricsSourceProvider, channel chan *metrics.DataBa
 		time.Sleep(jitter)
 
 		scrapeStart := time.Now()
-		timeoutTime := scrapeStart.Add(provider.Timeout())
+		timeout := provider.Timeout()
+		if timeout <= 0 {
+			timeout = time.Minute
+		}
 
 		glog.V(2).Infof("Querying source: '%s'", source.Name())
 		gometrics, err := source.ScrapeMetrics()
@@ -190,9 +194,9 @@ func scrape(provider metrics.MetricsSourceProvider, channel chan *metrics.DataBa
 		latency := now.Sub(scrapeStart)
 		scrapeLatency.Update(latency.Nanoseconds())
 
-		if !now.Before(timeoutTime) {
+		if !now.Before(scrapeStart.Add(timeout)) {
 			scrapeTimeouts.Inc(1)
-			glog.Warningf("Failed to get '%s' response in time", source.Name())
+			glog.Warningf("Failed to get '%s' response in time (% slatency)", source.Name(), latency)
 			return
 		}
 		channel <- gometrics
