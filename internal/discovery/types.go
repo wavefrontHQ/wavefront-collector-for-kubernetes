@@ -44,9 +44,10 @@ const (
 )
 
 type Resource struct {
-	Kind string
-	IP   string
-	Meta metav1.ObjectMeta
+	Kind   string
+	IP     string
+	Meta   metav1.ObjectMeta
+	Status string
 
 	PodSpec     v1.PodSpec
 	ServiceSpec v1.ServiceSpec
@@ -60,6 +61,7 @@ type ResourceLister interface {
 type Discoverer interface {
 	Discover(resource Resource)
 	Delete(resource Resource)
+	Stop()
 }
 
 // Handles the loading of discovery rules
