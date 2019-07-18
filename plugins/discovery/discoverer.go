@@ -18,6 +18,7 @@ type delegate struct {
 }
 
 type discoverer struct {
+	wg              sync.WaitGroup
 	queue           chan discovery.Resource
 	runtimeHandlers []discovery.TargetHandler
 	mtx             sync.RWMutex
@@ -30,7 +31,7 @@ func newDiscoverer(handler metrics.ProviderHandler, plugins []discovery.PluginCo
 		runtimeHandlers: makeRuntimeHandlers(handler),
 		delegates:       makeDelegates(handler, plugins),
 	}
-	go d.process()
+	go d.dequeue()
 	return d
 }
 
@@ -74,35 +75,36 @@ func makeDelegate(handler metrics.ProviderHandler, plugin discovery.PluginConfig
 	}, nil
 }
 
-func (d *discoverer) process() {
-	for {
-		select {
-		case resource, more := <-d.queue:
-			if !more {
-				glog.Infof("stopping resource discovery processing")
-				return
-			}
-			switch resource.Status {
-			case "delete":
-				d.internalDelete(resource)
-			default:
-				d.internalDiscover(resource)
-			}
+func (d *discoverer) enqueue(resource discovery.Resource) {
+	d.wg.Add(1)
+	defer d.wg.Done()
+	d.queue <- resource
+}
+
+func (d *discoverer) dequeue() {
+	for resource := range d.queue {
+		switch resource.Status {
+		case "delete":
+			d.internalDelete(resource)
+		default:
+			d.internalDiscover(resource)
 		}
 	}
+	glog.Infof("stopping discoverer deque")
 }
 
 func (d *discoverer) Stop() {
+	d.wg.Wait()
 	close(d.queue)
 }
 
 func (d *discoverer) Discover(resource discovery.Resource) {
-	d.queue <- resource
+	d.enqueue(resource)
 }
 
 func (d *discoverer) Delete(resource discovery.Resource) {
 	resource.Status = "delete"
-	d.queue <- resource
+	d.enqueue(resource)
 }
 
 func (d *discoverer) internalDiscover(resource discovery.Resource) {

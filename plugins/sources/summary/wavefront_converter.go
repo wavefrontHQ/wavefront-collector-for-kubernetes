@@ -2,6 +2,7 @@ package summary
 
 import (
 	"github.com/wavefronthq/go-metrics-wavefront/reporting"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
 	"net/url"
 	"strings"
 
@@ -56,6 +57,7 @@ func (converter *pointConverter) Process(batch *metrics.DataBatch) (*metrics.Dat
 	}
 
 	metricSets := batch.MetricSets
+	nodeName := util.GetNodeName()
 	ts := batch.Timestamp
 
 	glog.V(2).Infof("processing %d metric sets", len(metricSets))
@@ -86,13 +88,15 @@ func (converter *pointConverter) Process(batch *metrics.DataBatch) (*metrics.Dat
 			}
 
 			ts := ts.Unix()
-			source := ""
-			if metricType == "cluster" {
-				source = converter.cluster
-			} else if metricType == "ns" {
-				source = tags["namespace_name"] + "-ns"
-			} else {
-				source = hostname
+			source := nodeName
+			if source == "" {
+				if metricType == "cluster" {
+					source = converter.cluster
+				} else if metricType == "ns" {
+					source = tags["namespace_name"] + "-ns"
+				} else {
+					source = hostname
+				}
 			}
 			processTags(tags)
 

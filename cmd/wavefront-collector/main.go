@@ -86,7 +86,7 @@ func main() {
 
 func preRegister(opt *options.CollectorRunOptions) {
 	if opt.Daemon {
-		nodeName := os.Getenv(util.NodeNameEnvVar)
+		nodeName := util.GetNodeName()
 		if nodeName == "" {
 			glog.Fatalf("missing environment variable %s", util.NodeNameEnvVar)
 		}
