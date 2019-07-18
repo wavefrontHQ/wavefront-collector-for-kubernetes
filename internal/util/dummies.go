@@ -15,7 +15,6 @@
 package util
 
 import (
-	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -79,7 +78,7 @@ type DummyMetricsSource struct {
 }
 
 func (this *DummyMetricsSource) Name() string {
-	return fmt.Sprintf("dummy %s", this.name)
+	return this.name
 }
 
 func (this *DummyMetricsSource) ScrapeMetrics() (*DataBatch, error) {

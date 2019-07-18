@@ -23,7 +23,6 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/golang/glog"
 	"github.com/stretchr/testify/assert"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/flags"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
 )
@@ -35,17 +34,16 @@ func init() {
 }
 
 func TestNoTimeout(t *testing.T) {
-	metricsSourceProvider := util.NewDummyMetricsSourceProvider("dummy",
+	metricsSourceProvider := util.NewDummyMetricsSourceProvider("dummy_nt",
 		100*time.Millisecond, 100*time.Millisecond,
-		util.NewDummyMetricsSource("s1", 10*time.Millisecond),
-		util.NewDummyMetricsSource("s2", 10*time.Millisecond))
+		util.NewDummyMetricsSource("nto_1", 10*time.Millisecond),
+		util.NewDummyMetricsSource("nto_2", 10*time.Millisecond))
 
-	manager := NewSourceManager(flags.Uris{}, time.Minute)
-	manager.AddProvider(metricsSourceProvider)
+	Manager().AddProvider(metricsSourceProvider)
 
 	time.Sleep(200 * time.Millisecond)
 
-	dataBatchList := manager.GetPendingMetrics()
+	dataBatchList := Manager().GetPendingMetrics()
 
 	present := make(map[string]bool)
 	for _, dataBatch := range dataBatchList {
@@ -54,10 +52,10 @@ func TestNoTimeout(t *testing.T) {
 		}
 	}
 
-	manager.DeleteProvider("dummy")
+	Manager().StopProviders()
 
-	assert.True(t, present["dummy.s1"], "s1 not found - present:%v", present)
-	assert.True(t, present["dummy.s1"], "s2 not found - present:%v", present)
+	assert.True(t, present["nto_1"], "nto_1 not found - present:%v", present)
+	assert.True(t, present["nto_2"], "nto_2 not found - present:%v", present)
 }
 
 func TestTimeout(t *testing.T) {
@@ -66,12 +64,11 @@ func TestTimeout(t *testing.T) {
 		util.NewDummyMetricsSource("s1", 50*time.Millisecond),
 		util.NewDummyMetricsSource("s2", 100*time.Millisecond))
 
-	manager := NewSourceManager(flags.Uris{}, time.Minute)
-	manager.AddProvider(metricsSourceProvider)
+	Manager().AddProvider(metricsSourceProvider)
 
 	time.Sleep(200 * time.Millisecond)
 
-	dataBatchList := manager.GetPendingMetrics()
+	dataBatchList := Manager().GetPendingMetrics()
 
 	present := make(map[string]bool)
 	for _, dataBatch := range dataBatchList {
@@ -80,10 +77,11 @@ func TestTimeout(t *testing.T) {
 		}
 	}
 
-	manager.DeleteProvider("dummy")
+	Manager().StopProviders()
 
-	assert.True(t, present["dummy.s1"], "s1 not found - present:%v", present)
-	assert.False(t, present["dummy.s2"], "s2 found - present:%v", present)
+	assert.True(t, present["s1"], "s1 not found - present:%v", present)
+	assert.False(t, present["s2"], "s2 found - present:%v", present)
+
 }
 
 func TestMultipleMetrics(t *testing.T) {
@@ -95,16 +93,15 @@ func TestMultipleMetrics(t *testing.T) {
 		"p2", 10*time.Millisecond, 10*time.Millisecond,
 		util.NewDummyMetricsSource("s2", 0))
 
-	manager := NewSourceManager(flags.Uris{}, time.Minute)
-	manager.AddProvider(msp1)
-	manager.AddProvider(msp2)
+	Manager().AddProvider(msp1)
+	Manager().AddProvider(msp2)
 
 	time.Sleep(105 * time.Millisecond)
-	manager.DeleteProvider("p2")
-	time.Sleep(100 * time.Millisecond)
-	manager.DeleteProvider("p1")
+	Manager().DeleteProvider("p2")
+	time.Sleep(95 * time.Millisecond)
+	Manager().DeleteProvider("p1")
 
-	dataBatchList := manager.GetPendingMetrics()
+	dataBatchList := Manager().GetPendingMetrics()
 
 	counts := make(map[string]int)
 	for _, dataBatch := range dataBatchList {
@@ -113,8 +110,10 @@ func TestMultipleMetrics(t *testing.T) {
 		}
 	}
 
-	assert.Equal(t, 20, counts["dummy.s1"], "incorrect s1 count - counts: %vs", counts)
-	assert.Equal(t, 10, counts["dummy.s2"], "incorrect s2 count - counts: %v", counts)
+	Manager().StopProviders()
+
+	assert.Equal(t, 20, counts["s1"], "incorrect s1 count - counts: %vs", counts)
+	assert.Equal(t, 10, counts["s2"], "incorrect s2 count - counts: %v", counts)
 }
 
 func TestConfig(t *testing.T) {
@@ -136,10 +135,10 @@ type testProvider struct {
 	metrics.DefaultMetricsSourceProvider
 }
 
-func (this *testProvider) GetMetricsSources() []metrics.MetricsSource {
+func (p *testProvider) GetMetricsSources() []metrics.MetricsSource {
 	return make([]metrics.MetricsSource, 0)
 }
 
-func (this *testProvider) Name() string {
+func (p *testProvider) Name() string {
 	return "testProvider"
 }

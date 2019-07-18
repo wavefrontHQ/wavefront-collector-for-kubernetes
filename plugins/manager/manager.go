@@ -26,14 +26,13 @@ import (
 	"github.com/golang/glog"
 )
 
-// PushManager deals with data push
+// FlushManager deals with data push
 type FlushManager interface {
 	Start()
 	Stop()
 }
 
 type flushManagerImpl struct {
-	sourceManager sources.SourceManager
 	processors    []metrics.DataProcessor
 	sink          metrics.DataSink
 	flushInterval time.Duration
@@ -42,10 +41,9 @@ type flushManagerImpl struct {
 }
 
 // NewFlushManager crates a new PushManager
-func NewFlushManager(source sources.SourceManager, processors []metrics.DataProcessor,
+func NewFlushManager(processors []metrics.DataProcessor,
 	sink metrics.DataSink, flushInterval time.Duration) (FlushManager, error) {
 	manager := flushManagerImpl{
-		sourceManager: source,
 		processors:    processors,
 		sink:          sink,
 		flushInterval: flushInterval,
@@ -67,7 +65,7 @@ func (rm *flushManagerImpl) run() {
 			go rm.push()
 		case <-rm.stopChan:
 			rm.ticker.Stop()
-			rm.sourceManager.Stop()
+			sources.Manager().StopProviders()
 			rm.sink.Stop()
 			return
 		}
@@ -79,7 +77,7 @@ func (rm *flushManagerImpl) Stop() {
 }
 
 func (rm *flushManagerImpl) push() {
-	dataList := rm.sourceManager.GetPendingMetrics()
+	dataList := sources.Manager().GetPendingMetrics()
 	for _, data := range dataList {
 		for _, p := range rm.processors {
 			if data.MetricSets != nil {

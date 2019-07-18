@@ -7,7 +7,6 @@ import (
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery/utils"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/telegraf"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,11 +14,10 @@ import (
 
 var defaultEncoder = telegrafEncoder{}
 
-func NewTargetHandler(handler metrics.ProviderHandler, plugin string) discovery.TargetHandler {
+func NewTargetHandler(plugin string) discovery.TargetHandler {
 	registryName := strings.Replace(plugin, "/", ".", -1)
 	return discovery.NewHandler(
 		discovery.ProviderInfo{
-			Handler: handler,
 			Factory: telegraf.NewFactory(),
 			Encoder: defaultEncoder,
 		},

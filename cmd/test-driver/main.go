@@ -15,7 +15,6 @@ import (
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/options"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/manager"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sinks"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources"
 
 	kubeFlag "k8s.io/apiserver/pkg/util/flag"
 	"k8s.io/apiserver/pkg/util/logs"
@@ -53,10 +52,9 @@ func main() {
 	logs.InitLogs()
 	defer logs.FlushLogs()
 
-	sourceManager := sources.NewSourceManager(opt.Sources, opt.DefaultCollectionInterval)
 	sinkManager := createAndInitSinksOrDie(opt.Sinks, opt.SinkExportDataTimeout)
 
-	man, err := manager.NewFlushManager(sourceManager, nil, sinkManager, opt.FlushInterval)
+	man, err := manager.NewFlushManager(nil, sinkManager, opt.FlushInterval)
 	if err != nil {
 		glog.Fatalf("Failed to create main manager: %v", err)
 	}

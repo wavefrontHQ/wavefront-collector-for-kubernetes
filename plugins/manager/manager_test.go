@@ -19,8 +19,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/flags"
-
 	"github.com/go-kit/kit/log"
 	"github.com/golang/glog"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
@@ -42,10 +40,9 @@ func TestFlow(t *testing.T) {
 	sink := util.NewDummySink("sink", time.Millisecond)
 	processor := util.NewDummyDataProcessor(time.Millisecond)
 
-	sourceManager := sources.NewSourceManager(flags.Uris{}, time.Minute)
-	sourceManager.AddProvider(provider)
+	sources.Manager().AddProvider(provider)
 
-	manager, _ := NewFlushManager(sourceManager, []metrics.DataProcessor{processor}, sink, 100*time.Millisecond)
+	manager, _ := NewFlushManager([]metrics.DataProcessor{processor}, sink, 100*time.Millisecond)
 	manager.Start()
 
 	// 4-5 cycles

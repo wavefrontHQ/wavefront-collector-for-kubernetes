@@ -7,7 +7,6 @@ import (
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/kubernetes"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/leadership"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -15,16 +14,14 @@ import (
 // handles runtime changes to plugin rules
 type ruleHandler struct {
 	d          *discoverer
-	ph         metrics.ProviderHandler
 	daemon     bool
 	rulesCount gm.Gauge
 }
 
 // Gets a new rule handler that can handle runtime changes to plugin rules
-func newRuleHandler(d discovery.Discoverer, ph metrics.ProviderHandler, daemon bool) discovery.RuleHandler {
+func newRuleHandler(d discovery.Discoverer, daemon bool) discovery.RuleHandler {
 	return &ruleHandler{
 		d:          d.(*discoverer),
-		ph:         ph,
 		daemon:     daemon,
 		rulesCount: gm.GetOrRegisterGauge("discovery.rules.count", gm.DefaultRegistry),
 	}
@@ -91,7 +88,7 @@ func (rh *ruleHandler) internalHandle(plugin discovery.PluginConfig) error {
 	delegate, exists := rh.d.delegates[plugin.Name]
 	if !exists {
 		var err error
-		delegate, err = makeDelegate(rh.ph, plugin)
+		delegate, err = makeDelegate(plugin)
 		if err != nil {
 			return err
 		}

@@ -119,7 +119,8 @@ func createAgentOrDie(opt *options.CollectorRunOptions, cfg *configuration.Confi
 	klog.ClampLevel(klog.Level(cfg.LogLevel))
 
 	// create source and sink managers
-	sourceManager := sources.NewSourceManager(opt.Sources, opt.DefaultCollectionInterval)
+	sources.Manager().SetDefaultCollectionInterval(opt.DefaultCollectionInterval)
+	sources.Manager().BuildProviders(opt.Sources)
 	sinkManager := createSinkManagerOrDie(opt.Sinks, opt.SinkExportDataTimeout)
 
 	// create data processors
@@ -129,11 +130,10 @@ func createAgentOrDie(opt *options.CollectorRunOptions, cfg *configuration.Confi
 	dataProcessors := createDataProcessorsOrDie(kubernetesUrl, clusterName, podLister)
 
 	// create discovery manager
-	handler := sourceManager.(metrics.ProviderHandler)
-	dm := createDiscoveryManagerOrDie(kubeClient, plugins, handler, opt)
+	dm := createDiscoveryManagerOrDie(kubeClient, plugins, opt)
 
 	// create uber manager
-	man, err := manager.NewFlushManager(sourceManager, dataProcessors, sinkManager, opt.FlushInterval)
+	man, err := manager.NewFlushManager(dataProcessors, sinkManager, opt.FlushInterval)
 	if err != nil {
 		glog.Fatalf("Failed to create main manager: %v", err)
 	}
@@ -224,13 +224,13 @@ func registerListeners(ag *agent.Agent, opt *options.CollectorRunOptions) {
 }
 
 func createDiscoveryManagerOrDie(client *kube_client.Clientset, plugins []discConfig.PluginConfig,
-	handler metrics.ProviderHandler, opt *options.CollectorRunOptions) *discovery.Manager {
+	opt *options.CollectorRunOptions) *discovery.Manager {
 	if opt.EnableDiscovery {
 		// backwards compatibility, discovery config was a separate file
 		if len(plugins) == 0 && opt.DiscoveryConfigFile != "" {
 			plugins = loadPluginsOrDie(opt.DiscoveryConfigFile)
 		}
-		return discovery.NewDiscoveryManager(client, plugins, handler, opt.Daemon)
+		return discovery.NewDiscoveryManager(client, plugins, opt.Daemon)
 	}
 	return nil
 }
