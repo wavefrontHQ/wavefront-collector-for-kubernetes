@@ -4,6 +4,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/discovery"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/manager"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources"
 )
 
 type Agent struct {
@@ -38,4 +39,6 @@ func (a *Agent) Stop() {
 	if a.dm != nil {
 		a.dm.Stop()
 	}
+	sources.Manager().StopProviders()
+	glog.Infof("Agent stopped")
 }

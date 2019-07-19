@@ -65,7 +65,6 @@ func (rm *flushManagerImpl) run() {
 			go rm.push()
 		case <-rm.stopChan:
 			rm.ticker.Stop()
-			sources.Manager().StopProviders()
 			rm.sink.Stop()
 			return
 		}

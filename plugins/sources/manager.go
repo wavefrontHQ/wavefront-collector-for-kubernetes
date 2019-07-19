@@ -158,7 +158,8 @@ func (sm *sourceManagerImpl) AddProvider(provider metrics.MetricsSourceProvider)
 
 func (sm *sourceManagerImpl) DeleteProvider(name string) {
 	if _, found := sm.metricsSourceProviders[name]; !found {
-		glog.Fatalf("Error on 'SourceManager.DeleteProvider'  Metrics Source Provider '%s' not found", name)
+		glog.V(4).Infof("Metrics Source Provider '%s' not found", name)
+		return
 	}
 
 	sm.metricsSourcesMtx.Lock()
@@ -171,7 +172,7 @@ func (sm *sourceManagerImpl) DeleteProvider(name string) {
 	}
 	if quit, ok := sm.metricsSourceQuits[name]; ok {
 		close(quit)
-		delete(sm.metricsSourceTickers, name)
+		delete(sm.metricsSourceQuits, name)
 	}
 	glog.Infof("deleted provider %s", name)
 }
