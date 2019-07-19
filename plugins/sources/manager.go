@@ -67,7 +67,7 @@ type SourceManager interface {
 	StopProviders()
 	GetPendingMetrics() []*metrics.DataBatch
 	SetDefaultCollectionInterval(time.Duration)
-	BuildProviders(src flags.Uris)
+	BuildProviders(src flags.Uris) error
 }
 
 type sourceManagerImpl struct {
@@ -101,11 +101,15 @@ func Manager() SourceManager {
 }
 
 // NewSourceManager creates a new NewSourceManager with the configured goMetricsSourceProviders
-func (sm *sourceManagerImpl) BuildProviders(src flags.Uris) {
-	metricsSourceProviders := buildProviders(src)
-	for _, runtime := range metricsSourceProviders {
+func (sm *sourceManagerImpl) BuildProviders(src flags.Uris) error {
+	sources := buildProviders(src)
+	for _, runtime := range sources {
 		sm.AddProvider(runtime)
 	}
+	if len(sm.metricsSourceProviders) == 0 {
+		return fmt.Errorf("No available sources to use")
+	}
+	return nil
 }
 
 func (sm *sourceManagerImpl) SetDefaultCollectionInterval(defaultCollectionInterval time.Duration) {

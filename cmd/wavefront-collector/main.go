@@ -118,9 +118,14 @@ func createAgentOrDie(opt *options.CollectorRunOptions, cfg *configuration.Confi
 	glog.ClampLevel(glog.Level(cfg.LogLevel))
 	klog.ClampLevel(klog.Level(cfg.LogLevel))
 
-	// create source and sink managers
+	// create sources manager
 	sources.Manager().SetDefaultCollectionInterval(opt.DefaultCollectionInterval)
-	sources.Manager().BuildProviders(opt.Sources)
+	err := sources.Manager().BuildProviders(opt.Sources)
+	if err != nil {
+		glog.Fatalf("Failed to create source manager: %v", err)
+	}
+
+	// create sink managers
 	sinkManager := createSinkManagerOrDie(opt.Sinks, opt.SinkExportDataTimeout)
 
 	// create data processors
