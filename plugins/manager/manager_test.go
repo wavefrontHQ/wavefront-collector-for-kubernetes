@@ -15,43 +15,41 @@
 package manager
 
 import (
+	"os"
 	"testing"
 	"time"
 
+	"github.com/go-kit/kit/log"
+	"github.com/golang/glog"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources"
 )
 
+func init() {
+	logger := log.NewLogfmtLogger(log.NewSyncWriter(os.Stdout))
+	logger = log.With(logger, "ts", log.DefaultTimestampUTC)
+	glog.SetLogger(logger)
+}
+
 func TestFlow(t *testing.T) {
-	source := util.NewDummyMetricsSource("src", time.Millisecond)
+	provider := util.NewDummyMetricsSourceProvider(
+		"p1", 100*time.Millisecond, 100*time.Millisecond,
+		util.NewDummyMetricsSource("src", time.Millisecond))
+
 	sink := util.NewDummySink("sink", time.Millisecond)
 	processor := util.NewDummyDataProcessor(time.Millisecond)
 
-	manager, _ := NewManager(source, []metrics.DataProcessor{processor}, sink, time.Second, time.Millisecond, 1)
+	sources.Manager().AddProvider(provider)
+
+	manager, _ := NewFlushManager([]metrics.DataProcessor{processor}, sink, 100*time.Millisecond)
 	manager.Start()
 
 	// 4-5 cycles
-	time.Sleep(time.Millisecond * 4500)
+	time.Sleep(time.Millisecond * 550)
 	manager.Stop()
 
 	if sink.GetExportCount() < 4 || sink.GetExportCount() > 5 {
-		t.Fatalf("Wrong number of exports executed: %d", sink.GetExportCount())
-	}
-}
-
-func TestThrottling(t *testing.T) {
-	source := util.NewDummyMetricsSource("src", time.Millisecond)
-	sink := util.NewDummySink("sink", 4*time.Second)
-	processor := util.NewDummyDataProcessor(5 * time.Millisecond)
-
-	manager, _ := NewManager(source, []metrics.DataProcessor{processor}, sink, time.Second, time.Millisecond, 1)
-	manager.Start()
-
-	// 4-5 cycles
-	time.Sleep(time.Millisecond * 9500)
-	manager.Stop()
-
-	if sink.GetExportCount() < 2 || sink.GetExportCount() > 3 {
 		t.Fatalf("Wrong number of exports executed: %d", sink.GetExportCount())
 	}
 }

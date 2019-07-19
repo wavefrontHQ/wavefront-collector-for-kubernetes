@@ -21,121 +21,75 @@ import (
 	"time"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources"
 
 	"github.com/golang/glog"
 )
 
-const (
-	DefaultScrapeOffset   = 5 * time.Second
-	DefaultMaxParallelism = 3
-)
-
-type Manager interface {
+// FlushManager deals with data push
+type FlushManager interface {
 	Start()
 	Stop()
 }
 
-type realManager struct {
-	source                 metrics.MetricsSource
-	processors             []metrics.DataProcessor
-	sink                   metrics.DataSink
-	resolution             time.Duration
-	scrapeOffset           time.Duration
-	stopChan               chan struct{}
-	housekeepSemaphoreChan chan struct{}
-	housekeepTimeout       time.Duration
+type flushManagerImpl struct {
+	processors    []metrics.DataProcessor
+	sink          metrics.DataSink
+	flushInterval time.Duration
+	ticker        *time.Ticker
+	stopChan      chan struct{}
 }
 
-func NewManager(source metrics.MetricsSource, processors []metrics.DataProcessor, sink metrics.DataSink, resolution time.Duration,
-	scrapeOffset time.Duration, maxParallelism int) (Manager, error) {
-	manager := realManager{
-		source:                 source,
-		processors:             processors,
-		sink:                   sink,
-		resolution:             resolution,
-		scrapeOffset:           scrapeOffset,
-		stopChan:               make(chan struct{}),
-		housekeepSemaphoreChan: make(chan struct{}, maxParallelism),
-		housekeepTimeout:       resolution / 2,
-	}
-
-	for i := 0; i < maxParallelism; i++ {
-		manager.housekeepSemaphoreChan <- struct{}{}
+// NewFlushManager crates a new PushManager
+func NewFlushManager(processors []metrics.DataProcessor,
+	sink metrics.DataSink, flushInterval time.Duration) (FlushManager, error) {
+	manager := flushManagerImpl{
+		processors:    processors,
+		sink:          sink,
+		flushInterval: flushInterval,
+		stopChan:      make(chan struct{}),
 	}
 
 	return &manager, nil
 }
 
-func (rm *realManager) Start() {
-	go rm.Housekeep()
+func (rm *flushManagerImpl) Start() {
+	rm.ticker = time.NewTicker(rm.flushInterval)
+	go rm.run()
 }
 
-func (rm *realManager) Stop() {
-	rm.stopChan <- struct{}{}
-}
-
-func (rm *realManager) Handle(cfg interface{}) {
-	// no-op
-}
-
-func (rm *realManager) Housekeep() {
+func (rm *flushManagerImpl) run() {
 	for {
-		// Always try to get the newest metrics
-		now := time.Now()
-		start := now.Truncate(rm.resolution)
-		end := start.Add(rm.resolution)
-		timeToNextSync := end.Add(rm.scrapeOffset).Sub(now)
-
 		select {
-		case <-time.After(timeToNextSync):
-			rm.housekeep(start, end)
+		case <-rm.ticker.C:
+			go rm.push()
 		case <-rm.stopChan:
+			rm.ticker.Stop()
 			rm.sink.Stop()
 			return
 		}
 	}
 }
 
-func (rm *realManager) housekeep(start, end time.Time) {
-	if !start.Before(end) {
-		glog.Warningf("Wrong time provided to housekeep start:%s end: %s", start, end)
-		return
-	}
-
-	select {
-	case <-rm.housekeepSemaphoreChan:
-		// ok, good to go
-
-	case <-time.After(rm.housekeepTimeout):
-		glog.Warningf("Spent too long waiting for housekeeping to start")
-		return
-	}
-
-	go func(rm *realManager) {
-		// should always give back the semaphore
-		defer func() { rm.housekeepSemaphoreChan <- struct{}{} }()
-		data, err := rm.source.ScrapeMetrics(start, end)
-
-		if err != nil {
-			glog.Errorf("Error in scraping metrics for %s: %v", rm.source.Name(), err)
-			return
-		}
-
-		for _, p := range rm.processors {
-			newData, err := process(p, data)
-			if err == nil {
-				data = newData
-			} else {
-				glog.Errorf("Error in processor: %v", err)
-				return
-			}
-		}
-
-		// Export data to sinks
-		rm.sink.ExportData(data)
-	}(rm)
+func (rm *flushManagerImpl) Stop() {
+	rm.stopChan <- struct{}{}
 }
 
-func process(p metrics.DataProcessor, data *metrics.DataBatch) (*metrics.DataBatch, error) {
-	return p.Process(data)
+func (rm *flushManagerImpl) push() {
+	dataList := sources.Manager().GetPendingMetrics()
+	for _, data := range dataList {
+		for _, p := range rm.processors {
+			if data.MetricSets != nil {
+				newData, err := p.Process(data)
+				if err == nil {
+					data = newData
+				} else {
+					glog.Errorf("Error in processor: %v", err)
+					return
+				}
+			}
+		}
+		// Export data to sinks
+		rm.sink.ExportData(data)
+	}
 }

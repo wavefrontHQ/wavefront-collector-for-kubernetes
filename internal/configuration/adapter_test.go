@@ -148,7 +148,10 @@ func buildPromSource() *PrometheusSourceConfig {
 }
 
 func TestTelegrafSource(t *testing.T) {
-	conf := *buildTelegrafSource()
+	conf := TelegrafSourceConfig{
+		Plugins:    []string{"mem", "disk", "diskio"},
+		Collection: CollectionConfig{Interval: "1m", Timeout: "2m"},
+	}
 	uri, err := conf.convert()
 	if err != nil {
 		t.Errorf("error converting telegraf source: %v", err)
@@ -156,20 +159,21 @@ func TestTelegrafSource(t *testing.T) {
 	assert.Equal(t, "telegraf", uri.Key)
 	vals := uri.Val.Query()
 	assert.Equal(t, 1, len(vals["plugins"]))
+	assert.Equal(t, "1m", vals["collectionInterval"][0])
+	assert.Equal(t, "2m", vals["timeout"][0])
 
 	conf = TelegrafSourceConfig{
-		Prefix: "k8s-metrics.",
-		Tags:   map[string]string{"env": "test", "version": "1.14"},
-		Filters: filter.Config{
-			MetricWhitelist:    []string{"k8s.*", "kubernetes.*"},
-			MetricBlacklist:    []string{"kops.*", "kube.*"},
-			MetricTagWhitelist: map[string][]string{"env": {"prod"}},
-			MetricTagBlacklist: map[string][]string{"env": {"dev", "test"}},
-			TagInclude:         []string{"env"},
-			TagExclude:         []string{"pod-template-id"},
-		},
+		Plugins: []string{"mem", "disk", "diskio"},
 	}
-	testCommon(t, conf, "telegraf")
+	uri, err = conf.convert()
+	if err != nil {
+		t.Errorf("error converting telegraf source: %v", err)
+	}
+	assert.Equal(t, "telegraf", uri.Key)
+	vals = uri.Val.Query()
+	assert.Equal(t, 1, len(vals["plugins"]))
+	assert.Equal(t, 0, len(vals["collectionInterval"]))
+	assert.Equal(t, 0, len(vals["timeout"]))
 }
 
 func buildTelegrafSource() *TelegrafSourceConfig {
@@ -215,12 +219,12 @@ func buildSystemdSource() *SystemdSourceConfig {
 
 func TestFullConversion(t *testing.T) {
 	conf := Config{
-		CollectionInterval:    2 * time.Minute,
-		SinkExportDataTimeout: 20 * time.Second,
-		ScrapeTimeout:         20 * time.Second,
-		MaxProcs:              4,
-		EnableDiscovery:       true,
-		ClusterName:           "prod-cluster",
+		FlushInterval:             2 * time.Minute,
+		SinkExportDataTimeout:     20 * time.Second,
+		DefaultCollectionInterval: time.Minute,
+		MaxProcs:                  4,
+		EnableDiscovery:           true,
+		ClusterName:               "prod-cluster",
 
 		Sinks:             []*WavefrontSinkConfig{buildWavefrontSink()},
 		SummaryConfig:     buildSummarySource(),
@@ -232,9 +236,6 @@ func TestFullConversion(t *testing.T) {
 	if err != nil {
 		t.Errorf("full conversion error: %v", err)
 	}
-	assert.Equal(t, 2*time.Minute, opts.MetricResolution)
-	assert.Equal(t, 20*time.Second, opts.SinkExportDataTimeout)
-	assert.Equal(t, 20*time.Second, opts.ScrapeTimeout)
 	assert.Equal(t, 4, opts.MaxProcs)
 	assert.True(t, opts.EnableDiscovery)
 	assert.True(t, len(opts.Sinks) == 1)

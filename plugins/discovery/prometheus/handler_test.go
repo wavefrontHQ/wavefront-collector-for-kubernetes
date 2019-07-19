@@ -1,15 +1,13 @@
 package prometheus
 
 import (
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
 	"testing"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
 )
 
 func TestDiscover(t *testing.T) {
-	ph := &util.DummyProviderHandler{}
-	th := NewTargetHandler(ph, true)
+	th := NewTargetHandler(true)
 
 	pod := discovery.FakePod("pod1", "ns", "123")
 	th.Handle(discovery.Resource{

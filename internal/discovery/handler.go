@@ -6,12 +6,12 @@ import (
 	"sync"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources"
 
 	"github.com/golang/glog"
 )
 
 type ProviderInfo struct {
-	Handler metrics.ProviderHandler
 	Factory metrics.ProviderFactory
 	Encoder Encoder
 }
@@ -115,6 +115,9 @@ func (d *defaultHandler) Handle(resource Resource, rule interface{}) {
 			glog.Error(err)
 			return
 		}
+		if i, ok := provider.(metrics.ConfigurabeMetricsSourceProvider); ok {
+			i.Configure(u)
+		}
 		d.register(name, newEncoding, provider)
 	}
 
@@ -129,7 +132,7 @@ func (d *defaultHandler) Handle(resource Resource, rule interface{}) {
 
 func (d *defaultHandler) register(name, url string, provider metrics.MetricsSourceProvider) {
 	d.add(name, url)
-	d.info.Handler.AddProvider(provider)
+	sources.Manager().AddProvider(provider)
 	d.registry.Register(name, d)
 }
 
@@ -143,7 +146,7 @@ func (d *defaultHandler) unregister(name string) {
 func (d *defaultHandler) deleteProvider(name string) {
 	if d.registry.Handler(name) != nil {
 		providerName := fmt.Sprintf("%s: %s", d.info.Factory.Name(), name)
-		d.info.Handler.DeleteProvider(providerName)
+		sources.Manager().DeleteProvider(providerName)
 		d.registry.Unregister(name)
 	}
 	glog.V(5).Infof("%s deleted", name)

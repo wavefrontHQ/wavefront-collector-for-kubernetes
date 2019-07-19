@@ -14,13 +14,15 @@ import (
 )
 
 const (
-	scrapeAnnotation = "prometheus.io/scrape"
-	schemeAnnotation = "prometheus.io/scheme"
-	pathAnnotation   = "prometheus.io/path"
-	portAnnotation   = "prometheus.io/port"
-	prefixAnnotation = "prometheus.io/prefix"
-	labelsAnnotation = "prometheus.io/includeLabels"
-	sourceAnnotation = "prometheus.io/source"
+	scrapeAnnotation             = "prometheus.io/scrape"
+	schemeAnnotation             = "prometheus.io/scheme"
+	pathAnnotation               = "prometheus.io/path"
+	portAnnotation               = "prometheus.io/port"
+	prefixAnnotation             = "prometheus.io/prefix"
+	labelsAnnotation             = "prometheus.io/includeLabels"
+	sourceAnnotation             = "prometheus.io/source"
+	collectionIntervalAnnotation = "prometheus.io/collectionInterval"
+	timeoutAnnotation            = "prometheus.io/timeout"
 )
 
 // used as source for discovered resources
@@ -33,12 +35,18 @@ func init() {
 type prometheusEncoder struct{}
 
 func (e prometheusEncoder) Encode(ip, kind string, meta metav1.ObjectMeta, cfg interface{}) url.Values {
+	values := url.Values{}
 	rule := discovery.PluginConfig{}
 	discoveryType := "annotation"
 	if cfg != nil {
 		rule = cfg.(discovery.PluginConfig)
 		discoveryType = "rule"
+		collectionInterval := utils.Param(meta, collectionIntervalAnnotation, rule.Collection.Interval.String(), "0s")
+		values.Set("collectionInterval", collectionInterval)
+		timeout := utils.Param(meta, timeoutAnnotation, rule.Collection.Timeout.String(), "0s")
+		values.Set("timeout", timeout)
 	}
+	values.Set("discovered", discoveryType)
 
 	if ip == "" {
 		glog.V(5).Infof("missing ip for %s=%s", kind, meta.Name)
@@ -50,9 +58,6 @@ func (e prometheusEncoder) Encode(ip, kind string, meta metav1.ObjectMeta, cfg i
 		glog.V(5).Infof("prometheus scrape=false for %s=%s", kind, meta.Name)
 		return url.Values{}
 	}
-
-	values := url.Values{}
-	values.Set("discovered", discoveryType)
 
 	scheme := utils.Param(meta, schemeAnnotation, rule.Scheme, "http")
 	path := utils.Param(meta, pathAnnotation, rule.Path, "/metrics")

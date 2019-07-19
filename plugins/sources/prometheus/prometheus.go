@@ -21,7 +21,7 @@ import (
 	"github.com/golang/glog"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/expfmt"
-	"github.com/rcrowley/go-metrics"
+	metrics "github.com/rcrowley/go-metrics"
 	"github.com/wavefronthq/go-metrics-wavefront/reporting"
 )
 
@@ -105,9 +105,10 @@ func (src *prometheusMetricsSource) Name() string {
 	return fmt.Sprintf("prometheus_source: %s", src.metricsURL)
 }
 
-func (src *prometheusMetricsSource) ScrapeMetrics(start, end time.Time) (*DataBatch, error) {
+func (src *prometheusMetricsSource) ScrapeMetrics() (*DataBatch, error) {
 	result := &DataBatch{
-		Timestamp: time.Now(),
+		Timestamp:  time.Now(),
+		MetricSets: map[string]*MetricSet{},
 	}
 
 	resp, err := src.client.Get(src.metricsURL)
@@ -279,6 +280,7 @@ func (src *prometheusMetricsSource) filterAppend(slice []*MetricPoint, point *Me
 }
 
 type prometheusProvider struct {
+	DefaultMetricsSourceProvider
 	urls       []string
 	prefix     string
 	source     string

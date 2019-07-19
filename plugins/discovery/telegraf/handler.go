@@ -7,7 +7,6 @@ import (
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery/utils"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/telegraf"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,11 +14,10 @@ import (
 
 var defaultEncoder = telegrafEncoder{}
 
-func NewTargetHandler(handler metrics.ProviderHandler, plugin string) discovery.TargetHandler {
+func NewTargetHandler(plugin string) discovery.TargetHandler {
 	registryName := strings.Replace(plugin, "/", ".", -1)
 	return discovery.NewHandler(
 		discovery.ProviderInfo{
-			Handler: handler,
 			Factory: telegraf.NewFactory(),
 			Encoder: defaultEncoder,
 		},
@@ -61,6 +59,9 @@ func (e telegrafEncoder) Encode(ip, kind string, meta metav1.ObjectMeta, rule in
 	includeLabels := utils.Param(meta, discovery.LabelsAnnotation, cfg.IncludeLabels, "true")
 
 	values.Set("prefix", prefix)
+	values.Set("collectionInterval", cfg.Collection.Interval.String())
+	values.Set("timeout", cfg.Collection.Timeout.String())
+
 	utils.EncodeMeta(values, kind, meta)
 	utils.EncodeTags(values, "", cfg.Tags)
 	if includeLabels == "true" {

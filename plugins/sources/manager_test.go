@@ -15,119 +15,130 @@
 package sources
 
 import (
+	"net/url"
+	"os"
 	"testing"
 	"time"
 
-	. "github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
+	"github.com/go-kit/kit/log"
+	"github.com/golang/glog"
+	"github.com/stretchr/testify/assert"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
 )
 
-func TestAllSourcesReplyInTime(t *testing.T) {
-	metricsSourceProvider := util.NewDummyMetricsSourceProvider(
-		util.NewDummyMetricsSource("s1", time.Second),
-		util.NewDummyMetricsSource("s2", time.Second))
-
-	providers := []MetricsSourceProvider{metricsSourceProvider}
-
-	manager, _ := NewSourceManager(providers, time.Second*3)
-	now := time.Now()
-	end := now.Truncate(10 * time.Second)
-	dataBatch, err := manager.ScrapeMetrics(end.Add(-10*time.Second), end)
-	if err != nil {
-		t.Fatalf("ScrapeMetrics error. %v", err)
-	}
-
-	elapsed := time.Now().Sub(now)
-	if elapsed > 3*time.Second {
-		t.Fatalf("ScrapeMetrics took too long: %s", elapsed)
-	}
-
-	present := make(map[string]bool)
-	for key := range dataBatch.MetricSets {
-		present[key] = true
-	}
-
-	if _, ok := present["s1"]; !ok {
-		t.Fatal("s1 not found")
-	}
-
-	if _, ok := present["s2"]; !ok {
-		t.Fatal("s2 not found")
-	}
+func init() {
+	logger := log.NewLogfmtLogger(log.NewSyncWriter(os.Stdout))
+	logger = log.With(logger, "ts", log.DefaultTimestampUTC)
+	glog.SetLogger(logger)
 }
 
-func TestOneSourcesReplyInTime(t *testing.T) {
-	metricsSourceProvider := util.NewDummyMetricsSourceProvider(
-		util.NewDummyMetricsSource("s1", time.Second),
-		util.NewDummyMetricsSource("s2", 30*time.Second))
+func TestNoTimeout(t *testing.T) {
+	metricsSourceProvider := util.NewDummyMetricsSourceProvider("dummy_nt",
+		100*time.Millisecond, 100*time.Millisecond,
+		util.NewDummyMetricsSource("nto_1", 10*time.Millisecond),
+		util.NewDummyMetricsSource("nto_2", 10*time.Millisecond))
 
-	providers := []MetricsSourceProvider{metricsSourceProvider}
+	Manager().AddProvider(metricsSourceProvider)
 
-	manager, _ := NewSourceManager(providers, time.Second*3)
-	now := time.Now()
-	end := now.Truncate(10 * time.Second)
-	dataBatch, err := manager.ScrapeMetrics(end.Add(-10*time.Second), end)
-	if err != nil {
-		t.Fatalf("ScrapeMetrics error. %v", err)
-	}
-	elapsed := time.Now().Sub(now)
+	time.Sleep(200 * time.Millisecond)
 
-	if elapsed > 4*time.Second {
-		t.Fatalf("ScrapeMetrics took too long: %s", elapsed)
-	}
-
-	if elapsed < 2*time.Second {
-		t.Fatalf("ScrapeMetrics took too short: %s", elapsed)
-	}
+	dataBatchList := Manager().GetPendingMetrics()
 
 	present := make(map[string]bool)
-	for key := range dataBatch.MetricSets {
-		present[key] = true
+	for _, dataBatch := range dataBatchList {
+		for _, point := range dataBatch.MetricPoints {
+			present[point.Metric] = true
+		}
 	}
 
-	if _, ok := present["s1"]; !ok {
-		t.Fatal("s1 not found")
-	}
+	Manager().StopProviders()
 
-	if _, ok := present["s2"]; ok {
-		t.Fatal("s2 found")
-	}
+	assert.True(t, present["nto_1"], "nto_1 not found - present:%v", present)
+	assert.True(t, present["nto_2"], "nto_2 not found - present:%v", present)
 }
 
-func TestNoSourcesReplyInTime(t *testing.T) {
+func TestTimeout(t *testing.T) {
 	metricsSourceProvider := util.NewDummyMetricsSourceProvider(
-		util.NewDummyMetricsSource("s1", 30*time.Second),
-		util.NewDummyMetricsSource("s2", 30*time.Second))
+		"dummy", 100*time.Millisecond, 75*time.Millisecond,
+		util.NewDummyMetricsSource("s1", 50*time.Millisecond),
+		util.NewDummyMetricsSource("s2", 100*time.Millisecond))
 
-	providers := []MetricsSourceProvider{metricsSourceProvider}
+	Manager().AddProvider(metricsSourceProvider)
 
-	manager, _ := NewSourceManager(providers, time.Second*3)
-	now := time.Now()
-	end := now.Truncate(10 * time.Second)
-	dataBatch, err := manager.ScrapeMetrics(end.Add(-10*time.Second), end)
-	if err != nil {
-		t.Fatalf("ScrapeMetrics error. %v", err)
-	}
-	elapsed := time.Now().Sub(now)
+	time.Sleep(200 * time.Millisecond)
 
-	if elapsed > 4*time.Second {
-		t.Fatalf("ScrapeMetrics took too long: %s", elapsed)
-	}
-
-	if elapsed < 2*time.Second {
-		t.Fatalf("ScrapeMetrics took too short: %s", elapsed)
-	}
+	dataBatchList := Manager().GetPendingMetrics()
 
 	present := make(map[string]bool)
-	for key := range dataBatch.MetricSets {
-		present[key] = true
+	for _, dataBatch := range dataBatchList {
+		for _, point := range dataBatch.MetricPoints {
+			present[point.Metric] = true
+		}
 	}
 
-	if _, ok := present["s1"]; ok {
-		t.Fatal("s1 found")
+	Manager().StopProviders()
+
+	assert.True(t, present["s1"], "s1 not found - present:%v", present)
+	assert.False(t, present["s2"], "s2 found - present:%v", present)
+
+}
+
+func TestMultipleMetrics(t *testing.T) {
+	msp1 := util.NewDummyMetricsSourceProvider(
+		"p1", 10*time.Millisecond, 10*time.Millisecond,
+		util.NewDummyMetricsSource("s1", 0))
+
+	msp2 := util.NewDummyMetricsSourceProvider(
+		"p2", 10*time.Millisecond, 10*time.Millisecond,
+		util.NewDummyMetricsSource("s2", 0))
+
+	Manager().AddProvider(msp1)
+	Manager().AddProvider(msp2)
+
+	time.Sleep(105 * time.Millisecond)
+	Manager().DeleteProvider("p2")
+	time.Sleep(95 * time.Millisecond)
+	Manager().DeleteProvider("p1")
+
+	dataBatchList := Manager().GetPendingMetrics()
+
+	counts := make(map[string]int)
+	for _, dataBatch := range dataBatchList {
+		for _, point := range dataBatch.MetricPoints {
+			counts[point.Metric]++
+		}
 	}
 
-	if _, ok := present["s2"]; ok {
-		t.Fatal("s2 found")
+	Manager().StopProviders()
+
+	assert.True(t, (counts["s1"] >= 20) && (counts["s1"] <= 21), counts["s1"], "incorrect s1 count - counts: %vs", counts)
+	assert.Equal(t, 10, counts["s2"], "incorrect s2 count - counts: %v", counts)
+}
+
+func TestConfig(t *testing.T) {
+	var provider metrics.MetricsSourceProvider
+
+	provider = &testProvider{}
+	url, _ := url.Parse("?collectionInterval=1h&timeout=1m")
+
+	if i, ok := provider.(metrics.ConfigurabeMetricsSourceProvider); ok {
+		i.Configure(url)
+		glog.Infof("Name: %s - CollectionInterval: %v", provider.Name(), provider.CollectionInterval())
 	}
+
+	assert.Equal(t, time.Hour, provider.CollectionInterval(), "incorrect CollectionInterval")
+	assert.Equal(t, time.Minute, provider.Timeout(), "incorrect Timeout")
+}
+
+type testProvider struct {
+	metrics.DefaultMetricsSourceProvider
+}
+
+func (p *testProvider) GetMetricsSources() []metrics.MetricsSource {
+	return make([]metrics.MetricsSource, 0)
+}
+
+func (p *testProvider) Name() string {
+	return "testProvider"
 }
