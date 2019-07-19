@@ -7,6 +7,7 @@ import (
 var sampleFile = `
 clusterName: new-collector
 enableDiscovery: true
+defaultCollectionInterval: 10s
 
 sinks:
 - proxyAddress: wavefront-proxy.default.svc.cluster.local:2878
@@ -26,6 +27,12 @@ prometheus_sources:
       insecure_skip_verify: true
   prefix: 'kube.apiserver.'
 
+telegraf_sources:
+  - plugins: [cpu]
+    collection:
+      interval: 1s
+  - plugins: [mem]
+
 discovery_configs:
   - type: telegraf/redis
     name: "redis"
@@ -35,6 +42,8 @@ discovery_configs:
       - '*redis*'
     port: 6379
     scheme: "tcp"
+    collection:
+      interval: 1s
     conf: |
       servers = [${server}]
       password = bar

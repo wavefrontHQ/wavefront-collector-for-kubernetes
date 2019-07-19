@@ -76,7 +76,7 @@ func (t *telegrafPluginSource) Name() string {
 	return "telegraf_" + t.name + "_source"
 }
 
-func (t *telegrafPluginSource) ScrapeMetrics(start, end time.Time) (*metrics.DataBatch, error) {
+func (t *telegrafPluginSource) ScrapeMetrics() (*metrics.DataBatch, error) {
 	result := &telegrafDataBatch{
 		DataBatch: metrics.DataBatch{Timestamp: time.Now()},
 		source:    t,
@@ -102,6 +102,7 @@ func (t *telegrafPluginSource) ScrapeMetrics(start, end time.Time) (*metrics.Dat
 
 // Telegraf provider
 type telegrafProvider struct {
+	metrics.DefaultMetricsSourceProvider
 	name    string
 	sources []metrics.MetricsSource
 }
@@ -169,7 +170,7 @@ func NewProvider(uri *url.URL) (metrics.MetricsSourceProvider, error) {
 		name = fmt.Sprintf("%s: %s", ProviderName, vals["name"][0])
 	}
 	if name == "" {
-		name = fmt.Sprintf("%s: default", ProviderName)
+		name = fmt.Sprintf("%s: %v", ProviderName, plugins)
 	}
 
 	return &telegrafProvider{

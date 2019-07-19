@@ -22,6 +22,8 @@ package metrics
 import (
 	"net/url"
 	"time"
+
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/flags"
 )
 
 type MetricType int8
@@ -147,13 +149,15 @@ type DataBatch struct {
 // A place from where the metrics should be scraped.
 type MetricsSource interface {
 	Name() string
-	ScrapeMetrics(start, end time.Time) (*DataBatch, error)
+	ScrapeMetrics() (*DataBatch, error)
 }
 
 // Provider of list of sources to be scraped.
 type MetricsSourceProvider interface {
 	GetMetricsSources() []MetricsSource
 	Name() string
+	CollectionInterval() time.Duration
+	Timeout() time.Duration
 }
 
 type DataSink interface {
@@ -180,13 +184,34 @@ type MetricPoint struct {
 	Tags      map[string]string
 }
 
-// Interface for dynamically adding and removing MetricsSourceProviders
-type ProviderHandler interface {
-	AddProvider(provider MetricsSourceProvider)
-	DeleteProvider(name string)
-}
-
 type ProviderFactory interface {
 	Name() string
 	Build(uri *url.URL) (MetricsSourceProvider, error)
+}
+
+type ConfigurabeMetricsSourceProvider interface {
+	Configure(uri *url.URL)
+}
+
+//DefaultMetricsSourceProvider handle the common providers configuration
+type DefaultMetricsSourceProvider struct {
+	collectionInterval time.Duration
+	timeout            time.Duration
+}
+
+// CollectionInterval return the provider collection interval configuration
+func (dp *DefaultMetricsSourceProvider) CollectionInterval() time.Duration {
+	return dp.collectionInterval
+}
+
+// Timeout return the provider timeout configuration
+func (dp *DefaultMetricsSourceProvider) Timeout() time.Duration {
+	return dp.timeout
+}
+
+// Configure the 'collectionInterval' and 'timeout' values
+func (dp *DefaultMetricsSourceProvider) Configure(uri *url.URL) {
+	vals := uri.Query()
+	dp.collectionInterval = flags.ParseDuration(vals, "collectionInterval", 0) // force default collection interval
+	dp.timeout = flags.ParseDuration(vals, "timeout", time.Duration(10*time.Second))
 }

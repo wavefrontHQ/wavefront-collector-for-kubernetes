@@ -92,7 +92,7 @@ func (this *sinkManager) ExportData(data *metrics.DataBatch) {
 		wg.Add(1)
 		go func(sh sinkHolder, wg *sync.WaitGroup) {
 			defer wg.Done()
-			glog.V(2).Infof("Pushing data to: %s", sh.sink.Name())
+			glog.V(2).Infof("Flushing data to: %s", sh.sink.Name())
 			select {
 			case sh.dataBatchChannel <- data:
 				glog.V(2).Infof("Data push completed: %s", sh.sink.Name())

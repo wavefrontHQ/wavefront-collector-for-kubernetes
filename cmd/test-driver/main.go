@@ -15,7 +15,6 @@ import (
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/options"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/manager"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sinks"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources"
 
 	kubeFlag "k8s.io/apiserver/pkg/util/flag"
 	"k8s.io/apiserver/pkg/util/logs"
@@ -53,31 +52,14 @@ func main() {
 	logs.InitLogs()
 	defer logs.FlushLogs()
 
-	sourceManager := createSourceManagerOrDie(opt.Sources, opt.ScrapeTimeout)
 	sinkManager := createAndInitSinksOrDie(opt.Sinks, opt.SinkExportDataTimeout)
 
-	man, err := manager.NewManager(sourceManager, nil, sinkManager,
-		opt.MetricResolution, manager.DefaultScrapeOffset, manager.DefaultMaxParallelism)
+	man, err := manager.NewFlushManager(nil, sinkManager, opt.MetricResolution)
 	if err != nil {
 		glog.Fatalf("Failed to create main manager: %v", err)
 	}
 	man.Start()
 	waitForStop()
-}
-
-func createSourceManagerOrDie(src flags.Uris, scrapeTimeout time.Duration) metrics.MetricsSource {
-	sourceFactory := sources.NewSourceFactory()
-	sourceList := sourceFactory.BuildAll(src)
-
-	for _, source := range sourceList {
-		glog.Infof("Starting with source %s", source.Name())
-	}
-
-	sourceManager, err := sources.NewSourceManager(sourceList, scrapeTimeout)
-	if err != nil {
-		glog.Fatalf("Failed to create source manager: %v", err)
-	}
-	return sourceManager
 }
 
 func createAndInitSinksOrDie(sinkAddresses flags.Uris, sinkExportDataTimeout time.Duration) metrics.DataSink {

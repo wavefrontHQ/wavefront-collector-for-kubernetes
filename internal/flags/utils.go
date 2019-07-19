@@ -1,9 +1,12 @@
 package flags
 
 import (
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/httputil"
+	"net/url"
 	"strconv"
 	"strings"
+	"time"
+
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/httputil"
 
 	"github.com/golang/glog"
 )
@@ -70,4 +73,16 @@ func DecodeHTTPConfig(vals map[string][]string) httputil.ClientConfig {
 			InsecureSkipVerify: DecodeBoolean(vals, "tlsInsecure"),
 		},
 	}
+}
+
+func ParseDuration(vals url.Values, prop string, def time.Duration) time.Duration {
+	if len(vals[prop]) > 0 {
+		res, err := time.ParseDuration(vals[prop][0])
+		if err != nil {
+			glog.Errorf("error parsing '%s' propertie: %v", prop, err)
+		} else {
+			return res
+		}
+	}
+	return def
 }

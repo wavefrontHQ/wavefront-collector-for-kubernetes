@@ -8,10 +8,11 @@ import (
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/flags"
 	. "github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 
-	"github.com/rcrowley/go-metrics"
+	metrics "github.com/rcrowley/go-metrics"
 )
 
 type statsProvider struct {
+	DefaultMetricsSourceProvider
 	sources []MetricsSource
 }
 

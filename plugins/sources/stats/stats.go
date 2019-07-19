@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rcrowley/go-metrics"
+	metrics "github.com/rcrowley/go-metrics"
 	"github.com/wavefronthq/go-metrics-wavefront/reporting"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
@@ -14,6 +14,7 @@ import (
 )
 
 type internalMetricsSource struct {
+	DefaultMetricsSourceProvider
 	prefix  string
 	tags    map[string]string
 	filters filter.Filter
@@ -59,14 +60,15 @@ func (src *internalMetricsSource) Name() string {
 	return "internal_stats_source"
 }
 
-func (src *internalMetricsSource) ScrapeMetrics(start, end time.Time) (*DataBatch, error) {
+func (src *internalMetricsSource) ScrapeMetrics() (*DataBatch, error) {
 	return src.internalStats()
 }
 
 func (src *internalMetricsSource) internalStats() (*DataBatch, error) {
 	now := time.Now()
 	result := &DataBatch{
-		Timestamp: now,
+		Timestamp:  now,
+		MetricSets: map[string]*MetricSet{},
 	}
 	var points []*MetricPoint
 

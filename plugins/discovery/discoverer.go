@@ -2,13 +2,13 @@ package discovery
 
 import (
 	"fmt"
-	"github.com/golang/glog"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/discovery/prometheus"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/discovery/telegraf"
 	"strings"
 	"sync"
+
+	"github.com/golang/glog"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/discovery/prometheus"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/discovery/telegraf"
 )
 
 type delegate struct {
@@ -25,27 +25,27 @@ type discoverer struct {
 	delegates       map[string]*delegate
 }
 
-func newDiscoverer(handler metrics.ProviderHandler, plugins []discovery.PluginConfig) discovery.Discoverer {
+func newDiscoverer(plugins []discovery.PluginConfig) discovery.Discoverer {
 	d := &discoverer{
 		queue:           make(chan discovery.Resource, 1000),
-		runtimeHandlers: makeRuntimeHandlers(handler),
-		delegates:       makeDelegates(handler, plugins),
+		runtimeHandlers: makeRuntimeHandlers(),
+		delegates:       makeDelegates(plugins),
 	}
 	go d.dequeue()
 	return d
 }
 
-func makeRuntimeHandlers(handler metrics.ProviderHandler) []discovery.TargetHandler {
+func makeRuntimeHandlers() []discovery.TargetHandler {
 	// currently annotation based discovery is supported only for prometheus
 	return []discovery.TargetHandler{
-		prometheus.NewTargetHandler(handler, true),
+		prometheus.NewTargetHandler(true),
 	}
 }
 
-func makeDelegates(handler metrics.ProviderHandler, plugins []discovery.PluginConfig) map[string]*delegate {
+func makeDelegates(plugins []discovery.PluginConfig) map[string]*delegate {
 	delegates := make(map[string]*delegate, len(plugins))
 	for _, plugin := range plugins {
-		delegate, err := makeDelegate(handler, plugin)
+		delegate, err := makeDelegate(plugin)
 		if err != nil {
 			glog.Errorf("error parsing plugin: %s error: %v", plugin.Name, err)
 			continue
@@ -55,16 +55,16 @@ func makeDelegates(handler metrics.ProviderHandler, plugins []discovery.PluginCo
 	return delegates
 }
 
-func makeDelegate(handler metrics.ProviderHandler, plugin discovery.PluginConfig) (*delegate, error) {
+func makeDelegate(plugin discovery.PluginConfig) (*delegate, error) {
 	filter, err := newResourceFilter(plugin)
 	if err != nil {
 		return nil, err
 	}
 	var targetHandler discovery.TargetHandler
 	if strings.Contains(plugin.Type, "prometheus") {
-		targetHandler = prometheus.NewTargetHandler(handler, false)
+		targetHandler = prometheus.NewTargetHandler(false)
 	} else if strings.Contains(plugin.Type, "telegraf") {
-		targetHandler = telegraf.NewTargetHandler(handler, plugin.Type)
+		targetHandler = telegraf.NewTargetHandler(plugin.Type)
 	} else {
 		return nil, fmt.Errorf("invalid plugin type: %s", plugin.Type)
 	}

@@ -52,6 +52,10 @@ func main() {
 	logger = log.With(logger, "ts", log.DefaultTimestamp)
 	logger = level.NewFilter(logger, level.AllowDebug())
 
+	opt := options.NewCollectorRunOptions()
+	opt.AddFlags(pflag.CommandLine)
+	kubeFlag.InitFlags()
+
 	// Overriding the default glog with our go-kit glog implementation.
 	// Thus we need to pass it our go-kit logger object.
 	glog.ClampLevel(6)
@@ -59,10 +63,6 @@ func main() {
 
 	klog.ClampLevel(6)
 	klog.SetLogger(logger)
-
-	opt := options.NewCollectorRunOptions()
-	opt.AddFlags(pflag.CommandLine)
-	kubeFlag.InitFlags()
 
 	if opt.Version {
 		fmt.Println(fmt.Sprintf("version: %s\ncommit: %s", version, commit))
@@ -107,15 +107,32 @@ func createAgentOrDie(opt *options.CollectorRunOptions, cfg *configuration.Confi
 
 	clusterName := ""
 	var plugins []discConfig.PluginConfig
+	var defaultCollectionInterval time.Duration
+	var flushInterval time.Duration
 
 	// if config is missing we will use the flags provided
 	if cfg != nil {
 		clusterName = resolveClusterName(cfg.ClusterName, opt)
 		plugins = cfg.DiscoveryConfigs
+		// setup log level
+		glog.ClampLevel(glog.Level(cfg.LogLevel))
+		klog.ClampLevel(klog.Level(cfg.LogLevel))
+
+		defaultCollectionInterval = cfg.DefaultCollectionInterval
+		flushInterval = cfg.FlushInterval
+	} else {
+		defaultCollectionInterval = opt.MetricResolution
+		flushInterval = opt.MetricResolution
 	}
 
-	// create source and sink managers
-	sourceManager := createSourceManagerOrDie(opt.Sources, opt.ScrapeTimeout)
+	// create sources manager
+	sources.Manager().SetDefaultCollectionInterval(defaultCollectionInterval)
+	err := sources.Manager().BuildProviders(opt.Sources)
+	if err != nil {
+		glog.Fatalf("Failed to create source manager: %v", err)
+	}
+
+	// create sink managers
 	sinkManager := createSinkManagerOrDie(opt.Sinks, opt.SinkExportDataTimeout)
 
 	// create data processors
@@ -125,12 +142,10 @@ func createAgentOrDie(opt *options.CollectorRunOptions, cfg *configuration.Confi
 	dataProcessors := createDataProcessorsOrDie(kubernetesUrl, clusterName, podLister)
 
 	// create discovery manager
-	handler := sourceManager.(metrics.ProviderHandler)
-	dm := createDiscoveryManagerOrDie(kubeClient, plugins, handler, opt)
+	dm := createDiscoveryManagerOrDie(kubeClient, plugins, opt)
 
 	// create uber manager
-	man, err := manager.NewManager(sourceManager, dataProcessors, sinkManager,
-		opt.MetricResolution, manager.DefaultScrapeOffset, manager.DefaultMaxParallelism)
+	man, err := manager.NewFlushManager(dataProcessors, sinkManager, flushInterval)
 	if err != nil {
 		glog.Fatalf("Failed to create main manager: %v", err)
 	}
@@ -164,14 +179,14 @@ func loadConfigOrDie(file string) *configuration.Config {
 
 // use defaults if no values specified in config file
 func fillDefaults(cfg *configuration.Config) {
-	if cfg.CollectionInterval == 0 {
-		cfg.CollectionInterval = 60 * time.Second
+	if cfg.FlushInterval == 0 {
+		cfg.FlushInterval = 60 * time.Second
+	}
+	if cfg.DefaultCollectionInterval == 0 {
+		cfg.DefaultCollectionInterval = 60 * time.Second
 	}
 	if cfg.SinkExportDataTimeout == 0 {
 		cfg.SinkExportDataTimeout = 20 * time.Second
-	}
-	if cfg.ScrapeTimeout == 0 {
-		cfg.ScrapeTimeout = 20 * time.Second
 	}
 	if cfg.ClusterName == "" {
 		cfg.ClusterName = "k8s-cluster"
@@ -221,13 +236,13 @@ func registerListeners(ag *agent.Agent, opt *options.CollectorRunOptions) {
 }
 
 func createDiscoveryManagerOrDie(client *kube_client.Clientset, plugins []discConfig.PluginConfig,
-	handler metrics.ProviderHandler, opt *options.CollectorRunOptions) *discovery.Manager {
+	opt *options.CollectorRunOptions) *discovery.Manager {
 	if opt.EnableDiscovery {
 		// backwards compatibility, discovery config was a separate file
 		if len(plugins) == 0 && opt.DiscoveryConfigFile != "" {
 			plugins = loadPluginsOrDie(opt.DiscoveryConfigFile)
 		}
-		return discovery.NewDiscoveryManager(client, plugins, handler, opt.Daemon)
+		return discovery.NewDiscoveryManager(client, plugins, opt.Daemon)
 	}
 	return nil
 }
@@ -261,21 +276,6 @@ func registerVersion() {
 	}
 	m := gm.GetOrRegisterGaugeFloat64("version", gm.DefaultRegistry)
 	m.Update(f)
-}
-
-func createSourceManagerOrDie(src flags.Uris, scrapeTimeout time.Duration) metrics.MetricsSource {
-	sourceFactory := sources.NewSourceFactory()
-	sourceList := sourceFactory.BuildAll(src)
-
-	for _, source := range sourceList {
-		glog.Infof("Starting with source %s", source.Name())
-	}
-
-	sourceManager, err := sources.NewSourceManager(sourceList, scrapeTimeout)
-	if err != nil {
-		glog.Fatalf("Failed to create source manager: %v", err)
-	}
-	return sourceManager
 }
 
 func createSinkManagerOrDie(sinkAddresses flags.Uris, sinkExportDataTimeout time.Duration) metrics.DataSink {
@@ -401,8 +401,8 @@ func getKubernetesAddressOrDie(args flags.Uris) *url.URL {
 }
 
 func validateCfg(cfg *configuration.Config) error {
-	if cfg.CollectionInterval < 5*time.Second {
-		return fmt.Errorf("metric resolution should not be less than 5 seconds: %d", cfg.CollectionInterval)
+	if cfg.FlushInterval < 5*time.Second {
+		return fmt.Errorf("metric resolution should not be less than 5 seconds: %d", cfg.FlushInterval)
 	}
 	return nil
 }
