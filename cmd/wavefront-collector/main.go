@@ -107,19 +107,26 @@ func createAgentOrDie(opt *options.CollectorRunOptions, cfg *configuration.Confi
 
 	clusterName := ""
 	var plugins []discConfig.PluginConfig
+	var defaultCollectionInterval time.Duration
+	var flushInterval time.Duration
 
 	// if config is missing we will use the flags provided
 	if cfg != nil {
 		clusterName = resolveClusterName(cfg.ClusterName, opt)
 		plugins = cfg.DiscoveryConfigs
+		// setup log level
+		glog.ClampLevel(glog.Level(cfg.LogLevel))
+		klog.ClampLevel(klog.Level(cfg.LogLevel))
+
+		defaultCollectionInterval = cfg.DefaultCollectionInterval
+		flushInterval = cfg.FlushInterval
+	} else {
+		defaultCollectionInterval = opt.MetricResolution
+		flushInterval = opt.MetricResolution
 	}
 
-	// setup log level
-	glog.ClampLevel(glog.Level(cfg.LogLevel))
-	klog.ClampLevel(klog.Level(cfg.LogLevel))
-
 	// create sources manager
-	sources.Manager().SetDefaultCollectionInterval(opt.DefaultCollectionInterval)
+	sources.Manager().SetDefaultCollectionInterval(defaultCollectionInterval)
 	err := sources.Manager().BuildProviders(opt.Sources)
 	if err != nil {
 		glog.Fatalf("Failed to create source manager: %v", err)
@@ -138,7 +145,7 @@ func createAgentOrDie(opt *options.CollectorRunOptions, cfg *configuration.Confi
 	dm := createDiscoveryManagerOrDie(kubeClient, plugins, opt)
 
 	// create uber manager
-	man, err := manager.NewFlushManager(dataProcessors, sinkManager, opt.FlushInterval)
+	man, err := manager.NewFlushManager(dataProcessors, sinkManager, flushInterval)
 	if err != nil {
 		glog.Fatalf("Failed to create main manager: %v", err)
 	}

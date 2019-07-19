@@ -54,7 +54,7 @@ func main() {
 
 	sinkManager := createAndInitSinksOrDie(opt.Sinks, opt.SinkExportDataTimeout)
 
-	man, err := manager.NewFlushManager(nil, sinkManager, opt.FlushInterval)
+	man, err := manager.NewFlushManager(nil, sinkManager, opt.MetricResolution)
 	if err != nil {
 		glog.Fatalf("Failed to create main manager: %v", err)
 	}

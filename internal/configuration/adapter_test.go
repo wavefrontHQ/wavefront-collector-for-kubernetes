@@ -236,9 +236,6 @@ func TestFullConversion(t *testing.T) {
 	if err != nil {
 		t.Errorf("full conversion error: %v", err)
 	}
-	assert.Equal(t, 2*time.Minute, opts.FlushInterval)
-	assert.Equal(t, time.Minute, opts.DefaultCollectionInterval)
-	assert.Equal(t, 20*time.Second, opts.SinkExportDataTimeout)
 	assert.Equal(t, 4, opts.MaxProcs)
 	assert.True(t, opts.EnableDiscovery)
 	assert.True(t, len(opts.Sinks) == 1)
