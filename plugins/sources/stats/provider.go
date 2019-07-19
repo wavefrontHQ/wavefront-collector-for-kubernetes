@@ -40,7 +40,7 @@ func NewInternalStatsProvider(uri *url.URL) (MetricsSourceProvider, error) {
 	sources := make([]MetricsSource, 1)
 	sources[0] = src
 
-	doOnce.Do(func() {
+	doOnce.Do(func() { // Temporal solution for https://github.com/rcrowley/go-metrics/issues/252
 		metrics.RegisterRuntimeMemStats(metrics.DefaultRegistry)
 	})
 
