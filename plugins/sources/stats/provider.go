@@ -3,6 +3,7 @@ package stats
 
 import (
 	"net/url"
+	"sync"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/flags"
@@ -10,6 +11,8 @@ import (
 
 	metrics "github.com/rcrowley/go-metrics"
 )
+
+var doOnce sync.Once
 
 type statsProvider struct {
 	DefaultMetricsSourceProvider
@@ -36,7 +39,10 @@ func NewInternalStatsProvider(uri *url.URL) (MetricsSourceProvider, error) {
 	}
 	sources := make([]MetricsSource, 1)
 	sources[0] = src
-	metrics.RegisterRuntimeMemStats(metrics.DefaultRegistry)
+
+	doOnce.Do(func() { // Temporal solution for https://github.com/rcrowley/go-metrics/issues/252
+		metrics.RegisterRuntimeMemStats(metrics.DefaultRegistry)
+	})
 
 	return &statsProvider{
 		sources: sources,
