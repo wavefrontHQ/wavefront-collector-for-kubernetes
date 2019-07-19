@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/httputil"
+
 	"github.com/golang/glog"
 )
 
@@ -57,6 +59,20 @@ func DecodeBoolean(vals map[string][]string, name string) bool {
 		}
 	}
 	return value
+}
+
+func DecodeHTTPConfig(vals map[string][]string) httputil.ClientConfig {
+	return httputil.ClientConfig{
+		BearerToken:     DecodeValue(vals, "bearerToken"),
+		BearerTokenFile: DecodeValue(vals, "bearerTokenFile"),
+		TLSConfig: httputil.TLSConfig{
+			CAFile:             DecodeValue(vals, "tlsCAFile"),
+			CertFile:           DecodeValue(vals, "tlsCertFile"),
+			KeyFile:            DecodeValue(vals, "tlsKeyFile"),
+			ServerName:         DecodeValue(vals, "tlsServerName"),
+			InsecureSkipVerify: DecodeBoolean(vals, "tlsInsecure"),
+		},
+	}
 }
 
 func ParseDuration(vals url.Values, prop string, def time.Duration) time.Duration {

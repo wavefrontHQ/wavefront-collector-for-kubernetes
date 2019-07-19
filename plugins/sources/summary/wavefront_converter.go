@@ -116,7 +116,10 @@ func (converter *pointConverter) Process(batch *metrics.DataBatch) (*metrics.Dat
 			}
 
 			ts := ts.Unix()
-			source := hostname
+			source := nodeName
+			if source == "" {
+				source = hostname
+			}
 			for labelName, labelValue := range metric.Labels {
 				tags[labelName] = labelValue
 			}

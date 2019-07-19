@@ -49,14 +49,15 @@ type prometheusMetricsSource struct {
 	eps        metrics.Counter
 }
 
-func NewPrometheusMetricsSource(metricsURL, prefix, source, discovered string, tags map[string]string, filters filter.Filter) (MetricsSource, error) {
-	client, err := httpClient(metricsURL)
+//TODO: move tags, prefix, source, filters into a single common struct used by all sources and sinks
+func NewPrometheusMetricsSource(metricsURL, prefix, source, discovered string, tags map[string]string, filters filter.Filter, httpCfg httputil.ClientConfig) (MetricsSource, error) {
+	client, err := httpClient(metricsURL, httpCfg)
 	if err != nil {
 		glog.Errorf("error creating http client: %q", err)
 		return nil, err
 	}
 
-	pt := extractTags(tags, discovered)
+	pt := extractTags(tags, discovered, metricsURL)
 	ppsKey := reporting.EncodeKey("target.points.collected", pt)
 	epsKey := reporting.EncodeKey("target.collect.errors", pt)
 
@@ -72,7 +73,7 @@ func NewPrometheusMetricsSource(metricsURL, prefix, source, discovered string, t
 	}, nil
 }
 
-func extractTags(tags map[string]string, discovered string) map[string]string {
+func extractTags(tags map[string]string, discovered, metricsURL string) map[string]string {
 	result := make(map[string]string)
 	for k, v := range tags {
 		if k == "pod" || k == "service" || k == "apiserver" || k == "namespace" {
@@ -81,24 +82,29 @@ func extractTags(tags map[string]string, discovered string) map[string]string {
 	}
 	if discovered != "" {
 		result["discovered"] = discovered
+	} else {
+		result["url"] = metricsURL
 	}
 	result["type"] = "prometheus"
 	return result
 }
 
-func httpClient(metricsURL string) (*http.Client, error) {
+func httpClient(metricsURL string, cfg httputil.ClientConfig) (*http.Client, error) {
 	if strings.Contains(metricsURL, "kubernetes.default.svc.cluster.local") {
-		client, err := httputil.NewClient(httputil.ClientConfig{
-			TLSConfig: httputil.TLSConfig{
-				CAFile:             "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt",
-				InsecureSkipVerify: true,
-			},
-			BearerTokenFile: "/var/run/secrets/kubernetes.io/serviceaccount/token",
-		})
-		glog.V(2).Info("using default client for kubernetes api service")
-		return client, err
+		if cfg.TLSConfig.CAFile == "" {
+			glog.V(2).Info("using default client for kubernetes api service")
+			cfg.TLSConfig.CAFile = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+			cfg.TLSConfig.InsecureSkipVerify = true
+		}
+		if cfg.BearerToken == "" && cfg.BearerTokenFile == "" {
+			cfg.BearerTokenFile = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+		}
 	}
-	return &http.Client{Timeout: time.Second * 30}, nil
+	client, err := httputil.NewClient(cfg)
+	if err == nil {
+		client.Timeout = time.Second * 30
+	}
+	return client, err
 }
 
 func (src *prometheusMetricsSource) Name() string {
@@ -328,13 +334,15 @@ func NewPrometheusProvider(uri *url.URL) (MetricsSourceProvider, error) {
 	discovered := flags.DecodeValue(vals, "discovered")
 	glog.V(4).Infof("name: %s discovered: %s", name, discovered)
 
+	httpCfg := flags.DecodeHTTPConfig(vals)
+
 	prefix := flags.DecodeValue(vals, "prefix")
 	tags := flags.DecodeTags(vals)
 	filters := filter.FromQuery(vals)
 
 	var sources []MetricsSource
 	for _, metricsURL := range vals["url"] {
-		metricsSource, err := NewPrometheusMetricsSource(metricsURL, prefix, source, discovered, tags, filters)
+		metricsSource, err := NewPrometheusMetricsSource(metricsURL, prefix, source, discovered, tags, filters, httpCfg)
 		if err == nil {
 			sources = append(sources, metricsSource)
 		} else {

@@ -2,6 +2,7 @@ package prometheus
 
 import (
 	"fmt"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/httputil"
 	"net/url"
 	"strings"
 
@@ -79,7 +80,23 @@ func (e prometheusEncoder) Encode(ip, kind string, meta metav1.ObjectMeta, cfg i
 		utils.EncodeTags(values, "label.", meta.Labels)
 	}
 	utils.EncodeFilters(values, rule.Filters)
+
+	err := encodeConf(values, rule.Conf)
+	if err != nil {
+		return url.Values{}
+	}
 	return values
+}
+
+func encodeConf(values url.Values, conf string) error {
+	if conf != "" {
+		httpConf, err := httputil.FromYAML([]byte(conf))
+		if err != nil {
+			return err
+		}
+		utils.EncodeHTTPConfig(values, httpConf)
+	}
+	return nil
 }
 
 func encodeBase(values url.Values, scheme, ip, port, path, name, source, prefix string) {

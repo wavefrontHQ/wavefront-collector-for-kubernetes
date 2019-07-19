@@ -90,6 +90,7 @@ func (p PrometheusSourceConfig) convert() (flags.Uri, error) {
 	addVal(values, "url", p.URL)
 	addVal(values, "prefix", p.Prefix)
 	addVal(values, "source", p.Source)
+	utils.EncodeHTTPConfig(values, p.HTTPClientConfig)
 	utils.EncodeFilters(values, p.Filters)
 	utils.EncodeTags(values, "", p.Tags)
 	return buildUri("prometheus", "", values.Encode())

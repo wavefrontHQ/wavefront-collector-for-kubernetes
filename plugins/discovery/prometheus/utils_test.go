@@ -91,6 +91,12 @@ func TestEncode(t *testing.T) {
 		Port:          "9103",
 		Prefix:        "foo.",
 		IncludeLabels: "false",
+		Conf: `
+bearer_token_file: '/var/run/secrets/kubernetes.io/serviceaccount/token'
+tls_config:
+  ca_file: '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
+  insecure_skip_verify: true
+`,
 	}
 	pod.Annotations = map[string]string{}
 
@@ -102,6 +108,9 @@ func TestEncode(t *testing.T) {
 	checkValue(values, "prefix", "foo.", t)
 	checkTag(values, "pod:test", t)
 	checkTag(values, "namespace:test", t)
+	checkValue(values, "bearerTokenFile", "/var/run/secrets/kubernetes.io/serviceaccount/token", t)
+	checkValue(values, "tlsCAFile", "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt", t)
+	checkValue(values, "tlsInsecure", "true", t)
 }
 
 func checkTag(values url.Values, val string, t *testing.T) {

@@ -2,8 +2,10 @@ package utils
 
 import (
 	"fmt"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/httputil"
 	"net/url"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
@@ -68,6 +70,16 @@ func EncodeMeta(values url.Values, kind string, meta metav1.ObjectMeta) {
 	}
 }
 
+func EncodeHTTPConfig(values url.Values, cfg httputil.ClientConfig) {
+	addVal(values, "bearerToken", cfg.BearerToken)
+	addVal(values, "bearerTokenFile", cfg.BearerTokenFile)
+	addVal(values, "tlsCAFile", cfg.TLSConfig.CAFile)
+	addVal(values, "tlsCertFile", cfg.TLSConfig.CertFile)
+	addVal(values, "tlsKeyFile", cfg.TLSConfig.KeyFile)
+	addVal(values, "tlsServerName", cfg.TLSConfig.ServerName)
+	addVal(values, "tlsInsecure", strconv.FormatBool(cfg.TLSConfig.InsecureSkipVerify))
+}
+
 func Param(meta metav1.ObjectMeta, annotation, cfgVal, defaultVal string) string {
 	value := ""
 	// give precedence to annotation
@@ -83,4 +95,10 @@ func Param(meta metav1.ObjectMeta, annotation, cfgVal, defaultVal string) string
 		value = defaultVal
 	}
 	return value
+}
+
+func addVal(values url.Values, key, val string) {
+	if val != "" {
+		values.Add(key, val)
+	}
 }
