@@ -67,8 +67,7 @@ func (src *internalMetricsSource) ScrapeMetrics() (*DataBatch, error) {
 func (src *internalMetricsSource) internalStats() (*DataBatch, error) {
 	now := time.Now()
 	result := &DataBatch{
-		Timestamp:  now,
-		MetricSets: map[string]*MetricSet{},
+		Timestamp: now,
 	}
 	var points []*MetricPoint
 

@@ -93,8 +93,7 @@ func (this *DummyMetricsSource) ScrapeMetrics() (*DataBatch, error) {
 	}
 
 	res := &DataBatch{
-		Timestamp:  time.Now(),
-		MetricSets: map[string]*MetricSet{},
+		Timestamp: time.Now(),
 	}
 	res.MetricPoints = append(res.MetricPoints, point)
 	return res, nil
