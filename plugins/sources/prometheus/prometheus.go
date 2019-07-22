@@ -8,7 +8,6 @@ import (
 	"math"
 	"net/http"
 	"net/url"
-	"sort"
 	"strings"
 	"time"
 
@@ -299,10 +298,6 @@ func encodeLabelTags(labels []*dto.LabelPair, buf *bytes.Buffer) {
 	if len(labels) == 0 {
 		return
 	}
-	// sort the labels to ensure the key is always the same when getting or setting
-	sort.Slice(labels, func(i, j int) bool {
-		return labels[i].GetName() < labels[j].GetName()
-	})
 	buf.WriteString("[")
 	for _, label := range labels {
 		buf.WriteString(url.QueryEscape(label.GetName()))
