@@ -545,15 +545,15 @@
   version = "v1.0.0"
 
 [[projects]]
-  branch = "master"
-  digest = "1:2280e07b45fd1738935db641e4b0b135aa4ca7248e353d535485638b0f73e21e"
+  digest = "1:fd13842de24935850da66d3884da230deb7e53d366f08041eb23b6198e5703af"
   name = "github.com/wavefronthq/go-metrics-wavefront"
   packages = ["reporting"]
   pruneopts = "UT"
-  revision = "e86b11d2e81bbf4e48f1fde1fe8ad5e4b8b5e40e"
+  revision = "4d2f53e0833cefc9a0044795b2eb951779cedaa8"
+  version = "v1.0.1"
 
 [[projects]]
-  digest = "1:f8fa24dccae1fe5bb5e9dbd7adc11588cc6e0a2767576251318835bc4998f13d"
+  digest = "1:ff5b7022e7887a3b0d5db87a5679130f0d1e43f63b39aa3ca3510eb562a18d33"
   name = "github.com/wavefronthq/wavefront-sdk-go"
   packages = [
     "application",
@@ -562,8 +562,8 @@
     "senders",
   ]
   pruneopts = "UT"
-  revision = "fa87530cd02a8ad08bd179e1c39fb319a0cc0dae"
-  version = "v0.9.2"
+  revision = "444c396a44fc920294d5e7f960f6a8fc7d8a5ad2"
+  version = "v0.9.3"
 
 [[projects]]
   branch = "master"
