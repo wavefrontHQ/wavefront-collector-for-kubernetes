@@ -74,8 +74,7 @@ func (src *systemdMetricsSource) ScrapeMetrics() (*DataBatch, error) {
 
 	now := time.Now().Unix()
 	result := &DataBatch{
-		Timestamp:  time.Now(),
-		MetricSets: map[string]*MetricSet{},
+		Timestamp: time.Now(),
 	}
 
 	// channel for gathering collected metrics

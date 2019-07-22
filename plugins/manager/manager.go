@@ -79,7 +79,7 @@ func (rm *flushManagerImpl) push() {
 	dataList := sources.Manager().GetPendingMetrics()
 	for _, data := range dataList {
 		for _, p := range rm.processors {
-			if data.MetricSets != nil {
+			if len(data.MetricSets) > 0 {
 				newData, err := p.Process(data)
 				if err == nil {
 					data = newData

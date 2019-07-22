@@ -113,8 +113,7 @@ func (src *prometheusMetricsSource) Name() string {
 
 func (src *prometheusMetricsSource) ScrapeMetrics() (*DataBatch, error) {
 	result := &DataBatch{
-		Timestamp:  time.Now(),
-		MetricSets: map[string]*MetricSet{},
+		Timestamp: time.Now(),
 	}
 
 	resp, err := src.client.Get(src.metricsURL)

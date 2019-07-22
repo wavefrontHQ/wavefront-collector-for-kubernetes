@@ -33,8 +33,7 @@ func TestAllExportsInTime(t *testing.T) {
 
 	now := time.Now()
 	batch := metrics.DataBatch{
-		Timestamp:  now,
-		MetricSets: map[string]*metrics.MetricSet{},
+		Timestamp: now,
 	}
 
 	manager.ExportData(&batch)
@@ -60,8 +59,7 @@ func TestOneExportInTime(t *testing.T) {
 
 	now := time.Now()
 	batch := metrics.DataBatch{
-		Timestamp:  now,
-		MetricSets: map[string]*metrics.MetricSet{},
+		Timestamp: now,
 	}
 
 	manager.ExportData(&batch)
@@ -90,8 +88,7 @@ func TestNoExportInTime(t *testing.T) {
 
 	now := time.Now()
 	batch := metrics.DataBatch{
-		Timestamp:  now,
-		MetricSets: map[string]*metrics.MetricSet{},
+		Timestamp: now,
 	}
 
 	manager.ExportData(&batch)

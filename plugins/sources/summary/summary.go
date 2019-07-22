@@ -80,8 +80,7 @@ func (this *summaryMetricsSource) String() string {
 
 func (this *summaryMetricsSource) ScrapeMetrics() (*DataBatch, error) {
 	result := &DataBatch{
-		Timestamp:  time.Now(),
-		MetricSets: map[string]*MetricSet{},
+		Timestamp: time.Now(),
 	}
 
 	summary, err := func() (*stats.Summary, error) {
