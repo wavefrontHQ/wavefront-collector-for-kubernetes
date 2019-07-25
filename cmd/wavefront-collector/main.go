@@ -203,22 +203,8 @@ func convertOrDie(opt *options.CollectorRunOptions, cfg *configuration.Config) *
 		glog.Infof("using configuration file, omitting flags")
 		return cflags
 	}
-	addInternalStatsSource(opt)
+	handleBackwardsCompatibility(opt)
 	return opt
-}
-
-// backwards compatibility: internal stats used to be included by default. It's now config driven.
-func addInternalStatsSource(opt *options.CollectorRunOptions) {
-	values := url.Values{}
-	values.Add("prefix", opt.InternalStatsPrefix)
-
-	u, err := url.Parse("?")
-	if err != nil {
-		glog.Errorf("error adding internal source: %v", err)
-		return
-	}
-	u.RawQuery = values.Encode()
-	opt.Sources = append(opt.Sources, flags.Uri{Key: "internal_stats", Val: *u})
 }
 
 func registerListeners(ag *agent.Agent, opt *options.CollectorRunOptions) {
@@ -240,31 +226,11 @@ func createDiscoveryManagerOrDie(client *kube_client.Clientset, plugins []discCo
 	if opt.EnableDiscovery {
 		// backwards compatibility, discovery config was a separate file
 		if len(plugins) == 0 && opt.DiscoveryConfigFile != "" {
-			plugins = loadPluginsOrDie(opt.DiscoveryConfigFile)
+			plugins = loadDiscoveryFileOrDie(opt.DiscoveryConfigFile)
 		}
 		return discovery.NewDiscoveryManager(client, plugins, opt.Daemon)
 	}
 	return nil
-}
-
-// backwards compatibility. clusterName used to be specified on the sink.
-func resolveClusterName(name string, opt *options.CollectorRunOptions) string {
-	if name == "" {
-		sinkUrl, err := getWavefrontAddress(opt.Sinks)
-		if err != nil {
-			glog.Fatalf("Failed to get wavefront sink address: %v", err)
-		}
-		name = flags.DecodeValue(sinkUrl.Query(), "clusterName")
-	}
-	return name
-}
-
-func loadPluginsOrDie(file string) []discConfig.PluginConfig {
-	cfg, err := discConfig.FromFile(file)
-	if err != nil {
-		glog.Fatalf("error loading discovery configuration: %v", err)
-	}
-	return cfg.PluginConfigs
 }
 
 func registerVersion() {
