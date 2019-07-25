@@ -59,5 +59,5 @@ func (h *CollectorRunOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.DurationVar(&h.ScrapeTimeout, "scrape_timeout", 20*time.Second, "The per-source scrape timeout")
 	fs.MarkDeprecated("scrape_timeout", "set in configuration file")
 	fs.IntVar(&h.logLevel, "v", 2, "log level for V logs")
-	fs.MarkDeprecated("v", "use --verbose flag")
+	fs.MarkDeprecated("v", "flag is ignored")
 }
