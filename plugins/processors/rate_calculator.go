@@ -33,18 +33,18 @@ func (this *RateCalculator) Process(batch *metrics.DataBatch) (*metrics.DataBatc
 	for key, newMs := range batch.MetricSets {
 		oldMs, found := this.previousMetricSets[key]
 		if !found {
-			glog.V(4).Infof("Skipping rate calculation for '%s' - no previous batch found", key)
+			glog.V(4).Infof("Skipping rates for '%s' - no previous batch found", key)
 			this.previousMetricSets[key] = newMs
 			continue
 		}
 
 		if !newMs.ScrapeTime.After(oldMs.ScrapeTime) {
 			// New must be strictly after old.
-			glog.V(4).Infof("Skipping rate calculations for %'s' - new batch (%s) was not scraped strictly after old batch (%s)", key, newMs.ScrapeTime, oldMs.ScrapeTime)
+			glog.V(4).Infof("Skipping rates for '%s' - new batch (%s) was not scraped strictly after old batch (%s)", key, newMs.ScrapeTime, oldMs.ScrapeTime)
 			continue
 		}
 		if !newMs.CollectionStartTime.Equal(oldMs.CollectionStartTime) {
-			glog.V(4).Infof("Skipping rates for %s - different collection start time (restart) new:%v  old:%v", key, newMs.CollectionStartTime, oldMs.CollectionStartTime)
+			glog.V(4).Infof("Skipping rates for '%s' - different collection start time (restart) new:%v  old:%v", key, newMs.CollectionStartTime, oldMs.CollectionStartTime)
 			this.previousMetricSets[key] = newMs
 			continue
 		}
@@ -83,16 +83,15 @@ func (this *RateCalculator) Process(batch *metrics.DataBatch) (*metrics.DataBatc
 							})
 						}
 					} else if foundNew && !foundOld || !foundNew && foundOld {
-						glog.V(4).Infof("Skipping rates for %s in %s: metric not found in one of old (%v) or new (%v)", metricName, key, foundOld, foundNew)
+						glog.V(4).Infof("Skipping rates for '%s' in '%s': metric not found in one of old (%v) or new (%v)", metricName, key, foundOld, foundNew)
 					}
 				}
 			} else {
 				metricValNew, foundNew = newMs.MetricValues[metricName]
 				metricValOld, foundOld = oldMs.MetricValues[metricName]
 
-				if foundNew && foundOld && metricName == metrics.MetricCpuUsage.MetricDescriptor.Name {
-					// cpu/usage values are in nanoseconds; we want to have it in millicores (that's why constant 1000 is here).
-					newVal := 1000 * (metricValNew.IntValue - metricValOld.IntValue) /
+				if foundNew && foundOld && targetMetric.MetricDescriptor.ValueType == metrics.ValueInt64 {
+					newVal := 1e9 * (metricValNew.IntValue - metricValOld.IntValue) /
 						(newMs.ScrapeTime.UnixNano() - oldMs.ScrapeTime.UnixNano())
 
 					newMs.MetricValues[targetMetric.MetricDescriptor.Name] = metrics.MetricValue{
@@ -111,7 +110,7 @@ func (this *RateCalculator) Process(batch *metrics.DataBatch) (*metrics.DataBatc
 						FloatValue: newVal,
 					}
 				} else if foundNew && !foundOld || !foundNew && foundOld {
-					glog.V(4).Infof("Skipping rates for %s in %s: metric not found in one of old (%v) or new (%v)", metricName, key, foundOld, foundNew)
+					glog.V(4).Infof("Skipping rates for '%s' in '%s': metric not found in one of old (%v) or new (%v)", metricName, key, foundOld, foundNew)
 				}
 			}
 		}
