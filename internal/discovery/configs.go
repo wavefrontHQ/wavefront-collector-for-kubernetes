@@ -12,7 +12,7 @@ type Config struct {
 	PluginConfigs []PluginConfig `yaml:"plugin_configs"`
 
 	// Deprecated: Use PluginConfigs instead.
-	PromConfigs   []PrometheusConfig `yaml:"prom_configs"`
+	PromConfigs []PrometheusConfig `yaml:"prom_configs"`
 }
 
 // Describes global rules that define the default discovery behavior
@@ -122,4 +122,3 @@ type PrometheusConfig struct {
 
 	Filters filter.Config `yaml:"filters"`
 }
-
