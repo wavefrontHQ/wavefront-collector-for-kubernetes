@@ -11,8 +11,8 @@ import (
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	"github.com/wavefronthq/wavefront-sdk-go/senders"
 
-	"github.com/golang/glog"
 	gm "github.com/rcrowley/go-metrics"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -60,7 +60,7 @@ func (sink *wavefrontSink) sendPoint(metricName string, value float64, ts int64,
 	metricName = sanitizedChars.Replace(metricName)
 	if sink.filters != nil && !sink.filters.Match(metricName, tags) {
 		filteredPoints.Inc(1)
-		glog.V(5).Infof("dropping metric: %s", metricName)
+		log.Debugf("dropping metric: %s", metricName)
 		return
 	}
 
@@ -73,13 +73,13 @@ func (sink *wavefrontSink) sendPoint(metricName string, value float64, ts int64,
 		}
 		line := fmt.Sprintf("%s %f %d source=\"%s\" %s\n", metricName, value, ts, source, tagStr)
 		sink.testReceivedLines = append(sink.testReceivedLines, line)
-		glog.Infoln(line)
+		log.Infoln(line)
 		return
 	}
 	err := sink.WavefrontClient.SendMetric(metricName, value, ts, source, tags)
 	if err != nil {
 		errPoints.Inc(1)
-		glog.Errorf("error=%q sending metric=%s", err, metricName)
+		log.Errorf("error=%q sending metric=%s", err, metricName)
 	} else {
 		sentPoints.Inc(1)
 	}
@@ -109,7 +109,7 @@ func (sink *wavefrontSink) send(batch *metrics.DataBatch) {
 }
 
 func (sink *wavefrontSink) processMetricPoints(points []*metrics.MetricPoint) {
-	glog.V(2).Infof("received metric points: %d", len(points))
+	log.Debugf("received metric points: %d", len(points))
 	for _, point := range points {
 		if point.Tags == nil {
 			point.Tags = make(map[string]string, 1)
@@ -199,7 +199,7 @@ func NewWavefrontSink(uri *url.URL) (metrics.DataSink, error) {
 	if len(vals["testMode"]) > 0 {
 		testMode, err := strconv.ParseBool(vals["testMode"][0])
 		if err != nil {
-			glog.Warning("Unable to parse the testMode argument. This argument is a boolean, please pass \"true\" or \"false\"")
+			log.Warning("Unable to parse the testMode argument. This argument is a boolean, please pass \"true\" or \"false\"")
 			return nil, err
 		}
 		storage.testMode = testMode

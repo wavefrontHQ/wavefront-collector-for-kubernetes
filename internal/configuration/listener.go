@@ -1,7 +1,8 @@
 package configuration
 
 import (
-	"github.com/golang/glog"
+	log "github.com/sirupsen/logrus"
+
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
 )
 
@@ -16,7 +17,7 @@ func NewFileListener(handler util.ConfigHandler) util.FileListener {
 func (l *listener) Changed(file string) {
 	cfg, err := FromFile(file)
 	if err != nil {
-		glog.Errorf("error loading configuration: %v", err)
+		log.Errorf("error loading configuration: %v", err)
 	} else {
 		l.handler.Handle(cfg)
 	}

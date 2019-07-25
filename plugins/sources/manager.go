@@ -31,8 +31,8 @@ import (
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/systemd"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/telegraf"
 
-	"github.com/golang/glog"
 	gometrics "github.com/rcrowley/go-metrics"
+	log "github.com/sirupsen/logrus"
 	"github.com/wavefronthq/go-metrics-wavefront/reporting"
 )
 
@@ -119,9 +119,9 @@ func (sm *sourceManagerImpl) SetDefaultCollectionInterval(defaultCollectionInter
 // AddProvider register and start a new goMetricsSourceProvider
 func (sm *sourceManagerImpl) AddProvider(provider metrics.MetricsSourceProvider) {
 	name := provider.Name()
-	glog.Infof("Adding provider: '%s' - collection iterval: '%v' - timeout: '%v'", name, provider.CollectionInterval(), provider.Timeout())
+	log.Infof("Adding provider: '%s' - collection iterval: '%v' - timeout: '%v'", name, provider.CollectionInterval(), provider.Timeout())
 	if _, found := sm.metricsSourceProviders[name]; found {
-		glog.Fatalf("Error on 'SourceManager.AddProvider' Duplicate Metrics Source Provider name: '%s'", name)
+		log.Fatalf("Error on 'SourceManager.AddProvider' Duplicate Metrics Source Provider name: '%s'", name)
 	}
 
 	sm.metricsSourcesMtx.Lock()
@@ -132,7 +132,7 @@ func (sm *sourceManagerImpl) AddProvider(provider metrics.MetricsSourceProvider)
 		ticker = time.NewTicker(provider.CollectionInterval())
 	} else {
 		ticker = time.NewTicker(sm.defaultCollectionInterval)
-		glog.Infof("Provider '%s' have no 'CollectionInterval' using default collection interval '%v", provider.Name(), sm.defaultCollectionInterval)
+		log.Infof("Provider '%s' have no 'CollectionInterval' using default collection interval '%v", provider.Name(), sm.defaultCollectionInterval)
 	}
 
 	quit := make(chan struct{})
@@ -140,7 +140,7 @@ func (sm *sourceManagerImpl) AddProvider(provider metrics.MetricsSourceProvider)
 	sm.metricsSourceProviders[name] = provider
 	sm.metricsSourceTickers[name] = ticker
 	sm.metricsSourceQuits[name] = quit
-	glog.V(2).Infof("added provider: %s", name)
+	log.Infof("added provider: %s", name)
 
 	providerCount.Update(int64(len(sm.metricsSourceProviders)))
 
@@ -158,7 +158,7 @@ func (sm *sourceManagerImpl) AddProvider(provider metrics.MetricsSourceProvider)
 
 func (sm *sourceManagerImpl) DeleteProvider(name string) {
 	if _, found := sm.metricsSourceProviders[name]; !found {
-		glog.V(4).Infof("Metrics Source Provider '%s' not found", name)
+		log.Debugf("Metrics Source Provider '%s' not found", name)
 		return
 	}
 
@@ -174,7 +174,7 @@ func (sm *sourceManagerImpl) DeleteProvider(name string) {
 		close(quit)
 		delete(sm.metricsSourceQuits, name)
 	}
-	glog.Infof("deleted provider %s", name)
+	log.Infof("deleted provider %s", name)
 }
 
 func (sm *sourceManagerImpl) StopProviders() {
@@ -214,11 +214,11 @@ func scrape(provider metrics.MetricsSourceProvider, channel chan *metrics.DataBa
 			timeout = time.Minute
 		}
 
-		glog.V(2).Infof("Querying source: '%s'", source.Name())
+		log.Infof("Querying source: '%s'", source.Name())
 		gometrics, err := source.ScrapeMetrics()
 		if err != nil {
 			scrapeErrors.Inc(1)
-			glog.Errorf("Error in scraping containers from '%s': %v", source.Name(), err)
+			log.Errorf("Error in scraping containers from '%s': %v", source.Name(), err)
 			return
 		}
 
@@ -228,11 +228,11 @@ func scrape(provider metrics.MetricsSourceProvider, channel chan *metrics.DataBa
 
 		if !now.Before(scrapeStart.Add(timeout)) {
 			scrapeTimeouts.Inc(1)
-			glog.Warningf("Failed to get '%s' response in time (% slatency)", source.Name(), latency)
+			log.Warningf("Failed to get '%s' response in time (% slatency)", source.Name(), latency)
 			return
 		}
 		channel <- gometrics
-		glog.V(2).Infof("Done Querying source: '%s' (%v metrics) (%v latency)", source.Name(), len(gometrics.MetricPoints), latency)
+		log.Debugf("Done Querying source: '%s' (%v metrics) (%v latency)", source.Name(), len(gometrics.MetricPoints), latency)
 	}
 }
 
@@ -249,12 +249,12 @@ func buildProviders(uris flags.Uris) []metrics.MetricsSourceProvider {
 		if err == nil {
 			result = append(result, provider)
 		} else {
-			glog.Errorf("Failed to create %v source: %v", uri, err)
+			log.Errorf("Failed to create %v source: %v", uri, err)
 		}
 	}
 
 	if len([]flags.Uri(uris)) != 0 && len(result) == 0 {
-		glog.Fatal("No available source to use")
+		log.Fatal("No available source to use")
 	}
 
 	return result

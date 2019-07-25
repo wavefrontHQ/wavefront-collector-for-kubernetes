@@ -18,7 +18,8 @@ import (
 	. "github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
 
-	"github.com/golang/glog"
+	log "github.com/sirupsen/logrus"
+
 	dto "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/expfmt"
 	metrics "github.com/rcrowley/go-metrics"
@@ -53,7 +54,7 @@ type prometheusMetricsSource struct {
 func NewPrometheusMetricsSource(metricsURL, prefix, source, discovered string, tags map[string]string, filters filter.Filter, httpCfg httputil.ClientConfig) (MetricsSource, error) {
 	client, err := httpClient(metricsURL, httpCfg)
 	if err != nil {
-		glog.Errorf("error creating http client: %q", err)
+		log.Errorf("error creating http client: %q", err)
 		return nil, err
 	}
 
@@ -92,7 +93,7 @@ func extractTags(tags map[string]string, discovered, metricsURL string) map[stri
 func httpClient(metricsURL string, cfg httputil.ClientConfig) (*http.Client, error) {
 	if strings.Contains(metricsURL, "kubernetes.default.svc.cluster.local") {
 		if cfg.TLSConfig.CAFile == "" {
-			glog.V(2).Info("using default client for kubernetes api service")
+			log.Debugf("using default client for kubernetes api service")
 			cfg.TLSConfig.CAFile = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
 			cfg.TLSConfig.InsecureSkipVerify = true
 		}
@@ -162,7 +163,7 @@ func (src *prometheusMetricsSource) parseMetrics(buf []byte, header http.Header)
 
 	metricFamilies, err := parser.TextToMetricFamilies(reader)
 	if err != nil {
-		glog.Errorf("reading text format failed: %s", err)
+		log.Errorf("reading text format failed: %s", err)
 	}
 	return src.buildPoints(metricFamilies)
 }
@@ -186,13 +187,7 @@ func (src *prometheusMetricsSource) buildPoints(metricFamilies map[string]*dto.M
 			}
 		}
 	}
-
-	glog.V(4).Infof("%s total points: %d", src.Name(), len(result))
-	if glog.V(9) {
-		for _, i := range result {
-			glog.Infof("%s %f src=%s %q \n", i.Metric, i.Value, i.Source, i.Tags)
-		}
-	}
+	log.Debugf("%s total points: %d", src.Name(), len(result))
 	return result, nil
 }
 
@@ -280,7 +275,7 @@ func (src *prometheusMetricsSource) filterAppend(slice []*MetricPoint, point *Me
 		return append(slice, point)
 	}
 	filteredPoints.Inc(1)
-	glog.V(5).Infof("dropping metric: %s", point.Metric)
+	log.Debugf("dropping metric: %s", point.Metric)
 	return slice
 }
 
@@ -298,7 +293,7 @@ type prometheusProvider struct {
 
 func (p *prometheusProvider) GetMetricsSources() []MetricsSource {
 	if p.discovered == "" && !leadership.Leading() {
-		glog.V(2).Infof("not scraping sources from: %s. current leader: %s", p.name, leadership.Leader())
+		log.Infof("not scraping sources from: %s. current leader: %s", p.name, leadership.Leader())
 		return nil
 	}
 	return p.sources
@@ -331,7 +326,7 @@ func NewPrometheusProvider(uri *url.URL) (MetricsSourceProvider, error) {
 	}
 
 	discovered := flags.DecodeValue(vals, "discovered")
-	glog.V(4).Infof("name: %s discovered: %s", name, discovered)
+	log.Debugf("name: %s discovered: %s", name, discovered)
 
 	httpCfg := flags.DecodeHTTPConfig(vals)
 
@@ -345,7 +340,7 @@ func NewPrometheusProvider(uri *url.URL) (MetricsSourceProvider, error) {
 		if err == nil {
 			sources = append(sources, metricsSource)
 		} else {
-			glog.Errorf("error creating source: %v", err)
+			log.Errorf("error creating source: %v", err)
 		}
 	}
 

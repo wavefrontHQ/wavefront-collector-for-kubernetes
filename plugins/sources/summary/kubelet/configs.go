@@ -18,7 +18,8 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/golang/glog"
+	log "github.com/sirupsen/logrus"
+
 	kube_config "github.com/wavefronthq/wavefront-kubernetes-collector/internal/kubernetes"
 	kube_client "k8s.io/client-go/rest"
 )
@@ -57,8 +58,8 @@ func GetKubeConfigs(uri *url.URL) (*kube_client.Config, *KubeletClientConfig, er
 		}
 	}
 
-	glog.Infof("Using Kubernetes client with master %q and version %+v\n", kubeConfig.Host, kubeConfig.GroupVersion)
-	glog.Infof("Using kubelet port %d", kubeletPort)
+	log.Infof("Using Kubernetes client with master %q and version %+v\n", kubeConfig.Host, kubeConfig.GroupVersion)
+	log.Infof("Using kubelet port %d", kubeletPort)
 
 	kubeletConfig := &KubeletClientConfig{
 		Port:            uint(kubeletPort),

@@ -16,22 +16,15 @@ package sources
 
 import (
 	"net/url"
-	"os"
 	"testing"
 	"time"
 
-	"github.com/go-kit/kit/log"
-	"github.com/golang/glog"
+	log "github.com/sirupsen/logrus"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
 )
-
-func init() {
-	logger := log.NewLogfmtLogger(log.NewSyncWriter(os.Stdout))
-	logger = log.With(logger, "ts", log.DefaultTimestampUTC)
-	glog.SetLogger(logger)
-}
 
 func TestNoTimeout(t *testing.T) {
 	metricsSourceProvider := util.NewDummyMetricsSourceProvider("dummy_nt",
@@ -124,7 +117,7 @@ func TestConfig(t *testing.T) {
 
 	if i, ok := provider.(metrics.ConfigurabeMetricsSourceProvider); ok {
 		i.Configure(url)
-		glog.Infof("Name: %s - CollectionInterval: %v", provider.Name(), provider.CollectionInterval())
+		log.Infof("Name: %s - CollectionInterval: %v", provider.Name(), provider.CollectionInterval())
 	}
 
 	assert.Equal(t, time.Hour, provider.CollectionInterval(), "incorrect CollectionInterval")

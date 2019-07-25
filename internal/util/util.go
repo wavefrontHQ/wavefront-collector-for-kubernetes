@@ -22,7 +22,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/golang/glog"
+	log "github.com/sirupsen/logrus"
 
 	kube_api "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -117,10 +117,10 @@ func GetFieldSelector(resourceType string) fields.Selector {
 		case "nodes":
 			fieldSelector = fields.OneTermEqualSelector("metadata.name", nodeName)
 		default:
-			glog.Infof("invalid resource type: %s", resourceType)
+			log.Infof("invalid resource type: %s", resourceType)
 		}
 	}
-	glog.V(2).Infof("using fieldSelector: %q for resourceType: %s", fieldSelector, resourceType)
+	log.Infof("using fieldSelector: %q for resourceType: %s", fieldSelector, resourceType)
 	return fieldSelector
 }
 

@@ -1,7 +1,8 @@
 package discovery
 
 import (
-	"github.com/golang/glog"
+	log "github.com/sirupsen/logrus"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -16,7 +17,7 @@ func ResourceName(kind string, meta metav1.ObjectMeta) string {
 func ConvertPromToPlugin(cfg *Config) {
 	// convert PrometheusConfigs to PluginConfigs
 	if len(cfg.PromConfigs) > 0 {
-		glog.Warningf("Warning: PrometheusConfig has been deprecated. Use PluginConfig.")
+		log.Warningf("Warning: PrometheusConfig has been deprecated. Use PluginConfig.")
 		toAppend := make([]PluginConfig, len(cfg.PromConfigs))
 		for i, promCfg := range cfg.PromConfigs {
 			toAppend[i] = PluginConfig{

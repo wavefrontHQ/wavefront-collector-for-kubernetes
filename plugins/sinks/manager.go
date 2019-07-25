@@ -23,8 +23,8 @@ import (
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 
-	"github.com/golang/glog"
 	gm "github.com/rcrowley/go-metrics"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -69,7 +69,7 @@ func NewDataSinkManager(sinks []metrics.DataSink, exportDataTimeout, stopTimeout
 				case data := <-sh.dataBatchChannel:
 					export(sh.sink, data)
 				case isStop := <-sh.stopChannel:
-					glog.V(2).Infof("Stop received: %s", sh.sink.Name())
+					log.Infof("Stop received: %s", sh.sink.Name())
 					if isStop {
 						sh.sink.Stop()
 						return
@@ -92,14 +92,14 @@ func (this *sinkManager) ExportData(data *metrics.DataBatch) {
 		wg.Add(1)
 		go func(sh sinkHolder, wg *sync.WaitGroup) {
 			defer wg.Done()
-			glog.V(2).Infof("Flushing data to: %s", sh.sink.Name())
+			log.Infof("Flushing data to: %s", sh.sink.Name())
 			select {
 			case sh.dataBatchChannel <- data:
-				glog.V(2).Infof("Data push completed: %s", sh.sink.Name())
+				log.Infof("Data push completed: %s", sh.sink.Name())
 				// everything ok
 			case <-time.After(this.exportDataTimeout):
 				sinkTimeouts.Inc(1)
-				glog.Warningf("Failed to push data to sink: %s", sh.sink.Name())
+				log.Warningf("Failed to push data to sink: %s", sh.sink.Name())
 			}
 		}(sh, &wg)
 	}
@@ -113,16 +113,16 @@ func (this *sinkManager) Name() string {
 
 func (this *sinkManager) Stop() {
 	for _, sh := range this.sinkHolders {
-		glog.V(2).Infof("Running stop for: %s", sh.sink.Name())
+		log.Infof("Running stop for: %s", sh.sink.Name())
 
 		go func(sh sinkHolder) {
 			select {
 			case sh.stopChannel <- true:
 				// everything ok
-				glog.V(2).Infof("Stop sent to sink: %s", sh.sink.Name())
+				log.Infof("Stop sent to sink: %s", sh.sink.Name())
 
 			case <-time.After(this.stopTimeout):
-				glog.Warningf("Failed to stop sink: %s", sh.sink.Name())
+				log.Warningf("Failed to stop sink: %s", sh.sink.Name())
 			}
 			return
 		}(sh)

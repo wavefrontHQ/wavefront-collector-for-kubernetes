@@ -15,22 +15,13 @@
 package manager
 
 import (
-	"os"
 	"testing"
 	"time"
 
-	"github.com/go-kit/kit/log"
-	"github.com/golang/glog"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources"
 )
-
-func init() {
-	logger := log.NewLogfmtLogger(log.NewSyncWriter(os.Stdout))
-	logger = log.With(logger, "ts", log.DefaultTimestampUTC)
-	glog.SetLogger(logger)
-}
 
 func TestFlow(t *testing.T) {
 	provider := util.NewDummyMetricsSourceProvider(

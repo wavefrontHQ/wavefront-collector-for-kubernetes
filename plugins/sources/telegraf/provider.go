@@ -6,10 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang/glog"
 	"github.com/influxdata/telegraf"
 	telegrafPlugins "github.com/influxdata/telegraf/plugins/inputs"
 	gm "github.com/rcrowley/go-metrics"
+	log "github.com/sirupsen/logrus"
 	"github.com/wavefronthq/go-metrics-wavefront/reporting"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
@@ -89,10 +89,10 @@ func (t *telegrafPluginSource) ScrapeMetrics() (*metrics.DataBatch, error) {
 		if t.targetEPS != nil {
 			t.targetEPS.Inc(1)
 		}
-		glog.Errorf("error gathering %s metrics. error: %v", t.name, err)
+		log.Errorf("error gathering %s metrics. error: %v", t.name, err)
 	}
 	count := len(result.MetricPoints)
-	glog.Infof("%s metrics: %d", t.Name(), count)
+	log.Infof("%s metrics: %d", t.Name(), count)
 	t.pointsCollected.Inc(int64(count))
 	if t.targetPPS != nil {
 		t.targetPPS.Inc(int64(count))
@@ -150,18 +150,18 @@ func NewProvider(uri *url.URL) (metrics.MetricsSourceProvider, error) {
 				err := initPlugin(plugin, vals)
 				if err != nil {
 					// bail if discovered and error initializing
-					glog.Errorf("error creating plugin: %s err: %s", name, err)
+					log.Errorf("error creating plugin: %s err: %s", name, err)
 					return nil, err
 				}
 			}
 			sources = append(sources, newTelegrafPluginSource(name, plugin, prefix, tags, filters, discovered))
 		} else {
-			glog.Errorf("telegraf plugin %s not found", name)
+			log.Errorf("telegraf plugin %s not found", name)
 			var availablePlugins []string
 			for name := range telegrafPlugins.Inputs {
 				availablePlugins = append(availablePlugins, name)
 			}
-			glog.Infof("available telegraf plugins: '%v'", availablePlugins)
+			log.Infof("available telegraf plugins: '%v'", availablePlugins)
 		}
 	}
 

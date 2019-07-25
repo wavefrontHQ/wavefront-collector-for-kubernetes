@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang/glog"
 	"github.com/influxdata/telegraf"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 )
@@ -35,7 +35,7 @@ func (t *telegrafDataBatch) preparePoints(measurement string, fields map[string]
 		default:
 			value, err = getFloat(v)
 			if err != nil {
-				glog.Errorf("unsupported type: %v plugin: %s metric: %v value: %v. error: %v", reflect.TypeOf(v), t.source.name, metric, v, err)
+				log.Errorf("unsupported type: %v plugin: %s metric: %v value: %v. error: %v", reflect.TypeOf(v), t.source.name, metric, v, err)
 				continue
 			}
 		}
@@ -77,7 +77,7 @@ func (t *telegrafDataBatch) filterAppend(slice []*metrics.MetricPoint, point *me
 		return append(slice, point)
 	}
 	t.source.pointsFiltered.Inc(1)
-	glog.V(4).Infof("dropping metric: %s", point.Metric)
+	log.Debugf("dropping metric: %s", point.Metric)
 	return slice
 }
 
@@ -100,24 +100,24 @@ func (t *telegrafDataBatch) AddCounter(measurement string, fields map[string]int
 
 // AddSummary is the same as AddFields, but will add the metric as a "Summary" type
 func (t *telegrafDataBatch) AddSummary(measurement string, fields map[string]interface{}, tags map[string]string, timestamp ...time.Time) {
-	glog.Fatal("not supported")
+	log.Fatal("not supported")
 }
 
 // AddHistogram is the same as AddFields, but will add the metric as a "Histogram" type
 func (t *telegrafDataBatch) AddHistogram(measurement string, fields map[string]interface{}, tags map[string]string, timestamp ...time.Time) {
-	glog.Fatal("not supported")
+	log.Fatal("not supported")
 }
 
 // AddMetric adds an metric to the accumulator.
 func (t *telegrafDataBatch) AddMetric(telegraf.Metric) {
-	glog.Fatal("not supported")
+	log.Fatal("not supported")
 }
 
 // SetPrecision sets the timestamp rounding precision.  All metrics addeds
 // added to the accumulator will have their timestamp rounded to the
 // nearest multiple of precision.
 func (t *telegrafDataBatch) SetPrecision(precision time.Duration) {
-	glog.Fatal("not supported")
+	log.Fatal("not supported")
 }
 
 // Report an error.
@@ -127,13 +127,13 @@ func (t *telegrafDataBatch) AddError(err error) {
 		if t.source.targetEPS != nil {
 			t.source.targetEPS.Inc(1)
 		}
-		glog.Error(err)
+		log.Error(err)
 	}
 }
 
 // Upgrade to a TrackingAccumulator with space for maxTracked metrics/batches.
 func (t *telegrafDataBatch) WithTracking(maxTracked int) telegraf.TrackingAccumulator {
-	glog.Fatal("not supported")
+	log.Fatal("not supported")
 	return nil
 }
 

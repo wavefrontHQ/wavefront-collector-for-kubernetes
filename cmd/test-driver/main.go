@@ -5,9 +5,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/log/level"
-	"github.com/golang/glog"
+	log "github.com/sirupsen/logrus"
+
 	"github.com/spf13/pflag"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/flags"
@@ -18,7 +17,6 @@ import (
 
 	kubeFlag "k8s.io/apiserver/pkg/util/flag"
 	"k8s.io/apiserver/pkg/util/logs"
-	"k8s.io/klog"
 )
 
 var (
@@ -27,18 +25,9 @@ var (
 )
 
 func main() {
-	// Create go-kit logger (wrapper around glog)
-	logger := log.NewLogfmtLogger(log.NewSyncWriter(os.Stdout))
-	logger = log.With(logger, "ts", log.DefaultTimestamp)
-	logger = level.NewFilter(logger, level.AllowDebug())
-
-	// Overriding the default glog with our go-kit glog implementation.
-	// Thus we need to pass it our go-kit logger object.
-	glog.ClampLevel(6)
-	glog.SetLogger(logger)
-
-	klog.ClampLevel(6)
-	klog.SetLogger(logger)
+	log.SetFormatter(&log.TextFormatter{})
+	log.SetLevel(log.InfoLevel)
+	log.SetOutput(os.Stdout)
 
 	opt := options.NewCollectorRunOptions()
 	opt.AddFlags(pflag.CommandLine)
@@ -56,7 +45,7 @@ func main() {
 
 	man, err := manager.NewFlushManager(nil, sinkManager, opt.MetricResolution)
 	if err != nil {
-		glog.Fatalf("Failed to create main manager: %v", err)
+		log.Fatalf("Failed to create main manager: %v", err)
 	}
 	man.Start()
 	waitForStop()
@@ -67,11 +56,11 @@ func createAndInitSinksOrDie(sinkAddresses flags.Uris, sinkExportDataTimeout tim
 	sinkList := sinksFactory.BuildAll(sinkAddresses)
 
 	for _, sink := range sinkList {
-		glog.Infof("Starting with %s", sink.Name())
+		log.Infof("Starting with %s", sink.Name())
 	}
 	sinkManager, err := sinks.NewDataSinkManager(sinkList, sinkExportDataTimeout, sinks.DefaultSinkStopTimeout)
 	if err != nil {
-		glog.Fatalf("Failed to create sink manager: %v", err)
+		log.Fatalf("Failed to create sink manager: %v", err)
 	}
 	return sinkManager
 }

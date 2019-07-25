@@ -12,10 +12,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/log/level"
-	"github.com/golang/glog"
 	gm "github.com/rcrowley/go-metrics"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/agent"
@@ -37,7 +35,6 @@ import (
 	"k8s.io/apiserver/pkg/util/logs"
 	kube_client "k8s.io/client-go/kubernetes"
 	v1listers "k8s.io/client-go/listers/core/v1"
-	"k8s.io/klog"
 )
 
 var (
@@ -47,22 +44,13 @@ var (
 )
 
 func main() {
-	// Create go-kit logger (wrapper around glog)
-	logger := log.NewLogfmtLogger(log.NewSyncWriter(os.Stdout))
-	logger = log.With(logger, "ts", log.DefaultTimestamp)
-	logger = level.NewFilter(logger, level.AllowDebug())
+	log.SetFormatter(&log.TextFormatter{})
+	log.SetLevel(log.InfoLevel)
+	log.SetOutput(os.Stdout)
 
 	opt := options.NewCollectorRunOptions()
 	opt.AddFlags(pflag.CommandLine)
 	kubeFlag.InitFlags()
-
-	// Overriding the default glog with our go-kit glog implementation.
-	// Thus we need to pass it our go-kit logger object.
-	glog.ClampLevel(6)
-	glog.SetLogger(logger)
-
-	klog.ClampLevel(6)
-	klog.SetLogger(logger)
 
 	if opt.Version {
 		fmt.Println(fmt.Sprintf("version: %s\ncommit: %s", version, commit))
@@ -72,8 +60,8 @@ func main() {
 	logs.InitLogs()
 	defer logs.FlushLogs()
 
-	glog.Infof(strings.Join(os.Args, " "))
-	glog.Infof("wavefront-collector version %v", version)
+	log.Infof(strings.Join(os.Args, " "))
+	log.Infof("wavefront-collector version %v", version)
 	enableProfiling(opt.EnableProfiling)
 
 	preRegister(opt)
@@ -88,13 +76,13 @@ func preRegister(opt *options.CollectorRunOptions) {
 	if opt.Daemon {
 		nodeName := util.GetNodeName()
 		if nodeName == "" {
-			glog.Fatalf("missing environment variable %s", util.NodeNameEnvVar)
+			log.Fatalf("missing environment variable %s", util.NodeNameEnvVar)
 		}
 		err := os.Setenv(util.DaemonModeEnvVar, "true")
 		if err != nil {
-			glog.Fatalf("error setting environment variable %s", util.DaemonModeEnvVar)
+			log.Fatalf("error setting environment variable %s", util.DaemonModeEnvVar)
 		}
-		glog.Infof("%s: %s", util.NodeNameEnvVar, nodeName)
+		log.Infof("%s: %s", util.NodeNameEnvVar, nodeName)
 	}
 	setMaxProcs(opt)
 	registerVersion()
@@ -114,10 +102,6 @@ func createAgentOrDie(opt *options.CollectorRunOptions, cfg *configuration.Confi
 	if cfg != nil {
 		clusterName = resolveClusterName(cfg.ClusterName, opt)
 		plugins = cfg.DiscoveryConfigs
-		// setup log level
-		glog.ClampLevel(glog.Level(cfg.LogLevel))
-		klog.ClampLevel(klog.Level(cfg.LogLevel))
-
 		defaultCollectionInterval = cfg.DefaultCollectionInterval
 		flushInterval = cfg.FlushInterval
 	} else {
@@ -129,7 +113,7 @@ func createAgentOrDie(opt *options.CollectorRunOptions, cfg *configuration.Confi
 	sources.Manager().SetDefaultCollectionInterval(defaultCollectionInterval)
 	err := sources.Manager().BuildProviders(opt.Sources)
 	if err != nil {
-		glog.Fatalf("Failed to create source manager: %v", err)
+		log.Fatalf("Failed to create source manager: %v", err)
 	}
 
 	// create sink managers
@@ -147,7 +131,7 @@ func createAgentOrDie(opt *options.CollectorRunOptions, cfg *configuration.Confi
 	// create uber manager
 	man, err := manager.NewFlushManager(dataProcessors, sinkManager, flushInterval)
 	if err != nil {
-		glog.Fatalf("Failed to create main manager: %v", err)
+		log.Fatalf("Failed to create main manager: %v", err)
 	}
 
 	// create and start agent
@@ -157,7 +141,7 @@ func createAgentOrDie(opt *options.CollectorRunOptions, cfg *configuration.Confi
 }
 
 func loadConfigOrDie(file string) *configuration.Config {
-	glog.Infof("loading config: %s", file)
+	log.Infof("loading config: %s", file)
 
 	if file == "" {
 		return nil
@@ -165,13 +149,13 @@ func loadConfigOrDie(file string) *configuration.Config {
 
 	cfg, err := configuration.FromFile(file)
 	if err != nil {
-		glog.Fatalf("error parsing configuration: %v", err)
+		log.Fatalf("error parsing configuration: %v", err)
 		return nil
 	}
 	fillDefaults(cfg)
 
 	if err := validateCfg(cfg); err != nil {
-		glog.Fatalf("invalid configuration file: %v", err)
+		log.Fatalf("invalid configuration file: %v", err)
 		return nil
 	}
 	return cfg
@@ -198,9 +182,9 @@ func convertOrDie(opt *options.CollectorRunOptions, cfg *configuration.Config) *
 	if cfg != nil {
 		cflags, err := cfg.Convert()
 		if err != nil {
-			glog.Fatalf("error converting configuration: %v", err)
+			log.Fatalf("error converting configuration: %v", err)
 		}
-		glog.Infof("using configuration file, omitting flags")
+		log.Infof("using configuration file, omitting flags")
 		return cflags
 	}
 	handleBackwardsCompatibility(opt)
@@ -249,11 +233,11 @@ func createSinkManagerOrDie(sinkAddresses flags.Uris, sinkExportDataTimeout time
 	sinkList := sinksFactory.BuildAll(sinkAddresses)
 
 	for _, sink := range sinkList {
-		glog.Infof("Starting with %s", sink.Name())
+		log.Infof("Starting with %s", sink.Name())
 	}
 	sinkManager, err := sinks.NewDataSinkManager(sinkList, sinkExportDataTimeout, sinks.DefaultSinkStopTimeout)
 	if err != nil {
-		glog.Fatalf("Failed to create sink manager: %v", err)
+		log.Fatalf("Failed to create sink manager: %v", err)
 	}
 	return sinkManager
 }
@@ -261,7 +245,7 @@ func createSinkManagerOrDie(sinkAddresses flags.Uris, sinkExportDataTimeout time
 func getPodListerOrDie(kubeClient *kube_client.Clientset) v1listers.PodLister {
 	podLister, err := util.GetPodLister(kubeClient)
 	if err != nil {
-		glog.Fatalf("Failed to create podLister: %v", err)
+		log.Fatalf("Failed to create podLister: %v", err)
 	}
 	return podLister
 }
@@ -269,7 +253,7 @@ func getPodListerOrDie(kubeClient *kube_client.Clientset) v1listers.PodLister {
 func createKubeClientOrDie(kubernetesUrl *url.URL) *kube_client.Clientset {
 	kubeConfig, err := kube_config.GetKubeClientConfig(kubernetesUrl)
 	if err != nil {
-		glog.Fatalf("Failed to get client config: %v", err)
+		log.Fatalf("Failed to get client config: %v", err)
 	}
 	return kube_client.NewForConfigOrDie(kubeConfig)
 }
@@ -277,7 +261,7 @@ func createKubeClientOrDie(kubernetesUrl *url.URL) *kube_client.Clientset {
 func createDataProcessorsOrDie(kubernetesUrl *url.URL, cluster string, podLister v1listers.PodLister) []metrics.DataProcessor {
 	labelCopier, err := util.NewLabelCopier(",", []string{}, []string{})
 	if err != nil {
-		glog.Fatalf("Failed to initialize label copier: %v", err)
+		log.Fatalf("Failed to initialize label copier: %v", err)
 	}
 
 	dataProcessors := []metrics.DataProcessor{
@@ -287,13 +271,13 @@ func createDataProcessorsOrDie(kubernetesUrl *url.URL, cluster string, podLister
 
 	podBasedEnricher, err := processors.NewPodBasedEnricher(podLister, labelCopier)
 	if err != nil {
-		glog.Fatalf("Failed to create PodBasedEnricher: %v", err)
+		log.Fatalf("Failed to create PodBasedEnricher: %v", err)
 	}
 	dataProcessors = append(dataProcessors, podBasedEnricher)
 
 	namespaceBasedEnricher, err := processors.NewNamespaceBasedEnricher(kubernetesUrl)
 	if err != nil {
-		glog.Fatalf("Failed to create NamespaceBasedEnricher: %v", err)
+		log.Fatalf("Failed to create NamespaceBasedEnricher: %v", err)
 	}
 	dataProcessors = append(dataProcessors, namespaceBasedEnricher)
 
@@ -330,14 +314,14 @@ func createDataProcessorsOrDie(kubernetesUrl *url.URL, cluster string, podLister
 
 	nodeAutoscalingEnricher, err := processors.NewNodeAutoscalingEnricher(kubernetesUrl, labelCopier)
 	if err != nil {
-		glog.Fatalf("Failed to create NodeAutoscalingEnricher: %v", err)
+		log.Fatalf("Failed to create NodeAutoscalingEnricher: %v", err)
 	}
 	dataProcessors = append(dataProcessors, nodeAutoscalingEnricher)
 
 	// this always needs to be the last processor
 	wavefrontCoverter, err := summary.NewPointConverter(kubernetesUrl, cluster)
 	if err != nil {
-		glog.Fatalf("Failed to create WavefrontPointConverter: %v", err)
+		log.Fatalf("Failed to create WavefrontPointConverter: %v", err)
 	}
 	dataProcessors = append(dataProcessors, wavefrontCoverter)
 
@@ -362,7 +346,7 @@ func getKubernetesAddressOrDie(args flags.Uris) *url.URL {
 			return &uri.Val
 		}
 	}
-	glog.Fatal("no kubernetes source found")
+	log.Fatal("no kubernetes source found")
 	return nil
 }
 
@@ -386,16 +370,16 @@ func setMaxProcs(opt *options.CollectorRunOptions) {
 	// Check if the setting was successful.
 	actualNumProcs := runtime.GOMAXPROCS(0)
 	if actualNumProcs != numProcs {
-		glog.Warningf("Specified max procs of %d but using %d", numProcs, actualNumProcs)
+		log.Warningf("Specified max procs of %d but using %d", numProcs, actualNumProcs)
 	}
 }
 
 func enableProfiling(enable bool) {
 	if enable {
 		go func() {
-			glog.Info("Starting pprof server at: http://localhost:9090/debug/pprof")
+			log.Info("Starting pprof server at: http://localhost:9090/debug/pprof")
 			if err := http.ListenAndServe("localhost:9090", nil); err != nil {
-				glog.Errorf("E! %v", err)
+				log.Errorf("E! %v", err)
 			}
 		}()
 	}
@@ -424,13 +408,13 @@ func (r *reloader) Handle(cfg interface{}) {
 }
 
 func (r *reloader) handleCollectorCfg(cfg *configuration.Config) {
-	glog.Infof("collector configuration changed")
+	log.Infof("collector configuration changed")
 
 	fillDefaults(cfg)
 
 	opt, err := cfg.Convert()
 	if err != nil {
-		glog.Errorf("configuration error: %v", err)
+		log.Errorf("configuration error: %v", err)
 		return
 	}
 

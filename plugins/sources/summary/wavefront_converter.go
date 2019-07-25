@@ -10,8 +10,8 @@ import (
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/flags"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 
-	"github.com/golang/glog"
 	gm "github.com/rcrowley/go-metrics"
+	log "github.com/sirupsen/logrus"
 )
 
 // converts MetricSets to MetricPoints.
@@ -60,7 +60,7 @@ func (converter *pointConverter) Process(batch *metrics.DataBatch) (*metrics.Dat
 	nodeName := util.GetNodeName()
 	ts := batch.Timestamp
 
-	glog.V(2).Infof("processing %d metric sets", len(metricSets))
+	log.Infof("processing %d metric sets", len(metricSets))
 
 	for _, key := range sortedMetricSetKeys(metricSets) {
 		ms := metricSets[key]
@@ -139,7 +139,7 @@ func (converter *pointConverter) filterAppend(slice []*metrics.MetricPoint, poin
 		return append(slice, point)
 	}
 	converter.filteredPoints.Inc(1)
-	glog.V(5).Infof("dropping metric: %s", point.Metric)
+	log.Debugf("dropping metric: %s", point.Metric)
 	return slice
 }
 
