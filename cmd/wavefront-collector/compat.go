@@ -92,38 +92,6 @@ func loadDiscoveryFileOrDie(file string) []discovery.PluginConfig {
 	if err != nil {
 		glog.Fatalf("error loading discovery configuration: %v", err)
 	}
-	convertPromToPlugin(cfg)
+	discovery.ConvertPromToPlugin(cfg)
 	return cfg.PluginConfigs
-}
-
-func convertPromToPlugin(cfg *discovery.Config) {
-	// convert PrometheusConfigs to PluginConfigs
-	if len(cfg.PromConfigs) > 0 {
-		glog.Warningf("Warning: PrometheusConfig has been deprecated. Use PluginConfig.")
-		toAppend := make([]discovery.PluginConfig, len(cfg.PromConfigs))
-		for i, promCfg := range cfg.PromConfigs {
-			toAppend[i] = discovery.PluginConfig{
-				Name:          promCfg.Name,
-				Type:          "prometheus",
-				Port:          promCfg.Port,
-				Scheme:        promCfg.Scheme,
-				Path:          promCfg.Path,
-				Source:        promCfg.Source,
-				Prefix:        promCfg.Prefix,
-				Tags:          promCfg.Tags,
-				IncludeLabels: promCfg.IncludeLabels,
-				Filters:       promCfg.Filters,
-				Selectors: discovery.Selectors{
-					ResourceType: promCfg.ResourceType,
-					Namespaces:   []string{promCfg.Namespace},
-				},
-			}
-			labels := map[string][]string{}
-			for k, v := range promCfg.Labels {
-				labels[k] = []string{v}
-			}
-			toAppend[i].Selectors.Labels = labels
-		}
-		cfg.PluginConfigs = append(cfg.PluginConfigs, toAppend...)
-	}
 }
