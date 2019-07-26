@@ -2,3 +2,4 @@ vendor
 .idea
 _output
 .DS_Store
+osstp_golang.yml
