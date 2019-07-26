@@ -60,7 +60,7 @@ func (converter *pointConverter) Process(batch *metrics.DataBatch) (*metrics.Dat
 	nodeName := util.GetNodeName()
 	ts := batch.Timestamp
 
-	log.Infof("processing %d metric sets", len(metricSets))
+	log.WithField("total", len(metricSets)).Debug("Processing metric sets")
 
 	for _, key := range sortedMetricSetKeys(metricSets) {
 		ms := metricSets[key]
@@ -139,7 +139,7 @@ func (converter *pointConverter) filterAppend(slice []*metrics.MetricPoint, poin
 		return append(slice, point)
 	}
 	converter.filteredPoints.Inc(1)
-	log.Debugf("dropping metric: %s", point.Metric)
+	log.WithField("name", point.Metric).Trace("Dropping metric")
 	return slice
 }
 

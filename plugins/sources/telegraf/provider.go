@@ -92,7 +92,12 @@ func (t *telegrafPluginSource) ScrapeMetrics() (*metrics.DataBatch, error) {
 		log.Errorf("error gathering %s metrics. error: %v", t.name, err)
 	}
 	count := len(result.MetricPoints)
-	log.Infof("%s metrics: %d", t.Name(), count)
+
+	log.WithFields(log.Fields{
+		"name":          t.Name(),
+		"total_metrics": count,
+	}).Debug("Scraping completed")
+
 	t.pointsCollected.Inc(int64(count))
 	if t.targetPPS != nil {
 		t.targetPPS.Inc(int64(count))

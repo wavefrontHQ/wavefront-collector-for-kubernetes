@@ -138,7 +138,7 @@ func (this *summaryMetricsSource) cloneLabels(labels map[string]string) map[stri
 }
 
 func (this *summaryMetricsSource) decodeNodeStats(metrics map[string]*MetricSet, labels map[string]string, node *stats.NodeStats) {
-	log.Debugf("Decoding node stats for node %s...", node.NodeName)
+	log.Tracef("Decoding node stats for node %s...", node.NodeName)
 	nodeMetrics := &MetricSet{
 		Labels:              this.cloneLabels(labels),
 		MetricValues:        map[string]MetricValue{},
@@ -165,7 +165,7 @@ func (this *summaryMetricsSource) decodeNodeStats(metrics map[string]*MetricSet,
 }
 
 func (this *summaryMetricsSource) decodePodStats(metrics map[string]*MetricSet, nodeLabels map[string]string, pod *stats.PodStats) {
-	log.Debugf("Decoding pod stats for pod %s/%s (%s)...", pod.PodRef.Namespace, pod.PodRef.Name, pod.PodRef.UID)
+	log.Tracef("Decoding pod stats for pod %s/%s (%s)...", pod.PodRef.Namespace, pod.PodRef.Name, pod.PodRef.UID)
 	podMetrics := &MetricSet{
 		Labels:              this.cloneLabels(nodeLabels),
 		MetricValues:        map[string]MetricValue{},
@@ -206,7 +206,7 @@ func (this *summaryMetricsSource) decodePodStats(metrics map[string]*MetricSet, 
 }
 
 func (this *summaryMetricsSource) decodeContainerStats(podLabels map[string]string, container *stats.ContainerStats, isSystemContainer bool) *MetricSet {
-	log.Debugf("Decoding container stats stats for container %s...", container.Name)
+	log.Tracef("Decoding container stats stats for container %s...", container.Name)
 	containerMetrics := &MetricSet{
 		Labels:              this.cloneLabels(podLabels),
 		MetricValues:        map[string]MetricValue{},
@@ -235,7 +235,7 @@ func (this *summaryMetricsSource) decodeContainerStats(podLabels map[string]stri
 
 func (this *summaryMetricsSource) decodeUptime(metrics *MetricSet, startTime time.Time) {
 	if startTime.IsZero() {
-		log.Debugf("missing start time!")
+		log.Trace("missing start time!")
 		return
 	}
 
@@ -245,7 +245,7 @@ func (this *summaryMetricsSource) decodeUptime(metrics *MetricSet, startTime tim
 
 func (this *summaryMetricsSource) decodeCPUStats(metrics *MetricSet, cpu *stats.CPUStats) {
 	if cpu == nil {
-		log.Debugf("missing cpu usage metric!")
+		log.Trace("missing cpu usage metric!")
 		return
 	}
 	this.addIntMetric(metrics, &MetricCpuUsage, cpu.UsageCoreNanoSeconds)
@@ -253,7 +253,7 @@ func (this *summaryMetricsSource) decodeCPUStats(metrics *MetricSet, cpu *stats.
 
 func (this *summaryMetricsSource) decodeEphemeralStorageStats(metrics *MetricSet, storage *stats.FsStats) {
 	if storage == nil {
-		log.Debugf("missing storage usage metric!")
+		log.Trace("missing storage usage metric!")
 		return
 	}
 	this.addIntMetric(metrics, &MetricEphemeralStorageUsage, storage.UsedBytes)
@@ -261,7 +261,7 @@ func (this *summaryMetricsSource) decodeEphemeralStorageStats(metrics *MetricSet
 
 func (this *summaryMetricsSource) decodeEphemeralStorageStatsForContainer(metrics *MetricSet, rootfs *stats.FsStats, logs *stats.FsStats) {
 	if rootfs == nil || logs == nil || rootfs.UsedBytes == nil || logs.UsedBytes == nil {
-		log.Debugf("missing storage usage metric!")
+		log.Trace("missing storage usage metric!")
 		return
 	}
 	usage := *rootfs.UsedBytes + *logs.UsedBytes
@@ -270,7 +270,7 @@ func (this *summaryMetricsSource) decodeEphemeralStorageStatsForContainer(metric
 
 func (this *summaryMetricsSource) decodeMemoryStats(metrics *MetricSet, memory *stats.MemoryStats) {
 	if memory == nil {
-		log.Debugf("missing memory metrics!")
+		log.Trace("missing memory metrics!")
 		return
 	}
 
@@ -296,12 +296,12 @@ func (this *summaryMetricsSource) decodeAcceleratorStats(metrics *MetricSet, acc
 
 func (this *summaryMetricsSource) decodeNetworkStats(metrics *MetricSet, network *stats.NetworkStats) {
 	if network == nil {
-		log.Debugf("missing network metrics!")
+		log.Trace("missing network metrics!")
 		return
 	}
 
 	for _, netInterface := range network.Interfaces {
-		log.Debugf("Processing metrics for network interface %s", netInterface.Name)
+		log.Tracef("Processing metrics for network interface %s", netInterface.Name)
 		intfLabels := map[string]string{NetworkInterfaceKey: netInterface.Name}
 		this.addLabeledIntMetric(metrics, &MetricNetworkRx, intfLabels, netInterface.RxBytes)
 		this.addLabeledIntMetric(metrics, &MetricNetworkRxErrors, intfLabels, netInterface.RxErrors)
@@ -316,7 +316,7 @@ func (this *summaryMetricsSource) decodeNetworkStats(metrics *MetricSet, network
 
 func (this *summaryMetricsSource) decodeFsStats(metrics *MetricSet, fsKey string, fs *stats.FsStats) {
 	if fs == nil {
-		log.Debugf("missing fs metrics!")
+		log.Trace("missing fs metrics!")
 		return
 	}
 
@@ -460,7 +460,14 @@ func (this *summaryProvider) getNodeInfo(node *kube_api.Node) (NodeInfo, error) 
 		},
 		KubeletVersion: node.Status.NodeInfo.KubeletVersion,
 	}
-	log.Infof("nodeInfo: [nodeName:%s hostname:%s hostID:%s ip:%s]", node.Name, hostname, hostID, ip)
+
+	log.WithFields(log.Fields{
+		"name":      node.Name,
+		"hostname":  hostname,
+		"hostID":    hostID,
+		"ipAddress": ip,
+	}).Debug("Node information")
+
 	return info, nil
 }
 

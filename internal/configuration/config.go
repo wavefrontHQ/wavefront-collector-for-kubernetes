@@ -15,9 +15,6 @@ type Config struct {
 
 	DefaultCollectionInterval time.Duration `yaml:"defaultCollectionInterval"`
 
-	//TODO: look into this and changing the level on the fly
-	LogLevel time.Duration `yaml:"verbose"`
-
 	// the timeout for sinks to export data to Wavefront. Defaults to 20 seconds.
 	SinkExportDataTimeout time.Duration `yaml:"sinkExportDataTimeout"`
 

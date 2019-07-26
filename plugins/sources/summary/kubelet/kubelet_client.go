@@ -91,7 +91,11 @@ func (self *KubeletClient) postRequestAndGetValue(client *http.Client, req *http
 	if req.URL != nil {
 		kubeletAddr = req.URL.Host
 	}
-	log.Debugf("Raw response from Kubelet at %s: %s", kubeletAddr, string(body))
+
+	log.WithFields(log.Fields{
+		"address":  kubeletAddr,
+		"response": string(body),
+	}).Trace("Raw response from kubelet")
 
 	err = jsoniter.ConfigFastest.Unmarshal(body, value)
 	if err != nil {

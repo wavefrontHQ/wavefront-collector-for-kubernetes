@@ -107,7 +107,7 @@ func (sm *sourceManagerImpl) BuildProviders(src flags.Uris) error {
 		sm.AddProvider(runtime)
 	}
 	if len(sm.metricsSourceProviders) == 0 {
-		return fmt.Errorf("No available sources to use")
+		return fmt.Errorf("no available sources to use")
 	}
 	return nil
 }
@@ -119,7 +119,13 @@ func (sm *sourceManagerImpl) SetDefaultCollectionInterval(defaultCollectionInter
 // AddProvider register and start a new goMetricsSourceProvider
 func (sm *sourceManagerImpl) AddProvider(provider metrics.MetricsSourceProvider) {
 	name := provider.Name()
-	log.Infof("Adding provider: '%s' - collection iterval: '%v' - timeout: '%v'", name, provider.CollectionInterval(), provider.Timeout())
+
+	log.WithFields(log.Fields{
+		"name":                name,
+		"collection_interval": provider.CollectionInterval(),
+		"timeout":             provider.Timeout(),
+	}).Info("Adding provider")
+
 	if _, found := sm.metricsSourceProviders[name]; found {
 		log.Fatalf("Error on 'SourceManager.AddProvider' Duplicate Metrics Source Provider name: '%s'", name)
 	}
@@ -132,7 +138,11 @@ func (sm *sourceManagerImpl) AddProvider(provider metrics.MetricsSourceProvider)
 		ticker = time.NewTicker(provider.CollectionInterval())
 	} else {
 		ticker = time.NewTicker(sm.defaultCollectionInterval)
-		log.Infof("Provider '%s' have no 'CollectionInterval' using default collection interval '%v", provider.Name(), sm.defaultCollectionInterval)
+
+		log.WithFields(log.Fields{
+			"provider":            name,
+			"collection_interval": sm.defaultCollectionInterval,
+		}).Info("Using default collection interval")
 	}
 
 	quit := make(chan struct{})
@@ -140,7 +150,6 @@ func (sm *sourceManagerImpl) AddProvider(provider metrics.MetricsSourceProvider)
 	sm.metricsSourceProviders[name] = provider
 	sm.metricsSourceTickers[name] = ticker
 	sm.metricsSourceQuits[name] = quit
-	log.Infof("added provider: %s", name)
 
 	providerCount.Update(int64(len(sm.metricsSourceProviders)))
 
@@ -174,7 +183,7 @@ func (sm *sourceManagerImpl) DeleteProvider(name string) {
 		close(quit)
 		delete(sm.metricsSourceQuits, name)
 	}
-	log.Infof("deleted provider %s", name)
+	log.WithField("name", name).Info("Deleted provider")
 }
 
 func (sm *sourceManagerImpl) StopProviders() {
@@ -214,8 +223,9 @@ func scrape(provider metrics.MetricsSourceProvider, channel chan *metrics.DataBa
 			timeout = time.Minute
 		}
 
-		log.Infof("Querying source: '%s'", source.Name())
-		gometrics, err := source.ScrapeMetrics()
+		log.WithField("name", source.Name()).Info("Querying source")
+
+		dataBatch, err := source.ScrapeMetrics()
 		if err != nil {
 			scrapeErrors.Inc(1)
 			log.Errorf("Error in scraping containers from '%s': %v", source.Name(), err)
@@ -228,11 +238,16 @@ func scrape(provider metrics.MetricsSourceProvider, channel chan *metrics.DataBa
 
 		if !now.Before(scrapeStart.Add(timeout)) {
 			scrapeTimeouts.Inc(1)
-			log.Warningf("Failed to get '%s' response in time (% slatency)", source.Name(), latency)
+			log.Warningf("Failed to get '%s' response in time (%s latency)", source.Name(), latency)
 			return
 		}
-		channel <- gometrics
-		log.Debugf("Done Querying source: '%s' (%v metrics) (%v latency)", source.Name(), len(gometrics.MetricPoints), latency)
+		channel <- dataBatch
+
+		log.WithFields(log.Fields{
+			"name":          source.Name(),
+			"total_metrics": len(dataBatch.MetricPoints),
+			"latency":       latency,
+		}).Debug("Finished querying source")
 	}
 }
 
@@ -256,7 +271,6 @@ func buildProviders(uris flags.Uris) []metrics.MetricsSourceProvider {
 	if len([]flags.Uri(uris)) != 0 && len(result) == 0 {
 		log.Fatal("No available source to use")
 	}
-
 	return result
 }
 
@@ -284,6 +298,5 @@ func buildProvider(uri flags.Uri) (metrics.MetricsSourceProvider, error) {
 			i.Configure(&uri.Val)
 		}
 	}
-
 	return provider, err
 }

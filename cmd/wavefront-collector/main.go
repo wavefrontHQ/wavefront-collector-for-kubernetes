@@ -60,6 +60,15 @@ func main() {
 	logs.InitLogs()
 	defer logs.FlushLogs()
 
+	switch opt.LogLevel {
+	case "trace":
+		log.SetLevel(log.TraceLevel)
+	case "debug":
+		log.SetLevel(log.DebugLevel)
+	case "warn":
+		log.SetLevel(log.WarnLevel)
+	}
+
 	log.Infof(strings.Join(os.Args, " "))
 	log.Infof("wavefront-collector version %v", version)
 	enableProfiling(opt.EnableProfiling)
@@ -184,7 +193,7 @@ func convertOrDie(opt *options.CollectorRunOptions, cfg *configuration.Config) *
 		if err != nil {
 			log.Fatalf("error converting configuration: %v", err)
 		}
-		log.Infof("using configuration file, omitting flags")
+		log.Info("using configuration file, omitting flags")
 		return cflags
 	}
 	handleBackwardsCompatibility(opt)

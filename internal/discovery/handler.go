@@ -90,7 +90,12 @@ func (d *defaultHandler) Handle(resource Resource, rule interface{}) {
 	kind := resource.Kind
 	ip := resource.IP
 	meta := resource.Meta
-	log.Infof("%s: %s namespace: %s", kind, meta.Name, meta.Namespace)
+
+	log.WithFields(log.Fields{
+		"kind":      kind,
+		"name":      meta.Name,
+		"namespace": meta.Namespace,
+	}).Debug("Handling resource")
 
 	name := ResourceName(kind, meta)
 	currEncoding := d.registry.Encoding(name)

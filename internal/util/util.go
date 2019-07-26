@@ -120,7 +120,7 @@ func GetFieldSelector(resourceType string) fields.Selector {
 			log.Infof("invalid resource type: %s", resourceType)
 		}
 	}
-	log.Infof("using fieldSelector: %q for resourceType: %s", fieldSelector, resourceType)
+	log.Debugf("using fieldSelector: %q for resourceType: %s", fieldSelector, resourceType)
 	return fieldSelector
 }
 

@@ -69,7 +69,7 @@ func NewDataSinkManager(sinks []metrics.DataSink, exportDataTimeout, stopTimeout
 				case data := <-sh.dataBatchChannel:
 					export(sh.sink, data)
 				case isStop := <-sh.stopChannel:
-					log.Infof("Stop received: %s", sh.sink.Name())
+					log.WithField("name", sh.sink.Name()).Info("Sink stop received")
 					if isStop {
 						sh.sink.Stop()
 						return
@@ -92,14 +92,14 @@ func (this *sinkManager) ExportData(data *metrics.DataBatch) {
 		wg.Add(1)
 		go func(sh sinkHolder, wg *sync.WaitGroup) {
 			defer wg.Done()
-			log.Infof("Flushing data to: %s", sh.sink.Name())
+			log.WithField("name", sh.sink.Name()).Debug("Pushing data to sink")
 			select {
 			case sh.dataBatchChannel <- data:
-				log.Infof("Data push completed: %s", sh.sink.Name())
+				log.WithField("name", sh.sink.Name()).Info("Data push complete")
 				// everything ok
 			case <-time.After(this.exportDataTimeout):
 				sinkTimeouts.Inc(1)
-				log.Warningf("Failed to push data to sink: %s", sh.sink.Name())
+				log.WithField("name", sh.sink.Name()).Info("Data push failed")
 			}
 		}(sh, &wg)
 	}
