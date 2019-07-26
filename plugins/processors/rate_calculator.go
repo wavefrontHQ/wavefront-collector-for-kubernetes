@@ -90,8 +90,9 @@ func (this *RateCalculator) Process(batch *metrics.DataBatch) (*metrics.DataBatc
 				metricValNew, foundNew = newMs.MetricValues[metricName]
 				metricValOld, foundOld = oldMs.MetricValues[metricName]
 
-				if foundNew && foundOld && targetMetric.MetricDescriptor.ValueType == metrics.ValueInt64 {
-					newVal := 1e9 * (metricValNew.IntValue - metricValOld.IntValue) /
+				if foundNew && foundOld && metricName == metrics.MetricCpuUsage.MetricDescriptor.Name {
+					// cpu/usage values are in nanoseconds; we want to have it in millicores (that's why constant 1000 is here).
+					newVal := 1000 * (metricValNew.IntValue - metricValOld.IntValue) /
 						(newMs.ScrapeTime.UnixNano() - oldMs.ScrapeTime.UnixNano())
 
 					newMs.MetricValues[targetMetric.MetricDescriptor.Name] = metrics.MetricValue{
