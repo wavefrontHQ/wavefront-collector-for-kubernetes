@@ -14,6 +14,7 @@ type CollectorRunOptions struct {
 	EnableProfiling bool
 	Daemon          bool
 	ConfigFile      string
+	LogLevel        string
 
 	// deprecated flags
 	MetricResolution      time.Duration
@@ -38,6 +39,7 @@ func (h *CollectorRunOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&h.EnableProfiling, "profile", false, "enable pprof")
 	fs.BoolVar(&h.Daemon, "daemon", false, "enable daemon mode")
 	fs.StringVar(&h.ConfigFile, "config_file", "", "required configuration file")
+	fs.StringVar(&h.LogLevel, "log_level", "info", "one of info, debug or trace")
 
 	// deprecated flags
 	fs.DurationVar(&h.MetricResolution, "metric_resolution", 60*time.Second, "The resolution at which the collector will collect metrics")

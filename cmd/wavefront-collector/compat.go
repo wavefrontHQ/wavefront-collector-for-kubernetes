@@ -4,7 +4,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/golang/glog"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/flags"
@@ -23,7 +23,7 @@ func addInternalStatsSource(opt *options.CollectorRunOptions) {
 
 	u, err := url.Parse("?")
 	if err != nil {
-		glog.Errorf("error adding internal source: %v", err)
+		log.Errorf("error adding internal source: %v", err)
 		return
 	}
 	u.RawQuery = values.Encode()
@@ -34,7 +34,7 @@ func addInternalStatsSource(opt *options.CollectorRunOptions) {
 // this is now set on the kubernetes source. sink level prefixes now apply globally.
 func cleanupSinkPrefix(opt *options.CollectorRunOptions) {
 	if len(opt.Sinks) == 0 {
-		glog.Fatalf("no sink configured")
+		log.Fatalf("no sink configured")
 	}
 	sink := opt.Sinks[0]
 	prefix := flags.DecodeValue(sink.Val.Query(), "prefix")
@@ -56,7 +56,7 @@ func addQueryKey(uri flags.Uri, key, value string) flags.Uri {
 	val := &uri.Val
 	values, err := url.ParseQuery(val.RawQuery)
 	if err != nil {
-		glog.Fatalf("error adding key: %v", err)
+		log.Fatalf("error adding key: %v", err)
 	}
 	values.Add(key, value)
 	val.RawQuery = values.Encode()
@@ -67,7 +67,7 @@ func removeQueryKey(uri flags.Uri, key string) flags.Uri {
 	val := &uri.Val
 	values, err := url.ParseQuery(val.RawQuery)
 	if err != nil {
-		glog.Fatalf("error removing key :%v", err)
+		log.Fatalf("error removing key :%v", err)
 	}
 	values.Del(key)
 	val.RawQuery = values.Encode()
@@ -79,7 +79,7 @@ func resolveClusterName(name string, opt *options.CollectorRunOptions) string {
 	if name == "" {
 		sinkUrl, err := getWavefrontAddress(opt.Sinks)
 		if err != nil {
-			glog.Fatalf("Failed to get wavefront sink address: %v", err)
+			log.Fatalf("Failed to get wavefront sink address: %v", err)
 		}
 		name = flags.DecodeValue(sinkUrl.Query(), "clusterName")
 	}
@@ -90,7 +90,7 @@ func resolveClusterName(name string, opt *options.CollectorRunOptions) string {
 func loadDiscoveryFileOrDie(file string) []discovery.PluginConfig {
 	cfg, err := discovery.FromFile(file)
 	if err != nil {
-		glog.Fatalf("error loading discovery configuration: %v", err)
+		log.Fatalf("error loading discovery configuration: %v", err)
 	}
 	discovery.ConvertPromToPlugin(cfg)
 	return cfg.PluginConfigs

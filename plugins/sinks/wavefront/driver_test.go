@@ -25,7 +25,7 @@ func TestStoreTimeseriesEmptyInput(t *testing.T) {
 func TestName(t *testing.T) {
 	fakeSink := NewFakeWavefrontSink()
 	name := fakeSink.Name()
-	assert.Equal(t, name, "Wavefront Sink")
+	assert.Equal(t, name, "wavefront_sink")
 }
 
 func TestCreateWavefrontSinkWithNoEmptyInputs(t *testing.T) {

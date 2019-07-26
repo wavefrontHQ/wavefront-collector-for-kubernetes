@@ -8,7 +8,7 @@ import (
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/httputil"
 
-	"github.com/golang/glog"
+	log "github.com/sirupsen/logrus"
 )
 
 // Decodes tags of the form "tag=key:value"
@@ -26,7 +26,7 @@ func DecodeTags(vals map[string][]string) map[string]string {
 				k, v := s[0], s[1]
 				tags[k] = v
 			} else {
-				glog.Warning("invalid tag ", tag)
+				log.Warning("invalid tag ", tag)
 			}
 		}
 	}
@@ -79,7 +79,7 @@ func ParseDuration(vals url.Values, prop string, def time.Duration) time.Duratio
 	if len(vals[prop]) > 0 {
 		res, err := time.ParseDuration(vals[prop][0])
 		if err != nil {
-			glog.Errorf("error parsing '%s' propertie: %v", prop, err)
+			log.Errorf("error parsing '%s' propertie: %v", prop, err)
 		} else {
 			return res
 		}

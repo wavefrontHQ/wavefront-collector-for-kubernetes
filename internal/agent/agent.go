@@ -1,7 +1,8 @@
 package agent
 
 import (
-	"github.com/golang/glog"
+	log "github.com/sirupsen/logrus"
+
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/discovery"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/manager"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources"
@@ -26,7 +27,7 @@ func (a *Agent) Handle(cfg interface{}) {
 }
 
 func (a *Agent) Start() {
-	glog.Infof("Starting agent")
+	log.Infof("Starting agent")
 	a.pm.Start()
 	if a.dm != nil {
 		a.dm.Start()
@@ -34,11 +35,11 @@ func (a *Agent) Start() {
 }
 
 func (a *Agent) Stop() {
-	glog.Infof("Stopping agent")
+	log.Infof("Stopping agent")
 	a.pm.Stop()
 	if a.dm != nil {
 		a.dm.Stop()
 	}
 	sources.Manager().StopProviders()
-	glog.Infof("Agent stopped")
+	log.Infof("Agent stopped")
 }
