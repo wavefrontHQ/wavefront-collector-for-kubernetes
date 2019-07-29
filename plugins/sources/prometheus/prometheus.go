@@ -22,7 +22,7 @@ import (
 
 	dto "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/expfmt"
-	metrics "github.com/rcrowley/go-metrics"
+	"github.com/rcrowley/go-metrics"
 	"github.com/wavefronthq/go-metrics-wavefront/reporting"
 )
 
@@ -44,6 +44,8 @@ type prometheusMetricsSource struct {
 	prefix     string
 	source     string
 	tags       map[string]string
+	flatTags   string
+	buf        *bytes.Buffer
 	filters    filter.Filter
 	client     *http.Client
 	pps        metrics.Counter
@@ -61,12 +63,15 @@ func NewPrometheusMetricsSource(metricsURL, prefix, source, discovered string, t
 	pt := extractTags(tags, discovered, metricsURL)
 	ppsKey := reporting.EncodeKey("target.points.collected", pt)
 	epsKey := reporting.EncodeKey("target.collect.errors", pt)
+	flatTags := reporting.EncodeKey("", tags)
 
 	return &prometheusMetricsSource{
 		metricsURL: metricsURL,
 		prefix:     prefix,
 		source:     source,
 		tags:       tags,
+		flatTags:   flatTags,
+		buf:        bytes.NewBufferString(""),
 		filters:    filters,
 		client:     client,
 		pps:        metrics.GetOrRegisterCounter(ppsKey, metrics.DefaultRegistry),
@@ -159,8 +164,6 @@ func (src *prometheusMetricsSource) parseMetrics(buf []byte, header http.Header)
 	buffer := bytes.NewBuffer(buf)
 	reader := bufio.NewReader(buffer)
 
-	metricFamilies := make(map[string]*dto.MetricFamily)
-
 	metricFamilies, err := parser.TextToMetricFamilies(reader)
 	if err != nil {
 		log.Errorf("reading text format failed: %s", err)
@@ -172,9 +175,11 @@ func (src *prometheusMetricsSource) buildPoints(metricFamilies map[string]*dto.M
 	now := time.Now().Unix()
 	var result []*MetricPoint
 
+	groupedTags := util.NewGroupedTags()
+
 	for metricName, mf := range metricFamilies {
 		for _, m := range mf.Metric {
-			tags := src.buildTags(m)
+			tags := src.buildTags(m, groupedTags)
 			if mf.GetType() == dto.MetricType_SUMMARY {
 				// summary metric
 				result = append(result, src.buildQuantiles(metricName, m, now, tags)...)
@@ -255,8 +260,22 @@ func (src *prometheusMetricsSource) buildHistos(name string, m *dto.Metric, now 
 }
 
 // Get labels from metric
-func (src *prometheusMetricsSource) buildTags(m *dto.Metric) map[string]string {
-	result := map[string]string{}
+func (src *prometheusMetricsSource) buildTags(m *dto.Metric, gt *util.GroupedTags) map[string]string {
+	// always reset the buffer
+	src.buf.Reset()
+
+	// form a composite key of tags and labels of the form [key1=val1&key2=val2][label1=val1 label2=val2]
+	src.buf.WriteString(src.flatTags)
+	encodeLabelTags(m.Label, src.buf)
+	key := src.buf.String()
+
+	// check if a map of tags already exists for the key
+	result, exists := gt.GetOrAdd(key)
+	if exists {
+		return result
+	}
+
+	// add to the map if no matching tags exist. The map reference is held within GroupedTags.
 	for k, v := range src.tags {
 		if len(v) > 0 {
 			result[k] = v
@@ -268,6 +287,20 @@ func (src *prometheusMetricsSource) buildTags(m *dto.Metric) map[string]string {
 		}
 	}
 	return result
+}
+
+func encodeLabelTags(labels []*dto.LabelPair, buf *bytes.Buffer) {
+	if len(labels) == 0 {
+		return
+	}
+	buf.WriteString("[")
+	for _, label := range labels {
+		buf.WriteString(url.QueryEscape(label.GetName()))
+		buf.WriteString("=")
+		buf.WriteString(url.QueryEscape(label.GetValue()))
+		buf.WriteString(url.QueryEscape(" "))
+	}
+	buf.WriteString("]")
 }
 
 func (src *prometheusMetricsSource) filterAppend(slice []*MetricPoint, point *MetricPoint) []*MetricPoint {
