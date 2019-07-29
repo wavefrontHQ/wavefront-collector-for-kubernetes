@@ -31,7 +31,7 @@ func newResourceFilter(conf discovery.PluginConfig) (*resourceFilter, error) {
 	}
 	rf.kind = kind
 
-	if rf.kind != discovery.ApiServerType.String() && rf.images == nil && rf.labels == nil && rf.namespaces == nil {
+	if rf.images == nil && rf.labels == nil && rf.namespaces == nil {
 		return nil, fmt.Errorf("no selectors specified")
 	}
 
@@ -51,7 +51,7 @@ func resourceType(kind string) (string, error) {
 		return discovery.PodType.String(), nil
 	}
 	switch kind {
-	case discovery.PodType.String(), discovery.ServiceType.String(), discovery.ApiServerType.String():
+	case discovery.PodType.String(), discovery.ServiceType.String():
 		return kind, nil
 	default:
 		return "", fmt.Errorf("invalid resource type: %s", kind)

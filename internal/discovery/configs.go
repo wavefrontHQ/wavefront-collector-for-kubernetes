@@ -71,7 +71,7 @@ type CollectionConfig struct {
 
 // Describes selectors for identifying kubernetes resources
 type Selectors struct {
-	// The resource type the rule applies to. One of <pod|service|apiserver>. Defaults to pod.
+	// The resource type the rule applies to. One of <pod|service>. Defaults to pod.
 	ResourceType string `yaml:"resourceType"`
 
 	// the container images to match against specified as a list of glob pattern strings. Ex: 'redis*'
