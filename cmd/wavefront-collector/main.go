@@ -12,6 +12,8 @@ import (
 	"sync"
 	"time"
 
+	kitlog "github.com/go-kit/kit/log"
+
 	gm "github.com/rcrowley/go-metrics"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
@@ -31,10 +33,12 @@ import (
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/summary"
 
+	"github.com/golang/glog"
 	kubeFlag "k8s.io/apiserver/pkg/util/flag"
 	"k8s.io/apiserver/pkg/util/logs"
 	kube_client "k8s.io/client-go/kubernetes"
 	v1listers "k8s.io/client-go/listers/core/v1"
+	"k8s.io/klog"
 )
 
 var (
@@ -60,14 +64,19 @@ func main() {
 	logs.InitLogs()
 	defer logs.FlushLogs()
 
+	logger := kitlog.NewNopLogger()
 	switch opt.LogLevel {
 	case "trace":
 		log.SetLevel(log.TraceLevel)
+		logger = kitlog.NewLogfmtLogger(kitlog.NewSyncWriter(os.Stdout))
 	case "debug":
 		log.SetLevel(log.DebugLevel)
 	case "warn":
 		log.SetLevel(log.WarnLevel)
 	}
+
+	glog.SetLogger(logger)
+	klog.SetLogger(logger)
 
 	log.Infof(strings.Join(os.Args, " "))
 	log.Infof("wavefront-collector version %v", version)
