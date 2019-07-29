@@ -3,8 +3,8 @@ package discovery
 import (
 	"time"
 
-	"github.com/golang/glog"
 	gm "github.com/rcrowley/go-metrics"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
@@ -44,7 +44,7 @@ func NewDiscoveryManager(client kubernetes.Interface, plugins []discovery.Plugin
 }
 
 func (dm *Manager) Start() {
-	glog.Infof("Starting discovery manager")
+	log.Infof("Starting discovery manager")
 	discoveryEnabled.Inc(1)
 
 	dm.stopCh = make(chan struct{})
@@ -61,21 +61,21 @@ func (dm *Manager) Start() {
 		// kick off leader election to determine if this agent should handle it
 		ch, err := leadership.Subscribe(dm.kubeClient.CoreV1())
 		if err != nil {
-			glog.Errorf("discovery: leader election error: %q", err)
+			log.Errorf("discovery: leader election error: %q", err)
 		} else {
 			go func() {
 				for {
 					select {
 					case isLeader := <-ch:
 						if isLeader {
-							glog.V(2).Infof("elected leader: %s starting service discovery", leadership.Leader())
+							log.Infof("elected leader: %s starting service discovery", leadership.Leader())
 							dm.serviceListener.start()
 						} else {
-							glog.V(2).Infof("stopping service discovery. new leader: %s", leadership.Leader())
+							log.Infof("stopping service discovery. new leader: %s", leadership.Leader())
 							dm.serviceListener.stop()
 						}
 					case <-dm.stopCh:
-						glog.Infof("stopping service discovery")
+						log.Infof("stopping service discovery")
 						return
 					}
 				}
@@ -85,7 +85,7 @@ func (dm *Manager) Start() {
 }
 
 func (dm *Manager) Stop() {
-	glog.Infof("Stopping discovery manager")
+	log.Infof("Stopping discovery manager")
 	discoveryEnabled.Dec(1)
 
 	leadership.Unsubscribe()
@@ -101,14 +101,14 @@ func (dm *Manager) Stop() {
 func (dm *Manager) Handle(cfg interface{}) {
 	switch cfg.(type) {
 	case *discovery.Config:
-		glog.Infof("discovery configuration changed")
+		log.Infof("discovery configuration changed")
 		d := cfg.(*discovery.Config)
 		dm.ruleHandler.HandleAll(d.PluginConfigs)
 	case *configuration.Config:
-		glog.Infof("discoveryManager: collector configuration changed")
+		log.Infof("discoveryManager: collector configuration changed")
 		c := cfg.(*configuration.Config)
 		dm.ruleHandler.HandleAll(c.DiscoveryConfigs)
 	default:
-		glog.Errorf("unknown configuration type: %q", cfg)
+		log.Errorf("unknown configuration type: %q", cfg)
 	}
 }

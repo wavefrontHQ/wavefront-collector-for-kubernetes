@@ -23,7 +23,7 @@ import (
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources"
 
-	"github.com/golang/glog"
+	log "github.com/sirupsen/logrus"
 )
 
 // FlushManager deals with data push
@@ -84,7 +84,7 @@ func (rm *flushManagerImpl) push() {
 				if err == nil {
 					data = newData
 				} else {
-					glog.Errorf("Error in processor: %v", err)
+					log.Errorf("Error in processor: %v", err)
 					return
 				}
 			}

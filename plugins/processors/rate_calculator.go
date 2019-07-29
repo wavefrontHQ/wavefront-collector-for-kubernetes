@@ -17,12 +17,12 @@ package processors
 import (
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 
-	"github.com/golang/glog"
+	log "github.com/sirupsen/logrus"
 )
 
 type RateCalculator struct {
 	rateMetricsMapping map[string]metrics.Metric
-	previousBatch      *metrics.DataBatch
+	previousMetricSets map[string]*metrics.MetricSet
 }
 
 func (this *RateCalculator) Name() string {
@@ -30,30 +30,22 @@ func (this *RateCalculator) Name() string {
 }
 
 func (this *RateCalculator) Process(batch *metrics.DataBatch) (*metrics.DataBatch, error) {
-	if this.previousBatch == nil {
-		glog.V(4).Infof("Skipping rate calculation entirely - no previous batch found")
-		this.previousBatch = batch
-		return batch, nil
-	}
-	if !batch.Timestamp.After(this.previousBatch.Timestamp) {
-		// something got out of sync, do nothing.
-		glog.Errorf("New data batch has timestamp before the previous one: new:%v old:%v", batch.Timestamp, this.previousBatch.Timestamp)
-		return batch, nil
-	}
-
 	for key, newMs := range batch.MetricSets {
-		oldMs, found := this.previousBatch.MetricSets[key]
+		oldMs, found := this.previousMetricSets[key]
 		if !found {
+			log.Infof("Skipping rates for '%s' - no previous batch found", key)
+			this.previousMetricSets[key] = newMs
 			continue
 		}
+
 		if !newMs.ScrapeTime.After(oldMs.ScrapeTime) {
 			// New must be strictly after old.
-			glog.V(4).Infof("Skipping rate calculations for %s - new batch (%s) was not scraped strictly after old batch (%s)", key, newMs.ScrapeTime, oldMs.ScrapeTime)
+			log.Debugf("Skipping rates for '%s' - new batch (%s) was not scraped strictly after old batch (%s)", key, newMs.ScrapeTime, oldMs.ScrapeTime)
 			continue
 		}
 		if !newMs.CollectionStartTime.Equal(oldMs.CollectionStartTime) {
-			glog.V(4).Infof("Skipping rates for %s - different collection start time new:%v  old:%v", key, newMs.CollectionStartTime, oldMs.CollectionStartTime)
-			// Create time for container must be the same.
+			log.Debugf("Skipping rates for '%s' - different collection start time (restart) new:%v  old:%v", key, newMs.CollectionStartTime, oldMs.CollectionStartTime)
+			this.previousMetricSets[key] = newMs
 			continue
 		}
 
@@ -91,7 +83,7 @@ func (this *RateCalculator) Process(batch *metrics.DataBatch) (*metrics.DataBatc
 							})
 						}
 					} else if foundNew && !foundOld || !foundNew && foundOld {
-						glog.V(4).Infof("Skipping rates for %s in %s: metric not found in one of old (%v) or new (%v)", metricName, key, foundOld, foundNew)
+						log.Debugf("Skipping rates for '%s' in '%s': metric not found in one of old (%v) or new (%v)", metricName, key, foundOld, foundNew)
 					}
 				}
 			} else {
@@ -119,17 +111,18 @@ func (this *RateCalculator) Process(batch *metrics.DataBatch) (*metrics.DataBatc
 						FloatValue: newVal,
 					}
 				} else if foundNew && !foundOld || !foundNew && foundOld {
-					glog.V(4).Infof("Skipping rates for %s in %s: metric not found in one of old (%v) or new (%v)", metricName, key, foundOld, foundNew)
+					log.Debugf("Skipping rates for '%s' in '%s': metric not found in one of old (%v) or new (%v)", metricName, key, foundOld, foundNew)
 				}
 			}
 		}
+		this.previousMetricSets[key] = newMs
 	}
-	this.previousBatch = batch
 	return batch, nil
 }
 
-func NewRateCalculator(metrics map[string]metrics.Metric) *RateCalculator {
+func NewRateCalculator(rateMetricsMapping map[string]metrics.Metric) *RateCalculator {
 	return &RateCalculator{
-		rateMetricsMapping: metrics,
+		rateMetricsMapping: rateMetricsMapping,
+		previousMetricSets: make(map[string]*metrics.MetricSet, 0),
 	}
 }

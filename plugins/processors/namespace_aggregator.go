@@ -15,7 +15,8 @@
 package processors
 
 import (
-	"github.com/golang/glog"
+	log "github.com/sirupsen/logrus"
+
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 )
 
@@ -36,7 +37,7 @@ func (this *NamespaceAggregator) Process(batch *metrics.DataBatch) (*metrics.Dat
 
 		namespaceName, found := metricSet.Labels[metrics.LabelNamespaceName.Key]
 		if !found {
-			glog.Errorf("No namespace info in pod %s: %v", key, metricSet.Labels)
+			log.Errorf("No namespace info in pod %s: %v", key, metricSet.Labels)
 			continue
 		}
 

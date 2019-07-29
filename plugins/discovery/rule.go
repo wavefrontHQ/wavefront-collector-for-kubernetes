@@ -1,8 +1,8 @@
 package discovery
 
 import (
-	"github.com/golang/glog"
 	gm "github.com/rcrowley/go-metrics"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/kubernetes"
@@ -38,7 +38,7 @@ func (rh *ruleHandler) HandleAll(plugins []discovery.PluginConfig) error {
 	}
 	for name := range rh.d.delegates {
 		if _, exists := rules[name]; !exists {
-			glog.V(2).Infof("deleting discovery rule %s", name)
+			log.Infof("deleting discovery rule %s", name)
 			rh.internalDelete(name)
 		}
 	}
@@ -47,7 +47,7 @@ func (rh *ruleHandler) HandleAll(plugins []discovery.PluginConfig) error {
 	for _, rule := range plugins {
 		err := rh.internalHandle(rule)
 		if err != nil {
-			glog.Errorf("error processing rule=%s type=%s err=%v", rule.Name, rule.Type, err)
+			log.Errorf("error processing rule=%s type=%s err=%v", rule.Name, rule.Type, err)
 		}
 	}
 	rh.rulesCount.Update(int64(len(plugins)))
@@ -55,7 +55,7 @@ func (rh *ruleHandler) HandleAll(plugins []discovery.PluginConfig) error {
 }
 
 func (rh *ruleHandler) Handle(plugin discovery.PluginConfig) error {
-	glog.Infof("handling rule=%s type=%s", plugin.Name, plugin.Type)
+	log.Infof("handling rule=%s type=%s", plugin.Name, plugin.Type)
 	rh.d.mtx.Lock()
 	defer rh.d.mtx.Unlock()
 	return rh.internalHandle(plugin)
@@ -64,7 +64,7 @@ func (rh *ruleHandler) Handle(plugin discovery.PluginConfig) error {
 func (rh *ruleHandler) DeleteAll() {
 	err := rh.HandleAll([]discovery.PluginConfig{})
 	if err != nil {
-		glog.Errorf("error deleting rules: %v", err)
+		log.Errorf("error deleting rules: %v", err)
 	}
 	for _, rh := range rh.d.runtimeHandlers {
 		rh.DeleteMissing(map[string]bool{})
@@ -119,7 +119,7 @@ func (rh *ruleHandler) internalDelete(name string) {
 
 func (rh *ruleHandler) discoverAPIServer(plugin discovery.PluginConfig, handler discovery.TargetHandler) {
 	if rh.daemon && !leadership.Leading() {
-		glog.V(2).Infof("apiserver discovery disabled. current leader: %s", leadership.Leader())
+		log.Infof("apiserver discovery disabled. current leader: %s", leadership.Leader())
 		return
 	}
 

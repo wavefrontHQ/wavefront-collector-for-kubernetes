@@ -5,7 +5,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/golang/glog"
+	log "github.com/sirupsen/logrus"
+
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/discovery/prometheus"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/discovery/telegraf"
@@ -47,7 +48,7 @@ func makeDelegates(plugins []discovery.PluginConfig) map[string]*delegate {
 	for _, plugin := range plugins {
 		delegate, err := makeDelegate(plugin)
 		if err != nil {
-			glog.Errorf("error parsing plugin: %s error: %v", plugin.Name, err)
+			log.Errorf("error parsing plugin: %s error: %v", plugin.Name, err)
 			continue
 		}
 		delegates[plugin.Name] = delegate
@@ -90,7 +91,7 @@ func (d *discoverer) dequeue() {
 			d.internalDiscover(resource)
 		}
 	}
-	glog.Infof("stopping discoverer deque")
+	log.Infof("stopping discoverer deque")
 }
 
 func (d *discoverer) Stop() {

@@ -17,7 +17,7 @@ package processors
 import (
 	"fmt"
 
-	"github.com/golang/glog"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 )
@@ -53,7 +53,7 @@ func (this *PodAggregator) Process(batch *metrics.DataBatch) (*metrics.DataBatch
 		podName, found := metricSet.Labels[metrics.LabelPodName.Key]
 		ns, found2 := metricSet.Labels[metrics.LabelNamespaceName.Key]
 		if !found || !found2 {
-			glog.Errorf("No namespace and/or pod info in container %s: %v", key, metricSet.Labels)
+			log.Errorf("No namespace and/or pod info in container %s: %v", key, metricSet.Labels)
 			continue
 		}
 
@@ -62,7 +62,7 @@ func (this *PodAggregator) Process(batch *metrics.DataBatch) (*metrics.DataBatch
 		if !found {
 			pod, found = newPods[podKey]
 			if !found {
-				glog.V(2).Infof("Pod not found adding %s", podKey)
+				log.Infof("Pod not found adding %s", podKey)
 				pod = this.podMetricSet(metricSet.Labels)
 				newPods[podKey] = pod
 			}
@@ -80,7 +80,7 @@ func (this *PodAggregator) Process(batch *metrics.DataBatch) (*metrics.DataBatch
 			} else {
 				if requireAggregate[podKey+metricName] {
 					if aggregatedValue.ValueType != metricValue.ValueType {
-						glog.Errorf("PodAggregator: inconsistent type in %s", metricName)
+						log.Errorf("PodAggregator: inconsistent type in %s", metricName)
 						continue
 					}
 

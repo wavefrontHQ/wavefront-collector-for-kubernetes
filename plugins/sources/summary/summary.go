@@ -27,8 +27,8 @@ import (
 	. "github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/summary/kubelet"
 
-	"github.com/golang/glog"
 	gm "github.com/rcrowley/go-metrics"
+	log "github.com/sirupsen/logrus"
 	"github.com/wavefronthq/go-metrics-wavefront/reporting"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
 	kube_api "k8s.io/api/core/v1"
@@ -112,7 +112,6 @@ var systemNameMap = map[string]string{
 
 // decodeSummary translates the kubelet statsSummary API into the flattened MetricSet API.
 func (this *summaryMetricsSource) decodeSummary(summary *stats.Summary) map[string]*MetricSet {
-	glog.V(9).Infof("Begin summary decode")
 	result := map[string]*MetricSet{}
 
 	labels := map[string]string{
@@ -125,8 +124,7 @@ func (this *summaryMetricsSource) decodeSummary(summary *stats.Summary) map[stri
 	for _, pod := range summary.Pods {
 		this.decodePodStats(result, labels, &pod)
 	}
-
-	glog.V(9).Infof("End summary decode")
+	log.Debugf("End summary decode")
 	return result
 }
 
@@ -140,7 +138,7 @@ func (this *summaryMetricsSource) cloneLabels(labels map[string]string) map[stri
 }
 
 func (this *summaryMetricsSource) decodeNodeStats(metrics map[string]*MetricSet, labels map[string]string, node *stats.NodeStats) {
-	glog.V(9).Infof("Decoding node stats for node %s...", node.NodeName)
+	log.Tracef("Decoding node stats for node %s...", node.NodeName)
 	nodeMetrics := &MetricSet{
 		Labels:              this.cloneLabels(labels),
 		MetricValues:        map[string]MetricValue{},
@@ -167,7 +165,7 @@ func (this *summaryMetricsSource) decodeNodeStats(metrics map[string]*MetricSet,
 }
 
 func (this *summaryMetricsSource) decodePodStats(metrics map[string]*MetricSet, nodeLabels map[string]string, pod *stats.PodStats) {
-	glog.V(9).Infof("Decoding pod stats for pod %s/%s (%s)...", pod.PodRef.Namespace, pod.PodRef.Name, pod.PodRef.UID)
+	log.Tracef("Decoding pod stats for pod %s/%s (%s)...", pod.PodRef.Namespace, pod.PodRef.Name, pod.PodRef.UID)
 	podMetrics := &MetricSet{
 		Labels:              this.cloneLabels(nodeLabels),
 		MetricValues:        map[string]MetricValue{},
@@ -196,7 +194,7 @@ func (this *summaryMetricsSource) decodePodStats(metrics map[string]*MetricSet, 
 		// This check ensures that we are not replacing metrics of running container with metrics of terminated one if
 		// there are two exactly same containers reported by kubelet.
 		if _, exist := metrics[key]; exist {
-			glog.V(2).Infof("Metrics reported from two containers with the same key: %v. Create time of "+
+			log.Infof("Metrics reported from two containers with the same key: %v. Create time of "+
 				"containers are %v and %v. Metrics from the older container are going to be dropped.", key,
 				container.StartTime.Time, metrics[key].CollectionStartTime)
 			if container.StartTime.Time.Before(metrics[key].CollectionStartTime) {
@@ -208,7 +206,7 @@ func (this *summaryMetricsSource) decodePodStats(metrics map[string]*MetricSet, 
 }
 
 func (this *summaryMetricsSource) decodeContainerStats(podLabels map[string]string, container *stats.ContainerStats, isSystemContainer bool) *MetricSet {
-	glog.V(9).Infof("Decoding container stats stats for container %s...", container.Name)
+	log.Tracef("Decoding container stats stats for container %s...", container.Name)
 	containerMetrics := &MetricSet{
 		Labels:              this.cloneLabels(podLabels),
 		MetricValues:        map[string]MetricValue{},
@@ -237,7 +235,7 @@ func (this *summaryMetricsSource) decodeContainerStats(podLabels map[string]stri
 
 func (this *summaryMetricsSource) decodeUptime(metrics *MetricSet, startTime time.Time) {
 	if startTime.IsZero() {
-		glog.V(9).Infof("missing start time!")
+		log.Trace("missing start time!")
 		return
 	}
 
@@ -247,16 +245,15 @@ func (this *summaryMetricsSource) decodeUptime(metrics *MetricSet, startTime tim
 
 func (this *summaryMetricsSource) decodeCPUStats(metrics *MetricSet, cpu *stats.CPUStats) {
 	if cpu == nil {
-		glog.V(9).Infof("missing cpu usage metric!")
+		log.Trace("missing cpu usage metric!")
 		return
 	}
-
 	this.addIntMetric(metrics, &MetricCpuUsage, cpu.UsageCoreNanoSeconds)
 }
 
 func (this *summaryMetricsSource) decodeEphemeralStorageStats(metrics *MetricSet, storage *stats.FsStats) {
 	if storage == nil {
-		glog.V(9).Infof("missing storage usage metric!")
+		log.Trace("missing storage usage metric!")
 		return
 	}
 	this.addIntMetric(metrics, &MetricEphemeralStorageUsage, storage.UsedBytes)
@@ -264,7 +261,7 @@ func (this *summaryMetricsSource) decodeEphemeralStorageStats(metrics *MetricSet
 
 func (this *summaryMetricsSource) decodeEphemeralStorageStatsForContainer(metrics *MetricSet, rootfs *stats.FsStats, logs *stats.FsStats) {
 	if rootfs == nil || logs == nil || rootfs.UsedBytes == nil || logs.UsedBytes == nil {
-		glog.V(9).Infof("missing storage usage metric!")
+		log.Trace("missing storage usage metric!")
 		return
 	}
 	usage := *rootfs.UsedBytes + *logs.UsedBytes
@@ -273,7 +270,7 @@ func (this *summaryMetricsSource) decodeEphemeralStorageStatsForContainer(metric
 
 func (this *summaryMetricsSource) decodeMemoryStats(metrics *MetricSet, memory *stats.MemoryStats) {
 	if memory == nil {
-		glog.V(9).Infof("missing memory metrics!")
+		log.Trace("missing memory metrics!")
 		return
 	}
 
@@ -299,12 +296,12 @@ func (this *summaryMetricsSource) decodeAcceleratorStats(metrics *MetricSet, acc
 
 func (this *summaryMetricsSource) decodeNetworkStats(metrics *MetricSet, network *stats.NetworkStats) {
 	if network == nil {
-		glog.V(9).Infof("missing network metrics!")
+		log.Trace("missing network metrics!")
 		return
 	}
 
 	for _, netInterface := range network.Interfaces {
-		glog.V(9).Infof("Processing metrics for network interface %s", netInterface.Name)
+		log.Tracef("Processing metrics for network interface %s", netInterface.Name)
 		intfLabels := map[string]string{NetworkInterfaceKey: netInterface.Name}
 		this.addLabeledIntMetric(metrics, &MetricNetworkRx, intfLabels, netInterface.RxBytes)
 		this.addLabeledIntMetric(metrics, &MetricNetworkRxErrors, intfLabels, netInterface.RxErrors)
@@ -319,7 +316,7 @@ func (this *summaryMetricsSource) decodeNetworkStats(metrics *MetricSet, network
 
 func (this *summaryMetricsSource) decodeFsStats(metrics *MetricSet, fsKey string, fs *stats.FsStats) {
 	if fs == nil {
-		glog.V(9).Infof("missing fs metrics!")
+		log.Trace("missing fs metrics!")
 		return
 	}
 
@@ -342,7 +339,7 @@ func (this *summaryMetricsSource) decodeUserDefinedMetrics(metrics *MetricSet, u
 		case stats.MetricDelta:
 			mv.MetricType = MetricDelta
 		default:
-			glog.V(4).Infof("Skipping %s: unknown custom metric type: %v", metric.Name, metric.Type)
+			log.Debugf("Skipping %s: unknown custom metric type: %v", metric.Name, metric.Type)
 			continue
 		}
 
@@ -371,7 +368,7 @@ func (this *summaryMetricsSource) getScrapeTime(cpu *stats.CPUStats, memory *sta
 // addIntMetric is a convenience method for adding the metric and value to the metric set.
 func (this *summaryMetricsSource) addIntMetric(metrics *MetricSet, metric *Metric, value *uint64) {
 	if value == nil {
-		glog.V(9).Infof("skipping metric %s because the value was nil", metric.Name)
+		log.Debugf("skipping metric %s because the value was nil", metric.Name)
 		return
 	}
 	val := MetricValue{
@@ -385,7 +382,7 @@ func (this *summaryMetricsSource) addIntMetric(metrics *MetricSet, metric *Metri
 // addLabeledIntMetric is a convenience method for adding the labeled metric and value to the metric set.
 func (this *summaryMetricsSource) addLabeledIntMetric(metrics *MetricSet, metric *Metric, labels map[string]string, value *uint64) {
 	if value == nil {
-		glog.V(9).Infof("skipping labeled metric %s (%v) because the value was nil", metric.Name, labels)
+		log.Debugf("skipping labeled metric %s (%v) because the value was nil", metric.Name, labels)
 		return
 	}
 
@@ -421,14 +418,14 @@ func (this *summaryProvider) GetMetricsSources() []MetricsSource {
 	sources := []MetricsSource{}
 	nodes, err := this.nodeLister.List(labels.Everything())
 	if err != nil {
-		glog.Errorf("error while listing nodes: %v", err)
+		log.Errorf("error while listing nodes: %v", err)
 		return sources
 	}
 
 	for _, node := range nodes {
 		info, err := this.getNodeInfo(node)
 		if err != nil {
-			glog.Errorf("%v", err)
+			log.Errorf("%v", err)
 			continue
 		}
 		sources = append(sources, NewSummaryMetricsSource(info, this.kubeletClient))
@@ -463,7 +460,14 @@ func (this *summaryProvider) getNodeInfo(node *kube_api.Node) (NodeInfo, error) 
 		},
 		KubeletVersion: node.Status.NodeInfo.KubeletVersion,
 	}
-	glog.V(2).Infof("nodeInfo: [nodeName:%s hostname:%s hostID:%s ip:%s]", node.Name, hostname, hostID, ip)
+
+	log.WithFields(log.Fields{
+		"name":      node.Name,
+		"hostname":  hostname,
+		"hostID":    hostID,
+		"ipAddress": ip,
+	}).Debug("Node information")
+
 	return info, nil
 }
 

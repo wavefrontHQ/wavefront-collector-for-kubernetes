@@ -34,18 +34,11 @@ spec:
         - --daemon=true
         - --source=kubernetes.summary_api:''
         - --source=telegraf:''
-        - --source=systemd:''
         - --sink=wavefront:?proxyAddress=wavefront-proxy.default.svc.cluster.local:2878&clusterName=k8s-cluster&includeLabels=true
         - --v=2
         volumeMounts:
-        - name: system-dbus-socket
-          mountPath: /var/run/dbus/system_bus_socket
-          readOnly: true
         - name: procfs
           mountPath: /host/proc
-          readOnly: true
-        - name: ssl-certs
-          mountPath: /etc/ssl/certs
           readOnly: true
         ports:
         - containerPort: 8088
@@ -64,12 +57,6 @@ spec:
               apiVersion: v1
               fieldPath: metadata.namespace
       volumes:
-      - name: system-dbus-socket
-        hostPath:
-          path: /var/run/dbus/system_bus_socket
       - name: procfs
         hostPath:
           path: /proc
-      - name: ssl-certs
-        hostPath:
-          path: /etc/ssl/certs

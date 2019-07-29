@@ -15,7 +15,8 @@
 package processors
 
 import (
-	"github.com/golang/glog"
+	log "github.com/sirupsen/logrus"
+
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 )
 
@@ -36,17 +37,17 @@ func (this *NodeAggregator) Process(batch *metrics.DataBatch) (*metrics.DataBatc
 		// Aggregating pods
 		nodeName, found := metricSet.Labels[metrics.LabelNodename.Key]
 		if nodeName == "" {
-			glog.V(8).Infof("Skipping pod %s: no node info", key)
+			log.Debugf("Skipping pod %s: no node info", key)
 			continue
 		}
 		if !found {
-			glog.Errorf("No node info in pod %s: %v", key, metricSet.Labels)
+			log.Errorf("No node info in pod %s: %v", key, metricSet.Labels)
 			continue
 		}
 		nodeKey := metrics.NodeKey(nodeName)
 		node, found := batch.MetricSets[nodeKey]
 		if !found {
-			glog.V(1).Infof("No metric for node %s, cannot perform node level aggregation.", nodeKey)
+			log.Infof("No metric for node %s, cannot perform node level aggregation.", nodeKey)
 		} else if err := aggregate(metricSet, node, this.MetricsToAggregate); err != nil {
 			return nil, err
 		}
