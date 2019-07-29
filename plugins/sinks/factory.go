@@ -17,7 +17,8 @@ package sinks
 import (
 	"fmt"
 
-	"github.com/golang/glog"
+	log "github.com/sirupsen/logrus"
+
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/flags"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sinks/wavefront"
@@ -41,14 +42,14 @@ func (this *SinkFactory) BuildAll(uris flags.Uris) []metrics.DataSink {
 	for _, uri := range uris {
 		sink, err := this.Build(uri)
 		if err != nil {
-			glog.Errorf("Failed to create %v sink: %v", uri, err)
+			log.Errorf("Failed to create %v sink: %v", uri, err)
 			continue
 		}
 		result = append(result, sink)
 	}
 
 	if len([]flags.Uri(uris)) != 0 && len(result) == 0 {
-		glog.Fatal("No available sink to use")
+		log.Fatal("No available sink to use")
 	}
 	return result
 }

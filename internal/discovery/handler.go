@@ -8,7 +8,7 @@ import (
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources"
 
-	"github.com/golang/glog"
+	log "github.com/sirupsen/logrus"
 )
 
 type ProviderInfo struct {
@@ -90,7 +90,12 @@ func (d *defaultHandler) Handle(resource Resource, rule interface{}) {
 	kind := resource.Kind
 	ip := resource.IP
 	meta := resource.Meta
-	glog.Infof("%s: %s namespace: %s", kind, meta.Name, meta.Namespace)
+
+	log.WithFields(log.Fields{
+		"kind":      kind,
+		"name":      meta.Name,
+		"namespace": meta.Namespace,
+	}).Debug("Handling resource")
 
 	name := ResourceName(kind, meta)
 	currEncoding := d.registry.Encoding(name)
@@ -100,19 +105,19 @@ func (d *defaultHandler) Handle(resource Resource, rule interface{}) {
 
 	// add target if newEncoding is non-empty and has changed
 	if len(newEncoding) > 0 && newEncoding != currEncoding {
-		glog.V(4).Infof("newEncoding: %s", newEncoding)
-		glog.V(4).Infof("currEncoding: %s", currEncoding)
+		log.Debugf("newEncoding: %s", newEncoding)
+		log.Debugf("currEncoding: %s", currEncoding)
 
 		u, err := url.Parse("?")
 		if err != nil {
-			glog.Errorf("error parsing url: %q", err)
+			log.Errorf("error parsing url: %q", err)
 			return
 		}
 		u.RawQuery = newEncoding
 
 		provider, err := d.info.Factory.Build(u)
 		if err != nil {
-			glog.Error(err)
+			log.Error(err)
 			return
 		}
 		if i, ok := provider.(metrics.ConfigurabeMetricsSourceProvider); ok {
@@ -124,7 +129,7 @@ func (d *defaultHandler) Handle(resource Resource, rule interface{}) {
 	// delete target if scrape annotation is false/absent and handler is annotation based
 	if newEncoding == "" && currEncoding != "" && d.useAnnotations && d.Encoding(name) != "" {
 		if d.rh != nil && d.rh(resource) {
-			glog.V(2).Infof("deleting target %s as annotation has changed", name)
+			log.Infof("deleting target %s as annotation has changed", name)
 			d.unregister(name)
 		}
 	}
@@ -149,7 +154,7 @@ func (d *defaultHandler) deleteProvider(name string) {
 		sources.Manager().DeleteProvider(providerName)
 		d.registry.Unregister(name)
 	}
-	glog.V(5).Infof("%s deleted", name)
+	log.Debugf("%s deleted", name)
 }
 
 func (d *defaultHandler) Count() int {

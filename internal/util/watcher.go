@@ -4,7 +4,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/golang/glog"
+	log "github.com/sirupsen/logrus"
+
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -48,7 +49,7 @@ func (fw *fileWatcher) Watch() {
 		}
 		fileInfo, err := os.Stat(fw.file)
 		if err != nil {
-			glog.Errorf("error retrieving file stats: %v", err)
+			log.Errorf("error retrieving file stats: %v", err)
 			return
 		}
 

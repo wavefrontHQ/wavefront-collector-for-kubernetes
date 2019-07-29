@@ -33,8 +33,8 @@ import (
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
 
 	"github.com/coreos/go-systemd/dbus"
-	"github.com/golang/glog"
 	gm "github.com/rcrowley/go-metrics"
+	log "github.com/sirupsen/logrus"
 )
 
 var unitStatesName = []string{"active", "activating", "deactivating", "inactive", "failed"}
@@ -88,7 +88,7 @@ func (src *systemdMetricsSource) ScrapeMetrics() (*DataBatch, error) {
 			select {
 			case point, more := <-gather:
 				if !more {
-					glog.Infof("systemd metrics collection complete")
+					log.Infof("systemd metrics collection complete")
 					done <- true
 					return
 				}
@@ -141,7 +141,7 @@ func (src *systemdMetricsSource) ScrapeMetrics() (*DataBatch, error) {
 	err = src.collectSystemState(conn, gather, now)
 	if err != nil {
 		src.eps.Inc(1)
-		glog.Errorf("error collecting system stats: %v", err)
+		log.Errorf("error collecting system stats: %v", err)
 	}
 
 	// wait for collection to complete and then close the gathering channel
@@ -153,7 +153,7 @@ func (src *systemdMetricsSource) ScrapeMetrics() (*DataBatch, error) {
 
 	result.MetricPoints = points
 	count := len(result.MetricPoints)
-	glog.Infof("%s metrics: %d", "systemd", count)
+	log.Infof("%s metrics: %d", "systemd", count)
 	src.pps.Inc(int64(count))
 
 	return result, err
@@ -165,14 +165,14 @@ func (src *systemdMetricsSource) collectUnitStatusMetrics(conn *dbus.Conn, units
 		if strings.HasSuffix(unit.Name, ".service") {
 			serviceTypeProperty, err := conn.GetUnitTypeProperty(unit.Name, "Service", "Type")
 			if err != nil {
-				glog.Infof("couldn't get unit '%s' Type: %s", unit.Name, err)
+				log.Infof("couldn't get unit '%s' Type: %s", unit.Name, err)
 			} else {
 				serviceType = serviceTypeProperty.Value.Value().(string)
 			}
 		} else if strings.HasSuffix(unit.Name, ".mount") {
 			serviceTypeProperty, err := conn.GetUnitTypeProperty(unit.Name, "Mount", "Type")
 			if err != nil {
-				glog.V(4).Infof("couldn't get unit '%s' Type: %s", unit.Name, err)
+				log.Debugf("couldn't get unit '%s' Type: %s", unit.Name, err)
 			} else {
 				serviceType = serviceTypeProperty.Value.Value().(string)
 			}
@@ -190,7 +190,7 @@ func (src *systemdMetricsSource) collectUnitStatusMetrics(conn *dbus.Conn, units
 			// NRestarts wasn't added until systemd 235.
 			restartsCount, err := conn.GetUnitTypeProperty(unit.Name, "Service", "NRestarts")
 			if err != nil {
-				glog.V(4).Infof("couldn't get unit '%s' NRestarts: %s", unit.Name, err)
+				log.Debugf("couldn't get unit '%s' NRestarts: %s", unit.Name, err)
 			} else {
 				tags := map[string]string{}
 				setTag(tags, "name", unit.Name)
@@ -208,7 +208,7 @@ func (src *systemdMetricsSource) collectSockets(conn *dbus.Conn, units []unit, c
 
 		acceptedConnectionCount, err := conn.GetUnitTypeProperty(unit.Name, "Socket", "NAccepted")
 		if err != nil {
-			glog.V(4).Infof("couldn't get unit '%s' NAccepted: %s", unit.Name, err)
+			log.Debugf("couldn't get unit '%s' NAccepted: %s", unit.Name, err)
 			continue
 		}
 		tags := map[string]string{}
@@ -217,7 +217,7 @@ func (src *systemdMetricsSource) collectSockets(conn *dbus.Conn, units []unit, c
 
 		currentConnectionCount, err := conn.GetUnitTypeProperty(unit.Name, "Socket", "NConnections")
 		if err != nil {
-			glog.V(4).Infof("couldn't get unit '%s' NConnections: %s", unit.Name, err)
+			log.Debugf("couldn't get unit '%s' NConnections: %s", unit.Name, err)
 			continue
 		}
 		ch <- src.metricPoint("socket_current_connections", float64(currentConnectionCount.Value.Value().(uint32)), now, tags)
@@ -225,7 +225,7 @@ func (src *systemdMetricsSource) collectSockets(conn *dbus.Conn, units []unit, c
 		// NRefused wasn't added until systemd 239.
 		refusedConnectionCount, err := conn.GetUnitTypeProperty(unit.Name, "Socket", "NRefused")
 		if err != nil {
-			glog.V(4).Infof("couldn't get unit '%s' NRefused: %s", unit.Name, err)
+			log.Debugf("couldn't get unit '%s' NRefused: %s", unit.Name, err)
 		} else {
 			ch <- src.metricPoint("socket_refused_connections_total", float64(refusedConnectionCount.Value.Value().(uint32)), now, tags)
 		}
@@ -240,7 +240,7 @@ func (src *systemdMetricsSource) collectUnitStartTimeMetrics(conn *dbus.Conn, un
 		} else {
 			timestampValue, err := conn.GetUnitProperty(unit.Name, "ActiveEnterTimestamp")
 			if err != nil {
-				glog.V(4).Infof("couldn't get unit '%s' StartTimeUsec: %s", unit.Name, err)
+				log.Debugf("couldn't get unit '%s' StartTimeUsec: %s", unit.Name, err)
 				continue
 			}
 			startTimeUsec = timestampValue.Value.Value().(uint64)
@@ -257,7 +257,7 @@ func (src *systemdMetricsSource) collectUnitTasksMetrics(conn *dbus.Conn, units 
 		if strings.HasSuffix(unit.Name, ".service") {
 			tasksCurrentCount, err := conn.GetUnitTypeProperty(unit.Name, "Service", "TasksCurrent")
 			if err != nil {
-				glog.Infof("couldn't get unit '%s' TasksCurrent: %s", unit.Name, err)
+				log.Infof("couldn't get unit '%s' TasksCurrent: %s", unit.Name, err)
 			} else {
 				val = tasksCurrentCount.Value.Value().(uint64)
 				// Don't set if tasksCurrent if dbus reports MaxUint64.
@@ -269,7 +269,7 @@ func (src *systemdMetricsSource) collectUnitTasksMetrics(conn *dbus.Conn, units 
 			}
 			tasksMaxCount, err := conn.GetUnitTypeProperty(unit.Name, "Service", "TasksMax")
 			if err != nil {
-				glog.Infof("couldn't get unit '%s' TasksMax: %s", unit.Name, err)
+				log.Infof("couldn't get unit '%s' TasksMax: %s", unit.Name, err)
 			} else {
 				val = tasksMaxCount.Value.Value().(uint64)
 				// Don't set if tasksMax if dbus reports MaxUint64.
@@ -291,7 +291,7 @@ func (src *systemdMetricsSource) collectTimers(conn *dbus.Conn, units []unit, ch
 
 		lastTriggerValue, err := conn.GetUnitTypeProperty(unit.Name, "Timer", "LastTriggerUSec")
 		if err != nil {
-			glog.V(4).Infof("couldn't get unit '%s' LastTriggerUSec: %s", unit.Name, err)
+			log.Debugf("couldn't get unit '%s' LastTriggerUSec: %s", unit.Name, err)
 			continue
 		}
 		tags := map[string]string{}
@@ -345,10 +345,10 @@ func (src *systemdMetricsSource) filterUnits(units []unit) []unit {
 	filtered := make([]unit, 0, len(units))
 	for _, unit := range units {
 		if (src.unitsFilter == nil || src.unitsFilter.match(unit.Name)) && unit.LoadState == "loaded" {
-			glog.V(4).Infof("Adding unit: %s", unit.Name)
+			log.Debugf("Adding unit: %s", unit.Name)
 			filtered = append(filtered, unit)
 		} else {
-			glog.V(4).Infof("Ignoring unit: %s", unit.Name)
+			log.Debugf("Ignoring unit: %s", unit.Name)
 		}
 	}
 	return filtered
@@ -359,7 +359,7 @@ func (src *systemdMetricsSource) filterAppend(slice []*MetricPoint, point *Metri
 		return append(slice, point)
 	}
 	src.fps.Inc(1)
-	glog.V(4).Infof("dropping metric: %s", point.Metric)
+	log.Debugf("dropping metric: %s", point.Metric)
 	return slice
 }
 
@@ -431,7 +431,7 @@ func NewProvider(uri *url.URL) (MetricsSourceProvider, error) {
 		var err error
 		collectTaskMetrics, err = strconv.ParseBool(vals["taskMetrics"][0])
 		if err != nil {
-			glog.Infof("error parsing taskMetrics property: %v", err)
+			log.Infof("error parsing taskMetrics property: %v", err)
 		}
 	}
 
@@ -440,7 +440,7 @@ func NewProvider(uri *url.URL) (MetricsSourceProvider, error) {
 		var err error
 		collectStartTimeMetrics, err = strconv.ParseBool(vals["startTimeMetrics"][0])
 		if err != nil {
-			glog.Infof("error parsing startTimeMetrics property: %v", err)
+			log.Infof("error parsing startTimeMetrics property: %v", err)
 		}
 	}
 
@@ -449,7 +449,7 @@ func NewProvider(uri *url.URL) (MetricsSourceProvider, error) {
 		var err error
 		collectRestartMetrics, err = strconv.ParseBool(vals["restartMetrics"][0])
 		if err != nil {
-			glog.Infof("error parsing restartMetrics property: %v", err)
+			log.Infof("error parsing restartMetrics property: %v", err)
 		}
 	}
 

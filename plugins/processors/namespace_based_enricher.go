@@ -15,9 +15,10 @@
 package processors
 
 import (
-	"github.com/golang/glog"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
 	"net/url"
+
+	log "github.com/sirupsen/logrus"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
 
 	kube_config "github.com/wavefronthq/wavefront-kubernetes-collector/internal/kubernetes"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
@@ -64,12 +65,12 @@ func (this *NamespaceBasedEnricher) addNamespaceInfo(metricSet *metrics.MetricSe
 		if ok {
 			metricSet.Labels[metrics.LabelPodNamespaceUID.Key] = string(namespace.UID)
 		} else {
-			glog.Errorf("Wrong namespace store content")
+			log.Errorf("Wrong namespace store content")
 		}
 	} else if err != nil {
-		glog.Warningf("Failed to get namespace %s: %v", namespaceName, err)
+		log.Warningf("Failed to get namespace %s: %v", namespaceName, err)
 	} else if !exists {
-		glog.Warningf("Namespace doesn't exist: %s", namespaceName)
+		log.Warningf("Namespace doesn't exist: %s", namespaceName)
 	}
 }
 

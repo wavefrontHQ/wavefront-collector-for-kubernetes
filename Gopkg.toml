@@ -15,12 +15,16 @@
   version = "1.10.3"
 
 [[constraint]]
-  branch = "master"
   name = "github.com/rcrowley/go-metrics"
+  branch = "master"
 
 [[constraint]]
   name = "github.com/google/cadvisor"
   version = "0.31.0"
+
+[[constraint]]
+  name = "github.com/sirupsen/logrus"
+  version = "v1.4.2"
 
 [[constraint]]
   name = "github.com/json-iterator/go"
@@ -45,14 +49,6 @@
 [[constraint]]
   branch = "release-11.0"
   name = "k8s.io/client-go"
-
-[[override]]
-  name = "github.com/golang/glog"
-  source = "github.com/kubermatic/glog-gokit"
-
-[[override]]
-  name = "k8s.io/klog"
-  source = "github.com/simonpasquier/klog-gokit" 
 
 [[override]]
   name = "github.com/golang/protobuf"

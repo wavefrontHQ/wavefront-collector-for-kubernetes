@@ -10,7 +10,7 @@ import (
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery/utils"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
 
-	"github.com/golang/glog"
+	log "github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -50,13 +50,13 @@ func (e prometheusEncoder) Encode(ip, kind string, meta metav1.ObjectMeta, cfg i
 	values.Set("discovered", discoveryType)
 
 	if ip == "" {
-		glog.V(5).Infof("missing ip for %s=%s", kind, meta.Name)
+		log.Debugf("missing ip for %s=%s", kind, meta.Name)
 		return url.Values{}
 	}
 
 	scrape := utils.Param(meta, scrapeAnnotation, "", "false")
 	if rule.Name == "" && scrape != "true" {
-		glog.V(5).Infof("prometheus scrape=false for %s=%s", kind, meta.Name)
+		log.Debugf("prometheus scrape=false for %s=%s", kind, meta.Name)
 		return url.Values{}
 	}
 
@@ -116,7 +116,7 @@ func encodeBase(values url.Values, scheme, ip, port, path, name, source, prefix 
 
 func sanitizePort(name, port string) string {
 	if strings.Contains(name, "kube-state-metrics") && port == "" {
-		glog.V(5).Infof("using port 8080 for %s", name)
+		log.Debugf("using port 8080 for %s", name)
 		return "8080"
 	}
 	return port

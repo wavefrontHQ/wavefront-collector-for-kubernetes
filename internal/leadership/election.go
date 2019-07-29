@@ -8,8 +8,8 @@ import (
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
 
-	"github.com/golang/glog"
 	"github.com/rcrowley/go-metrics"
+	log "github.com/sirupsen/logrus"
 
 	"k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/tools/leaderelection"
@@ -60,7 +60,7 @@ func Unsubscribe() {
 
 	// assumes a single subscriber at this time
 	subscribers = subscribers[:0]
-	glog.Infof("unsubscribed from leader-election: %d", len(subscribers))
+	log.Infof("unsubscribed from leader-election: %d", len(subscribers))
 }
 
 // startLeaderElection starts the election process if not already started
@@ -116,7 +116,7 @@ func getLeaderElector(client v1.CoreV1Interface) (*leaderelection.LeaderElector,
 					leadingGauge.Update(0)
 				}
 
-				glog.V(2).Infof("node: %s elected leader", identity)
+				log.Infof("node: %s elected leader", identity)
 				leaderId = identity
 				if identity == nodeName && !isLeader {
 					for i := range subscribers {

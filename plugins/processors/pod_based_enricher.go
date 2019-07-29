@@ -17,7 +17,7 @@ package processors
 import (
 	"fmt"
 
-	"github.com/golang/glog"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
 
@@ -44,7 +44,7 @@ func (this *PodBasedEnricher) Process(batch *metrics.DataBatch) (*metrics.DataBa
 			podName := v.Labels[metrics.LabelPodName.Key]
 			pod, err := this.getPod(namespace, podName)
 			if err != nil {
-				glog.V(3).Infof("Failed to get pod %s from cache: %v", metrics.PodKey(namespace, podName), err)
+				log.Debugf("Failed to get pod %s from cache: %v", metrics.PodKey(namespace, podName), err)
 				continue
 			}
 			this.addPodInfo(k, v, pod, batch, newMs)
@@ -53,7 +53,7 @@ func (this *PodBasedEnricher) Process(batch *metrics.DataBatch) (*metrics.DataBa
 			podName := v.Labels[metrics.LabelPodName.Key]
 			pod, err := this.getPod(namespace, podName)
 			if err != nil {
-				glog.V(3).Infof("Failed to get pod %s from cache: %v", metrics.PodKey(namespace, podName), err)
+				log.Debugf("Failed to get pod %s from cache: %v", metrics.PodKey(namespace, podName), err)
 				continue
 			}
 			this.addContainerInfo(k, v, pod, batch, newMs)
@@ -108,7 +108,7 @@ func (this *PodBasedEnricher) addContainerInfo(key string, containerMs *metrics.
 	if !oldfound {
 		_, newfound := newMs[podKey]
 		if !newfound {
-			glog.V(2).Infof("Pod %s not found, creating a stub", podKey)
+			log.Debugf("Pod %s not found, creating a stub", podKey)
 			podMs := &metrics.MetricSet{
 				MetricValues: make(map[string]metrics.MetricValue),
 				Labels: map[string]string{
@@ -147,7 +147,7 @@ func (this *PodBasedEnricher) addPodInfo(key string, podMs *metrics.MetricSet, p
 		if _, found := newMs[containerKey]; found {
 			continue
 		}
-		glog.V(2).Infof("Container %s not found, creating a stub", containerKey)
+		log.Debugf("Container %s not found, creating a stub", containerKey)
 		containerMs := &metrics.MetricSet{
 			MetricValues: make(map[string]metrics.MetricValue),
 			Labels: map[string]string{
