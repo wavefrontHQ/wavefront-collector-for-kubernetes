@@ -28,10 +28,6 @@ func (resType ResourceType) String() string {
 		return "pod"
 	case ServiceType:
 		return "service"
-	case IngressType:
-		return "ingress"
-	case ApiServerType:
-		return "apiserver"
 	default:
 		return fmt.Sprintf("%d", int(resType))
 	}

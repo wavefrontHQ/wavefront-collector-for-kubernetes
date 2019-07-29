@@ -5,10 +5,6 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/kubernetes"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/leadership"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // handles runtime changes to plugin rules
@@ -20,11 +16,14 @@ type ruleHandler struct {
 
 // Gets a new rule handler that can handle runtime changes to plugin rules
 func newRuleHandler(d discovery.Discoverer, daemon bool) discovery.RuleHandler {
-	return &ruleHandler{
+	rh := &ruleHandler{
 		d:          d.(*discoverer),
 		daemon:     daemon,
 		rulesCount: gm.GetOrRegisterGauge("discovery.rules.count", gm.DefaultRegistry),
 	}
+	count := int64(len(rh.d.delegates))
+	rh.rulesCount.Update(count)
+	return rh
 }
 
 func (rh *ruleHandler) HandleAll(plugins []discovery.PluginConfig) error {
@@ -102,9 +101,6 @@ func (rh *ruleHandler) internalHandle(plugin discovery.PluginConfig) error {
 		delegate.filter = filter
 		delegate.plugin = plugin
 	}
-	if plugin.Selectors.ResourceType == discovery.ApiServerType.String() {
-		rh.discoverAPIServer(plugin, delegate.handler)
-	}
 	return nil
 }
 
@@ -115,24 +111,4 @@ func (rh *ruleHandler) internalDelete(name string) {
 		delegate.handler.DeleteMissing(nil)
 		delete(rh.d.delegates, name)
 	}
-}
-
-func (rh *ruleHandler) discoverAPIServer(plugin discovery.PluginConfig, handler discovery.TargetHandler) {
-	if rh.daemon && !leadership.Leading() {
-		log.Infof("apiserver discovery disabled. current leader: %s", leadership.Leader())
-		return
-	}
-
-	if plugin.Port != "" {
-		plugin.Port = "443"
-	}
-	if plugin.Scheme != "https" {
-		plugin.Scheme = "https"
-	}
-	resource := discovery.Resource{
-		Kind: discovery.ApiServerType.String(),
-		IP:   kubernetes.DefaultAPIService,
-		Meta: metav1.ObjectMeta{Name: "kube-apiserver"},
-	}
-	handler.Handle(resource, plugin)
 }
