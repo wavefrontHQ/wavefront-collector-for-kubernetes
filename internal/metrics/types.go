@@ -182,6 +182,7 @@ type MetricPoint struct {
 	Timestamp int64
 	Source    string
 	Tags      map[string]string
+	StrTags   string
 }
 
 type ProviderFactory interface {
