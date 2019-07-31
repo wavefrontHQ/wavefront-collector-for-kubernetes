@@ -33,8 +33,6 @@ The installation instructions use a default configuration suitable for most use 
 | `1.x` | [Docs](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/tree/master/docs) |
 | `0.9.x` | [Docs](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/tree/v0.9.8/docs) |
 
-The collector is plugin-driven and supports collecting metrics from multiple sources and writing metrics to Wavefront using a [Wavefront proxy](https://docs.wavefront.com/proxies.html) or via [direct ingestion](https://docs.wavefront.com/direct_ingestion.html). See the [configuration doc](https://github.com/wavefronthq/wavefront-kubernetes-collector/tree/master/docs/configuration.md) for detailed configuration information.
-
 ## OpenShift
 This collector supports monitoring of Openshift Origin 3.9 clusters. See [openshift.md](https://github.com/wavefronthq/wavefront-kubernetes-collector/tree/master/docs/openshift.md) for detailed installation instructions.
 
