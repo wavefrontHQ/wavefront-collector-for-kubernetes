@@ -1,95 +1,106 @@
 # Auto Discovery
 
-The Wavefront Kubernetes Collector can auto discover pods and services that expose prometheus format metrics and dynamically configure [Prometheus scrape targets](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/docs/configuration.md#prometheus-source) for the targets.
+The Wavefront Kubernetes Collector can auto discover pods and services that expose metrics, and dynamically start collecting metrics for the targets.
 
-Pods/Services are discovered based on annotations and based on discovery rules provided using a configuration file.
+Pods/Services can be discovered based on annotations and discovery rules. Discovery rules are provided via the configuration file.
 
-## Annotations Based Discovery
-Pods/Services annotated with `prometheus.io/scrape` set to **true** will be auto discovered.
+## Annotation based discovery
+**Note**: Annotation based discovery is only supported for prometheus endpoints currently.
+
+[Annotations](https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/) are metadata you attach to Kubernetes objects. Amongst other uses, they can act as pointers for monitoring tools.
+
+The collector can dynamically discover pods/services annotated with `prometheus.io/scrape` set to **true**. Additional annotations can be provided to inform the collector on how to perform the collection and what prefix and tags should be added to the emitted metrics.
 
 Additional annotations that apply:
 - `prometheus.io/scheme`: Defaults to **http**.
 - `prometheus.io/path`: Defaults to **/metrics**.
 - `prometheus.io/port`: Defaults to a port free target if omitted.
 - `prometheus.io/prefix`: Dot suffixed string to prefix reported metrics. Defaults to an empty string.
-- `prometheus.io/includeLabels`: Whether to include pod labels as tags on reported metrics. Defaults to **true**.
-- `prometheus.io/source`: Optional source for the reported metrics. Defaults to the name of the Kubernetes resource.
+- `prometheus.io/includeLabels`: Whether to include Kubernetes labels as tags on reported metrics. Defaults to **true**.
+- `prometheus.io/source`: Optional source for the reported metrics. Defaults to the node name on which collection is performed.
 
-## Rules Based Discovery
-Discovery rules enable discovery based on labels and namespaces. Prometheus scrape options similar to the annotations above are supported.
+## Rule based discovery
+Discovery rules encompass three distinct parts:
+- *Selectors*: The criteria for identifying matching kubernetes resources (Container images, resource labels and namespaces).
+- *Config*: Configuration information on how/where to collect from the discovered targets.
+- *Transformations*: Prefix, tags and filters on the collected data before emitting them to Wavefront.
 
-The rules are provided to the collector using the optional `--discovery-config` flag. When provided, the collector watches for configuration changes and automatically reloads configurations without having to restart it.
+The rules are provided to the collector under the `discovery_configs` section within the top-level `--config-file`. The collector watches for configuration changes and can dynamically reload changes to the rules without having to restart it.
 
 ### Configuration file
-The configuration file is YAML based and has the following structure:
-```yaml
-global:
-  # Frequency of rule based target discovery
-  discovery_interval: 10m
+Source: [configs.go](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/internal/discovery/configs.go)
 
-# List of rules for auto discovering Prometheus scrape targets
-prom_configs
-```
-The structure for the `prom_config`:
+The configuration file is YAML based. Each rule has the following structure:
 ```yaml
-# Name describing the rule
-name: rule_name
-# The resource type the rule applies to. Defaults to pod.
-resourceType: <pod|service|apiserver>
-# Map of kubernetes labels identifying the pods and services. Does not apply for apiserver.
-labels:
-  <key1>: <val1>
-  <key2>: <val2>
-# Optional namespace to filter by for pods and services.
-namespace: <my-app-namespace>
-# Optional port to scrape for Prometheus metrics. Defaults to a port-free target.
-port: <port_number>
-# Optional scheme to use. Defaults to http.
-scheme: <http|https>
-# Optional dot suffixed prefix to apply to metrics collected using this rule.
-prefix: <some.prefix.>
-# Optional map of custom tags to include with the metrics collected using this rule.
-tags:
-  <key1>:<val1>
-  <key2>:<val2>
-# Optional source for metrics collected using this rule. Defaults to the name of the Kubernetes resource.
-source: <source_name>
-# Whether to include Kubernetes resource labels with the reported metrics. Defaults to "true".
+# Unique name per rule. Used internally as map keys and thus needs to be unique per rule.
+name: <string>
+
+# Plugin type to use for collecting metrics. Example: 'prometheus' or 'telegraf/redis'
+type: <string>
+
+# Selectors for identifying matching kubernetes resources.
+# One of images, labels or namespaces is required.
+selectors:
+  # pod | service. Defaults to pod.
+  resourceType: <string>
+
+  # The container images to match against. Provided as a list of glob pattern strings. Ex: 'redis*'
+  images:
+    - 'redis:*'
+    - '*redis*'
+
+  # map of labels to select resources by. Label values are provided as a list of glob pattern strings.
+  labels:
+    k8s-app:
+    - 'redis'
+    - '*cache*'
+
+  # namespaces to filter resources by. Provided as a list of glob pattern strings.
+  namespaces:
+  - default
+
+# The port to be monitored on the pod or service
+port: <string>
+
+# The scheme to use. Defaults to "http".
+scheme: <string>
+
+# Defaults to "/metrics" for prometheus plugin type. Empty string for telegraf plugins.
+path: <string>
+
+# The configuration specific to a plugin.
+# For telegraf based plugins config is provided in toml format: https://github.com/toml-lang/toml
+# and parsed using https://github.com/influxdata/toml
+conf: <multi_line_string>
+
+# Optional static source for metrics collected using this rule. Defaults to agent node name.
+source: <string>
+
+# Optional prefix for metrics collected using this rule. Defaults to empty string.
+prefix: <string>
+
+# Optional map of custom tags to include with the reported metrics
+tags: <map of key-value pairs>
+
+# Whether to include resource labels with the reported metrics. Defaults to "true".
 includeLabels: <true|false>
-# Optional filtering rules to apply towards metrics collected using this rule.
-filters:
-  # See filtering documentation
-```
-See the [filtering documentation](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/docs/filtering.md) for details on filtering the metrics that are reported to Wavefront.
 
-### Sample Configuration file
-The sample configuration below enables discovery of the `apiserver`, `kube-dns` and a `my-app` application pods:
-```yaml
-global:
-  discovery_interval: 10m
-prom_configs:
-- name: kube-apiserver
-  resourceType: apiserver
-  scheme: https
-  port: 443
-  prefix: kube.apiserver.
-- name: kube-dns
-  labels:
-    k8s-app: kube-dns
-  namespace: kube-system
-  port: 10054
-  prefix: kube.dns.
-- name: my-app
-  labels:
-    app: my-app
-    service: ingestion
-  namespace: my-app-namespace
-  prefix: my-app.
+# filters applied towards the collected metrics before emitting them.
+filters:
+  # see the filtering documentation: https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/docs/filtering.md
+
+# custom collection interval for this rule
+collection:
+  # Duration type specified as [0-9]+(ms|[smhdwy])
+  interval: 30s
+
+  # Duration type specified as [0-9]+(ms|[smhdwy])
+  timeout: 20s
 ```
-See the [sample deployment](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/tree/master/deploy/discovery-examples) for details on how to deploy the discovery rules.
+See the reference [example](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/deploy/examples/conf.example.yaml) for details on how to specify the discovery rules.
 
 ## Use Cases
 Together, annotation and rule based discovery can be used to easily collect metrics from the Kubernetes control plane (apiserver, etcd, dns etc), NGINX ingresses, and any application that exposes a Prometheus scrape endpoint.
 
 ## Disabling Auto Discovery
-Auto discovery is enabled by default and can be disabled by setting the `--enable-discovery` collector flag to `false`.
+Auto discovery is enabled by default and can be disabled by setting the `enableDiscovery` configuration option to `false`.

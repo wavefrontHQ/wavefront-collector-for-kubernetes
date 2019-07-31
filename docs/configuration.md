@@ -1,96 +1,213 @@
 # Configuration
 
-This page documents advanced configuration options for various aspects of the Wavefront Kubernetes Collector.
+The Wavefront Kubernetes Collector is configured via command-line flags and a configuration file.
 
-## Wavefront Collector
+Starting with version 1.0, most command line flags have been deprecated in favor of a top-level configuration file.
+
+## Flags
 ```
 Usage of ./wavefront-collector:
-      --alsologtostderr                     log to standard error as well as files
-      --daemon                              enable daemon mode (default false)
-      --discovery-config string             optional discovery configuration file
-      --enable-discovery                    enable pod discovery (default true)
-      --ignore-label strings                ignore this label when joining labels
-      --label-separator string              separator used for joining labels (default ",")
-      --log-backtrace-at traceLocation      when logging hits line file:N, emit a stack trace (default :0)
-      --log-dir string                      If non-empty, write log files in this directory
-      --log-flush-frequency duration        Maximum number of seconds between log flushes (default 5s)
-      --logtostderr                         log to standard error instead of files (default true)
-      --max-procs int                       max number of CPUs that can be used simultaneously. Less than 1 for default (number of cores)
-      --metric-resolution duration          The resolution at which the collector will retain metrics. (default 1m0s)
-      --sink *flags.Uris                    external sink(s) that receive data (default [])
-      --sink-export-data-timeout duration   Timeout for exporting data to a sink (default 20s)
-      --source *flags.Uris                  source(s) to watch (default [])
-      --stderrthreshold severity            logs at or above this threshold go to stderr (default 2)
-      --store-label strings                 store this label separately from joined labels with the same name (name) or with different name (newName=name)
-  -v, --v Level                             log level for V logs
-      --version                             print version info and exit
-      --vmodule moduleSpec                  comma-separated list of pattern=N settings for file-filtered logging
+      --config-file string             required configuration file
+      --daemon                         enable daemon mode (required when running as daemonset)
+      --log-level string               one of info, debug or trace (default "info")
+      --profile                        enable pprof (for debugging)
+      --version                        print version info and exit
 ```
 
-## Kubernetes Source
-- `kubeletPort`: Defaults to 10255. Use 10250 for the secure port.
-- `kubeletHttps`: Defaults to false. Set to true if `kubeletPort` set to 10250.
-- `inClusterConfig`: Defaults to true.
-- `useServiceAccount`: Defaults to false.
-- `auth`: If using secure kubelet port, this can be set to a valid kubeConfig file provided using a config map.
+## Configuration file
 
-Example usage using secure port and service account:
+Source: [config.go](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/internal/configuration/config.go)
+
+The configuration file is written in YAML and provided using the `--config-file` flag. The Collector can reload configuration changes at runtime.
+
+A reference example is provided [here](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/deploy/examples/conf.example.yaml).
+
+```yaml
+# An unique identifier for your Kubernetes cluster. Defaults to 'k8s-cluster'.
+# Included as a point tag on all metrics reported to Wavefront.
+clusterName: k8s-cluster
+
+# Whether auto-discovery is enabled. Defaults to true.
+enableDiscovery: true
+
+# The global interval at which data is flushsed. Defaults to 60 seconds.
+# Duration type specified as [0-9]+(ms|[smhdwy])
+flushInterval: 60s
+
+# The global interval at which data is collected. Defaults to 60 seconds.
+# Duration type specified as [0-9]+(ms|[smhdwy])
+# Note: collection intervals can be overridden per source.
+defaultCollectionInterval: 60s
+
+# Timeout for sinks to export data to Wavefront. Defaults to 20 seconds.
+# Duration type specified as [0-9]+(ms|[smhdwy])
+sinkExportDataTimeout: 20s
+
+# runtime.GOMAXPROCS value to use.
+maxProcs: 4
+
+# Required: List of Wavefront sinks. At least 1 required.
+sinks:
+  # see the Wavefront sink section for details
+
+# Required: Source for collecting metrics from the stats summary API.
+kubernetes_source:
+  # see kubernetes_source for details
+
+# Optional source for emitting internal collector stats.
+internal_stats_source:
+  # see internal_stats_source for details
+
+# Optional list of prometheus sources.
+prometheus_sources:
+  # see prometheus_source for details
+
+# Optional list of telegraf sources.
+telegraf_sources:
+  # see telegraf_source for details
+
+# Optional source for collecting host level systemd unit metrics.
+systemd_source:
+  # see systemd_source for details
+
+# Optional list of auto-discovery rules.
+discovery_configs:
+  # see auto-discovery for details
 ```
---source=kubernetes.summary_api:https://kubernetes.default.svc?useServiceAccount=true&kubeletHttps=true&kubeletPort=10250&insecure=true
+
+### Wavefront sink
+
+```yaml
+# The Wavefront proxy address of the form 'hostname:port'.
+proxyAddress: wavefront-proxy.default.svc.cluster.local:2878
+
+# Wavefront URL of the form https:YOUR_INSTANCE.wavefront.com. Only required for direct ingestion.
+server: https://<instance>.wavefront.com
+
+# Wavefront API token with direct data ingestion permission. Only required for direct ingestion.
+token: <string>
+```
+
+
+### kubernetes_source
+
+```yaml
+# Defaults to empty string when using port 10255.
+url: 'https://kubernetes.default.svc'
+
+# Either 10255 (default, read-only kubelet port) or 10250 (secure kubelet port).
+kubeletPort: <10250|10255>
+
+# Defaults to false. Set to true if `kubeletPort` set to 10250.
+kubeletHttps: <true|false>
+
+# Defaults to true.
+inClusterConfig: <true|false>
+
+# Defaults to false.
+useServiceAccount: <true|false>
+
+# Defaults to false.
+insecure: <true|false>
+
+# Optional: a valid kubeConfig file provided using a config map
+auth: <string>
 ```
 
 See [configs.go](https://github.com/wavefronthq/wavefront-kubernetes-collector/tree/master/internal/kubernetes/configs.go) for how these properties are used.
 
-## Prometheus Source
-- `url`: The URL for a Prometheus metrics endpoint. Kubernetes Service URLs work across namespaces.
-- `prefix`: The prefix (dot suffixed such as `prom.`) to be applied to all metrics for this source. Defaults to empty string.
-- `source`: The source to set for the metrics from this source. Defaults to `prom_source`.
-- `tag`: Custom tags to include with metrics reported by this source, of the form `tag=key1:val1&tag=key2:val2`.
+### prometheus_source
 
-Example Usage:
-```
---source=prometheus:''?url=http://kube-state-metrics.kube-system.svc.cluster.local:8080/metrics&prefix=prom.
-```
+```yaml
+# The URL for a prometheus metrics endpoint. Kubernetes service URLs work across namespaces.
+url: <string>
 
-## Telegraf Source
-- `prefix`: The prefix to be applied to all metrics for this source. Defaults to empty string.
-- `plugins`: Comma separated list of telegraf plugins to collect metrics from. Defaults to collecting from all plugins.
+# Optional HTTP configuration
+httpConfig:
+  [ <ClientConfig> ]
 
-The list of plugins that are supported:
-- mem, net, netstat, linux_sysctl_fs, swap, cpu, disk, diskio, system, kernel, processes.
-
-Example Usage:
-```
---source=telegraf:''?prefix=telegraf.&plugins=cpu,netstat,disk,diskio
+# The source (tag) to set for the metrics collected by this source. Defaults to node name.
+source: <string>
 ```
 
-## Systemd Source
-- `prefix`: The prefix to be applied to all metrics for this source. Defaults to `kubernetes.systemd.`.
-- `taskMetrics`: Defaults to true. Set to false to not collect systemd unit task metrics.
-- `startTimeMetrics`: Defaults to true. Set to false to not collect system unit start time metrics.
-- `restartMetrics`: Defaults to false. Set to true to collect systemd unit restart metrics.
-- `unitWhitelist`: List of glob patterns. Only unit names matching the whitelist are monitored. Defaults to all units.
-- `unitBlacklist`: List of glob patterns. Unit names matching the blacklist are not monitored. Defaults to empty string.
-
-Example Usage:
-```
---source=systemd:''?prefix=kubernetes.systemd.&restartMetrics=true&unitWhitelist=*docker*&unitWhitelist=*kubelet*
+### telegraf_source
+```yaml
+# The list of plugins to be enabled. Empty list defaults to enabling all plugins.
+# Supported plugins are: mem, net, netstat, linux_sysctl_fs, swap, cpu, disk, diskio, system, kernel, processes
+plugins: []
 ```
 
-## Wavefront Sink
-- `server`: The Wavefront URL of the form `https://YOUR_INSTANCE.wavefront.com`. Only required for direct ingestion.
-- `token`: The Wavefront API token with direct data ingestion permission. Only required for direct ingestion.
-- `proxyAddress`: The Wavefront proxy service address of the form `wavefront-proxy.default.svc.cluster.local:2878`.
-- `clusterName`: A unique identifier for your Kubernetes cluster. Defaults to `k8s-cluster`. This is included as a point tag on all metrics sent to Wavefront.
-- `includeLabels`: If set to true, any Kubernetes labels will be applied to metrics as tags. Defaults to false.
-- `includeContainers`: If set to true, all container metrics will be sent to Wavefront. When set to false, container level metrics are skipped (pod level and above are still sent to Wavefront). Defaults to true.
-- `prefix`: The global prefix (dot suffixed) to be added for Kubernetes metrics. Defaults to `kubernetes.`. This does not apply to other sources. Use source level prefixes for sources other than the `kubernetes` source.
+### systemd_source
+```yaml
+# Whether to include systemd task metrics. Defaults to true.
+taskMetrics: <true|false>
 
-Example Usages:
+# Whether to include systemd start time metrics. Defaults to true.
+startTimeMetrics: <true|false>
+
+# Whether to include restart metrics. Defaults to false.
+restartMetrics: <true|false>
+
+# List of glob patterns. Metrics from matching systemd unit names are reported.
+unitWhitelist:
+- 'docker*'
+- 'kubelet*'
+
+# List of glob patterns. Metrics from matching systemd unit names are not reported.
+unitBlacklist:
+- '*mount*'
+- 'etc*'
 ```
-## Direct Ingestion
---sink=wavefront:?server=https://YOUR_INSTANCE.wavefront.com&token=YOUR_TOKEN&clusterName=k8s-cluster&includeLabels=true
 
-## Proxy
---sink=wavefront:?proxyAddress=wavefront-proxy.default.svc.cluster.local:2878&clusterName=k8s-cluster&includeLabels=true
+### Common properties
+#### Prefix, tags and filters
+All sources and sinks support the following common properties:
+```yaml
+# An optional dot suffixed prefix for metrics emitted by the sink or source.
+prefix: <string>
+
+# A map of key value pairs that are included as point tags on all metrics emitted
+# by the sink or source.
+tags:
+  env: non-production
+  region: us-west-2
+
+# Filters to be applied to metrics collected by a source or reported by sinks.
+filters:
+  # List of glob patterns. Only metrics with names matching the whitelist are reported.
+  metricWhitelist:
+  - 'kube.dns.http.*'
+  - 'kube.dns.process.*'
+
+  # List of glob patterns. Metrics with names matching the blacklist are dropped.
+  metricBlacklist:
+  - 'kube.dns.go.*'
+
+  # Map of tag names to list of glob patterns. Only metrics containing tag keys and values matching the whitelist will be reported.
+  metricTagWhitelist:
+    env: 'prod*'
+
+  # Map of tag names to list of glob patterns. Metrics containing blacklisted tag keys and values will be dropped.
+  metricTagBlacklist:
+    env: 'test*'
+
+  # List of glob patterns. Tags with matching keys will be included. All other tags will be excluded.
+  tagInclude:
+  - namespace
+  - 'label.app'
+  - 'label.component'
+
+  # List of glob patterns. Tags with matching keys will be excluded.
+  tagExclude:
+  - handler
+  - image
+```
+#### Custom collection intervals
+All sources support using a custom collection interval:
+```yaml
+# Duration type specified as [0-9]+(ms|[smhdwy])
+interval: 30s
+
+# Duration type specified as [0-9]+(ms|[smhdwy])
+timeout: 20s
 ```
