@@ -1,6 +1,6 @@
 # Auto Discovery
 
-The Wavefront Kubernetes Collector can auto discover pods and services that expose metrics, and dynamically start collecting metrics for the targets.
+The Wavefront Kubernetes Collector can auto-discover pods and services that expose metrics, and dynamically start collecting metrics for the targets.
 
 Pods/Services can be discovered based on annotations and discovery rules. Discovery rules are provided via the configuration file.
 
@@ -20,9 +20,9 @@ Additional annotations that apply:
 - `prometheus.io/source`: Optional source for the reported metrics. Defaults to the node name on which collection is performed.
 
 ## Rule based discovery
-Discovery rules encompass three distinct parts:
-- *Selectors*: The criteria for identifying matching kubernetes resources (Container images, resource labels and namespaces).
-- *Config*: Configuration information on how/where to collect from the discovered targets.
+Discovery rules encompass three distinct aspects:
+- *Selectors*: The criteria for identifying matching kubernetes resources using container images, resource labels and namespaces.
+- *Plugin Config*: Configuration information on how/where to collect metrics from the discovered targets.
 - *Transformations*: Prefix, tags and filters on the collected data before emitting them to Wavefront.
 
 The rules are provided to the collector under the `discovery_configs` section within the top-level `--config-file`. The collector watches for configuration changes and can dynamically reload changes to the rules without having to restart it.

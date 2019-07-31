@@ -115,8 +115,8 @@ Varies by scrape target.
 | kubernetes.collector.source.manager.scrape.latency.* | Scrape latencies across all sources. |
 | kubernetes.collector.source.manager.scrape.timeouts | Scrape timeout counter across all sources. |
 | kubernetes.collector.source.manager.sources | # of configured scrape targets. For example, a single Kubernetes source provider on a 10 node cluster will yield a count of 10. |
-| kubernetes.collector.source.prometheus.scrape.errors | scrape error counter for Prometheus sources. |
-| kubernetes.collector.source.prometheus.points.filtered.count | filtered points counter for Prometheus sources. |
+| kubernetes.collector.source.points.collected | collected points counter per source type. |
+| kubernetes.collector.source.points.filtered | filtered points counter per source type. |
 | kubernetes.collector.version | The version of the collector. |
 | kubernetes.collector.wavefront.points.* | Wavefront sink points sent, filtered, errors etc. |
 | kubernetes.collector.wavefront.sender.type | 1 for proxy and 0 for direct ingestion. |
