@@ -26,7 +26,7 @@ type pointConverter struct {
 	filteredPoints  gm.Counter
 }
 
-// Creates a new processor that converts summary stats data into the Wavefront point format
+// NewPointConverter creates a new processor that converts summary stats data into the Wavefront point format
 func NewPointConverter(uri *url.URL, cluster string) (metrics.DataProcessor, error) {
 	vals := uri.Query()
 

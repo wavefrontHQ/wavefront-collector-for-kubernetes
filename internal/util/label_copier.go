@@ -34,21 +34,21 @@ type LabelCopier struct {
 // Copy copies the given set of pod labels into a set of metric labels, using the following logic:
 // - all labels, unless found in ignoredLabels, are concatenated into a Separator-separated key:value pairs and stored under metrics.LabelLabels.Key
 // - labels found in storedLabels are additionally stored under key provided
-func (this *LabelCopier) Copy(in map[string]string, out map[string]string) {
+func (copier *LabelCopier) Copy(in map[string]string, out map[string]string) {
 	labels := make([]string, 0, len(in))
 
 	for key, value := range in {
-		if mappedKey, exists := this.storedLabels[key]; exists {
+		if mappedKey, exists := copier.storedLabels[key]; exists {
 			out[mappedKey] = value
 		}
 
-		if _, exists := this.ignoredLabels[key]; !exists {
+		if _, exists := copier.ignoredLabels[key]; !exists {
 			labels = append(labels, fmt.Sprintf("%s:%s", key, value))
 		}
 	}
 
 	sort.Strings(labels)
-	out[metrics.LabelLabels.Key] = strings.Join(labels, this.labelSeparator)
+	out[metrics.LabelLabels.Key] = strings.Join(labels, copier.labelSeparator)
 }
 
 // makeStoredLabels converts labels into a map for quicker retrieval.

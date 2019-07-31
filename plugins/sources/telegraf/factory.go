@@ -18,5 +18,5 @@ func (p factory) Build(uri *url.URL) (metrics.MetricsSourceProvider, error) {
 }
 
 func (p factory) Name() string {
-	return ProviderName
+	return providerName
 }

@@ -31,35 +31,35 @@ type DummySink struct {
 	latency     time.Duration
 }
 
-func (this *DummySink) Name() string {
-	return this.name
+func (dummy *DummySink) Name() string {
+	return dummy.name
 }
-func (this *DummySink) ExportData(*DataBatch) {
-	this.mutex.Lock()
-	this.exportCount++
-	this.mutex.Unlock()
+func (dummy *DummySink) ExportData(*DataBatch) {
+	dummy.mutex.Lock()
+	dummy.exportCount++
+	dummy.mutex.Unlock()
 
-	time.Sleep(this.latency)
-}
-
-func (this *DummySink) Stop() {
-	this.mutex.Lock()
-	this.stopped = true
-	this.mutex.Unlock()
-
-	time.Sleep(this.latency)
+	time.Sleep(dummy.latency)
 }
 
-func (this *DummySink) IsStopped() bool {
-	this.mutex.Lock()
-	defer this.mutex.Unlock()
-	return this.stopped
+func (dummy *DummySink) Stop() {
+	dummy.mutex.Lock()
+	dummy.stopped = true
+	dummy.mutex.Unlock()
+
+	time.Sleep(dummy.latency)
 }
 
-func (this *DummySink) GetExportCount() int {
-	this.mutex.Lock()
-	defer this.mutex.Unlock()
-	return this.exportCount
+func (dummy *DummySink) IsStopped() bool {
+	dummy.mutex.Lock()
+	defer dummy.mutex.Unlock()
+	return dummy.stopped
+}
+
+func (dummy *DummySink) GetExportCount() int {
+	dummy.mutex.Lock()
+	defer dummy.mutex.Unlock()
+	return dummy.exportCount
 }
 
 func NewDummySink(name string, latency time.Duration) *DummySink {
@@ -77,18 +77,18 @@ type DummyMetricsSource struct {
 	name      string
 }
 
-func (this *DummyMetricsSource) Name() string {
-	return this.name
+func (dummy *DummyMetricsSource) Name() string {
+	return dummy.name
 }
 
-func (this *DummyMetricsSource) ScrapeMetrics() (*DataBatch, error) {
-	time.Sleep(this.latency)
+func (dummy *DummyMetricsSource) ScrapeMetrics() (*DataBatch, error) {
+	time.Sleep(dummy.latency)
 
 	point := &metrics.MetricPoint{
-		Metric:    strings.Replace(this.Name(), " ", ".", -1),
+		Metric:    strings.Replace(dummy.Name(), " ", ".", -1),
 		Value:     1,
 		Timestamp: time.Now().UnixNano() / 1000,
-		Source:    this.Name(),
+		Source:    dummy.Name(),
 		Tags:      map[string]string{"tag": "tag"},
 	}
 
@@ -123,20 +123,20 @@ type DummyMetricsSourceProvider struct {
 	name              string
 }
 
-func (this *DummyMetricsSourceProvider) GetMetricsSources() []MetricsSource {
-	return this.sources
+func (dummy *DummyMetricsSourceProvider) GetMetricsSources() []MetricsSource {
+	return dummy.sources
 }
 
-func (this *DummyMetricsSourceProvider) Name() string {
-	return this.name
+func (dummy *DummyMetricsSourceProvider) Name() string {
+	return dummy.name
 }
 
-func (this *DummyMetricsSourceProvider) CollectionInterval() time.Duration {
-	return this.collectionIterval
+func (dummy *DummyMetricsSourceProvider) CollectionInterval() time.Duration {
+	return dummy.collectionIterval
 }
 
-func (this *DummyMetricsSourceProvider) Timeout() time.Duration {
-	return this.timeout
+func (dummy *DummyMetricsSourceProvider) Timeout() time.Duration {
+	return dummy.timeout
 }
 
 func NewDummyMetricsSourceProvider(name string, collectionIterval, timeout time.Duration, sources ...MetricsSource) MetricsSourceProvider {
@@ -152,12 +152,12 @@ type DummyDataProcessor struct {
 	latency time.Duration
 }
 
-func (this *DummyDataProcessor) Name() string {
+func (dummy *DummyDataProcessor) Name() string {
 	return "dummy"
 }
 
-func (this *DummyDataProcessor) Process(data *DataBatch) (*DataBatch, error) {
-	time.Sleep(this.latency)
+func (dummy *DummyDataProcessor) Process(data *DataBatch) (*DataBatch, error) {
+	time.Sleep(dummy.latency)
 	return data, nil
 }
 

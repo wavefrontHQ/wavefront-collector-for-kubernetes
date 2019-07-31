@@ -46,13 +46,6 @@ func (_ *SystemStats) Gather(acc telegraf.Accumulator) error {
 		"n_cpus": runtime.NumCPU(),
 	}
 
-	// users, err := host.Users()
-	// if err == nil {
-	// 	fields["n_users"] = len(users)
-	// } else if !os.IsPermission(err) {
-	// 	return err
-	// }
-
 	now := time.Now()
 	acc.AddGauge("system", fields, nil, now)
 

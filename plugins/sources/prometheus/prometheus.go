@@ -319,7 +319,7 @@ func (p *prometheusProvider) Name() string {
 	return p.name
 }
 
-const ProviderName = "prometheus_metrics_provider"
+const providerName = "prometheus_metrics_provider"
 
 func NewPrometheusProvider(uri *url.URL) (metrics.MetricsSourceProvider, error) {
 	vals := uri.Query()
@@ -335,10 +335,10 @@ func NewPrometheusProvider(uri *url.URL) (metrics.MetricsSourceProvider, error) 
 
 	name := ""
 	if len(vals["name"]) > 0 {
-		name = fmt.Sprintf("%s: %s", ProviderName, vals["name"][0])
+		name = fmt.Sprintf("%s: %s", providerName, vals["name"][0])
 	}
 	if name == "" {
-		name = fmt.Sprintf("%s: %s", ProviderName, vals["url"][0])
+		name = fmt.Sprintf("%s: %s", providerName, vals["url"][0])
 	}
 
 	discovered := flags.DecodeValue(vals, "discovered")

@@ -48,7 +48,7 @@ func TestHandleSinkPrefix(t *testing.T) {
 
 	assert.True(t, strings.Contains(opts.Sinks[0].String(), "prefix=staging."))
 
-	u, err = url.Parse("?")
+	u, _ = url.Parse("?")
 	kuri := flags.Uri{Key: "kubernetes.summary_api", Val: *u}
 	opts.Sources = append(opts.Sources, kuri)
 

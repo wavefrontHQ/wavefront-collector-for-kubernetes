@@ -15,7 +15,7 @@ The Wavefront Kubernetes Collector enables monitoring Kubernetes clusters and se
 * Daemonset mode for high scalability with leader election for monitoring cluster level resources
 * Rich [filtering](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/docs/filtering.md) support
 * Auto reload of configuration changes
-* [Internalh metrics](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/docs/metrics.md#collector-health-metrics) for tracking the collector health and configuration
+* [Internal metrics](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/docs/metrics.md#collector-health-metrics) for tracking the collector health and configuration
 
 ## Prerequisites
 - Kubernetes 1.9+

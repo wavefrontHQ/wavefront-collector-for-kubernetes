@@ -35,11 +35,11 @@ type PodAggregator struct {
 	skippedMetrics map[string]struct{}
 }
 
-func (this *PodAggregator) Name() string {
+func (aggregator *PodAggregator) Name() string {
 	return "pod_aggregator"
 }
 
-func (this *PodAggregator) Process(batch *metrics.DataBatch) (*metrics.DataBatch, error) {
+func (aggregator *PodAggregator) Process(batch *metrics.DataBatch) (*metrics.DataBatch, error) {
 	newPods := make(map[string]*metrics.MetricSet)
 
 	// If pod already has pod-level metrics, it no longer needs to aggregates its container's metrics.
@@ -63,13 +63,13 @@ func (this *PodAggregator) Process(batch *metrics.DataBatch) (*metrics.DataBatch
 			pod, found = newPods[podKey]
 			if !found {
 				log.Infof("Pod not found adding %s", podKey)
-				pod = this.podMetricSet(metricSet.Labels)
+				pod = aggregator.podMetricSet(metricSet.Labels)
 				newPods[podKey] = pod
 			}
 		}
 
 		for metricName, metricValue := range metricSet.MetricValues {
-			if _, found := this.skippedMetrics[metricName]; found {
+			if _, found := aggregator.skippedMetrics[metricName]; found {
 				continue
 			}
 
@@ -104,7 +104,7 @@ func (this *PodAggregator) Process(batch *metrics.DataBatch) (*metrics.DataBatch
 	return batch, nil
 }
 
-func (this *PodAggregator) podMetricSet(labels map[string]string) *metrics.MetricSet {
+func (aggregator *PodAggregator) podMetricSet(labels map[string]string) *metrics.MetricSet {
 	newLabels := map[string]string{
 		metrics.LabelMetricSetType.Key: metrics.MetricSetTypePod,
 	}

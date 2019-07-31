@@ -42,8 +42,6 @@ const (
 
 var (
 	providerCount  gometrics.Gauge
-	sourceCount    gometrics.Gauge
-	scrapeTimeout  gometrics.Gauge
 	scrapeErrors   gometrics.Counter
 	scrapeTimeouts gometrics.Counter
 	scrapeLatency  gometrics.Histogram
@@ -53,7 +51,6 @@ var (
 
 func init() {
 	providerCount = gometrics.GetOrRegisterGauge("source.manager.providers", gometrics.DefaultRegistry)
-	sourceCount = gometrics.GetOrRegisterGauge("source.manager.sources", gometrics.DefaultRegistry)
 	scrapeErrors = gometrics.GetOrRegisterCounter("source.manager.scrape.errors", gometrics.DefaultRegistry)
 	scrapeTimeouts = gometrics.GetOrRegisterCounter("source.manager.scrape.timeouts", gometrics.DefaultRegistry)
 	scrapeLatency = reporting.NewHistogram()

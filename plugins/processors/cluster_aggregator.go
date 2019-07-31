@@ -22,17 +22,17 @@ type ClusterAggregator struct {
 	MetricsToAggregate []string
 }
 
-func (this *ClusterAggregator) Name() string {
+func (aggregator *ClusterAggregator) Name() string {
 	return "cluster_aggregator"
 }
 
-func (this *ClusterAggregator) Process(batch *metrics.DataBatch) (*metrics.DataBatch, error) {
+func (aggregator *ClusterAggregator) Process(batch *metrics.DataBatch) (*metrics.DataBatch, error) {
 	clusterKey := metrics.ClusterKey()
 	cluster := clusterMetricSet()
 	for _, metricSet := range batch.MetricSets {
 		if metricSetType, found := metricSet.Labels[metrics.LabelMetricSetType.Key]; found &&
 			metricSetType == metrics.MetricSetTypeNamespace {
-			if err := aggregate(metricSet, cluster, this.MetricsToAggregate); err != nil {
+			if err := aggregate(metricSet, cluster, aggregator.MetricsToAggregate); err != nil {
 				return nil, err
 			}
 		}

@@ -120,7 +120,7 @@ func (p telegrafProvider) Name() string {
 	return p.name
 }
 
-const ProviderName = "telegraf_provider"
+const providerName = "telegraf_provider"
 
 var defaultPlugins = []string{"mem", "net", "netstat", "linux_sysctl_fs", "swap", "cpu", "disk", "diskio", "system", "kernel", "processes"}
 
@@ -172,10 +172,10 @@ func NewProvider(uri *url.URL) (metrics.MetricsSourceProvider, error) {
 
 	name := ""
 	if len(vals["name"]) > 0 {
-		name = fmt.Sprintf("%s: %s", ProviderName, vals["name"][0])
+		name = fmt.Sprintf("%s: %s", providerName, vals["name"][0])
 	}
 	if name == "" {
-		name = fmt.Sprintf("%s: %v", ProviderName, plugins)
+		name = fmt.Sprintf("%s: %v", providerName, plugins)
 	}
 
 	return &telegrafProvider{

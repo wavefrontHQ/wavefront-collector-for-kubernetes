@@ -31,19 +31,19 @@ type NamespaceBasedEnricher struct {
 	store cache.Store
 }
 
-func (this *NamespaceBasedEnricher) Name() string {
+func (nbe *NamespaceBasedEnricher) Name() string {
 	return "namespace_based_enricher"
 }
 
-func (this *NamespaceBasedEnricher) Process(batch *metrics.DataBatch) (*metrics.DataBatch, error) {
+func (nbe *NamespaceBasedEnricher) Process(batch *metrics.DataBatch) (*metrics.DataBatch, error) {
 	for _, ms := range batch.MetricSets {
-		this.addNamespaceInfo(ms)
+		nbe.addNamespaceInfo(ms)
 	}
 	return batch, nil
 }
 
 // Adds UID to all namespaced elements.
-func (this *NamespaceBasedEnricher) addNamespaceInfo(metricSet *metrics.MetricSet) {
+func (nbe *NamespaceBasedEnricher) addNamespaceInfo(metricSet *metrics.MetricSet) {
 	metricSetType, found := metricSet.Labels[metrics.LabelMetricSetType.Key]
 	if !found {
 		return
@@ -59,7 +59,7 @@ func (this *NamespaceBasedEnricher) addNamespaceInfo(metricSet *metrics.MetricSe
 		return
 	}
 
-	nsObj, exists, err := this.store.GetByKey(namespaceName)
+	nsObj, exists, err := nbe.store.GetByKey(namespaceName)
 	if exists && err == nil {
 		namespace, ok := nsObj.(*kube_api.Namespace)
 		if ok {

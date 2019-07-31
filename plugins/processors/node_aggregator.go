@@ -25,11 +25,11 @@ type NodeAggregator struct {
 	MetricsToAggregate []string
 }
 
-func (this *NodeAggregator) Name() string {
+func (aggregator *NodeAggregator) Name() string {
 	return "node_aggregator"
 }
 
-func (this *NodeAggregator) Process(batch *metrics.DataBatch) (*metrics.DataBatch, error) {
+func (aggregator *NodeAggregator) Process(batch *metrics.DataBatch) (*metrics.DataBatch, error) {
 	for key, metricSet := range batch.MetricSets {
 		if metricSetType, found := metricSet.Labels[metrics.LabelMetricSetType.Key]; !found || metricSetType != metrics.MetricSetTypePod {
 			continue
@@ -48,7 +48,7 @@ func (this *NodeAggregator) Process(batch *metrics.DataBatch) (*metrics.DataBatc
 		node, found := batch.MetricSets[nodeKey]
 		if !found {
 			log.Infof("No metric for node %s, cannot perform node level aggregation.", nodeKey)
-		} else if err := aggregate(metricSet, node, this.MetricsToAggregate); err != nil {
+		} else if err := aggregate(metricSet, node, aggregator.MetricsToAggregate); err != nil {
 			return nil, err
 		}
 

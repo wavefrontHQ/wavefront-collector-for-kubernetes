@@ -31,32 +31,32 @@ type PodBasedEnricher struct {
 	labelCopier *util.LabelCopier
 }
 
-func (this *PodBasedEnricher) Name() string {
+func (pbe *PodBasedEnricher) Name() string {
 	return "pod_based_enricher"
 }
 
-func (this *PodBasedEnricher) Process(batch *metrics.DataBatch) (*metrics.DataBatch, error) {
+func (pbe *PodBasedEnricher) Process(batch *metrics.DataBatch) (*metrics.DataBatch, error) {
 	newMs := make(map[string]*metrics.MetricSet, len(batch.MetricSets))
 	for k, v := range batch.MetricSets {
 		switch v.Labels[metrics.LabelMetricSetType.Key] {
 		case metrics.MetricSetTypePod:
 			namespace := v.Labels[metrics.LabelNamespaceName.Key]
 			podName := v.Labels[metrics.LabelPodName.Key]
-			pod, err := this.getPod(namespace, podName)
+			pod, err := pbe.getPod(namespace, podName)
 			if err != nil {
 				log.Debugf("Failed to get pod %s from cache: %v", metrics.PodKey(namespace, podName), err)
 				continue
 			}
-			this.addPodInfo(k, v, pod, batch, newMs)
+			pbe.addPodInfo(k, v, pod, batch, newMs)
 		case metrics.MetricSetTypePodContainer:
 			namespace := v.Labels[metrics.LabelNamespaceName.Key]
 			podName := v.Labels[metrics.LabelPodName.Key]
-			pod, err := this.getPod(namespace, podName)
+			pod, err := pbe.getPod(namespace, podName)
 			if err != nil {
 				log.Debugf("Failed to get pod %s from cache: %v", metrics.PodKey(namespace, podName), err)
 				continue
 			}
-			this.addContainerInfo(k, v, pod, batch, newMs)
+			pbe.addContainerInfo(k, v, pod, batch, newMs)
 		}
 	}
 	for k, v := range newMs {
@@ -65,8 +65,8 @@ func (this *PodBasedEnricher) Process(batch *metrics.DataBatch) (*metrics.DataBa
 	return batch, nil
 }
 
-func (this *PodBasedEnricher) getPod(namespace, name string) (*kube_api.Pod, error) {
-	pod, err := this.podLister.Pods(namespace).Get(name)
+func (pbe *PodBasedEnricher) getPod(namespace, name string) (*kube_api.Pod, error) {
+	pod, err := pbe.podLister.Pods(namespace).Get(name)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +76,7 @@ func (this *PodBasedEnricher) getPod(namespace, name string) (*kube_api.Pod, err
 	return pod, nil
 }
 
-func (this *PodBasedEnricher) addContainerInfo(key string, containerMs *metrics.MetricSet, pod *kube_api.Pod, batch *metrics.DataBatch, newMs map[string]*metrics.MetricSet) {
+func (pbe *PodBasedEnricher) addContainerInfo(key string, containerMs *metrics.MetricSet, pod *kube_api.Pod, batch *metrics.DataBatch, newMs map[string]*metrics.MetricSet) {
 	for _, container := range pod.Spec.Containers {
 		if key == metrics.PodContainerKey(pod.Namespace, pod.Name, container.Name) {
 			updateContainerResourcesAndLimits(containerMs, container)
@@ -98,7 +98,7 @@ func (this *PodBasedEnricher) addContainerInfo(key string, containerMs *metrics.
 	}
 
 	containerMs.Labels[metrics.LabelPodId.Key] = string(pod.UID)
-	this.labelCopier.Copy(pod.Labels, containerMs.Labels)
+	pbe.labelCopier.Copy(pod.Labels, containerMs.Labels)
 
 	namespace := containerMs.Labels[metrics.LabelNamespaceName.Key]
 	podName := containerMs.Labels[metrics.LabelPodName.Key]
@@ -124,19 +124,19 @@ func (this *PodBasedEnricher) addContainerInfo(key string, containerMs *metrics.
 				podMs.EntityCreateTime = pod.Status.StartTime.Time
 			}
 			newMs[podKey] = podMs
-			this.addPodInfo(podKey, podMs, pod, batch, newMs)
+			pbe.addPodInfo(podKey, podMs, pod, batch, newMs)
 		}
 	}
 }
 
-func (this *PodBasedEnricher) addPodInfo(key string, podMs *metrics.MetricSet, pod *kube_api.Pod, batch *metrics.DataBatch, newMs map[string]*metrics.MetricSet) {
+func (pbe *PodBasedEnricher) addPodInfo(key string, podMs *metrics.MetricSet, pod *kube_api.Pod, batch *metrics.DataBatch, newMs map[string]*metrics.MetricSet) {
 
 	// Add UID and create time to pod
 	podMs.Labels[metrics.LabelPodId.Key] = string(pod.UID)
 	if !pod.Status.StartTime.IsZero() {
 		podMs.EntityCreateTime = pod.Status.StartTime.Time
 	}
-	this.labelCopier.Copy(pod.Labels, podMs.Labels)
+	pbe.labelCopier.Copy(pod.Labels, podMs.Labels)
 
 	// Add cpu/mem requests and limits to containers
 	for _, container := range pod.Spec.Containers {
@@ -163,7 +163,7 @@ func (this *PodBasedEnricher) addPodInfo(key string, podMs *metrics.MetricSet, p
 			},
 			EntityCreateTime: podMs.CollectionStartTime,
 		}
-		this.labelCopier.Copy(pod.Labels, containerMs.Labels)
+		pbe.labelCopier.Copy(pod.Labels, containerMs.Labels)
 		updateContainerResourcesAndLimits(containerMs, container)
 		newMs[containerKey] = containerMs
 	}

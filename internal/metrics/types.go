@@ -53,8 +53,8 @@ const (
 	ValueFloat
 )
 
-func (self *ValueType) String() string {
-	switch *self {
+func (valueType *ValueType) String() string {
+	switch *valueType {
 	case ValueInt64:
 		return "int64"
 	case ValueFloat:
@@ -78,8 +78,8 @@ const (
 	UnitsMillicores
 )
 
-func (self *UnitsType) String() string {
-	switch *self {
+func (unitsType *UnitsType) String() string {
+	switch *unitsType {
 	case UnitsBytes:
 		return "bytes"
 	case UnitsMilliseconds:
@@ -99,11 +99,11 @@ type MetricValue struct {
 	ValueType  ValueType
 }
 
-func (this *MetricValue) GetValue() interface{} {
-	if ValueInt64 == this.ValueType {
-		return this.IntValue
-	} else if ValueFloat == this.ValueType {
-		return this.FloatValue
+func (metricValue *MetricValue) GetValue() interface{} {
+	if ValueInt64 == metricValue.ValueType {
+		return metricValue.IntValue
+	} else if ValueFloat == metricValue.ValueType {
+		return metricValue.FloatValue
 	} else {
 		return nil
 	}
@@ -115,11 +115,11 @@ type LabeledMetric struct {
 	MetricValue
 }
 
-func (this *LabeledMetric) GetValue() interface{} {
-	if ValueInt64 == this.ValueType {
-		return this.IntValue
-	} else if ValueFloat == this.ValueType {
-		return this.FloatValue
+func (labeledMetric *LabeledMetric) GetValue() interface{} {
+	if ValueInt64 == labeledMetric.ValueType {
+		return labeledMetric.IntValue
+	} else if ValueFloat == labeledMetric.ValueType {
+		return labeledMetric.FloatValue
 	} else {
 		return nil
 	}

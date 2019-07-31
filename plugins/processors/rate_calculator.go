@@ -25,16 +25,16 @@ type RateCalculator struct {
 	previousMetricSets map[string]*metrics.MetricSet
 }
 
-func (this *RateCalculator) Name() string {
+func (rc *RateCalculator) Name() string {
 	return "rate calculator"
 }
 
-func (this *RateCalculator) Process(batch *metrics.DataBatch) (*metrics.DataBatch, error) {
+func (rc *RateCalculator) Process(batch *metrics.DataBatch) (*metrics.DataBatch, error) {
 	for key, newMs := range batch.MetricSets {
-		oldMs, found := this.previousMetricSets[key]
+		oldMs, found := rc.previousMetricSets[key]
 		if !found {
 			log.Infof("Skipping rates for '%s' - no previous batch found", key)
-			this.previousMetricSets[key] = newMs
+			rc.previousMetricSets[key] = newMs
 			continue
 		}
 
@@ -45,14 +45,14 @@ func (this *RateCalculator) Process(batch *metrics.DataBatch) (*metrics.DataBatc
 		}
 		if !newMs.CollectionStartTime.Equal(oldMs.CollectionStartTime) {
 			log.Debugf("Skipping rates for '%s' - different collection start time (restart) new:%v  old:%v", key, newMs.CollectionStartTime, oldMs.CollectionStartTime)
-			this.previousMetricSets[key] = newMs
+			rc.previousMetricSets[key] = newMs
 			continue
 		}
 
 		var metricValNew, metricValOld metrics.MetricValue
 		var foundNew, foundOld bool
 
-		for metricName, targetMetric := range this.rateMetricsMapping {
+		for metricName, targetMetric := range rc.rateMetricsMapping {
 			if metricName == metrics.MetricDiskIORead.MetricDescriptor.Name || metricName == metrics.MetricDiskIOWrite.MetricDescriptor.Name {
 				for _, itemNew := range newMs.LabeledMetrics {
 					foundNew, foundOld = false, false
@@ -115,7 +115,7 @@ func (this *RateCalculator) Process(batch *metrics.DataBatch) (*metrics.DataBatc
 				}
 			}
 		}
-		this.previousMetricSets[key] = newMs
+		rc.previousMetricSets[key] = newMs
 	}
 	return batch, nil
 }

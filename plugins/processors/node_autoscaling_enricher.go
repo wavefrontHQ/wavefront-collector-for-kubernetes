@@ -33,18 +33,18 @@ type NodeAutoscalingEnricher struct {
 	labelCopier *util.LabelCopier
 }
 
-func (this *NodeAutoscalingEnricher) Name() string {
+func (nae *NodeAutoscalingEnricher) Name() string {
 	return "node_autoscaling_enricher"
 }
 
-func (this *NodeAutoscalingEnricher) Process(batch *metrics.DataBatch) (*metrics.DataBatch, error) {
-	nodes, err := this.nodeLister.List(labels.Everything())
+func (nae *NodeAutoscalingEnricher) Process(batch *metrics.DataBatch) (*metrics.DataBatch, error) {
+	nodes, err := nae.nodeLister.List(labels.Everything())
 	if err != nil {
 		return nil, err
 	}
 	for _, node := range nodes {
 		if metricSet, found := batch.MetricSets[metrics.NodeKey(node.Name)]; found {
-			this.labelCopier.Copy(node.Labels, metricSet.Labels)
+			nae.labelCopier.Copy(node.Labels, metricSet.Labels)
 			capacityCpu, _ := node.Status.Capacity[kube_api.ResourceCPU]
 			capacityMem, _ := node.Status.Capacity[kube_api.ResourceMemory]
 			capacityEphemeralStorage, storageExist := node.Status.Capacity[kube_api.ResourceEphemeralStorage]

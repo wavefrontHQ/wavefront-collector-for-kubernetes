@@ -27,7 +27,7 @@ import (
 type SinkFactory struct {
 }
 
-func (this *SinkFactory) Build(uri flags.Uri) (metrics.DataSink, error) {
+func (factory *SinkFactory) Build(uri flags.Uri) (metrics.DataSink, error) {
 	switch uri.Key {
 	case "wavefront":
 		return wavefront.NewWavefrontSink(&uri.Val)
@@ -36,11 +36,11 @@ func (this *SinkFactory) Build(uri flags.Uri) (metrics.DataSink, error) {
 	}
 }
 
-func (this *SinkFactory) BuildAll(uris flags.Uris) []metrics.DataSink {
+func (factory *SinkFactory) BuildAll(uris flags.Uris) []metrics.DataSink {
 	result := make([]metrics.DataSink, 0, len(uris))
 
 	for _, uri := range uris {
-		sink, err := this.Build(uri)
+		sink, err := factory.Build(uri)
 		if err != nil {
 			log.Errorf("Failed to create %v sink: %v", uri, err)
 			continue
