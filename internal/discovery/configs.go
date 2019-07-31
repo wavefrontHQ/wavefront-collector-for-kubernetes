@@ -66,7 +66,7 @@ type PluginConfig struct {
 
 type CollectionConfig struct {
 	Interval time.Duration `yaml:"interval"`
-	Timeout  time.Duration `yaml:"time_out"`
+	Timeout  time.Duration `yaml:"timeout"`
 }
 
 // Describes selectors for identifying kubernetes resources

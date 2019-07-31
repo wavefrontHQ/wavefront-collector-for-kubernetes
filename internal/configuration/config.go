@@ -69,7 +69,7 @@ type WavefrontSinkConfig struct {
 
 type CollectionConfig struct {
 	Interval string `yaml:"interval"`
-	Timeout  string `yaml:"time_out"`
+	Timeout  string `yaml:"timeout"`
 }
 
 // Configuration options for the Kubernetes summary source
