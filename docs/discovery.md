@@ -20,10 +20,11 @@ Additional annotations that apply:
 - `prometheus.io/source`: Optional source for the reported metrics. Defaults to the node name on which collection is performed.
 
 ## Rule based discovery
-Discovery rules encompass three distinct aspects:
+Discovery rules encompass a few distinct aspects:
 - *Selectors*: The criteria for identifying matching kubernetes resources using container images, resource labels and namespaces.
-- *Plugin Config*: Configuration information on how/where to collect metrics from the discovered targets.
-- *Transformations*: Prefix, tags and filters on the collected data before emitting them to Wavefront.
+- *Plugin Type*: The type of source plugin to use for collecting metrics from the discovered targets.
+- *Plugin Config*: Configuration information on how to collect metrics from the discovered targets.
+- *Transformations*: Add prefix, tags and filters on the collected data before emitting them to Wavefront.
 
 The rules are provided to the collector under the `discovery_configs` section within the top-level `--config-file`. The collector watches for configuration changes and can dynamically reload changes to the rules without having to restart it.
 
@@ -87,7 +88,8 @@ includeLabels: <true|false>
 
 # filters applied towards the collected metrics before emitting them.
 filters:
-  # see the filtering documentation: https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/docs/filtering.md
+  # see the filtering documentation:
+  # https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/docs/filtering.md
 
 # custom collection interval for this rule
 collection:
