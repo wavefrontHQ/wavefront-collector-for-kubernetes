@@ -258,10 +258,10 @@ func (src *prometheusMetricsSource) buildHistos(name string, m *dto.Metric, now 
 
 // Get labels from metric
 func (src *prometheusMetricsSource) buildTags(m *dto.Metric) string {
-	sb := new(bytes.Buffer)
-	encodeTags(src.tags, sb)
-	encodeLabelTags(m.Label, sb)
-	return sb.String()
+	src.buf.Reset()
+	encodeTags(src.tags, src.buf)
+	encodeLabelTags(m.Label, src.buf)
+	return src.buf.String()
 }
 
 func encodeLabelTags(labels []*dto.LabelPair, buf *bytes.Buffer) {
