@@ -86,6 +86,7 @@ func extractTags(tags map[string]string, discovered, metricsURL string) map[stri
 	if discovered != "" {
 		result["discovered"] = discovered
 	} else {
+		result["discovered"] = "static"
 		result["url"] = metricsURL
 	}
 	result["type"] = "prometheus"

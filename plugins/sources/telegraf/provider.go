@@ -67,6 +67,8 @@ func extractTags(tags map[string]string, name, discovered string) map[string]str
 	}
 	if discovered != "" {
 		result["discovered"] = discovered
+	} else {
+		result["discovered"] = "static"
 	}
 	result["type"] = "telegraf." + name
 	return result
