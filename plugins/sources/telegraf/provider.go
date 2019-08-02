@@ -2,7 +2,6 @@ package telegraf
 
 import (
 	"fmt"
-	"net/url"
 	"strings"
 	"time"
 
@@ -12,8 +11,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/wavefronthq/go-metrics-wavefront/reporting"
 
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/flags"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
 )
@@ -127,26 +126,22 @@ const providerName = "telegraf_provider"
 var defaultPlugins = []string{"mem", "net", "netstat", "linux_sysctl_fs", "swap", "cpu", "disk", "diskio", "system", "kernel", "processes"}
 
 // NewProvider creates a Telegraf source
-func NewProvider(uri *url.URL) (metrics.MetricsSourceProvider, error) {
-	vals := uri.Query()
+func NewProvider(cfg configuration.TelegrafSourceConfig) (metrics.MetricsSourceProvider, error) {
+	//TODO: validate this
 
-	prefix := ""
-	if len(vals["prefix"]) > 0 {
-		prefix = vals["prefix"][0]
+	prefix := configuration.GetStringValue(cfg.Prefix, "")
+	if len(prefix) > 0 {
 		prefix = strings.Trim(prefix, ".")
 	}
 
-	var plugins []string
-	for _, pluginList := range vals["plugins"] {
-		plugins = append(plugins, strings.Split(pluginList, ",")...)
-	}
+	plugins := cfg.Plugins
 	if len(plugins) == 0 {
 		plugins = defaultPlugins
 	}
 
-	filters := filter.FromQuery(vals)
-	tags := flags.DecodeTags(vals)
-	discovered := flags.DecodeValue(vals, "discovered")
+	filters := filter.FromConfig(cfg.Filters)
+	tags := cfg.Tags
+	discovered := cfg.Discovered
 
 	var sources []metrics.MetricsSource
 	for _, name := range plugins {
@@ -154,7 +149,7 @@ func NewProvider(uri *url.URL) (metrics.MetricsSourceProvider, error) {
 		if creator != nil {
 			plugin := creator()
 			if discovered != "" {
-				err := initPlugin(plugin, vals)
+				err := initPlugin(plugin, cfg.Conf)
 				if err != nil {
 					// bail if discovered and error initializing
 					log.Errorf("error creating plugin: %s err: %s", name, err)
@@ -172,11 +167,10 @@ func NewProvider(uri *url.URL) (metrics.MetricsSourceProvider, error) {
 		}
 	}
 
-	name := ""
-	if len(vals["name"]) > 0 {
-		name = fmt.Sprintf("%s: %s", providerName, vals["name"][0])
-	}
-	if name == "" {
+	name := cfg.Name
+	if len(name) > 0 {
+		name = fmt.Sprintf("%s: %s", providerName, name)
+	} else {
 		name = fmt.Sprintf("%s: %v", providerName, plugins)
 	}
 

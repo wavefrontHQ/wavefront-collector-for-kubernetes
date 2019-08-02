@@ -63,7 +63,7 @@ func (registry *defaultRegistry) Handler(name string) TargetHandler {
 	return registry.targets[name]
 }
 
-func (registry *defaultRegistry) Encoding(name string) string {
+func (registry *defaultRegistry) Encoding(name string) interface{} {
 	handler := registry.Handler(name)
 	if handler != nil {
 		return handler.Encoding(name)

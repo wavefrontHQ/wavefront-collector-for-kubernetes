@@ -2,6 +2,7 @@ package discovery
 
 import (
 	"fmt"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	"strings"
 	"sync"
 
@@ -26,27 +27,27 @@ type discoverer struct {
 	delegates       map[string]*delegate
 }
 
-func newDiscoverer(plugins []discovery.PluginConfig) discovery.Discoverer {
+func newDiscoverer(handler metrics.ProviderHandler, plugins []discovery.PluginConfig) discovery.Discoverer {
 	d := &discoverer{
 		queue:           make(chan discovery.Resource, 1000),
-		runtimeHandlers: makeRuntimeHandlers(),
-		delegates:       makeDelegates(plugins),
+		runtimeHandlers: makeRuntimeHandlers(handler),
+		delegates:       makeDelegates(handler, plugins),
 	}
 	go d.dequeue()
 	return d
 }
 
-func makeRuntimeHandlers() []discovery.TargetHandler {
+func makeRuntimeHandlers(handler metrics.ProviderHandler) []discovery.TargetHandler {
 	// currently annotation based discovery is supported only for prometheus
 	return []discovery.TargetHandler{
-		prometheus.NewTargetHandler(true),
+		prometheus.NewTargetHandler(true, handler),
 	}
 }
 
-func makeDelegates(plugins []discovery.PluginConfig) map[string]*delegate {
+func makeDelegates(handler metrics.ProviderHandler, plugins []discovery.PluginConfig) map[string]*delegate {
 	delegates := make(map[string]*delegate, len(plugins))
 	for _, plugin := range plugins {
-		delegate, err := makeDelegate(plugin)
+		delegate, err := makeDelegate(handler, plugin)
 		if err != nil {
 			log.Errorf("error parsing plugin: %s error: %v", plugin.Name, err)
 			continue
@@ -56,16 +57,16 @@ func makeDelegates(plugins []discovery.PluginConfig) map[string]*delegate {
 	return delegates
 }
 
-func makeDelegate(plugin discovery.PluginConfig) (*delegate, error) {
+func makeDelegate(handler metrics.ProviderHandler, plugin discovery.PluginConfig) (*delegate, error) {
 	filter, err := newResourceFilter(plugin)
 	if err != nil {
 		return nil, err
 	}
 	var targetHandler discovery.TargetHandler
 	if strings.Contains(plugin.Type, "prometheus") {
-		targetHandler = prometheus.NewTargetHandler(false)
+		targetHandler = prometheus.NewTargetHandler(false, handler)
 	} else if strings.Contains(plugin.Type, "telegraf") {
-		targetHandler = telegraf.NewTargetHandler(plugin.Type)
+		targetHandler = telegraf.NewTargetHandler(plugin.Type, handler)
 	} else {
 		return nil, fmt.Errorf("invalid plugin type: %s", plugin.Type)
 	}

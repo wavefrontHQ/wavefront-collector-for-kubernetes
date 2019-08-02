@@ -24,15 +24,17 @@ func TestWavefrontSink(t *testing.T) {
 
 	// tags, prefix and filters
 	conf = WavefrontSinkConfig{
-		Prefix: "k8s-metrics.",
-		Tags:   map[string]string{"env": "test", "version": "1.14"},
-		Filters: filter.Config{
-			MetricWhitelist:    []string{"k8s.*", "kubernetes.*"},
-			MetricBlacklist:    []string{"kops.*", "kube.*"},
-			MetricTagWhitelist: map[string][]string{"env": {"prod"}},
-			MetricTagBlacklist: map[string][]string{"env": {"dev", "test"}},
-			TagInclude:         []string{"env"},
-			TagExclude:         []string{"pod-template-id"},
+		Transforms: Transforms{
+			Prefix: "k8s-metrics.",
+			Tags:   map[string]string{"env": "test", "version": "1.14"},
+			Filters: filter.Config{
+				MetricWhitelist:    []string{"k8s.*", "kubernetes.*"},
+				MetricBlacklist:    []string{"kops.*", "kube.*"},
+				MetricTagWhitelist: map[string][]string{"env": {"prod"}},
+				MetricTagBlacklist: map[string][]string{"env": {"dev", "test"}},
+				TagInclude:         []string{"env"},
+				TagExclude:         []string{"pod-template-id"},
+			},
 		},
 	}
 	testCommon(t, conf, "wavefront")
@@ -49,7 +51,9 @@ func buildWavefrontSink() *WavefrontSinkConfig {
 func TestKubeletSource(t *testing.T) {
 	// default configuration (implicitly uses inClusterConfig)
 	conf := SummaySourceConfig{
-		Prefix: "kubernetes.",
+		Transforms: Transforms{
+			Prefix: "kubernetes.",
+		},
 	}
 	uri, err := conf.convert()
 	if err != nil {
@@ -88,15 +92,17 @@ func TestKubeletSource(t *testing.T) {
 
 	// tags, prefix and filters
 	conf = SummaySourceConfig{
-		Prefix: "k8s-metrics.",
-		Tags:   map[string]string{"env": "test", "version": "1.14"},
-		Filters: filter.Config{
-			MetricWhitelist:    []string{"k8s.*", "kubernetes.*"},
-			MetricBlacklist:    []string{"kops.*", "kube.*"},
-			MetricTagWhitelist: map[string][]string{"env": {"prod"}},
-			MetricTagBlacklist: map[string][]string{"env": {"dev", "test"}},
-			TagInclude:         []string{"env"},
-			TagExclude:         []string{"pod-template-id"},
+		Transforms: Transforms{
+			Prefix: "k8s-metrics.",
+			Tags:   map[string]string{"env": "test", "version": "1.14"},
+			Filters: filter.Config{
+				MetricWhitelist:    []string{"k8s.*", "kubernetes.*"},
+				MetricBlacklist:    []string{"kops.*", "kube.*"},
+				MetricTagWhitelist: map[string][]string{"env": {"prod"}},
+				MetricTagBlacklist: map[string][]string{"env": {"dev", "test"}},
+				TagInclude:         []string{"env"},
+				TagExclude:         []string{"pod-template-id"},
+			},
 		},
 	}
 	testCommon(t, conf, "kubernetes.summary_api")
@@ -126,15 +132,17 @@ func TestPrometheusSource(t *testing.T) {
 	assert.Equal(t, "test_source", vals["source"][0])
 
 	conf = PrometheusSourceConfig{
-		Prefix: "k8s-metrics.",
-		Tags:   map[string]string{"env": "test", "version": "1.14"},
-		Filters: filter.Config{
-			MetricWhitelist:    []string{"k8s.*", "kubernetes.*"},
-			MetricBlacklist:    []string{"kops.*", "kube.*"},
-			MetricTagWhitelist: map[string][]string{"env": {"prod"}},
-			MetricTagBlacklist: map[string][]string{"env": {"dev", "test"}},
-			TagInclude:         []string{"env"},
-			TagExclude:         []string{"pod-template-id"},
+		Transforms: Transforms{
+			Prefix: "k8s-metrics.",
+			Tags:   map[string]string{"env": "test", "version": "1.14"},
+			Filters: filter.Config{
+				MetricWhitelist:    []string{"k8s.*", "kubernetes.*"},
+				MetricBlacklist:    []string{"kops.*", "kube.*"},
+				MetricTagWhitelist: map[string][]string{"env": {"prod"}},
+				MetricTagBlacklist: map[string][]string{"env": {"dev", "test"}},
+				TagInclude:         []string{"env"},
+				TagExclude:         []string{"pod-template-id"},
+			},
 		},
 	}
 	testCommon(t, conf, "prometheus")
@@ -142,15 +150,17 @@ func TestPrometheusSource(t *testing.T) {
 
 func buildPromSource() *PrometheusSourceConfig {
 	return &PrometheusSourceConfig{
-		URL:    "http://1.2.3.4:8080/metrics",
-		Source: "test_source",
+		URL: "http://1.2.3.4:8080/metrics",
+		Transforms: Transforms{
+			Source: "test_source",
+		},
 	}
 }
 
 func TestTelegrafSource(t *testing.T) {
 	conf := TelegrafSourceConfig{
 		Plugins:    []string{"mem", "disk", "diskio"},
-		Collection: CollectionConfig{Interval: "1m", Timeout: "2m"},
+		Collection: CollectionConfig{Interval: time.Minute * 1, Timeout: time.Minute * 2},
 	}
 	uri, err := conf.convert()
 	if err != nil {
@@ -195,15 +205,17 @@ func TestSystemdSource(t *testing.T) {
 	assert.Equal(t, 1, len(vals["startTimeMetrics"]))
 
 	conf = SystemdSourceConfig{
-		Prefix: "k8s-metrics.",
-		Tags:   map[string]string{"env": "test", "version": "1.14"},
-		Filters: filter.Config{
-			MetricWhitelist:    []string{"k8s.*", "kubernetes.*"},
-			MetricBlacklist:    []string{"kops.*", "kube.*"},
-			MetricTagWhitelist: map[string][]string{"env": {"prod"}},
-			MetricTagBlacklist: map[string][]string{"env": {"dev", "test"}},
-			TagInclude:         []string{"env"},
-			TagExclude:         []string{"pod-template-id"},
+		Transforms: Transforms{
+			Prefix: "k8s-metrics.",
+			Tags:   map[string]string{"env": "test", "version": "1.14"},
+			Filters: filter.Config{
+				MetricWhitelist:    []string{"k8s.*", "kubernetes.*"},
+				MetricBlacklist:    []string{"kops.*", "kube.*"},
+				MetricTagWhitelist: map[string][]string{"env": {"prod"}},
+				MetricTagBlacklist: map[string][]string{"env": {"dev", "test"}},
+				TagInclude:         []string{"env"},
+				TagExclude:         []string{"pod-template-id"},
+			},
 		},
 	}
 	testCommon(t, conf, "systemd")
@@ -226,11 +238,13 @@ func TestFullConversion(t *testing.T) {
 		EnableDiscovery:           true,
 		ClusterName:               "prod-cluster",
 
-		Sinks:             []*WavefrontSinkConfig{buildWavefrontSink()},
-		SummaryConfig:     buildSummarySource(),
-		PrometheusConfigs: []*PrometheusSourceConfig{buildPromSource()},
-		TelegrafConfigs:   []*TelegrafSourceConfig{buildTelegrafSource()},
-		SystemdConfig:     buildSystemdSource(),
+		Sinks: []*WavefrontSinkConfig{buildWavefrontSink()},
+		Sources: &SourceConfig{
+			SummaryConfig:     buildSummarySource(),
+			PrometheusConfigs: []*PrometheusSourceConfig{buildPromSource()},
+			TelegrafConfigs:   []*TelegrafSourceConfig{buildTelegrafSource()},
+			SystemdConfig:     buildSystemdSource(),
+		},
 	}
 	opts, err := conf.Convert()
 	if err != nil {

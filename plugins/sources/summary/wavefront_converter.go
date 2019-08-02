@@ -1,14 +1,13 @@
 package summary
 
 import (
-	"github.com/wavefronthq/go-metrics-wavefront/reporting"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
-	"net/url"
 	"strings"
 
+	"github.com/wavefronthq/go-metrics-wavefront/reporting"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/flags"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
 
 	gm "github.com/rcrowley/go-metrics"
 	log "github.com/sirupsen/logrus"
@@ -16,32 +15,30 @@ import (
 
 // converts MetricSets to MetricPoints.
 type pointConverter struct {
-	cluster       string
-	prefix        string
-	includeLabels bool
-	tags          map[string]string
-	filters       filter.Filter
+	cluster string
+	prefix  string
+	tags    map[string]string
+	filters filter.Filter
 
 	collectedPoints gm.Counter
 	filteredPoints  gm.Counter
 }
 
 // NewPointConverter creates a new processor that converts summary stats data into the Wavefront point format
-func NewPointConverter(uri *url.URL, cluster string) (metrics.DataProcessor, error) {
-	vals := uri.Query()
-
+func NewPointConverter(cfg configuration.SummaySourceConfig, cluster string) (metrics.DataProcessor, error) {
 	cluster = strings.TrimSpace(cluster)
 	if cluster == "" {
 		cluster = "k8s-cluster"
 	}
 
+	//TODO: validate this works
+
 	pt := map[string]string{"type": "kubernetes.summary_api"}
 	return &pointConverter{
 		cluster:         cluster,
-		prefix:          flags.DecodeDefaultValue(vals, "prefix", "kubernetes."),
-		includeLabels:   flags.DecodeBoolean(vals, "includeLabels"),
-		tags:            flags.DecodeTags(vals),
-		filters:         filter.FromQuery(vals),
+		prefix:          configuration.GetStringValue(cfg.Prefix, "kubernetes."),
+		tags:            cfg.Tags,
+		filters:         filter.FromConfig(cfg.Filters),
 		collectedPoints: gm.GetOrRegisterCounter(reporting.EncodeKey("source.points.collected", pt), gm.DefaultRegistry),
 		filteredPoints:  gm.GetOrRegisterCounter(reporting.EncodeKey("source.points.filtered", pt), gm.DefaultRegistry),
 	}, nil

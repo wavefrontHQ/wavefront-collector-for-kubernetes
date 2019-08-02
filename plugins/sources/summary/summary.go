@@ -20,9 +20,9 @@ package summary
 import (
 	"fmt"
 	"net"
-	"net/url"
 	"time"
 
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	. "github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/summary/kubelet"
@@ -497,15 +497,11 @@ func getNodeHostnameAndIP(node *kube_api.Node) (string, net.IP, error) {
 	return "", nil, fmt.Errorf("node %v has no valid hostname and/or IP address: %v %v", node.Name, hostname, ip)
 }
 
-func NewSummaryProvider(uri *url.URL) (MetricsSourceProvider, error) {
-	opts := uri.Query()
-
+func NewSummaryProvider(cfg configuration.SummaySourceConfig) (MetricsSourceProvider, error) {
 	hostIDAnnotation := ""
-	if len(opts["host_id_annotation"]) > 0 {
-		hostIDAnnotation = opts["host_id_annotation"][0]
-	}
+
 	// create clients
-	kubeConfig, kubeletConfig, err := kubelet.GetKubeConfigs(uri)
+	kubeConfig, kubeletConfig, err := kubelet.GetKubeConfigs(cfg)
 	if err != nil {
 		return nil, err
 	}

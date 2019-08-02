@@ -50,6 +50,7 @@ discovery_configs:
 `
 
 func TestFromYAML(t *testing.T) {
+	//TODO: validate Transforms
 	cfg, err := FromYAML([]byte(sampleFile))
 	if err != nil {
 		t.Errorf("error loading yaml: %q", err)

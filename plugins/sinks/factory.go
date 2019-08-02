@@ -15,11 +15,9 @@
 package sinks
 
 import (
-	"fmt"
-
 	log "github.com/sirupsen/logrus"
 
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/flags"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sinks/wavefront"
 )
@@ -27,28 +25,23 @@ import (
 type SinkFactory struct {
 }
 
-func (factory *SinkFactory) Build(uri flags.Uri) (metrics.DataSink, error) {
-	switch uri.Key {
-	case "wavefront":
-		return wavefront.NewWavefrontSink(&uri.Val)
-	default:
-		return nil, fmt.Errorf("sink not recognized: %s", uri.Key)
-	}
+func (factory *SinkFactory) Build(cfg configuration.WavefrontSinkConfig) (metrics.DataSink, error) {
+	return wavefront.NewWavefrontSink(cfg)
 }
 
-func (factory *SinkFactory) BuildAll(uris flags.Uris) []metrics.DataSink {
-	result := make([]metrics.DataSink, 0, len(uris))
+func (factory *SinkFactory) BuildAll(cfgs []*configuration.WavefrontSinkConfig) []metrics.DataSink {
+	result := make([]metrics.DataSink, 0, len(cfgs))
 
-	for _, uri := range uris {
-		sink, err := factory.Build(uri)
+	for _, cfg := range cfgs {
+		sink, err := factory.Build(*cfg)
 		if err != nil {
-			log.Errorf("Failed to create %v sink: %v", uri, err)
+			log.Errorf("Failed to create sink: %v", err)
 			continue
 		}
 		result = append(result, sink)
 	}
 
-	if len([]flags.Uri(uris)) != 0 && len(result) == 0 {
+	if len(result) == 0 {
 		log.Fatal("No available sink to use")
 	}
 	return result

@@ -14,10 +14,11 @@ func TestEncodeTags(t *testing.T) {
 	labels := make(map[string]string)
 	labels["a"] = "a"
 	labels["b"] = "b"
-	values := url.Values{}
-	EncodeTags(values, "label.", labels)
-	checkValues(values, "tag", "label.a:a", t)
-	checkValues(values, "tag", "label.b:b", t)
+
+	tags := make(map[string]string)
+	EncodeTags(tags, "label.", labels)
+	checkTag(tags, "label.a", "a", t)
+	checkTag(tags, "label.b", "b", t)
 }
 
 func TestEncodePod(t *testing.T) {
@@ -27,10 +28,10 @@ func TestEncodePod(t *testing.T) {
 			Namespace: "test-ns",
 		},
 	}
-	values := url.Values{}
-	EncodeMeta(values, "pod", pod.ObjectMeta)
-	checkValues(values, "tag", "pod:test", t)
-	checkValues(values, "tag", "namespace:test-ns", t)
+	tags := make(map[string]string)
+	EncodeMeta(tags, "pod", pod.ObjectMeta)
+	checkTag(tags, "pod", "test", t)
+	checkTag(tags, "namespace", "test-ns", t)
 }
 
 func TestEncodeFilter(t *testing.T) {
@@ -87,6 +88,18 @@ func TestParam(t *testing.T) {
 	if p != "defaultValue" {
 		t.Errorf("expected default value: %s actual: %s", "defaultValue", p)
 	}
+}
+
+func checkTag(tags map[string]string, key, val string, t *testing.T) {
+	if len(tags) == 0 {
+		t.Error("missing tags")
+	}
+	if v, ok := tags[key]; ok {
+		if v == val {
+			return
+		}
+	}
+	t.Errorf("missing tag: %s", key)
 }
 
 func checkValues(values url.Values, name, val string, t *testing.T) {

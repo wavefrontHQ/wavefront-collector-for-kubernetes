@@ -23,6 +23,8 @@ import (
 	"net/url"
 	"strconv"
 
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
+
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	kube_rest "k8s.io/client-go/rest"
 	kubeClientCmd "k8s.io/client-go/tools/clientcmd"
@@ -61,21 +63,46 @@ func getConfigOverrides(uri *url.URL) (*kubeClientCmd.ConfigOverrides, error) {
 	return &kubeConfigOverride, nil
 }
 
-func GetKubeClientConfig(uri *url.URL) (*kube_rest.Config, error) {
+func getConfigOverridesFromConfig(cfg configuration.SummaySourceConfig) (*kubeClientCmd.ConfigOverrides, error) {
+	//TODO: validate this returns the same values as with flags
+	kubeConfigOverride := kubeClientCmd.ConfigOverrides{
+		ClusterInfo: kubeClientCmdApi.Cluster{},
+	}
+
+	if cfg.URL != "" {
+		uri, err := url.Parse(cfg.URL)
+		if err != nil {
+			return nil, err
+		}
+		if len(uri.Scheme) != 0 && len(uri.Host) != 0 {
+			kubeConfigOverride.ClusterInfo.Server = fmt.Sprintf("%s://%s", uri.Scheme, uri.Host)
+		}
+	}
+
+	if len(cfg.Insecure) > 0 {
+		insecure, err := strconv.ParseBool(cfg.Insecure)
+		if err != nil {
+			return nil, err
+		}
+		kubeConfigOverride.ClusterInfo.InsecureSkipTLSVerify = insecure
+	}
+	return &kubeConfigOverride, nil
+}
+
+func GetKubeClientConfigFromConfig(cfg configuration.SummaySourceConfig) (*kube_rest.Config, error) {
 	var (
 		kubeConfig *kube_rest.Config
 		err        error
 	)
 
-	opts := uri.Query()
-	configOverrides, err := getConfigOverrides(uri)
+	configOverrides, err := getConfigOverridesFromConfig(cfg)
 	if err != nil {
 		return nil, err
 	}
 
 	inClusterConfig := defaultInClusterConfig
-	if len(opts["inClusterConfig"]) > 0 {
-		inClusterConfig, err = strconv.ParseBool(opts["inClusterConfig"][0])
+	if len(cfg.InClusterConfig) > 0 {
+		inClusterConfig, err = strconv.ParseBool(cfg.InClusterConfig)
 		if err != nil {
 			return nil, err
 		}
@@ -97,8 +124,8 @@ func GetKubeClientConfig(uri *url.URL) (*kube_rest.Config, error) {
 		}
 	} else {
 		authFile := ""
-		if len(opts["auth"]) > 0 {
-			authFile = opts["auth"][0]
+		if len(cfg.Auth) > 0 {
+			authFile = cfg.Auth
 		}
 
 		if authFile != "" {
@@ -132,8 +159,8 @@ func GetKubeClientConfig(uri *url.URL) (*kube_rest.Config, error) {
 	}
 
 	useServiceAccount := defaultUseServiceAccount
-	if len(opts["useServiceAccount"]) >= 1 {
-		useServiceAccount, err = strconv.ParseBool(opts["useServiceAccount"][0])
+	if len(cfg.UseServiceAccount) >= 1 {
+		useServiceAccount, err = strconv.ParseBool(cfg.UseServiceAccount)
 		if err != nil {
 			return nil, err
 		}
@@ -145,7 +172,6 @@ func GetKubeClientConfig(uri *url.URL) (*kube_rest.Config, error) {
 			kubeConfig.BearerToken = string(contents)
 		}
 	}
-
 	kubeConfig.ContentType = "application/vnd.kubernetes.protobuf"
 
 	return kubeConfig, nil

@@ -75,8 +75,8 @@ func main() {
 
 	preRegister(opt)
 	cfg := loadConfigOrDie(opt.ConfigFile)
-	cflags := convertOrDie(opt, cfg)
-	ag := createAgentOrDie(cflags, cfg)
+	cfg = convertOrDie(opt, cfg)
+	ag := createAgentOrDie(opt, cfg)
 	registerListeners(ag, opt)
 	waitForStop()
 }
@@ -119,23 +119,24 @@ func createAgentOrDie(opt *options.CollectorRunOptions, cfg *configuration.Confi
 	}
 
 	// create sources manager
-	sources.Manager().SetDefaultCollectionInterval(defaultCollectionInterval)
-	err := sources.Manager().BuildProviders(opt.Sources)
+	sourceManager := sources.Manager()
+	sourceManager.SetDefaultCollectionInterval(defaultCollectionInterval)
+	err := sourceManager.BuildProviders(*cfg.Sources)
 	if err != nil {
 		log.Fatalf("Failed to create source manager: %v", err)
 	}
 
 	// create sink managers
-	sinkManager := createSinkManagerOrDie(opt.Sinks, opt.SinkExportDataTimeout)
+	sinkManager := createSinkManagerOrDie(cfg.Sinks, cfg.SinkExportDataTimeout)
 
 	// create data processors
-	kubernetesUrl := getKubernetesAddressOrDie(opt.Sources)
-	kubeClient := createKubeClientOrDie(kubernetesUrl)
+	kubeClient := createKubeClientOrDie(*cfg.Sources.SummaryConfig)
 	podLister := getPodListerOrDie(kubeClient)
-	dataProcessors := createDataProcessorsOrDie(kubernetesUrl, clusterName, podLister)
+	dataProcessors := createDataProcessorsOrDie(kubeClient, clusterName, podLister, *cfg.Sources.SummaryConfig)
 
 	// create discovery manager
-	dm := createDiscoveryManagerOrDie(kubeClient, plugins, opt)
+	handler := sourceManager.(metrics.ProviderHandler)
+	dm := createDiscoveryManagerOrDie(kubeClient, plugins, handler, opt)
 
 	// create uber manager
 	man, err := manager.NewFlushManager(dataProcessors, sinkManager, flushInterval)
@@ -150,11 +151,10 @@ func createAgentOrDie(opt *options.CollectorRunOptions, cfg *configuration.Confi
 }
 
 func loadConfigOrDie(file string) *configuration.Config {
-	log.Infof("loading config: %s", file)
-
 	if file == "" {
 		return nil
 	}
+	log.Infof("loading config: %s", file)
 
 	cfg, err := configuration.FromFile(file)
 	if err != nil {
@@ -186,18 +186,20 @@ func fillDefaults(cfg *configuration.Config) {
 	}
 }
 
-func convertOrDie(opt *options.CollectorRunOptions, cfg *configuration.Config) *options.CollectorRunOptions {
+func convertOrDie(opt *options.CollectorRunOptions, cfg *configuration.Config) *configuration.Config {
 	// omit flags if config file is provided
 	if cfg != nil {
-		cflags, err := cfg.Convert()
-		if err != nil {
-			log.Fatalf("error converting configuration: %v", err)
-		}
 		log.Info("using configuration file, omitting flags")
-		return cflags
+
+		for _, sink := range cfg.Sinks {
+			log.Infof("using clusterName: %s", cfg.ClusterName)
+			sink.ClusterName = cfg.ClusterName
+		}
+		return cfg
 	}
+	//TODO: convert opts to configuration and return
 	handleBackwardsCompatibility(opt)
-	return opt
+	return cfg
 }
 
 func registerListeners(ag *agent.Agent, opt *options.CollectorRunOptions) {
@@ -214,14 +216,14 @@ func registerListeners(ag *agent.Agent, opt *options.CollectorRunOptions) {
 	}
 }
 
-func createDiscoveryManagerOrDie(client *kube_client.Clientset, plugins []discConfig.PluginConfig,
+func createDiscoveryManagerOrDie(client *kube_client.Clientset, plugins []discConfig.PluginConfig, handler metrics.ProviderHandler,
 	opt *options.CollectorRunOptions) *discovery.Manager {
 	if opt.EnableDiscovery {
 		// backwards compatibility, discovery config was a separate file
 		if len(plugins) == 0 && opt.DiscoveryConfigFile != "" {
 			plugins = loadDiscoveryFileOrDie(opt.DiscoveryConfigFile)
 		}
-		return discovery.NewDiscoveryManager(client, plugins, opt.Daemon)
+		return discovery.NewDiscoveryManager(client, plugins, handler, opt.Daemon)
 	}
 	return nil
 }
@@ -237,9 +239,9 @@ func registerVersion() {
 	m.Update(f)
 }
 
-func createSinkManagerOrDie(sinkAddresses flags.Uris, sinkExportDataTimeout time.Duration) metrics.DataSink {
+func createSinkManagerOrDie(cfgs []*configuration.WavefrontSinkConfig, sinkExportDataTimeout time.Duration) metrics.DataSink {
 	sinksFactory := sinks.NewSinkFactory()
-	sinkList := sinksFactory.BuildAll(sinkAddresses)
+	sinkList := sinksFactory.BuildAll(cfgs)
 
 	for _, sink := range sinkList {
 		log.Infof("Starting with %s", sink.Name())
@@ -259,15 +261,17 @@ func getPodListerOrDie(kubeClient *kube_client.Clientset) v1listers.PodLister {
 	return podLister
 }
 
-func createKubeClientOrDie(kubernetesUrl *url.URL) *kube_client.Clientset {
-	kubeConfig, err := kube_config.GetKubeClientConfig(kubernetesUrl)
+func createKubeClientOrDie(cfg configuration.SummaySourceConfig) *kube_client.Clientset {
+	kubeConfig, err := kube_config.GetKubeClientConfigFromConfig(cfg)
 	if err != nil {
 		log.Fatalf("Failed to get client config: %v", err)
 	}
 	return kube_client.NewForConfigOrDie(kubeConfig)
 }
 
-func createDataProcessorsOrDie(kubernetesUrl *url.URL, cluster string, podLister v1listers.PodLister) []metrics.DataProcessor {
+func createDataProcessorsOrDie(kubeClient *kube_client.Clientset, cluster string, podLister v1listers.PodLister,
+	cfg configuration.SummaySourceConfig) []metrics.DataProcessor {
+
 	labelCopier, err := util.NewLabelCopier(",", []string{}, []string{})
 	if err != nil {
 		log.Fatalf("Failed to initialize label copier: %v", err)
@@ -284,7 +288,7 @@ func createDataProcessorsOrDie(kubernetesUrl *url.URL, cluster string, podLister
 	}
 	dataProcessors = append(dataProcessors, podBasedEnricher)
 
-	namespaceBasedEnricher, err := processors.NewNamespaceBasedEnricher(kubernetesUrl)
+	namespaceBasedEnricher, err := processors.NewNamespaceBasedEnricher(kubeClient)
 	if err != nil {
 		log.Fatalf("Failed to create NamespaceBasedEnricher: %v", err)
 	}
@@ -321,14 +325,14 @@ func createDataProcessorsOrDie(kubernetesUrl *url.URL, cluster string, podLister
 			MetricsToAggregate: metricsToAggregate,
 		})
 
-	nodeAutoscalingEnricher, err := processors.NewNodeAutoscalingEnricher(kubernetesUrl, labelCopier)
+	nodeAutoscalingEnricher, err := processors.NewNodeAutoscalingEnricher(kubeClient, labelCopier)
 	if err != nil {
 		log.Fatalf("Failed to create NodeAutoscalingEnricher: %v", err)
 	}
 	dataProcessors = append(dataProcessors, nodeAutoscalingEnricher)
 
 	// this always needs to be the last processor
-	wavefrontCoverter, err := summary.NewPointConverter(kubernetesUrl, cluster)
+	wavefrontCoverter, err := summary.NewPointConverter(cfg, cluster)
 	if err != nil {
 		log.Fatalf("Failed to create WavefrontPointConverter: %v", err)
 	}
@@ -347,21 +351,18 @@ func getWavefrontAddress(args flags.Uris) (*url.URL, error) {
 	return nil, fmt.Errorf("no wavefront sink found")
 }
 
-// Gets the address of the kubernetes source from the list of source URIs.
-// Possible kubernetes sources are: 'kubernetes.summary_api'
-func getKubernetesAddressOrDie(args flags.Uris) *url.URL {
-	for _, uri := range args {
-		if strings.SplitN(uri.Key, ".", 2)[0] == "kubernetes" {
-			return &uri.Val
-		}
-	}
-	log.Fatal("no kubernetes source found")
-	return nil
-}
-
 func validateCfg(cfg *configuration.Config) error {
 	if cfg.FlushInterval < 5*time.Second {
 		return fmt.Errorf("metric resolution should not be less than 5 seconds: %d", cfg.FlushInterval)
+	}
+	if cfg.Sources == nil {
+		return fmt.Errorf("missing sources")
+	}
+	if cfg.Sources.SummaryConfig == nil {
+		return fmt.Errorf("kubernetes_source is missing")
+	}
+	if len(cfg.Sinks) == 0 {
+		return fmt.Errorf("missing sink")
 	}
 	return nil
 }

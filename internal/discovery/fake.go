@@ -1,39 +1,9 @@
 package discovery
 
 import (
-	"strconv"
-
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
-type FakeResourceLister struct {
-	count          int
-	registeredPods map[string]string
-}
-
-func NewFakeResourceLister(count int) *FakeResourceLister {
-	return &FakeResourceLister{
-		count:          count,
-		registeredPods: make(map[string]string),
-	}
-}
-
-func (f *FakeResourceLister) ListPods(ns string, labels map[string]string) ([]*v1.Pod, error) {
-	pods := make([]*v1.Pod, f.count)
-	for i := 0; i < f.count; i++ {
-		pods[i] = FakePod("pod"+strconv.Itoa(i), "ns", "192.168.0.123")
-	}
-	return pods, nil
-}
-
-func (f *FakeResourceLister) ListServices(ns string, labels map[string]string) ([]*v1.Service, error) {
-	services := make([]*v1.Service, f.count)
-	for i := 0; i < f.count; i++ {
-		services[i] = FakeService("svc"+strconv.Itoa(i), "ns", "192.168.0.123")
-	}
-	return services, nil
-}
 
 func FakeService(name, namespace, ip string) *v1.Service {
 	service := v1.Service{

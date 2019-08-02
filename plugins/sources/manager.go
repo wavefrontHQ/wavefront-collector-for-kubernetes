@@ -18,12 +18,12 @@ package sources
 
 import (
 	"fmt"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
 	"math/rand"
 	"sort"
 	"sync"
 	"time"
 
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/flags"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/prometheus"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/stats"
@@ -57,14 +57,14 @@ func init() {
 	_ = gometrics.Register("source.manager.scrape.latency", scrapeLatency)
 }
 
-// SourceManager ProviderHandler with gometrics gatherin support
+// SourceManager ProviderHandler with metrics gathering support
 type SourceManager interface {
-	AddProvider(provider metrics.MetricsSourceProvider)
-	DeleteProvider(name string)
+	metrics.ProviderHandler
+
 	StopProviders()
 	GetPendingMetrics() []*metrics.DataBatch
 	SetDefaultCollectionInterval(time.Duration)
-	BuildProviders(src flags.Uris) error
+	BuildProviders(config configuration.SourceConfig) error
 }
 
 type sourceManagerImpl struct {
@@ -90,16 +90,15 @@ func Manager() SourceManager {
 			metricsSourceQuits:        make(map[string]chan struct{}),
 			defaultCollectionInterval: time.Minute,
 		}
-
 		singleton.rotateResponse()
 		go singleton.run()
 	})
 	return singleton
 }
 
-// NewSourceManager creates a new NewSourceManager with the configured goMetricsSourceProviders
-func (sm *sourceManagerImpl) BuildProviders(src flags.Uris) error {
-	sources := buildProviders(src)
+// BuildProviders creates a new source manager with the configured MetricsSourceProviders
+func (sm *sourceManagerImpl) BuildProviders(cfg configuration.SourceConfig) error {
+	sources := buildProviders(cfg)
 	for _, runtime := range sources {
 		sm.AddProvider(runtime)
 	}
@@ -242,7 +241,7 @@ func scrape(provider metrics.MetricsSourceProvider, channel chan *metrics.DataBa
 
 		log.WithFields(log.Fields{
 			"name":          source.Name(),
-			"total_metrics": len(dataBatch.MetricPoints),
+			"total_metrics": len(dataBatch.MetricPoints) + len(dataBatch.MetricSets),
 			"latency":       latency,
 		}).Debug("Finished querying source")
 	}
@@ -254,46 +253,49 @@ func (sm *sourceManagerImpl) GetPendingMetrics() []*metrics.DataBatch {
 	return response
 }
 
-func buildProviders(uris flags.Uris) []metrics.MetricsSourceProvider {
-	result := make([]metrics.MetricsSourceProvider, 0, len(uris))
-	for _, uri := range uris {
-		provider, err := buildProvider(uri)
-		if err == nil {
-			result = append(result, provider)
-		} else {
-			log.Errorf("Failed to create %v source: %v", uri, err)
-		}
+func buildProviders(cfg configuration.SourceConfig) []metrics.MetricsSourceProvider {
+	//TODO: validate this
+	result := make([]metrics.MetricsSourceProvider, 0)
+
+	if cfg.SummaryConfig != nil {
+		provider, err := summary.NewSummaryProvider(*cfg.SummaryConfig)
+		result = appendProvider(result, provider, err, cfg.SummaryConfig.Collection)
+	}
+	if cfg.SystemdConfig != nil {
+		provider, err := systemd.NewProvider(*cfg.SystemdConfig)
+		result = appendProvider(result, provider, err, cfg.SystemdConfig.Collection)
+	}
+	if cfg.StatsConfig != nil {
+		provider, err := stats.NewInternalStatsProvider(*cfg.StatsConfig)
+		result = appendProvider(result, provider, err, cfg.StatsConfig.Collection)
+	}
+	for _, srcCfg := range cfg.TelegrafConfigs {
+		provider, err := telegraf.NewProvider(*srcCfg)
+		result = appendProvider(result, provider, err, srcCfg.Collection)
+	}
+	for _, srcCfg := range cfg.PrometheusConfigs {
+		provider, err := prometheus.NewPrometheusProvider(*srcCfg)
+		result = appendProvider(result, provider, err, srcCfg.Collection)
 	}
 
-	if len([]flags.Uri(uris)) != 0 && len(result) == 0 {
+	if len(result) == 0 {
 		log.Fatal("No available source to use")
 	}
 	return result
 }
 
-func buildProvider(uri flags.Uri) (metrics.MetricsSourceProvider, error) {
-	var provider metrics.MetricsSourceProvider
-	var err error
+func appendProvider(slice []metrics.MetricsSourceProvider, provider metrics.MetricsSourceProvider, err error,
+	cfg configuration.CollectionConfig) []metrics.MetricsSourceProvider {
 
-	switch uri.Key {
-	case "kubernetes.summary_api":
-		provider, err = summary.NewSummaryProvider(&uri.Val)
-	case "prometheus":
-		provider, err = prometheus.NewPrometheusProvider(&uri.Val)
-	case "telegraf":
-		provider, err = telegraf.NewProvider(&uri.Val)
-	case "systemd":
-		provider, err = systemd.NewProvider(&uri.Val)
-	case "internal_stats":
-		provider, err = stats.NewInternalStatsProvider(&uri.Val)
-	default:
-		err = fmt.Errorf("source not recognized: %s", uri.Key)
+	if err != nil {
+		log.Errorf("Failed to create source: %v", err)
+		return slice
 	}
-
+	slice = append(slice, provider)
 	if err == nil {
 		if i, ok := provider.(metrics.ConfigurabeMetricsSourceProvider); ok {
-			i.Configure(&uri.Val)
+			i.Configure(cfg.Interval, cfg.Timeout)
 		}
 	}
-	return provider, err
+	return slice
 }

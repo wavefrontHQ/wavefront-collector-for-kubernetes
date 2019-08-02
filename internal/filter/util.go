@@ -6,6 +6,7 @@ import (
 )
 
 func FromQuery(vals map[string][]string) Filter {
+	//TODO: can be deleted
 	if len(vals) == 0 {
 		return nil
 	}
@@ -16,6 +17,34 @@ func FromQuery(vals map[string][]string) Filter {
 	metricTagBlacklist := parseFilters(vals[MetricTagBlacklist])
 	tagInclude := vals[TagInclude]
 	tagExclude := vals[TagExclude]
+
+	if len(metricWhitelist) == 0 && len(metricBlacklist) == 0 && len(metricTagWhitelist) == 0 &&
+		len(metricTagBlacklist) == 0 && len(tagInclude) == 0 && len(tagExclude) == 0 {
+		return nil
+	}
+
+	return NewGlobFilter(Config{
+		MetricWhitelist:    metricWhitelist,
+		MetricBlacklist:    metricBlacklist,
+		MetricTagWhitelist: metricTagWhitelist,
+		MetricTagBlacklist: metricTagBlacklist,
+		TagInclude:         tagInclude,
+		TagExclude:         tagExclude,
+	})
+}
+
+func FromConfig(cfg Config) Filter {
+	//TODO: unit tests
+	if cfg.Empty() {
+		return nil
+	}
+
+	metricWhitelist := cfg.MetricWhitelist
+	metricBlacklist := cfg.MetricBlacklist
+	metricTagWhitelist := cfg.MetricTagWhitelist
+	metricTagBlacklist := cfg.MetricTagBlacklist
+	tagInclude := cfg.TagInclude
+	tagExclude := cfg.TagExclude
 
 	if len(metricWhitelist) == 0 && len(metricBlacklist) == 0 && len(metricTagWhitelist) == 0 &&
 		len(metricTagBlacklist) == 0 && len(tagInclude) == 0 && len(tagExclude) == 0 {

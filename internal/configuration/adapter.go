@@ -26,22 +26,26 @@ func (c Config) Convert() (*options.CollectorRunOptions, error) {
 	opts.MaxProcs = c.MaxProcs
 	opts.EnableDiscovery = c.EnableDiscovery
 
-	if err := addSource(c.SummaryConfig, opts); err != nil {
+	if c.Sources == nil {
+		return nil, fmt.Errorf("missing sources")
+	}
+
+	if err := addSource(c.Sources.SummaryConfig, opts); err != nil {
 		return nil, err
 	}
-	if err := addSource(c.SystemdConfig, opts); err != nil {
+	if err := addSource(c.Sources.SystemdConfig, opts); err != nil {
 		return nil, err
 	}
-	if err := addSource(c.StatsConfig, opts); err != nil {
+	if err := addSource(c.Sources.StatsConfig, opts); err != nil {
 		return nil, err
 	}
 
-	for _, cfg := range c.PrometheusConfigs {
+	for _, cfg := range c.Sources.PrometheusConfigs {
 		if err := addSource(cfg, opts); err != nil {
 			return nil, err
 		}
 	}
-	for _, cfg := range c.TelegrafConfigs {
+	for _, cfg := range c.Sources.TelegrafConfigs {
 		if err := addSource(cfg, opts); err != nil {
 			return nil, err
 		}
@@ -65,7 +69,7 @@ func (w WavefrontSinkConfig) convert() (flags.Uri, error) {
 	addVal(values, "testMode", strconv.FormatBool(w.TestMode))
 	addVal(values, "clusterName", w.ClusterName)
 	utils.EncodeFilters(values, w.Filters)
-	utils.EncodeTags(values, "", w.Tags)
+	//utils.EncodeTags(values, "", w.Tags)
 	return buildUri("wavefront", "", values.Encode())
 }
 
@@ -80,19 +84,20 @@ func (k SummaySourceConfig) convert() (flags.Uri, error) {
 	addVal(values, "auth", k.Auth)
 	addVal(values, "prefix", k.Prefix)
 	utils.EncodeFilters(values, k.Filters)
-	utils.EncodeTags(values, "", k.Tags)
+	//utils.EncodeTags(values, "", k.Tags)
 	return buildUri("kubernetes.summary_api", k.URL, values.Encode())
 }
 
 // converts a Prometheus source configuration to a Uri format
 func (p PrometheusSourceConfig) convert() (flags.Uri, error) {
+	//TODO: convert from opts to config
 	values := p.Collection.convert()
-	addVal(values, "url", p.URL)
-	addVal(values, "prefix", p.Prefix)
-	addVal(values, "source", p.Source)
-	utils.EncodeHTTPConfig(values, p.HTTPClientConfig)
-	utils.EncodeFilters(values, p.Filters)
-	utils.EncodeTags(values, "", p.Tags)
+	//addVal(values, "url", p.URL)
+	//addVal(values, "prefix", p.Prefix)
+	//addVal(values, "source", p.Source)
+	//utils.EncodeHTTPConfig(values, p.HTTPClientConfig)
+	//utils.EncodeFilters(values, p.Filters)
+	//utils.EncodeTags(values, "", p.Tags)
 	return buildUri("prometheus", "", values.Encode())
 }
 
@@ -102,7 +107,7 @@ func (t TelegrafSourceConfig) convert() (flags.Uri, error) {
 	addVal(values, "plugins", strings.Join(t.Plugins, ","))
 	addVal(values, "prefix", t.Prefix)
 	utils.EncodeFilters(values, t.Filters)
-	utils.EncodeTags(values, "", t.Tags)
+	//utils.EncodeTags(values, "", t.Tags)
 	return buildUri("telegraf", "", values.Encode())
 }
 
@@ -121,7 +126,7 @@ func (s SystemdSourceConfig) convert() (flags.Uri, error) {
 		addVal(values, "unitBlacklist", val)
 	}
 	utils.EncodeFilters(values, s.Filters)
-	utils.EncodeTags(values, "", s.Tags)
+	//utils.EncodeTags(values, "", s.Tags)
 	return buildUri("systemd", "", values.Encode())
 }
 
@@ -141,15 +146,15 @@ func (s StatsSourceConfig) convert() (flags.Uri, error) {
 	values := s.Collection.convert()
 	addVal(values, "prefix", s.Prefix)
 	utils.EncodeFilters(values, s.Filters)
-	utils.EncodeTags(values, "", s.Tags)
+	//utils.EncodeTags(values, "", s.Tags)
 	return buildUri("internal_stats", "", values.Encode())
 }
 
 // converts an Internal stats source configuration to a Uri format
 func (c CollectionConfig) convert() url.Values {
 	values := url.Values{}
-	addVal(values, "collectionInterval", c.Interval)
-	addVal(values, "timeout", c.Timeout)
+	//addVal(values, "collectionInterval", c.Interval)
+	//addVal(values, "timeout", c.Timeout)
 	return values
 }
 

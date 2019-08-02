@@ -15,12 +15,9 @@
 package processors
 
 import (
-	"net/url"
-
 	log "github.com/sirupsen/logrus"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
 
-	kube_config "github.com/wavefronthq/wavefront-kubernetes-collector/internal/kubernetes"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	kube_api "k8s.io/api/core/v1"
 	kube_client "k8s.io/client-go/kubernetes"
@@ -74,12 +71,7 @@ func (nbe *NamespaceBasedEnricher) addNamespaceInfo(metricSet *metrics.MetricSet
 	}
 }
 
-func NewNamespaceBasedEnricher(url *url.URL) (*NamespaceBasedEnricher, error) {
-	kubeConfig, err := kube_config.GetKubeClientConfig(url)
-	if err != nil {
-		return nil, err
-	}
-	kubeClient := kube_client.NewForConfigOrDie(kubeConfig)
+func NewNamespaceBasedEnricher(kubeClient *kube_client.Clientset) (*NamespaceBasedEnricher, error) {
 	return &NamespaceBasedEnricher{
 		store: util.GetNamespaceStore(kubeClient),
 	}, nil

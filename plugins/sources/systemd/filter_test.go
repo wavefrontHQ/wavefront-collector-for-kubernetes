@@ -1,16 +1,21 @@
 package systemd
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
+)
 
 func TestFromQuery(t *testing.T) {
-	vals := make(map[string][]string)
-	if fromQuery(vals) != nil {
+	cfg := configuration.SystemdSourceConfig{}
+
+	if fromConfig(cfg.UnitWhitelist, cfg.UnitBlacklist) != nil {
 		t.Errorf("error creating filter")
 	}
 
 	// test whitelisting
-	vals["unitWhitelist"] = []string{"docker*", "kubelet*"}
-	f := fromQuery(vals)
+	cfg.UnitWhitelist = []string{"docker*", "kubelet*"}
+	f := fromConfig(cfg.UnitWhitelist, cfg.UnitBlacklist)
 	if f == nil {
 		t.Errorf("error creating filter")
 	}
@@ -28,9 +33,9 @@ func TestFromQuery(t *testing.T) {
 	}
 
 	// test blacklisting
-	delete(vals, "unitWhitelist")
-	vals["unitBlacklist"] = []string{"*mount*", "etc*"}
-	f = fromQuery(vals)
+	cfg.UnitWhitelist = nil
+	cfg.UnitBlacklist = []string{"*mount*", "etc*"}
+	f = fromConfig(cfg.UnitWhitelist, cfg.UnitBlacklist)
 	if f.match("home.mount") {
 		t.Errorf("error matching blacklisted home.mount")
 	}

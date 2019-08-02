@@ -2,19 +2,12 @@ package main
 
 import (
 	"fmt"
-	"os"
-	"time"
-
 	log "github.com/sirupsen/logrus"
+	"os"
 
 	"github.com/spf13/pflag"
 
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/flags"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/options"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/manager"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sinks"
-
 	kubeFlag "k8s.io/apiserver/pkg/util/flag"
 	"k8s.io/apiserver/pkg/util/logs"
 )
@@ -41,29 +34,31 @@ func main() {
 	logs.InitLogs()
 	defer logs.FlushLogs()
 
-	sinkManager := createAndInitSinksOrDie(opt.Sinks, opt.SinkExportDataTimeout)
+	//TODO: fix this
 
-	man, err := manager.NewFlushManager(nil, sinkManager, opt.MetricResolution)
-	if err != nil {
-		log.Fatalf("Failed to create main manager: %v", err)
-	}
-	man.Start()
+	//sinkManager := createAndInitSinksOrDie(opt.Sinks, opt.SinkExportDataTimeout)
+	//
+	//man, err := manager.NewFlushManager(nil, sinkManager, opt.MetricResolution)
+	//if err != nil {
+	//	log.Fatalf("Failed to create main manager: %v", err)
+	//}
+	//man.Start()
 	waitForStop()
 }
 
-func createAndInitSinksOrDie(sinkAddresses flags.Uris, sinkExportDataTimeout time.Duration) metrics.DataSink {
-	sinksFactory := sinks.NewSinkFactory()
-	sinkList := sinksFactory.BuildAll(sinkAddresses)
-
-	for _, sink := range sinkList {
-		log.Infof("Starting with %s", sink.Name())
-	}
-	sinkManager, err := sinks.NewDataSinkManager(sinkList, sinkExportDataTimeout, sinks.DefaultSinkStopTimeout)
-	if err != nil {
-		log.Fatalf("Failed to create sink manager: %v", err)
-	}
-	return sinkManager
-}
+//func createAndInitSinksOrDie(sinkAddresses flags.Uris, sinkExportDataTimeout time.Duration) metrics.DataSink {
+//	sinksFactory := sinks.NewSinkFactory()
+//	sinkList := sinksFactory.BuildAll(sinkAddresses)
+//
+//	for _, sink := range sinkList {
+//		log.Infof("Starting with %s", sink.Name())
+//	}
+//	sinkManager, err := sinks.NewDataSinkManager(sinkList, sinkExportDataTimeout, sinks.DefaultSinkStopTimeout)
+//	if err != nil {
+//		log.Fatalf("Failed to create sink manager: %v", err)
+//	}
+//	return sinkManager
+//}
 
 func waitForStop() {
 	select {}

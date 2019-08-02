@@ -15,10 +15,11 @@
 package kubelet
 
 import (
-	"net/url"
 	"strconv"
 
 	log "github.com/sirupsen/logrus"
+
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
 
 	kube_config "github.com/wavefronthq/wavefront-kubernetes-collector/internal/kubernetes"
 	kube_client "k8s.io/client-go/rest"
@@ -34,25 +35,24 @@ const (
 	defaultInClusterConfig    = true
 )
 
-func GetKubeConfigs(uri *url.URL) (*kube_client.Config, *KubeletClientConfig, error) {
+func GetKubeConfigs(cfg configuration.SummaySourceConfig) (*kube_client.Config, *KubeletClientConfig, error) {
 
-	kubeConfig, err := kube_config.GetKubeClientConfig(uri)
+	kubeConfig, err := kube_config.GetKubeClientConfigFromConfig(cfg)
 	if err != nil {
 		return nil, nil, err
 	}
-	opts := uri.Query()
 
 	kubeletPort := defaultKubeletPort
-	if len(opts["kubeletPort"]) >= 1 {
-		kubeletPort, err = strconv.Atoi(opts["kubeletPort"][0])
+	if len(cfg.KubeletPort) >= 1 {
+		kubeletPort, err = strconv.Atoi(cfg.KubeletPort)
 		if err != nil {
 			return nil, nil, err
 		}
 	}
 
 	kubeletHttps := defaultKubeletHttps
-	if len(opts["kubeletHttps"]) >= 1 {
-		kubeletHttps, err = strconv.ParseBool(opts["kubeletHttps"][0])
+	if len(cfg.KubeletHttps) >= 1 {
+		kubeletHttps, err = strconv.ParseBool(cfg.KubeletHttps)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -67,6 +67,5 @@ func GetKubeConfigs(uri *url.URL) (*kube_client.Config, *KubeletClientConfig, er
 		TLSClientConfig: kubeConfig.TLSClientConfig,
 		BearerToken:     kubeConfig.BearerToken,
 	}
-
 	return kubeConfig, kubeletConfig, nil
 }

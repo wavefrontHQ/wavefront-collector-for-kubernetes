@@ -2,11 +2,12 @@ package telegraf
 
 import (
 	"fmt"
-	"net/url"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
 	"strings"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery/utils"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/telegraf"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -14,10 +15,11 @@ import (
 
 var defaultEncoder = telegrafEncoder{}
 
-func NewTargetHandler(plugin string) discovery.TargetHandler {
+func NewTargetHandler(plugin string, handler metrics.ProviderHandler) discovery.TargetHandler {
 	registryName := strings.Replace(plugin, "/", ".", -1)
 	return discovery.NewHandler(
 		discovery.ProviderInfo{
+			Handler: handler,
 			Factory: telegraf.NewFactory(),
 			Encoder: defaultEncoder,
 		},
@@ -31,9 +33,15 @@ func NewEncoder() discovery.Encoder {
 	return telegrafEncoder{}
 }
 
-func (e telegrafEncoder) Encode(ip, kind string, meta metav1.ObjectMeta, rule interface{}) url.Values {
+func (e telegrafEncoder) Encode(ip, kind string, meta metav1.ObjectMeta, rule interface{}) (interface{}, bool) {
 	if ip == "" {
-		return url.Values{}
+		return configuration.TelegrafSourceConfig{}, false
+	}
+
+	result := configuration.TelegrafSourceConfig{
+		Transforms: configuration.Transforms{
+			Tags: make(map[string]string),
+		},
 	}
 
 	// panics if rule is not of expected type
@@ -41,10 +49,9 @@ func (e telegrafEncoder) Encode(ip, kind string, meta metav1.ObjectMeta, rule in
 	name := discovery.ResourceName(kind, meta)
 	pluginName := strings.Replace(cfg.Type, "telegraf/", "", -1)
 
-	values := url.Values{}
-	values.Set("discovered", "rule")
-	values.Set("plugins", pluginName)
-	values.Set("name", name)
+	result.Discovered = "rule"
+	result.Plugins = []string{pluginName}
+	result.Name = name
 
 	// parse telegraf configuration
 	scheme := utils.Param(meta, "", cfg.Scheme, "http")
@@ -52,22 +59,24 @@ func (e telegrafEncoder) Encode(ip, kind string, meta metav1.ObjectMeta, rule in
 	conf := strings.Replace(cfg.Conf, "${server}", server, -1)
 	conf = strings.Replace(conf, "${host}", ip, -1)
 	conf = strings.Replace(conf, "${port}", cfg.Port, -1)
-	values.Set("tg.conf", conf)
+	result.Conf = conf
 
 	// parse prefix, tags, labels and filters
 	prefix := utils.Param(meta, discovery.PrefixAnnotation, cfg.Prefix, "")
 	includeLabels := utils.Param(meta, discovery.LabelsAnnotation, cfg.IncludeLabels, "true")
 
-	values.Set("prefix", prefix)
-	values.Set("collectionInterval", cfg.Collection.Interval.String())
-	values.Set("timeout", cfg.Collection.Timeout.String())
-
-	utils.EncodeMeta(values, kind, meta)
-	utils.EncodeTags(values, "", cfg.Tags)
-	if includeLabels == "true" {
-		utils.EncodeTags(values, "label.", meta.Labels)
+	result.Prefix = prefix
+	result.Collection = configuration.CollectionConfig{
+		Interval: cfg.Collection.Interval,
+		Timeout:  cfg.Collection.Timeout,
 	}
-	utils.EncodeFilters(values, cfg.Filters)
 
-	return values
+	utils.EncodeMeta(result.Tags, kind, meta)
+	utils.EncodeTags(result.Tags, "", cfg.Tags)
+	if includeLabels == "true" {
+		utils.EncodeTags(result.Tags, "label.", meta.Labels)
+	}
+	result.Filters = cfg.Filters
+
+	return result, true
 }

@@ -21,15 +21,12 @@ func (uf *unitFilter) match(name string) bool {
 	return true
 }
 
-func fromQuery(vals map[string][]string) *unitFilter {
-	if len(vals) == 0 {
+func fromConfig(whitelist, blacklist []string) *unitFilter {
+	if len(whitelist) == 0 && len(blacklist) == 0 {
 		return nil
 	}
-	unitWhitelist := vals["unitWhitelist"]
-	unitBlacklist := vals["unitBlacklist"]
-
 	return &unitFilter{
-		unitWhitelist: filter.Compile(unitWhitelist),
-		unitBlacklist: filter.Compile(unitBlacklist),
+		unitWhitelist: filter.Compile(whitelist),
+		unitBlacklist: filter.Compile(blacklist),
 	}
 }

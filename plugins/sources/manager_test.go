@@ -15,7 +15,6 @@
 package sources
 
 import (
-	"net/url"
 	"testing"
 	"time"
 
@@ -113,13 +112,11 @@ func TestConfig(t *testing.T) {
 	var provider metrics.MetricsSourceProvider
 
 	provider = &testProvider{}
-	url, _ := url.Parse("?collectionInterval=1h&timeout=1m")
 
 	if i, ok := provider.(metrics.ConfigurabeMetricsSourceProvider); ok {
-		i.Configure(url)
+		i.Configure(time.Hour*1, time.Minute*1)
 		log.Infof("Name: %s - CollectionInterval: %v", provider.Name(), provider.CollectionInterval())
 	}
-
 	assert.Equal(t, time.Hour, provider.CollectionInterval(), "incorrect CollectionInterval")
 	assert.Equal(t, time.Minute, provider.Timeout(), "incorrect Timeout")
 }
