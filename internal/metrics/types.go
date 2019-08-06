@@ -20,10 +20,7 @@
 package metrics
 
 import (
-	"net/url"
 	"time"
-
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/flags"
 )
 
 type MetricType int8
@@ -185,13 +182,19 @@ type MetricPoint struct {
 	StrTags   string
 }
 
+// ProviderHandler is an interface for dynamically adding and removing MetricSourceProviders
+type ProviderHandler interface {
+	AddProvider(provider MetricsSourceProvider)
+	DeleteProvider(name string)
+}
+
 type ProviderFactory interface {
 	Name() string
-	Build(uri *url.URL) (MetricsSourceProvider, error)
+	Build(cfg interface{}) (MetricsSourceProvider, error)
 }
 
 type ConfigurabeMetricsSourceProvider interface {
-	Configure(uri *url.URL)
+	Configure(interval, timeout time.Duration)
 }
 
 //DefaultMetricsSourceProvider handle the common providers configuration
@@ -211,8 +214,10 @@ func (dp *DefaultMetricsSourceProvider) Timeout() time.Duration {
 }
 
 // Configure the 'collectionInterval' and 'timeout' values
-func (dp *DefaultMetricsSourceProvider) Configure(uri *url.URL) {
-	vals := uri.Query()
-	dp.collectionInterval = flags.ParseDuration(vals, "collectionInterval", 0) // force default collection interval
-	dp.timeout = flags.ParseDuration(vals, "timeout", time.Duration(10*time.Second))
+func (dp *DefaultMetricsSourceProvider) Configure(interval, timeout time.Duration) {
+	dp.collectionInterval = interval // forces default collection interval if zero
+	dp.timeout = timeout
+	if dp.timeout == 0 {
+		dp.timeout = 10 * time.Second
+	}
 }

@@ -2,12 +2,11 @@ package wavefront
 
 import (
 	"fmt"
-	"net/url"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
 	"strconv"
 	"strings"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/flags"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	"github.com/wavefronthq/wavefront-sdk-go/senders"
 
@@ -113,7 +112,9 @@ func (sink *wavefrontSink) send(batch *metrics.DataBatch) {
 		tags := make(map[string]string)
 
 		for k, v := range point.Tags {
-			tags[k] = v
+			if len(v) > 0 {
+				tags[k] = v
+			}
 		}
 
 		if len(point.StrTags) > 0 {
@@ -121,11 +122,12 @@ func (sink *wavefrontSink) send(batch *metrics.DataBatch) {
 				if len(tag) > 0 {
 					s := strings.Split(tag, "=")
 					k, v := s[0], s[1]
-					tags[k] = v
+					if len(v) > 0 {
+						tags[k] = v
+					}
 				}
 			}
 		}
-
 		tags["cluster"] = sink.ClusterName
 		sink.sendPoint(point.Metric, point.Value, point.Timestamp, point.Source, tags)
 	}
@@ -146,24 +148,14 @@ func (sink *wavefrontSink) ExportData(batch *metrics.DataBatch) {
 	sink.send(batch)
 }
 
-func NewWavefrontSink(uri *url.URL) (metrics.DataSink, error) {
-	if len(uri.Scheme) > 0 {
-		return nil, fmt.Errorf("scheme should not be set for Wavefront sink")
-	}
-
-	if len(uri.Host) > 0 {
-		return nil, fmt.Errorf("host should not be set for Wavefront sink")
-	}
-
+func NewWavefrontSink(cfg configuration.WavefrontSinkConfig) (metrics.DataSink, error) {
 	storage := &wavefrontSink{
-		ClusterName: "k8s-cluster",
-		testMode:    false,
+		ClusterName: configuration.GetStringValue(cfg.ClusterName, "k8s-cluster"),
+		testMode:    cfg.TestMode,
 	}
 
-	vals := uri.Query()
-
-	if len(vals["proxyAddress"]) > 0 {
-		s := strings.Split(vals["proxyAddress"][0], ":")
+	if cfg.ProxyAddress != "" {
+		s := strings.Split(cfg.ProxyAddress, ":")
 		host, portStr := s[0], s[1]
 		port, err := strconv.Atoi(portStr)
 
@@ -178,48 +170,29 @@ func NewWavefrontSink(uri *url.URL) (metrics.DataSink, error) {
 			return nil, fmt.Errorf("error creating proxy sender: %s", err.Error())
 		}
 		clientType.Update(proxyClient)
-	}
-
-	if len(vals["server"]) > 0 {
-		server := vals["server"][0]
-		if len(vals["token"]) == 0 {
+	} else if cfg.Server != "" {
+		if len(cfg.Token) == 0 {
 			return nil, fmt.Errorf("token missing for Wavefront sink")
 		}
-		token := vals["token"][0]
-
 		var err error
 		storage.WavefrontClient, err = senders.NewDirectSender(&senders.DirectConfiguration{
-			Server: server,
-			Token:  token,
+			Server: cfg.Server,
+			Token:  cfg.Token,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("error creating direct sender: %s", err.Error())
 		}
 		clientType.Update(directClient)
 	}
-
 	if storage.WavefrontClient == nil {
 		return nil, fmt.Errorf("proxyAddress or server property required for Wavefront sink")
 	}
 
-	storage.globalTags = flags.DecodeTags(vals)
-
-	if len(vals["clusterName"]) > 0 {
-		storage.ClusterName = vals["clusterName"][0]
+	storage.globalTags = cfg.Tags
+	if cfg.Prefix != "" {
+		storage.Prefix = cfg.Prefix
 	}
-	if len(vals["prefix"]) > 0 {
-		storage.Prefix = vals["prefix"][0]
-	}
+	storage.filters = filter.FromConfig(cfg.Filters)
 
-	storage.filters = filter.FromQuery(vals)
-
-	if len(vals["testMode"]) > 0 {
-		testMode, err := strconv.ParseBool(vals["testMode"][0])
-		if err != nil {
-			log.Warning("Unable to parse the testMode argument. This argument is a boolean, please pass \"true\" or \"false\"")
-			return nil, err
-		}
-		storage.testMode = testMode
-	}
 	return storage, nil
 }

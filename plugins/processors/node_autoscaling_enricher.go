@@ -15,9 +15,6 @@
 package processors
 
 import (
-	"net/url"
-
-	kube_config "github.com/wavefronthq/wavefront-kubernetes-collector/internal/kubernetes"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
 	kube_api "k8s.io/api/core/v1"
@@ -101,13 +98,7 @@ func setFloat(metricSet *metrics.MetricSet, metric *metrics.Metric, value float6
 	}
 }
 
-func NewNodeAutoscalingEnricher(url *url.URL, labelCopier *util.LabelCopier) (*NodeAutoscalingEnricher, error) {
-	kubeConfig, err := kube_config.GetKubeClientConfig(url)
-	if err != nil {
-		return nil, err
-	}
-	kubeClient := kube_client.NewForConfigOrDie(kubeConfig)
-
+func NewNodeAutoscalingEnricher(kubeClient *kube_client.Clientset, labelCopier *util.LabelCopier) (*NodeAutoscalingEnricher, error) {
 	// watch nodes
 	nodeLister, reflector, _ := util.GetNodeLister(kubeClient)
 

@@ -2,7 +2,6 @@ package discovery
 
 import (
 	"fmt"
-	"net/url"
 
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -49,11 +48,6 @@ type Resource struct {
 	ServiceSpec v1.ServiceSpec
 }
 
-type ResourceLister interface {
-	ListPods(ns string, labels map[string]string) ([]*v1.Pod, error)
-	ListServices(ns string, labels map[string]string) ([]*v1.Service, error)
-}
-
 type Discoverer interface {
 	Discover(resource Resource)
 	Delete(resource Resource)
@@ -75,13 +69,13 @@ type RuleHandler interface {
 }
 
 type Encoder interface {
-	Encode(ip, kind string, meta metav1.ObjectMeta, rule interface{}) url.Values
+	Encode(ip, kind string, meta metav1.ObjectMeta, rule interface{}) (interface{}, bool)
 }
 
 // Handles discovery of targets
 type TargetHandler interface {
 	Handle(resource Resource, cfg interface{})
-	Encoding(name string) string
+	Encoding(name string) interface{}
 	Delete(name string)
 	DeleteMissing(input map[string]bool)
 	Count() int
@@ -92,6 +86,6 @@ type TargetRegistry interface {
 	Register(name string, handler TargetHandler)
 	Unregister(name string)
 	Handler(name string) TargetHandler
-	Encoding(name string) string
+	Encoding(name string) interface{}
 	Count() int
 }

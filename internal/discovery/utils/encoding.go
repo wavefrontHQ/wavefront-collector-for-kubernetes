@@ -2,82 +2,26 @@ package utils
 
 import (
 	"fmt"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/httputil"
-	"net/url"
-	"sort"
-	"strconv"
-	"strings"
-
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func EncodeFilters(values url.Values, cfg filter.Config) {
-	if cfg.Empty() {
-		return
-	}
-	encodeFilter(values, filter.MetricWhitelist, cfg.MetricWhitelist)
-	encodeFilter(values, filter.MetricBlacklist, cfg.MetricBlacklist)
-	encodeFilterMap(values, filter.MetricTagWhitelist, cfg.MetricTagWhitelist)
-	encodeFilterMap(values, filter.MetricTagBlacklist, cfg.MetricTagBlacklist)
-	encodeFilter(values, filter.TagInclude, cfg.TagInclude)
-	encodeFilter(values, filter.TagExclude, cfg.TagExclude)
-}
-
-func encodeFilterMap(values url.Values, name string, filters map[string][]string) {
-	if len(filters) == 0 {
-		return
-	}
-	var keys []string
-	for k := range filters {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	for _, k := range keys {
-		patterns := "[" + strings.Join(filters[k], ",") + "]"
-		values.Add(name, fmt.Sprintf("%s:%s", k, patterns))
-	}
-}
-
-func encodeFilter(values url.Values, name string, slice []string) {
-	for _, val := range slice {
-		values.Add(name, val)
-	}
-}
-
-func EncodeTags(values url.Values, prefix string, tags map[string]string) {
+func EncodeTags(destTags map[string]string, prefix string, tags map[string]string) {
 	if len(tags) == 0 {
 		return
 	}
-	var keys []string
-	for k := range tags {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	for _, k := range keys {
-		// exclude pod-template-hash
-		if k != "pod-template-hash" {
-			values.Add("tag", fmt.Sprintf("%s%s:%s", prefix, k, tags[k]))
+	for k, v := range tags {
+		if k != "pod-template-hash" && len(k) > 0 && len(v) > 0 {
+			key := fmt.Sprintf("%s%s", prefix, k)
+			destTags[key] = v
 		}
 	}
 }
 
-func EncodeMeta(values url.Values, kind string, meta metav1.ObjectMeta) {
-	values.Add("tag", fmt.Sprintf("%s:%s", kind, meta.Name))
+func EncodeMeta(tags map[string]string, kind string, meta metav1.ObjectMeta) {
+	tags[kind] = meta.Name
 	if meta.Namespace != "" {
-		values.Add("tag", fmt.Sprintf("%s:%s", "namespace", meta.Namespace))
+		tags["namespace"] = meta.Namespace
 	}
-}
-
-func EncodeHTTPConfig(values url.Values, cfg httputil.ClientConfig) {
-	addVal(values, "bearerToken", cfg.BearerToken)
-	addVal(values, "bearerTokenFile", cfg.BearerTokenFile)
-	addVal(values, "tlsCAFile", cfg.TLSConfig.CAFile)
-	addVal(values, "tlsCertFile", cfg.TLSConfig.CertFile)
-	addVal(values, "tlsKeyFile", cfg.TLSConfig.KeyFile)
-	addVal(values, "tlsServerName", cfg.TLSConfig.ServerName)
-	addVal(values, "tlsInsecure", strconv.FormatBool(cfg.TLSConfig.InsecureSkipVerify))
 }
 
 func Param(meta metav1.ObjectMeta, annotation, cfgVal, defaultVal string) string {
@@ -95,10 +39,4 @@ func Param(meta metav1.ObjectMeta, annotation, cfgVal, defaultVal string) string
 		value = defaultVal
 	}
 	return value
-}
-
-func addVal(values url.Values, key, val string) {
-	if val != "" {
-		values.Add(key, val)
-	}
 }

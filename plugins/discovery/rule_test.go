@@ -1,6 +1,7 @@
 package discovery
 
 import (
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
 	"testing"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
@@ -33,7 +34,8 @@ func TestRuleAdd(t *testing.T) {
 }
 
 func makeRuleHandler() discovery.RuleHandler {
-	return newRuleHandler(newDiscoverer(nil), true)
+	ph := &util.DummyProviderHandler{}
+	return newRuleHandler(newDiscoverer(ph, nil), ph, true)
 }
 
 func config(num int) []discovery.PluginConfig {

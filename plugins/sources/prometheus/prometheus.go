@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
 	"io/ioutil"
 	"math"
 	"net/http"
@@ -12,7 +13,6 @@ import (
 	"time"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/flags"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/httputil"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/leadership"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
@@ -268,10 +268,12 @@ func (src *prometheusMetricsSource) buildTags(m *dto.Metric) string {
 func encodeLabelTags(labels []*dto.LabelPair, buf *bytes.Buffer) {
 	if len(labels) >= 0 {
 		for _, label := range labels {
-			buf.WriteString(" ")
-			buf.WriteString(url.QueryEscape(label.GetName()))
-			buf.WriteString("=")
-			buf.WriteString(url.QueryEscape(label.GetValue()))
+			if label.GetName() != "" && label.GetValue() != "" {
+				buf.WriteString(" ")
+				buf.WriteString(url.QueryEscape(label.GetName()))
+				buf.WriteString("=")
+				buf.WriteString(url.QueryEscape(label.GetValue()))
+			}
 		}
 	}
 }
@@ -322,47 +324,40 @@ func (p *prometheusProvider) Name() string {
 
 const providerName = "prometheus_metrics_provider"
 
-func NewPrometheusProvider(uri *url.URL) (metrics.MetricsSourceProvider, error) {
-	vals := uri.Query()
-
-	if len(vals["url"]) == 0 {
+func NewPrometheusProvider(cfg configuration.PrometheusSourceConfig) (metrics.MetricsSourceProvider, error) {
+	if len(cfg.URL) == 0 {
 		return nil, fmt.Errorf("missing prometheus url")
 	}
 
-	source := flags.DecodeDefaultValue(vals, "source", util.GetNodeName())
-	if source == "" {
-		source = "prom_source"
-	}
+	source := configuration.GetStringValue(cfg.Source, util.GetNodeName())
+	source = configuration.GetStringValue(source, "prom_source")
 
 	name := ""
-	if len(vals["name"]) > 0 {
-		name = fmt.Sprintf("%s: %s", providerName, vals["name"][0])
+	if len(cfg.Name) > 0 {
+		name = fmt.Sprintf("%s: %s", providerName, cfg.Name)
 	}
 	if name == "" {
-		name = fmt.Sprintf("%s: %s", providerName, vals["url"][0])
+		name = fmt.Sprintf("%s: %s", providerName, cfg.URL)
 	}
 
-	discovered := flags.DecodeValue(vals, "discovered")
+	discovered := configuration.GetStringValue(cfg.Discovered, "")
 	log.Debugf("name: %s discovered: %s", name, discovered)
 
-	httpCfg := flags.DecodeHTTPConfig(vals)
-
-	prefix := flags.DecodeValue(vals, "prefix")
-	tags := flags.DecodeTags(vals)
-	filters := filter.FromQuery(vals)
+	httpCfg := cfg.HTTPClientConfig
+	prefix := cfg.Prefix
+	tags := cfg.Tags
+	filters := filter.FromConfig(cfg.Filters)
 
 	var sources []metrics.MetricsSource
-	for _, metricsURL := range vals["url"] {
-		metricsSource, err := NewPrometheusMetricsSource(metricsURL, prefix, source, discovered, tags, filters, httpCfg)
-		if err == nil {
-			sources = append(sources, metricsSource)
-		} else {
-			log.Errorf("error creating source: %v", err)
-		}
+	metricsSource, err := NewPrometheusMetricsSource(cfg.URL, prefix, source, discovered, tags, filters, httpCfg)
+	if err == nil {
+		sources = append(sources, metricsSource)
+	} else {
+		log.Errorf("error creating source: %v", err)
 	}
 
 	return &prometheusProvider{
-		urls:       vals["url"],
+		urls:       []string{cfg.URL},
 		prefix:     prefix,
 		source:     source,
 		name:       name,

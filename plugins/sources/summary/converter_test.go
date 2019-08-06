@@ -1,13 +1,14 @@
 package summary
 
 import (
-	"net/url"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
 	"testing"
 	"time"
 
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
-
 	"github.com/stretchr/testify/assert"
+
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 )
 
 var (
@@ -29,7 +30,7 @@ var (
 )
 
 func TestNewMetricName(t *testing.T) {
-	converter := fakeWavefrontConverter(t, "?")
+	converter := fakeWavefrontConverter(t, configuration.SummaySourceConfig{})
 	name := "cpu/usage"
 	mtype := "pod_container"
 	newName := converter.(*pointConverter).cleanMetricName(mtype, name)
@@ -37,7 +38,7 @@ func TestNewMetricName(t *testing.T) {
 }
 
 func TestStoreTimeseriesMultipleTimeseriesInput(t *testing.T) {
-	fakeConverter := fakeWavefrontConverter(t, "?")
+	fakeConverter := fakeWavefrontConverter(t, configuration.SummaySourceConfig{})
 	batch := generateFakeBatch()
 	count := len(batch.MetricSets)
 	data, err := fakeConverter.Process(batch)
@@ -48,7 +49,13 @@ func TestStoreTimeseriesMultipleTimeseriesInput(t *testing.T) {
 }
 
 func TestFiltering(t *testing.T) {
-	fakeConverter := fakeWavefrontConverter(t, "?metricWhitelist=kubernetes*cpu*")
+	fakeConverter := fakeWavefrontConverter(t, configuration.SummaySourceConfig{
+		Transforms: configuration.Transforms{
+			Filters: filter.Config{
+				MetricWhitelist: []string{"kubernetes*cpu*"},
+			},
+		},
+	})
 	batch := generateFakeBatch()
 	data, err := fakeConverter.Process(batch)
 	if err != nil {
@@ -57,7 +64,13 @@ func TestFiltering(t *testing.T) {
 	assert.Equal(t, 8, len(data.MetricSets))
 	assert.Equal(t, 2, len(data.MetricPoints))
 
-	fakeConverter = fakeWavefrontConverter(t, "?metricBlacklist=kubernetes*cpu*")
+	fakeConverter = fakeWavefrontConverter(t, configuration.SummaySourceConfig{
+		Transforms: configuration.Transforms{
+			Filters: filter.Config{
+				MetricBlacklist: []string{"kubernetes*cpu*"},
+			},
+		},
+	})
 	batch = generateFakeBatch()
 	data, err = fakeConverter.Process(batch)
 	if err != nil {
@@ -68,7 +81,9 @@ func TestFiltering(t *testing.T) {
 }
 
 func TestPrefix(t *testing.T) {
-	fakeConverter := fakeWavefrontConverter(t, "?prefix=k8s.")
+	fakeConverter := fakeWavefrontConverter(t, configuration.SummaySourceConfig{
+		Transforms: configuration.Transforms{Prefix: "k8s."},
+	})
 	name := "cpu/usage"
 	mtype := "pod"
 	newName := fakeConverter.(*pointConverter).cleanMetricName(mtype, name)
@@ -106,13 +121,8 @@ func generateMetricSet(name string, metricType metrics.MetricType, value int64) 
 	return set
 }
 
-func fakeWavefrontConverter(t *testing.T, uri string) metrics.DataProcessor {
-	u, err := url.Parse(uri)
-	if err != nil {
-		t.Error("error creating url")
-	}
-
-	converter, err := NewPointConverter(u, "k8s-cluster")
+func fakeWavefrontConverter(t *testing.T, cfg configuration.SummaySourceConfig) metrics.DataProcessor {
+	converter, err := NewPointConverter(cfg, "k8s-cluster")
 	if err != nil {
 		t.Error(err)
 	}

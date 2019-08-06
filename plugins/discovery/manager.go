@@ -9,6 +9,7 @@ import (
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/leadership"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 
 	"k8s.io/client-go/kubernetes"
 )
@@ -32,14 +33,14 @@ type Manager struct {
 	stopCh          chan struct{}
 }
 
-func NewDiscoveryManager(client kubernetes.Interface, plugins []discovery.PluginConfig, daemon bool) *Manager {
+func NewDiscoveryManager(client kubernetes.Interface, plugins []discovery.PluginConfig, handler metrics.ProviderHandler, daemon bool) *Manager {
 	mgr := &Manager{
 		daemon:     daemon,
 		kubeClient: client,
 		stopCh:     make(chan struct{}),
-		discoverer: newDiscoverer(plugins),
+		discoverer: newDiscoverer(handler, plugins),
 	}
-	mgr.ruleHandler = newRuleHandler(mgr.discoverer, daemon)
+	mgr.ruleHandler = newRuleHandler(mgr.discoverer, handler, daemon)
 	return mgr
 }
 

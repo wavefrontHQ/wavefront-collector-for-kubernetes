@@ -1,10 +1,11 @@
 package wavefront
 
 import (
-	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 )
 
@@ -29,9 +30,14 @@ func TestName(t *testing.T) {
 }
 
 func TestCreateWavefrontSinkWithNoEmptyInputs(t *testing.T) {
-	fakeUrl := "?proxyAddress=wavefront-proxy:2878&clusterName=testCluster&prefix=testPrefix&includeLabels=true&includeContainers=true"
-	uri, _ := url.Parse(fakeUrl)
-	sink, err := NewWavefrontSink(uri)
+	cfg := configuration.WavefrontSinkConfig{
+		ProxyAddress: "wavefront-proxy:2878",
+		ClusterName:  "testCluster",
+		Transforms: configuration.Transforms{
+			Prefix: "testPrefix",
+		},
+	}
+	sink, err := NewWavefrontSink(cfg)
 	assert.NoError(t, err)
 	assert.NotNil(t, sink)
 	wfSink, ok := sink.(*wavefrontSink)

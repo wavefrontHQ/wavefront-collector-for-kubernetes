@@ -5,9 +5,9 @@ import (
 	"strings"
 )
 
-func FromQuery(vals map[string][]string) Filter {
+func FromQuery(vals map[string][]string) Config {
 	if len(vals) == 0 {
-		return nil
+		return Config{}
 	}
 
 	metricWhitelist := vals[MetricWhitelist]
@@ -16,6 +16,33 @@ func FromQuery(vals map[string][]string) Filter {
 	metricTagBlacklist := parseFilters(vals[MetricTagBlacklist])
 	tagInclude := vals[TagInclude]
 	tagExclude := vals[TagExclude]
+
+	if len(metricWhitelist) == 0 && len(metricBlacklist) == 0 && len(metricTagWhitelist) == 0 &&
+		len(metricTagBlacklist) == 0 && len(tagInclude) == 0 && len(tagExclude) == 0 {
+		return Config{}
+	}
+
+	return Config{
+		MetricWhitelist:    metricWhitelist,
+		MetricBlacklist:    metricBlacklist,
+		MetricTagWhitelist: metricTagWhitelist,
+		MetricTagBlacklist: metricTagBlacklist,
+		TagInclude:         tagInclude,
+		TagExclude:         tagExclude,
+	}
+}
+
+func FromConfig(cfg Config) Filter {
+	if cfg.Empty() {
+		return nil
+	}
+
+	metricWhitelist := cfg.MetricWhitelist
+	metricBlacklist := cfg.MetricBlacklist
+	metricTagWhitelist := cfg.MetricTagWhitelist
+	metricTagBlacklist := cfg.MetricTagBlacklist
+	tagInclude := cfg.TagInclude
+	tagExclude := cfg.TagExclude
 
 	if len(metricWhitelist) == 0 && len(metricBlacklist) == 0 && len(metricTagWhitelist) == 0 &&
 		len(metricTagBlacklist) == 0 && len(tagInclude) == 0 && len(tagExclude) == 0 {

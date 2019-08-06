@@ -50,25 +50,26 @@ maxProcs: 4
 sinks:
   # see the Wavefront sink section for details
 
-# Required: Source for collecting metrics from the stats summary API.
-kubernetes_source:
-  # see kubernetes_source for details
+sources:
+  # Required: Source for collecting metrics from the stats summary API.
+  kubernetes_source:
+    # see kubernetes_source for details
 
-# Optional source for emitting internal collector stats.
-internal_stats_source:
-  # see internal_stats_source for details
+  # Optional source for emitting internal collector stats.
+  internal_stats_source:
+    # see internal_stats_source for details
 
-# Optional list of prometheus sources.
-prometheus_sources:
-  # see prometheus_source for details
+  # Optional list of prometheus sources.
+  prometheus_sources:
+    # see prometheus_source for details
 
-# Optional list of telegraf sources.
-telegraf_sources:
-  # see telegraf_source for details
+  # Optional list of telegraf sources.
+  telegraf_sources:
+    # see telegraf_source for details
 
-# Optional source for collecting host level systemd unit metrics.
-systemd_source:
-  # see systemd_source for details
+  # Optional source for collecting host level systemd unit metrics.
+  systemd_source:
+    # see systemd_source for details
 
 # Optional list of auto-discovery rules.
 discovery_configs:

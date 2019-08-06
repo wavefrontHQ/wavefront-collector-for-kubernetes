@@ -1,10 +1,7 @@
 package utils
 
 import (
-	"net/url"
 	"testing"
-
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
 
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -14,10 +11,11 @@ func TestEncodeTags(t *testing.T) {
 	labels := make(map[string]string)
 	labels["a"] = "a"
 	labels["b"] = "b"
-	values := url.Values{}
-	EncodeTags(values, "label.", labels)
-	checkValues(values, "tag", "label.a:a", t)
-	checkValues(values, "tag", "label.b:b", t)
+
+	tags := make(map[string]string)
+	EncodeTags(tags, "label.", labels)
+	checkTag(tags, "label.a", "a", t)
+	checkTag(tags, "label.b", "b", t)
 }
 
 func TestEncodePod(t *testing.T) {
@@ -27,45 +25,10 @@ func TestEncodePod(t *testing.T) {
 			Namespace: "test-ns",
 		},
 	}
-	values := url.Values{}
-	EncodeMeta(values, "pod", pod.ObjectMeta)
-	checkValues(values, "tag", "pod:test", t)
-	checkValues(values, "tag", "namespace:test-ns", t)
-}
-
-func TestEncodeFilter(t *testing.T) {
-	values := url.Values{}
-	encodeFilter(values, filter.MetricWhitelist, []string{"foo*", "bar*"})
-	checkValues(values, filter.MetricWhitelist, "foo*", t)
-	checkValues(values, filter.MetricWhitelist, "bar*", t)
-}
-
-func TestEncodeFilterMap(t *testing.T) {
-	values := url.Values{}
-	encodeFilterMap(values, filter.MetricBlacklist, map[string][]string{
-		"env":     {"dev*", "staging*"},
-		"cluster": {"*west", "*east"},
-	})
-	checkValues(values, filter.MetricBlacklist, "env:[dev*,staging*]", t)
-	checkValues(values, filter.MetricBlacklist, "cluster:[*west,*east]", t)
-}
-
-func TestEncodeFilters(t *testing.T) {
-	values := url.Values{}
-	EncodeFilters(values, filter.Config{
-		MetricWhitelist:    []string{"kube.dns.http.*"},
-		MetricBlacklist:    []string{"kube.dns.probe.*"},
-		MetricTagWhitelist: map[string][]string{"env": {"prod*"}},
-		MetricTagBlacklist: map[string][]string{"env": {"dev*"}},
-		TagInclude:         []string{"cluster"},
-		TagExclude:         []string{"pod-template-hash"},
-	})
-	checkValue(values, filter.MetricWhitelist, "kube.dns.http.*", t)
-	checkValue(values, filter.MetricBlacklist, "kube.dns.probe.*", t)
-	checkValues(values, filter.MetricTagWhitelist, "env:[prod*]", t)
-	checkValues(values, filter.MetricTagBlacklist, "env:[dev*]", t)
-	checkValue(values, filter.TagInclude, "cluster", t)
-	checkValue(values, filter.TagExclude, "pod-template-hash", t)
+	tags := make(map[string]string)
+	EncodeMeta(tags, "pod", pod.ObjectMeta)
+	checkTag(tags, "pod", "test", t)
+	checkTag(tags, "namespace", "test-ns", t)
 }
 
 func TestParam(t *testing.T) {
@@ -89,21 +52,14 @@ func TestParam(t *testing.T) {
 	}
 }
 
-func checkValues(values url.Values, name, val string, t *testing.T) {
-	if len(values[name]) == 0 {
-		t.Errorf("missing %s", name)
+func checkTag(tags map[string]string, key, val string, t *testing.T) {
+	if len(tags) == 0 {
+		t.Error("missing tags")
 	}
-	tags := values[name]
-	for _, tag := range tags {
-		if tag == val {
+	if v, ok := tags[key]; ok {
+		if v == val {
 			return
 		}
 	}
-	t.Errorf("missing %s: %s", name, val)
-}
-
-func checkValue(values url.Values, name, val string, t *testing.T) {
-	if values.Get(name) != val {
-		t.Errorf("key:%s expected:%s actual:%s", name, val, values.Get(name))
-	}
+	t.Errorf("missing tag: %s", key)
 }

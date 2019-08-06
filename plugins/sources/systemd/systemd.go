@@ -19,10 +19,9 @@ package systemd
 import (
 	"fmt"
 	"github.com/wavefronthq/go-metrics-wavefront/reporting"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
 	"math"
-	"net/url"
 	"os"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -409,15 +408,10 @@ func (sp *systemdProvider) Name() string {
 	return "systemd_provider"
 }
 
-func NewProvider(uri *url.URL) (MetricsSourceProvider, error) {
-	vals := uri.Query()
+func NewProvider(cfg configuration.SystemdSourceConfig) (MetricsSourceProvider, error) {
+	prefix := configuration.GetStringValue(cfg.Prefix, "kubernetes.systemd.")
+	source := configuration.GetStringValue(cfg.Source, util.GetNodeName())
 
-	prefix := "kubernetes.systemd."
-	if len(vals["prefix"]) > 0 {
-		prefix = vals["prefix"][0]
-	}
-
-	source := util.GetNodeName()
 	if source == "" {
 		var err error
 		source, err = os.Hostname()
@@ -425,36 +419,12 @@ func NewProvider(uri *url.URL) (MetricsSourceProvider, error) {
 			source = "wavefront-kubernetes-collector"
 		}
 	}
+	collectTaskMetrics := cfg.IncludeTaskMetrics
+	collectStartTimeMetrics := cfg.IncludeStartTimeMetrics
+	collectRestartMetrics := cfg.IncludeRestartMetrics
 
-	collectTaskMetrics := true
-	if len(vals["taskMetrics"]) > 0 {
-		var err error
-		collectTaskMetrics, err = strconv.ParseBool(vals["taskMetrics"][0])
-		if err != nil {
-			log.Infof("error parsing taskMetrics property: %v", err)
-		}
-	}
-
-	collectStartTimeMetrics := true
-	if len(vals["startTimeMetrics"]) > 0 {
-		var err error
-		collectStartTimeMetrics, err = strconv.ParseBool(vals["startTimeMetrics"][0])
-		if err != nil {
-			log.Infof("error parsing startTimeMetrics property: %v", err)
-		}
-	}
-
-	collectRestartMetrics := false
-	if len(vals["restartMetrics"]) > 0 {
-		var err error
-		collectRestartMetrics, err = strconv.ParseBool(vals["restartMetrics"][0])
-		if err != nil {
-			log.Infof("error parsing restartMetrics property: %v", err)
-		}
-	}
-
-	unitsFilter := fromQuery(vals)
-	filters := filter.FromQuery(vals)
+	unitsFilter := fromConfig(cfg.UnitWhitelist, cfg.UnitBlacklist)
+	filters := filter.FromConfig(cfg.Filters)
 
 	pt := map[string]string{"type": "systemd"}
 	ppsKey := reporting.EncodeKey("source.points.collected", pt)

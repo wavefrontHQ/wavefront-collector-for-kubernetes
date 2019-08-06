@@ -2,12 +2,13 @@ package prometheus
 
 import (
 	"fmt"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/httputil"
-	"net/url"
 	"strings"
+	"time"
 
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery/utils"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/httputil"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
 
 	log "github.com/sirupsen/logrus"
@@ -35,29 +36,47 @@ func init() {
 
 type prometheusEncoder struct{}
 
-func (e prometheusEncoder) Encode(ip, kind string, meta metav1.ObjectMeta, cfg interface{}) url.Values {
-	values := url.Values{}
+func (e prometheusEncoder) Encode(ip, kind string, meta metav1.ObjectMeta, cfg interface{}) (interface{}, bool) {
+	if ip == "" {
+		log.Debugf("missing ip for %s=%s", kind, meta.Name)
+		return configuration.PrometheusSourceConfig{}, false
+	}
+
+	result := configuration.PrometheusSourceConfig{
+		Transforms: configuration.Transforms{
+			Tags: make(map[string]string),
+		},
+	}
 	rule := discovery.PluginConfig{}
+
 	discoveryType := "annotation"
 	if cfg != nil {
 		rule = cfg.(discovery.PluginConfig)
 		discoveryType = "rule"
 		collectionInterval := utils.Param(meta, collectionIntervalAnnotation, rule.Collection.Interval.String(), "0s")
-		values.Set("collectionInterval", collectionInterval)
 		timeout := utils.Param(meta, timeoutAnnotation, rule.Collection.Timeout.String(), "0s")
-		values.Set("timeout", timeout)
-	}
-	values.Set("discovered", discoveryType)
 
-	if ip == "" {
-		log.Debugf("missing ip for %s=%s", kind, meta.Name)
-		return url.Values{}
+		collectionDuration, err := time.ParseDuration(collectionInterval)
+		if err != nil {
+			log.Errorf("error parsing collection interval: %s %v", collectionInterval, err)
+			return result, false
+		}
+		timeoutDuration, err := time.ParseDuration(timeout)
+		if err != nil {
+			log.Errorf("error parsing timeout: %s %v", timeout, err)
+			return result, false
+		}
+		result.Collection = configuration.CollectionConfig{
+			Interval: collectionDuration,
+			Timeout:  timeoutDuration,
+		}
 	}
+	result.Discovered = discoveryType
 
 	scrape := utils.Param(meta, scrapeAnnotation, "", "false")
 	if rule.Name == "" && scrape != "true" {
 		log.Debugf("prometheus scrape=false for %s=%s", kind, meta.Name)
-		return url.Values{}
+		return result, false
 	}
 
 	scheme := utils.Param(meta, schemeAnnotation, rule.Scheme, "http")
@@ -73,45 +92,40 @@ func (e prometheusEncoder) Encode(ip, kind string, meta metav1.ObjectMeta, cfg i
 	name := discovery.ResourceName(kind, meta)
 	port = sanitizePort(meta.Name, port)
 
-	encodeBase(values, scheme, ip, port, path, name, source, prefix)
-	utils.EncodeMeta(values, kind, meta)
-	utils.EncodeTags(values, "", rule.Tags)
+	encodeBase(&result, scheme, ip, port, path, name, source, prefix)
+	utils.EncodeMeta(result.Tags, kind, meta)
+	utils.EncodeTags(result.Tags, "", rule.Tags)
 	if includeLabels == "true" {
-		utils.EncodeTags(values, "label.", meta.Labels)
+		utils.EncodeTags(result.Tags, "label.", meta.Labels)
 	}
-	utils.EncodeFilters(values, rule.Filters)
+	result.Filters = rule.Filters
 
-	err := encodeConf(values, rule.Conf)
+	err := encodeConf(&result, rule.Conf)
 	if err != nil {
-		return url.Values{}
+		return result, false
 	}
-	return values
+	return result, true
 }
 
-func encodeConf(values url.Values, conf string) error {
+func encodeConf(cfg *configuration.PrometheusSourceConfig, conf string) error {
 	if conf != "" {
 		httpConf, err := httputil.FromYAML([]byte(conf))
 		if err != nil {
 			return err
 		}
-		utils.EncodeHTTPConfig(values, httpConf)
+		cfg.HTTPClientConfig = httpConf
 	}
 	return nil
 }
 
-func encodeBase(values url.Values, scheme, ip, port, path, name, source, prefix string) {
+func encodeBase(cfg *configuration.PrometheusSourceConfig, scheme, ip, port, path, name, source, prefix string) {
 	if port != "" {
 		port = fmt.Sprintf(":%s", port)
 	}
-	values.Set("url", fmt.Sprintf("%s://%s%s%s", scheme, ip, port, path))
-	values.Add("name", name)
-
-	if source != "" {
-		values.Add("source", source)
-	}
-	if prefix != "" {
-		values.Add("prefix", prefix)
-	}
+	cfg.URL = fmt.Sprintf("%s://%s%s%s", scheme, ip, port, path)
+	cfg.Name = name
+	cfg.Source = source
+	cfg.Prefix = prefix
 }
 
 func sanitizePort(name, port string) string {

@@ -30,18 +30,43 @@ type Config struct {
 	// list of Wavefront sinks. At least 1 is required.
 	Sinks []*WavefrontSinkConfig `yaml:"sinks"`
 
-	//----- sources -----
+	// list of sources. SummarySource is mandatory. Others are optional.
+	Sources *SourceConfig `yaml:"sources"`
+
+	DiscoveryConfigs []discovery.PluginConfig `yaml:"discovery_configs"`
+
+	// Internal use only
+	Daemon bool `yaml:"-"`
+}
+
+// SourceConfig contains configuration for various sources
+type SourceConfig struct {
 	SummaryConfig     *SummaySourceConfig       `yaml:"kubernetes_source"`
 	PrometheusConfigs []*PrometheusSourceConfig `yaml:"prometheus_sources"`
 	TelegrafConfigs   []*TelegrafSourceConfig   `yaml:"telegraf_sources"`
 	SystemdConfig     *SystemdSourceConfig      `yaml:"systemd_source"`
 	StatsConfig       *StatsSourceConfig        `yaml:"internal_stats_source"`
+}
 
-	DiscoveryConfigs []discovery.PluginConfig `yaml:"discovery_configs"`
+// Transforms represents transformations that can be applied to metrics at sources or sinks
+type Transforms struct {
+	// The source to set for the metrics. Defaults to the name of the node on which the collector is running on.
+	Source string `yaml:"source"`
+
+	// The global prefix (dot suffixed) to be added for all metrics. Default prefix varies by source/sink.
+	Prefix string `yaml:"prefix"`
+
+	// Custom tags to include with metrics.
+	Tags map[string]string `yaml:"tags"`
+
+	// Filters to be applied prior to emitting the metrics to Wavefront.
+	Filters filter.Config `yaml:"filters"`
 }
 
 // Configuration options for the Wavefront sink
 type WavefrontSinkConfig struct {
+	Transforms `yaml:",inline"`
+
 	//  The Wavefront URL of the form https://YOUR_INSTANCE.wavefront.com. Only required for direct ingestion.
 	Server string `yaml:"server"`
 
@@ -51,15 +76,6 @@ type WavefrontSinkConfig struct {
 	// The Wavefront proxy service address of the form wavefront-proxy.default.svc.cluster.local:2878.
 	ProxyAddress string `yaml:"proxyAddress"`
 
-	// The global prefix (dot suffixed) to be added for all metrics. Defaults to empty string.
-	Prefix string `yaml:"prefix"`
-
-	// Custom tags to include with metrics reported by this sink.
-	Tags map[string]string `yaml:"tags"`
-
-	// Filters to be applied prior to emitting the metrics to Wavefront.
-	Filters filter.Config `yaml:"filters"`
-
 	// If set to true, metrics are emitted to stdout instead. Defaults to false.
 	TestMode bool `yaml:"testMode"`
 
@@ -68,12 +84,14 @@ type WavefrontSinkConfig struct {
 }
 
 type CollectionConfig struct {
-	Interval string `yaml:"interval"`
-	Timeout  string `yaml:"timeout"`
+	Interval time.Duration `yaml:"interval"`
+	Timeout  time.Duration `yaml:"timeout"`
 }
 
 // Configuration options for the Kubernetes summary source
 type SummaySourceConfig struct {
+	Transforms `yaml:",inline"`
+
 	Collection CollectionConfig `yaml:"collection"`
 
 	// Defaults to empty string.
@@ -96,19 +114,12 @@ type SummaySourceConfig struct {
 
 	// If not using inClusterConfig, this can be set to a valid kubeConfig file provided using a config map.
 	Auth string `yaml:"auth"`
-
-	// The global prefix (dot suffixed) to be added for all metrics. Defaults to "kubernetes.".
-	Prefix string `yaml:"prefix"`
-
-	// Custom tags to include with metrics reported by this sink.
-	Tags map[string]string `yaml:"tags"`
-
-	// Filters to be applied prior to emitting the metrics to Wavefront.
-	Filters filter.Config `yaml:"filters"`
 }
 
 // Configuration options for a Prometheus source
 type PrometheusSourceConfig struct {
+	Transforms `yaml:",inline"`
+
 	Collection CollectionConfig `yaml:"collection"`
 
 	// The URL for a Prometheus metrics endpoint. Kubernetes Service URLs work across namespaces.
@@ -117,18 +128,6 @@ type PrometheusSourceConfig struct {
 	// Optional HTTP client configuration.
 	HTTPClientConfig httputil.ClientConfig `yaml:"httpConfig"`
 
-	// The prefix (dot suffixed such as prom.) to be applied to all metrics for this source. Defaults to empty string.
-	Prefix string `yaml:"prefix"`
-
-	// The source to set for the metrics from this source. Defaults to prom_source.
-	Source string `yaml:"source"`
-
-	// Custom tags to include with metrics reported by this source, of the form tag=key1:val1&tag=key2:val2.
-	Tags map[string]string `yaml:"tags"`
-
-	// Filters to be applied to metrics collected by this source
-	Filters filter.Config `yaml:"filters"`
-
 	// internal use only
 	Discovered string `yaml:"-"`
 	Name       string `yaml:"-"`
@@ -136,19 +135,16 @@ type PrometheusSourceConfig struct {
 
 // Configuration options for a Telegraf source
 type TelegrafSourceConfig struct {
+	Transforms `yaml:",inline"`
+
 	Collection CollectionConfig `yaml:"collection"`
 
 	// the list of plugins to be enabled
 	Plugins []string `yaml:"plugins"`
 
-	// The prefix (dot suffixed) to be added for all metrics. Defaults to empty string.
-	Prefix string `yaml:"prefix"`
-
-	// Custom tags to include with metrics reported by this source.
-	Tags map[string]string `yaml:"tags"`
-
-	// Filters to be applied to metrics collected by this source
-	Filters filter.Config `yaml:"filters"`
+	// The configuration specific to a plugin provided in toml format: https://github.com/toml-lang/toml
+	// parsed using https://github.com/influxdata/toml
+	Conf string `yaml:"conf"`
 
 	// internal use only
 	Discovered string `yaml:"-"`
@@ -156,6 +152,8 @@ type TelegrafSourceConfig struct {
 }
 
 type SystemdSourceConfig struct {
+	Transforms `yaml:",inline"`
+
 	Collection CollectionConfig `yaml:"collection"`
 
 	IncludeTaskMetrics bool `yaml:"taskMetrics"`
@@ -167,26 +165,10 @@ type SystemdSourceConfig struct {
 	UnitWhitelist []string `yaml:"unitWhitelist"`
 
 	UnitBlacklist []string `yaml:"unitBlacklist"`
-
-	// The prefix (dot suffixed) to be added for all metrics. Defaults to empty string.
-	Prefix string `yaml:"prefix"`
-
-	// Custom tags to include with metrics reported by this source.
-	Tags map[string]string `yaml:"tags"`
-
-	// Filters to be applied to metrics collected by this source
-	Filters filter.Config `yaml:"filters"`
 }
 
 type StatsSourceConfig struct {
+	Transforms `yaml:",inline"`
+
 	Collection CollectionConfig `yaml:"collection"`
-
-	// The prefix (dot suffixed) to be added for all metrics. Defaults to "kubernetes.collector.".
-	Prefix string `yaml:"prefix"`
-
-	// Custom tags to include with metrics reported by this source.
-	Tags map[string]string `yaml:"tags"`
-
-	// Filters to be applied to metrics collected by this source.
-	Filters filter.Config `yaml:"filters"`
 }

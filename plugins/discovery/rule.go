@@ -3,6 +3,7 @@ package discovery
 import (
 	gm "github.com/rcrowley/go-metrics"
 	log "github.com/sirupsen/logrus"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
 )
@@ -10,14 +11,16 @@ import (
 // handles runtime changes to plugin rules
 type ruleHandler struct {
 	d          *discoverer
+	ph         metrics.ProviderHandler
 	daemon     bool
 	rulesCount gm.Gauge
 }
 
 // Gets a new rule handler that can handle runtime changes to plugin rules
-func newRuleHandler(d discovery.Discoverer, daemon bool) discovery.RuleHandler {
+func newRuleHandler(d discovery.Discoverer, ph metrics.ProviderHandler, daemon bool) discovery.RuleHandler {
 	rh := &ruleHandler{
 		d:          d.(*discoverer),
+		ph:         ph,
 		daemon:     daemon,
 		rulesCount: gm.GetOrRegisterGauge("discovery.rules.count", gm.DefaultRegistry),
 	}
@@ -87,7 +90,7 @@ func (rh *ruleHandler) internalHandle(plugin discovery.PluginConfig) error {
 	delegate, exists := rh.d.delegates[plugin.Name]
 	if !exists {
 		var err error
-		delegate, err = makeDelegate(plugin)
+		delegate, err = makeDelegate(rh.ph, plugin)
 		if err != nil {
 			return err
 		}
