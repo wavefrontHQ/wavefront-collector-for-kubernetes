@@ -24,13 +24,16 @@ sinks:
     - 'kube.dns.go.*'
     - 'kube.apiserver.go.*'
 
-    # Whitelist metrics that have an environment tag of production
+    # Whitelist metrics that have an environment tag of production or staging
     metricTagWhitelist:
-      env: 'prod*'
+      env:
+      - 'prod*'
+      - 'staging*'
 
     # Blacklist metrics that have an environment tag of test.
     metricTagBlacklist:
-      env: 'test*'
+      env:
+      - 'test*'
 ```
 
 Filtering applied on a source applies only to metrics collected by that source:
@@ -45,13 +48,16 @@ prometheus_sources:
       metricBlacklist:
       - 'prom.app.go.*'
 
-      # Whitelist metrics that have an environment tag of production
+      # Whitelist metrics that have an environment tag of production or staging
       metricTagWhitelist:
-        env: 'prod*'
+        env:
+        - 'prod*'
+        - 'staging*'
 
       # Blacklist metrics that have an environment tag of test.
       metricTagBlacklist:
-        env: 'test*'
+        env:
+        - 'test*'
 ```
 
 Filtering can also be specified within discovery rules, and only apply towards the metrics collected from the discovered targets:

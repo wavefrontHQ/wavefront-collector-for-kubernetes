@@ -186,11 +186,14 @@ filters:
 
   # Map of tag names to list of glob patterns. Only metrics containing tag keys and values matching the whitelist will be reported.
   metricTagWhitelist:
-    env: 'prod*'
+    env:
+    - 'prod*'
+    - 'staging*'
 
   # Map of tag names to list of glob patterns. Metrics containing blacklisted tag keys and values will be dropped.
   metricTagBlacklist:
-    env: 'test*'
+    env:
+    - 'test*'
 
   # List of glob patterns. Tags with matching keys will be included. All other tags will be excluded.
   tagInclude:

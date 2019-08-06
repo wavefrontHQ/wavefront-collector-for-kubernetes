@@ -16,6 +16,16 @@ sinks:
   tags:
     env: gcp-dev
     image: 0.9.9-rc3
+  filters:
+    metricWhitelist:
+    - 'kubernetes.node.*'
+
+    metricTagWhitelist:
+      nodename:
+      - 'gke-vikramr-cluster*wj2d'
+
+    tagInclude:
+    - 'nodename'
 
 sources:
   kubernetes_source:
