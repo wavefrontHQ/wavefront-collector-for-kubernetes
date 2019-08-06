@@ -127,8 +127,6 @@ var defaultPlugins = []string{"mem", "net", "netstat", "linux_sysctl_fs", "swap"
 
 // NewProvider creates a Telegraf source
 func NewProvider(cfg configuration.TelegrafSourceConfig) (metrics.MetricsSourceProvider, error) {
-	//TODO: validate this
-
 	prefix := configuration.GetStringValue(cfg.Prefix, "")
 	if len(prefix) > 0 {
 		prefix = strings.Trim(prefix, ".")

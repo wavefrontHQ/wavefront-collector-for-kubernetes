@@ -34,31 +34,8 @@ func main() {
 	logs.InitLogs()
 	defer logs.FlushLogs()
 
-	//TODO: fix this
-
-	//sinkManager := createAndInitSinksOrDie(opt.Sinks, opt.SinkExportDataTimeout)
-	//
-	//man, err := manager.NewFlushManager(nil, sinkManager, opt.MetricResolution)
-	//if err != nil {
-	//	log.Fatalf("Failed to create main manager: %v", err)
-	//}
-	//man.Start()
 	waitForStop()
 }
-
-//func createAndInitSinksOrDie(sinkAddresses flags.Uris, sinkExportDataTimeout time.Duration) metrics.DataSink {
-//	sinksFactory := sinks.NewSinkFactory()
-//	sinkList := sinksFactory.BuildAll(sinkAddresses)
-//
-//	for _, sink := range sinkList {
-//		log.Infof("Starting with %s", sink.Name())
-//	}
-//	sinkManager, err := sinks.NewDataSinkManager(sinkList, sinkExportDataTimeout, sinks.DefaultSinkStopTimeout)
-//	if err != nil {
-//		log.Fatalf("Failed to create sink manager: %v", err)
-//	}
-//	return sinkManager
-//}
 
 func waitForStop() {
 	select {}

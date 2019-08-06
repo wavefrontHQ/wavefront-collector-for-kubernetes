@@ -64,7 +64,6 @@ func getConfigOverrides(uri *url.URL) (*kubeClientCmd.ConfigOverrides, error) {
 }
 
 func getConfigOverridesFromConfig(cfg configuration.SummaySourceConfig) (*kubeClientCmd.ConfigOverrides, error) {
-	//TODO: validate this returns the same values as with flags
 	kubeConfigOverride := kubeClientCmd.ConfigOverrides{
 		ClusterInfo: kubeClientCmdApi.Cluster{},
 	}
@@ -89,7 +88,7 @@ func getConfigOverridesFromConfig(cfg configuration.SummaySourceConfig) (*kubeCl
 	return &kubeConfigOverride, nil
 }
 
-func GetKubeClientConfigFromConfig(cfg configuration.SummaySourceConfig) (*kube_rest.Config, error) {
+func GetKubeClientConfig(cfg configuration.SummaySourceConfig) (*kube_rest.Config, error) {
 	var (
 		kubeConfig *kube_rest.Config
 		err        error

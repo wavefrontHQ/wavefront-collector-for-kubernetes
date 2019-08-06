@@ -34,7 +34,6 @@ type Manager struct {
 }
 
 func NewDiscoveryManager(client kubernetes.Interface, plugins []discovery.PluginConfig, handler metrics.ProviderHandler, daemon bool) *Manager {
-	//TODO: validate discovery as added back ProviderHandler logic
 	mgr := &Manager{
 		daemon:     daemon,
 		kubeClient: client,

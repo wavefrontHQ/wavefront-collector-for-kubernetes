@@ -37,7 +37,7 @@ const (
 
 func GetKubeConfigs(cfg configuration.SummaySourceConfig) (*kube_client.Config, *KubeletClientConfig, error) {
 
-	kubeConfig, err := kube_config.GetKubeClientConfigFromConfig(cfg)
+	kubeConfig, err := kube_config.GetKubeClientConfig(cfg)
 	if err != nil {
 		return nil, nil, err
 	}

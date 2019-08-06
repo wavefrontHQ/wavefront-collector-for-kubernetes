@@ -1,10 +1,32 @@
 package filter
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
+
+func TestFromConfig(t *testing.T) {
+	f := FromConfig(Config{})
+	assert.Equal(t, nil, f)
+
+	f = FromConfig(Config{
+		MetricWhitelist:    []string{"foo*", "bar*"},
+		MetricTagBlacklist: map[string][]string{"env": {"dev*", "test*"}},
+	})
+
+	gf, ok := f.(*globFilter)
+	assert.True(t, ok)
+
+	assert.Nil(t, gf.metricBlacklist)
+	assert.Nil(t, gf.metricTagWhitelist)
+	assert.Nil(t, gf.tagInclude)
+	assert.Nil(t, gf.tagExclude)
+}
 
 func TestFromQuery(t *testing.T) {
 	vals := make(map[string][]string)
-	if FromQuery(vals) != nil {
+	if !FromQuery(vals).Empty() {
 		t.Errorf("error creating filter")
 	}
 	vals[MetricWhitelist] = []string{"foo*", "bar*"}
@@ -14,10 +36,13 @@ func TestFromQuery(t *testing.T) {
 	vals[TagInclude] = []string{"key1*", "key2*"}
 	vals[TagExclude] = []string{"key3*", "key4*"}
 
-	f := FromQuery(vals)
-	if f == nil {
+	cfg := FromQuery(vals)
+	if cfg.Empty() {
 		t.Errorf("error creating filter")
 	}
+
+	f := FromConfig(cfg)
+
 	gf, ok := f.(*globFilter)
 	if !ok {
 		t.Errorf("error creating filter")

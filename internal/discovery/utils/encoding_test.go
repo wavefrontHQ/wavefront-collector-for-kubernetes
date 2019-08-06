@@ -1,10 +1,7 @@
 package utils
 
 import (
-	"net/url"
 	"testing"
-
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
 
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -32,41 +29,6 @@ func TestEncodePod(t *testing.T) {
 	EncodeMeta(tags, "pod", pod.ObjectMeta)
 	checkTag(tags, "pod", "test", t)
 	checkTag(tags, "namespace", "test-ns", t)
-}
-
-func TestEncodeFilter(t *testing.T) {
-	values := url.Values{}
-	encodeFilter(values, filter.MetricWhitelist, []string{"foo*", "bar*"})
-	checkValues(values, filter.MetricWhitelist, "foo*", t)
-	checkValues(values, filter.MetricWhitelist, "bar*", t)
-}
-
-func TestEncodeFilterMap(t *testing.T) {
-	values := url.Values{}
-	encodeFilterMap(values, filter.MetricBlacklist, map[string][]string{
-		"env":     {"dev*", "staging*"},
-		"cluster": {"*west", "*east"},
-	})
-	checkValues(values, filter.MetricBlacklist, "env:[dev*,staging*]", t)
-	checkValues(values, filter.MetricBlacklist, "cluster:[*west,*east]", t)
-}
-
-func TestEncodeFilters(t *testing.T) {
-	values := url.Values{}
-	EncodeFilters(values, filter.Config{
-		MetricWhitelist:    []string{"kube.dns.http.*"},
-		MetricBlacklist:    []string{"kube.dns.probe.*"},
-		MetricTagWhitelist: map[string][]string{"env": {"prod*"}},
-		MetricTagBlacklist: map[string][]string{"env": {"dev*"}},
-		TagInclude:         []string{"cluster"},
-		TagExclude:         []string{"pod-template-hash"},
-	})
-	checkValue(values, filter.MetricWhitelist, "kube.dns.http.*", t)
-	checkValue(values, filter.MetricBlacklist, "kube.dns.probe.*", t)
-	checkValues(values, filter.MetricTagWhitelist, "env:[prod*]", t)
-	checkValues(values, filter.MetricTagBlacklist, "env:[dev*]", t)
-	checkValue(values, filter.TagInclude, "cluster", t)
-	checkValue(values, filter.TagExclude, "pod-template-hash", t)
 }
 
 func TestParam(t *testing.T) {
@@ -100,23 +62,4 @@ func checkTag(tags map[string]string, key, val string, t *testing.T) {
 		}
 	}
 	t.Errorf("missing tag: %s", key)
-}
-
-func checkValues(values url.Values, name, val string, t *testing.T) {
-	if len(values[name]) == 0 {
-		t.Errorf("missing %s", name)
-	}
-	tags := values[name]
-	for _, tag := range tags {
-		if tag == val {
-			return
-		}
-	}
-	t.Errorf("missing %s: %s", name, val)
-}
-
-func checkValue(values url.Values, name, val string, t *testing.T) {
-	if values.Get(name) != val {
-		t.Errorf("key:%s expected:%s actual:%s", name, val, values.Get(name))
-	}
 }

@@ -409,7 +409,6 @@ func (sp *systemdProvider) Name() string {
 }
 
 func NewProvider(cfg configuration.SystemdSourceConfig) (MetricsSourceProvider, error) {
-	//TODO: validate this
 	prefix := configuration.GetStringValue(cfg.Prefix, "kubernetes.systemd.")
 	source := configuration.GetStringValue(cfg.Source, util.GetNodeName())
 

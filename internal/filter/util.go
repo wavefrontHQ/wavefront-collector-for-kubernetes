@@ -5,10 +5,9 @@ import (
 	"strings"
 )
 
-func FromQuery(vals map[string][]string) Filter {
-	//TODO: can be deleted
+func FromQuery(vals map[string][]string) Config {
 	if len(vals) == 0 {
-		return nil
+		return Config{}
 	}
 
 	metricWhitelist := vals[MetricWhitelist]
@@ -20,21 +19,20 @@ func FromQuery(vals map[string][]string) Filter {
 
 	if len(metricWhitelist) == 0 && len(metricBlacklist) == 0 && len(metricTagWhitelist) == 0 &&
 		len(metricTagBlacklist) == 0 && len(tagInclude) == 0 && len(tagExclude) == 0 {
-		return nil
+		return Config{}
 	}
 
-	return NewGlobFilter(Config{
+	return Config{
 		MetricWhitelist:    metricWhitelist,
 		MetricBlacklist:    metricBlacklist,
 		MetricTagWhitelist: metricTagWhitelist,
 		MetricTagBlacklist: metricTagBlacklist,
 		TagInclude:         tagInclude,
 		TagExclude:         tagExclude,
-	})
+	}
 }
 
 func FromConfig(cfg Config) Filter {
-	//TODO: unit tests
 	if cfg.Empty() {
 		return nil
 	}

@@ -112,7 +112,7 @@ func (sm *sourceManagerImpl) SetDefaultCollectionInterval(defaultCollectionInter
 	sm.defaultCollectionInterval = defaultCollectionInterval
 }
 
-// AddProvider register and start a new goMetricsSourceProvider
+// AddProvider register and start a new MetricsSourceProvider
 func (sm *sourceManagerImpl) AddProvider(provider metrics.MetricsSourceProvider) {
 	name := provider.Name()
 
@@ -123,7 +123,8 @@ func (sm *sourceManagerImpl) AddProvider(provider metrics.MetricsSourceProvider)
 	}).Info("Adding provider")
 
 	if _, found := sm.metricsSourceProviders[name]; found {
-		log.Fatalf("Error on 'SourceManager.AddProvider' Duplicate Metrics Source Provider name: '%s'", name)
+		log.WithField("name", name).Info("deleting existing provider")
+		sm.DeleteProvider(name)
 	}
 
 	sm.metricsSourcesMtx.Lock()
@@ -254,7 +255,6 @@ func (sm *sourceManagerImpl) GetPendingMetrics() []*metrics.DataBatch {
 }
 
 func buildProviders(cfg configuration.SourceConfig) []metrics.MetricsSourceProvider {
-	//TODO: validate this
 	result := make([]metrics.MetricsSourceProvider, 0)
 
 	if cfg.SummaryConfig != nil {

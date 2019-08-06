@@ -268,10 +268,12 @@ func (src *prometheusMetricsSource) buildTags(m *dto.Metric) string {
 func encodeLabelTags(labels []*dto.LabelPair, buf *bytes.Buffer) {
 	if len(labels) >= 0 {
 		for _, label := range labels {
-			buf.WriteString(" ")
-			buf.WriteString(url.QueryEscape(label.GetName()))
-			buf.WriteString("=")
-			buf.WriteString(url.QueryEscape(label.GetValue()))
+			if label.GetName() != "" && label.GetValue() != "" {
+				buf.WriteString(" ")
+				buf.WriteString(url.QueryEscape(label.GetName()))
+				buf.WriteString("=")
+				buf.WriteString(url.QueryEscape(label.GetValue()))
+			}
 		}
 	}
 }
@@ -323,8 +325,6 @@ func (p *prometheusProvider) Name() string {
 const providerName = "prometheus_metrics_provider"
 
 func NewPrometheusProvider(cfg configuration.PrometheusSourceConfig) (metrics.MetricsSourceProvider, error) {
-	///TODO: validate this
-
 	if len(cfg.URL) == 0 {
 		return nil, fmt.Errorf("missing prometheus url")
 	}

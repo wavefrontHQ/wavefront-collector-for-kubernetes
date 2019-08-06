@@ -149,9 +149,6 @@ func (sink *wavefrontSink) ExportData(batch *metrics.DataBatch) {
 }
 
 func NewWavefrontSink(cfg configuration.WavefrontSinkConfig) (metrics.DataSink, error) {
-	//TODO: remove
-	log.Debugf("sink clusterName: %s", cfg.ClusterName)
-
 	storage := &wavefrontSink{
 		ClusterName: configuration.GetStringValue(cfg.ClusterName, "k8s-cluster"),
 		testMode:    cfg.TestMode,

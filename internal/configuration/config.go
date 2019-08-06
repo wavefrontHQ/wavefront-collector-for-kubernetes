@@ -34,6 +34,9 @@ type Config struct {
 	Sources *SourceConfig `yaml:"sources"`
 
 	DiscoveryConfigs []discovery.PluginConfig `yaml:"discovery_configs"`
+
+	// Internal use only
+	Daemon bool `yaml:"-"`
 }
 
 // SourceConfig contains configuration for various sources

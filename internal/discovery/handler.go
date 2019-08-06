@@ -87,7 +87,6 @@ func (d *defaultHandler) DeleteMissing(input map[string]bool) {
 }
 
 func (d *defaultHandler) Handle(resource Resource, rule interface{}) {
-	//TODO: validate discovery
 	kind := resource.Kind
 	ip := resource.IP
 	meta := resource.Meta

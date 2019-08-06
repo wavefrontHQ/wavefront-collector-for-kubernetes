@@ -76,7 +76,7 @@ func main() {
 	preRegister(opt)
 	cfg := loadConfigOrDie(opt.ConfigFile)
 	cfg = convertOrDie(opt, cfg)
-	ag := createAgentOrDie(opt, cfg)
+	ag := createAgentOrDie(cfg)
 	registerListeners(ag, opt)
 	waitForStop()
 }
@@ -97,30 +97,16 @@ func preRegister(opt *options.CollectorRunOptions) {
 	registerVersion()
 }
 
-func createAgentOrDie(opt *options.CollectorRunOptions, cfg *configuration.Config) *agent.Agent {
+func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 	// when invoked from cfg reloads original command flags will be missing
 	// always read from the environment variable
-	opt.Daemon = os.Getenv(util.DaemonModeEnvVar) != ""
+	cfg.Daemon = os.Getenv(util.DaemonModeEnvVar) != ""
 
-	clusterName := ""
-	var plugins []discConfig.PluginConfig
-	var defaultCollectionInterval time.Duration
-	var flushInterval time.Duration
-
-	// if config is missing we will use the flags provided
-	if cfg != nil {
-		clusterName = resolveClusterName(cfg.ClusterName, opt)
-		plugins = cfg.DiscoveryConfigs
-		defaultCollectionInterval = cfg.DefaultCollectionInterval
-		flushInterval = cfg.FlushInterval
-	} else {
-		defaultCollectionInterval = opt.MetricResolution
-		flushInterval = opt.MetricResolution
-	}
+	clusterName := cfg.ClusterName
 
 	// create sources manager
 	sourceManager := sources.Manager()
-	sourceManager.SetDefaultCollectionInterval(defaultCollectionInterval)
+	sourceManager.SetDefaultCollectionInterval(cfg.DefaultCollectionInterval)
 	err := sourceManager.BuildProviders(*cfg.Sources)
 	if err != nil {
 		log.Fatalf("Failed to create source manager: %v", err)
@@ -136,10 +122,10 @@ func createAgentOrDie(opt *options.CollectorRunOptions, cfg *configuration.Confi
 
 	// create discovery manager
 	handler := sourceManager.(metrics.ProviderHandler)
-	dm := createDiscoveryManagerOrDie(kubeClient, plugins, handler, opt)
+	dm := createDiscoveryManagerOrDie(kubeClient, cfg, handler)
 
 	// create uber manager
-	man, err := manager.NewFlushManager(dataProcessors, sinkManager, flushInterval)
+	man, err := manager.NewFlushManager(dataProcessors, sinkManager, cfg.FlushInterval)
 	if err != nil {
 		log.Fatalf("Failed to create main manager: %v", err)
 	}
@@ -186,20 +172,22 @@ func fillDefaults(cfg *configuration.Config) {
 	}
 }
 
+// converts flags to configuration for backwards compatibility support
 func convertOrDie(opt *options.CollectorRunOptions, cfg *configuration.Config) *configuration.Config {
 	// omit flags if config file is provided
 	if cfg != nil {
 		log.Info("using configuration file, omitting flags")
-
 		for _, sink := range cfg.Sinks {
 			log.Infof("using clusterName: %s", cfg.ClusterName)
 			sink.ClusterName = cfg.ClusterName
 		}
 		return cfg
 	}
-	//TODO: convert opts to configuration and return
-	handleBackwardsCompatibility(opt)
-	return cfg
+	optsCfg, err := opt.Convert()
+	if err != nil {
+		log.Fatalf("error converting flags to config: %v", err)
+	}
+	return optsCfg
 }
 
 func registerListeners(ag *agent.Agent, opt *options.CollectorRunOptions) {
@@ -216,14 +204,9 @@ func registerListeners(ag *agent.Agent, opt *options.CollectorRunOptions) {
 	}
 }
 
-func createDiscoveryManagerOrDie(client *kube_client.Clientset, plugins []discConfig.PluginConfig, handler metrics.ProviderHandler,
-	opt *options.CollectorRunOptions) *discovery.Manager {
-	if opt.EnableDiscovery {
-		// backwards compatibility, discovery config was a separate file
-		if len(plugins) == 0 && opt.DiscoveryConfigFile != "" {
-			plugins = loadDiscoveryFileOrDie(opt.DiscoveryConfigFile)
-		}
-		return discovery.NewDiscoveryManager(client, plugins, handler, opt.Daemon)
+func createDiscoveryManagerOrDie(client *kube_client.Clientset, cfg *configuration.Config, handler metrics.ProviderHandler) *discovery.Manager {
+	if cfg.EnableDiscovery {
+		return discovery.NewDiscoveryManager(client, cfg.DiscoveryConfigs, handler, cfg.Daemon)
 	}
 	return nil
 }
@@ -262,7 +245,7 @@ func getPodListerOrDie(kubeClient *kube_client.Clientset) v1listers.PodLister {
 }
 
 func createKubeClientOrDie(cfg configuration.SummaySourceConfig) *kube_client.Clientset {
-	kubeConfig, err := kube_config.GetKubeClientConfigFromConfig(cfg)
+	kubeConfig, err := kube_config.GetKubeClientConfig(cfg)
 	if err != nil {
 		log.Fatalf("Failed to get client config: %v", err)
 	}
@@ -422,13 +405,7 @@ func (r *reloader) handleCollectorCfg(cfg *configuration.Config) {
 
 	fillDefaults(cfg)
 
-	opt, err := cfg.Convert()
-	if err != nil {
-		log.Errorf("configuration error: %v", err)
-		return
-	}
-
 	// stop the previous agent and start a new agent
 	r.ag.Stop()
-	r.ag = createAgentOrDie(opt, cfg)
+	r.ag = createAgentOrDie(cfg)
 }

@@ -31,8 +31,6 @@ func NewPointConverter(cfg configuration.SummaySourceConfig, cluster string) (me
 		cluster = "k8s-cluster"
 	}
 
-	//TODO: validate this works
-
 	pt := map[string]string{"type": "kubernetes.summary_api"}
 	return &pointConverter{
 		cluster:         cluster,
