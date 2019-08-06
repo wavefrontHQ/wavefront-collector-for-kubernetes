@@ -18,7 +18,6 @@ func (opts *CollectorRunOptions) Convert() (*configuration.Config, error) {
 	cfg.DefaultCollectionInterval = opts.MetricResolution
 	cfg.FlushInterval = opts.MetricResolution
 	cfg.SinkExportDataTimeout = opts.SinkExportDataTimeout
-	cfg.MaxProcs = opts.MaxProcs
 	cfg.EnableDiscovery = opts.EnableDiscovery
 	cfg.Daemon = opts.Daemon
 

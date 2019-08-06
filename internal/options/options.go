@@ -15,10 +15,10 @@ type CollectorRunOptions struct {
 	Daemon          bool
 	ConfigFile      string
 	LogLevel        string
+	MaxProcs        int
 
 	// deprecated flags
 	MetricResolution      time.Duration
-	MaxProcs              int
 	Sources               flags.Uris
 	Sinks                 flags.Uris
 	SinkExportDataTimeout time.Duration
@@ -40,12 +40,11 @@ func (opts *CollectorRunOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&opts.Daemon, "daemon", false, "enable daemon mode")
 	fs.StringVar(&opts.ConfigFile, "config_file", "", "required configuration file")
 	fs.StringVar(&opts.LogLevel, "log_level", "info", "one of info, debug or trace")
+	fs.IntVar(&opts.MaxProcs, "max_procs", 0, "max number of CPUs that can be used simultaneously. Less than 1 for default (number of cores)")
 
 	// deprecated flags
 	fs.DurationVar(&opts.MetricResolution, "metric_resolution", 60*time.Second, "The resolution at which the collector will collect metrics")
 	fs.MarkDeprecated("metric_resolution", "set defaultCollectionInterval in configuration file")
-	fs.IntVar(&opts.MaxProcs, "max_procs", 0, "max number of CPUs that can be used simultaneously. Less than 1 for default (number of cores)")
-	fs.MarkDeprecated("max_procs", "set maxProcs in configuration file")
 	fs.Var(&opts.Sources, "source", "source(s) to watch")
 	fs.MarkDeprecated("source", "set sources in configuration file")
 	fs.Var(&opts.Sinks, "sink", "external sink(s) that receive data")

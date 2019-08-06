@@ -18,8 +18,6 @@ type Config struct {
 	// the timeout for sinks to export data to Wavefront. Defaults to 20 seconds.
 	SinkExportDataTimeout time.Duration `yaml:"sinkExportDataTimeout"`
 
-	MaxProcs int `yaml:"maxProcs"`
-
 	// whether auto-discovery is enabled.
 	EnableDiscovery bool `yaml:"enableDiscovery"`
 

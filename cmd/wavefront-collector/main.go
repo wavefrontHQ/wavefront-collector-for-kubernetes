@@ -113,6 +113,7 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 	}
 
 	// create sink managers
+	setClusterNameOnSinks(clusterName, cfg.Sinks)
 	sinkManager := createSinkManagerOrDie(cfg.Sinks, cfg.SinkExportDataTimeout)
 
 	// create data processors
@@ -177,10 +178,6 @@ func convertOrDie(opt *options.CollectorRunOptions, cfg *configuration.Config) *
 	// omit flags if config file is provided
 	if cfg != nil {
 		log.Info("using configuration file, omitting flags")
-		for _, sink := range cfg.Sinks {
-			log.Infof("using clusterName: %s", cfg.ClusterName)
-			sink.ClusterName = cfg.ClusterName
-		}
 		return cfg
 	}
 	optsCfg, err := opt.Convert()
@@ -188,6 +185,13 @@ func convertOrDie(opt *options.CollectorRunOptions, cfg *configuration.Config) *
 		log.Fatalf("error converting flags to config: %v", err)
 	}
 	return optsCfg
+}
+
+func setClusterNameOnSinks(clusterName string, sinks []*configuration.WavefrontSinkConfig) {
+	log.Infof("using clusterName: %s", clusterName)
+	for _, sink := range sinks {
+		sink.ClusterName = clusterName
+	}
 }
 
 func registerListeners(ag *agent.Agent, opt *options.CollectorRunOptions) {
