@@ -18,6 +18,8 @@
 package util
 
 import (
+	"fmt"
+	"net"
 	"os"
 	"sync"
 	"time"
@@ -27,7 +29,7 @@ import (
 	kube_api "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/util/wait"
-	kube_client "k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes"
 	v1listers "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/tools/cache"
 )
@@ -46,7 +48,7 @@ var (
 	nsStore    cache.Store
 )
 
-func GetNodeLister(kubeClient *kube_client.Clientset) (v1listers.NodeLister, *cache.Reflector, error) {
+func GetNodeLister(kubeClient kubernetes.Interface) (v1listers.NodeLister, *cache.Reflector, error) {
 	lock.Lock()
 	defer lock.Unlock()
 
@@ -64,7 +66,7 @@ func GetNodeLister(kubeClient *kube_client.Clientset) (v1listers.NodeLister, *ca
 	return nodeLister, reflector, nil
 }
 
-func GetPodLister(kubeClient *kube_client.Clientset) (v1listers.PodLister, error) {
+func GetPodLister(kubeClient kubernetes.Interface) (v1listers.PodLister, error) {
 	lock.Lock()
 	defer lock.Unlock()
 
@@ -82,7 +84,7 @@ func GetPodLister(kubeClient *kube_client.Clientset) (v1listers.PodLister, error
 	return podLister, nil
 }
 
-func GetServiceLister(kubeClient *kube_client.Clientset) (v1listers.ServiceLister, error) {
+func GetServiceLister(kubeClient kubernetes.Interface) (v1listers.ServiceLister, error) {
 	lw := cache.NewListWatchFromClient(kubeClient.CoreV1().RESTClient(), "services", kube_api.NamespaceAll, fields.Everything())
 	store := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc})
 	serviceLister := v1listers.NewServiceLister(store)
@@ -91,7 +93,7 @@ func GetServiceLister(kubeClient *kube_client.Clientset) (v1listers.ServiceListe
 	return serviceLister, nil
 }
 
-func GetNamespaceStore(kubeClient *kube_client.Clientset) cache.Store {
+func GetNamespaceStore(kubeClient kubernetes.Interface) cache.Store {
 	lock.Lock()
 	defer lock.Unlock()
 
@@ -134,4 +136,30 @@ func GetNodeName() string {
 
 func GetNamespaceName() string {
 	return os.Getenv(NamespaceNameEnvVar)
+}
+
+func GetNodeHostnameAndIP(node *kube_api.Node) (string, net.IP, error) {
+	for _, c := range node.Status.Conditions {
+		if c.Type == kube_api.NodeReady && c.Status != kube_api.ConditionTrue {
+			return "", nil, fmt.Errorf("node %v is not ready", node.Name)
+		}
+	}
+	hostname, ip := node.Name, ""
+	for _, addr := range node.Status.Addresses {
+		if addr.Type == kube_api.NodeHostName && addr.Address != "" {
+			hostname = addr.Address
+		}
+		if addr.Type == kube_api.NodeInternalIP && addr.Address != "" {
+			if net.ParseIP(addr.Address) != nil {
+				ip = addr.Address
+			}
+		}
+		if addr.Type == kube_api.NodeExternalIP && addr.Address != "" && ip == "" {
+			ip = addr.Address
+		}
+	}
+	if parsedIP := net.ParseIP(ip); parsedIP != nil {
+		return hostname, parsedIP, nil
+	}
+	return "", nil, fmt.Errorf("node %v has no valid hostname and/or IP address: %v %v", node.Name, hostname, ip)
 }

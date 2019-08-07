@@ -1,11 +1,16 @@
 package discovery
 
 import (
+	"fmt"
 	gm "github.com/rcrowley/go-metrics"
 	log "github.com/sirupsen/logrus"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 )
 
 // handles runtime changes to plugin rules
@@ -13,15 +18,19 @@ type ruleHandler struct {
 	d          *discoverer
 	ph         metrics.ProviderHandler
 	daemon     bool
+	kubeClient kubernetes.Interface
+	lister     discovery.ResourceLister
 	rulesCount gm.Gauge
 }
 
 // Gets a new rule handler that can handle runtime changes to plugin rules
-func newRuleHandler(d discovery.Discoverer, ph metrics.ProviderHandler, daemon bool) discovery.RuleHandler {
+func newRuleHandler(d discovery.Discoverer, cfg RunConfig) discovery.RuleHandler {
 	rh := &ruleHandler{
 		d:          d.(*discoverer),
-		ph:         ph,
-		daemon:     daemon,
+		ph:         cfg.Handler,
+		daemon:     cfg.Daemon,
+		kubeClient: cfg.KubeClient,
+		lister:     cfg.Lister,
 		rulesCount: gm.GetOrRegisterGauge("discovery.rules.count", gm.DefaultRegistry),
 	}
 	count := int64(len(rh.d.delegates))
@@ -40,7 +49,7 @@ func (rh *ruleHandler) HandleAll(plugins []discovery.PluginConfig) error {
 	}
 	for name := range rh.d.delegates {
 		if _, exists := rules[name]; !exists {
-			log.Infof("deleting discovery rule %s", name)
+			log.WithField("name", name).Info("deleting discovery rule")
 			rh.internalDelete(name)
 		}
 	}
@@ -49,7 +58,11 @@ func (rh *ruleHandler) HandleAll(plugins []discovery.PluginConfig) error {
 	for _, rule := range plugins {
 		err := rh.internalHandle(rule)
 		if err != nil {
-			log.Errorf("error processing rule=%s type=%s err=%v", rule.Name, rule.Type, err)
+			log.WithFields(log.Fields{
+				"error": err,
+				"name":  rule.Name,
+				"type":  rule.Type,
+			}).Error("error processing rule")
 		}
 	}
 	rh.rulesCount.Update(int64(len(plugins)))
@@ -104,6 +117,10 @@ func (rh *ruleHandler) internalHandle(plugin discovery.PluginConfig) error {
 		delegate.filter = filter
 		delegate.plugin = plugin
 	}
+
+	if plugin.Selectors.ResourceType == discovery.NodeType.String() {
+		return rh.discoverNodeEndpoint(plugin, delegate.handler)
+	}
 	return nil
 }
 
@@ -114,4 +131,33 @@ func (rh *ruleHandler) internalDelete(name string) {
 		delegate.handler.DeleteMissing(nil)
 		delete(rh.d.delegates, name)
 	}
+}
+
+func (rh *ruleHandler) discoverNodeEndpoint(plugin discovery.PluginConfig, handler discovery.TargetHandler) error {
+	nodes, err := rh.lister.ListNodes()
+	if err != nil {
+		return fmt.Errorf("error listing nodes: %v", err)
+	}
+
+	count := len(nodes)
+	if count != 1 {
+		// node based discovery not supported in non-daemonset mode
+		return fmt.Errorf("invalid number of nodes found: %d", count)
+	}
+
+	_, ip, err := util.GetNodeHostnameAndIP(nodes[0])
+	if err != nil {
+		return fmt.Errorf("error getting node IP: %v", err)
+	}
+
+	//TODO: probe if the node:port is reachable
+
+	resource := discovery.Resource{
+		Kind: discovery.NodeType.String(),
+		IP:   ip.String(),
+		Meta: metav1.ObjectMeta{Name: util.GetNodeName()},
+	}
+	handler.Handle(resource, plugin)
+
+	return nil
 }

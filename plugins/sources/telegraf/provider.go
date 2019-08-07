@@ -60,7 +60,7 @@ func newTelegrafPluginSource(name string, plugin telegraf.Input, prefix string, 
 func extractTags(tags map[string]string, name, discovered string) map[string]string {
 	result := make(map[string]string)
 	for k, v := range tags {
-		if k == "pod" || k == "service" || k == "namespace" {
+		if k == "pod" || k == "service" || k == "namespace" || k == "node" {
 			result[k] = v
 		}
 	}

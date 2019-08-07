@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	_ "net/http/pprof"
-	"net/url"
 	"os"
 	"runtime"
 	"strconv"
@@ -19,7 +18,6 @@ import (
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/agent"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
 	discConfig "github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/flags"
 	kube_config "github.com/wavefronthq/wavefront-kubernetes-collector/internal/kubernetes"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/options"
@@ -123,7 +121,7 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 
 	// create discovery manager
 	handler := sourceManager.(metrics.ProviderHandler)
-	dm := createDiscoveryManagerOrDie(kubeClient, cfg, handler)
+	dm := createDiscoveryManagerOrDie(kubeClient, cfg, handler, podLister)
 
 	// create uber manager
 	man, err := manager.NewFlushManager(dataProcessors, sinkManager, cfg.FlushInterval)
@@ -171,6 +169,9 @@ func fillDefaults(cfg *configuration.Config) {
 	if cfg.ClusterName == "" {
 		cfg.ClusterName = "k8s-cluster"
 	}
+	if cfg.DiscoveryInterval == 0 {
+		cfg.DiscoveryInterval = 10 * time.Minute
+	}
 }
 
 // converts flags to configuration for backwards compatibility support
@@ -208,9 +209,21 @@ func registerListeners(ag *agent.Agent, opt *options.CollectorRunOptions) {
 	}
 }
 
-func createDiscoveryManagerOrDie(client *kube_client.Clientset, cfg *configuration.Config, handler metrics.ProviderHandler) *discovery.Manager {
+func createDiscoveryManagerOrDie(client *kube_client.Clientset, cfg *configuration.Config,
+	handler metrics.ProviderHandler, podLister v1listers.PodLister) *discovery.Manager {
+
 	if cfg.EnableDiscovery {
-		return discovery.NewDiscoveryManager(client, cfg.DiscoveryConfigs, handler, cfg.Daemon)
+		serviceLister := getServiceListerOrDie(client)
+		nodeLister := getNodeListerOrDie(client)
+
+		return discovery.NewDiscoveryManager(discovery.RunConfig{
+			KubeClient:   client,
+			Plugins:      cfg.DiscoveryConfigs,
+			Handler:      handler,
+			Daemon:       cfg.Daemon,
+			Lister:       discovery.NewResourceLister(podLister, serviceLister, nodeLister),
+			SyncInterval: cfg.DiscoveryInterval,
+		})
 	}
 	return nil
 }
@@ -328,14 +341,20 @@ func createDataProcessorsOrDie(kubeClient *kube_client.Clientset, cluster string
 	return dataProcessors
 }
 
-// Gets the address of the wavefront sink from the list of sink URIs.
-func getWavefrontAddress(args flags.Uris) (*url.URL, error) {
-	for _, uri := range args {
-		if uri.Key == "wavefront" {
-			return &uri.Val, nil
-		}
+func getServiceListerOrDie(kubeClient *kube_client.Clientset) v1listers.ServiceLister {
+	serviceLister, err := util.GetServiceLister(kubeClient)
+	if err != nil {
+		log.Fatalf("Failed to create serviceLister: %v", err)
 	}
-	return nil, fmt.Errorf("no wavefront sink found")
+	return serviceLister
+}
+
+func getNodeListerOrDie(kubeClient *kube_client.Clientset) v1listers.NodeLister {
+	nodeLister, _, err := util.GetNodeLister(kubeClient)
+	if err != nil {
+		log.Fatalf("Failed to create nodeLister: %v", err)
+	}
+	return nodeLister
 }
 
 func validateCfg(cfg *configuration.Config) error {

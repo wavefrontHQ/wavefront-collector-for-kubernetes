@@ -79,7 +79,7 @@ func NewPrometheusMetricsSource(metricsURL, prefix, source, discovered string, t
 func extractTags(tags map[string]string, discovered, metricsURL string) map[string]string {
 	result := make(map[string]string)
 	for k, v := range tags {
-		if k == "pod" || k == "service" || k == "apiserver" || k == "namespace" {
+		if k == "pod" || k == "service" || k == "apiserver" || k == "namespace" || k == "node" {
 			result[k] = v
 		}
 	}

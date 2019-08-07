@@ -15,10 +15,9 @@ const (
 type ResourceType int
 
 const (
-	PodType       ResourceType = 1
-	ServiceType   ResourceType = 2
-	IngressType   ResourceType = 3
-	ApiServerType ResourceType = 4
+	PodType     ResourceType = 1
+	ServiceType ResourceType = 2
+	NodeType    ResourceType = 3
 )
 
 func (resType ResourceType) String() string {
@@ -27,16 +26,12 @@ func (resType ResourceType) String() string {
 		return "pod"
 	case ServiceType:
 		return "service"
+	case NodeType:
+		return "node"
 	default:
 		return fmt.Sprintf("%d", int(resType))
 	}
 }
-
-type IntegrationType int
-
-const (
-	Redis IntegrationType = 1
-)
 
 type Resource struct {
 	Kind   string
@@ -48,13 +43,14 @@ type Resource struct {
 	ServiceSpec v1.ServiceSpec
 }
 
+// Discoverer discovers resources based on rules or annotations
 type Discoverer interface {
 	Discover(resource Resource)
 	Delete(resource Resource)
 	Stop()
 }
 
-// Handles the loading of discovery rules
+// RuleHandler handles the loading of discovery rules
 type RuleHandler interface {
 	// Handles all the discovery rules
 	HandleAll(cfg []PluginConfig) error
@@ -88,4 +84,11 @@ type TargetRegistry interface {
 	Handler(name string) TargetHandler
 	Encoding(name string) interface{}
 	Count() int
+}
+
+// ResourceLister lists kubernetes resources based on custom criteria
+type ResourceLister interface {
+	ListPods(ns string, labels map[string]string) ([]*v1.Pod, error)
+	ListServices(ns string, labels map[string]string) ([]*v1.Service, error)
+	ListNodes() ([]*v1.Node, error)
 }

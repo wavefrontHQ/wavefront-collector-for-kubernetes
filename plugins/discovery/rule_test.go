@@ -35,7 +35,7 @@ func TestRuleAdd(t *testing.T) {
 
 func makeRuleHandler() discovery.RuleHandler {
 	ph := &util.DummyProviderHandler{}
-	return newRuleHandler(newDiscoverer(ph, nil), ph, true)
+	return newRuleHandler(newDiscoverer(ph, nil), RunConfig{Handler: ph, Daemon: true})
 }
 
 func config(num int) []discovery.PluginConfig {

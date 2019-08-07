@@ -19,18 +19,18 @@ package summary
 
 import (
 	"fmt"
-	"net"
 	"time"
-
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
-	. "github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/summary/kubelet"
 
 	gm "github.com/rcrowley/go-metrics"
 	log "github.com/sirupsen/logrus"
+
 	"github.com/wavefronthq/go-metrics-wavefront/reporting"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
+	. "github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/summary/kubelet"
+
 	kube_api "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	kube_client "k8s.io/client-go/kubernetes"
@@ -438,7 +438,7 @@ func (sp *summaryProvider) Name() string {
 }
 
 func (sp *summaryProvider) getNodeInfo(node *kube_api.Node) (NodeInfo, error) {
-	hostname, ip, err := getNodeHostnameAndIP(node)
+	hostname, ip, err := util.GetNodeHostnameAndIP(node)
 	if err != nil {
 		return NodeInfo{}, err
 	}
@@ -469,32 +469,6 @@ func (sp *summaryProvider) getNodeInfo(node *kube_api.Node) (NodeInfo, error) {
 	}).Debug("Node information")
 
 	return info, nil
-}
-
-func getNodeHostnameAndIP(node *kube_api.Node) (string, net.IP, error) {
-	for _, c := range node.Status.Conditions {
-		if c.Type == kube_api.NodeReady && c.Status != kube_api.ConditionTrue {
-			return "", nil, fmt.Errorf("node %v is not ready", node.Name)
-		}
-	}
-	hostname, ip := node.Name, ""
-	for _, addr := range node.Status.Addresses {
-		if addr.Type == kube_api.NodeHostName && addr.Address != "" {
-			hostname = addr.Address
-		}
-		if addr.Type == kube_api.NodeInternalIP && addr.Address != "" {
-			if net.ParseIP(addr.Address) != nil {
-				ip = addr.Address
-			}
-		}
-		if addr.Type == kube_api.NodeExternalIP && addr.Address != "" && ip == "" {
-			ip = addr.Address
-		}
-	}
-	if parsedIP := net.ParseIP(ip); parsedIP != nil {
-		return hostname, parsedIP, nil
-	}
-	return "", nil, fmt.Errorf("node %v has no valid hostname and/or IP address: %v %v", node.Name, hostname, ip)
 }
 
 func NewSummaryProvider(cfg configuration.SummaySourceConfig) (MetricsSourceProvider, error) {
