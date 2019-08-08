@@ -1,0 +1,96 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  annotations:
+    alm-examples: '[{"apiVersion":"wavefront.com/v1beta1","kind":"WavefrontCollector","metadata":{"name":"wavefrontcollector"},"spec":{"affinity":{},"clusterName":"OPENSHIFT_CLUSTER_NAME","collector":{"kubernetesSource":"kubernetes.summary_api:https://kubernetes.default.svc?useServiceAccount=true\u0026kubeletHttps=true\u0026kubeletPort=10250\u0026insecure=true","useProxy":false},"fullnameOverride":"","nameOverride":"","nodeSelector":{},"proxy":{"enabled":false},"resources":{},"tolerations":[],"wavefront":{"token":"YOUR_API_TOKEN","url":"https://YOUR_CLUSTER_NAME.wavefront.com"}}}]'
+    capabilities: Basic Install
+  name: wavefront-operator.v0.0.2
+  namespace: placeholder
+spec:
+  apiservicedefinitions: {}
+  customresourcedefinitions:
+    owned:
+    - kind: WavefrontCollector
+      name: wavefrontcollectors.wavefront.com
+      version: v1beta1
+  description: Placeholder description
+  displayName: Wavefront Operator
+  install:
+    spec:
+      clusterPermissions:
+      - rules:
+        - apiGroups:
+          - wavefront.com
+          resources:
+          - '*'
+          verbs:
+          - '*'
+        - apiGroups:
+          - ""
+          resources:
+          - namespaces
+          - pods
+          - nodes
+          - services
+          - serviceaccounts
+          - configmaps
+          - secrets
+          verbs:
+          - '*'
+        - apiGroups:
+          - apps
+          resources:
+          - deployments
+          verbs:
+          - '*'
+        - apiGroups:
+          - rbac.authorization.k8s.io
+          resources:
+          - clusterrolebindings
+          - clusterroles
+          verbs:
+          - '*'
+        serviceAccountName: wavefront-collector-operator
+      deployments:
+      - name: wavefront-collector-operator
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              name: wavefront-collector-operator
+          strategy: {}
+          template:
+            metadata:
+              labels:
+                name: wavefront-collector-operator
+            spec:
+              containers:
+              - env:
+                - name: WATCH_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.namespace
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+                - name: OPERATOR_NAME
+                  value: wavefront-collector-operator
+                image: quay.io/wavefront/wavefront-collector-operator:v0.0.4
+                imagePullPolicy: Always
+                name: wavefront-collector-operator
+                resources: {}
+              serviceAccountName: wavefront-collector-operator
+    strategy: deployment
+  installModes:
+  - supported: true
+    type: OwnNamespace
+  - supported: true
+    type: SingleNamespace
+  - supported: false
+    type: MultiNamespace
+  - supported: true
+    type: AllNamespaces
+  maturity: alpha
+  provider: {}
+  version: 0.0.2

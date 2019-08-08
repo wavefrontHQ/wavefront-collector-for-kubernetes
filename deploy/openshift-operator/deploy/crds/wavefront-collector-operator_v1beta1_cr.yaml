@@ -1,0 +1,46 @@
+apiVersion: wavefront.com/v1beta1
+kind: WavefrontCollector
+metadata:
+  name: wavefrontcollector
+spec:
+  
+  # Default values copied from <project_dir>/helm-charts/wavefrontcollector/values.yaml
+  
+  # Default values for wavefrontcollector.
+  # This is a YAML-formatted file.
+  # Declare variables to be passed into your templates.
+  collector:
+    useProxy: false
+    kubernetesSource: kubernetes.summary_api:https://kubernetes.default.svc?useServiceAccount=true&kubeletHttps=true&kubeletPort=10250&insecure=true
+
+  clusterName: OPENSHIFT_CLUSTER_NAME
+  wavefront:
+    url: https://YOUR_CLUSTER_NAME.wavefront.com
+    token: YOUR_API_TOKEN
+  proxy:
+    enabled: false
+  # This flag should not be changed
+  openshift:
+    enabled: true
+
+  nameOverride: ""
+  fullnameOverride: ""
+  
+  resources: {}
+    # We usually recommend not to specify default resources and to leave this as a conscious
+    # choice for the user. This also increases chances charts run on environments with little
+    # resources, such as Minikube. If you do want to specify resources, uncomment the following
+    # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+  
+  nodeSelector: {}
+  
+  tolerations: []
+  
+  affinity: {}
+  
