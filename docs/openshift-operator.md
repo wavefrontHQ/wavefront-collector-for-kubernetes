@@ -15,15 +15,15 @@ oc login -u <ADMIN_USER>
 ```
 4. Create Wavefront collector operator CRD:
 ```
- oc create -f https://raw.githubusercontent.com/wavefrontHQ/wavefront-kubernetes-collector/master/deploy/openshift-operator/deploy/crds/wavefront-collector-operator_v1beta1_crd.yaml
+ oc create -f https://raw.githubusercontent.com/wavefrontHQ/wavefront-kubernetes-collector/master/deploy/openshift/openshift-operator/deploy/crds/wavefront-collector-operator_v1beta1_crd.yaml
 ```
 5. Install the operator:
 ```
-oc create -f https://raw.githubusercontent.com/wavefrontHQ/wavefront-kubernetes-collector/master/deploy/openshift-operator/deploy/operator.yaml
+oc create -f https://raw.githubusercontent.com/wavefrontHQ/wavefront-kubernetes-collector/master/deploy/openshift/openshift-operator/deploy/operator.yaml
 ```
 6. Download the Custom Resource (CR) YAML file that can be customized and used as a blueprint to deploy the collector
 ```
-curl -O https://raw.githubusercontent.com/wavefrontHQ/wavefront-kubernetes-collector/master/deploy/openshift-operator/deploy/crds/wavefront-collector-operator_v1beta1_cr.yaml 
+curl -O https://raw.githubusercontent.com/wavefrontHQ/wavefront-kubernetes-collector/master/deploy/openshift/openshift-operator/deploy/crds/wavefront-collector-operator_v1beta1_cr.yaml 
 ```
 
 7. Replace OPENSHIFT_CLUSTER_NAME, YOUR_CLUSTER_NAME and YOUR_API_TOKEN in `wavefront-collector-operator_v1beta1_cr.yaml` and run:
