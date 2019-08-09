@@ -2,7 +2,7 @@ PREFIX?=wavefronthq
 DOCKER_IMAGE=wavefront-kubernetes-collector
 ARCH?=amd64
 OUT_DIR?=./_output
-GOLANG_VERSION?=1.11
+GOLANG_VERSION?=1.12
 
 BINARY_NAME=wavefront-collector
 
