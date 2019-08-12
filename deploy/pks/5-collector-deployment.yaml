@@ -78,7 +78,7 @@ spec:
         imagePullPolicy: Always
         command:
         - /wavefront-collector
-        - --source=kubernetes.summary_api:''
+        - --source=kubernetes.summary_api:https://kubernetes.default.svc?useServiceAccount=true&kubeletHttps=true&kubeletPort=10250&insecure=true
         - --source=prometheus:''?url=http://kube-state-metrics.pks-system.svc.cluster.local:8080/metrics
         - --sink=wavefront:?proxyAddress=wavefront-proxy.pks-system.svc.cluster.local:2878&clusterName=sophia-test&includeLabels=true
         - --v=2
