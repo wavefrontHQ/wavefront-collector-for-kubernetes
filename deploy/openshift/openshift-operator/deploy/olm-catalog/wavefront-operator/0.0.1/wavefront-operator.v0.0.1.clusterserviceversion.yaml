@@ -1,0 +1,121 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  annotations:
+    categories: Monitoring
+    description: Wavefront operator is based on the Wavefront helm char.
+    alm-examples: '[{"apiVersion":"vmware.com/v1beta1","kind":"Wavefront","metadata":{"name":"wavefront"},"spec":{"affinity":{},"clusterName":"openshift-operator-collector","collector":{"kubernetesSource":"kubernetes.summary_api:https://kubernetes.default.svc?useServiceAccount=true\u0026kubeletHttps=true\u0026kubeletPort=10250\u0026insecure=true","useProxy":false},"fullnameOverride":"","nameOverride":"","nodeSelector":{},"proxy":{"enabled":false},"resources":{},"tolerations":[],"wavefront":{"token":"10549b14c81","url":"https://longboard.wavefront.com"}}}]'
+    capabilities: Basic Install
+    containerImage: quay.io/wavefront/wavefront-operator:v0.0.1
+    support: VMware 
+  name: wavefront-operator.v0.0.1
+  namespace: placeholder
+spec:
+  apiservicedefinitions: {}
+  customresourcedefinitions:
+    owned:
+    - kind: Wavefront
+      name: wavefronts.vmware.com
+      version: v1beta1
+  description: Wavefront, a cloud-native monitoring and analytics platform, is used to alert on, troubleshoot, and optimize the performance of multi-cloud application environments. 
+  displayName: Wavefront Operator
+  keywords: ['wavefront', 'monitoring', 'metrics', 'alert', 'alerting']
+
+  maintainers:
+  - name: VMware, Inc
+    email: support@wavefront.com
+
+  provider:
+    name: VMware, Inc
+
+  links:
+  - name: Wavefront
+    url: https://www.wavefront.com/
+  - name: Documentation
+    url: https://docs.wavefront.com/
+  - name: Wavefront Operator Source Code
+    url: https://github.com/wavefrontHQ/integrations/wavefront-operator
+
+  icon:
+  - base64data:  
+    mediatype: image/svg+xml   
+
+  install:
+    spec:
+      clusterPermissions:
+      - rules:
+        - apiGroups:
+          - vmware.com
+          resources:
+          - '*'
+          verbs:
+          - '*'
+        - apiGroups:
+          - ""
+          resources:
+          - namespaces
+          - pods
+          - nodes
+          - services
+          - serviceaccounts
+          - configmaps
+          - secrets
+          verbs:
+          - '*'
+        - apiGroups:
+          - apps
+          resources:
+          - deployments
+          verbs:
+          - '*'
+        - apiGroups:
+          - rbac.authorization.k8s.io
+          resources:
+          - clusterrolebindings
+          - clusterroles
+          verbs:
+          - '*'
+        serviceAccountName: wavefront-operator
+      deployments:
+      - name: wavefront-operator
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              name: wavefront-operator
+          strategy: {}
+          template:
+            metadata:
+              labels:
+                name: wavefront-operator
+            spec:
+              containers:
+              - env:
+                - name: WATCH_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.namespace
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+                - name: OPERATOR_NAME
+                  value: wavefront-operator
+                image: quay.io/wavefront/wavefront-operator:v0.0.1
+                imagePullPolicy: Always
+                name: wavefront-operator
+                resources: {}
+              serviceAccountName: wavefront-operator
+    strategy: deployment
+  installModes:
+  - supported: true
+    type: OwnNamespace
+  - supported: true
+    type: SingleNamespace
+  - supported: false
+    type: MultiNamespace
+  - supported: true
+    type: AllNamespaces
+  maturity: alpha
+  provider: {}
+  version: 0.0.1

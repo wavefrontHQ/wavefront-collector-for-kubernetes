@@ -1,0 +1,19 @@
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: wavefrontcollectors.wavefront.com
+spec:
+  group: wavefront.com
+  names:
+    kind: WavefrontCollector
+    listKind: WavefrontCollectorList
+    plural: wavefrontcollectors
+    singular: wavefrontcollector
+  scope: Namespaced
+  subresources:
+    status: {}
+  version: v1beta1
+  versions:
+  - name: v1beta1
+    served: true
+    storage: true
