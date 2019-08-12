@@ -15,6 +15,39 @@ data:
         env: non-production
         region: us-west-2
 
+      filters:
+        # Filter out the following set of K8 metrics to reduce the pps.
+          metricBlacklist:
+          - 'kube.configmap.annotations.gauge'
+          - 'kube.configmap.metadata.resource.version.gauge'
+          - 'kube.dns.*'
+          - 'kube.endpoint.*'
+          - 'kube.job.owner.gauge'
+          - 'kube.job.labels.gauge'
+          - 'kube.job.spec.completions.gauge'
+          - 'kube.job.spec.parallelism.gauge'
+          - 'kube.job.status.start.time.gauge'
+          - 'kube.limitrange.*'
+          - 'kube.persistentvolume.*'
+          - 'kube.persistentvolumeclaim.*'
+          - 'kube.pod.container.resource.*'
+          - 'kube.pod.container.*.reason.gauge'
+          - 'kube.pod.labels.gauge'
+          - 'kube.pod.owner.gauge'
+          - 'kube.pod.start.time.gauge'
+          - 'kube.pod.status.scheduled.gauge'
+          - 'kube.pod.status.scheduled.time.gauge'
+          - 'kube.replicationcontroller.created.gauge'
+          - 'kube.replicationcontroller.metadata.generation.gauge'
+          - 'kube.replicationcontroller.spec.replicas.gauge'
+          - 'kube.resourcequota.*'
+          - 'kube.secret.*'
+          - 'kube.statefulset.*'
+          - 'kube.storageclass.*'
+          - 'kubernetes.sys_container.*'
+          - 'kubernetes.node.ephemeral_storage.*'
+          - '*.go.*'
+
     sources:
       kubernetes_source:
         url: 'https://kubernetes.default.svc'
