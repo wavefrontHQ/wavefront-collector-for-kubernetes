@@ -20,7 +20,6 @@ data:
           metricBlacklist:
           - 'kube.configmap.annotations.gauge'
           - 'kube.configmap.metadata.resource.version.gauge'
-          - 'kube.dns.*'
           - 'kube.endpoint.*'
           - 'kube.job.owner.gauge'
           - 'kube.job.labels.gauge'
@@ -44,8 +43,6 @@ data:
           - 'kube.secret.*'
           - 'kube.statefulset.*'
           - 'kube.storageclass.*'
-          - 'kubernetes.sys_container.*'
-          - 'kubernetes.node.ephemeral_storage.*'
           - '*.go.*'
 
     sources:
@@ -56,6 +53,11 @@ data:
         useServiceAccount: true
         insecure: true
         prefix: 'kubernetes.'
+
+        filters:
+          metricBlacklist:
+          - 'kubernetes.sys_container.*'
+          - 'kubernetes.node.ephemeral_storage.*'
 
       internal_stats_source:
         prefix: 'kubernetes.'
@@ -76,6 +78,12 @@ data:
             ca_file: '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
             insecure_skip_verify: true
         prefix: 'kube.apiserver.'
+
+        filters:
+          metricWhitelist:
+          - 'kube.apiserver.apiserver.*'
+          - 'kube.apiserver.etcd.*'
+          - 'kube.apiserver.process.*'
 
     # discovery rules for auto-discovery of pods and services
     discovery_configs:
@@ -123,6 +131,15 @@ data:
       path: /metrics
       scheme: http
       prefix: kube.dns.
+
+      filters:
+        metricWhitelist:
+        - 'kube.dns.http.request.duration.microseconds'
+        - 'kube.dns.http.request.size.bytes'
+        - 'kube.dns.http.requests.total.counter'
+        - 'kube.dns.http.response.size.bytes'
+        - 'kube.dns.kubedns.dnsmasq.*'
+        - 'kube.dns.process.*'
 
     # auto-discover a sample prometheus application
     - name: prom-example
