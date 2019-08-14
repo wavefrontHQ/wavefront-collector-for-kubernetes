@@ -88,7 +88,7 @@ spec:
       containers:
         - name: wavefront-collector-operator
           # Replace this with the built image name
-          image: wavefronthq/wavefront-collector-operator:v0.0.4
+          image: wavefronthq/wavefront-kubernetes-collector-operator:v0.1.0
           imagePullPolicy: Always
           env:
             - name: WATCH_NAMESPACE
