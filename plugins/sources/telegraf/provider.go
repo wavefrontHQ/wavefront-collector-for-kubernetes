@@ -2,6 +2,7 @@ package telegraf
 
 import (
 	"fmt"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/leadership"
 	"strings"
 	"time"
 
@@ -109,11 +110,17 @@ func (t *telegrafPluginSource) ScrapeMetrics() (*metrics.DataBatch, error) {
 // Telegraf provider
 type telegrafProvider struct {
 	metrics.DefaultMetricsSourceProvider
-	name    string
-	sources []metrics.MetricsSource
+	name              string
+	useLeaderElection bool
+	sources           []metrics.MetricsSource
 }
 
 func (p telegrafProvider) GetMetricsSources() []metrics.MetricsSource {
+	// only the leader will collect from a static source (not auto-discovered) that is not a host plugin
+	if p.useLeaderElection && !leadership.Leading() {
+		log.Infof("not scraping sources from: %s. current leader: %s", p.name, leadership.Leader())
+		return nil
+	}
 	return p.sources
 }
 
@@ -123,7 +130,7 @@ func (p telegrafProvider) Name() string {
 
 const providerName = "telegraf_provider"
 
-var defaultPlugins = []string{"mem", "net", "netstat", "linux_sysctl_fs", "swap", "cpu", "disk", "diskio", "system", "kernel", "processes"}
+var hostPlugins = []string{"mem", "net", "netstat", "linux_sysctl_fs", "swap", "cpu", "disk", "diskio", "system", "kernel", "processes"}
 
 // NewProvider creates a Telegraf source
 func NewProvider(cfg configuration.TelegrafSourceConfig) (metrics.MetricsSourceProvider, error) {
@@ -134,7 +141,7 @@ func NewProvider(cfg configuration.TelegrafSourceConfig) (metrics.MetricsSourceP
 
 	plugins := cfg.Plugins
 	if len(plugins) == 0 {
-		plugins = defaultPlugins
+		plugins = hostPlugins
 	}
 
 	filters := filter.FromConfig(cfg.Filters)
@@ -146,12 +153,10 @@ func NewProvider(cfg configuration.TelegrafSourceConfig) (metrics.MetricsSourceP
 		creator := telegrafPlugins.Inputs[strings.Trim(name, " ")]
 		if creator != nil {
 			plugin := creator()
-			if discovered != "" {
+			if cfg.Conf != "" {
 				err := initPlugin(plugin, cfg.Conf)
 				if err != nil {
-					// bail if discovered and error initializing
-					log.Errorf("error creating plugin: %s err: %s", name, err)
-					return nil, err
+					return nil, fmt.Errorf("error creating plugin: %s err: %s", name, err)
 				}
 			}
 			sources = append(sources, newTelegrafPluginSource(name, plugin, prefix, tags, filters, discovered))
@@ -172,8 +177,12 @@ func NewProvider(cfg configuration.TelegrafSourceConfig) (metrics.MetricsSourceP
 		name = fmt.Sprintf("%s: %v", providerName, plugins)
 	}
 
+	// use leader election if static source (not discovered) and is not a host plugin
+	useLeaderElection := cfg.Discovered == "" && cfg.Conf != ""
+
 	return &telegrafProvider{
-		name:    name,
-		sources: sources,
+		name:              name,
+		useLeaderElection: useLeaderElection,
+		sources:           sources,
 	}, nil
 }
