@@ -19,12 +19,13 @@ import (
 )
 
 type telegrafPluginSource struct {
-	name    string
-	source  string
-	prefix  string
-	tags    map[string]string
-	plugin  telegraf.Input
-	filters filter.Filter
+	name         string
+	source       string
+	prefix       string
+	tags         map[string]string
+	plugin       telegraf.Input
+	pluginPrefix string
+	filters      filter.Filter
 
 	pointsCollected gm.Counter
 	pointsFiltered  gm.Counter
@@ -34,7 +35,8 @@ type telegrafPluginSource struct {
 }
 
 func newTelegrafPluginSource(name string, plugin telegraf.Input, prefix string, tags map[string]string, filters filter.Filter, discovered string) *telegrafPluginSource {
-	pt := map[string]string{"type": "telegraf." + name}
+	pluginType := pluginType(name) + "." + name
+	pt := map[string]string{"type": pluginType}
 	collected := reporting.EncodeKey("source.points.collected", pt)
 	filtered := reporting.EncodeKey("source.points.filtered", pt)
 	errors := reporting.EncodeKey("source.collect.errors", pt)
@@ -51,7 +53,7 @@ func newTelegrafPluginSource(name string, plugin telegraf.Input, prefix string, 
 		errors:          gm.GetOrRegisterCounter(errors, gm.DefaultRegistry),
 	}
 	if discovered != "" {
-		pt = extractTags(tags, name, discovered)
+		pt = extractTags(tags, pluginType, discovered)
 		tsp.targetPPS = gm.GetOrRegisterCounter(reporting.EncodeKey("target.points.collected", pt), gm.DefaultRegistry)
 		tsp.targetEPS = gm.GetOrRegisterCounter(reporting.EncodeKey("target.collect.errors", pt), gm.DefaultRegistry)
 	}
@@ -70,7 +72,7 @@ func extractTags(tags map[string]string, name, discovered string) map[string]str
 	} else {
 		result["discovered"] = "static"
 	}
-	result["type"] = "telegraf." + name
+	result["type"] = name
 	return result
 }
 
@@ -185,4 +187,13 @@ func NewProvider(cfg configuration.TelegrafSourceConfig) (metrics.MetricsSourceP
 		useLeaderElection: useLeaderElection,
 		sources:           sources,
 	}, nil
+}
+
+func pluginType(plugin string) string {
+	for _, name := range hostPlugins {
+		if plugin == name {
+			return "telegraf_host"
+		}
+	}
+	return "telegraf"
 }
