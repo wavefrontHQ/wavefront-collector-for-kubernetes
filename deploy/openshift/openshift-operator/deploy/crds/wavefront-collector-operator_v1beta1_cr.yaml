@@ -18,7 +18,7 @@ spec:
     ## If set to true, metrics will be sent to Wavefront via a Wavefront Proxy.
     ## When true you must either specify a value for `collector.proxyAddress` or set `proxy.enabled` to true
     ## If set to false, metrics will be sent to Wavefront via the Direct Ingestion API
-    useProxy: true
+    useProxy: false
 
     ## Can be used to specify a specific address for the Wavefront Proxy
     ## The proxy can be anywhere network reachable including outside of the cluster
@@ -85,68 +85,68 @@ spec:
         cpu: 200m
         memory: 256Mi
 
-    ## Wavefront Proxy is a metrics forwarder that is used to relay metrics to the Wavefront SaaS service.
-    ## It can receive metrics from the Wavefront Collector as well as other metrics collection services
-    ## within your cluster. The proxy also supports preprocessor rules to allow you to further filter
-    ## and enhance your metric names, and tags. Should network connectivity fall between the proxy and
-    ## Wavefront SaaS service, the proxy will buffer metrics, which will be flushed when connectivity resumes.
-    ## Ref: https://docs.wavefront.com/proxies.html
-    proxy:
-      enabled: true
-      image:
-        repository: wavefronthq/proxy
-        tag: 4.35
-        pullPolicy: IfNotPresent
+  ## Wavefront Proxy is a metrics forwarder that is used to relay metrics to the Wavefront SaaS service.
+  ## It can receive metrics from the Wavefront Collector as well as other metrics collection services
+  ## within your cluster. The proxy also supports preprocessor rules to allow you to further filter
+  ## and enhance your metric names, and tags. Should network connectivity fall between the proxy and
+  ## Wavefront SaaS service, the proxy will buffer metrics, which will be flushed when connectivity resumes.
+  ## Ref: https://docs.wavefront.com/proxies.html
+  proxy:
+    enabled: false
+    image:
+      repository: wavefronthq/proxy
+      tag: 4.35
+      pullPolicy: IfNotPresent
 
-      ## The port number the proxy will listen on for metrics in Wavefront data format.
-      ## This is usually 2878
-      port: 2878
+    ## The port number the proxy will listen on for metrics in Wavefront data format.
+    ## This is usually 2878
+    port: 2878
 
-      ## The port nubmer the proxy will listen on for tracing spans in Wavefront trace data format.
-      ## This is usually 30000
-      # tracePort: 30000
+    ## The port nubmer the proxy will listen on for tracing spans in Wavefront trace data format.
+    ## This is usually 30000
+    # tracePort: 30000
 
-      ## The port nubmer the proxy will listen on for tracing spans in Jaeger data format.
-      ## This is usually 30001
-      # jaegerPort: 30001
+    ## The port nubmer the proxy will listen on for tracing spans in Jaeger data format.
+    ## This is usually 30001
+    # jaegerPort: 30001
 
-      ## The port nubmer the proxy will listen on for tracing spans in Zipkin data format.
-      ## This is usually 9411
-      # zipkinPort: 9411
+    ## The port nubmer the proxy will listen on for tracing spans in Zipkin data format.
+    ## This is usually 9411
+    # zipkinPort: 9411
 
-      ## Sampling rate to apply to tracing spans sent to the proxy.
-      ## This rate is applied to all data formats the proxy is listening on.
-      ## Value should be between 0.0 and 1.0.  Default is 1.0
-      # traceSamplingRate: 0.25
+    ## Sampling rate to apply to tracing spans sent to the proxy.
+    ## This rate is applied to all data formats the proxy is listening on.
+    ## Value should be between 0.0 and 1.0.  Default is 1.0
+    # traceSamplingRate: 0.25
 
-      ## When this is set to a value greater than 0,
-      ## spans that are greater than or equal to this value will be sampled.
-      # traceSamplingDuration: 500
+    ## When this is set to a value greater than 0,
+    ## spans that are greater than or equal to this value will be sampled.
+    # traceSamplingDuration: 500
 
-      ## Any configuration property can be passed to the proxy via command line args in
-      ## in the format: `--<property_name> <value>`. Multiple properties can be specified
-      ## separated by whitespace.
-      ## Ref: https://docs.wavefront.com/proxies_configuring.html
-      # args:
+    ## Any configuration property can be passed to the proxy via command line args in
+    ## in the format: `--<property_name> <value>`. Multiple properties can be specified
+    ## separated by whitespace.
+    ## Ref: https://docs.wavefront.com/proxies_configuring.html
+    # args:
 
-      ## Proxy is a Java application. By default Java will consume upto 4G of heap memory.
-      ## This can be used to override the default. Uses the `-Xmx` command line option for java
-      # heap: 1024m
+    ## Proxy is a Java application. By default Java will consume upto 4G of heap memory.
+    ## This can be used to override the default. Uses the `-Xmx` command line option for java
+    # heap: 1024m
 
-      ## Preprocessor rules is a powerful way to apply filtering or to enhance metrics as they flow
-      ## through the proxy. You can configure the rules here. By default a rule to drop Kubernetes
-      ## generated labels is applied to remove unecessary and often noisy tags.
-      ## Ref: https://docs.wavefront.com/proxies_preprocessor_rules.html
-      preprocessor:
-        rules.yaml: |
-          '2878':
-            - rule    : drop-generated-label-tags
-              action  : dropTag
-              tag     : label\.(controller-revision-hash|pod-template-.*|.*kubernetes\.io.*)
-      #       - rule    : add-cluster-tag
-      #         action  : addTag
-      #         tag     : cluster
-      #         value   : {{ .Values.clusterName | quote }}
+    ## Preprocessor rules is a powerful way to apply filtering or to enhance metrics as they flow
+    ## through the proxy. You can configure the rules here. By default a rule to drop Kubernetes
+    ## generated labels is applied to remove unecessary and often noisy tags.
+    ## Ref: https://docs.wavefront.com/proxies_preprocessor_rules.html
+    preprocessor:
+      rules.yaml: |
+        '2878':
+          - rule    : drop-generated-label-tags
+            action  : dropTag
+            tag     : label\.(controller-revision-hash|pod-template-.*|.*kubernetes\.io.*)
+    #       - rule    : add-cluster-tag
+    #         action  : addTag
+    #         tag     : cluster
+    #         value   : {{ .Values.clusterName | quote }}
 
   ## kube-state-metrics are used to get metrics about the state of the Kubernetes scheduler
   ## If enabled the kube-state-metrics chart will be installed as a subchart and the collector
