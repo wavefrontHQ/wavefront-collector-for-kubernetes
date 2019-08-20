@@ -23,7 +23,7 @@ var (
 	leadingGauge  metrics.Gauge
 
 	// leadership state
-	subscribers []chan<- bool
+	subscribers map[string]chan<- bool
 	lock        sync.RWMutex
 	started     bool
 	isLeader    bool
@@ -37,7 +37,7 @@ func init() {
 
 // Subscribe starts the leader election process if not already started
 // and returns a channel subscriber can listen on for election results
-func Subscribe(client v1.CoreV1Interface) (<-chan bool, error) {
+func Subscribe(client v1.CoreV1Interface, name string) (<-chan bool, error) {
 	lock.Lock()
 	defer lock.Unlock()
 
@@ -49,18 +49,20 @@ func Subscribe(client v1.CoreV1Interface) (<-chan bool, error) {
 	if isLeader {
 		ch <- true
 	}
-	// append to subscribers list to notify of election results
-	subscribers = append(subscribers, ch)
+	if subscribers == nil {
+		subscribers = make(map[string]chan<- bool)
+	}
+	// add to subscribers map to notify of election results
+	subscribers[name] = ch
 	return ch, nil
 }
 
-func Unsubscribe() {
+func Unsubscribe(name string) {
 	lock.Lock()
 	defer lock.Unlock()
 
-	// assumes a single subscriber at this time
-	subscribers = subscribers[:0]
-	log.Infof("unsubscribed from leader-election: %d", len(subscribers))
+	delete(subscribers, name)
+	log.Infof("unsubscribed %s from leader-election: %d", name, len(subscribers))
 }
 
 // startLeaderElection starts the election process if not already started

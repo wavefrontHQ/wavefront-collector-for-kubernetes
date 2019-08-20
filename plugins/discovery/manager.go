@@ -14,6 +14,10 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
+const (
+	subscriberName = "discovery.manager"
+)
+
 var (
 	discoveryEnabled gm.Counter
 )
@@ -70,7 +74,7 @@ func (dm *Manager) Start() {
 	} else {
 		// in daemon mode, service discovery is performed by only one collector agent in a cluster
 		// kick off leader election to determine if this agent should handle it
-		ch, err := leadership.Subscribe(dm.runConfig.KubeClient.CoreV1())
+		ch, err := leadership.Subscribe(dm.runConfig.KubeClient.CoreV1(), subscriberName)
 		if err != nil {
 			log.Errorf("discovery: leader election error: %q", err)
 		} else {
@@ -99,7 +103,7 @@ func (dm *Manager) Stop() {
 	log.Infof("Stopping discovery manager")
 	discoveryEnabled.Dec(1)
 
-	leadership.Unsubscribe()
+	leadership.Unsubscribe(subscriberName)
 	dm.podListener.stop()
 	dm.serviceListener.stop()
 	close(dm.stopCh)

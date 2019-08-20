@@ -19,6 +19,7 @@ import (
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
 	discConfig "github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
 	kube_config "github.com/wavefronthq/wavefront-kubernetes-collector/internal/kubernetes"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/leadership"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/options"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
@@ -127,6 +128,14 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 	man, err := manager.NewFlushManager(dataProcessors, sinkManager, cfg.FlushInterval)
 	if err != nil {
 		log.Fatalf("Failed to create main manager: %v", err)
+	}
+
+	// start leader-election if daemon mode
+	if cfg.Daemon {
+		_, err := leadership.Subscribe(kubeClient.CoreV1(), "agent")
+		if err != nil {
+			log.Fatalf("Failed to start leader election: %v", err)
+		}
 	}
 
 	// create and start agent
