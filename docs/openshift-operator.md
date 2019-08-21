@@ -26,7 +26,13 @@ oc create -f https://raw.githubusercontent.com/wavefrontHQ/wavefront-kubernetes-
 curl -O https://raw.githubusercontent.com/wavefrontHQ/wavefront-kubernetes-collector/master/deploy/openshift/openshift-operator/deploy/crds/wavefront-collector-operator_v1beta1_cr.yaml 
 ```
 
-7. Replace OPENSHIFT_CLUSTER_NAME, YOUR_CLUSTER_NAME and YOUR_API_TOKEN in `wavefront-collector-operator_v1beta1_cr.yaml` and run:
+**Note**: If you are planning to use direct ingestion then set `collector.useProxy` and `proxy.enabled` to `false` in `wavefront-collector-operator_v1beta1_cr.yaml` and go to step 8.
+
+7. Log in to the Openshift web console and create storage under `wavefront-collector`:
+   * Select **Access Mode** as `RWX`
+   * Set **Size** to `5 GiB`
+   * Give a name to the storage and make a note of it.
+8. Replace OPENSHIFT_CLUSTER_NAME, YOUR_CLUSTER_NAME, YOUR_API_TOKEN and WF_PROXY_STORAGE (ignore for direct ingestion) in `wavefront-collector-operator_v1beta1_cr.yaml` and run:
 ```
 oc create -f wavefront-collector-operator_v1beta1_cr.yaml -n wavefront-collector
 ``` 
