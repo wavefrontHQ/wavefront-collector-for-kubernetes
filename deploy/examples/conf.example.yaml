@@ -27,6 +27,7 @@ data:
         - 'kube.job.spec.parallelism.gauge'
         - 'kube.job.status.start.time.gauge'
         - 'kube.limitrange.*'
+        - 'kube.namespace.annotations.gauge'        
         - 'kube.persistentvolume.*'
         - 'kube.persistentvolumeclaim.*'
         - 'kube.pod.container.resource.*'
@@ -43,6 +44,10 @@ data:
         - 'kube.secret.*'
         - 'kube.statefulset.*'
         - 'kube.storageclass.*'
+        # Filter out generated labels        
+        tagExclude:
+        - 'label.controller-revision-hash'
+        - 'label.pod-template-*'        
 
     sources:
       kubernetes_source:
