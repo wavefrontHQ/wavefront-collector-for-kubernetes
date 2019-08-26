@@ -1,6 +1,6 @@
 # Filtering Metrics
 
-The Wavefront Kubernetes Collector supports filtering metrics before they are reported to Wavefront. The following filtering options are supported:
+The Wavefront Collector for Kubernetes supports filtering metrics before they are reported to Wavefront. The following filtering options are supported:
 
   * **metricWhitelist**: List of glob patterns. Only metrics with names matching the whitelist are reported.
   * **metricBlacklist** List of glob patterns. Metrics with names matching the blacklist are dropped.

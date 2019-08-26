@@ -1,8 +1,8 @@
-# wavefront-kubernetes-collector [![build status][ci-img]][ci] [![Go Report Card][go-report-img]][go-report] [![Docker Pulls][docker-pull-img]][docker-img]
+# wavefront-collector-kubernetes [![build status][ci-img]][ci] [![Go Report Card][go-report-img]][go-report] [![Docker Pulls][docker-pull-img]][docker-img]
 
 [Wavefront](https://docs.wavefront.com) is a high-performance streaming analytics platform for monitoring and optimizing your environment and applications.
 
-The Wavefront Kubernetes Collector enables monitoring Kubernetes clusters and sending metrics to Wavefront.
+The Wavefront Collector for Kubernetes enables monitoring Kubernetes clusters and sending metrics to Wavefront.
 
 ## Features
 * Collects real-time metrics from all layers of a Kubernetes environment

@@ -1,6 +1,6 @@
 # Auto Discovery
 
-The Wavefront Kubernetes Collector can auto-discover pods and services that expose metrics, and dynamically start collecting metrics for the targets.
+The Wavefront Collector for Kubernetes can auto-discover pods and services that expose metrics, and dynamically start collecting metrics for the targets.
 
 Pods/Services can be discovered based on annotations and discovery rules. Discovery rules are provided via the configuration file.
 

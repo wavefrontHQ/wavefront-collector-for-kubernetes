@@ -1,6 +1,6 @@
 # Configuration
 
-The Wavefront Kubernetes Collector is configured via command-line flags and a configuration file.
+The Wavefront Collector for Kubernetes is configured via command-line flags and a configuration file.
 
 Starting with version 1.0, most command line flags have been deprecated in favor of a top-level configuration file.
 

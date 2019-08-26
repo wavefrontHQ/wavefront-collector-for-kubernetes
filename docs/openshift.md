@@ -1,5 +1,5 @@
 # Installation and configuration on OpenShift
-This page contains the Installation and Configuration steps to monitor Openshift using Wavefront Kubernetes Collector.
+This page contains the Installation and Configuration steps to monitor Openshift using the Wavefront Collector for Kubernetes.
 
 **Supported Versions**: Openshift Origin 3.9
 
