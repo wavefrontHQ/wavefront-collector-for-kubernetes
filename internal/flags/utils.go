@@ -1,3 +1,6 @@
+// Copyright 2018-2019 VMware, Inc. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
 package flags
 
 import (
@@ -5,8 +8,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/httputil"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -41,14 +42,6 @@ func DecodeValue(vals map[string][]string, name string) string {
 	return value
 }
 
-func DecodeDefaultValue(vals map[string][]string, name, defaultValue string) string {
-	value := DecodeValue(vals, name)
-	if value == "" {
-		return defaultValue
-	}
-	return value
-}
-
 func DecodeBoolean(vals map[string][]string, name string) bool {
 	value := false
 	if len(vals[name]) > 0 {
@@ -59,20 +52,6 @@ func DecodeBoolean(vals map[string][]string, name string) bool {
 		}
 	}
 	return value
-}
-
-func DecodeHTTPConfig(vals map[string][]string) httputil.ClientConfig {
-	return httputil.ClientConfig{
-		BearerToken:     DecodeValue(vals, "bearerToken"),
-		BearerTokenFile: DecodeValue(vals, "bearerTokenFile"),
-		TLSConfig: httputil.TLSConfig{
-			CAFile:             DecodeValue(vals, "tlsCAFile"),
-			CertFile:           DecodeValue(vals, "tlsCertFile"),
-			KeyFile:            DecodeValue(vals, "tlsKeyFile"),
-			ServerName:         DecodeValue(vals, "tlsServerName"),
-			InsecureSkipVerify: DecodeBoolean(vals, "tlsInsecure"),
-		},
-	}
 }
 
 func ParseDuration(vals url.Values, prop string, def time.Duration) time.Duration {

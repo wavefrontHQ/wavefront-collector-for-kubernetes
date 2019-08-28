@@ -18,6 +18,9 @@
 // This file implements a cadvisor datasource, that collects metrics from an instance
 // of cadvisor running on a specific host.
 
+// Copyright 2018-2019 VMware, Inc. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
 package kubelet
 
 import (

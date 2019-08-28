@@ -1,3 +1,6 @@
+// Copyright 2019 VMware, Inc. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
 // Package stats provides internal metrics on the health of the Wavefront collector
 package stats
 
