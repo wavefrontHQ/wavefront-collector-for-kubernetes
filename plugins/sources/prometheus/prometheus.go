@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"math"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -272,9 +273,9 @@ func encodeLabelTags(labels []*dto.LabelPair, buf *bytes.Buffer) {
 		for _, label := range labels {
 			if label.GetName() != "" && label.GetValue() != "" {
 				buf.WriteString(" ")
-				buf.WriteString(label.GetName())
+				buf.WriteString(url.QueryEscape(label.GetName()))
 				buf.WriteString("=")
-				buf.WriteString(label.GetValue())
+				buf.WriteString(url.QueryEscape(label.GetValue()))
 			}
 		}
 	}
@@ -284,9 +285,9 @@ func encodeTags(tags map[string]string, buf *bytes.Buffer) {
 	for k, v := range tags {
 		if len(v) > 0 {
 			buf.WriteString(" ")
-			buf.WriteString(k)
+			buf.WriteString(url.QueryEscape(k))
 			buf.WriteString("=")
-			buf.WriteString(v)
+			buf.WriteString(url.QueryEscape(v))
 		}
 	}
 }
