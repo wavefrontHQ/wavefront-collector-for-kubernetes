@@ -5,10 +5,11 @@ package wavefront
 
 import (
 	"fmt"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
+	"net/url"
 	"strconv"
 	"strings"
 
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	"github.com/wavefronthq/wavefront-sdk-go/senders"
@@ -124,9 +125,15 @@ func (sink *wavefrontSink) send(batch *metrics.DataBatch) {
 			for _, tag := range strings.Split(point.StrTags, " ") {
 				if len(tag) > 0 {
 					s := strings.Split(tag, "=")
-					k, v := s[0], s[1]
-					if len(v) > 0 {
-						tags[k] = v
+					if len(s) == 2 {
+						k, v := s[0], s[1]
+						if len(v) > 0 {
+							key, _ := url.QueryUnescape(k)
+							val, _ := url.QueryUnescape(v)
+							if len(key) > 0 && len(val) > 0 {
+								tags[key] = val
+							}
+						}
 					}
 				}
 			}
