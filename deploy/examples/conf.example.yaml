@@ -30,7 +30,7 @@ data:
         - 'kube.namespace.annotations.gauge'        
         - 'kube.persistentvolume.*'
         - 'kube.persistentvolumeclaim.*'
-        - 'kube.pod.container.resource.*'
+        - 'kube.pod.container.resource.limits.*'
         - 'kube.pod.container.*.reason.gauge'
         - 'kube.pod.labels.gauge'
         - 'kube.pod.owner.gauge'
