@@ -74,7 +74,12 @@ func (r *resourceFilter) matches(resource discovery.Resource) bool {
 	if r.images != nil {
 		for _, container := range resource.PodSpec.Containers {
 			if r.images.Match(container.Image) {
-				// image matches, verify matching port exists.
+				if r.port == 0 {
+					// assume port exists
+					return true
+				}
+
+				// verify matching port exists if port was specified
 				for _, cPort := range container.Ports {
 					if int64(cPort.ContainerPort) == r.port {
 						return true
