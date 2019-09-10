@@ -39,7 +39,7 @@ func newResourceFilter(conf discovery.PluginConfig) (*resourceFilter, error) {
 	}
 
 	// port
-	if rf.images != nil {
+	if rf.images != nil && conf.Port != "" {
 		val, err := strconv.ParseInt(conf.Port, 10, 32)
 		if err != nil {
 			return nil, err

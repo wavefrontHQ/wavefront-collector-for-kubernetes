@@ -64,6 +64,22 @@ func TestImages(t *testing.T) {
 	if rf.matches(r2) {
 		t.Errorf("unexpected container match")
 	}
+
+	// image without port
+	rf, err = newResourceFilter(discovery.PluginConfig{
+		Type: "telegraf/rabbitmq",
+		Selectors: discovery.Selectors{
+			Images: []string{"rabbitmq:*"},
+		},
+	})
+	if err != nil {
+		t.Error(err)
+	}
+	c3 = makeContainer("rabbitmq:v1.1", []int32{5672})
+	r3 = makeResource([]v1.Container{c3}, nil, "")
+	if !rf.matches(r3) {
+		t.Errorf("container not matching")
+	}
 }
 
 func TestLabels(t *testing.T) {
