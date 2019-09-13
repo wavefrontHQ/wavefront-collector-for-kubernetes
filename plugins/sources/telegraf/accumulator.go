@@ -32,9 +32,15 @@ func (t *telegrafDataBatch) preparePoints(measurement string, fields map[string]
 	for metric, v := range fields {
 		var value float64
 		var err error
-		switch v.(type) {
+		switch p := v.(type) {
 		case string:
 			continue
+		case bool:
+			if p {
+				value = 1
+			} else {
+				value = 0
+			}
 		default:
 			value, err = getFloat(v)
 			if err != nil {
