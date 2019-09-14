@@ -2,9 +2,10 @@
   name = "github.com/emicklei/go-restful"
   version = "2.8.0"
 
-[[constraint]]
+[[override]]
   name = "github.com/wavefronthq/wavefront-sdk-go"
-  version = "0.9.3"
+#  version = "0.9.3"
+  branch = "laullon/MONIT-15702"
 
 [[constraint]]
   name = "github.com/wavefronthq/go-metrics-wavefront"

@@ -18,6 +18,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 
+	"github.com/wavefronthq/wavefront-kubernetes-collector/events"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/agent"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
 	discConfig "github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
@@ -118,8 +119,12 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 	setClusterNameOnSinks(clusterName, cfg.Sinks)
 	sinkManager := createSinkManagerOrDie(cfg.Sinks, cfg.SinkExportDataTimeout)
 
-	// create data processors
 	kubeClient := createKubeClientOrDie(*cfg.Sources.SummaryConfig)
+
+	// Evnets
+	eventRouter, sharedInformers := events.CreateEventRouter(kubeClient)
+
+	// create data processors
 	podLister := getPodListerOrDie(kubeClient)
 	dataProcessors := createDataProcessorsOrDie(kubeClient, clusterName, podLister, *cfg.Sources.SummaryConfig)
 
@@ -142,7 +147,7 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 	}
 
 	// create and start agent
-	ag := agent.NewAgent(man, dm)
+	ag := agent.NewAgent(man, dm, eventRouter, sharedInformers)
 	ag.Start()
 	return ag
 }
