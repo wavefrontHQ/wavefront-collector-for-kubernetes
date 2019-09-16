@@ -3,6 +3,7 @@ package events
 import (
 	"os"
 
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
 	"github.com/wavefronthq/wavefront-sdk-go/event"
 
 	log "github.com/sirupsen/logrus"
@@ -14,10 +15,14 @@ type WavefrontSkin struct {
 	sender senders.Sender
 }
 
-func NewWavefrontSkin() EventSinkInterface {
+func NewWavefrontSkin(wf *configuration.WavefrontSinkConfig) EventSinkInterface {
+	if len(wf.Server) == 0 || len(wf.Token) == 0 {
+		log.Fatal("Invalid EventSink configuration `Server` and `Token` are required")
+	}
+
 	directCfg := &senders.DirectConfiguration{
-		Server: "https://nimba.wavefront.com",
-		Token:  "6490a634-ca7d-47c1-bb04-4629f53fc98b",
+		Server: wf.Server,
+		Token:  wf.Token,
 	}
 
 	sender, err := senders.NewDirectSender(directCfg)

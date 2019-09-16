@@ -49,6 +49,10 @@ data:
         - 'label.controller-revision-hash'
         - 'label.pod-template-*'        
 
+    events_sink:
+      server: https://<CLUSTER>.wavefront.com
+      token: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+
     sources:
       kubernetes_source:
         url: 'https://kubernetes.default.svc'

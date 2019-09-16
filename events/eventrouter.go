@@ -5,6 +5,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
 	v1 "k8s.io/api/core/v1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/informers"
@@ -25,17 +26,17 @@ type EventSinkInterface interface {
 	UpdateEvents(function string, eNew *v1.Event, eOld *v1.Event)
 }
 
-func CreateEventRouter(clientset kubernetes.Interface) (*EventRouter, informers.SharedInformerFactory) {
+func CreateEventRouter(clientset kubernetes.Interface, wf *configuration.WavefrontSinkConfig) (*EventRouter, informers.SharedInformerFactory) {
 	sharedInformers := informers.NewSharedInformerFactory(clientset, time.Minute)
 	eventsInformer := sharedInformers.Core().V1().Events()
-	eventRouter := newEventRouter(clientset, eventsInformer)
+	eventRouter := newEventRouter(clientset, eventsInformer, wf)
 	return eventRouter, sharedInformers
 }
 
-func newEventRouter(kubeClient kubernetes.Interface, eventsInformer coreinformers.EventInformer) *EventRouter {
+func newEventRouter(kubeClient kubernetes.Interface, eventsInformer coreinformers.EventInformer, wf *configuration.WavefrontSinkConfig) *EventRouter {
 	er := &EventRouter{
 		kubeClient: kubeClient,
-		eSink:      NewWavefrontSkin(),
+		eSink:      NewWavefrontSkin(wf),
 	}
 	eventsInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: er.addEvent,

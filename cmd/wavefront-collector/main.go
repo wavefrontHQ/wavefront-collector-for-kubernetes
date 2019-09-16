@@ -122,7 +122,7 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 	kubeClient := createKubeClientOrDie(*cfg.Sources.SummaryConfig)
 
 	// Evnets
-	eventRouter, sharedInformers := events.CreateEventRouter(kubeClient)
+	eventRouter, sharedInformers := events.CreateEventRouter(kubeClient, cfg.EventSink)
 
 	// create data processors
 	podLister := getPodListerOrDie(kubeClient)
