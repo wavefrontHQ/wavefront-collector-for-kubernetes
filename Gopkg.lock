@@ -43,11 +43,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:a21bff49edb8503a1b37b8faa8836feeda5de8e1645b39a3b1464938821826bd"
+  digest = "1:46bc05c4e39bf67f951bd3d2f608a95048fc43fe018186a9ee7f2852055437aa"
   name = "github.com/couchbase/go-couchbase"
   packages = ["."]
   pruneopts = "UT"
-  revision = "719f431aeeeecf65cd1afe042893f7d55ab7c040"
+  revision = "cf3c4e6d01a825ef9eb1acd3dfee00bb46015b84"
 
 [[projects]]
   branch = "master"
@@ -189,6 +189,20 @@
   version = "v0.31.0"
 
 [[projects]]
+  digest = "1:1d1cbf539d9ac35eb3148129f96be5537f1a1330cadcc7e3a83b4e72a59672a3"
+  name = "github.com/google/go-cmp"
+  packages = [
+    "cmp",
+    "cmp/internal/diff",
+    "cmp/internal/flags",
+    "cmp/internal/function",
+    "cmp/internal/value",
+  ]
+  pruneopts = "UT"
+  revision = "2d0692c2e9617365a95b295612ac0d4415ba4627"
+  version = "v0.3.1"
+
+[[projects]]
   digest = "1:a6181aca1fd5e27103f9a920876f29ac72854df7345a39f3b01e61c8c94cc8af"
   name = "github.com/google/gofuzz"
   packages = ["."]
@@ -209,12 +223,12 @@
   version = "v0.3.1"
 
 [[projects]]
-  digest = "1:888eed29c1705c99a75bec25251aed7e2ae23c7670b986c8166b31dfbf205872"
+  digest = "1:0a5a54e1299bac2a651a33cee116fb184c9b06c8d71a7bda1a7c79a84d77f709"
   name = "github.com/hashicorp/consul"
   packages = ["api"]
   pruneopts = "UT"
-  revision = "944cc71026c007e7de9467ec3f38f0ad14464fcc"
-  version = "v1.6.0"
+  revision = "9be6dfc310ddd54627d698537a98827245185290"
+  version = "v1.6.1"
 
 [[projects]]
   digest = "1:af105c7c5dc0b4ae41991f122cae860b9600f7d226072c2a83127048c991660c"
@@ -324,7 +338,7 @@
   revision = "2a2e3012f7cfbef64091cc79776311e65dfa211b"
 
 [[projects]]
-  digest = "1:0e0ae5dabe92c48685eb32932ee45cf4e9b3cd341f454905e4ed60deeaf614df"
+  digest = "1:9a5326944b81d75a98e0de59e370f1b603a628acc5c8eed359f41e73bdcc96f1"
   name = "github.com/jackc/pgx"
   packages = [
     ".",
@@ -336,8 +350,8 @@
     "stdlib",
   ]
   pruneopts = "UT"
-  revision = "a1d6202434aa40c3624688f6c2cacbc27eef5472"
-  version = "v3.5.0"
+  revision = "c73e7d75061bb42b0282945710f344cfe1113d10"
+  version = "v3.6.0"
 
 [[projects]]
   digest = "1:709cd2a2c29cc9b89732f6c24846bbb9d6270f28ef5ef2128cc73bd0d6d7bff9"
@@ -428,7 +442,7 @@
   revision = "14fe0d1b01d4d5fc031dd4bec1823bd3ebbe8016"
 
 [[projects]]
-  digest = "1:8dcedf2e8f06c7f94e48267dea0bc0be261fa97b377f3ae3e87843a92a549481"
+  digest = "1:f119e3205d3a1f0f19dbd7038eb37528e2c6f0933269dc344e305951fb87d632"
   name = "github.com/prometheus/common"
   packages = [
     "expfmt",
@@ -436,8 +450,8 @@
     "model",
   ]
   pruneopts = "UT"
-  revision = "31bed53e4047fd6c510e43a941f90cb31be0972a"
-  version = "v0.6.0"
+  revision = "287d3e634a1e550c9e463dd7e5a75a422c614505"
+  version = "v0.7.0"
 
 [[projects]]
   branch = "master"
@@ -542,7 +556,7 @@
 
 [[projects]]
   branch = "laullon/MONIT-15702"
-  digest = "1:fc92cebf846322b540fdcc211653df44aaefa30d018c1fe115f3579676b03250"
+  digest = "1:77d98d3fb5f4f1161940a54b1fd46a513c9c0bc3eba8d833b5b7df8744ef2726"
   name = "github.com/wavefronthq/wavefront-sdk-go"
   packages = [
     "application",
@@ -552,7 +566,7 @@
     "senders",
   ]
   pruneopts = "UT"
-  revision = "8c893c9e963b4e3340dbf4eb4f2d6ba2858ef3ed"
+  revision = "8fa9a8b08cd50ab80bb3a9fc7955f91c6301f748"
 
 [[projects]]
   branch = "master"
@@ -578,7 +592,7 @@
     "idna",
   ]
   pruneopts = "UT"
-  revision = "24e19bdeb0f2d062d8e2640d50a7aaf2a7f80e7a"
+  revision = "c8589233b77dde5edd2205ba8a4fb5c9c2472556"
 
 [[projects]]
   branch = "master"
@@ -593,14 +607,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:02da7af449b0c807a00c4533c72ba85b6105783efc243ced4057eb04843c1a83"
+  digest = "1:27d157d5f46fed69bdea22ad0b54f98de99c2e52d7468f9cfb04686f13a70298"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = "UT"
-  revision = "bc967efca4b87fb45e946a3ea4cb891883404fd0"
+  revision = "1a3b71a79e4aff00d87e69e0744746d7d67a3f8f"
   source = "https://github.com/golang/sys.git"
 
 [[projects]]
@@ -689,8 +703,8 @@
   version = "v2.2.2"
 
 [[projects]]
-  branch = "release-1.14"
-  digest = "1:c1eecbff5fa39a78676e0a7ed245be7338ef18e5566479bbe0e76f1ef852cd0c"
+  branch = "master"
+  digest = "1:8b13c174d0c185d665b685597f7aca8ee8bd6a07d8801b2f48ca886fa0fc4ea2"
   name = "k8s.io/api"
   packages = [
     "admissionregistration/v1beta1",
@@ -731,11 +745,11 @@
     "storage/v1beta1",
   ]
   pruneopts = "UT"
-  revision = "e3a6b8045b0b303430f6d0c261fd9e35be50800e"
+  revision = "21721929cffa4119565dd1922a54a3e38c440f85"
 
 [[projects]]
-  branch = "release-1.14"
-  digest = "1:f4bb0f5e93d9b631a124f38a1e975e064ed7c9ac584e535ab58546115fbde34e"
+  branch = "master"
+  digest = "1:89cf8dd55199f49b83831b6d61147132d903e183b669e8a99703eb1bcf204376"
   name = "k8s.io/apimachinery"
   packages = [
     "pkg/api/errors",
@@ -782,7 +796,7 @@
     "third_party/forked/golang/reflect",
   ]
   pruneopts = "UT"
-  revision = "a9f1d8a9c10182d101acf19b5145c3d4e9299adb"
+  revision = "344bcc0201c96e6981fd956f55e530f657826a52"
 
 [[projects]]
   branch = "release-1.10"
@@ -796,8 +810,7 @@
   revision = "30d6a91f580b7a2a240dccebc1a35bff2a6940f6"
 
 [[projects]]
-  branch = "release-11.0"
-  digest = "1:b1ef692197d8826f02ceaa2a51b1b89cf7056d1c141bd9f77dd711084ca94787"
+  digest = "1:1732de617afd7488fdbd98eaf4c3c449196967132fb1102d89ad1a222902bf2e"
   name = "k8s.io/client-go"
   packages = [
     "discovery",
@@ -952,7 +965,8 @@
     "util/testing",
   ]
   pruneopts = "UT"
-  revision = "6d55c1b1f1ca8ad83d572bbc3ca55ba5526d9d71"
+  revision = "78d2af792babf2dd937ba2e2a8d99c753a5eda89"
+  version = "kubernetes-1.15.0"
 
 [[projects]]
   digest = "1:ccb9be4c583b6ec848eb98aa395a4e8c8f8ad9ebb823642c0dd1c1c45939a5bb"
@@ -1045,6 +1059,7 @@
     "github.com/stretchr/testify/assert",
     "github.com/stretchr/testify/require",
     "github.com/wavefronthq/go-metrics-wavefront/reporting",
+    "github.com/wavefronthq/wavefront-sdk-go/event",
     "github.com/wavefronthq/wavefront-sdk-go/senders",
     "gopkg.in/yaml.v2",
     "k8s.io/api/core/v1",

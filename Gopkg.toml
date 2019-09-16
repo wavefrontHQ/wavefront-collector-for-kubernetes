@@ -40,16 +40,8 @@
   version = "1.2.2"
 
 [[constraint]]
-  branch = "release-1.14"
-  name = "k8s.io/api"
-
-[[constraint]]
-  branch = "release-1.14"
-  name = "k8s.io/apimachinery"
-
-[[constraint]]
-  branch = "release-11.0"
   name = "k8s.io/client-go"
+  version = "kubernetes-1.15.0"
 
 [[override]]
   name = "github.com/golang/protobuf"
