@@ -64,8 +64,7 @@ func (wf *WavefrontSkin) UpdateEvents(function string, eNew *v1.Event, eOld *v1.
 
 	wf.sender.SendEvent(
 		eNew.Message,
-		eNew.LastTimestamp.Unix(),
-		eNew.LastTimestamp.Unix()+1, // TODO: remove
+		eNew.LastTimestamp.Unix(), 0,
 		eNew.InvolvedObject.Name,
 		tags,
 		event.Type(eType),
