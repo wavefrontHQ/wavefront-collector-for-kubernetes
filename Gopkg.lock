@@ -51,14 +51,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:4e36268b92e691f4e84d9c3105f1e617a1ff2f949aa5bcc122741a051b2387bc"
+  digest = "1:daec43a6e190bf2ff768ee5dbad60b39703551fbdc72359382c5af0b22d656e8"
   name = "github.com/couchbase/gomemcached"
   packages = [
     ".",
     "client",
   ]
   pruneopts = "UT"
-  revision = "4e485a3d895fdb2a276c969e90fe32e1e8fa0280"
+  revision = "db06807997e6f778fe135571140a0c4f1f59723c"
 
 [[projects]]
   branch = "master"
@@ -78,6 +78,25 @@
   pruneopts = "UT"
   revision = "8991bc29aa16c548c550c7ff78260e27b9ab7c73"
   version = "v1.1.1"
+
+[[projects]]
+  digest = "1:a54d9b22e14caae3254cfa3e86c814c720e334bc49b0e153a673a7137642598e"
+  name = "github.com/go-kit/kit"
+  packages = [
+    "log",
+    "log/level",
+  ]
+  pruneopts = "UT"
+  revision = "150a65a7ec6156b4b640c1fd55f26fd3d475d656"
+  version = "v0.9.0"
+
+[[projects]]
+  digest = "1:4062bc6de62d73e2be342243cf138cf499b34d558876db8d9430e2149388a4d8"
+  name = "github.com/go-logfmt/logfmt"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "07c9b44f60d7ffdfb7d8efe1ad539965737836dc"
+  version = "v0.4.0"
 
 [[projects]]
   digest = "1:440028f55cb322d8cb5b9d5ebec298a00b7d74690a658fe6b1c0c0b44341bfae"
@@ -152,11 +171,12 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:1ba1d79f2810270045c328ae5d674321db34e3aae468eb4233883b473c5c0467"
+  digest = "1:497736d72a7a53142d24d9bc21c5d7f25d6394d10503968ba162d048c33ed622"
   name = "github.com/golang/glog"
   packages = ["."]
   pruneopts = "UT"
-  revision = "23def4e6c14b4da8ac2ed8007337bc5eb5007998"
+  revision = "3d0e1f406ff87368ce4e577c15ea0a90f9b07560"
+  source = "github.com/kubermatic/glog-gokit"
 
 [[projects]]
   branch = "master"
@@ -368,6 +388,14 @@
   pruneopts = "UT"
   revision = "f55edac94c9bbba5d6182a4be46d86a2c9b5b50e"
   version = "v1.0.2"
+
+[[projects]]
+  branch = "master"
+  digest = "1:a64e323dc06b73892e5bb5d040ced475c4645d456038333883f58934abbf6f72"
+  name = "github.com/kr/logfmt"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "b84e30acd515aadc4b783ad4ff83aff3299bdfe0"
 
 [[projects]]
   digest = "1:ff5ebae34cfbf047d505ee150de27e60570e8c394b3b8fdbb720ff6ac71985fc"
@@ -607,14 +635,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:27d157d5f46fed69bdea22ad0b54f98de99c2e52d7468f9cfb04686f13a70298"
+  digest = "1:b4ff814225fae134f48a210caa3257932973cfafa7ad594aeab69ce03e7c0540"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = "UT"
-  revision = "1a3b71a79e4aff00d87e69e0744746d7d67a3f8f"
+  revision = "8a69140bde95ee56138cac9d942a13d472e4188d"
   source = "https://github.com/golang/sys.git"
 
 [[projects]]
@@ -969,12 +997,13 @@
   version = "kubernetes-1.15.0"
 
 [[projects]]
-  digest = "1:ccb9be4c583b6ec848eb98aa395a4e8c8f8ad9ebb823642c0dd1c1c45939a5bb"
+  digest = "1:4896983246cdbac55d647d0d765387a05dc0c1a153f2999d51babbdee81b699c"
   name = "k8s.io/klog"
   packages = ["."]
   pruneopts = "UT"
-  revision = "3ca30a56d8a775276f9cdae009ba326fdc05af7f"
-  version = "v0.4.0"
+  revision = "dda81c2766535b29def2e939a98cd01351086376"
+  source = "github.com/simonpasquier/klog-gokit"
+  version = "v0.2.0"
 
 [[projects]]
   branch = "master"
@@ -1017,7 +1046,9 @@
   analyzer-version = 1
   input-imports = [
     "github.com/coreos/go-systemd/dbus",
+    "github.com/go-kit/kit/log",
     "github.com/gobwas/glob",
+    "github.com/golang/glog",
     "github.com/google/cadvisor/info/v1",
     "github.com/influxdata/telegraf",
     "github.com/influxdata/telegraf/plugins/inputs",
@@ -1089,6 +1120,7 @@
     "k8s.io/client-go/tools/record",
     "k8s.io/client-go/transport",
     "k8s.io/client-go/util/testing",
+    "k8s.io/klog",
     "k8s.io/kubernetes/pkg/kubelet/apis/stats/v1alpha1",
   ]
   solver-name = "gps-cdcl"
