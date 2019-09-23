@@ -26,17 +26,17 @@ type EventSinkInterface interface {
 	UpdateEvents(function string, eNew *v1.Event, eOld *v1.Event)
 }
 
-func CreateEventRouter(clientset kubernetes.Interface, wf *configuration.WavefrontSinkConfig) (*EventRouter, informers.SharedInformerFactory) {
+func CreateEventRouter(clientset kubernetes.Interface, wf *configuration.WavefrontSinkConfig, clusterName string) (*EventRouter, informers.SharedInformerFactory) {
 	sharedInformers := informers.NewSharedInformerFactory(clientset, time.Minute)
 	eventsInformer := sharedInformers.Core().V1().Events()
-	eventRouter := newEventRouter(clientset, eventsInformer, wf)
+	eventRouter := newEventRouter(clientset, eventsInformer, wf, clusterName)
 	return eventRouter, sharedInformers
 }
 
-func newEventRouter(kubeClient kubernetes.Interface, eventsInformer coreinformers.EventInformer, wf *configuration.WavefrontSinkConfig) *EventRouter {
+func newEventRouter(kubeClient kubernetes.Interface, eventsInformer coreinformers.EventInformer, wf *configuration.WavefrontSinkConfig, clusterName string) *EventRouter {
 	er := &EventRouter{
 		kubeClient: kubeClient,
-		eSink:      NewWavefrontSkin(wf),
+		eSink:      NewWavefrontSkin(wf, clusterName),
 	}
 	eventsInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: er.addEvent,

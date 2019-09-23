@@ -1,6 +1,7 @@
 package events
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
@@ -12,10 +13,11 @@ import (
 )
 
 type WavefrontSkin struct {
-	sender senders.Sender
+	sender      senders.Sender
+	clusterName string
 }
 
-func NewWavefrontSkin(wf *configuration.WavefrontSinkConfig) EventSinkInterface {
+func NewWavefrontSkin(wf *configuration.WavefrontSinkConfig, clusterName string) EventSinkInterface {
 	if len(wf.Server) == 0 || len(wf.Token) == 0 {
 		log.Fatal("Invalid EventSink configuration `Server` and `Token` are required")
 	}
@@ -33,7 +35,7 @@ func NewWavefrontSkin(wf *configuration.WavefrontSinkConfig) EventSinkInterface 
 
 	log.Print("sender ready")
 
-	return &WavefrontSkin{sender: sender}
+	return &WavefrontSkin{sender: sender, clusterName: clusterName}
 }
 
 // UpdateEvents implements the EventSinkInterface
@@ -51,10 +53,11 @@ func (wf *WavefrontSkin) UpdateEvents(function string, eNew *v1.Event, eOld *v1.
 	}
 
 	tags := []string{
-		ns,
-		eNew.InvolvedObject.Kind,
-		eNew.Reason,
-		function,
+		fmt.Sprintf("ns: %s", ns),
+		fmt.Sprintf("k8s: %s", wf.clusterName),
+		fmt.Sprintf("Kind: %s", eNew.InvolvedObject.Kind),
+		fmt.Sprintf("Reason: %s", eNew.Reason),
+		fmt.Sprintf("cmt: %s", eNew.Source.Component),
 	}
 
 	eType := eNew.Type
@@ -65,7 +68,7 @@ func (wf *WavefrontSkin) UpdateEvents(function string, eNew *v1.Event, eOld *v1.
 	wf.sender.SendEvent(
 		eNew.Message,
 		eNew.LastTimestamp.Unix(), 0,
-		eNew.InvolvedObject.Name,
+		eNew.Source.Host,
 		tags,
 		event.Type(eType),
 	)
