@@ -11,7 +11,7 @@ import (
 )
 
 func TestDiscover(t *testing.T) {
-	th := NewTargetHandler(true, &util.DummyProviderHandler{})
+	th := NewTargetHandler(true, &util.DummyProviderHandler{}, "prometheus.io")
 
 	pod := discovery.FakePod("pod1", "ns", "123")
 	th.Handle(discovery.Resource{

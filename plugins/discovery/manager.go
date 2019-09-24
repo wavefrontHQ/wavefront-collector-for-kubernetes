@@ -31,12 +31,11 @@ func init() {
 
 // RunConfig encapsulates the runtime configuration required for a discovery manager
 type RunConfig struct {
-	KubeClient   kubernetes.Interface
-	Plugins      []discovery.PluginConfig
-	Handler      metrics.ProviderHandler
-	Lister       discovery.ResourceLister
-	Daemon       bool
-	SyncInterval time.Duration
+	KubeClient      kubernetes.Interface
+	DiscoveryConfig discovery.Config
+	Handler         metrics.ProviderHandler
+	Lister          discovery.ResourceLister
+	Daemon          bool
 }
 
 // Manager manages the discovery of kubernetes targets based on annotations or configuration rules.
@@ -54,7 +53,7 @@ func NewDiscoveryManager(cfg RunConfig) *Manager {
 	mgr := &Manager{
 		runConfig:  cfg,
 		stopCh:     make(chan struct{}),
-		discoverer: newDiscoverer(cfg.Handler, cfg.Plugins),
+		discoverer: newDiscoverer(cfg.Handler, cfg.DiscoveryConfig),
 	}
 	mgr.ruleHandler = newRuleHandler(mgr.discoverer, cfg)
 	return mgr
@@ -125,7 +124,7 @@ func (dm *Manager) Handle(cfg interface{}) {
 	case *configuration.Config:
 		log.Infof("discoveryManager: collector configuration changed")
 		c := cfg.(*configuration.Config)
-		dm.ruleHandler.HandleAll(c.DiscoveryConfigs)
+		dm.ruleHandler.HandleAll(c.DiscoveryConfig.PluginConfigs)
 	default:
 		log.Errorf("unknown configuration type: %q", cfg)
 	}
@@ -141,9 +140,10 @@ func (dm *Manager) resyncRules() {
 			initial = false
 			time.Sleep(30 * time.Second)
 		}
-		err := dm.ruleHandler.HandleAll(dm.runConfig.Plugins)
+		log.Info("reloading discovery rules")
+		err := dm.ruleHandler.HandleAll(dm.runConfig.DiscoveryConfig.PluginConfigs)
 		if err != nil {
 			log.Errorf("discovery resync error: %v", err)
 		}
-	}, dm.runConfig.SyncInterval, dm.stopCh)
+	}, dm.runConfig.DiscoveryConfig.DiscoveryInterval, dm.stopCh)
 }

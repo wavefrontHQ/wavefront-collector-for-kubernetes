@@ -30,27 +30,28 @@ type discoverer struct {
 	delegates       map[string]*delegate
 }
 
-func newDiscoverer(handler metrics.ProviderHandler, plugins []discovery.PluginConfig) discovery.Discoverer {
+func newDiscoverer(handler metrics.ProviderHandler, discoveryCfg discovery.Config) discovery.Discoverer {
 	d := &discoverer{
 		queue:           make(chan discovery.Resource, 1000),
-		runtimeHandlers: makeRuntimeHandlers(handler),
-		delegates:       makeDelegates(handler, plugins),
+		runtimeHandlers: makeRuntimeHandlers(handler, discoveryCfg.AnnotationPrefix),
+		delegates:       makeDelegates(handler, discoveryCfg),
 	}
 	go d.dequeue()
 	return d
 }
 
-func makeRuntimeHandlers(handler metrics.ProviderHandler) []discovery.TargetHandler {
+func makeRuntimeHandlers(handler metrics.ProviderHandler, prefix string) []discovery.TargetHandler {
 	// currently annotation based discovery is supported only for prometheus
 	return []discovery.TargetHandler{
-		prometheus.NewTargetHandler(true, handler),
+		prometheus.NewTargetHandler(true, handler, prefix),
 	}
 }
 
-func makeDelegates(handler metrics.ProviderHandler, plugins []discovery.PluginConfig) map[string]*delegate {
+func makeDelegates(handler metrics.ProviderHandler, discoveryCfg discovery.Config) map[string]*delegate {
+	plugins := discoveryCfg.PluginConfigs
 	delegates := make(map[string]*delegate, len(plugins))
 	for _, plugin := range plugins {
-		delegate, err := makeDelegate(handler, plugin)
+		delegate, err := makeDelegate(handler, plugin, discoveryCfg.AnnotationPrefix)
 		if err != nil {
 			log.Errorf("error parsing plugin: %s error: %v", plugin.Name, err)
 			continue
@@ -60,14 +61,14 @@ func makeDelegates(handler metrics.ProviderHandler, plugins []discovery.PluginCo
 	return delegates
 }
 
-func makeDelegate(handler metrics.ProviderHandler, plugin discovery.PluginConfig) (*delegate, error) {
+func makeDelegate(handler metrics.ProviderHandler, plugin discovery.PluginConfig, prefix string) (*delegate, error) {
 	filter, err := newResourceFilter(plugin)
 	if err != nil {
 		return nil, err
 	}
 	var targetHandler discovery.TargetHandler
 	if strings.Contains(plugin.Type, "prometheus") {
-		targetHandler = prometheus.NewTargetHandler(false, handler)
+		targetHandler = prometheus.NewTargetHandler(false, handler, prefix)
 	} else if strings.Contains(plugin.Type, "telegraf") {
 		targetHandler = telegraf.NewTargetHandler(plugin.Type, handler)
 	} else {

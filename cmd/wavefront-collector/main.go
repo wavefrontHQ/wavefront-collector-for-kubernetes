@@ -181,8 +181,8 @@ func fillDefaults(cfg *configuration.Config) {
 	if cfg.ClusterName == "" {
 		cfg.ClusterName = "k8s-cluster"
 	}
-	if cfg.DiscoveryInterval == 0 {
-		cfg.DiscoveryInterval = 10 * time.Minute
+	if cfg.DiscoveryConfig.DiscoveryInterval == 0 {
+		cfg.DiscoveryConfig.DiscoveryInterval = 10 * time.Minute
 	}
 }
 
@@ -229,12 +229,11 @@ func createDiscoveryManagerOrDie(client *kube_client.Clientset, cfg *configurati
 		nodeLister := getNodeListerOrDie(client)
 
 		return discovery.NewDiscoveryManager(discovery.RunConfig{
-			KubeClient:   client,
-			Plugins:      cfg.DiscoveryConfigs,
-			Handler:      handler,
-			Daemon:       cfg.Daemon,
-			Lister:       discovery.NewResourceLister(podLister, serviceLister, nodeLister),
-			SyncInterval: cfg.DiscoveryInterval,
+			KubeClient:      client,
+			DiscoveryConfig: cfg.DiscoveryConfig,
+			Handler:         handler,
+			Daemon:          cfg.Daemon,
+			Lister:          discovery.NewResourceLister(podLister, serviceLister, nodeLister),
 		})
 	}
 	return nil

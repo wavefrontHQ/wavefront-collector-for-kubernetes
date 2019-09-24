@@ -49,7 +49,8 @@ sources:
         interval: 1s
     - plugins: [mem]
 
-discovery_configs:
+discovery:
+  plugins:
   - type: telegraf/redis
     name: "redis"
     selectors:

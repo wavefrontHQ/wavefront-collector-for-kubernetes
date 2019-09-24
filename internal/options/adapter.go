@@ -37,7 +37,7 @@ func (opts *CollectorRunOptions) Convert() (*configuration.Config, error) {
 	extractSinkProperties(cfg)
 
 	if opts.EnableDiscovery && opts.DiscoveryConfigFile != "" {
-		cfg.DiscoveryConfigs = loadDiscoveryFileOrDie(opts.DiscoveryConfigFile)
+		cfg.DiscoveryConfig.PluginConfigs = loadDiscoveryFileOrDie(opts.DiscoveryConfigFile)
 	}
 	return cfg, nil
 }

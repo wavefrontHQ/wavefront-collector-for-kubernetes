@@ -24,10 +24,6 @@ type Config struct {
 	// whether auto-discovery is enabled.
 	EnableDiscovery bool `yaml:"enableDiscovery"`
 
-	// frequency of evaluating discovery rules. Defaults to 10 minutes.
-	// format is [0-9]+(ms|[smhdwy])
-	DiscoveryInterval time.Duration `yaml:"discoveryInterval"`
-
 	// A unique identifier for your Kubernetes cluster. Defaults to k8s-cluster.
 	// Included as a point tag on all metrics sent to Wavefront.
 	ClusterName string `yaml:"clusterName"`
@@ -38,7 +34,7 @@ type Config struct {
 	// list of sources. SummarySource is mandatory. Others are optional.
 	Sources *SourceConfig `yaml:"sources"`
 
-	DiscoveryConfigs []discovery.PluginConfig `yaml:"discovery_configs"`
+	DiscoveryConfig discovery.Config `yaml:"discovery"`
 
 	// Internal use only
 	Daemon bool `yaml:"-"`

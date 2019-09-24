@@ -10,19 +10,21 @@ import (
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/prometheus"
 )
 
-func NewTargetHandler(useAnnotations bool, handler metrics.ProviderHandler) discovery.TargetHandler {
+func NewTargetHandler(useAnnotations bool, handler metrics.ProviderHandler, prefix string) discovery.TargetHandler {
+	if prefix == "" {
+		prefix = "prometheus.io"
+	}
+	scrapeAnnotation := customAnnotation(scrapeAnnotationFormat, prefix)
 	return discovery.NewHandler(
 		discovery.ProviderInfo{
 			Handler: handler,
 			Factory: prometheus.NewFactory(),
-			Encoder: prometheusEncoder{},
+			Encoder: newPrometheusEncoder(prefix),
 		},
 		discovery.NewRegistry("prometheus"),
 		discovery.UseAnnotations(useAnnotations),
-		discovery.SetRegistrationHandler(unregister),
+		discovery.SetRegistrationHandler(func(resource discovery.Resource) bool {
+			return utils.Param(resource.Meta, scrapeAnnotation, "", "false") == "false"
+		}),
 	)
-}
-
-func unregister(resource discovery.Resource) bool {
-	return utils.Param(resource.Meta, scrapeAnnotation, "", "false") == "false"
 }
