@@ -61,6 +61,9 @@ func (sink *wavefrontSink) Stop() {
 
 func (sink *wavefrontSink) sendPoint(metricName string, value float64, ts int64, source string, tags map[string]string) {
 	metricName = sanitizedChars.Replace(metricName)
+	if len(sink.Prefix) > 0 {
+		metricName = sink.Prefix + "." + metricName
+	}
 	if sink.filters != nil && !sink.filters.Match(metricName, tags) {
 		filteredPoints.Inc(1)
 		log.WithField("name", metricName).Trace("Dropping metric")
@@ -200,7 +203,7 @@ func NewWavefrontSink(cfg configuration.WavefrontSinkConfig) (metrics.DataSink, 
 
 	storage.globalTags = cfg.Tags
 	if cfg.Prefix != "" {
-		storage.Prefix = cfg.Prefix
+		storage.Prefix = strings.Trim(cfg.Prefix, ".")
 	}
 	storage.filters = filter.FromConfig(cfg.Filters)
 

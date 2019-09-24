@@ -4,6 +4,7 @@
 package wavefront
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -48,4 +49,30 @@ func TestCreateWavefrontSinkWithNoEmptyInputs(t *testing.T) {
 	assert.NotNil(t, wfSink.WavefrontClient)
 	assert.Equal(t, "testCluster", wfSink.ClusterName)
 	assert.Equal(t, "testPrefix", wfSink.Prefix)
+}
+
+func TestPrefix(t *testing.T) {
+	cfg := configuration.WavefrontSinkConfig{
+		ProxyAddress: "wavefront-proxy:2878",
+		TestMode:     true,
+		Transforms: configuration.Transforms{
+			Prefix: "test.",
+		},
+	}
+	sink, err := NewWavefrontSink(cfg)
+	assert.NoError(t, err)
+
+	db := metrics.DataBatch{
+		MetricPoints: []*metrics.MetricPoint{
+			{
+				Metric: "cpu.idle",
+				Value:  1.0,
+				Source: "fakeSource",
+			},
+		},
+	}
+	sink.ExportData(&db)
+	wfSink := sink.(*wavefrontSink)
+	assert.Equal(t, 1, len(wfSink.testReceivedLines))
+	assert.True(t, strings.Contains(wfSink.testReceivedLines[0], "test.cpu.idle"))
 }
