@@ -27,7 +27,7 @@ data:
         - 'kube.job.spec.parallelism.gauge'
         - 'kube.job.status.start.time.gauge'
         - 'kube.limitrange.*'
-        - 'kube.namespace.annotations.gauge'        
+        - 'kube.namespace.annotations.gauge'
         - 'kube.persistentvolume.*'
         - 'kube.persistentvolumeclaim.*'
         - 'kube.pod.container.resource.limits.*'
@@ -44,10 +44,10 @@ data:
         - 'kube.secret.*'
         - 'kube.statefulset.*'
         - 'kube.storageclass.*'
-        # Filter out generated labels        
+        # Filter out generated labels
         tagExclude:
         - 'label.controller-revision-hash'
-        - 'label.pod-template-*'        
+        - 'label.pod-template-*'
 
     sources:
       kubernetes_source:
@@ -90,70 +90,71 @@ data:
           - 'kube.apiserver.process.*'
 
     # discovery rules for auto-discovery of pods and services
-    discovery_configs:
+    discovery:
+      plugins:
 
-    # auto-discover redis master and slave pods
-    - name: redis
-      type: telegraf/redis
-      selectors:
-        images:
-        - 'redis:*'
-        - '*redis*'
-      port: 6379
-      scheme: "tcp"
-      conf: |
-        servers = ["${server}"]
+      # auto-discover redis master and slave pods
+      - name: redis
+        type: telegraf/redis
+        selectors:
+          images:
+          - 'redis:*'
+          - '*redis*'
+        port: 6379
+        scheme: "tcp"
+        conf: |
+          servers = ["${server}"]
 
-    # auto-discover memcached pods
-    - name: memcached
-      type: telegraf/memcached
-      selectors:
-        images:
-        - 'memcached:*'
-      port: 11211
-      conf: |
-        servers = ["${host}:${port}"]
+      # auto-discover memcached pods
+      - name: memcached
+        type: telegraf/memcached
+        selectors:
+          images:
+          - 'memcached:*'
+        port: 11211
+        conf: |
+          servers = ["${host}:${port}"]
 
-    # auto-discover apache httpd pods
-    - name: apache
-      type: telegraf/apache
-      selectors:
-        images:
-        - '*apache:2.4.39*'
-      port: 8080
-      conf: |
-        urls = ["http://${host}:${port}/server-status?auto"]
+      # auto-discover apache httpd pods
+      - name: apache
+        type: telegraf/apache
+        selectors:
+          images:
+          - '*apache:2.4.39*'
+        port: 8080
+        conf: |
+          urls = ["http://${host}:${port}/server-status?auto"]
 
-    # auto-discover kube DNS
-    - name: kube-dns-discovery
-      type: prometheus
-      selectors:
-        labels:
-          k8s-app:
-          - kube-dns
-      port: 10054
-      path: /metrics
-      scheme: http
-      prefix: kube.dns.
+      # auto-discover kube DNS
+      - name: kube-dns-discovery
+        type: prometheus
+        selectors:
+          labels:
+            k8s-app:
+            - kube-dns
+        port: 10054
+        path: /metrics
+        scheme: http
+        prefix: kube.dns.
 
-      filters:
-        metricWhitelist:
-        - 'kube.dns.http.request.duration.microseconds'
-        - 'kube.dns.http.request.size.bytes'
-        - 'kube.dns.http.requests.total.counter'
-        - 'kube.dns.http.response.size.bytes'
-        - 'kube.dns.kubedns.dnsmasq.*'
-        - 'kube.dns.process.*'
+        filters:
+          metricWhitelist:
+          - 'kube.dns.http.request.duration.microseconds'
+          - 'kube.dns.http.request.size.bytes'
+          - 'kube.dns.http.requests.total.counter'
+          - 'kube.dns.http.response.size.bytes'
+          - 'kube.dns.kubedns.dnsmasq.*'
+          - 'kube.dns.process.*'
 
-    # auto-discover a sample prometheus application
-    - name: prom-example
-      type: prometheus
-      selectors:
-        labels:
-          k8s-app:
-          - prom-example
-      port: 8080
-      path: /metrics
-      prefix: kube.prom-example.
-      tags:
-        alt_name: sample-app
+      # auto-discover a sample prometheus application
+      - name: prom-example
+        type: prometheus
+        selectors:
+          labels:
+            k8s-app:
+            - prom-example
+        port: 8080
+        path: /metrics
+        prefix: kube.prom-example.
+        tags:
+          alt_name: sample-app

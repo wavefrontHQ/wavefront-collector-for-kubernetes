@@ -69,8 +69,13 @@ sources:
   systemd_source:
     # see systemd_source for details
 
-# Optional list of auto-discovery rules.
-discovery_configs:
+# Optional auto-discovery configuration.
+discovery:
+  # optional prefix for annotation based discovery.
+  # when specified, this replaces prefixes such as `prometheus.io` etc
+  annotation_prefix: "wavefront.com"
+
+  plugins:
   # see auto-discovery for details
 ```
 
