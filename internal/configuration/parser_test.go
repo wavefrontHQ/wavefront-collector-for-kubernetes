@@ -30,6 +30,12 @@ sinks:
     tagInclude:
     - 'nodename'
 
+events_sinks:
+- server: https://nimba.wavefront.com
+  token: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+- server: https://nimba.wavefront.com
+  token: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+
 sources:
   kubernetes_source:
     prefix: kubernetes.

@@ -44,8 +44,10 @@ func (a *Agent) Start() {
 		a.dm.Start()
 	}
 	log.Infof("Starting Events collector")
-	go func() { a.er.Run(a.stop) }()
-	go func() { a.sif.Start(a.stop) }()
+	if a.er != nil {
+		go func() { a.er.Run(a.stop) }()
+		go func() { a.sif.Start(a.stop) }()
+	}
 	log.Infof("Done Starting Events collector")
 }
 

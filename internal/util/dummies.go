@@ -24,6 +24,7 @@ import (
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	. "github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
+	v1 "k8s.io/api/core/v1"
 )
 
 type DummySink struct {
@@ -43,6 +44,9 @@ func (dummy *DummySink) ExportData(*DataBatch) {
 	dummy.mutex.Unlock()
 
 	time.Sleep(dummy.latency)
+}
+
+func (dummy *DummySink) ExportEvents(function string, eNew *v1.Event, eOld *v1.Event) {
 }
 
 func (dummy *DummySink) Stop() {

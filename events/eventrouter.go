@@ -5,7 +5,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	v1 "k8s.io/api/core/v1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/informers"
@@ -15,28 +15,30 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
+var Log = log.WithField("system", "events")
+
 type EventRouter struct {
 	kubeClient     kubernetes.Interface
 	eLister        corelisters.EventLister
 	eListerSynched cache.InformerSynced
-	eSink          EventSinkInterface
+	skins          []metrics.DataSink
 }
 
 type EventSinkInterface interface {
 	UpdateEvents(function string, eNew *v1.Event, eOld *v1.Event)
 }
 
-func CreateEventRouter(clientset kubernetes.Interface, wf *configuration.WavefrontSinkConfig, clusterName string) (*EventRouter, informers.SharedInformerFactory) {
+func CreateEventRouter(clientset kubernetes.Interface, skins []metrics.DataSink, clusterName string) (*EventRouter, informers.SharedInformerFactory) {
 	sharedInformers := informers.NewSharedInformerFactory(clientset, time.Minute)
 	eventsInformer := sharedInformers.Core().V1().Events()
-	eventRouter := newEventRouter(clientset, eventsInformer, wf, clusterName)
+	eventRouter := newEventRouter(clientset, eventsInformer, skins, clusterName)
 	return eventRouter, sharedInformers
 }
 
-func newEventRouter(kubeClient kubernetes.Interface, eventsInformer coreinformers.EventInformer, wf *configuration.WavefrontSinkConfig, clusterName string) *EventRouter {
+func newEventRouter(kubeClient kubernetes.Interface, eventsInformer coreinformers.EventInformer, skins []metrics.DataSink, clusterName string) *EventRouter {
 	er := &EventRouter{
 		kubeClient: kubeClient,
-		eSink:      NewWavefrontSkin(wf, clusterName),
+		skins:      skins,
 	}
 	eventsInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: er.addEvent,
@@ -66,18 +68,24 @@ func (er *EventRouter) Run(stopCh <-chan struct{}) {
 // addEvent is called when an event is created, or during the initial list
 func (er *EventRouter) addEvent(obj interface{}) {
 	e := obj.(*v1.Event)
-	er.eSink.UpdateEvents("added", e, nil)
+	for _, skin := range er.skins {
+		skin.ExportEvents("added", e, nil)
+	}
 }
 
 // updateEvent is called any time there is an update to an existing event
 func (er *EventRouter) updateEvent(objOld interface{}, objNew interface{}) {
 	eOld := objOld.(*v1.Event)
 	eNew := objNew.(*v1.Event)
-	er.eSink.UpdateEvents("update", eNew, eOld)
+	for _, skin := range er.skins {
+		skin.ExportEvents("update", eNew, eOld)
+	}
 }
 
 // deleteEvent should only occur when the system garbage collects events via TTL expiration
 func (er *EventRouter) deleteEvent(obj interface{}) {
 	e := obj.(*v1.Event)
-	er.eSink.UpdateEvents("delete", e, nil)
+	for _, skin := range er.skins {
+		skin.ExportEvents("delete", e, nil)
+	}
 }

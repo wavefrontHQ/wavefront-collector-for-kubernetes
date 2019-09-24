@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
+	v1 "k8s.io/api/core/v1"
 
 	gm "github.com/rcrowley/go-metrics"
 	log "github.com/sirupsen/logrus"
@@ -108,6 +109,9 @@ func (this *sinkManager) ExportData(data *metrics.DataBatch) {
 	}
 	// Wait for all pushes to complete or timeout.
 	wg.Wait()
+}
+
+func (this *sinkManager) ExportEvents(function string, eNew *v1.Event, eOld *v1.Event) {
 }
 
 func (this *sinkManager) Name() string {

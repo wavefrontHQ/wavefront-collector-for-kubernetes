@@ -22,6 +22,8 @@ package metrics
 
 import (
 	"time"
+
+	v1 "k8s.io/api/core/v1"
 )
 
 type MetricType int8
@@ -165,6 +167,7 @@ type DataSink interface {
 	// after the given DataBatch was written. This will allow sink manager to push data only to these
 	// sinks that finished writing the previous data.
 	ExportData(*DataBatch)
+	ExportEvents(function string, eNew *v1.Event, eOld *v1.Event)
 	Stop()
 }
 
