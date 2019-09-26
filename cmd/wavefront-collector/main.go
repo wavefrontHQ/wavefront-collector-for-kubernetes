@@ -39,7 +39,6 @@ import (
 	"github.com/golang/glog"
 	kubeFlag "k8s.io/apiserver/pkg/util/flag"
 	"k8s.io/apiserver/pkg/util/logs"
-	"k8s.io/client-go/informers"
 	kube_client "k8s.io/client-go/kubernetes"
 	v1listers "k8s.io/client-go/listers/core/v1"
 	"k8s.io/klog"
@@ -133,11 +132,10 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 
 	// Evnets
 	var eventRouter *events.EventRouter
-	var sharedInformers informers.SharedInformerFactory
 	sinksFactory := sinks.NewSinkFactory()
 	eventsSinkList := sinksFactory.BuildAll(cfg.EventSinks, false)
 	if len(eventsSinkList) > 0 {
-		eventRouter, sharedInformers = events.CreateEventRouter(kubeClient, eventsSinkList, cfg.ClusterName)
+		eventRouter = events.CreateEventRouter(kubeClient, eventsSinkList, cfg.ClusterName, cfg.Daemon)
 		events.Log.Info("Events collection enabled")
 	} else {
 		events.Log.Info("Events collection disabled")
@@ -166,7 +164,7 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 	}
 
 	// create and start agent
-	ag := agent.NewAgent(man, dm, eventRouter, sharedInformers)
+	ag := agent.NewAgent(man, dm, eventRouter)
 	ag.Start()
 	return ag
 }
