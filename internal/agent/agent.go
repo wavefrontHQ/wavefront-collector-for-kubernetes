@@ -7,8 +7,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"k8s.io/client-go/informers"
 
-	"github.com/wavefronthq/wavefront-kubernetes-collector/events"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/discovery"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/events"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/manager"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources"
 )

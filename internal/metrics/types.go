@@ -23,7 +23,7 @@ package metrics
 import (
 	"time"
 
-	v1 "k8s.io/api/core/v1"
+	"github.com/wavefronthq/wavefront-sdk-go/event"
 )
 
 type MetricType int8
@@ -167,7 +167,7 @@ type DataSink interface {
 	// after the given DataBatch was written. This will allow sink manager to push data only to these
 	// sinks that finished writing the previous data.
 	ExportData(*DataBatch)
-	ExportEvents(function string, eNew *v1.Event, eOld *v1.Event)
+	ExportEvents(message string, ts time.Time, host string, tags map[string]string, options ...event.Option)
 	Stop()
 }
 

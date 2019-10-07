@@ -4,9 +4,14 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/gobwas/glob"
 	log "github.com/sirupsen/logrus"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/leadership"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sinks"
+	"github.com/wavefronthq/wavefront-sdk-go/event"
 	v1 "k8s.io/api/core/v1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/informers"
@@ -27,26 +32,31 @@ type EventRouter struct {
 	stop              chan struct{}
 	daemon            bool
 	leadershipManager *leadershipManager
+	whitelist         map[string]glob.Glob
+	blacklist         map[string]glob.Glob
 }
 
-type EventSinkInterface interface {
-	UpdateEvents(function string, eNew *v1.Event, eOld *v1.Event)
-}
-
-func CreateEventRouter(clientset kubernetes.Interface, skins []metrics.DataSink, clusterName string, daemon bool) *EventRouter {
+func CreateEventRouter(clientset kubernetes.Interface, cfg *configuration.EventsConfig, clusterName string, daemon bool) *EventRouter {
 	sharedInformers := informers.NewSharedInformerFactory(clientset, time.Minute)
 	eventsInformer := sharedInformers.Core().V1().Events()
+
+	sinksFactory := sinks.NewSinkFactory()
+	skins := sinksFactory.BuildAll(cfg.Sinks, false)
+	if len(skins) == 0 {
+		log.Fatalf("Failed to create Event manager manager: no Sink defined")
+	}
 
 	er := &EventRouter{
 		kubeClient:      clientset,
 		skins:           skins,
 		daemon:          daemon,
 		sharedInformers: sharedInformers,
+		whitelist:       filter.MultiCompile(cfg.Filters.TagWhitelist),
+		blacklist:       filter.MultiCompile(cfg.Filters.TagBlacklist),
 	}
+
 	eventsInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: er.addEvent,
-		// UpdateFunc: er.updateEvent,
-		// DeleteFunc: er.deleteEvent,
 	})
 	er.eLister = eventsInformer.Lister()
 	er.eListerSynched = eventsInformer.Informer().HasSynced
@@ -97,25 +107,39 @@ func (er *EventRouter) Stop() {
 // addEvent is called when an event is created, or during the initial list
 func (er *EventRouter) addEvent(obj interface{}) {
 	e := obj.(*v1.Event)
-	for _, skin := range er.skins {
-		skin.ExportEvents("added", e, nil)
-	}
-}
 
-// updateEvent is called any time there is an update to an existing event
-func (er *EventRouter) updateEvent(objOld interface{}, objNew interface{}) {
-	eOld := objOld.(*v1.Event)
-	eNew := objNew.(*v1.Event)
-	for _, skin := range er.skins {
-		skin.ExportEvents("update", eNew, eOld)
+	ns := e.InvolvedObject.Namespace
+	if len(ns) == 0 {
+		ns = "default"
 	}
-}
 
-// deleteEvent should only occur when the system garbage collects events via TTL expiration
-func (er *EventRouter) deleteEvent(obj interface{}) {
-	e := obj.(*v1.Event)
+	tags := map[string]string{
+		"namespace": ns,
+		"Kind":      e.InvolvedObject.Kind,
+		"Reason":    e.Reason,
+		"component": e.Source.Component,
+	}
+
+	if len(er.whitelist) > 0 && !filter.MatchesTags(er.whitelist, tags) {
+		return
+	}
+	if len(er.blacklist) > 0 && filter.MatchesTags(er.blacklist, tags) {
+		return
+	}
+
+	eType := e.Type
+	if len(eType) == 0 {
+		eType = "Normal"
+	}
+
 	for _, skin := range er.skins {
-		skin.ExportEvents("delete", e, nil)
+		skin.ExportEvents(
+			e.Message,
+			e.LastTimestamp.Time,
+			e.Source.Host,
+			tags,
+			event.Type(eType),
+		)
 	}
 }
 

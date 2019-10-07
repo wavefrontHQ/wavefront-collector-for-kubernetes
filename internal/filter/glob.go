@@ -67,10 +67,10 @@ func (gf *globFilter) Match(name string, tags map[string]string) bool {
 		return false
 	}
 
-	if gf.metricTagWhitelist != nil && !matchesTags(gf.metricTagWhitelist, tags) {
+	if gf.metricTagWhitelist != nil && !MatchesTags(gf.metricTagWhitelist, tags) {
 		return false
 	}
-	if gf.metricTagBlacklist != nil && matchesTags(gf.metricTagBlacklist, tags) {
+	if gf.metricTagBlacklist != nil && MatchesTags(gf.metricTagBlacklist, tags) {
 		return false
 	}
 
@@ -83,7 +83,7 @@ func (gf *globFilter) Match(name string, tags map[string]string) bool {
 	return true
 }
 
-func matchesTags(matchers map[string]glob.Glob, tags map[string]string) bool {
+func MatchesTags(matchers map[string]glob.Glob, tags map[string]string) bool {
 	for k, matcher := range matchers {
 		if val, ok := tags[k]; ok {
 			if matcher.Match(val) {

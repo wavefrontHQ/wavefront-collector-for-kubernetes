@@ -30,11 +30,19 @@ sinks:
     tagInclude:
     - 'nodename'
 
-events_sinks:
-- server: https://nimba.wavefront.com
-  token: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-- server: https://nimba.wavefront.com
-  token: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+events:
+  enabled: true
+  sinks:
+  - server: https://nimba.wavefront.com
+    token: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+  - server: https://nimba.wavefront.com
+    token: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+  filters:
+    tagWhitelist:
+      namespace:
+      - "default"
+      component:
+      - "pp"
 
 sources:
   kubernetes_source:
@@ -80,6 +88,10 @@ func TestFromYAML(t *testing.T) {
 	if len(cfg.Sinks) == 0 {
 		t.Errorf("invalid sinks")
 	}
+
+	assert.True(t, cfg.EventsConfig.Enabled)
+	assert.Equal(t, "default", cfg.EventsConfig.Filters.TagWhitelist["namespace"][0])
+	assert.Equal(t, "pp", cfg.EventsConfig.Filters.TagWhitelist["component"][0])
 
 	assert.True(t, len(cfg.Sources.PrometheusConfigs) > 0)
 	assert.Equal(t, "kubernetes.", cfg.Sources.SummaryConfig.Prefix)

@@ -25,7 +25,7 @@ import (
 	"time"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
-	v1 "k8s.io/api/core/v1"
+	"github.com/wavefronthq/wavefront-sdk-go/event"
 
 	gm "github.com/rcrowley/go-metrics"
 	log "github.com/sirupsen/logrus"
@@ -111,7 +111,7 @@ func (this *sinkManager) ExportData(data *metrics.DataBatch) {
 	wg.Wait()
 }
 
-func (this *sinkManager) ExportEvents(function string, eNew *v1.Event, eOld *v1.Event) {
+func (this *sinkManager) ExportEvents(message string, ts time.Time, host string, tags map[string]string, options ...event.Option) {
 }
 
 func (this *sinkManager) Name() string {

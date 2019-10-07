@@ -4,9 +4,10 @@
 package filter
 
 import (
-	"github.com/gobwas/glob"
 	"strings"
 	"testing"
+
+	"github.com/gobwas/glob"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 )
@@ -33,19 +34,19 @@ func TestMatchesTags(t *testing.T) {
 		"node": {"10.2.*", "10.3.*"},
 	})
 
-	if matchesTags(matchers, map[string]string{"env": "prod"}) {
+	if MatchesTags(matchers, map[string]string{"env": "prod"}) {
 		t.Errorf("error matching tags")
 	}
-	if !matchesTags(matchers, map[string]string{"env": "prod234"}) {
+	if !MatchesTags(matchers, map[string]string{"env": "prod234"}) {
 		t.Errorf("error matching tags")
 	}
-	if !matchesTags(matchers, map[string]string{"env": "prod134"}) {
+	if !MatchesTags(matchers, map[string]string{"env": "prod134"}) {
 		t.Errorf("error matching tags")
 	}
-	if !matchesTags(matchers, map[string]string{"type": "service"}) {
+	if !MatchesTags(matchers, map[string]string{"type": "service"}) {
 		t.Errorf("error matching tags")
 	}
-	if !matchesTags(matchers, map[string]string{"node": "10.2.45.2"}) {
+	if !MatchesTags(matchers, map[string]string{"node": "10.2.45.2"}) {
 		t.Errorf("error matching tags")
 	}
 }

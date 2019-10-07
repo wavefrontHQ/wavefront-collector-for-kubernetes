@@ -35,8 +35,7 @@ type Config struct {
 	// list of Wavefront sinks. At least 1 is required.
 	Sinks []*WavefrontSinkConfig `yaml:"sinks"`
 
-	// list of Wavefront sinks used by envent listener.
-	EventSinks []*WavefrontSinkConfig `yaml:"events_sinks"`
+	EventsConfig *EventsConfig `yaml:"events"`
 
 	// list of sources. SummarySource is mandatory. Others are optional.
 	Sources *SourceConfig `yaml:"sources"`
@@ -45,6 +44,17 @@ type Config struct {
 
 	// Internal use only
 	Daemon bool `yaml:"-"`
+}
+
+type EventsConfig struct {
+	Enabled bool                   `yaml:"enabled"`
+	Sinks   []*WavefrontSinkConfig `yaml:"sinks"`
+	Filters EventsFilter           `yaml:"filters"`
+}
+
+type EventsFilter struct {
+	TagWhitelist map[string][]string `yaml:"tagWhitelist"`
+	TagBlacklist map[string][]string `yaml:"tagBlacklist"`
 }
 
 // SourceConfig contains configuration for various sources

@@ -24,7 +24,7 @@ import (
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	. "github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
-	v1 "k8s.io/api/core/v1"
+	"github.com/wavefronthq/wavefront-sdk-go/event"
 )
 
 type DummySink struct {
@@ -46,7 +46,7 @@ func (dummy *DummySink) ExportData(*DataBatch) {
 	time.Sleep(dummy.latency)
 }
 
-func (dummy *DummySink) ExportEvents(function string, eNew *v1.Event, eOld *v1.Event) {
+func (dummy *DummySink) ExportEvents(message string, ts time.Time, host string, tags map[string]string, options ...event.Option) {
 }
 
 func (dummy *DummySink) Stop() {

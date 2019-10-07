@@ -8,13 +8,13 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	"github.com/wavefronthq/wavefront-sdk-go/event"
 	"github.com/wavefronthq/wavefront-sdk-go/senders"
-	v1 "k8s.io/api/core/v1"
 
 	gm "github.com/rcrowley/go-metrics"
 	log "github.com/sirupsen/logrus"
@@ -160,31 +160,18 @@ func (sink *wavefrontSink) ExportData(batch *metrics.DataBatch) {
 	sink.send(batch)
 }
 
-func (wf *wavefrontSink) ExportEvents(function string, eNew *v1.Event, eOld *v1.Event) {
-	ns := eNew.InvolvedObject.Namespace
-	if len(ns) == 0 {
-		ns = "default"
+func (wf *wavefrontSink) ExportEvents(message string, ts time.Time, host string, tagsMap map[string]string, options ...event.Option) {
+	var tags []string
+	for k, v := range tagsMap {
+		tags = append(tags, fmt.Sprintf("%s: %s", k, v))
 	}
-
-	tags := []string{
-		fmt.Sprintf("ns: %s", ns),
-		fmt.Sprintf("k8s: %s", wf.ClusterName),
-		fmt.Sprintf("Kind: %s", eNew.InvolvedObject.Kind),
-		fmt.Sprintf("Reason: %s", eNew.Reason),
-		fmt.Sprintf("cmt: %s", eNew.Source.Component),
-	}
-
-	eType := eNew.Type
-	if len(eType) == 0 {
-		eType = "Normal"
-	}
-
+	tags = append(tags, fmt.Sprintf("cluster: %s", wf.ClusterName))
 	wf.WavefrontClient.SendEvent(
-		eNew.Message,
-		eNew.LastTimestamp.Unix(), 0,
-		eNew.Source.Host,
+		message,
+		ts.Unix(), 0,
+		host,
 		tags,
-		event.Type(eType),
+		options...,
 	)
 }
 

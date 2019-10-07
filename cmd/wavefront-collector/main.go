@@ -20,7 +20,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 
-	"github.com/wavefronthq/wavefront-kubernetes-collector/events"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/agent"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
 	discConfig "github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
@@ -30,6 +29,7 @@ import (
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/options"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/discovery"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/events"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/manager"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/processors"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sinks"
@@ -132,11 +132,9 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 
 	// Evnets
 	var eventRouter *events.EventRouter
-	sinksFactory := sinks.NewSinkFactory()
-	eventsSinkList := sinksFactory.BuildAll(cfg.EventSinks, false)
-	if len(eventsSinkList) > 0 {
-		eventRouter = events.CreateEventRouter(kubeClient, eventsSinkList, cfg.ClusterName, cfg.Daemon)
+	if cfg.EventsConfig.Enabled {
 		events.Log.Info("Events collection enabled")
+		eventRouter = events.CreateEventRouter(kubeClient, cfg.EventsConfig, cfg.ClusterName, cfg.Daemon)
 	} else {
 		events.Log.Info("Events collection disabled")
 	}
