@@ -212,9 +212,10 @@ filters:
 #### Custom collection intervals
 All sources support using a custom collection interval:
 ```yaml
-# Duration type specified as [0-9]+(ms|[smhdwy])
-interval: 30s
+collection:
+  # Duration type specified as [0-9]+(ms|[smhdwy])
+  interval: 30s
 
-# Duration type specified as [0-9]+(ms|[smhdwy])
-timeout: 20s
+  # Duration type specified as [0-9]+(ms|[smhdwy])
+  timeout: 20s
 ```
