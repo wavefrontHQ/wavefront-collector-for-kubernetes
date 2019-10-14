@@ -32,7 +32,6 @@ data:
         - 'kube.persistentvolumeclaim.*'
         - 'kube.pod.container.resource.limits.*'
         - 'kube.pod.container.*.reason.gauge'
-        - 'kube.pod.labels.gauge'
         - 'kube.pod.owner.gauge'
         - 'kube.pod.start.time.gauge'
         - 'kube.pod.status.scheduled.gauge'
@@ -46,8 +45,8 @@ data:
         - 'kube.storageclass.*'
         # Filter out generated labels
         tagExclude:
-        - 'label.controller-revision-hash'
-        - 'label.pod-template-*'
+        - 'label?controller?revision*'
+        - 'label?pod?template*'
 
     sources:
       kubernetes_source:
