@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/gobwas/glob"
+	gometrics "github.com/rcrowley/go-metrics"
 	log "github.com/sirupsen/logrus"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
@@ -22,6 +23,9 @@ import (
 
 var Log = log.WithField("system", "events")
 var leadershipName = "wf_collector_events"
+var filteredEvents = gometrics.GetOrRegisterCounter("events.filtered", gometrics.DefaultRegistry)
+var receviedEvents = gometrics.GetOrRegisterCounter("events.recevied", gometrics.DefaultRegistry)
+var sentEvents = gometrics.GetOrRegisterCounter("events.sent", gometrics.DefaultRegistry)
 
 type EventRouter struct {
 	kubeClient        kubernetes.Interface
@@ -120,12 +124,18 @@ func (er *EventRouter) addEvent(obj interface{}) {
 		"component": e.Source.Component,
 	}
 
+	receviedEvents.Inc(1)
 	if len(er.whitelist) > 0 && !filter.MatchesTags(er.whitelist, tags) {
+		Log.Infof("event '%s' filtered becuase a white list", e.Message)
+		filteredEvents.Inc(1)
 		return
 	}
 	if len(er.blacklist) > 0 && filter.MatchesTags(er.blacklist, tags) {
+		Log.Infof("event '%s' filtered becuase a black list", e.Message)
+		filteredEvents.Inc(1)
 		return
 	}
+	sentEvents.Inc(1)
 
 	eType := e.Type
 	if len(eType) == 0 {
