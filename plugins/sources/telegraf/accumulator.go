@@ -148,8 +148,12 @@ func (t *telegrafDataBatch) WithTracking(maxTracked int) telegraf.TrackingAccumu
 
 var floatType = reflect.TypeOf(float64(0))
 
-func getFloat(unk interface{}) (float64, error) {
+func getFloat(unk interface{}) (f float64, e error) {
 	v := reflect.ValueOf(unk)
+	if unk == nil || v.IsNil() {
+		return 0, fmt.Errorf("cannot convert nil value to float64")
+	}
+
 	v = reflect.Indirect(v)
 	if !v.Type().ConvertibleTo(floatType) {
 		return 0, fmt.Errorf("cannot convert %v to float64", v.Type())
