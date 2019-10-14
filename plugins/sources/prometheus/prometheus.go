@@ -7,13 +7,14 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
 	"io/ioutil"
 	"math"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/httputil"
@@ -47,7 +48,6 @@ type prometheusMetricsSource struct {
 	prefix     string
 	source     string
 	tags       map[string]string
-	buf        *bytes.Buffer
 	filters    filter.Filter
 	client     *http.Client
 	pps        gometrics.Counter
@@ -71,7 +71,6 @@ func NewPrometheusMetricsSource(metricsURL, prefix, source, discovered string, t
 		prefix:     prefix,
 		source:     source,
 		tags:       tags,
-		buf:        bytes.NewBufferString(""),
 		filters:    filters,
 		client:     client,
 		pps:        gometrics.GetOrRegisterCounter(ppsKey, gometrics.DefaultRegistry),
@@ -179,15 +178,18 @@ func (src *prometheusMetricsSource) buildPoints(metricFamilies map[string]*dto.M
 	for metricName, mf := range metricFamilies {
 		for _, m := range mf.Metric {
 			tags := src.buildTags(m)
-			if mf.GetType() == dto.MetricType_SUMMARY {
-				// summary metric
-				result = append(result, src.buildQuantiles(metricName, m, now, tags)...)
-			} else if mf.GetType() == dto.MetricType_HISTOGRAM {
-				// histogram metric
-				result = append(result, src.buildHistos(metricName, m, now, tags)...)
-			} else {
-				// standard metric
-				result = append(result, src.buildPoint(metricName, m, now, tags)...)
+			if src.isValidMetric(metricName, tags) {
+				tagsStr := encodeTags(tags)
+				if mf.GetType() == dto.MetricType_SUMMARY {
+					// summary metric
+					result = append(result, src.buildQuantiles(metricName, m, now, tagsStr)...)
+				} else if mf.GetType() == dto.MetricType_HISTOGRAM {
+					// histogram metric
+					result = append(result, src.buildHistos(metricName, m, now, tagsStr)...)
+				} else {
+					// standard metric
+					result = append(result, src.buildPoint(metricName, m, now, tagsStr)...)
+				}
 			}
 		}
 	}
@@ -211,17 +213,17 @@ func (src *prometheusMetricsSource) buildPoint(name string, m *dto.Metric, now i
 	if m.Gauge != nil {
 		if !math.IsNaN(m.GetGauge().GetValue()) {
 			point := src.metricPoint(name+".gauge", float64(m.GetGauge().GetValue()), now, src.source, tags)
-			result = src.filterAppend(result, point)
+			result = append(result, point)
 		}
 	} else if m.Counter != nil {
 		if !math.IsNaN(m.GetCounter().GetValue()) {
 			point := src.metricPoint(name+".counter", float64(m.GetCounter().GetValue()), now, src.source, tags)
-			result = src.filterAppend(result, point)
+			result = append(result, point)
 		}
 	} else if m.Untyped != nil {
 		if !math.IsNaN(m.GetUntyped().GetValue()) {
 			point := src.metricPoint(name+".value", float64(m.GetUntyped().GetValue()), now, src.source, tags)
-			result = src.filterAppend(result, point)
+			result = append(result, point)
 		}
 	}
 	return result
@@ -234,13 +236,13 @@ func (src *prometheusMetricsSource) buildQuantiles(name string, m *dto.Metric, n
 		if !math.IsNaN(q.GetValue()) {
 			newTags := fmt.Sprintf("%s quantile=%v", tags, q.GetQuantile())
 			point := src.metricPoint(name, float64(q.GetValue()), now, src.source, newTags)
-			result = src.filterAppend(result, point)
+			result = append(result, point)
 		}
 	}
 	point := src.metricPoint(name+".count", float64(m.GetSummary().GetSampleCount()), now, src.source, tags)
-	result = src.filterAppend(result, point)
+	result = append(result, point)
 	point = src.metricPoint(name+".sum", float64(m.GetSummary().GetSampleSum()), now, src.source, tags)
-	result = src.filterAppend(result, point)
+	result = append(result, point)
 
 	return result
 }
@@ -251,21 +253,31 @@ func (src *prometheusMetricsSource) buildHistos(name string, m *dto.Metric, now 
 	for _, b := range m.GetHistogram().Bucket {
 		newTags := fmt.Sprintf("%s le=%v", tags, b.GetUpperBound())
 		point := src.metricPoint(name, float64(b.GetCumulativeCount()), now, src.source, newTags)
-		result = src.filterAppend(result, point)
+		result = append(result, point)
 	}
 	point := src.metricPoint(name+".count", float64(m.GetHistogram().GetSampleCount()), now, src.source, tags)
-	result = src.filterAppend(result, point)
+	result = append(result, point)
 	point = src.metricPoint(name+".sum", float64(m.GetHistogram().GetSampleSum()), now, src.source, tags)
-	result = src.filterAppend(result, point)
+	result = append(result, point)
 	return result
 }
 
 // Get labels from metric
-func (src *prometheusMetricsSource) buildTags(m *dto.Metric) string {
-	src.buf.Reset()
-	encodeTags(src.tags, src.buf)
-	encodeLabelTags(m.Label, src.buf)
-	return src.buf.String()
+func (src *prometheusMetricsSource) buildTags(m *dto.Metric) map[string]string {
+	tags := make(map[string]string, len(src.tags)+len(m.Label))
+	for k, v := range src.tags {
+		if len(v) > 0 {
+			tags[k] = v
+		}
+	}
+	if len(m.Label) >= 0 {
+		for _, label := range m.Label {
+			if len(label.GetName()) > 0 && len(label.GetValue()) > 0 {
+				tags[label.GetName()] = label.GetValue()
+			}
+		}
+	}
+	return tags
 }
 
 func encodeLabelTags(labels []*dto.LabelPair, buf *bytes.Buffer) {
@@ -281,7 +293,10 @@ func encodeLabelTags(labels []*dto.LabelPair, buf *bytes.Buffer) {
 	}
 }
 
-func encodeTags(tags map[string]string, buf *bytes.Buffer) {
+var buf = bytes.NewBufferString("")
+
+func encodeTags(tags map[string]string) string {
+	buf.Reset()
 	for k, v := range tags {
 		if len(v) > 0 {
 			buf.WriteString(" ")
@@ -290,15 +305,16 @@ func encodeTags(tags map[string]string, buf *bytes.Buffer) {
 			buf.WriteString(url.QueryEscape(v))
 		}
 	}
+	return buf.String()
 }
 
-func (src *prometheusMetricsSource) filterAppend(slice []*metrics.MetricPoint, point *metrics.MetricPoint) []*metrics.MetricPoint {
-	if src.filters == nil || src.filters.Match(point.Metric, point.Tags) {
-		return append(slice, point)
+func (src *prometheusMetricsSource) isValidMetric(name string, tags map[string]string) bool {
+	if src.filters == nil || src.filters.Match(name, tags) {
+		return true
 	}
 	filteredPoints.Inc(1)
-	log.Debugf("dropping metric: %s", point.Metric)
-	return slice
+	log.Debugf("dropping metric: %s", name)
+	return false
 }
 
 type prometheusProvider struct {
