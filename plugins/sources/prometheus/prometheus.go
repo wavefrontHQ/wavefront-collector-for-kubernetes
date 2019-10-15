@@ -15,7 +15,6 @@ import (
 	"time"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
-
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/httputil"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/leadership"
@@ -48,6 +47,7 @@ type prometheusMetricsSource struct {
 	prefix     string
 	source     string
 	tags       map[string]string
+	buf        *bytes.Buffer
 	filters    filter.Filter
 	client     *http.Client
 	pps        gometrics.Counter
@@ -71,6 +71,7 @@ func NewPrometheusMetricsSource(metricsURL, prefix, source, discovered string, t
 		prefix:     prefix,
 		source:     source,
 		tags:       tags,
+		buf:        bytes.NewBufferString(""),
 		filters:    filters,
 		client:     client,
 		pps:        gometrics.GetOrRegisterCounter(ppsKey, gometrics.DefaultRegistry),
@@ -178,17 +179,24 @@ func (src *prometheusMetricsSource) buildPoints(metricFamilies map[string]*dto.M
 	for metricName, mf := range metricFamilies {
 		for _, m := range mf.Metric {
 			tags := src.buildTags(m)
-			if src.isValidMetric(metricName, tags) {
-				tagsStr := encodeTags(tags)
-				if mf.GetType() == dto.MetricType_SUMMARY {
-					// summary metric
-					result = append(result, src.buildQuantiles(metricName, m, now, tagsStr)...)
-				} else if mf.GetType() == dto.MetricType_HISTOGRAM {
-					// histogram metric
-					result = append(result, src.buildHistos(metricName, m, now, tagsStr)...)
-				} else {
-					// standard metric
-					result = append(result, src.buildPoint(metricName, m, now, tagsStr)...)
+			var metrics []*metrics.MetricPoint
+			if mf.GetType() == dto.MetricType_SUMMARY {
+				// summary metric
+				metrics = src.buildQuantiles(metricName, m, now, tags)
+			} else if mf.GetType() == dto.MetricType_HISTOGRAM {
+				// histogram metric
+				metrics = src.buildHistos(metricName, m, now, tags)
+			} else {
+				// standard metric
+				metrics = src.buildPoint(metricName, m, now, tags)
+			}
+
+			for _, metric := range metrics {
+				if src.isValidMetric(metric.Metric, metric.Tags) {
+					tagsStr := src.encodeTags(metric.Tags)
+					metric.StrTags = tagsStr
+					metric.Tags = nil
+					result = append(result, metric)
 				}
 			}
 		}
@@ -197,18 +205,18 @@ func (src *prometheusMetricsSource) buildPoints(metricFamilies map[string]*dto.M
 	return result, nil
 }
 
-func (src *prometheusMetricsSource) metricPoint(name string, value float64, ts int64, source string, tags string) *metrics.MetricPoint {
+func (src *prometheusMetricsSource) metricPoint(name string, value float64, ts int64, source string, tags map[string]string) *metrics.MetricPoint {
 	return &metrics.MetricPoint{
 		Metric:    src.prefix + strings.Replace(name, "_", ".", -1),
 		Value:     value,
 		Timestamp: ts,
 		Source:    source,
-		StrTags:   tags,
+		Tags:      tags,
 	}
 }
 
 // Get name and value from metric
-func (src *prometheusMetricsSource) buildPoint(name string, m *dto.Metric, now int64, tags string) []*metrics.MetricPoint {
+func (src *prometheusMetricsSource) buildPoint(name string, m *dto.Metric, now int64, tags map[string]string) []*metrics.MetricPoint {
 	var result []*metrics.MetricPoint
 	if m.Gauge != nil {
 		if !math.IsNaN(m.GetGauge().GetValue()) {
@@ -230,12 +238,12 @@ func (src *prometheusMetricsSource) buildPoint(name string, m *dto.Metric, now i
 }
 
 // Get Quantiles from summary metric
-func (src *prometheusMetricsSource) buildQuantiles(name string, m *dto.Metric, now int64, tags string) []*metrics.MetricPoint {
+func (src *prometheusMetricsSource) buildQuantiles(name string, m *dto.Metric, now int64, tags map[string]string) []*metrics.MetricPoint {
 	var result []*metrics.MetricPoint
 	for _, q := range m.GetSummary().Quantile {
 		if !math.IsNaN(q.GetValue()) {
-			newTags := fmt.Sprintf("%s quantile=%v", tags, q.GetQuantile())
-			point := src.metricPoint(name, float64(q.GetValue()), now, src.source, newTags)
+			tags["quantile"] = fmt.Sprintf("%v", q.GetQuantile())
+			point := src.metricPoint(name, float64(q.GetValue()), now, src.source, tags)
 			result = append(result, point)
 		}
 	}
@@ -248,11 +256,11 @@ func (src *prometheusMetricsSource) buildQuantiles(name string, m *dto.Metric, n
 }
 
 // Get Buckets from histogram metric
-func (src *prometheusMetricsSource) buildHistos(name string, m *dto.Metric, now int64, tags string) []*metrics.MetricPoint {
+func (src *prometheusMetricsSource) buildHistos(name string, m *dto.Metric, now int64, tags map[string]string) []*metrics.MetricPoint {
 	var result []*metrics.MetricPoint
 	for _, b := range m.GetHistogram().Bucket {
-		newTags := fmt.Sprintf("%s le=%v", tags, b.GetUpperBound())
-		point := src.metricPoint(name, float64(b.GetCumulativeCount()), now, src.source, newTags)
+		tags["bucket"] = fmt.Sprintf("%v", b.GetUpperBound())
+		point := src.metricPoint(name, float64(b.GetCumulativeCount()), now, src.source, tags)
 		result = append(result, point)
 	}
 	point := src.metricPoint(name+".count", float64(m.GetHistogram().GetSampleCount()), now, src.source, tags)
@@ -293,19 +301,17 @@ func encodeLabelTags(labels []*dto.LabelPair, buf *bytes.Buffer) {
 	}
 }
 
-var buf = bytes.NewBufferString("")
-
-func encodeTags(tags map[string]string) string {
-	buf.Reset()
+func (src *prometheusMetricsSource) encodeTags(tags map[string]string) string {
+	src.buf.Reset()
 	for k, v := range tags {
 		if len(v) > 0 {
-			buf.WriteString(" ")
-			buf.WriteString(url.QueryEscape(k))
-			buf.WriteString("=")
-			buf.WriteString(url.QueryEscape(v))
+			src.buf.WriteString(" ")
+			src.buf.WriteString(url.QueryEscape(k))
+			src.buf.WriteString("=")
+			src.buf.WriteString(url.QueryEscape(v))
 		}
 	}
-	return buf.String()
+	return src.buf.String()
 }
 
 func (src *prometheusMetricsSource) isValidMetric(name string, tags map[string]string) bool {
