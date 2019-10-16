@@ -259,7 +259,7 @@ func (src *prometheusMetricsSource) buildQuantiles(name string, m *dto.Metric, n
 func (src *prometheusMetricsSource) buildHistos(name string, m *dto.Metric, now int64, tags map[string]string) []*metrics.MetricPoint {
 	var result []*metrics.MetricPoint
 	for _, b := range m.GetHistogram().Bucket {
-		tags["bucket"] = fmt.Sprintf("%v", b.GetUpperBound())
+		tags["le"] = fmt.Sprintf("%v", b.GetUpperBound())
 		point := src.metricPoint(name, float64(b.GetCumulativeCount()), now, src.source, tags)
 		result = append(result, point)
 	}
