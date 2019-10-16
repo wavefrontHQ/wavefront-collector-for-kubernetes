@@ -69,7 +69,7 @@ func TestMetricBlacklist(t *testing.T) {
 
 func TestMetricTagWhitelist(t *testing.T) {
 	cfg := filter.Config{
-		MetricTagWhitelist: map[string][]string{"label": []string{"good"}},
+		MetricTagWhitelist: map[string][]string{"label": {"good"}},
 	}
 	f := filter.NewGlobFilter(cfg)
 
@@ -87,7 +87,7 @@ func TestMetricTagWhitelist(t *testing.T) {
 
 func TestMetricTagBlacklist(t *testing.T) {
 	cfg := filter.Config{
-		MetricTagBlacklist: map[string][]string{"label": []string{"ba*"}},
+		MetricTagBlacklist: map[string][]string{"label": {"ba*"}},
 	}
 	f := filter.NewGlobFilter(cfg)
 

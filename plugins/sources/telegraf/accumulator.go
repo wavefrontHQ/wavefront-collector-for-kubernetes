@@ -150,7 +150,7 @@ var floatType = reflect.TypeOf(float64(0))
 
 func getFloat(unk interface{}) (f float64, e error) {
 	v := reflect.ValueOf(unk)
-	if unk == nil || v.IsNil() {
+	if unk == nil {
 		return 0, fmt.Errorf("cannot convert nil value to float64")
 	}
 
