@@ -51,6 +51,7 @@ ifneq ($(OVERRIDE_IMAGE_NAME),)
 	docker tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OVERRIDE_IMAGE_NAME)
 endif
 
+#This rule need to be run on RHEL with podman installed.
 container_rhel: build
 	cp $(OUT_DIR)/$(ARCH)/$(BINARY_NAME) $(TEMP_DIR)
 	cp deploy/docker/Dockerfile-rhel $(TEMP_DIR)/Dockerfile
