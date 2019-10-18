@@ -23,8 +23,6 @@ import (
 	"time"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
-	. "github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
-	"github.com/wavefronthq/wavefront-sdk-go/event"
 )
 
 type DummySink struct {
@@ -38,7 +36,7 @@ type DummySink struct {
 func (dummy *DummySink) Name() string {
 	return dummy.name
 }
-func (dummy *DummySink) ExportData(*DataBatch) {
+func (dummy *DummySink) ExportData(*metrics.DataBatch) {
 	dummy.mutex.Lock()
 	dummy.exportCount++
 	dummy.mutex.Unlock()
@@ -46,7 +44,7 @@ func (dummy *DummySink) ExportData(*DataBatch) {
 	time.Sleep(dummy.latency)
 }
 
-func (dummy *DummySink) ExportEvents(message string, ts time.Time, host string, tags map[string]string, options ...event.Option) {
+func (dummy *DummySink) ExportEvent(*metrics.Event) {
 }
 
 func (dummy *DummySink) Stop() {
@@ -80,7 +78,7 @@ func NewDummySink(name string, latency time.Duration) *DummySink {
 
 type DummyMetricsSource struct {
 	latency   time.Duration
-	metricSet MetricSet
+	metricSet metrics.MetricSet
 	name      string
 }
 
@@ -88,7 +86,7 @@ func (dummy *DummyMetricsSource) Name() string {
 	return dummy.name
 }
 
-func (dummy *DummyMetricsSource) ScrapeMetrics() (*DataBatch, error) {
+func (dummy *DummyMetricsSource) ScrapeMetrics() (*metrics.DataBatch, error) {
 	time.Sleep(dummy.latency)
 
 	point := &metrics.MetricPoint{
@@ -99,16 +97,16 @@ func (dummy *DummyMetricsSource) ScrapeMetrics() (*DataBatch, error) {
 		Tags:      map[string]string{"tag": "tag"},
 	}
 
-	res := &DataBatch{
+	res := &metrics.DataBatch{
 		Timestamp: time.Now(),
 	}
 	res.MetricPoints = append(res.MetricPoints, point)
 	return res, nil
 }
 
-func newDummyMetricSet(name string) MetricSet {
-	return MetricSet{
-		MetricValues: map[string]MetricValue{},
+func newDummyMetricSet(name string) metrics.MetricSet {
+	return metrics.MetricSet{
+		MetricValues: map[string]metrics.MetricValue{},
 		Labels: map[string]string{
 			"name": name,
 		},
@@ -124,13 +122,13 @@ func NewDummyMetricsSource(name string, latency time.Duration) *DummyMetricsSour
 }
 
 type DummyMetricsSourceProvider struct {
-	sources           []MetricsSource
+	sources           []metrics.MetricsSource
 	collectionIterval time.Duration
 	timeout           time.Duration
 	name              string
 }
 
-func (dummy *DummyMetricsSourceProvider) GetMetricsSources() []MetricsSource {
+func (dummy *DummyMetricsSourceProvider) GetMetricsSources() []metrics.MetricsSource {
 	return dummy.sources
 }
 
@@ -146,7 +144,7 @@ func (dummy *DummyMetricsSourceProvider) Timeout() time.Duration {
 	return dummy.timeout
 }
 
-func NewDummyMetricsSourceProvider(name string, collectionIterval, timeout time.Duration, sources ...MetricsSource) MetricsSourceProvider {
+func NewDummyMetricsSourceProvider(name string, collectionIterval, timeout time.Duration, sources ...metrics.MetricsSource) metrics.MetricsSourceProvider {
 	return &DummyMetricsSourceProvider{
 		sources:           sources,
 		collectionIterval: collectionIterval,
@@ -163,7 +161,7 @@ func (dummy *DummyDataProcessor) Name() string {
 	return "dummy"
 }
 
-func (dummy *DummyDataProcessor) Process(data *DataBatch) (*DataBatch, error) {
+func (dummy *DummyDataProcessor) Process(data *metrics.DataBatch) (*metrics.DataBatch, error) {
 	time.Sleep(dummy.latency)
 	return data, nil
 }
@@ -178,7 +176,7 @@ type DummyProviderHandler struct {
 	count int
 }
 
-func (d *DummyProviderHandler) AddProvider(provider MetricsSourceProvider) {
+func (d *DummyProviderHandler) AddProvider(provider metrics.MetricsSourceProvider) {
 	d.count += 1
 }
 

@@ -47,9 +47,8 @@ type Config struct {
 }
 
 type EventsConfig struct {
-	Enabled bool                   `yaml:"enabled"`
-	Sinks   []*WavefrontSinkConfig `yaml:"sinks"`
-	Filters EventsFilter           `yaml:"filters"`
+	Enabled bool         `yaml:"enabled"`
+	Filters EventsFilter `yaml:"filters"`
 }
 
 type EventsFilter struct {

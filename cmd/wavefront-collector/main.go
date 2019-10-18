@@ -130,11 +130,11 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 
 	kubeClient := createKubeClientOrDie(*cfg.Sources.SummaryConfig)
 
-	// Evnets
+	// Events
 	var eventRouter *events.EventRouter
 	if cfg.EventsConfig.Enabled {
 		events.Log.Info("Events collection enabled")
-		eventRouter = events.CreateEventRouter(kubeClient, cfg.EventsConfig, cfg.ClusterName, cfg.Daemon)
+		eventRouter = events.CreateEventRouter(kubeClient, cfg.EventsConfig, sinkManager, cfg.ClusterName, cfg.Daemon)
 	} else {
 		events.Log.Info("Events collection disabled")
 	}
@@ -273,7 +273,7 @@ func registerVersion() {
 
 func createSinkManagerOrDie(cfgs []*configuration.WavefrontSinkConfig, sinkExportDataTimeout time.Duration) metrics.DataSink {
 	sinksFactory := sinks.NewSinkFactory()
-	sinkList := sinksFactory.BuildAll(cfgs, true)
+	sinkList := sinksFactory.BuildAll(cfgs)
 
 	for _, sink := range sinkList {
 		log.Infof("Starting with %s", sink.Name())

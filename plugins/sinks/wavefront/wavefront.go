@@ -8,12 +8,10 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
-	"github.com/wavefronthq/wavefront-sdk-go/event"
 	"github.com/wavefronthq/wavefront-sdk-go/senders"
 
 	gm "github.com/rcrowley/go-metrics"
@@ -160,18 +158,18 @@ func (sink *wavefrontSink) ExportData(batch *metrics.DataBatch) {
 	sink.send(batch)
 }
 
-func (wf *wavefrontSink) ExportEvents(message string, ts time.Time, host string, tagsMap map[string]string, options ...event.Option) {
+func (wf *wavefrontSink) ExportEvent(event *metrics.Event) {
 	var tags []string
-	for k, v := range tagsMap {
+	for k, v := range event.Tags {
 		tags = append(tags, fmt.Sprintf("%s: %s", k, v))
 	}
 	tags = append(tags, fmt.Sprintf("cluster: %s", wf.ClusterName))
 	wf.WavefrontClient.SendEvent(
-		message,
-		ts.Unix(), 0,
-		host,
+		event.Message,
+		event.Ts.Unix(), 0,
+		event.Host,
 		tags,
-		options...,
+		event.Options...,
 	)
 }
 

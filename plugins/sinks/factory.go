@@ -32,7 +32,7 @@ func (factory *SinkFactory) Build(cfg configuration.WavefrontSinkConfig) (metric
 	return wavefront.NewWavefrontSink(cfg)
 }
 
-func (factory *SinkFactory) BuildAll(cfgs []*configuration.WavefrontSinkConfig, required bool) []metrics.DataSink {
+func (factory *SinkFactory) BuildAll(cfgs []*configuration.WavefrontSinkConfig) []metrics.DataSink {
 	result := make([]metrics.DataSink, 0, len(cfgs))
 
 	for _, cfg := range cfgs {
@@ -44,7 +44,7 @@ func (factory *SinkFactory) BuildAll(cfgs []*configuration.WavefrontSinkConfig, 
 		result = append(result, sink)
 	}
 
-	if (len(result) == 0) && required {
+	if len(result) == 0 {
 		log.Fatal("No available sink to use")
 	}
 	return result

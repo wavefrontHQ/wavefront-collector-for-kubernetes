@@ -32,11 +32,6 @@ sinks:
 
 events:
   enabled: true
-  sinks:
-  - server: https://nimba.wavefront.com
-    token: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-  - server: https://nimba.wavefront.com
-    token: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
   filters:
     tagWhitelist:
       namespace:

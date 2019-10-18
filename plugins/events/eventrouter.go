@@ -11,7 +11,6 @@ import (
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/leadership"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sinks"
 	"github.com/wavefronthq/wavefront-sdk-go/event"
 	v1 "k8s.io/api/core/v1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -31,7 +30,7 @@ type EventRouter struct {
 	kubeClient        kubernetes.Interface
 	eLister           corelisters.EventLister
 	eListerSynched    cache.InformerSynced
-	skins             []metrics.DataSink
+	sink              metrics.DataSink
 	sharedInformers   informers.SharedInformerFactory
 	stop              chan struct{}
 	daemon            bool
@@ -40,19 +39,13 @@ type EventRouter struct {
 	blacklist         map[string]glob.Glob
 }
 
-func CreateEventRouter(clientset kubernetes.Interface, cfg *configuration.EventsConfig, clusterName string, daemon bool) *EventRouter {
+func CreateEventRouter(clientset kubernetes.Interface, cfg *configuration.EventsConfig, sink metrics.DataSink, clusterName string, daemon bool) *EventRouter {
 	sharedInformers := informers.NewSharedInformerFactory(clientset, time.Minute)
 	eventsInformer := sharedInformers.Core().V1().Events()
 
-	sinksFactory := sinks.NewSinkFactory()
-	skins := sinksFactory.BuildAll(cfg.Sinks, false)
-	if len(skins) == 0 {
-		log.Fatalf("Failed to create Event manager manager: no Sink defined")
-	}
-
 	er := &EventRouter{
 		kubeClient:      clientset,
-		skins:           skins,
+		sink:            sink,
 		daemon:          daemon,
 		sharedInformers: sharedInformers,
 		whitelist:       filter.MultiCompile(cfg.Filters.TagWhitelist),
@@ -118,20 +111,20 @@ func (er *EventRouter) addEvent(obj interface{}) {
 	}
 
 	tags := map[string]string{
-		"namespace": ns,
-		"Kind":      e.InvolvedObject.Kind,
-		"Reason":    e.Reason,
-		"component": e.Source.Component,
+		"namespace_name": ns,
+		"kind":           e.InvolvedObject.Kind,
+		"reason":         e.Reason,
+		"component":      e.Source.Component,
 	}
 
 	receviedEvents.Inc(1)
 	if len(er.whitelist) > 0 && !filter.MatchesTags(er.whitelist, tags) {
-		Log.Infof("event '%s' filtered becuase a white list", e.Message)
+		Log.Debugf("event '%s' filtered becuase a white list", e.Message)
 		filteredEvents.Inc(1)
 		return
 	}
 	if len(er.blacklist) > 0 && filter.MatchesTags(er.blacklist, tags) {
-		Log.Infof("event '%s' filtered becuase a black list", e.Message)
+		Log.Debugf("event '%s' filtered becuase a black list", e.Message)
 		filteredEvents.Inc(1)
 		return
 	}
@@ -142,15 +135,13 @@ func (er *EventRouter) addEvent(obj interface{}) {
 		eType = "Normal"
 	}
 
-	for _, skin := range er.skins {
-		skin.ExportEvents(
-			e.Message,
-			e.LastTimestamp.Time,
-			e.Source.Host,
-			tags,
-			event.Type(eType),
-		)
-	}
+	er.sink.ExportEvent(NewEvent(
+		e.Message,
+		e.LastTimestamp.Time,
+		e.Source.Host,
+		tags,
+		event.Type(eType),
+	))
 }
 
 type system interface {
@@ -204,4 +195,15 @@ func (lm *leadershipManager) run(ch <-chan bool) {
 			return
 		}
 	}
+}
+
+func NewEvent(message string, ts time.Time, host string, tags map[string]string, options ...event.Option) *metrics.Event {
+	event := &metrics.Event{
+		Message: message,
+		Ts:      ts,
+		Host:    host,
+		Tags:    tags,
+		Options: options,
+	}
+	return event
 }

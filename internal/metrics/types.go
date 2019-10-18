@@ -160,6 +160,14 @@ type MetricsSourceProvider interface {
 	Timeout() time.Duration
 }
 
+type Event struct {
+	Message string
+	Ts      time.Time
+	Host    string
+	Tags    map[string]string
+	Options []event.Option
+}
+
 type DataSink interface {
 	Name() string
 
@@ -167,7 +175,7 @@ type DataSink interface {
 	// after the given DataBatch was written. This will allow sink manager to push data only to these
 	// sinks that finished writing the previous data.
 	ExportData(*DataBatch)
-	ExportEvents(message string, ts time.Time, host string, tags map[string]string, options ...event.Option)
+	ExportEvent(*Event)
 	Stop()
 }
 
