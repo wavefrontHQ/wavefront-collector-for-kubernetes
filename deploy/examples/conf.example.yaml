@@ -161,6 +161,16 @@ data:
           cluster_health = true
           cluster_stats = true
 
+      # haProxy
+      - name: haproxy
+        type: telegraf/haproxy
+        selectors:
+          images:
+          - "*haproxy*"
+        port: 8181
+        conf: |
+          servers = ["http://username:password@${host}:${port}/haproxy?stats"]
+
       # memcached
       - name: memcached
         type: telegraf/memcached
