@@ -26,13 +26,60 @@ oc create -f https://raw.githubusercontent.com/wavefrontHQ/wavefront-kubernetes-
 curl -O https://raw.githubusercontent.com/wavefrontHQ/wavefront-kubernetes-collector/master/deploy/openshift/openshift-operator/deploy/crds/wavefront-collector-operator_v1beta1_cr.yaml 
 ```
 
-**Note**: If you are planning to use direct ingestion then set `collector.useProxy` and `proxy.enabled` to `false` in `wavefront-collector-operator_v1beta1_cr.yaml` and go to step 8.
+7. Configure Wavefront Proxy:
 
-7. Log in to the Openshift web console and create storage under `wavefront-collector`:
-   * Select **Access Mode** as `RWX`
-   * Set **Size** to `5 GiB`
-   * Give a name to the storage and make a note of it.
-8. Replace OPENSHIFT_CLUSTER_NAME, YOUR_CLUSTER_NAME, YOUR_API_TOKEN and WF_PROXY_STORAGE (ignore for direct ingestion) in `wavefront-collector-operator_v1beta1_cr.yaml` and run:
+* Set `collector.useProxy: true` in `wavefront-collector-operator_v1beta1_cr.yaml`
+
+Now configure the Wavefront proxy by following any one of the options:
+
+* Option 1: [Using external Wavefront proxy](#option-1-using-external-wavefront-proxy) to send metrics to a Wavefront proxy that is already configured and running outside of the cluster.
+* Option 2: [Using internal Wavefront proxy](#option-2-using-internal-wavefront-proxy) to deploy Wavefront proxy into the Openshift cluster and configuring it.
+
+8. Replace OPENSHIFT_CLUSTER_NAME in `wavefront-collector-operator_v1beta1_cr.yaml` and run:
 ```
 oc create -f wavefront-collector-operator_v1beta1_cr.yaml -n wavefront-collector
 ``` 
+
+
+### Option 1. Using external Wavefront proxy 
+
+* Uncomment the property `collector.proxyAddress` in `wavefront-collector-operator_v1beta1_cr.yaml`and provide the external Wavefront proxy IP address with port.
+
+### Option 2. Using internal Wavefront proxy
+
+* Create a file `pvc.yaml` with below content and replace `<storage_class_name>` with available storage class in the cluster.
+
+```
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: wavefront-storage
+  namespace: wavefront-collector
+  annotation:
+    <storage_class_name>
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+```
+
+* Now create storage `wavefront-storage`
+```
+  oc create -f pvc.yaml
+```
+
+* Set `proxy.enabled: true` and replace `YOUR_CLUSTER_NAME`, `YOUR_API_TOKEN` and `WF_PROXY_STORAGE` in `wavefront-collector-operator_v1beta1_cr.yaml`
+
+
+## Uninstalling the Operator and its components
+
+```
+oc delete -f wavefront-collector-operator_v1beta1_cr.yaml -n wavefront-collector
+oc delete -f pvc.xml -n wavefront-collector
+oc delete -f https://raw.githubusercontent.com/wavefrontHQ/wavefront-kubernetes-collector/master/deploy/openshift/openshift-operator/deploy/operator.yaml
+oc delete -f https://raw.githubusercontent.com/wavefrontHQ/wavefront-kubernetes-collector/master/deploy/openshift/openshift-operator/deploy/crds/wavefront-collector-operator_v1beta1_crd.yaml
+
+```
+
