@@ -26,7 +26,7 @@ Refer to the [installation instructions](https://docs.wavefront.com/kubernetes.h
 
 ## Configuration
 
-The installation instructions use a default configuration suitable for most use cases. The collector supports various advanced configuration options. Configuration options have changed in 1.0 (upcoming release). See the documentation for the version of the collector you are running:
+The installation instructions use a default configuration suitable for most use cases. The collector supports various advanced configuration options. Configuration options have changed in 1.0. See the documentation for the version of the collector you are running:
 
 | Version | Documentation |
 | ----- | -------- |
