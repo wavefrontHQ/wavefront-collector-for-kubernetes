@@ -197,6 +197,7 @@ func convertOrDie(opt *options.CollectorRunOptions, cfg *configuration.Config) *
 	if err != nil {
 		log.Fatalf("error converting flags to config: %v", err)
 	}
+	fillDefaults(optsCfg)
 	return optsCfg
 }
 
