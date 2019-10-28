@@ -2,7 +2,7 @@ PREFIX?=wavefronthq
 DOCKER_IMAGE=wavefront-kubernetes-collector
 ARCH?=amd64
 OUT_DIR?=./_output
-GOLANG_VERSION?=1.12
+GOLANG_VERSION?=1.13
 
 BINARY_NAME=wavefront-collector
 
@@ -10,7 +10,7 @@ ifndef TEMP_DIR
 TEMP_DIR:=$(shell mktemp -d /tmp/wavefront.XXXXXX)
 endif
 
-VERSION?=1.0.1
+VERSION?=1.0.2
 GIT_COMMIT:=$(shell git rev-parse --short HEAD)
 
 REPO_DIR:=$(shell pwd)
