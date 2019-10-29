@@ -12,6 +12,7 @@ import (
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/events"
 	"github.com/wavefronthq/wavefront-sdk-go/senders"
 
 	gm "github.com/rcrowley/go-metrics"
@@ -159,18 +160,22 @@ func (sink *wavefrontSink) ExportData(batch *metrics.DataBatch) {
 }
 
 func (wf *wavefrontSink) ExportEvent(event *metrics.Event) {
-	var tags []string
+	tags := make(map[string]string)
 	for k, v := range event.Tags {
-		tags = append(tags, fmt.Sprintf("%s: %s", k, v))
+		tags[k] = v
 	}
-	tags = append(tags, fmt.Sprintf("cluster: %s", wf.ClusterName))
-	wf.WavefrontClient.SendEvent(
+	tags["cluster"] = wf.ClusterName
+
+	err := wf.WavefrontClient.SendEvent(
 		event.Message,
 		event.Ts.Unix(), 0,
 		event.Host,
 		tags,
 		event.Options...,
 	)
+	if err != nil {
+		events.Log.Error(err)
+	}
 }
 
 func NewWavefrontSink(cfg configuration.WavefrontSinkConfig) (metrics.DataSink, error) {
