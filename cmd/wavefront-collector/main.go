@@ -74,6 +74,7 @@ func main() {
 	log.Infof(strings.Join(os.Args, " "))
 	log.Infof("wavefront-collector version %v", version)
 	enableProfiling(opt.EnableProfiling)
+	enableForcedGC(opt.ForceGC)
 
 	preRegister(opt)
 	cfg := loadConfigOrDie(opt.ConfigFile)
@@ -410,6 +411,16 @@ func enableProfiling(enable bool) {
 				log.Errorf("E! %v", err)
 			}
 		}()
+	}
+}
+
+func enableForcedGC(enable bool) {
+	if enable {
+		log.Info("enabling forced garbage collection")
+		err := os.Setenv(util.ForceGC, "true")
+		if err != nil {
+			log.Errorf("error setting environment variable %s: %v", util.ForceGC, err)
+		}
 	}
 }
 

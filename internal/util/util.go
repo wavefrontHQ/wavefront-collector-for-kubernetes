@@ -41,6 +41,7 @@ const (
 	NodeNameEnvVar      = "POD_NODE_NAME"
 	NamespaceNameEnvVar = "POD_NAMESPACE_NAME"
 	DaemonModeEnvVar    = "DAEMON_MODE"
+	ForceGC             = "FORCE_GC"
 )
 
 var (

@@ -6,12 +6,15 @@ package wavefront
 import (
 	"fmt"
 	"net/url"
+	"os"
+	"runtime/debug"
 	"strconv"
 	"strings"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
 	"github.com/wavefronthq/wavefront-sdk-go/senders"
 
 	gm "github.com/rcrowley/go-metrics"
@@ -49,6 +52,7 @@ type wavefrontSink struct {
 	filters           filter.Filter
 	testMode          bool
 	testReceivedLines []string
+	forceGC           bool
 }
 
 func (sink *wavefrontSink) Name() string {
@@ -149,6 +153,11 @@ func (sink *wavefrontSink) send(batch *metrics.DataBatch) {
 	if after > before {
 		log.WithField("count", after).Warning("Error sending one or more points")
 	}
+
+	if sink.forceGC {
+		log.Info("sink: forcing memory release")
+		debug.FreeOSMemory()
+	}
 }
 
 func (sink *wavefrontSink) ExportData(batch *metrics.DataBatch) {
@@ -206,6 +215,9 @@ func NewWavefrontSink(cfg configuration.WavefrontSinkConfig) (metrics.DataSink, 
 		storage.Prefix = strings.Trim(cfg.Prefix, ".")
 	}
 	storage.filters = filter.FromConfig(cfg.Filters)
+
+	// force garbage collection if experimental flag enabled
+	storage.forceGC = os.Getenv(util.ForceGC) != ""
 
 	return storage, nil
 }
