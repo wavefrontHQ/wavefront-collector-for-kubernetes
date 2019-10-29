@@ -36,7 +36,7 @@ func (rc *RateCalculator) Process(batch *metrics.DataBatch) (*metrics.DataBatch,
 	for key, newMs := range batch.MetricSets {
 		oldMs, found := rc.previousMetricSets[key]
 		if !found {
-			log.Infof("Skipping rates for '%s' - no previous batch found", key)
+			log.Debugf("Skipping rates for '%s' - no previous batch found", key)
 			rc.previousMetricSets[key] = newMs
 			continue
 		}
