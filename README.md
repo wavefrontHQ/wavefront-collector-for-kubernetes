@@ -39,8 +39,8 @@ This collector supports monitoring of Openshift Origin 3.9 clusters. See [opensh
 ## Contributing
 Public contributions are always welcome. Please feel free to report issues or submit pull requests.
 
-[ci-img]: https://travis-ci.com/wavefrontHQ/wavefront-kubernetes-collector.svg?branch=master
-[ci]: https://travis-ci.com/wavefrontHQ/wavefront-kubernetes-collector
+[ci-img]: https://travis-ci.com/wavefrontHQ/wavefront-collector-for-kubernetes.svg?branch=master
+[ci]: https://travis-ci.com/wavefrontHQ/wavefront-collector-for-kubernetes
 [go-report-img]: https://goreportcard.com/badge/github.com/wavefronthq/wavefront-kubernetes-collector
 [go-report]: https://goreportcard.com/report/github.com/wavefronthq/wavefront-kubernetes-collector
 [docker-pull-img]: https://img.shields.io/docker/pulls/wavefronthq/wavefront-kubernetes-collector.svg?logo=docker
