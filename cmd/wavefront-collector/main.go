@@ -116,7 +116,7 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 	}
 
 	// create sink managers
-	setClusterNameOnSinks(clusterName, cfg.Sinks)
+	setInternalSinkProperties(cfg)
 	sinkManager := createSinkManagerOrDie(cfg.Sinks, cfg.SinkExportDataTimeout)
 
 	// create data processors
@@ -202,10 +202,17 @@ func convertOrDie(opt *options.CollectorRunOptions, cfg *configuration.Config) *
 	return optsCfg
 }
 
-func setClusterNameOnSinks(clusterName string, sinks []*configuration.WavefrontSinkConfig) {
-	log.Infof("using clusterName: %s", clusterName)
-	for _, sink := range sinks {
-		sink.ClusterName = clusterName
+func setInternalSinkProperties(cfg *configuration.Config) {
+	log.Infof("using clusterName: %s", cfg.ClusterName)
+	prefix := ""
+	if cfg.Sources.StatsConfig != nil {
+		prefix = configuration.GetStringValue(cfg.Sources.StatsConfig.Prefix, "kubernetes.")
+	}
+	version := getVersion()
+	for _, sink := range cfg.Sinks {
+		sink.ClusterName = cfg.ClusterName
+		sink.InternalStatsPrefix = prefix
+		sink.Version = version
 	}
 }
 
@@ -242,14 +249,19 @@ func createDiscoveryManagerOrDie(client *kube_client.Clientset, cfg *configurati
 }
 
 func registerVersion() {
+	version := getVersion()
+	m := gm.GetOrRegisterGaugeFloat64("version", gm.DefaultRegistry)
+	m.Update(version)
+}
+
+func getVersion() float64 {
 	parts := strings.Split(version, ".")
 	friendly := fmt.Sprintf("%s.%s%s", parts[0], parts[1], parts[2])
 	f, err := strconv.ParseFloat(friendly, 2)
 	if err != nil {
 		f = 0.0
 	}
-	m := gm.GetOrRegisterGaugeFloat64("version", gm.DefaultRegistry)
-	m.Update(f)
+	return f
 }
 
 func createSinkManagerOrDie(cfgs []*configuration.WavefrontSinkConfig, sinkExportDataTimeout time.Duration) metrics.DataSink {

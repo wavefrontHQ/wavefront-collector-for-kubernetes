@@ -80,8 +80,16 @@ type WavefrontSinkConfig struct {
 	// If set to true, metrics are emitted to stdout instead. Defaults to false.
 	TestMode bool `yaml:"testMode"`
 
-	// cluster name pulled in from the top level property. Internal use only.
+	// Note: Properties below are for internal use only. These cannot be set via the configuration file.
+
+	// Internal: Cluster name pulled in from the top level property.
 	ClusterName string `yaml:"-"`
+
+	// Internal: Collector version pulled in from top level. Used for the heartbeat metric.
+	Version float64 `yaml:"-"`
+
+	// Internal: The prefix used for internal stats. Used for the heartbeat metric.
+	InternalStatsPrefix string `yaml:"-"`
 }
 
 type CollectionConfig struct {
