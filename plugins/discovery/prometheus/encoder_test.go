@@ -6,6 +6,7 @@ package prometheus
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -80,6 +81,7 @@ func TestEncode(t *testing.T) {
 	pod.Annotations[customAnnotation(portAnnotationFormat, prefix)] = "9102"
 	pod.Annotations[customAnnotation(prefixAnnotationFormat, prefix)] = "test."
 	pod.Annotations[customAnnotation(labelsAnnotationFormat, prefix)] = "false"
+	pod.Annotations[customAnnotation(timeoutAnnotationFormat, prefix)] = "60s"
 
 	promCfg, ok = encoder.Encode("10.2.3.4", "pod", pod.ObjectMeta, discovery.PluginConfig{})
 	if !ok {
@@ -93,6 +95,7 @@ func TestEncode(t *testing.T) {
 	assert.Equal(t, "rule", pcfg.Discovered)
 	assert.Equal(t, "test", pcfg.Source)
 	assert.Equal(t, "test.", pcfg.Prefix)
+	assert.Equal(t, 60*time.Second, pcfg.Collection.Timeout)
 	checkTag(pcfg.Tags, "pod", "test", t)
 	checkTag(pcfg.Tags, "namespace", "test", t)
 
