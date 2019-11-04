@@ -28,7 +28,7 @@ type Config struct {
 	// format is [0-9]+(ms|[smhdwy])
 	DiscoveryInterval time.Duration `yaml:"discoveryInterval"`
 
-  // whether Events is enabled.
+	// whether Events is enabled.
 	EnableEvents bool `yaml:"enableEvents"`
 
 	// A unique identifier for your Kubernetes cluster. Defaults to k8s-cluster.
