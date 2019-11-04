@@ -14,6 +14,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sinks/wavefront"
+
 	kitlog "github.com/go-kit/kit/log"
 
 	gm "github.com/rcrowley/go-metrics"
@@ -132,7 +134,7 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 
 	// Events
 	var eventRouter *events.EventRouter
-	if cfg.EventsConfig.Enabled {
+	if cfg.EnableEvents {
 		events.Log.Info("Events collection enabled")
 		eventRouter = events.CreateEventRouter(kubeClient, cfg.EventsConfig, sinkManager, cfg.ClusterName, cfg.Daemon)
 	} else {
@@ -271,14 +273,14 @@ func registerVersion() {
 	m.Update(f)
 }
 
-func createSinkManagerOrDie(cfgs []*configuration.WavefrontSinkConfig, sinkExportDataTimeout time.Duration) metrics.DataSink {
+func createSinkManagerOrDie(cfgs []*configuration.WavefrontSinkConfig, sinkExportDataTimeout time.Duration) wavefront.WavefrontSink {
 	sinksFactory := sinks.NewSinkFactory()
 	sinkList := sinksFactory.BuildAll(cfgs)
 
 	for _, sink := range sinkList {
 		log.Infof("Starting with %s", sink.Name())
 	}
-	sinkManager, err := sinks.NewDataSinkManager(sinkList, sinkExportDataTimeout, sinks.DefaultSinkStopTimeout)
+	sinkManager, err := sinks.NewSinkManager(sinkList, sinkExportDataTimeout, sinks.DefaultSinkStopTimeout)
 	if err != nil {
 		log.Fatalf("Failed to create sink manager: %v", err)
 	}

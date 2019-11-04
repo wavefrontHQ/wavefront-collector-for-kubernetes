@@ -12,6 +12,7 @@ import (
 var sampleFile = `
 clusterName: new-collector
 enableDiscovery: true
+enableEvents: true
 defaultCollectionInterval: 10s
 
 sinks:
@@ -31,7 +32,6 @@ sinks:
     - 'nodename'
 
 events:
-  enabled: true
   filters:
     tagWhitelist:
       namespace:
@@ -84,7 +84,7 @@ func TestFromYAML(t *testing.T) {
 		t.Errorf("invalid sinks")
 	}
 
-	assert.True(t, cfg.EventsConfig.Enabled)
+	assert.True(t, cfg.EnableEvents)
 	assert.Equal(t, "default", cfg.EventsConfig.Filters.TagWhitelist["namespace"][0])
 	assert.Equal(t, "pp", cfg.EventsConfig.Filters.TagWhitelist["component"][0])
 

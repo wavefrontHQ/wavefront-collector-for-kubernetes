@@ -22,6 +22,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/events"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 )
 
@@ -44,7 +45,7 @@ func (dummy *DummySink) ExportData(*metrics.DataBatch) {
 	time.Sleep(dummy.latency)
 }
 
-func (dummy *DummySink) ExportEvent(*metrics.Event) {
+func (dummy *DummySink) ExportEvent(*events.Event) {
 }
 
 func (dummy *DummySink) Stop() {

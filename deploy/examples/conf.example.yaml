@@ -7,6 +7,7 @@ data:
   collector.yaml: |
     clusterName: test-gke-cluster-1
     enableDiscovery: true
+    enableEvents: true
     flushInterval: 30s
 
     sinks:
@@ -49,9 +50,11 @@ data:
         - 'label.controller-revision-hash'
         - 'label.pod-template-*'        
 
-    events_sink:
-      server: https://<CLUSTER>.wavefront.com
-      token: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+    events:
+      filters:
+        tagWhitelist:
+          namespace:
+          - "default"
 
     sources:
       kubernetes_source:

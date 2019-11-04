@@ -21,19 +21,18 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sinks/wavefront"
 )
 
 type SinkFactory struct {
 }
 
-func (factory *SinkFactory) Build(cfg configuration.WavefrontSinkConfig) (metrics.DataSink, error) {
+func (factory *SinkFactory) Build(cfg configuration.WavefrontSinkConfig) (wavefront.WavefrontSink, error) {
 	return wavefront.NewWavefrontSink(cfg)
 }
 
-func (factory *SinkFactory) BuildAll(cfgs []*configuration.WavefrontSinkConfig) []metrics.DataSink {
-	result := make([]metrics.DataSink, 0, len(cfgs))
+func (factory *SinkFactory) BuildAll(cfgs []*configuration.WavefrontSinkConfig) []wavefront.WavefrontSink {
+	result := make([]wavefront.WavefrontSink, 0, len(cfgs))
 
 	for _, cfg := range cfgs {
 		sink, err := factory.Build(*cfg)

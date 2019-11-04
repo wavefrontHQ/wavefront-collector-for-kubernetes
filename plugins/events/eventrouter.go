@@ -4,16 +4,21 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/events"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/leadership"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sinks/wavefront"
+	"github.com/wavefronthq/wavefront-sdk-go/event"
+
 	"github.com/gobwas/glob"
 	gometrics "github.com/rcrowley/go-metrics"
 	log "github.com/sirupsen/logrus"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/leadership"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
-	"github.com/wavefronthq/wavefront-sdk-go/event"
+
 	v1 "k8s.io/api/core/v1"
+
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	corelisters "k8s.io/client-go/listers/core/v1"
@@ -29,8 +34,8 @@ var sentEvents = gometrics.GetOrRegisterCounter("events.sent", gometrics.Default
 type EventRouter struct {
 	kubeClient        kubernetes.Interface
 	eLister           corelisters.EventLister
-	eListerSynched    cache.InformerSynced
-	sink              metrics.DataSink
+	eListerSynced     cache.InformerSynced
+	sink              wavefront.WavefrontSink
 	sharedInformers   informers.SharedInformerFactory
 	stop              chan struct{}
 	daemon            bool
@@ -39,7 +44,7 @@ type EventRouter struct {
 	blacklist         map[string]glob.Glob
 }
 
-func CreateEventRouter(clientset kubernetes.Interface, cfg *configuration.EventsConfig, sink metrics.DataSink, clusterName string, daemon bool) *EventRouter {
+func CreateEventRouter(clientset kubernetes.Interface, cfg *configuration.EventsConfig, sink wavefront.WavefrontSink, clusterName string, daemon bool) *EventRouter {
 	sharedInformers := informers.NewSharedInformerFactory(clientset, time.Minute)
 	eventsInformer := sharedInformers.Core().V1().Events()
 
@@ -56,7 +61,7 @@ func CreateEventRouter(clientset kubernetes.Interface, cfg *configuration.Events
 		AddFunc: er.addEvent,
 	})
 	er.eLister = eventsInformer.Lister()
-	er.eListerSynched = eventsInformer.Informer().HasSynced
+	er.eListerSynced = eventsInformer.Informer().HasSynced
 
 	if er.daemon {
 		er.leadershipManager = newLeadershipManager(er, leadershipName, clientset)
@@ -81,7 +86,7 @@ func (er *EventRouter) resume() {
 	go func() { er.sharedInformers.Start(er.stop) }()
 
 	// here is where we kick the caches into gear
-	if !cache.WaitForCacheSync(er.stop, er.eListerSynched) {
+	if !cache.WaitForCacheSync(er.stop, er.eListerSynced) {
 		utilruntime.HandleError(fmt.Errorf("timed out waiting for caches to sync"))
 		return
 	}
@@ -103,7 +108,10 @@ func (er *EventRouter) Stop() {
 
 // addEvent is called when an event is created, or during the initial list
 func (er *EventRouter) addEvent(obj interface{}) {
-	e := obj.(*v1.Event)
+	e, ok := obj.(*v1.Event)
+	if !ok {
+		return // prevent unlikely panic
+	}
 
 	ns := e.InvolvedObject.Namespace
 	if len(ns) == 0 {
@@ -135,7 +143,7 @@ func (er *EventRouter) addEvent(obj interface{}) {
 		eType = "Normal"
 	}
 
-	er.sink.ExportEvent(NewEvent(
+	er.sink.ExportEvent(newEvent(
 		e.Message,
 		e.LastTimestamp.Time,
 		e.Source.Host,
@@ -197,8 +205,8 @@ func (lm *leadershipManager) run(ch <-chan bool) {
 	}
 }
 
-func NewEvent(message string, ts time.Time, host string, tags map[string]string, options ...event.Option) *metrics.Event {
-	event := &metrics.Event{
+func newEvent(message string, ts time.Time, host string, tags map[string]string, options ...event.Option) *events.Event {
+	event := &events.Event{
 		Message: message,
 		Ts:      ts,
 		Host:    host,

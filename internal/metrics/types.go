@@ -22,8 +22,6 @@ package metrics
 
 import (
 	"time"
-
-	"github.com/wavefronthq/wavefront-sdk-go/event"
 )
 
 type MetricType int8
@@ -160,23 +158,11 @@ type MetricsSourceProvider interface {
 	Timeout() time.Duration
 }
 
-type Event struct {
-	Message string
-	Ts      time.Time
-	Host    string
-	Tags    map[string]string
-	Options []event.Option
-}
-
 type DataSink interface {
-	Name() string
-
 	// Exports data to the external storage. The function should be synchronous/blocking and finish only
 	// after the given DataBatch was written. This will allow sink manager to push data only to these
 	// sinks that finished writing the previous data.
 	ExportData(*DataBatch)
-	ExportEvent(*Event)
-	Stop()
 }
 
 type DataProcessor interface {

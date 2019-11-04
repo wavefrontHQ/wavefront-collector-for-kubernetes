@@ -5,7 +5,6 @@ package agent
 
 import (
 	log "github.com/sirupsen/logrus"
-	"k8s.io/client-go/informers"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/discovery"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/events"
@@ -14,10 +13,9 @@ import (
 )
 
 type Agent struct {
-	pm  manager.FlushManager
-	dm  *discovery.Manager
-	er  *events.EventRouter
-	sif informers.SharedInformerFactory
+	pm manager.FlushManager
+	dm *discovery.Manager
+	er *events.EventRouter
 }
 
 func NewAgent(pm manager.FlushManager, dm *discovery.Manager, er *events.EventRouter) *Agent {

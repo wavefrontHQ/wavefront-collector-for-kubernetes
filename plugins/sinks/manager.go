@@ -24,6 +24,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sinks/wavefront"
+
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/events"
+
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 
 	gm "github.com/rcrowley/go-metrics"
@@ -43,9 +47,9 @@ func init() {
 }
 
 type sinkHolder struct {
-	sink              metrics.DataSink
+	sink              wavefront.WavefrontSink
 	dataBatchChannel  chan *metrics.DataBatch
-	eventBatchChannel chan *metrics.Event
+	eventBatchChannel chan *events.Event
 	stopChannel       chan bool
 }
 
@@ -58,13 +62,13 @@ type sinkManager struct {
 	stopTimeout       time.Duration
 }
 
-func NewDataSinkManager(sinks []metrics.DataSink, exportDataTimeout, stopTimeout time.Duration) (metrics.DataSink, error) {
+func NewSinkManager(sinks []wavefront.WavefrontSink, exportDataTimeout, stopTimeout time.Duration) (wavefront.WavefrontSink, error) {
 	sinkHolders := []sinkHolder{}
 	for _, sink := range sinks {
 		sh := sinkHolder{
 			sink:              sink,
 			dataBatchChannel:  make(chan *metrics.DataBatch),
-			eventBatchChannel: make(chan *metrics.Event),
+			eventBatchChannel: make(chan *events.Event),
 			stopChannel:       make(chan bool),
 		}
 		sinkHolders = append(sinkHolders, sh)
@@ -114,7 +118,7 @@ func (this *sinkManager) ExportData(data *metrics.DataBatch) {
 	wg.Wait()
 }
 
-func (this *sinkManager) ExportEvent(event *metrics.Event) {
+func (this *sinkManager) ExportEvent(event *events.Event) {
 	var wg sync.WaitGroup
 	for _, sh := range this.sinkHolders {
 		wg.Add(1)

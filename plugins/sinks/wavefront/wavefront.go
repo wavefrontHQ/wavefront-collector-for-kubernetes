@@ -10,9 +10,9 @@ import (
 	"strings"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/events"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/events"
 	"github.com/wavefronthq/wavefront-sdk-go/senders"
 
 	gm "github.com/rcrowley/go-metrics"
@@ -40,6 +40,13 @@ func init() {
 	msCount = gm.GetOrRegisterCounter("wavefront.points.metric-sets.count", gm.DefaultRegistry)
 	filteredPoints = gm.GetOrRegisterCounter("wavefront.points.filtered.count", gm.DefaultRegistry)
 	clientType = gm.GetOrRegisterGauge("wavefront.sender.type", gm.DefaultRegistry)
+}
+
+type WavefrontSink interface {
+	Name() string
+	Stop()
+	metrics.DataSink
+	events.EventSink
 }
 
 type wavefrontSink struct {
@@ -159,26 +166,22 @@ func (sink *wavefrontSink) ExportData(batch *metrics.DataBatch) {
 	sink.send(batch)
 }
 
-func (wf *wavefrontSink) ExportEvent(event *metrics.Event) {
-	tags := make(map[string]string)
-	for k, v := range event.Tags {
-		tags[k] = v
-	}
-	tags["cluster"] = wf.ClusterName
+func (wf *wavefrontSink) ExportEvent(event *events.Event) {
+	event.Tags["cluster"] = wf.ClusterName
 
 	err := wf.WavefrontClient.SendEvent(
 		event.Message,
 		event.Ts.Unix(), 0,
 		event.Host,
-		tags,
+		event.Tags,
 		event.Options...,
 	)
 	if err != nil {
-		events.Log.Error(err)
+		log.Error(err)
 	}
 }
 
-func NewWavefrontSink(cfg configuration.WavefrontSinkConfig) (metrics.DataSink, error) {
+func NewWavefrontSink(cfg configuration.WavefrontSinkConfig) (WavefrontSink, error) {
 	storage := &wavefrontSink{
 		ClusterName: configuration.GetStringValue(cfg.ClusterName, "k8s-cluster"),
 		testMode:    cfg.TestMode,
