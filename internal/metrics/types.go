@@ -219,6 +219,6 @@ func (dp *DefaultMetricsSourceProvider) Configure(interval, timeout time.Duratio
 	dp.collectionInterval = interval // forces default collection interval if zero
 	dp.timeout = timeout
 	if dp.timeout == 0 {
-		dp.timeout = 10 * time.Second
+		dp.timeout = 30 * time.Second
 	}
 }

@@ -403,6 +403,10 @@ func setMaxProcs(opt *options.CollectorRunOptions) {
 	var numProcs int
 	if opt.MaxProcs < 1 {
 		numProcs = runtime.NumCPU()
+		if numProcs == 1 {
+			// default to 2
+			numProcs = 2
+		}
 	} else {
 		numProcs = opt.MaxProcs
 	}
