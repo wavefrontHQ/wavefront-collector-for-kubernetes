@@ -19,9 +19,9 @@ Metrics collected per type:
 |------------|-------------|
 | cpu.limit | CPU hard limit in millicores. |
 | cpu.node_capacity | CPU capacity of a node. |
-| cpu.node_allocatable | CPU allocatable of a node. |
-| cpu.node_reservation | Share of CPU that is reserved on the node allocatable. |
-| cpu.node_utilization | CPU utilization as a share of node allocatable. |
+| cpu.node_allocatable | CPU allocatable of a node in millicores. |
+| cpu.node_reservation | Share of CPU that is reserved on the node allocatable in millicores. |
+| cpu.node_utilization | CPU utilization as a share of node allocatable in millicores. |
 | cpu.request | CPU request (the guaranteed amount of resources) in millicores. |
 | cpu.usage | Cumulative amount of consumed CPU time on all cores in nanoseconds. |
 | cpu.usage_rate | CPU usage on all cores in millicores. |

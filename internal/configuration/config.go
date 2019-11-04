@@ -24,12 +24,12 @@ type Config struct {
 	// whether auto-discovery is enabled.
 	EnableDiscovery bool `yaml:"enableDiscovery"`
 
-	// whether Events is enabled.
-	EnableEvents bool `yaml:"enableEvents"`
-
 	// frequency of evaluating discovery rules. Defaults to 10 minutes.
 	// format is [0-9]+(ms|[smhdwy])
 	DiscoveryInterval time.Duration `yaml:"discoveryInterval"`
+
+  // whether Events is enabled.
+	EnableEvents bool `yaml:"enableEvents"`
 
 	// A unique identifier for your Kubernetes cluster. Defaults to k8s-cluster.
 	// Included as a point tag on all metrics sent to Wavefront.
@@ -43,7 +43,7 @@ type Config struct {
 	// list of sources. SummarySource is mandatory. Others are optional.
 	Sources *SourceConfig `yaml:"sources"`
 
-	DiscoveryConfigs []discovery.PluginConfig `yaml:"discovery_configs"`
+	DiscoveryConfig discovery.Config `yaml:"discovery"`
 
 	// Internal use only
 	Daemon bool `yaml:"-"`
@@ -98,8 +98,16 @@ type WavefrontSinkConfig struct {
 	// If set to true, metrics are emitted to stdout instead. Defaults to false.
 	TestMode bool `yaml:"testMode"`
 
-	// cluster name pulled in from the top level property. Internal use only.
+	// Note: Properties below are for internal use only. These cannot be set via the configuration file.
+
+	// Internal: Cluster name pulled in from the top level property.
 	ClusterName string `yaml:"-"`
+
+	// Internal: Collector version pulled in from top level. Used for the heartbeat metric.
+	Version float64 `yaml:"-"`
+
+	// Internal: The prefix used for internal stats. Used for the heartbeat metric.
+	InternalStatsPrefix string `yaml:"-"`
 }
 
 type CollectionConfig struct {

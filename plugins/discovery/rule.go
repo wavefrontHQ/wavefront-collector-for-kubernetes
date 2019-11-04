@@ -18,23 +18,25 @@ import (
 
 // handles runtime changes to plugin rules
 type ruleHandler struct {
-	d          *discoverer
-	ph         metrics.ProviderHandler
-	daemon     bool
-	kubeClient kubernetes.Interface
-	lister     discovery.ResourceLister
-	rulesCount gm.Gauge
+	d                *discoverer
+	ph               metrics.ProviderHandler
+	daemon           bool
+	kubeClient       kubernetes.Interface
+	lister           discovery.ResourceLister
+	annotationPrefix string
+	rulesCount       gm.Gauge
 }
 
 // Gets a new rule handler that can handle runtime changes to plugin rules
 func newRuleHandler(d discovery.Discoverer, cfg RunConfig) discovery.RuleHandler {
 	rh := &ruleHandler{
-		d:          d.(*discoverer),
-		ph:         cfg.Handler,
-		daemon:     cfg.Daemon,
-		kubeClient: cfg.KubeClient,
-		lister:     cfg.Lister,
-		rulesCount: gm.GetOrRegisterGauge("discovery.rules.count", gm.DefaultRegistry),
+		d:                d.(*discoverer),
+		ph:               cfg.Handler,
+		daemon:           cfg.Daemon,
+		kubeClient:       cfg.KubeClient,
+		lister:           cfg.Lister,
+		annotationPrefix: cfg.DiscoveryConfig.AnnotationPrefix,
+		rulesCount:       gm.GetOrRegisterGauge("discovery.rules.count", gm.DefaultRegistry),
 	}
 	count := int64(len(rh.d.delegates))
 	rh.rulesCount.Update(count)
@@ -106,7 +108,7 @@ func (rh *ruleHandler) internalHandle(plugin discovery.PluginConfig) error {
 	delegate, exists := rh.d.delegates[plugin.Name]
 	if !exists {
 		var err error
-		delegate, err = makeDelegate(rh.ph, plugin)
+		delegate, err = makeDelegate(rh.ph, plugin, rh.annotationPrefix)
 		if err != nil {
 			return err
 		}

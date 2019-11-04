@@ -10,7 +10,7 @@ import (
 var sampleFile = `
 global:
   discovery_interval: 5m
-plugin_configs:
+plugins:
   - type: telegraf/redis
     name: "redis"
     selectors:

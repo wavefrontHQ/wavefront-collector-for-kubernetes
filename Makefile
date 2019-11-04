@@ -2,7 +2,7 @@ PREFIX?=wavefronthq
 DOCKER_IMAGE=wavefront-kubernetes-collector
 ARCH?=amd64
 OUT_DIR?=./_output
-GOLANG_VERSION?=1.12
+GOLANG_VERSION?=1.13
 
 BINARY_NAME=wavefront-collector
 
@@ -10,7 +10,7 @@ ifndef TEMP_DIR
 TEMP_DIR:=$(shell mktemp -d /tmp/wavefront.XXXXXX)
 endif
 
-VERSION?=1.0.0
+VERSION?=1.0.3
 GIT_COMMIT:=$(shell git rev-parse --short HEAD)
 
 REPO_DIR:=$(shell pwd)
@@ -49,6 +49,16 @@ container:
 	rm -rf $(TEMP_DIR)
 ifneq ($(OVERRIDE_IMAGE_NAME),)
 	docker tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OVERRIDE_IMAGE_NAME)
+endif
+
+#This rule need to be run on RHEL with podman installed.
+container_rhel: build
+	cp $(OUT_DIR)/$(ARCH)/$(BINARY_NAME) $(TEMP_DIR)
+	cp deploy/docker/Dockerfile-rhel $(TEMP_DIR)/Dockerfile
+	sudo podman build --pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(TEMP_DIR)
+	rm -rf $(TEMP_DIR)
+ifneq ($(OVERRIDE_IMAGE_NAME),)
+	sudo podman tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OVERRIDE_IMAGE_NAME)
 endif
 
 clean:

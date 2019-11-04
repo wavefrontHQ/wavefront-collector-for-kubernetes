@@ -11,8 +11,19 @@ import (
 
 // configuration for auto discovery
 type Config struct {
-	Global        GlobalConfig   `yaml:"global"`
-	PluginConfigs []PluginConfig `yaml:"plugin_configs"`
+	// frequency of evaluating discovery rules. Defaults to 10 minutes.
+	// format is [0-9]+(ms|[smhdwy])
+	DiscoveryInterval time.Duration `yaml:"discovery_interval"`
+
+	// the annotation prefix for annotations based discovery
+	// if specified, this substitutes the default prefix such as "prometheus.io" etc that is used during discovery
+	AnnotationPrefix string `yaml:"annotation_prefix"`
+
+	// list of discovery rules
+	PluginConfigs []PluginConfig `yaml:"plugins"`
+
+	// Deprecated: ignored. Use top level configuration properties.
+	Global GlobalConfig `yaml:"global"`
 
 	// Deprecated: Use PluginConfigs instead.
 	PromConfigs []PrometheusConfig `yaml:"prom_configs"`

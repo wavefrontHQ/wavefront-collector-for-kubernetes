@@ -19,15 +19,15 @@ import (
 )
 
 const (
-	scrapeAnnotation             = "prometheus.io/scrape"
-	schemeAnnotation             = "prometheus.io/scheme"
-	pathAnnotation               = "prometheus.io/path"
-	portAnnotation               = "prometheus.io/port"
-	prefixAnnotation             = "prometheus.io/prefix"
-	labelsAnnotation             = "prometheus.io/includeLabels"
-	sourceAnnotation             = "prometheus.io/source"
-	collectionIntervalAnnotation = "prometheus.io/collectionInterval"
-	timeoutAnnotation            = "prometheus.io/timeout"
+	scrapeAnnotationFormat             = "%s/scrape"
+	schemeAnnotationFormat             = "%s/scheme"
+	pathAnnotationFormat               = "%s/path"
+	portAnnotationFormat               = "%s/port"
+	prefixAnnotationFormat             = "%s/prefix"
+	labelsAnnotationFormat             = "%s/includeLabels"
+	sourceAnnotationFormat             = "%s/source"
+	collectionIntervalAnnotationFormat = "%s/collectionInterval"
+	timeoutAnnotationFormat            = "%s/timeout"
 )
 
 // used as source for discovered resources
@@ -37,7 +37,34 @@ func init() {
 	nodeName = util.GetNodeName()
 }
 
-type prometheusEncoder struct{}
+type prometheusEncoder struct {
+	scrapeAnnotation             string
+	schemeAnnotation             string
+	pathAnnotation               string
+	portAnnotation               string
+	prefixAnnotation             string
+	labelsAnnotation             string
+	sourceAnnotation             string
+	collectionIntervalAnnotation string
+	timeoutAnnotation            string
+}
+
+func newPrometheusEncoder(prefix string) prometheusEncoder {
+	if len(prefix) == 0 {
+		prefix = "prometheus.io"
+	}
+	return prometheusEncoder{
+		scrapeAnnotation:             customAnnotation(scrapeAnnotationFormat, prefix),
+		schemeAnnotation:             customAnnotation(schemeAnnotationFormat, prefix),
+		pathAnnotation:               customAnnotation(pathAnnotationFormat, prefix),
+		portAnnotation:               customAnnotation(portAnnotationFormat, prefix),
+		prefixAnnotation:             customAnnotation(prefixAnnotationFormat, prefix),
+		labelsAnnotation:             customAnnotation(labelsAnnotationFormat, prefix),
+		sourceAnnotation:             customAnnotation(sourceAnnotationFormat, prefix),
+		collectionIntervalAnnotation: customAnnotation(collectionIntervalAnnotationFormat, prefix),
+		timeoutAnnotation:            customAnnotation(timeoutAnnotationFormat, prefix),
+	}
+}
 
 func (e prometheusEncoder) Encode(ip, kind string, meta metav1.ObjectMeta, cfg interface{}) (interface{}, bool) {
 	if ip == "" {
@@ -56,8 +83,8 @@ func (e prometheusEncoder) Encode(ip, kind string, meta metav1.ObjectMeta, cfg i
 	if cfg != nil {
 		rule = cfg.(discovery.PluginConfig)
 		discoveryType = "rule"
-		collectionInterval := utils.Param(meta, collectionIntervalAnnotation, rule.Collection.Interval.String(), "0s")
-		timeout := utils.Param(meta, timeoutAnnotation, rule.Collection.Timeout.String(), "0s")
+		collectionInterval := utils.Param(meta, e.collectionIntervalAnnotation, rule.Collection.Interval.String(), "0s")
+		timeout := utils.Param(meta, e.timeoutAnnotation, rule.Collection.Timeout.String(), "0s")
 
 		collectionDuration, err := time.ParseDuration(collectionInterval)
 		if err != nil {
@@ -76,18 +103,18 @@ func (e prometheusEncoder) Encode(ip, kind string, meta metav1.ObjectMeta, cfg i
 	}
 	result.Discovered = discoveryType
 
-	scrape := utils.Param(meta, scrapeAnnotation, "", "false")
+	scrape := utils.Param(meta, e.scrapeAnnotation, "", "false")
 	if rule.Name == "" && scrape != "true" {
 		log.Debugf("prometheus scrape=false for %s=%s", kind, meta.Name)
 		return result, false
 	}
 
-	scheme := utils.Param(meta, schemeAnnotation, rule.Scheme, "http")
-	path := utils.Param(meta, pathAnnotation, rule.Path, "/metrics")
-	port := utils.Param(meta, portAnnotation, rule.Port, "")
-	prefix := utils.Param(meta, prefixAnnotation, rule.Prefix, "")
-	source := utils.Param(meta, sourceAnnotation, rule.Source, nodeName)
-	includeLabels := utils.Param(meta, labelsAnnotation, rule.IncludeLabels, "true")
+	scheme := utils.Param(meta, e.schemeAnnotation, rule.Scheme, "http")
+	path := utils.Param(meta, e.pathAnnotation, rule.Path, "/metrics")
+	port := utils.Param(meta, e.portAnnotation, rule.Port, "")
+	prefix := utils.Param(meta, e.prefixAnnotation, rule.Prefix, "")
+	source := utils.Param(meta, e.sourceAnnotation, rule.Source, nodeName)
+	includeLabels := utils.Param(meta, e.labelsAnnotation, rule.IncludeLabels, "true")
 
 	if source == "" {
 		source = meta.Name
@@ -137,4 +164,8 @@ func sanitizePort(name, port string) string {
 		return "8080"
 	}
 	return port
+}
+
+func customAnnotation(annotationFormat, prefix string) string {
+	return fmt.Sprintf(annotationFormat, prefix)
 }

@@ -6,6 +6,7 @@ package options
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 
@@ -37,7 +38,10 @@ func (opts *CollectorRunOptions) Convert() (*configuration.Config, error) {
 	extractSinkProperties(cfg)
 
 	if opts.EnableDiscovery && opts.DiscoveryConfigFile != "" {
-		cfg.DiscoveryConfigs = loadDiscoveryFileOrDie(opts.DiscoveryConfigFile)
+		cfg.DiscoveryConfig.PluginConfigs = loadDiscoveryFileOrDie(opts.DiscoveryConfigFile)
+		if cfg.DiscoveryConfig.DiscoveryInterval == 0 {
+			cfg.DiscoveryConfig.DiscoveryInterval = 10 * time.Minute
+		}
 	}
 	return cfg, nil
 }

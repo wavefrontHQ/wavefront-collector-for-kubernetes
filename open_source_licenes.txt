@@ -1,6 +1,6 @@
 open_source_licenses.txt
 
-Wavefront Collector for Kubernetes 1.0.0 Beta
+Wavefront Collector for Kubernetes 1.0.0 GA
 
 ======================================================================
 
@@ -4602,4 +4602,4 @@ Source Files is valid for three years from the date you acquired or last used th
 Software product. Alternatively, the Source Files may accompany the
 VMware service.
 
-[WAVEFRONTKUBERNETESCOLLECTOR100BAB082719]
+[WAVEFRONTKUBERNETESCOLLECTOR100GA092619]

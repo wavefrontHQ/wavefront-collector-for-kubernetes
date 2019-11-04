@@ -27,6 +27,11 @@ func TestBaseURL(t *testing.T) {
 	assert.Equal(t, "test.", result.Prefix)
 }
 
+func TestCustomAnnotation(t *testing.T) {
+	s := customAnnotation(schemeAnnotationFormat, "wavefront.com")
+	assert.Equal(t, "wavefront.com/scheme", s)
+}
+
 func TestEncode(t *testing.T) {
 	pod := v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
@@ -35,7 +40,8 @@ func TestEncode(t *testing.T) {
 		},
 	}
 
-	encoder := prometheusEncoder{}
+	prefix := "wavefront.com"
+	encoder := newPrometheusEncoder(prefix)
 
 	// should return nil without pod IP
 	promCfg, ok := encoder.Encode("", "pod", pod.ObjectMeta, discovery.PluginConfig{})
@@ -54,14 +60,14 @@ func TestEncode(t *testing.T) {
 	}
 
 	// should return nil if scrape annotation is set to false
-	pod.Annotations = map[string]string{"prometheus.io/scrape": "false"}
+	pod.Annotations = map[string]string{customAnnotation(scrapeAnnotationFormat, prefix): "false"}
 	promCfg, ok = encoder.Encode("10.2.3.4", "pod", pod.ObjectMeta, discovery.PluginConfig{})
 	if ok {
 		t.Errorf("expected empty scrapeURL. actual: %s", promCfg)
 	}
 
 	// expect non-empty when scrape annotation set to true
-	pod.Annotations["prometheus.io/scrape"] = "true"
+	pod.Annotations[customAnnotation(scrapeAnnotationFormat, prefix)] = "true"
 	promCfg, ok = encoder.Encode("10.2.3.4", "pod", pod.ObjectMeta, discovery.PluginConfig{})
 	if !ok {
 		t.Error("expected non-empty scrapeURL.")
@@ -69,11 +75,11 @@ func TestEncode(t *testing.T) {
 
 	// validate all annotations are picked up
 	pod.Labels = map[string]string{"key1": "value1"}
-	pod.Annotations[schemeAnnotation] = "https"
-	pod.Annotations[pathAnnotation] = "/prometheus"
-	pod.Annotations[portAnnotation] = "9102"
-	pod.Annotations[prefixAnnotation] = "test."
-	pod.Annotations[labelsAnnotation] = "false"
+	pod.Annotations[customAnnotation(schemeAnnotationFormat, prefix)] = "https"
+	pod.Annotations[customAnnotation(pathAnnotationFormat, prefix)] = "/prometheus"
+	pod.Annotations[customAnnotation(portAnnotationFormat, prefix)] = "9102"
+	pod.Annotations[customAnnotation(prefixAnnotationFormat, prefix)] = "test."
+	pod.Annotations[customAnnotation(labelsAnnotationFormat, prefix)] = "false"
 
 	promCfg, ok = encoder.Encode("10.2.3.4", "pod", pod.ObjectMeta, discovery.PluginConfig{})
 	if !ok {

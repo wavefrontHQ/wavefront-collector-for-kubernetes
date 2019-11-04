@@ -86,6 +86,7 @@ func main() {
 	log.Infof(strings.Join(os.Args, " "))
 	log.Infof("wavefront-collector version %v", version)
 	enableProfiling(opt.EnableProfiling)
+	enableForcedGC(opt.ForceGC)
 
 	preRegister(opt)
 	cfg := loadConfigOrDie(opt.ConfigFile)
@@ -127,7 +128,7 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 	}
 
 	// create sink managers
-	setClusterNameOnSinks(clusterName, cfg.Sinks)
+	setInternalSinkProperties(cfg)
 	sinkManager := createSinkManagerOrDie(cfg.Sinks, cfg.SinkExportDataTimeout)
 
 	kubeClient := createKubeClientOrDie(*cfg.Sources.SummaryConfig)
@@ -203,8 +204,8 @@ func fillDefaults(cfg *configuration.Config) {
 	if cfg.ClusterName == "" {
 		cfg.ClusterName = "k8s-cluster"
 	}
-	if cfg.DiscoveryInterval == 0 {
-		cfg.DiscoveryInterval = 10 * time.Minute
+	if cfg.DiscoveryConfig.DiscoveryInterval == 0 {
+		cfg.DiscoveryConfig.DiscoveryInterval = 10 * time.Minute
 	}
 }
 
@@ -219,13 +220,21 @@ func convertOrDie(opt *options.CollectorRunOptions, cfg *configuration.Config) *
 	if err != nil {
 		log.Fatalf("error converting flags to config: %v", err)
 	}
+	fillDefaults(optsCfg)
 	return optsCfg
 }
 
-func setClusterNameOnSinks(clusterName string, sinks []*configuration.WavefrontSinkConfig) {
-	log.Infof("using clusterName: %s", clusterName)
-	for _, sink := range sinks {
-		sink.ClusterName = clusterName
+func setInternalSinkProperties(cfg *configuration.Config) {
+	log.Infof("using clusterName: %s", cfg.ClusterName)
+	prefix := ""
+	if cfg.Sources.StatsConfig != nil {
+		prefix = configuration.GetStringValue(cfg.Sources.StatsConfig.Prefix, "kubernetes.")
+	}
+	version := getVersion()
+	for _, sink := range cfg.Sinks {
+		sink.ClusterName = cfg.ClusterName
+		sink.InternalStatsPrefix = prefix
+		sink.Version = version
 	}
 }
 
@@ -251,26 +260,30 @@ func createDiscoveryManagerOrDie(client *kube_client.Clientset, cfg *configurati
 		nodeLister := getNodeListerOrDie(client)
 
 		return discovery.NewDiscoveryManager(discovery.RunConfig{
-			KubeClient:   client,
-			Plugins:      cfg.DiscoveryConfigs,
-			Handler:      handler,
-			Daemon:       cfg.Daemon,
-			Lister:       discovery.NewResourceLister(podLister, serviceLister, nodeLister),
-			SyncInterval: cfg.DiscoveryInterval,
+			KubeClient:      client,
+			DiscoveryConfig: cfg.DiscoveryConfig,
+			Handler:         handler,
+			Daemon:          cfg.Daemon,
+			Lister:          discovery.NewResourceLister(podLister, serviceLister, nodeLister),
 		})
 	}
 	return nil
 }
 
 func registerVersion() {
+	version := getVersion()
+	m := gm.GetOrRegisterGaugeFloat64("version", gm.DefaultRegistry)
+	m.Update(version)
+}
+
+func getVersion() float64 {
 	parts := strings.Split(version, ".")
 	friendly := fmt.Sprintf("%s.%s%s", parts[0], parts[1], parts[2])
 	f, err := strconv.ParseFloat(friendly, 2)
 	if err != nil {
 		f = 0.0
 	}
-	m := gm.GetOrRegisterGaugeFloat64("version", gm.DefaultRegistry)
-	m.Update(f)
+	return f
 }
 
 func createSinkManagerOrDie(cfgs []*configuration.WavefrontSinkConfig, sinkExportDataTimeout time.Duration) wavefront.WavefrontSink {
@@ -432,6 +445,16 @@ func enableProfiling(enable bool) {
 				log.Errorf("E! %v", err)
 			}
 		}()
+	}
+}
+
+func enableForcedGC(enable bool) {
+	if enable {
+		log.Info("enabling forced garbage collection")
+		err := os.Setenv(util.ForceGC, "true")
+		if err != nil {
+			log.Errorf("error setting environment variable %s: %v", util.ForceGC, err)
+		}
 	}
 }
 

@@ -20,6 +20,14 @@ type CollectorRunOptions struct {
 	LogLevel        string
 	MaxProcs        int
 
+	// An experimental flag for forcing a garbage collection and releasing memory.
+	// See https://utcc.utoronto.ca/~cks/space/blog/programming/GoNoMemoryFreeing for reference.
+	// Basically Go holds on to more memory than is necessary resulting in larger heap usage.
+	// Enabling this flag causes the collector to call debug.FreeOSMemory after every sink.send() call.
+	// Go 1.13 showed a 30% lower memory usage vs Go 1.12. Enabling this flag was observed to result in a further ~30%
+	// reduction in memory usage but the impact of forcing a GC run so frequently has not been thoroughly tested.
+	ForceGC bool
+
 	// deprecated flags
 	MetricResolution      time.Duration
 	Sources               flags.Uris
@@ -44,6 +52,7 @@ func (opts *CollectorRunOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&opts.ConfigFile, "config_file", "", "required configuration file")
 	fs.StringVar(&opts.LogLevel, "log_level", "info", "one of info, debug or trace")
 	fs.IntVar(&opts.MaxProcs, "max_procs", 0, "max number of CPUs that can be used simultaneously. Less than 1 for default (number of cores)")
+	fs.BoolVar(&opts.ForceGC, "force_gc", false, "experimental flag that periodically forces the release of unused memory")
 
 	// deprecated flags
 	fs.DurationVar(&opts.MetricResolution, "metric_resolution", 60*time.Second, "The resolution at which the collector will collect metrics")

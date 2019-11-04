@@ -32,9 +32,15 @@ func (t *telegrafDataBatch) preparePoints(measurement string, fields map[string]
 	for metric, v := range fields {
 		var value float64
 		var err error
-		switch v.(type) {
+		switch p := v.(type) {
 		case string:
 			continue
+		case bool:
+			if p {
+				value = 1
+			} else {
+				value = 0
+			}
 		default:
 			value, err = getFloat(v)
 			if err != nil {
@@ -142,8 +148,12 @@ func (t *telegrafDataBatch) WithTracking(maxTracked int) telegraf.TrackingAccumu
 
 var floatType = reflect.TypeOf(float64(0))
 
-func getFloat(unk interface{}) (float64, error) {
+func getFloat(unk interface{}) (f float64, e error) {
 	v := reflect.ValueOf(unk)
+	if unk == nil {
+		return 0, fmt.Errorf("cannot convert nil value to float64")
+	}
+
 	v = reflect.Indirect(v)
 	if !v.Type().ConvertibleTo(floatType) {
 		return 0, fmt.Errorf("cannot convert %v to float64", v.Type())

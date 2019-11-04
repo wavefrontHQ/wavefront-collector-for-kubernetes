@@ -172,6 +172,7 @@ func NewProvider(cfg configuration.TelegrafSourceConfig) (metrics.MetricsSourceP
 				availablePlugins = append(availablePlugins, name)
 			}
 			log.Infof("available telegraf plugins: '%v'", availablePlugins)
+			return nil, fmt.Errorf("telegraf plugin not found: %s", name)
 		}
 	}
 

@@ -69,8 +69,13 @@ sources:
   systemd_source:
     # see systemd_source for details
 
-# Optional list of auto-discovery rules.
-discovery_configs:
+# Optional auto-discovery configuration.
+discovery:
+  # optional prefix for annotation based discovery.
+  # when specified, this replaces prefixes such as `prometheus.io` etc
+  annotation_prefix: "wavefront.com"
+
+  plugins:
   # see auto-discovery for details
 ```
 
@@ -207,9 +212,10 @@ filters:
 #### Custom collection intervals
 All sources support using a custom collection interval:
 ```yaml
-# Duration type specified as [0-9]+(ms|[smhdwy])
-interval: 30s
+collection:
+  # Duration type specified as [0-9]+(ms|[smhdwy])
+  interval: 30s
 
-# Duration type specified as [0-9]+(ms|[smhdwy])
-timeout: 20s
+  # Duration type specified as [0-9]+(ms|[smhdwy])
+  timeout: 20s
 ```
