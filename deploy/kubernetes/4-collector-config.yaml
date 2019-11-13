@@ -47,6 +47,7 @@ data:
         tagExclude:
         - 'label?controller?revision*'
         - 'label?pod?template*'
+        - 'annotation_kubectl_kubernetes_io_last_applied_configuration'        
 
     sources:
       kubernetes_source:
@@ -98,9 +99,10 @@ data:
       #   selectors:
       #     images:
       #     - "*activemq*"
+      #   port: 8161
       #   conf: |
       #     server = "${host}"
-      #     port = 8161
+      #     port = ${port}
       #     username = "admin"
       #     password = "admin"
       #     webadmin = "admin"
@@ -195,7 +197,7 @@ data:
       #   type: telegraf/mysql
       #   selectors:
       #     images:
-      #     - "*sql*"
+      #     - "mysql*"
       #   collection:
       #     interval: "180s"
       #   port: 3306
@@ -238,8 +240,9 @@ data:
       #   selectors:
       #     images:
       #     - 'rabbitmq*'
+      #   port: 15672
       #   conf: |
-      #     url = "http://${host}:15672"
+      #     url = "http://${host}:${port}"
       #     username = "guest"
       #     password = "guest"
       #
@@ -280,10 +283,12 @@ data:
       # Kubernetes component auto discovery
       ##########################################################################
 
-      # auto-discover kube DNS prometheus endpoint
+      # auto-discover kube DNS
       - name: kube-dns-discovery
         type: prometheus
         selectors:
+          images:
+          - '*kube-dns/sidecar*'
           labels:
             k8s-app:
             - kube-dns
@@ -291,7 +296,6 @@ data:
         path: /metrics
         scheme: http
         prefix: kube.dns.
-
         filters:
           metricWhitelist:
           - 'kube.dns.http.request.duration.microseconds'
@@ -299,4 +303,28 @@ data:
           - 'kube.dns.http.requests.total.counter'
           - 'kube.dns.http.response.size.bytes'
           - 'kube.dns.kubedns.dnsmasq.*'
-          - 'kube.dns.process.*'
+          - 'kube.dns.process.*'    
+
+      # auto-discover coredns
+      - name: coredns-discovery
+        type: prometheus
+        selectors:
+          images:
+          - '*coredns:*'
+          labels:
+            k8s-app:
+            - kube-dns
+        port: 9153
+        path: /metrics
+        scheme: http
+        prefix: kube.coredns.  
+        filters:
+          metricWhitelist:
+          - 'kube.coredns.coredns.cache.*'
+          - 'kube.coredns.coredns.dns.request.count.total.counter'
+          - 'kube.coredns.coredns.dns.request.duration.seconds'
+          - 'kube.coredns.coredns.dns.request.size.bytes'
+          - 'kube.coredns.coredns.dns.request.type.count.total.counter'
+          - 'kube.coredns.coredns.dns.response.rcode.count.total.counter'
+          - 'kube.coredns.coredns.dns.response.size.bytes'          
+          - 'kube.coredns.process.*'      
