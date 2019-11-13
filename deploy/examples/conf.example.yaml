@@ -61,7 +61,6 @@ data:
         filters:
           metricBlacklist:
           - 'kubernetes.sys_container.*'
-          - 'kubernetes.node.ephemeral_storage.*'
 
       internal_stats_source:
         prefix: 'kubernetes.'
@@ -163,7 +162,7 @@ data:
           cluster_health = true
           cluster_stats = true
 
-      # haProxy
+      # HAProxy
       - name: haproxy
         type: telegraf/haproxy
         selectors:
