@@ -4,8 +4,7 @@
 
 [[override]]
   name = "github.com/wavefronthq/wavefront-sdk-go"
-#  version = "0.9.3"
-  branch = "laullon/MONIT-15702"
+  revision = "caaaf9d78ce10981d43bc7097a045db178afd831"
 
 [[constraint]]
   name = "github.com/wavefronthq/go-metrics-wavefront"
