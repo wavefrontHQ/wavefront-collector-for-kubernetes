@@ -10,7 +10,7 @@ ifndef TEMP_DIR
 TEMP_DIR:=$(shell mktemp -d /tmp/wavefront.XXXXXX)
 endif
 
-VERSION?=1.0.2
+VERSION?=1.0.3
 GIT_COMMIT:=$(shell git rev-parse --short HEAD)
 
 REPO_DIR:=$(shell pwd)
@@ -54,8 +54,10 @@ endif
 #This rule need to be run on RHEL with podman installed.
 container_rhel: build
 	cp $(OUT_DIR)/$(ARCH)/$(BINARY_NAME) $(TEMP_DIR)
+	cp LICENSE $(TEMP_DIR)/license.txt
 	cp deploy/docker/Dockerfile-rhel $(TEMP_DIR)/Dockerfile
-	sudo podman build --pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(TEMP_DIR)
+	cp deploy/examples/collector.yaml $(TEMP_DIR)/collector.yaml
+	sudo docker build --pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(TEMP_DIR)
 	rm -rf $(TEMP_DIR)
 ifneq ($(OVERRIDE_IMAGE_NAME),)
 	sudo podman tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OVERRIDE_IMAGE_NAME)
