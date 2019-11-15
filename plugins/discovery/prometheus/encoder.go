@@ -77,31 +77,32 @@ func (e prometheusEncoder) Encode(ip, kind string, meta metav1.ObjectMeta, cfg i
 			Tags: make(map[string]string),
 		},
 	}
-	rule := discovery.PluginConfig{}
 
+	rule := discovery.PluginConfig{}
 	discoveryType := "annotation"
 	if cfg != nil {
 		rule = cfg.(discovery.PluginConfig)
 		discoveryType = "rule"
-		collectionInterval := utils.Param(meta, e.collectionIntervalAnnotation, rule.Collection.Interval.String(), "0s")
-		timeout := utils.Param(meta, e.timeoutAnnotation, rule.Collection.Timeout.String(), "0s")
-
-		collectionDuration, err := time.ParseDuration(collectionInterval)
-		if err != nil {
-			log.Errorf("error parsing collection interval: %s %v", collectionInterval, err)
-			return result, false
-		}
-		timeoutDuration, err := time.ParseDuration(timeout)
-		if err != nil {
-			log.Errorf("error parsing timeout: %s %v", timeout, err)
-			return result, false
-		}
-		result.Collection = configuration.CollectionConfig{
-			Interval: collectionDuration,
-			Timeout:  timeoutDuration,
-		}
 	}
 	result.Discovered = discoveryType
+
+	collectionInterval := utils.Param(meta, e.collectionIntervalAnnotation, rule.Collection.Interval.String(), "0s")
+	timeout := utils.Param(meta, e.timeoutAnnotation, rule.Collection.Timeout.String(), "0s")
+
+	collectionDuration, err := time.ParseDuration(collectionInterval)
+	if err != nil {
+		log.Errorf("error parsing collection interval: %s %v", collectionInterval, err)
+		return result, false
+	}
+	timeoutDuration, err := time.ParseDuration(timeout)
+	if err != nil {
+		log.Errorf("error parsing timeout: %s %v", timeout, err)
+		return result, false
+	}
+	result.Collection = configuration.CollectionConfig{
+		Interval: collectionDuration,
+		Timeout:  timeoutDuration,
+	}
 
 	scrape := utils.Param(meta, e.scrapeAnnotation, "", "false")
 	if rule.Name == "" && scrape != "true" {
@@ -130,7 +131,7 @@ func (e prometheusEncoder) Encode(ip, kind string, meta metav1.ObjectMeta, cfg i
 	}
 	result.Filters = rule.Filters
 
-	err := encodeConf(&result, rule.Conf)
+	err = encodeConf(&result, rule.Conf)
 	if err != nil {
 		return result, false
 	}

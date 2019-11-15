@@ -10,6 +10,7 @@ import (
 	"runtime/debug"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
@@ -53,6 +54,7 @@ type wavefrontSink struct {
 	testMode          bool
 	testReceivedLines []string
 	forceGC           bool
+	stopHeartbeat     chan struct{}
 }
 
 func (sink *wavefrontSink) Name() string {
@@ -60,6 +62,7 @@ func (sink *wavefrontSink) Name() string {
 }
 
 func (sink *wavefrontSink) Stop() {
+	close(sink.stopHeartbeat)
 	sink.WavefrontClient.Close()
 }
 
@@ -170,6 +173,36 @@ func (sink *wavefrontSink) ExportData(batch *metrics.DataBatch) {
 	sink.send(batch)
 }
 
+func getDefault(val, defaultVal string) string {
+	if val == "" {
+		return defaultVal
+	}
+	return val
+}
+
+func (sink *wavefrontSink) emitHeartbeat(sender senders.Sender, cluster, prefix string, version float64) {
+	ticker := time.NewTicker(1 * time.Minute)
+	sink.stopHeartbeat = make(chan struct{})
+	source := getDefault(util.GetNodeName(), "wavefront-kubernetes-collector")
+	tags := map[string]string{
+		"cluster":      cluster,
+		"stats_prefix": configuration.GetStringValue(prefix, "kubernetes."),
+	}
+
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				_ = sender.SendMetric("~wavefront.kubernetes.collector.version", version, 0, source, tags)
+			case <-sink.stopHeartbeat:
+				log.Info("stopping heartbeat")
+				ticker.Stop()
+				return
+			}
+		}
+	}()
+}
+
 func NewWavefrontSink(cfg configuration.WavefrontSinkConfig) (metrics.DataSink, error) {
 	storage := &wavefrontSink{
 		ClusterName: configuration.GetStringValue(cfg.ClusterName, "k8s-cluster"),
@@ -218,6 +251,9 @@ func NewWavefrontSink(cfg configuration.WavefrontSinkConfig) (metrics.DataSink, 
 
 	// force garbage collection if experimental flag enabled
 	storage.forceGC = os.Getenv(util.ForceGC) != ""
+
+	// emit heartbeat metric
+	storage.emitHeartbeat(storage.WavefrontClient, storage.ClusterName, cfg.InternalStatsPrefix, cfg.Version)
 
 	return storage, nil
 }

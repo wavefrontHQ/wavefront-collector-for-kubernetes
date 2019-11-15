@@ -27,22 +27,19 @@ spec:
 
       containers:
       - name: wavefront-collector
-        image: wavefronthq/wavefront-kubernetes-collector:0.9.8
+        image: wavefronthq/wavefront-kubernetes-collector:1.0.3
         imagePullPolicy: IfNotPresent
         command:
         - /wavefront-collector
         - --daemon=true
-        - --source=kubernetes.summary_api:https://kubernetes.default.svc?useServiceAccount=true&kubeletHttps=true&kubeletPort=10250&insecure=true
-        - --source=telegraf:''
-        - --sink=wavefront:?proxyAddress=wavefront-proxy.default.svc.cluster.local:2878&clusterName=k8s-cluster&includeLabels=true
-        - --v=2
+        - --config-file=/etc/collector/collector.yaml
         volumeMounts:
         - name: procfs
           mountPath: /host/proc
           readOnly: true
-        ports:
-        - containerPort: 8088
-          protocol: TCP
+        - mountPath: /etc/collector/
+          name: collector-config
+          readOnly: true
         env:
         - name: HOST_PROC
           value: /host/proc
@@ -60,3 +57,6 @@ spec:
       - name: procfs
         hostPath:
           path: /proc
+      - name: collector-config
+        configMap:
+          name: collector-config
