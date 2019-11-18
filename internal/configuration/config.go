@@ -24,12 +24,21 @@ type Config struct {
 	// whether auto-discovery is enabled.
 	EnableDiscovery bool `yaml:"enableDiscovery"`
 
+	// frequency of evaluating discovery rules. Defaults to 10 minutes.
+	// format is [0-9]+(ms|[smhdwy])
+	DiscoveryInterval time.Duration `yaml:"discoveryInterval"`
+
+	// whether Events is enabled.
+	EnableEvents bool `yaml:"enableEvents"`
+
 	// A unique identifier for your Kubernetes cluster. Defaults to k8s-cluster.
 	// Included as a point tag on all metrics sent to Wavefront.
 	ClusterName string `yaml:"clusterName"`
 
 	// list of Wavefront sinks. At least 1 is required.
 	Sinks []*WavefrontSinkConfig `yaml:"sinks"`
+
+	EventsConfig *EventsConfig `yaml:"events"`
 
 	// list of sources. SummarySource is mandatory. Others are optional.
 	Sources *SourceConfig `yaml:"sources"`
@@ -38,6 +47,15 @@ type Config struct {
 
 	// Internal use only
 	Daemon bool `yaml:"-"`
+}
+
+type EventsConfig struct {
+	Filters EventsFilter `yaml:"filters"`
+}
+
+type EventsFilter struct {
+	TagWhitelist map[string][]string `yaml:"tagWhitelist"`
+	TagBlacklist map[string][]string `yaml:"tagBlacklist"`
 }
 
 // SourceConfig contains configuration for various sources

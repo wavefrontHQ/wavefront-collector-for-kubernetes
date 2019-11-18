@@ -159,13 +159,10 @@ type MetricsSourceProvider interface {
 }
 
 type DataSink interface {
-	Name() string
-
 	// Exports data to the external storage. The function should be synchronous/blocking and finish only
 	// after the given DataBatch was written. This will allow sink manager to push data only to these
 	// sinks that finished writing the previous data.
 	ExportData(*DataBatch)
-	Stop()
 }
 
 type DataProcessor interface {

@@ -12,6 +12,7 @@ import (
 var sampleFile = `
 clusterName: new-collector
 enableDiscovery: true
+enableEvents: true
 defaultCollectionInterval: 10s
 
 sinks:
@@ -29,6 +30,14 @@ sinks:
 
     tagInclude:
     - 'nodename'
+
+events:
+  filters:
+    tagWhitelist:
+      namespace:
+      - "default"
+      component:
+      - "pp"
 
 sources:
   kubernetes_source:
@@ -75,6 +84,10 @@ func TestFromYAML(t *testing.T) {
 	if len(cfg.Sinks) == 0 {
 		t.Errorf("invalid sinks")
 	}
+
+	assert.True(t, cfg.EnableEvents)
+	assert.Equal(t, "default", cfg.EventsConfig.Filters.TagWhitelist["namespace"][0])
+	assert.Equal(t, "pp", cfg.EventsConfig.Filters.TagWhitelist["component"][0])
 
 	assert.True(t, len(cfg.Sources.PrometheusConfigs) > 0)
 	assert.Equal(t, "kubernetes.", cfg.Sources.SummaryConfig.Prefix)

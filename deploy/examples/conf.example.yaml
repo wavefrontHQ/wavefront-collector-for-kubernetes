@@ -7,6 +7,7 @@ data:
   collector.yaml: |
     clusterName: k8s-cluster
     enableDiscovery: true
+    enableEvents: true
     flushInterval: 30s
 
     sinks:
@@ -48,6 +49,12 @@ data:
         - 'label?controller?revision*'
         - 'label?pod?template*'
         - 'annotation_kubectl_kubernetes_io_last_applied_configuration'        
+
+    events:
+      filters:
+        tagWhitelist:
+          namespace:
+          - "default"
 
     sources:
       kubernetes_source:

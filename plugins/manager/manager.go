@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sinks/wavefront"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources"
 
 	log "github.com/sirupsen/logrus"
@@ -37,7 +38,7 @@ type FlushManager interface {
 
 type flushManagerImpl struct {
 	processors    []metrics.DataProcessor
-	sink          metrics.DataSink
+	sink          wavefront.WavefrontSink
 	flushInterval time.Duration
 	ticker        *time.Ticker
 	stopChan      chan struct{}
@@ -45,7 +46,7 @@ type flushManagerImpl struct {
 
 // NewFlushManager crates a new PushManager
 func NewFlushManager(processors []metrics.DataProcessor,
-	sink metrics.DataSink, flushInterval time.Duration) (FlushManager, error) {
+	sink wavefront.WavefrontSink, flushInterval time.Duration) (FlushManager, error) {
 	manager := flushManagerImpl{
 		processors:    processors,
 		sink:          sink,

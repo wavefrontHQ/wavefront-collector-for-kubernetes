@@ -21,6 +21,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sinks/wavefront"
+
 	"github.com/stretchr/testify/assert"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
@@ -32,7 +34,7 @@ func TestAllExportsInTime(t *testing.T) {
 
 	sink1 := util.NewDummySink("s1", time.Second)
 	sink2 := util.NewDummySink("s2", time.Second)
-	manager, _ := NewDataSinkManager([]metrics.DataSink{sink1, sink2}, timeout, timeout)
+	manager, _ := NewSinkManager([]wavefront.WavefrontSink{sink1, sink2}, timeout, timeout)
 
 	now := time.Now()
 	batch := metrics.DataBatch{
@@ -58,7 +60,7 @@ func TestOneExportInTime(t *testing.T) {
 
 	sink1 := util.NewDummySink("s1", time.Second)
 	sink2 := util.NewDummySink("s2", 30*time.Second)
-	manager, _ := NewDataSinkManager([]metrics.DataSink{sink1, sink2}, timeout, timeout)
+	manager, _ := NewSinkManager([]wavefront.WavefrontSink{sink1, sink2}, timeout, timeout)
 
 	now := time.Now()
 	batch := metrics.DataBatch{
@@ -87,7 +89,7 @@ func TestNoExportInTime(t *testing.T) {
 
 	sink1 := util.NewDummySink("s1", 30*time.Second)
 	sink2 := util.NewDummySink("s2", 30*time.Second)
-	manager, _ := NewDataSinkManager([]metrics.DataSink{sink1, sink2}, timeout, timeout)
+	manager, _ := NewSinkManager([]wavefront.WavefrontSink{sink1, sink2}, timeout, timeout)
 
 	now := time.Now()
 	batch := metrics.DataBatch{
@@ -116,7 +118,7 @@ func TestStop(t *testing.T) {
 
 	sink1 := util.NewDummySink("s1", 30*time.Second)
 	sink2 := util.NewDummySink("s2", 30*time.Second)
-	manager, _ := NewDataSinkManager([]metrics.DataSink{sink1, sink2}, timeout, timeout)
+	manager, _ := NewSinkManager([]wavefront.WavefrontSink{sink1, sink2}, timeout, timeout)
 
 	now := time.Now()
 	manager.Stop()

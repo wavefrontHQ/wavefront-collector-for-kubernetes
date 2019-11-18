@@ -14,6 +14,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sinks/wavefront"
+
+	kitlog "github.com/go-kit/kit/log"
+
 	gm "github.com/rcrowley/go-metrics"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
@@ -27,16 +31,19 @@ import (
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/options"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/discovery"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/events"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/manager"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/processors"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sinks"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/summary"
 
+	"github.com/golang/glog"
 	kubeFlag "k8s.io/apiserver/pkg/util/flag"
 	"k8s.io/apiserver/pkg/util/logs"
 	kube_client "k8s.io/client-go/kubernetes"
 	v1listers "k8s.io/client-go/listers/core/v1"
+	"k8s.io/klog"
 )
 
 var (
@@ -62,6 +69,7 @@ func main() {
 	logs.InitLogs()
 	defer logs.FlushLogs()
 
+	// logger := kitlog.NewNopLogger()
 	switch opt.LogLevel {
 	case "trace":
 		log.SetLevel(log.TraceLevel)
@@ -70,6 +78,10 @@ func main() {
 	case "warn":
 		log.SetLevel(log.WarnLevel)
 	}
+
+	logger := kitlog.NewLogfmtLogger(kitlog.NewSyncWriter(os.Stdout))
+	glog.SetLogger(logger)
+	klog.SetLogger(logger)
 
 	log.Infof(strings.Join(os.Args, " "))
 	log.Infof("wavefront-collector version %v", version)
@@ -119,8 +131,18 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 	setInternalSinkProperties(cfg)
 	sinkManager := createSinkManagerOrDie(cfg.Sinks, cfg.SinkExportDataTimeout)
 
-	// create data processors
 	kubeClient := createKubeClientOrDie(*cfg.Sources.SummaryConfig)
+
+	// Events
+	var eventRouter *events.EventRouter
+	if cfg.EnableEvents {
+		events.Log.Info("Events collection enabled")
+		eventRouter = events.CreateEventRouter(kubeClient, cfg.EventsConfig, sinkManager, cfg.ClusterName, cfg.Daemon)
+	} else {
+		events.Log.Info("Events collection disabled")
+	}
+
+	// create data processors
 	podLister := getPodListerOrDie(kubeClient)
 	dataProcessors := createDataProcessorsOrDie(kubeClient, clusterName, podLister, *cfg.Sources.SummaryConfig)
 
@@ -143,7 +165,7 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 	}
 
 	// create and start agent
-	ag := agent.NewAgent(man, dm)
+	ag := agent.NewAgent(man, dm, eventRouter)
 	ag.Start()
 	return ag
 }
@@ -264,14 +286,14 @@ func getVersion() float64 {
 	return f
 }
 
-func createSinkManagerOrDie(cfgs []*configuration.WavefrontSinkConfig, sinkExportDataTimeout time.Duration) metrics.DataSink {
+func createSinkManagerOrDie(cfgs []*configuration.WavefrontSinkConfig, sinkExportDataTimeout time.Duration) wavefront.WavefrontSink {
 	sinksFactory := sinks.NewSinkFactory()
 	sinkList := sinksFactory.BuildAll(cfgs)
 
 	for _, sink := range sinkList {
 		log.Infof("Starting with %s", sink.Name())
 	}
-	sinkManager, err := sinks.NewDataSinkManager(sinkList, sinkExportDataTimeout, sinks.DefaultSinkStopTimeout)
+	sinkManager, err := sinks.NewSinkManager(sinkList, sinkExportDataTimeout, sinks.DefaultSinkStopTimeout)
 	if err != nil {
 		log.Fatalf("Failed to create sink manager: %v", err)
 	}

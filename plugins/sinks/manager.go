@@ -24,6 +24,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sinks/wavefront"
+
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/events"
+
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 
 	gm "github.com/rcrowley/go-metrics"
@@ -43,9 +47,10 @@ func init() {
 }
 
 type sinkHolder struct {
-	sink             metrics.DataSink
-	dataBatchChannel chan *metrics.DataBatch
-	stopChannel      chan bool
+	sink              wavefront.WavefrontSink
+	dataBatchChannel  chan *metrics.DataBatch
+	eventBatchChannel chan *events.Event
+	stopChannel       chan bool
 }
 
 // Sink Manager - a special sink that distributes data to other sinks. It pushes data
@@ -57,20 +62,23 @@ type sinkManager struct {
 	stopTimeout       time.Duration
 }
 
-func NewDataSinkManager(sinks []metrics.DataSink, exportDataTimeout, stopTimeout time.Duration) (metrics.DataSink, error) {
+func NewSinkManager(sinks []wavefront.WavefrontSink, exportDataTimeout, stopTimeout time.Duration) (wavefront.WavefrontSink, error) {
 	sinkHolders := []sinkHolder{}
 	for _, sink := range sinks {
 		sh := sinkHolder{
-			sink:             sink,
-			dataBatchChannel: make(chan *metrics.DataBatch),
-			stopChannel:      make(chan bool),
+			sink:              sink,
+			dataBatchChannel:  make(chan *metrics.DataBatch),
+			eventBatchChannel: make(chan *events.Event),
+			stopChannel:       make(chan bool),
 		}
 		sinkHolders = append(sinkHolders, sh)
 		go func(sh sinkHolder) {
 			for {
 				select {
 				case data := <-sh.dataBatchChannel:
-					export(sh.sink, data)
+					sh.sink.ExportData(data)
+				case event := <-sh.eventBatchChannel:
+					sh.sink.ExportEvent(event)
 				case isStop := <-sh.stopChannel:
 					log.WithField("name", sh.sink.Name()).Info("Sink stop received")
 					if isStop {
@@ -110,6 +118,27 @@ func (this *sinkManager) ExportData(data *metrics.DataBatch) {
 	wg.Wait()
 }
 
+func (this *sinkManager) ExportEvent(event *events.Event) {
+	var wg sync.WaitGroup
+	for _, sh := range this.sinkHolders {
+		wg.Add(1)
+		go func(sh sinkHolder, wg *sync.WaitGroup) {
+			defer wg.Done()
+			log.WithField("name", sh.sink.Name()).Debug("Pushing Events to sink")
+			select {
+			case sh.eventBatchChannel <- event:
+				log.WithField("name", sh.sink.Name()).Info("Events push complete")
+				// everything ok
+			case <-time.After(this.exportDataTimeout):
+				sinkTimeouts.Inc(1)
+				log.WithField("name", sh.sink.Name()).Info("Events push failed")
+			}
+		}(sh, &wg)
+	}
+	// Wait for all pushes to complete or timeout.
+	wg.Wait()
+}
+
 func (this *sinkManager) Name() string {
 	return "Manager"
 }
@@ -130,8 +159,4 @@ func (this *sinkManager) Stop() {
 			return
 		}(sh)
 	}
-}
-
-func export(s metrics.DataSink, data *metrics.DataBatch) {
-	s.ExportData(data)
 }
