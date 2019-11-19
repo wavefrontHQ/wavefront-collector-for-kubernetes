@@ -1,3 +1,5 @@
+// Copyright 2019 VMware, Inc. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 package events
 
 import (
@@ -127,12 +129,12 @@ func (er *EventRouter) addEvent(obj interface{}) {
 
 	receivedEvents.Inc(1)
 	if len(er.whitelist) > 0 && !filter.MatchesTags(er.whitelist, tags) {
-		Log.Debugf("event '%s' filtered becuase a white list", e.Message)
+		Log.WithField("event", e.Message).Trace("Dropping event not matching whitelist")
 		filteredEvents.Inc(1)
 		return
 	}
 	if len(er.blacklist) > 0 && filter.MatchesTags(er.blacklist, tags) {
-		Log.Debugf("event '%s' filtered becuase a black list", e.Message)
+		Log.WithField("event", e.Message).Trace("Dropping blacklisted event")
 		filteredEvents.Inc(1)
 		return
 	}

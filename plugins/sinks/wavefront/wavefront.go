@@ -32,8 +32,9 @@ var (
 	excludeTagList = [...]string{"namespace_id", "host_id", "pod_id", "hostname"}
 	sentPoints     gm.Counter
 	errPoints      gm.Counter
-	msCount        gm.Counter
 	filteredPoints gm.Counter
+	sentEvents     gm.Counter
+	errEvents      gm.Counter
 	clientType     gm.Gauge
 	sanitizedChars = strings.NewReplacer("+", "-")
 )
@@ -41,8 +42,9 @@ var (
 func init() {
 	sentPoints = gm.GetOrRegisterCounter("wavefront.points.sent.count", gm.DefaultRegistry)
 	errPoints = gm.GetOrRegisterCounter("wavefront.points.errors.count", gm.DefaultRegistry)
-	msCount = gm.GetOrRegisterCounter("wavefront.points.metric-sets.count", gm.DefaultRegistry)
 	filteredPoints = gm.GetOrRegisterCounter("wavefront.points.filtered.count", gm.DefaultRegistry)
+	sentEvents = gm.GetOrRegisterCounter("wavefront.events.sent.count", gm.DefaultRegistry)
+	errEvents = gm.GetOrRegisterCounter("wavefront.events.errors.count", gm.DefaultRegistry)
 	clientType = gm.GetOrRegisterGauge("wavefront.sender.type", gm.DefaultRegistry)
 }
 
@@ -181,10 +183,10 @@ func (sink *wavefrontSink) ExportData(batch *metrics.DataBatch) {
 	sink.send(batch)
 }
 
-func (wf *wavefrontSink) ExportEvent(event *events.Event) {
-	event.Tags["cluster"] = wf.ClusterName
+func (sink *wavefrontSink) ExportEvent(event *events.Event) {
+	event.Tags["cluster"] = sink.ClusterName
 
-	err := wf.WavefrontClient.SendEvent(
+	err := sink.WavefrontClient.SendEvent(
 		event.Message,
 		event.Ts.Unix(), 0,
 		event.Host,
@@ -192,7 +194,10 @@ func (wf *wavefrontSink) ExportEvent(event *events.Event) {
 		event.Options...,
 	)
 	if err != nil {
-		log.Error(err)
+		log.Debugf("Error sending events: %v", err)
+		errEvents.Inc(1)
+	} else {
+		sentEvents.Inc(1)
 	}
 }
 
@@ -217,6 +222,7 @@ func (sink *wavefrontSink) emitHeartbeat(sender senders.Sender, cluster, prefix 
 			select {
 			case <-ticker.C:
 				_ = sender.SendMetric("~wavefront.kubernetes.collector.version", version, 0, source, tags)
+				sink.logStatus()
 			case <-sink.stopHeartbeat:
 				log.Info("stopping heartbeat")
 				ticker.Stop()
@@ -224,6 +230,18 @@ func (sink *wavefrontSink) emitHeartbeat(sender senders.Sender, cluster, prefix 
 			}
 		}
 	}()
+}
+
+func (sink *wavefrontSink) logStatus() {
+	// # events can be large in volume. log a status message periodically
+	sent := sentEvents.Count()
+	errs := errEvents.Count()
+	if sent > 0 || errs > 0 {
+		log.WithFields(log.Fields{
+			"sent":   sentEvents.Count(),
+			"errors": errEvents.Count(),
+		}).Info("Events processed")
+	}
 }
 
 func NewWavefrontSink(cfg configuration.WavefrontSinkConfig) (WavefrontSink, error) {
