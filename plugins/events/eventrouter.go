@@ -15,7 +15,7 @@ import (
 	gometrics "github.com/rcrowley/go-metrics"
 	log "github.com/sirupsen/logrus"
 
-	v1 "k8s.io/api/core/v1"
+	"k8s.io/api/core/v1"
 
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 
@@ -28,7 +28,7 @@ import (
 var Log = log.WithField("system", "events")
 var leadershipName = "wf_collector_events"
 var filteredEvents = gometrics.GetOrRegisterCounter("events.filtered", gometrics.DefaultRegistry)
-var receviedEvents = gometrics.GetOrRegisterCounter("events.recevied", gometrics.DefaultRegistry)
+var receivedEvents = gometrics.GetOrRegisterCounter("events.received", gometrics.DefaultRegistry)
 var sentEvents = gometrics.GetOrRegisterCounter("events.sent", gometrics.DefaultRegistry)
 
 type EventRouter struct {
@@ -44,7 +44,7 @@ type EventRouter struct {
 	blacklist         map[string]glob.Glob
 }
 
-func CreateEventRouter(clientset kubernetes.Interface, cfg *configuration.EventsConfig, sink wavefront.WavefrontSink, clusterName string, daemon bool) *EventRouter {
+func CreateEventRouter(clientset kubernetes.Interface, cfg configuration.EventsConfig, sink wavefront.WavefrontSink, daemon bool) *EventRouter {
 	sharedInformers := informers.NewSharedInformerFactory(clientset, time.Minute)
 	eventsInformer := sharedInformers.Core().V1().Events()
 
@@ -125,7 +125,7 @@ func (er *EventRouter) addEvent(obj interface{}) {
 		"component":      e.Source.Component,
 	}
 
-	receviedEvents.Inc(1)
+	receivedEvents.Inc(1)
 	if len(er.whitelist) > 0 && !filter.MatchesTags(er.whitelist, tags) {
 		Log.Debugf("event '%s' filtered becuase a white list", e.Message)
 		filteredEvents.Inc(1)

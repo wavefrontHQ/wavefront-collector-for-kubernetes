@@ -43,14 +43,6 @@
   version = "kubernetes-1.15.0"
 
 [[override]]
-  name = "github.com/golang/glog"
-  source = "github.com/kubermatic/glog-gokit"
-
-[[override]]
-  name = "k8s.io/klog"
-  source = "github.com/simonpasquier/klog-gokit" 
-
-[[override]]
   name = "github.com/golang/protobuf"
   version = "v1.2.0"
 

@@ -1045,9 +1045,7 @@
   analyzer-version = 1
   input-imports = [
     "github.com/coreos/go-systemd/dbus",
-    "github.com/go-kit/kit/log",
     "github.com/gobwas/glob",
-    "github.com/golang/glog",
     "github.com/google/cadvisor/info/v1",
     "github.com/influxdata/telegraf",
     "github.com/influxdata/telegraf/plugins/inputs",
@@ -1118,7 +1116,6 @@
     "k8s.io/client-go/tools/record",
     "k8s.io/client-go/transport",
     "k8s.io/client-go/util/testing",
-    "k8s.io/klog",
     "k8s.io/kubernetes/pkg/kubelet/apis/stats/v1alpha1",
   ]
   solver-name = "gps-cdcl"

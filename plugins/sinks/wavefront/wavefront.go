@@ -243,6 +243,7 @@ func NewWavefrontSink(cfg configuration.WavefrontSinkConfig) (WavefrontSink, err
 		storage.WavefrontClient, err = senders.NewProxySender(&senders.ProxyConfiguration{
 			Host:        host,
 			MetricsPort: port,
+			EventsPort:  port,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("error creating proxy sender: %s", err.Error())
