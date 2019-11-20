@@ -1,3 +1,5 @@
+#This file contains default configuration for collector to work in Openshift Platform and this gets bundeled
+#with the RHEL container for Openshift.
     clusterName: openshift-demo-cluster
     enableDiscovery: true
     sinks:

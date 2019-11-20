@@ -56,11 +56,11 @@ container_rhel: build
 	cp $(OUT_DIR)/$(ARCH)/$(BINARY_NAME) $(TEMP_DIR)
 	cp LICENSE $(TEMP_DIR)/license.txt
 	cp deploy/docker/Dockerfile-rhel $(TEMP_DIR)/Dockerfile
-	cp deploy/examples/collector.yaml $(TEMP_DIR)/collector.yaml
+	cp deploy/examples/openshift-config.yaml $(TEMP_DIR)/collector.yaml
 	sudo docker build --pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(TEMP_DIR)
 	rm -rf $(TEMP_DIR)
 ifneq ($(OVERRIDE_IMAGE_NAME),)
-	sudo podman tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OVERRIDE_IMAGE_NAME)
+	sudo docker tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OVERRIDE_IMAGE_NAME)
 endif
 
 clean:
