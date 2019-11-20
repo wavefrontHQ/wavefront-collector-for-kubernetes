@@ -1,6 +1,6 @@
 #This file contains default configuration for collector to work in Openshift Platform and this gets bundeled
 #with the RHEL container for Openshift.
-    clusterName: openshift-demo-cluster
+    clusterName: openshift-cluster
     enableDiscovery: true
     sinks:
     - proxyAddress: example-wavefrontproxy.wavefront.svc.cluster.local:2878
