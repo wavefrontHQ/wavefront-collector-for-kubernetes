@@ -1,4 +1,4 @@
-# wavefront-collector-kubernetes [![build status][ci-img]][ci] [![Go Report Card][go-report-img]][go-report] [![Docker Pulls][docker-pull-img]][docker-img]
+# Wavefront Collector for Kubernetes [![build status][ci-img]][ci] [![Go Report Card][go-report-img]][go-report] [![Docker Pulls][docker-pull-img]][docker-img]
 
 [Wavefront](https://docs.wavefront.com) is a high-performance streaming analytics platform for monitoring and optimizing your environment and applications.
 
@@ -9,7 +9,7 @@ The Wavefront Collector for Kubernetes enables monitoring Kubernetes clusters an
 * Multiple sources of metrics providing comprehensive insight:
   - Kubernetes source: For [core kubernetes metrics](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/docs/metrics.md#kubernetes-source)
   - Prometheus source: For scraping prometheus metric endpoints (API server, etcd, NGINX etc)
-  - Telegraf source: For [host level metrics](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/docs/metrics.md#telegraf-source)
+  - Telegraf source: For [host](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/docs/metrics.md#telegraf-source) and [application](https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes/blob/master/docs/discovery.md#plugin-types) level metrics.
   - Systemd source: For [host level systemd metrics](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/docs/metrics.md#systemd-source)
 * [Auto discovery](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/docs/discovery.md) of pods and services based on annotation and configuration
 * Daemonset mode for high scalability with leader election for monitoring cluster level resources
@@ -26,12 +26,9 @@ Refer to the [installation instructions](https://docs.wavefront.com/kubernetes.h
 
 ## Configuration
 
-The installation instructions use a default configuration suitable for most use cases. The collector supports various advanced configuration options. Configuration options have changed in 1.0. See the documentation for the version of the collector you are running:
+The installation instructions use a default configuration suitable for most use cases. Refer to the [documentation](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/tree/master/docs) for details on all the configuration options.
 
-| Version | Documentation |
-| ----- | -------- |
-| `1.x` | [Docs](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/tree/master/docs) |
-| `0.9.x` | [Docs](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/tree/v0.9.8/docs) |
+**Note:** Refer [here](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/tree/v0.9.8/docs) for documentation for `v0.9.x` of the Collector.
 
 ## OpenShift
 This collector supports monitoring of Openshift Origin 3.9 clusters. See [openshift.md](https://github.com/wavefronthq/wavefront-kubernetes-collector/tree/master/docs/openshift.md) for detailed installation instructions.
