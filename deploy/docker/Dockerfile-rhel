@@ -1,4 +1,26 @@
+## Wavefront Collector container 
+## Note: Pulling container will require logging into Red Hat's registry using `docker login registry.redhat.io` .
+
+#Using ubi7 minimal image
 FROM registry.access.redhat.com/ubi7/ubi-minimal:latest
+
+MAINTAINER wavefront@vmware.com 
+
+LABEL name="Wavefront Collector" \
+      vendor="Wavefront by VMware" \
+      version="1.0.3" \
+      release="1" \
+      run='' \
+      summary="The Wavefront Collector for Kubernetes enables monitoring Kubernetes clusters and sending metrics to Wavefront." \
+      description="The Wavefront Collector collects real-time metrics from all layers of a Kubernetes environment and Auto discovery of pods and services based on annotation and configuration." 
+
+RUN mkdir /licenses
+
+COPY license.txt /licenses
+
+RUN mkdir -p /etc/collector
+
+COPY collector.yaml /etc/collector
 
 COPY wavefront-collector /
 
