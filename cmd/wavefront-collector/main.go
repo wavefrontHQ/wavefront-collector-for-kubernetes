@@ -226,6 +226,7 @@ func setInternalSinkProperties(cfg *configuration.Config) {
 		sink.ClusterName = cfg.ClusterName
 		sink.InternalStatsPrefix = prefix
 		sink.Version = version
+		sink.EventsEnabled = cfg.EnableEvents
 	}
 }
 

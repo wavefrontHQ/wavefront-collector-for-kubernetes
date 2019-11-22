@@ -208,20 +208,26 @@ func getDefault(val, defaultVal string) string {
 	return val
 }
 
-func (sink *wavefrontSink) emitHeartbeat(sender senders.Sender, cluster, prefix string, version float64) {
+func (sink *wavefrontSink) emitHeartbeat(sender senders.Sender, cfg configuration.WavefrontSinkConfig) {
 	ticker := time.NewTicker(1 * time.Minute)
 	sink.stopHeartbeat = make(chan struct{})
 	source := getDefault(util.GetNodeName(), "wavefront-kubernetes-collector")
 	tags := map[string]string{
-		"cluster":      cluster,
-		"stats_prefix": configuration.GetStringValue(prefix, "kubernetes."),
+		"cluster":      cfg.ClusterName,
+		"stats_prefix": configuration.GetStringValue(cfg.Prefix, "kubernetes."),
+	}
+
+	eventsEnabled := 0.0
+	if cfg.EventsEnabled {
+		eventsEnabled = 1.0
 	}
 
 	go func() {
 		for {
 			select {
 			case <-ticker.C:
-				_ = sender.SendMetric("~wavefront.kubernetes.collector.version", version, 0, source, tags)
+				_ = sender.SendMetric("~wavefront.kubernetes.collector.version", cfg.Version, 0, source, tags)
+				_ = sender.SendMetric("~wavefront.kubernetes.collector.config.events.enabled", eventsEnabled, 0, source, tags)
 				sink.logStatus()
 			case <-sink.stopHeartbeat:
 				log.Info("stopping heartbeat")
@@ -295,7 +301,7 @@ func NewWavefrontSink(cfg configuration.WavefrontSinkConfig) (WavefrontSink, err
 	storage.forceGC = os.Getenv(util.ForceGC) != ""
 
 	// emit heartbeat metric
-	storage.emitHeartbeat(storage.WavefrontClient, storage.ClusterName, cfg.InternalStatsPrefix, cfg.Version)
+	storage.emitHeartbeat(storage.WavefrontClient, cfg)
 
 	return storage, nil
 }

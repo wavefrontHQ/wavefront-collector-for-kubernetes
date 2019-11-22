@@ -105,6 +105,9 @@ type WavefrontSinkConfig struct {
 
 	// Internal: The prefix used for internal stats. Used for the heartbeat metric.
 	InternalStatsPrefix string `yaml:"-"`
+
+	// Internal: Whether event collection has been enabled
+	EventsEnabled bool `yaml:"-"`
 }
 
 type CollectionConfig struct {
