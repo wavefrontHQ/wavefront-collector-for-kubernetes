@@ -1,0 +1,86 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: collector-config
+  namespace: wavefront-collector
+data:
+  collector.yaml: | 
+    clusterName: openshift-cluster
+    enableDiscovery: true
+    sinks:
+    - proxyAddress: example-wavefrontproxy.wavefront.svc.cluster.local:2878
+      tags:
+        version: 1.0.3
+    sources:
+      prometheus_sources:
+      # collect metrics from the Kubernetes API server
+      - url: 'https://kubernetes.default.svc.cluster.local:443/metrics'
+        httpConfig:
+          bearer_token_file: '/var/run/secrets/kubernetes.io/serviceaccount/token'
+          tls_config:
+            ca_file: '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
+            insecure_skip_verify: true
+        prefix: 'kube.apiserver.'
+        filters:
+          metricWhitelist:
+          - 'kube.apiserver.apiserver.*'
+          - 'kube.apiserver.etcd.*'
+          - 'kube.apiserver.process.*'
+      - url: 'https://kube-state-metrics.openshift-monitoring:8443/metrics'
+        httpConfig:
+          bearer_token_file: '/var/run/secrets/kubernetes.io/serviceaccount/token'
+          tls_config:
+            ca_file: '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
+            insecure_skip_verify: true
+      kubernetes_source:
+        url: 'https://kubernetes.default.svc'
+        kubeletPort: 10250
+        kubeletHttps: true
+        useServiceAccount: true
+        insecure: true
+        prefix: 'kubernetes.'
+      internal_stats_source:
+        prefix: 'kubernetes.'
+      telegraf_sources:
+      - plugins: []
+    discovery:
+      discovery_interval: 1m
+      plugins:
+      - name: redis
+        type: telegraf/redis
+        selectors:
+          images:
+          - 'redis:*'
+          - '*redis*'
+        port: 6379
+        scheme: "tcp"
+        conf: |
+          servers = ["${server}"]
+      - name: memcached
+        type: telegraf/memcached
+        selectors:
+          images:
+          - 'memcached:*'
+        port: 11211
+        conf: |
+          servers = ["${host}:${port}"]
+      - name: consul
+        type: telegraf/consul
+        selectors:
+          images:
+          - 'consul*'
+        port: 8500
+        conf: |
+          address = ["${host}:${port}"]
+          scheme = "http"
+      - name: kube-dns-discovery
+        type: prometheus
+        selectors:
+          labels:
+            k8s-app:
+            - kube-dns
+        port: 10054
+        path: /metrics
+        scheme: http
+        prefix: kube.dns.
+
