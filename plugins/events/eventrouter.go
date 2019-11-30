@@ -4,6 +4,7 @@ package events
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
@@ -127,7 +128,17 @@ func (er *EventRouter) addEvent(obj interface{}) {
 		"component":      e.Source.Component,
 	}
 
+	resourceName := e.InvolvedObject.Name
+	if resourceName != "" {
+		if strings.ToLower(e.InvolvedObject.Kind) == "pod" {
+			tags["pod_name"] = resourceName
+		} else {
+			tags["resource_name"] = resourceName
+		}
+	}
+
 	receivedEvents.Inc(1)
+
 	if len(er.whitelist) > 0 && !filter.MatchesTags(er.whitelist, tags) {
 		Log.WithField("event", e.Message).Trace("Dropping event not matching whitelist")
 		filteredEvents.Inc(1)
