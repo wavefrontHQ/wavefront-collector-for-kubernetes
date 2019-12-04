@@ -38,6 +38,15 @@ events:
       - "default"
       component:
       - "pp"
+    tagWhitelistSets:
+    - kind:
+      - "Pod"
+      reason:
+      - "Scheduled"
+    - kind:
+      - "DaemonSet"
+      reason:
+      - "SuccessfulCreate"
 
 sources:
   kubernetes_source:

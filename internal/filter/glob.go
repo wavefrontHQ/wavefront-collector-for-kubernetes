@@ -59,6 +59,17 @@ func MultiCompile(filters map[string][]string) map[string]glob.Glob {
 	return globs
 }
 
+func MultiSetCompile(filters []map[string][]string) []map[string]glob.Glob {
+	if len(filters) == 0 {
+		return nil
+	}
+	globs := make([]map[string]glob.Glob, len(filters))
+	for i, f := range filters {
+		globs[i] = MultiCompile(f)
+	}
+	return globs
+}
+
 func (gf *globFilter) Match(name string, tags map[string]string) bool {
 	if gf.metricWhitelist != nil && !gf.metricWhitelist.Match(name) {
 		return false
@@ -92,6 +103,19 @@ func MatchesTags(matchers map[string]glob.Glob, tags map[string]string) bool {
 		}
 	}
 	return false
+}
+
+func MatchesAllTags(matchers map[string]glob.Glob, tags map[string]string) bool {
+	for k, matcher := range matchers {
+		if val, ok := tags[k]; ok {
+			if !matcher.Match(val) {
+				return false
+			}
+		} else {
+			return false
+		}
+	}
+	return true
 }
 
 func matchesTag(matcher glob.Glob, tags map[string]string) bool {

@@ -51,8 +51,10 @@ type EventsConfig struct {
 }
 
 type EventsFilter struct {
-	TagWhitelist map[string][]string `yaml:"tagWhitelist"`
-	TagBlacklist map[string][]string `yaml:"tagBlacklist"`
+	TagWhitelist     map[string][]string   `yaml:"tagWhitelist"`
+	TagBlacklist     map[string][]string   `yaml:"tagBlacklist"`
+	TagWhitelistSets []map[string][]string `yaml:"tagWhitelistSets"`
+	TagBlacklistSets []map[string][]string `yaml:"tagBlacklistSets"`
 }
 
 // SourceConfig contains configuration for various sources

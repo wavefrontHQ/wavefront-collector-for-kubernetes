@@ -9,12 +9,10 @@ import (
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/events"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/leadership"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sinks/wavefront"
 	"github.com/wavefronthq/wavefront-sdk-go/event"
 
-	"github.com/gobwas/glob"
 	gometrics "github.com/rcrowley/go-metrics"
 	log "github.com/sirupsen/logrus"
 
@@ -43,8 +41,7 @@ type EventRouter struct {
 	stop              chan struct{}
 	daemon            bool
 	leadershipManager *leadershipManager
-	whitelist         map[string]glob.Glob
-	blacklist         map[string]glob.Glob
+	filters           eventFilter
 }
 
 func CreateEventRouter(clientset kubernetes.Interface, cfg configuration.EventsConfig, sink wavefront.WavefrontSink, daemon bool) *EventRouter {
@@ -56,8 +53,7 @@ func CreateEventRouter(clientset kubernetes.Interface, cfg configuration.EventsC
 		sink:            sink,
 		daemon:          daemon,
 		sharedInformers: sharedInformers,
-		whitelist:       filter.MultiCompile(cfg.Filters.TagWhitelist),
-		blacklist:       filter.MultiCompile(cfg.Filters.TagBlacklist),
+		filters:         newEventFilter(cfg.Filters),
 	}
 
 	eventsInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -116,6 +112,12 @@ func (er *EventRouter) addEvent(obj interface{}) {
 		return // prevent unlikely panic
 	}
 
+	// ignore events older than a minute to prevent surge on startup
+	if e.LastTimestamp.Time.Before(time.Now().Add(-1 * time.Minute)) {
+		Log.WithField("event", e.Message).Trace("Ignoring older event")
+		return
+	}
+
 	ns := e.InvolvedObject.Namespace
 	if len(ns) == 0 {
 		ns = "default"
@@ -138,14 +140,8 @@ func (er *EventRouter) addEvent(obj interface{}) {
 	}
 
 	receivedEvents.Inc(1)
-
-	if len(er.whitelist) > 0 && !filter.MatchesTags(er.whitelist, tags) {
-		Log.WithField("event", e.Message).Trace("Dropping event not matching whitelist")
-		filteredEvents.Inc(1)
-		return
-	}
-	if len(er.blacklist) > 0 && filter.MatchesTags(er.blacklist, tags) {
-		Log.WithField("event", e.Message).Trace("Dropping blacklisted event")
+	if !er.filters.matches(tags) {
+		Log.WithField("event", e.Message).Trace("Dropping event")
 		filteredEvents.Inc(1)
 		return
 	}
@@ -163,6 +159,10 @@ func (er *EventRouter) addEvent(obj interface{}) {
 		tags,
 		event.Type(eType),
 	))
+}
+
+func (er *EventRouter) filterEvent(tags map[string]string) bool {
+	return true
 }
 
 type system interface {
@@ -219,12 +219,11 @@ func (lm *leadershipManager) run(ch <-chan bool) {
 }
 
 func newEvent(message string, ts time.Time, host string, tags map[string]string, options ...event.Option) *events.Event {
-	event := &events.Event{
+	return &events.Event{
 		Message: message,
 		Ts:      ts,
 		Host:    host,
 		Tags:    tags,
 		Options: options,
 	}
-	return event
 }

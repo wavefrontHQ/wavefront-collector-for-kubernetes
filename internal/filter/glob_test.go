@@ -51,6 +51,22 @@ func TestMatchesTags(t *testing.T) {
 	}
 }
 
+func TestMatchesAllTags(t *testing.T) {
+	matchers := MultiCompile(map[string][]string{
+		"env":  {"?rod1*", "prod2*"},
+		"type": {"pod", "service"},
+		"node": {"10.2.*", "10.3.*"},
+	})
+
+	if MatchesAllTags(matchers, map[string]string{"env": "prod134"}) {
+		t.Errorf("error matching all tags")
+	}
+
+	if !MatchesAllTags(matchers, map[string]string{"env": "prod234", "type": "pod", "node": "10.2.3.4"}) {
+		t.Errorf("error matching all tags")
+	}
+}
+
 func TestDeleteTags(t *testing.T) {
 	// test tagIncludes: only matching tags should remain in the map
 	matcher := compileGlob([]string{"foo"}, t)
