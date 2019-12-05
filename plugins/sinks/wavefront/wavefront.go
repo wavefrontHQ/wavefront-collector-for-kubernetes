@@ -12,6 +12,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/wavefronthq/wavefront-sdk-go/event"
+
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/events"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
@@ -183,15 +185,16 @@ func (sink *wavefrontSink) ExportData(batch *metrics.DataBatch) {
 	sink.send(batch)
 }
 
-func (sink *wavefrontSink) ExportEvent(event *events.Event) {
-	event.Tags["cluster"] = sink.ClusterName
+func (sink *wavefrontSink) ExportEvent(ev *events.Event) {
+	ev.Options = append(ev.Options, event.Annotate("cluster", sink.ClusterName))
+	host := sink.ClusterName
 
 	err := sink.WavefrontClient.SendEvent(
-		event.Message,
-		event.Ts.Unix(), 0,
-		event.Host,
-		event.Tags,
-		event.Options...,
+		ev.Message,
+		ev.Ts.Unix(), 0,
+		host,
+		ev.Tags,
+		ev.Options...,
 	)
 	if err != nil {
 		log.Debugf("Error sending events: %v", err)

@@ -4,7 +4,7 @@
 
 [[override]]
   name = "github.com/wavefronthq/wavefront-sdk-go"
-  revision = "caaaf9d78ce10981d43bc7097a045db178afd831"
+  revision = "86329984eb326ae0dc2b51ff12944fb4f9c70638"
 
 [[constraint]]
   name = "github.com/wavefronthq/go-metrics-wavefront"

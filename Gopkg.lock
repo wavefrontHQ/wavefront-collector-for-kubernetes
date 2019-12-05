@@ -80,25 +80,6 @@
   version = "v1.1.1"
 
 [[projects]]
-  digest = "1:a54d9b22e14caae3254cfa3e86c814c720e334bc49b0e153a673a7137642598e"
-  name = "github.com/go-kit/kit"
-  packages = [
-    "log",
-    "log/level",
-  ]
-  pruneopts = "UT"
-  revision = "150a65a7ec6156b4b640c1fd55f26fd3d475d656"
-  version = "v0.9.0"
-
-[[projects]]
-  digest = "1:4062bc6de62d73e2be342243cf138cf499b34d558876db8d9430e2149388a4d8"
-  name = "github.com/go-logfmt/logfmt"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "07c9b44f60d7ffdfb7d8efe1ad539965737836dc"
-  version = "v0.4.0"
-
-[[projects]]
   digest = "1:440028f55cb322d8cb5b9d5ebec298a00b7d74690a658fe6b1c0c0b44341bfae"
   name = "github.com/go-ole/go-ole"
   packages = [
@@ -171,12 +152,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:497736d72a7a53142d24d9bc21c5d7f25d6394d10503968ba162d048c33ed622"
+  digest = "1:1ba1d79f2810270045c328ae5d674321db34e3aae468eb4233883b473c5c0467"
   name = "github.com/golang/glog"
   packages = ["."]
   pruneopts = "UT"
-  revision = "3d0e1f406ff87368ce4e577c15ea0a90f9b07560"
-  source = "github.com/kubermatic/glog-gokit"
+  revision = "23def4e6c14b4da8ac2ed8007337bc5eb5007998"
 
 [[projects]]
   branch = "master"
@@ -390,14 +370,6 @@
   version = "v1.0.2"
 
 [[projects]]
-  branch = "master"
-  digest = "1:a64e323dc06b73892e5bb5d040ced475c4645d456038333883f58934abbf6f72"
-  name = "github.com/kr/logfmt"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "b84e30acd515aadc4b783ad4ff83aff3299bdfe0"
-
-[[projects]]
   digest = "1:ff5ebae34cfbf047d505ee150de27e60570e8c394b3b8fdbb720ff6ac71985fc"
   name = "github.com/matttproud/golang_protobuf_extensions"
   packages = ["pbutil"]
@@ -583,7 +555,7 @@
   version = "v1.0.1"
 
 [[projects]]
-  digest = "1:e1991a4b965da90c0abceabfc867fdf650382d081f8af06d4d238963c55ecf75"
+  digest = "1:eba18e82e5a2e16826512d08490f86cee26567aa3e6bfad441bec760d5b9ceac"
   name = "github.com/wavefronthq/wavefront-sdk-go"
   packages = [
     "application",
@@ -593,7 +565,7 @@
     "senders",
   ]
   pruneopts = "UT"
-  revision = "caaaf9d78ce10981d43bc7097a045db178afd831"
+  revision = "86329984eb326ae0dc2b51ff12944fb4f9c70638"
 
 [[projects]]
   branch = "master"
@@ -996,13 +968,12 @@
   version = "kubernetes-1.15.0"
 
 [[projects]]
-  digest = "1:4896983246cdbac55d647d0d765387a05dc0c1a153f2999d51babbdee81b699c"
+  digest = "1:93e82f25d75aba18436ad1ac042cb49493f096011f2541075721ed6f9e05c044"
   name = "k8s.io/klog"
   packages = ["."]
   pruneopts = "UT"
-  revision = "dda81c2766535b29def2e939a98cd01351086376"
-  source = "github.com/simonpasquier/klog-gokit"
-  version = "v0.2.0"
+  revision = "2ca9ad30301bf30a8a6e0fa2110db6b8df699a91"
+  version = "v1.0.0"
 
 [[projects]]
   branch = "master"

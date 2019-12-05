@@ -219,11 +219,15 @@ func (lm *leadershipManager) run(ch <-chan bool) {
 }
 
 func newEvent(message string, ts time.Time, host string, tags map[string]string, options ...event.Option) *events.Event {
+	// convert tags to annotations
+	for k, v := range tags {
+		options = append(options, event.Annotate(k, v))
+	}
+
 	return &events.Event{
 		Message: message,
 		Ts:      ts,
 		Host:    host,
-		Tags:    tags,
 		Options: options,
 	}
 }
