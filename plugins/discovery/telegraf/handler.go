@@ -47,6 +47,11 @@ func (e telegrafEncoder) Encode(ip, kind string, meta metav1.ObjectMeta, rule in
 		},
 	}
 
+	if kind == discovery.ServiceType.String() {
+		// always use leader election for cluster level resources
+		result.UseLeaderElection = true
+	}
+
 	// panics if rule is not of expected type
 	cfg := rule.(discovery.PluginConfig)
 	name := discovery.ResourceName(kind, meta)

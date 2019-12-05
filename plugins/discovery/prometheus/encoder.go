@@ -86,6 +86,11 @@ func (e prometheusEncoder) Encode(ip, kind string, meta metav1.ObjectMeta, cfg i
 	}
 	result.Discovered = discoveryType
 
+	if kind == discovery.ServiceType.String() {
+		// always use leader election for cluster level resources
+		result.UseLeaderElection = true
+	}
+
 	collectionInterval := utils.Param(meta, e.collectionIntervalAnnotation, rule.Collection.Interval.String(), "0s")
 	timeout := utils.Param(meta, e.timeoutAnnotation, rule.Collection.Timeout.String(), "0s")
 

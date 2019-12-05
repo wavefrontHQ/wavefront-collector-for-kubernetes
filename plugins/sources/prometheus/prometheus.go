@@ -54,7 +54,6 @@ type prometheusMetricsSource struct {
 	eps        gometrics.Counter
 }
 
-//TODO: move tags, prefix, source, filters into a single common struct used by all sources and sinks
 func NewPrometheusMetricsSource(metricsURL, prefix, source, discovered string, tags map[string]string, filters filter.Filter, httpCfg httputil.ClientConfig) (metrics.MetricsSource, error) {
 	client, err := httpClient(metricsURL, httpCfg)
 	if err != nil {
@@ -288,19 +287,6 @@ func (src *prometheusMetricsSource) buildTags(m *dto.Metric) map[string]string {
 	return tags
 }
 
-func encodeLabelTags(labels []*dto.LabelPair, buf *bytes.Buffer) {
-	if len(labels) >= 0 {
-		for _, label := range labels {
-			if label.GetName() != "" && label.GetValue() != "" {
-				buf.WriteString(" ")
-				buf.WriteString(url.QueryEscape(label.GetName()))
-				buf.WriteString("=")
-				buf.WriteString(url.QueryEscape(label.GetValue()))
-			}
-		}
-	}
-}
-
 func (src *prometheusMetricsSource) encodeTags(tags map[string]string) string {
 	src.buf.Reset()
 	for k, v := range tags {
@@ -325,18 +311,13 @@ func (src *prometheusMetricsSource) isValidMetric(name string, tags map[string]s
 
 type prometheusProvider struct {
 	metrics.DefaultMetricsSourceProvider
-	urls       []string
-	prefix     string
-	source     string
-	name       string
-	discovered string
-	sources    []metrics.MetricsSource
-	tags       map[string]string
-	filters    filter.Filter
+	name              string
+	useLeaderElection bool
+	sources           []metrics.MetricsSource
 }
 
 func (p *prometheusProvider) GetMetricsSources() []metrics.MetricsSource {
-	if p.discovered == "" && !leadership.Leading() {
+	if p.useLeaderElection && !leadership.Leading() {
 		log.Infof("not scraping sources from: %s. current leader: %s", p.name, leadership.Leader())
 		return nil
 	}
@@ -378,17 +359,14 @@ func NewPrometheusProvider(cfg configuration.PrometheusSourceConfig) (metrics.Me
 	if err == nil {
 		sources = append(sources, metricsSource)
 	} else {
-		log.Errorf("error creating source: %v", err)
+		return nil, fmt.Errorf("error creating source: %v", err)
 	}
 
+	useLeaderElection := cfg.UseLeaderElection || discovered == ""
+
 	return &prometheusProvider{
-		urls:       []string{cfg.URL},
-		prefix:     prefix,
-		source:     source,
-		name:       name,
-		discovered: discovered,
-		sources:    sources,
-		tags:       tags,
-		filters:    filters,
+		name:              name,
+		useLeaderElection: useLeaderElection,
+		sources:           sources,
 	}, nil
 }

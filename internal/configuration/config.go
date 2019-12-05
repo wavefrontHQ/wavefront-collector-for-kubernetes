@@ -158,8 +158,9 @@ type PrometheusSourceConfig struct {
 	HTTPClientConfig httputil.ClientConfig `yaml:"httpConfig"`
 
 	// internal use only
-	Discovered string `yaml:"-"`
-	Name       string `yaml:"-"`
+	Discovered        string `yaml:"-"`
+	Name              string `yaml:"-"`
+	UseLeaderElection bool   `yaml:"-"`
 }
 
 // Configuration options for a Telegraf source
@@ -176,8 +177,9 @@ type TelegrafSourceConfig struct {
 	Conf string `yaml:"conf"`
 
 	// internal use only
-	Discovered string `yaml:"-"`
-	Name       string `yaml:"-"`
+	Discovered        string `yaml:"-"`
+	Name              string `yaml:"-"`
+	UseLeaderElection bool   `yaml:"-"`
 }
 
 type SystemdSourceConfig struct {

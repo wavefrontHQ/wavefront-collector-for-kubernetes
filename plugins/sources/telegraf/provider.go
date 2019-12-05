@@ -184,7 +184,7 @@ func NewProvider(cfg configuration.TelegrafSourceConfig) (metrics.MetricsSourceP
 	}
 
 	// use leader election if static source (not discovered) and is not a host plugin
-	useLeaderElection := cfg.Discovered == "" && cfg.Conf != ""
+	useLeaderElection := cfg.UseLeaderElection || (cfg.Discovered == "" && cfg.Conf != "")
 
 	return &telegrafProvider{
 		name:              name,
