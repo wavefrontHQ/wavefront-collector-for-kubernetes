@@ -12,7 +12,7 @@
 
 [[constraint]]
   name = "github.com/influxdata/telegraf"
-  version = "1.10.3"
+  version = "~1.10.3"
 
 [[constraint]]
   name = "github.com/rcrowley/go-metrics"

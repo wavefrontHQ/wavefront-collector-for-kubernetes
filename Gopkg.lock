@@ -282,7 +282,7 @@
   version = "v0.3.8"
 
 [[projects]]
-  digest = "1:d6868c6d94ea35ea7ff96aea7a0890cdb97f0908cb9b2145770241c56b0a25eb"
+  digest = "1:8ae72843409c09a0dc95edc027977a41845d8e147964b7a2090673868776b6c8"
   name = "github.com/influxdata/telegraf"
   packages = [
     ".",
@@ -323,8 +323,8 @@
     "plugins/parsers/json",
   ]
   pruneopts = "UT"
-  revision = "8de41160d4edb971978c958c78fa87a5c4a026b8"
-  version = "1.12.1"
+  revision = "294bb6668f4c76ee3913613936e74b52dc5d3bda"
+  version = "1.10.3"
 
 [[projects]]
   branch = "master"
@@ -614,7 +614,6 @@
   ]
   pruneopts = "UT"
   revision = "4c7a9d0fe056d9d1de37e1409ca8a5c17accb46a"
-  source = "https://github.com/golang/sys.git"
 
 [[projects]]
   digest = "1:5f1559c4cee44069f81517430ebba19589869f3d4d4648213a4d5ddd199b11d8"
