@@ -178,24 +178,24 @@ func (src *prometheusMetricsSource) buildPoints(metricFamilies map[string]*dto.M
 	for metricName, mf := range metricFamilies {
 		for _, m := range mf.Metric {
 			tags := src.buildTags(m)
-			var metrics []*metrics.MetricPoint
+			var points []*metrics.MetricPoint
 			if mf.GetType() == dto.MetricType_SUMMARY {
-				// summary metric
-				metrics = src.buildQuantiles(metricName, m, now, tags)
+				// summary point
+				points = src.buildQuantiles(metricName, m, now, tags)
 			} else if mf.GetType() == dto.MetricType_HISTOGRAM {
-				// histogram metric
-				metrics = src.buildHistos(metricName, m, now, tags)
+				// histogram point
+				points = src.buildHistos(metricName, m, now, tags)
 			} else {
-				// standard metric
-				metrics = src.buildPoint(metricName, m, now, tags)
+				// standard point
+				points = src.buildPoint(metricName, m, now, tags)
 			}
 
-			for _, metric := range metrics {
-				if src.isValidMetric(metric.Metric, metric.Tags) {
-					tagsStr := src.encodeTags(metric.Tags)
-					metric.StrTags = tagsStr
-					metric.Tags = nil
-					result = append(result, metric)
+			for _, point := range points {
+				if src.isValidMetric(point.Metric, point.Tags) {
+					tagsStr := src.encodeTags(point.Tags)
+					point.StrTags = tagsStr
+					point.Tags = nil
+					result = append(result, point)
 				}
 			}
 		}
