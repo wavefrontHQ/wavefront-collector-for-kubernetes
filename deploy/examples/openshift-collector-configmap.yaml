@@ -8,9 +8,9 @@ data:
     clusterName: openshift-cluster
     enableDiscovery: true
     sinks:
-    - proxyAddress: example-wavefrontproxy.wavefront.svc.cluster.local:2878
+    - proxyAddress: default-wavefrontproxy.wavefront.svc.cluster.local:2878
       tags:
-        version: 1.0.3
+        version: 1.0.4
     sources:
       prometheus_sources:
       # collect metrics from the Kubernetes API server
