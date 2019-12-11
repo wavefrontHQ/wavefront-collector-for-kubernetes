@@ -8,7 +8,7 @@ MAINTAINER wavefront@vmware.com
 
 LABEL name="Wavefront Collector" \
       vendor="Wavefront by VMware" \
-      version="1.0.3" \
+      version="1.0.4" \
       release="1" \
       run='' \
       summary="The Wavefront Collector for Kubernetes enables monitoring Kubernetes clusters and sending metrics to Wavefront." \
