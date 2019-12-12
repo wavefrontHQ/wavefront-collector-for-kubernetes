@@ -67,7 +67,7 @@ func newPrometheusEncoder(prefix string) prometheusEncoder {
 }
 
 func (e prometheusEncoder) Encode(ip, kind string, meta metav1.ObjectMeta, cfg interface{}) (interface{}, bool) {
-	if ip == "" {
+	if ip == "" || ip == "None" {
 		log.Debugf("missing ip for %s=%s", kind, meta.Name)
 		return configuration.PrometheusSourceConfig{}, false
 	}

@@ -37,7 +37,7 @@ func NewEncoder() discovery.Encoder {
 }
 
 func (e telegrafEncoder) Encode(ip, kind string, meta metav1.ObjectMeta, rule interface{}) (interface{}, bool) {
-	if ip == "" {
+	if ip == "" || ip == "None" {
 		return configuration.TelegrafSourceConfig{}, false
 	}
 
