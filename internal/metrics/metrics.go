@@ -732,6 +732,27 @@ var MetricNodeEphemeralStorageReservation = Metric{
 	},
 }
 
+// Aggregated count metrics
+var MetricPodCount = Metric{
+	MetricDescriptor: MetricDescriptor{
+		Name:        "pod/count",
+		Description: "Count of pods",
+		Type:        MetricGauge,
+		ValueType:   ValueInt64,
+		Units:       UnitsCount,
+	},
+}
+
+var MetricPodContainerCount = Metric{
+	MetricDescriptor: MetricDescriptor{
+		Name:        "pod_container/count",
+		Description: "Count of pod containers",
+		Type:        MetricGauge,
+		ValueType:   ValueInt64,
+		Units:       UnitsCount,
+	},
+}
+
 // Labeled metrics
 
 var MetricFilesystemUsage = Metric{

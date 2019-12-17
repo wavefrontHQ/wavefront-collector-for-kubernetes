@@ -34,7 +34,8 @@ func (aggregator *NamespaceAggregator) Name() string {
 func (aggregator *NamespaceAggregator) Process(batch *metrics.DataBatch) (*metrics.DataBatch, error) {
 	namespaces := make(map[string]*metrics.MetricSet)
 	for key, metricSet := range batch.MetricSets {
-		if metricSetType, found := metricSet.Labels[metrics.LabelMetricSetType.Key]; !found || metricSetType != metrics.MetricSetTypePod {
+		metricSetType, found := metricSet.Labels[metrics.LabelMetricSetType.Key]
+		if !found || (metricSetType != metrics.MetricSetTypePod && metricSetType != metrics.MetricSetTypePodContainer) {
 			continue
 		}
 
@@ -55,10 +56,18 @@ func (aggregator *NamespaceAggregator) Process(batch *metrics.DataBatch) (*metri
 			}
 		}
 
+		if metricSetType == metrics.MetricSetTypePodContainer {
+			// aggregate container counts and continue to top of the loop
+			aggregateCount(metricSet, namespace, metrics.MetricPodContainerCount.Name)
+			continue
+		} else {
+			// aggregate pod counts
+			aggregateCount(metricSet, namespace, metrics.MetricPodCount.Name)
+		}
+
 		if err := aggregate(metricSet, namespace, aggregator.MetricsToAggregate); err != nil {
 			return nil, err
 		}
-
 	}
 	for key, val := range namespaces {
 		batch.MetricSets[key] = val

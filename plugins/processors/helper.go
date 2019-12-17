@@ -32,7 +32,7 @@ func aggregate(src, dst *metrics.MetricSet, metricsToAggregate []string) error {
 		aggregatedValue, found := dst.MetricValues[metricName]
 		if found {
 			if aggregatedValue.ValueType != metricValue.ValueType {
-				return fmt.Errorf("Aggregator: type not supported in %s", metricName)
+				return fmt.Errorf("aggregator: type not supported in %s", metricName)
 			}
 
 			if aggregatedValue.ValueType == metrics.ValueInt64 {
@@ -40,7 +40,7 @@ func aggregate(src, dst *metrics.MetricSet, metricsToAggregate []string) error {
 			} else if aggregatedValue.ValueType == metrics.ValueFloat {
 				aggregatedValue.FloatValue += metricValue.FloatValue
 			} else {
-				return fmt.Errorf("Aggregator: type not supported in %s", metricName)
+				return fmt.Errorf("aggregator: type not supported in %s", metricName)
 			}
 		} else {
 			aggregatedValue = metricValue
@@ -48,4 +48,26 @@ func aggregate(src, dst *metrics.MetricSet, metricsToAggregate []string) error {
 		dst.MetricValues[metricName] = aggregatedValue
 	}
 	return nil
+}
+
+// aggregates the count of pods or containers by node, namespace and cluster.
+// If the source already has aggregated counts (by namespace for example), they are used to get the counts per cluster.
+// If the source does not have any counts, we increment the dest count by 1 assuming this method is invoked once per pod/container.
+func aggregateCount(src, dst *metrics.MetricSet, metricName string) {
+	srcCount := int64(0)
+	if count, found := src.MetricValues[metricName]; found {
+		srcCount += count.IntValue
+	} else {
+		srcCount = 1
+	}
+
+	dstCount, found := dst.MetricValues[metricName]
+	if found {
+		dstCount.IntValue += srcCount
+	} else {
+		dstCount = metrics.MetricValue{
+			IntValue: srcCount,
+		}
+	}
+	dst.MetricValues[metricName] = dstCount
 }

@@ -38,6 +38,8 @@ func (aggregator *ClusterAggregator) Process(batch *metrics.DataBatch) (*metrics
 			if err := aggregate(metricSet, cluster, aggregator.MetricsToAggregate); err != nil {
 				return nil, err
 			}
+			aggregateCount(metricSet, cluster, metrics.MetricPodCount.Name)
+			aggregateCount(metricSet, cluster, metrics.MetricPodContainerCount.Name)
 		}
 	}
 

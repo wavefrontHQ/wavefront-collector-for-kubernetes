@@ -34,9 +34,11 @@ func (aggregator *NodeAggregator) Name() string {
 
 func (aggregator *NodeAggregator) Process(batch *metrics.DataBatch) (*metrics.DataBatch, error) {
 	for key, metricSet := range batch.MetricSets {
-		if metricSetType, found := metricSet.Labels[metrics.LabelMetricSetType.Key]; !found || metricSetType != metrics.MetricSetTypePod {
+		metricSetType, found := metricSet.Labels[metrics.LabelMetricSetType.Key]
+		if !found || (metricSetType != metrics.MetricSetTypePod && metricSetType != metrics.MetricSetTypePodContainer) {
 			continue
 		}
+
 		// Aggregating pods
 		nodeName, found := metricSet.Labels[metrics.LabelNodename.Key]
 		if nodeName == "" {
@@ -51,10 +53,20 @@ func (aggregator *NodeAggregator) Process(batch *metrics.DataBatch) (*metrics.Da
 		node, found := batch.MetricSets[nodeKey]
 		if !found {
 			log.Infof("No metric for node %s, cannot perform node level aggregation.", nodeKey)
-		} else if err := aggregate(metricSet, node, aggregator.MetricsToAggregate); err != nil {
-			return nil, err
-		}
+		} else {
+			if metricSetType == metrics.MetricSetTypePodContainer {
+				// aggregate container counts and continue to top of the loop
+				aggregateCount(metricSet, node, metrics.MetricPodContainerCount.Name)
+				continue
+			} else {
+				// aggregate pod counts
+				aggregateCount(metricSet, node, metrics.MetricPodCount.Name)
+			}
 
+			if err := aggregate(metricSet, node, aggregator.MetricsToAggregate); err != nil {
+				return nil, err
+			}
+		}
 	}
 	return batch, nil
 }
