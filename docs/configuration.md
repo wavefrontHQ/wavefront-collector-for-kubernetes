@@ -31,6 +31,9 @@ clusterName: k8s-cluster
 # Whether auto-discovery is enabled. Defaults to true.
 enableDiscovery: true
 
+# Whether event collection is enabled. Requires Wavefront Proxy v6.0+.
+enableEvents: false
+
 # The global interval at which data is flushsed. Defaults to 60 seconds.
 # Duration type specified as [0-9]+(ms|[smhdwy])
 flushInterval: 60s
@@ -77,6 +80,12 @@ discovery:
 
   plugins:
   # see auto-discovery for details
+
+# Optional event collection configuration
+events:
+  # optional filtering of events collected
+  filters:
+  # see the filtering documentation for details
 ```
 
 ### Wavefront sink

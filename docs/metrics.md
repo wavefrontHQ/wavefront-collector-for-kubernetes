@@ -106,6 +106,7 @@ Varies by scrape target.
 | kubernetes.collector.discovery.enabled | Whether discovery is enabled. 0 (false) or 1 (true). |
 | kubernetes.collector.discovery.rules.count | # of discovery configuration rules. |
 | kubernetes.collector.discovery.targets.registered | # of auto discovered scrape targets currently being monitored. |
+| kubernetes.collector.events.* | Events received, sent and filtered. |
 | kubernetes.collector.leaderelection.error | leader election error counter. Only emitted in daemonset mode. |
 | kubernetes.collector.leaderelection.leading | 1 indicates a pod is the leader. 0 (no). Only emitted in daemonset mode. |
 | kubernetes.collector.runtime.* | Go runtime metrics (MemStats, NumGoroutine etc). |
@@ -119,4 +120,5 @@ Varies by scrape target.
 | kubernetes.collector.source.points.filtered | filtered points counter per source type. |
 | kubernetes.collector.version | The version of the collector. |
 | kubernetes.collector.wavefront.points.* | Wavefront sink points sent, filtered, errors etc. |
+| kubernetes.collector.wavefront.events.* | Wavefront sink events sent, filtered, errors etc. |
 | kubernetes.collector.wavefront.sender.type | 1 for proxy and 0 for direct ingestion. |

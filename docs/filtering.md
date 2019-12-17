@@ -1,13 +1,15 @@
-# Filtering Metrics
+# Filtering
 
-The Wavefront Collector for Kubernetes supports filtering metrics before they are reported to Wavefront. The following filtering options are supported:
+## Metrics Filtering
+
+The Wavefront Collector for Kubernetes supports filtering metrics before they are reported to Wavefront. The following filtering options are supported for metrics:
 
   * **metricWhitelist**: List of glob patterns. Only metrics with names matching the whitelist are reported.
-  * **metricBlacklist** List of glob patterns. Metrics with names matching the blacklist are dropped.
-  * **metricTagWhitelist** Map of tag names to list of glob patterns. Only metrics containing tag keys and values matching the whitelist will be reported.
-  * **metricTagBlacklist** Map of tag names to list of glob patterns. Metrics containing blacklisted tag keys and values will be dropped.
-  * **tagInclude** List of glob patterns. Tags with matching keys will be included. All other tags will be excluded.
-  * **tagExclude** List of glob patterns. Tags with matching keys will be excluded.
+  * **metricBlacklist**: List of glob patterns. Metrics with names matching the blacklist are dropped.
+  * **metricTagWhitelist**: Map of tag names to list of glob patterns. Only metrics containing tag keys and values matching the whitelist will be reported.
+  * **metricTagBlacklist**: Map of tag names to list of glob patterns. Metrics containing blacklisted tag keys and values will be dropped.
+  * **tagInclude**: List of glob patterns. Tags with matching keys will be included. All other tags will be excluded.
+  * **tagExclude**: List of glob patterns. Tags with matching keys will be excluded.
 
 Filtering can be enabled on the sink or sources. Where it is applied controls the scope of metrics towards which the filtering applies.
 
@@ -82,4 +84,31 @@ discovery_configs:
         service:
         - 'app1*'
         - '?app2*'
+```
+
+## Events Filtering
+
+The Wavefront Collector for Kubernetes also supports filtering events before they are reported to Wavefront. The following filtering options are supported for events:
+
+* **tagWhitelist**: Map of tag names to list of glob patterns. Only events containing tag keys and values matching the whitelist will be reported.
+* **tagBlacklist**: Map of tag names to list of glob patterns. Events containing blacklisted tag keys and values will be dropped.
+* **tagWhitelistSets**: List of maps of tag names to list of glob patterns. Filters within each map are AND'd. Filters between the maps are OR'd.
+* **tagBlacklistSets**: List of maps of tag names to list of glob patterns. Filters within each map are AND'd. Filters between the maps are OR'd.
+
+Event filtering is specified within the top level events section in the config. For example to whitelist either Pod or DaemonSet events with a specific reason:
+
+```yaml
+events:
+  filters:
+    tagWhitelistSets:
+    - kind:
+     - "Pod"
+     reason:
+     - "Scheduled"
+     - "Failed*"
+    - kind:
+     - "DaemonSet"
+     reason:
+     - "SuccessfulCreate"
+     - "Failed*"
 ```
