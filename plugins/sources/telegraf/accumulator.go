@@ -86,7 +86,7 @@ func (t *telegrafDataBatch) filterAppend(slice []*metrics.MetricPoint, point *me
 		return append(slice, point)
 	}
 	t.source.pointsFiltered.Inc(1)
-	log.Debugf("dropping metric: %s", point.Metric)
+	log.Tracef("dropping metric: %s", point.Metric)
 	return slice
 }
 

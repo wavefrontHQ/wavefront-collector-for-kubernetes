@@ -2,101 +2,57 @@ package kstate
 
 import (
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
+	"strconv"
 
 	"k8s.io/api/core/v1"
 )
 
 func buildPodPhase(pod *v1.Pod, prefix, source string, tags map[string]string, ts int64) *metrics.MetricPoint {
-	return &metrics.MetricPoint{
-		Metric:    prefix + "pod.status.phase",
-		Value:     float64(convertPhase(pod.Status.Phase)),
-		Timestamp: ts,
-		Source:    source,
-		Tags:      tags,
+	pt := make(map[string]string, len(tags)+1)
+	for k, v := range tags {
+		pt[k] = v
 	}
+	pt["phase"] = string(pod.Status.Phase)
+	return metricPoint(prefix+"pod.status.phase", convertPhase(pod.Status.Phase), ts, source, pt)
 }
 
-func buildPodCondition(pod *v1.Pod) *metrics.MetricPoint {
-	//kube_pod_status_ready	Gauge	pod=<pod-name>
-	//	namespace=<pod-namespace>
-	//	condition=<true|false|unknown>	STABLE
-	//kube_pod_status_scheduled	Gauge	pod=<pod-name>
-	//	namespace=<pod-namespace>
-	//	condition=<true|false|unknown>	STABLE
-	return nil
+func buildContainerStatuses(statuses []v1.ContainerStatus, prefix, source string, tags map[string]string, ts int64) []*metrics.MetricPoint {
+	if len(statuses) == 0 {
+		return nil
+	}
+
+	points := make([]*metrics.MetricPoint, 2*len(statuses))
+	for i, container := range statuses {
+		pt := make(map[string]string, len(tags)+4)
+		for k, v := range tags {
+			pt[k] = v
+		}
+
+		pt["container_name"] = container.Name
+		pt["container_image_name"] = container.Image
+		pt["ready"] = strconv.FormatBool(container.Ready)
+
+		stateFloat, state, reason := convertContainerStatus(container.State)
+		if stateFloat > 0 {
+			pt["status"] = state
+			if reason != "" {
+				pt["reason"] = reason
+			}
+		}
+
+		idx := i * 2
+
+		// status
+		points[idx] = metricPoint(prefix+"status", stateFloat, ts, source, pt)
+
+		// restart.count
+		count := float64(container.RestartCount)
+		points[idx+1] = metricPoint(prefix+"restart.count", count, ts, source, pt)
+	}
+	return points
 }
 
-func buildContainerStatuses() {
-	//TODO: implement
-	//kube_pod_container_info	Gauge	container=<container-name>
-	//	pod=<pod-name>
-	//	namespace=<pod-namespace>
-	//	image=<image-name>
-	//	image_id=<image-id>
-	//	container_id=<containerid>	STABLE
-	//kube_pod_container_status_waiting	Gauge	container=<container-name>
-	//	pod=<pod-name>
-	//	namespace=<pod-namespace>	STABLE
-	//kube_pod_container_status_waiting_reason	Gauge	container=<container-name>
-	//	pod=<pod-name>
-	//	namespace=<pod-namespace>
-	//	reason=<ContainerCreating|CrashLoopBackOff|ErrImagePull|ImagePullBackOff|CreateContainerConfigError|InvalidImageName|CreateContainerError>	STABLE
-	//kube_pod_container_status_running	Gauge	container=<container-name>
-	//	pod=<pod-name>
-	//	namespace=<pod-namespace>	STABLE
-	//kube_pod_container_status_terminated	Gauge	container=<container-name>
-	//	pod=<pod-name>
-	//	namespace=<pod-namespace>	STABLE
-	//kube_pod_container_status_terminated_reason	Gauge	container=<container-name>
-	//	pod=<pod-name>
-	//	namespace=<pod-namespace>
-	//	reason=<OOMKilled|Error|Completed|ContainerCannotRun|DeadlineExceeded>	STABLE
-	//kube_pod_container_status_last_terminated_reason	Gauge	container=<container-name>
-	//	pod=<pod-name>
-	//	namespace=<pod-namespace>
-	//	reason=<OOMKilled|Error|Completed|ContainerCannotRun|DeadlineExceeded>	STABLE
-	//kube_pod_container_status_ready	Gauge	container=<container-name>
-	//	pod=<pod-name>
-	//	namespace=<pod-namespace>	STABLE
-	//kube_pod_container_status_restarts_total	Counter	container=<container-name>
-	//	namespace=<pod-namespace>
-	//	pod=<pod-name>
-
-	//kube_pod_init_container_status_waiting	Gauge	container=<container-name>
-	//	pod=<pod-name>
-	//	namespace=<pod-namespace>	STABLE
-	//kube_pod_init_container_status_waiting_reason	Gauge	container=<container-name>
-	//	pod=<pod-name>
-	//	namespace=<pod-namespace>
-	//	reason=<ContainerCreating|CrashLoopBackOff|ErrImagePull|ImagePullBackOff|CreateContainerConfigError>	STABLE
-	//kube_pod_init_container_status_running	Gauge	container=<container-name>
-	//	pod=<pod-name>
-	//	namespace=<pod-namespace>	STABLE
-	//kube_pod_init_container_status_terminated	Gauge	container=<container-name>
-	//	pod=<pod-name>
-	//	namespace=<pod-namespace>	STABLE
-	//kube_pod_init_container_status_terminated_reason	Gauge	container=<container-name>
-	//	pod=<pod-name>
-	//	namespace=<pod-namespace>
-	//	reason=<OOMKilled|Error|Completed|ContainerCannotRun|DeadlineExceeded>	STABLE
-	//kube_pod_init_container_status_last_terminated_reason	Gauge	container=<container-name>
-	//	pod=<pod-name>
-	//	namespace=<pod-namespace>
-	//	reason=<OOMKilled|Error|Completed|ContainerCannotRun|DeadlineExceeded>	STABLE
-	//kube_pod_init_container_status_ready	Gauge	container=<container-name>
-	//	pod=<pod-name>
-	//	namespace=<pod-namespace>	STABLE
-	//kube_pod_init_container_status_restarts_total	Counter	container=<container-name>
-	//	namespace=<pod-namespace>
-	//	pod=<pod-name>
-
-	//kube_pod_status_scheduled_time	Gauge	pod=<pod-name>
-	//	namespace=<pod-namespace>	STABLE
-	//kube_pod_status_unschedulable	Gauge	pod=<pod-name>
-	//	namespace=<pod-namespace>
-}
-
-func convertPhase(phase v1.PodPhase) int64 {
+func convertPhase(phase v1.PodPhase) float64 {
 	switch phase {
 	case v1.PodPending:
 		return 1
@@ -110,5 +66,28 @@ func convertPhase(phase v1.PodPhase) int64 {
 		return 5
 	default:
 		return 5
+	}
+}
+
+func convertContainerStatus(state v1.ContainerState) (float64, string, string) {
+	if state.Running != nil {
+		return 1, "running", ""
+	}
+	if state.Waiting != nil {
+		return 2, "waiting", state.Waiting.Reason
+	}
+	if state.Terminated != nil {
+		return 3, "terminated", state.Terminated.Reason
+	}
+	return 0, "", ""
+}
+
+func metricPoint(name string, value float64, ts int64, source string, tags map[string]string) *metrics.MetricPoint {
+	return &metrics.MetricPoint{
+		Metric:    name,
+		Value:     value,
+		Timestamp: ts,
+		Source:    source,
+		Tags:      tags,
 	}
 }

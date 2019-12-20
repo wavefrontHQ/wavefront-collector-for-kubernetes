@@ -11,9 +11,25 @@ import (
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
 
+	gometrics "github.com/rcrowley/go-metrics"
+	"github.com/wavefronthq/go-metrics-wavefront/reporting"
+
 	"k8s.io/apimachinery/pkg/labels"
 	v1lister "k8s.io/client-go/listers/core/v1"
 )
+
+var (
+	collectErrors   gometrics.Counter
+	filteredPoints  gometrics.Counter
+	collectedPoints gometrics.Counter
+)
+
+func init() {
+	pt := map[string]string{"type": "kubernetes.state"}
+	collectedPoints = gometrics.GetOrRegisterCounter(reporting.EncodeKey("source.points.collected", pt), gometrics.DefaultRegistry)
+	filteredPoints = gometrics.GetOrRegisterCounter(reporting.EncodeKey("source.points.filtered", pt), gometrics.DefaultRegistry)
+	collectErrors = gometrics.GetOrRegisterCounter(reporting.EncodeKey("source.collect.errors", pt), gometrics.DefaultRegistry)
+}
 
 type stateMetricsSource struct {
 	podLister v1lister.PodLister
@@ -21,12 +37,9 @@ type stateMetricsSource struct {
 	source    string
 	tags      map[string]string
 	filters   filter.Filter
-	//pps        gometrics.Counter
-	//eps        gometrics.Counter
 }
 
 func NewStateMetricsSource(podLister v1lister.PodLister, transforms configuration.Transforms) (metrics.MetricsSource, error) {
-	//TODO: emit internal metrics
 	return &stateMetricsSource{
 		podLister: podLister,
 		prefix:    transforms.Prefix,
@@ -51,20 +64,20 @@ func (src *stateMetricsSource) ScrapeMetrics() (*metrics.DataBatch, error) {
 	result := &metrics.DataBatch{
 		Timestamp: time.Now(),
 	}
-	result.MetricPoints = src.buildPodStatus()
+	points, err := src.buildPodStatus()
+	if err != nil {
+		collectErrors.Inc(1)
+		return result, err
+	}
+	result.MetricPoints = points
+	collectedPoints.Inc(int64(len(points)))
 	return result, nil
 }
 
-func (src *stateMetricsSource) buildPodStatus() []*metrics.MetricPoint {
+func (src *stateMetricsSource) buildPodStatus() ([]*metrics.MetricPoint, error) {
 	pods, err := src.podLister.List(labels.Everything())
 	if err != nil {
-		return nil
-	}
-
-	log.Debugf("total pods retrieved: %d", len(pods))
-
-	if len(pods) > 0 {
-		log.Debugf("first pod info: %v", pods[0].Status)
+		return nil, err
 	}
 
 	now := time.Now().Unix()
@@ -74,9 +87,27 @@ func (src *stateMetricsSource) buildPodStatus() []*metrics.MetricPoint {
 			"pod_name":       pod.Name,
 			"namespace_name": pod.Namespace,
 		}
-		points = append(points, buildPodPhase(pod, src.prefix, src.source, tags, now))
+		points = src.filter(points, buildPodPhase(pod, src.prefix, src.source, tags, now))
+		points = src.filterAppend(points, buildContainerStatuses(pod.Status.ContainerStatuses, src.prefix+"pod_container.", src.source, tags, now))
+		points = src.filterAppend(points, buildContainerStatuses(pod.Status.InitContainerStatuses, src.prefix+"pod_init_container.", src.source, tags, now))
 	}
-	return points
+	return points, nil
+}
+
+func (src *stateMetricsSource) filter(slice []*metrics.MetricPoint, point *metrics.MetricPoint) []*metrics.MetricPoint {
+	if src.filters == nil || src.filters.Match(point.Metric, point.Tags) {
+		return append(slice, point)
+	}
+	filteredPoints.Inc(1)
+	log.Tracef("dropping metric: %s", point.Metric)
+	return slice
+}
+
+func (src *stateMetricsSource) filterAppend(slice []*metrics.MetricPoint, points []*metrics.MetricPoint) []*metrics.MetricPoint {
+	for _, point := range points {
+		slice = src.filter(slice, point)
+	}
+	return slice
 }
 
 type stateProvider struct {
