@@ -1,8 +1,9 @@
 package kstate
 
 import (
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	"strconv"
+
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 
 	"k8s.io/api/core/v1"
 )
