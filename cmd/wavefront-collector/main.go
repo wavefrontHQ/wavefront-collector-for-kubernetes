@@ -110,6 +110,10 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 
 	clusterName := cfg.ClusterName
 
+	// initialize the pod lister so dependent sources can just invoke util.GetPodLister(nil)
+	kubeClient := createKubeClientOrDie(*cfg.Sources.SummaryConfig)
+	podLister := getPodListerOrDie(kubeClient)
+
 	// create sources manager
 	sourceManager := sources.Manager()
 	sourceManager.SetDefaultCollectionInterval(cfg.DefaultCollectionInterval)
@@ -122,8 +126,6 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 	setInternalSinkProperties(cfg)
 	sinkManager := createSinkManagerOrDie(cfg.Sinks, cfg.SinkExportDataTimeout)
 
-	kubeClient := createKubeClientOrDie(*cfg.Sources.SummaryConfig)
-
 	// Events
 	var eventRouter *events.EventRouter
 	if cfg.EnableEvents {
@@ -134,7 +136,6 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 	}
 
 	// create data processors
-	podLister := getPodListerOrDie(kubeClient)
 	dataProcessors := createDataProcessorsOrDie(kubeClient, clusterName, podLister, *cfg.Sources.SummaryConfig)
 
 	// create discovery manager

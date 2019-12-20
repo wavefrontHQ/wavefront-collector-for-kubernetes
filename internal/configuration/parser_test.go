@@ -52,6 +52,9 @@ sources:
   kubernetes_source:
     prefix: kubernetes.
 
+  kstate_source:
+    prefix: kubernetes.state.
+
   prometheus_sources:
   - url: 'https://kubernetes.default.svc.cluster.local:443'
     httpConfig:
