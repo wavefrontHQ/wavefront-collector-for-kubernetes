@@ -52,7 +52,7 @@ sources:
   kubernetes_source:
     prefix: kubernetes.
 
-  kstate_source:
+  kubernetes_state_source:
     prefix: kubernetes.state.
 
   prometheus_sources:

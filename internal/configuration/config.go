@@ -64,7 +64,7 @@ type SourceConfig struct {
 	TelegrafConfigs   []*TelegrafSourceConfig      `yaml:"telegraf_sources"`
 	SystemdConfig     *SystemdSourceConfig         `yaml:"systemd_source"`
 	StatsConfig       *StatsSourceConfig           `yaml:"internal_stats_source"`
-	StateConfig       *KubernetesStateSourceConfig `yaml:"kstate_source"`
+	StateConfig       *KubernetesStateSourceConfig `yaml:"kubernetes_state_source"`
 }
 
 // Transforms represents transformations that can be applied to metrics at sources or sinks
@@ -146,6 +146,7 @@ type SummaySourceConfig struct {
 	Auth string `yaml:"auth"`
 }
 
+// Configuration options for the Kubernetes state source.
 type KubernetesStateSourceConfig struct {
 	Transforms `yaml:",inline"`
 
