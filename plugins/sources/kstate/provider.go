@@ -123,7 +123,7 @@ func (p *stateProvider) Name() string {
 	return providerName
 }
 
-const providerName = "kstate_metrics_provider"
+const providerName = "kubernetes_state_metrics_provider"
 
 func NewStateProvider(cfg configuration.KubernetesStateSourceConfig) (metrics.MetricsSourceProvider, error) {
 	podLister, err := util.GetPodLister(nil)

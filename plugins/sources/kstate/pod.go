@@ -22,7 +22,7 @@ func buildContainerStatuses(statuses []v1.ContainerStatus, prefix, source string
 		return nil
 	}
 
-	points := make([]*metrics.MetricPoint, 2*len(statuses))
+	points := make([]*metrics.MetricPoint, len(statuses))
 	for i, container := range statuses {
 		pt := make(map[string]string, len(tags)+4)
 		for k, v := range tags {
@@ -40,15 +40,7 @@ func buildContainerStatuses(statuses []v1.ContainerStatus, prefix, source string
 				pt["reason"] = reason
 			}
 		}
-
-		idx := i * 2
-
-		// status
-		points[idx] = metricPoint(prefix+"status", stateFloat, ts, source, pt)
-
-		// restart.count
-		count := float64(container.RestartCount)
-		points[idx+1] = metricPoint(prefix+"restart.count", count, ts, source, pt)
+		points[i] = metricPoint(prefix+"status", stateFloat, ts, source, pt)
 	}
 	return points
 }
