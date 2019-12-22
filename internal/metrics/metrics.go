@@ -732,6 +732,26 @@ var MetricNodeEphemeralStorageReservation = Metric{
 	},
 }
 
+var MetricPodPhase = Metric{
+	MetricDescriptor: MetricDescriptor{
+		Name:        "status/phase",
+		Description: "Phase of pods",
+		Type:        MetricGauge,
+		ValueType:   ValueInt64,
+		Units:       UnitsCount,
+	},
+}
+
+var MetricContainerStatus = Metric{
+	MetricDescriptor: MetricDescriptor{
+		Name:        "status",
+		Description: "Container status",
+		Type:        MetricGauge,
+		ValueType:   ValueInt64,
+		Units:       UnitsCount,
+	},
+}
+
 // Aggregated count metrics
 var MetricPodCount = Metric{
 	MetricDescriptor: MetricDescriptor{

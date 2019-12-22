@@ -26,7 +26,6 @@ import (
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/kstate"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/prometheus"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/stats"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/summary"
@@ -270,10 +269,6 @@ func buildProviders(cfg configuration.SourceConfig) []metrics.MetricsSourceProvi
 	if cfg.StatsConfig != nil {
 		provider, err := stats.NewInternalStatsProvider(*cfg.StatsConfig)
 		result = appendProvider(result, provider, err, cfg.StatsConfig.Collection)
-	}
-	if cfg.StateConfig != nil {
-		provider, err := kstate.NewStateProvider(*cfg.StateConfig)
-		result = appendProvider(result, provider, err, cfg.StateConfig.Collection)
 	}
 	for _, srcCfg := range cfg.TelegrafConfigs {
 		provider, err := telegraf.NewProvider(*srcCfg)
