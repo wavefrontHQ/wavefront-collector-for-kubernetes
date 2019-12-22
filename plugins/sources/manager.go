@@ -19,12 +19,12 @@ package sources
 
 import (
 	"fmt"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
 	"math/rand"
 	"sort"
 	"sync"
 	"time"
 
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/prometheus"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/stats"

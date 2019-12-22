@@ -22,9 +22,9 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
 
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 	kube_api "k8s.io/api/core/v1"
 	v1listers "k8s.io/client-go/listers/core/v1"
 )
@@ -96,6 +96,7 @@ func (pbe *PodBasedEnricher) addContainerInfo(key string, containerMs *metrics.M
 			if !pod.Status.StartTime.IsZero() {
 				containerMs.EntityCreateTime = pod.Status.StartTime.Time
 			}
+			addContainerStatus(containerMs, &metrics.MetricContainerStatus, containerStatus)
 			break
 		}
 	}
@@ -141,6 +142,9 @@ func (pbe *PodBasedEnricher) addPodInfo(key string, podMs *metrics.MetricSet, po
 	}
 	pbe.labelCopier.Copy(pod.Labels, podMs.Labels)
 
+	// Add pod phase
+	addLabeledIntMetric(podMs, &metrics.MetricPodPhase, map[string]string{"phase": string(pod.Status.Phase)}, convertPhase(pod.Status.Phase))
+
 	// Add cpu/mem requests and limits to containers
 	for _, container := range pod.Spec.Containers {
 		containerKey := metrics.PodContainerKey(pod.Namespace, pod.Name, container.Name)
@@ -170,6 +174,7 @@ func (pbe *PodBasedEnricher) addPodInfo(key string, podMs *metrics.MetricSet, po
 		updateContainerResourcesAndLimits(containerMs, container)
 		newMs[containerKey] = containerMs
 	}
+	updateContainerStatus(newMs, &metrics.MetricContainerStatus, pod, pod.Status.ContainerStatuses)
 }
 
 func updateContainerResourcesAndLimits(metricSet *metrics.MetricSet, container kube_api.Container) {
@@ -228,6 +233,77 @@ func updateContainerResourcesAndLimits(metricSet *metrics.MetricSet, container k
 	} else {
 		metricSet.MetricValues[metrics.MetricEphemeralStorageLimit.Name] = intValue(0)
 	}
+}
+
+func addContainerStatus(containerMs *metrics.MetricSet, metric *metrics.Metric, status kube_api.ContainerStatus) {
+	labels := make(map[string]string, 2)
+	stateInt, state, reason := convertContainerState(status.State)
+	if stateInt > 0 {
+		labels["status"] = state
+		if reason != "" {
+			labels["reason"] = reason
+		}
+	}
+	addLabeledIntMetric(containerMs, metric, labels, stateInt)
+}
+
+func updateContainerStatus(metricSets map[string]*metrics.MetricSet, metric *metrics.Metric, pod *kube_api.Pod, statuses []kube_api.ContainerStatus) {
+	if len(statuses) == 0 {
+		return
+	}
+	for _, status := range statuses {
+		containerKey := metrics.PodContainerKey(pod.Namespace, pod.Name, status.Name)
+		containerMs, found := metricSets[containerKey]
+		if !found {
+			log.Debugf("Container key %s not found", containerKey)
+			continue
+		}
+		addContainerStatus(containerMs, &metrics.MetricContainerStatus, status)
+	}
+}
+
+func convertPhase(phase kube_api.PodPhase) int64 {
+	switch phase {
+	case kube_api.PodPending:
+		return 1
+	case kube_api.PodRunning:
+		return 2
+	case kube_api.PodSucceeded:
+		return 3
+	case kube_api.PodFailed:
+		return 4
+	case kube_api.PodUnknown:
+		return 5
+	default:
+		return 5
+	}
+}
+
+func convertContainerState(state kube_api.ContainerState) (int64, string, string) {
+	if state.Running != nil {
+		return 1, "running", ""
+	}
+	if state.Waiting != nil {
+		return 2, "waiting", state.Waiting.Reason
+	}
+	if state.Terminated != nil {
+		return 3, "terminated", state.Terminated.Reason
+	}
+	return 0, "", ""
+}
+
+// addLabeledIntMetric is a convenience method for adding the labeled metric and value to the metric set.
+func addLabeledIntMetric(ms *metrics.MetricSet, metric *metrics.Metric, labels map[string]string, value int64) {
+	val := metrics.LabeledMetric{
+		Name:   metric.Name,
+		Labels: labels,
+		MetricValue: metrics.MetricValue{
+			ValueType:  metrics.ValueInt64,
+			MetricType: metric.Type,
+			IntValue:   value,
+		},
+	}
+	ms.LabeledMetrics = append(ms.LabeledMetrics, val)
 }
 
 func intValue(value int64) metrics.MetricValue {
