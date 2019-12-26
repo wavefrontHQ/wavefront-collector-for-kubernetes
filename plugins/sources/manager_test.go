@@ -107,8 +107,8 @@ func TestMultipleMetrics(t *testing.T) {
 
 	Manager().StopProviders()
 
-	assert.True(t, (counts["s1"] >= 20) && (counts["s1"] <= 21), counts["s1"], "incorrect s1 count - counts: %vs", counts)
-	assert.Equal(t, 10, counts["s2"], "incorrect s2 count - counts: %v", counts)
+	assert.True(t, (counts["s1"] >= 19) && (counts["s1"] <= 21), counts["s1"], "incorrect s1 count - counts: %vs", counts)
+	assert.True(t, (counts["s2"] >= 10) && (counts["s2"] <= 11), "incorrect s2 count - counts: %v", counts)
 }
 
 func TestConfig(t *testing.T) {
