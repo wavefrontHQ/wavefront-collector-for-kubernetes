@@ -155,7 +155,7 @@ func (sm *sourceManagerImpl) AddProvider(provider metrics.MetricsSourceProvider)
 		for {
 			select {
 			case <-ticker.C:
-				go scrape(provider, sm.responseChannel)
+				scrape(provider, sm.responseChannel)
 			case <-quit:
 				return
 			}
@@ -234,12 +234,13 @@ func scrape(provider metrics.MetricsSourceProvider, channel chan *metrics.DataBa
 		latency := now.Sub(scrapeStart)
 		scrapeLatency.Update(latency.Nanoseconds())
 
+		// always send the collected data even if latency > timeout
+		channel <- dataBatch
+
 		if !now.Before(scrapeStart.Add(timeout)) {
 			scrapeTimeouts.Inc(1)
-			log.Warningf("Failed to get '%s' response in time (%s latency)", source.Name(), latency)
-			return
+			log.Warningf("'%s' high response latency: %s", source.Name(), latency)
 		}
-		channel <- dataBatch
 
 		log.WithFields(log.Fields{
 			"name":          source.Name(),
