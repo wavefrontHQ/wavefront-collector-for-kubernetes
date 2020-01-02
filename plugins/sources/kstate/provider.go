@@ -47,6 +47,7 @@ func NewStateMetricsSource(lister *util.Lister, transforms configuration.Transfo
 	funcs[util.CronJobs] = pointsForCronJob
 	funcs[util.DaemonSets] = pointsForDaemonSet
 	funcs[util.Deployments] = pointsForDeployment
+	funcs[util.StatefulSets] = pointsForStatefulSet
 	funcs[util.HorizontalPodAutoscalers] = pointsForHPA
 
 	return &stateMetricsSource{
@@ -77,11 +78,9 @@ func (src *stateMetricsSource) ScrapeMetrics() (*metrics.DataBatch, error) {
 	}
 
 	var points []*metrics.MetricPoint
-	points = append(points, src.pointsForResource(util.DaemonSets)...)
-	points = append(points, src.pointsForResource(util.Deployments)...)
-	points = append(points, src.pointsForResource(util.Jobs)...)
-	points = append(points, src.pointsForResource(util.CronJobs)...)
-	points = append(points, src.pointsForResource(util.HorizontalPodAutoscalers)...)
+	for resType := range src.funcs {
+		points = append(points, src.pointsForResource(resType)...)
+	}
 
 	n := 0
 	for _, point := range points {
