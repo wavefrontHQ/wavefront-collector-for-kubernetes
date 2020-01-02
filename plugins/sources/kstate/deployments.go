@@ -23,11 +23,13 @@ func pointsForDeployment(item interface{}, transforms configuration.Transforms) 
 
 	tags := buildTags("deployment", deployment.Name, deployment.Namespace, transforms.Tags)
 	now := time.Now().Unix()
-	available := float64(deployment.Status.AvailableReplicas)
 	desired := floatVal(deployment.Spec.Replicas, 0.0)
+	available := float64(deployment.Status.AvailableReplicas)
+	ready := float64(deployment.Status.ReadyReplicas)
 
 	return []*metrics.MetricPoint{
-		metricPoint(transforms.Prefix, "deployment.available_replicas", available, now, transforms.Source, tags),
 		metricPoint(transforms.Prefix, "deployment.desired_replicas", desired, now, transforms.Source, tags),
+		metricPoint(transforms.Prefix, "deployment.available_replicas", available, now, transforms.Source, tags),
+		metricPoint(transforms.Prefix, "deployment.ready_replicas", ready, now, transforms.Source, tags),
 	}
 }

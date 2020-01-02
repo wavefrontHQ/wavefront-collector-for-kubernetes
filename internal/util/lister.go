@@ -23,6 +23,7 @@ import (
 const (
 	DaemonSets               = "daemonsets"
 	Deployments              = "deployments"
+	ReplicaSets              = "replicasets"
 	StatefulSets             = "statefulsets"
 	Jobs                     = "jobs"
 	CronJobs                 = "cronjobs"
@@ -54,6 +55,7 @@ func buildStores(kubeClient kubernetes.Interface) map[string]cache.Store {
 	m[DaemonSets] = buildStore(DaemonSets, &appsv1.DaemonSet{}, kubeClient.AppsV1().RESTClient())
 	m[Deployments] = buildStore(Deployments, &appsv1.Deployment{}, kubeClient.AppsV1().RESTClient())
 	m[StatefulSets] = buildStore(StatefulSets, &appsv1.StatefulSet{}, kubeClient.AppsV1().RESTClient())
+	m[ReplicaSets] = buildStore(ReplicaSets, &appsv1.ReplicaSet{}, kubeClient.AppsV1().RESTClient())
 	m[Jobs] = buildStore(Jobs, &batchv1.Job{}, kubeClient.BatchV1().RESTClient())
 	m[CronJobs] = buildStore(CronJobs, &batchv1beta1.CronJob{}, kubeClient.BatchV1beta1().RESTClient())
 	m[HorizontalPodAutoscalers] = buildStore(HorizontalPodAutoscalers, &v2beta1.HorizontalPodAutoscaler{}, kubeClient.AutoscalingV2beta1().RESTClient())

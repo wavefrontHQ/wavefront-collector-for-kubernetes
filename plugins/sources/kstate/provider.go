@@ -47,6 +47,7 @@ func NewStateMetricsSource(lister *util.Lister, transforms configuration.Transfo
 	funcs[util.CronJobs] = pointsForCronJob
 	funcs[util.DaemonSets] = pointsForDaemonSet
 	funcs[util.Deployments] = pointsForDeployment
+	funcs[util.ReplicaSets] = pointsForReplicaSet
 	funcs[util.StatefulSets] = pointsForStatefulSet
 	funcs[util.HorizontalPodAutoscalers] = pointsForHPA
 
