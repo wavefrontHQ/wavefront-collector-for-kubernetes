@@ -1,3 +1,6 @@
+// Copyright 2020 VMware, Inc. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
 package kstate
 
 import "github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
