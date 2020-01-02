@@ -5,6 +5,7 @@ package util
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -27,17 +28,24 @@ const (
 	HorizontalPodAutoscalers = "horizontalpodautoscalers"
 )
 
+var (
+	doOnce    sync.Once
+	singleton *Lister
+)
+
 type Lister struct {
 	kubeClient kubernetes.Interface
 	stores     map[string]cache.Store
 }
 
 func NewLister(kubeClient kubernetes.Interface) *Lister {
-	//TODO: make singleton
-	return &Lister{
-		kubeClient: kubeClient,
-		stores:     buildStores(kubeClient),
-	}
+	doOnce.Do(func() {
+		singleton = &Lister{
+			kubeClient: kubeClient,
+			stores:     buildStores(kubeClient),
+		}
+	})
+	return singleton
 }
 
 func buildStores(kubeClient kubernetes.Interface) map[string]cache.Store {
