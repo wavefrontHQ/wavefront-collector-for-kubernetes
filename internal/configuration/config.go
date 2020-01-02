@@ -9,6 +9,7 @@ import (
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/httputil"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
 )
 
 // The main configuration struct that drives the Wavefront collector
@@ -59,11 +60,12 @@ type EventsFilter struct {
 
 // SourceConfig contains configuration for various sources
 type SourceConfig struct {
-	SummaryConfig     *SummaySourceConfig       `yaml:"kubernetes_source"`
-	PrometheusConfigs []*PrometheusSourceConfig `yaml:"prometheus_sources"`
-	TelegrafConfigs   []*TelegrafSourceConfig   `yaml:"telegraf_sources"`
-	SystemdConfig     *SystemdSourceConfig      `yaml:"systemd_source"`
-	StatsConfig       *StatsSourceConfig        `yaml:"internal_stats_source"`
+	SummaryConfig     *SummaySourceConfig          `yaml:"kubernetes_source"`
+	PrometheusConfigs []*PrometheusSourceConfig    `yaml:"prometheus_sources"`
+	TelegrafConfigs   []*TelegrafSourceConfig      `yaml:"telegraf_sources"`
+	SystemdConfig     *SystemdSourceConfig         `yaml:"systemd_source"`
+	StatsConfig       *StatsSourceConfig           `yaml:"internal_stats_source"`
+	StateConfig       *KubernetesStateSourceConfig `yaml:"kubernetes_state_source"`
 }
 
 // Transforms represents transformations that can be applied to metrics at sources or sinks
@@ -202,4 +204,13 @@ type StatsSourceConfig struct {
 	Transforms `yaml:",inline"`
 
 	Collection CollectionConfig `yaml:"collection"`
+}
+
+type KubernetesStateSourceConfig struct {
+	Transforms `yaml:",inline"`
+
+	Collection CollectionConfig `yaml:"collection"`
+
+	// internal use only
+	Lister *util.Lister `yaml:"-"`
 }

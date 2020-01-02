@@ -19,6 +19,7 @@ package sources
 
 import (
 	"fmt"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/kstate"
 	"math/rand"
 	"sort"
 	"sync"
@@ -270,6 +271,10 @@ func buildProviders(cfg configuration.SourceConfig) []metrics.MetricsSourceProvi
 	if cfg.StatsConfig != nil {
 		provider, err := stats.NewInternalStatsProvider(*cfg.StatsConfig)
 		result = appendProvider(result, provider, err, cfg.StatsConfig.Collection)
+	}
+	if cfg.StateConfig != nil {
+		provider, err := kstate.NewStateProvider(*cfg.StateConfig)
+		result = appendProvider(result, provider, err, cfg.StateConfig.Collection)
 	}
 	for _, srcCfg := range cfg.TelegrafConfigs {
 		provider, err := telegraf.NewProvider(*srcCfg)

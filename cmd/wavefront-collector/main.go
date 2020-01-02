@@ -14,8 +14,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sinks/wavefront"
-
 	gm "github.com/rcrowley/go-metrics"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
@@ -33,6 +31,7 @@ import (
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/manager"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/processors"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sinks"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sinks/wavefront"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/summary"
 
@@ -110,6 +109,11 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 
 	clusterName := cfg.ClusterName
 
+	kubeClient := createKubeClientOrDie(*cfg.Sources.SummaryConfig)
+	if cfg.Sources.StateConfig != nil {
+		cfg.Sources.StateConfig.Lister = util.NewLister(kubeClient)
+	}
+
 	// create sources manager
 	sourceManager := sources.Manager()
 	sourceManager.SetDefaultCollectionInterval(cfg.DefaultCollectionInterval)
@@ -121,8 +125,6 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 	// create sink managers
 	setInternalSinkProperties(cfg)
 	sinkManager := createSinkManagerOrDie(cfg.Sinks, cfg.SinkExportDataTimeout)
-
-	kubeClient := createKubeClientOrDie(*cfg.Sources.SummaryConfig)
 
 	// Events
 	var eventRouter *events.EventRouter
