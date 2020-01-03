@@ -111,7 +111,7 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 
 	kubeClient := createKubeClientOrDie(*cfg.Sources.SummaryConfig)
 	if cfg.Sources.StateConfig != nil {
-		cfg.Sources.StateConfig.Lister = util.NewLister(kubeClient)
+		cfg.Sources.StateConfig.KubeClient = kubeClient
 	}
 
 	// create sources manager

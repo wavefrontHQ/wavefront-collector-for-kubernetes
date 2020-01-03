@@ -9,7 +9,8 @@ import (
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/httputil"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
+
+	"k8s.io/client-go/kubernetes"
 )
 
 // The main configuration struct that drives the Wavefront collector
@@ -212,5 +213,5 @@ type KubernetesStateSourceConfig struct {
 	Collection CollectionConfig `yaml:"collection"`
 
 	// internal use only
-	Lister *util.Lister `yaml:"-"`
+	KubeClient *kubernetes.Clientset `yaml:"-"`
 }

@@ -40,7 +40,7 @@ type EventRouter struct {
 	sharedInformers   informers.SharedInformerFactory
 	stop              chan struct{}
 	daemon            bool
-	leadershipManager *leadershipManager
+	leadershipManager *leadership.Manager
 	filters           eventFilter
 }
 
@@ -63,7 +63,7 @@ func CreateEventRouter(clientset kubernetes.Interface, cfg configuration.EventsC
 	er.eListerSynced = eventsInformer.Informer().HasSynced
 
 	if er.daemon {
-		er.leadershipManager = newLeadershipManager(er, leadershipName, clientset)
+		er.leadershipManager = leadership.NewManager(er, leadershipName, clientset)
 	}
 	return er
 }
@@ -72,11 +72,11 @@ func (er *EventRouter) Start() {
 	if er.daemon {
 		er.leadershipManager.Start()
 	} else {
-		go func() { er.resume() }()
+		go func() { er.Resume() }()
 	}
 }
 
-func (er *EventRouter) resume() {
+func (er *EventRouter) Resume() {
 	er.stop = make(chan struct{})
 	defer utilruntime.HandleCrash()
 
@@ -94,7 +94,7 @@ func (er *EventRouter) resume() {
 	Log.Infof("Shutting down EventRouter")
 }
 
-func (er *EventRouter) pause() {
+func (er *EventRouter) Pause() {
 	close(er.stop)
 }
 
@@ -102,7 +102,7 @@ func (er *EventRouter) Stop() {
 	if er.daemon {
 		er.leadershipManager.Stop()
 	}
-	er.pause()
+	er.Pause()
 }
 
 // addEvent is called when an event is created, or during the initial list
@@ -163,59 +163,6 @@ func (er *EventRouter) addEvent(obj interface{}) {
 
 func (er *EventRouter) filterEvent(tags map[string]string) bool {
 	return true
-}
-
-type system interface {
-	resume()
-	pause()
-}
-
-type leadershipManager struct {
-	system     system
-	name       string
-	stop       chan struct{}
-	kubeClient kubernetes.Interface
-}
-
-func newLeadershipManager(system system, name string, kubeClient kubernetes.Interface) *leadershipManager {
-	return &leadershipManager{
-		stop:       make(chan struct{}),
-		system:     system,
-		name:       name,
-		kubeClient: kubeClient,
-	}
-}
-
-func (lm *leadershipManager) Start() {
-	ch, err := leadership.Subscribe(lm.kubeClient.CoreV1(), lm.name)
-	if err != nil {
-		Log.Errorf("discovery: leader election error: %q", err)
-	} else {
-		go func() { lm.run(ch) }()
-	}
-}
-
-func (lm *leadershipManager) Stop() {
-	close(lm.stop)
-	leadership.Unsubscribe(lm.name)
-}
-
-func (lm *leadershipManager) run(ch <-chan bool) {
-	for {
-		select {
-		case isLeader := <-ch:
-			if isLeader {
-				Log.Infof("promoted to leader for '%v' node:'%s'", lm.name, leadership.Leader())
-				go func() { lm.system.resume() }()
-			} else {
-				Log.Infof("demoted from leader events for '%v' new leader:'%s'", lm.name, leadership.Leader())
-				lm.system.pause()
-			}
-		case <-lm.stop:
-			Log.Infof("stopping leadershipManager for '%v'", lm.name)
-			return
-		}
-	}
 }
 
 func newEvent(message string, ts time.Time, host string, tags map[string]string, options ...event.Option) *events.Event {

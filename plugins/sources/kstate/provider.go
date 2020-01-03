@@ -23,7 +23,7 @@ import (
 type resourceOperator func(interface{}, configuration.Transforms) []*metrics.MetricPoint
 
 type stateMetricsSource struct {
-	lister     *util.Lister
+	lister     *lister
 	transforms configuration.Transforms
 	source     string
 	filters    filter.Filter
@@ -34,7 +34,7 @@ type stateMetricsSource struct {
 	fps gometrics.Counter
 }
 
-func NewStateMetricsSource(lister *util.Lister, transforms configuration.Transforms) (metrics.MetricsSource, error) {
+func NewStateMetricsSource(lister *lister, transforms configuration.Transforms) (metrics.MetricsSource, error) {
 	pt := map[string]string{"type": "kubernetes.state"}
 	ppsKey := reporting.EncodeKey("source.points.collected", pt)
 	epsKey := reporting.EncodeKey("source.collect.errors", pt)
@@ -43,13 +43,13 @@ func NewStateMetricsSource(lister *util.Lister, transforms configuration.Transfo
 	transforms.Source = getDefault(util.GetNodeName(), transforms.Source)
 
 	funcs := make(map[string]resourceOperator)
-	funcs[util.Jobs] = pointsForJob
-	funcs[util.CronJobs] = pointsForCronJob
-	funcs[util.DaemonSets] = pointsForDaemonSet
-	funcs[util.Deployments] = pointsForDeployment
-	funcs[util.ReplicaSets] = pointsForReplicaSet
-	funcs[util.StatefulSets] = pointsForStatefulSet
-	funcs[util.HorizontalPodAutoscalers] = pointsForHPA
+	funcs[jobs] = pointsForJob
+	funcs[cronJobs] = pointsForCronJob
+	funcs[daemonSets] = pointsForDaemonSet
+	funcs[deployments] = pointsForDeployment
+	funcs[replicaSets] = pointsForReplicaSet
+	funcs[statefulSets] = pointsForStatefulSet
+	funcs[horizontalPodAutoscalers] = pointsForHPA
 
 	return &stateMetricsSource{
 		lister:     lister,
@@ -149,12 +149,12 @@ func (p *stateProvider) Name() string {
 const providerName = "kstate_metrics_provider"
 
 func NewStateProvider(cfg configuration.KubernetesStateSourceConfig) (metrics.MetricsSourceProvider, error) {
-	if cfg.Lister == nil {
-		return nil, fmt.Errorf("lister not initialized")
+	if cfg.KubeClient == nil {
+		return nil, fmt.Errorf("kubeclient not initialized")
 	}
 
 	var sources []metrics.MetricsSource
-	metricsSource, err := NewStateMetricsSource(cfg.Lister, cfg.Transforms)
+	metricsSource, err := NewStateMetricsSource(newLister(cfg.KubeClient), cfg.Transforms)
 	if err == nil {
 		sources = append(sources, metricsSource)
 	} else {
