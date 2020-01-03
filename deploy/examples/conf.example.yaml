@@ -48,7 +48,7 @@ data:
         tagExclude:
         - 'label?controller?revision*'
         - 'label?pod?template*'
-        - 'annotation_kubectl_kubernetes_io_last_applied_configuration'        
+        - 'annotation_kubectl_kubernetes_io_last_applied_configuration'
 
     events:
       filters:
@@ -70,6 +70,9 @@ data:
           - 'kubernetes.sys_container.*'
 
       internal_stats_source:
+        prefix: 'kubernetes.'
+
+      kubernetes_state_source:
         prefix: 'kubernetes.'
 
       telegraf_sources:
@@ -310,7 +313,7 @@ data:
           - 'kube.dns.http.requests.total.counter'
           - 'kube.dns.http.response.size.bytes'
           - 'kube.dns.kubedns.dnsmasq.*'
-          - 'kube.dns.process.*'    
+          - 'kube.dns.process.*'
 
       # auto-discover coredns
       - name: coredns-discovery
@@ -324,7 +327,7 @@ data:
         port: 9153
         path: /metrics
         scheme: http
-        prefix: kube.coredns.  
+        prefix: kube.coredns.
         filters:
           metricWhitelist:
           - 'kube.coredns.coredns.cache.*'
@@ -333,5 +336,5 @@ data:
           - 'kube.coredns.coredns.dns.request.size.bytes'
           - 'kube.coredns.coredns.dns.request.type.count.total.counter'
           - 'kube.coredns.coredns.dns.response.rcode.count.total.counter'
-          - 'kube.coredns.coredns.dns.response.size.bytes'          
-          - 'kube.coredns.process.*'      
+          - 'kube.coredns.coredns.dns.response.size.bytes'
+          - 'kube.coredns.process.*'

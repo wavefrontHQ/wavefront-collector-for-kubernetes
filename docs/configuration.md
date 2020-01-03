@@ -52,9 +52,13 @@ sinks:
   # see the Wavefront sink section for details
 
 sources:
-  # Required: Source for collecting metrics from the stats summary API.
+  # Required: Source for collecting metrics from the kubelet stats summary API.
   kubernetes_source:
     # see kubernetes_source for details
+
+  # Optional source for collecting metrics from cluster level Kubernetes resources.
+  kubernetes_state_source:
+    # see kubernetes_state_source for details
 
   # Optional source for emitting internal collector stats.
   internal_stats_source:
@@ -66,7 +70,7 @@ sources:
 
   # Optional list of telegraf sources.
   telegraf_sources:
-    # see telegraf_source for details
+    # see telegraf_source for details    
 
   # Optional source for collecting host level systemd unit metrics.
   systemd_source:
@@ -128,6 +132,13 @@ auth: <string>
 ```
 
 See [configs.go](https://github.com/wavefronthq/wavefront-kubernetes-collector/tree/master/internal/kubernetes/configs.go) for how these properties are used.
+
+### kubernetes_state_source
+Collects metrics on the state of deployments, daemonsets, statefulsets, hpas, jobs, cronjobs and replicasets.
+
+```yaml
+prefix: <string>
+```
 
 ### prometheus_source
 
