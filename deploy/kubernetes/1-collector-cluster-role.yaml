@@ -29,14 +29,37 @@ rules:
   - get
   - update
   - create
+
+# required for kubernetes_state_source
 - apiGroups:
-  - extensions
+  - apps
   resources:
+  - daemonsets
   - deployments
+  - statefulsets
+  - replicasets
   verbs:
   - get
   - list
   - watch
+- apiGroups:
+  - batch
+  resources:
+  - jobs
+  - cronjobs
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - autoscaling
+  resources:
+  - horizontalpodautoscalers
+  verbs:
+  - get
+  - list
+  - watch
+
 - nonResourceURLs: ["/metrics"]
   verbs:
   - get
