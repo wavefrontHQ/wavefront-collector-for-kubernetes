@@ -20,14 +20,14 @@ import (
 	gometrics "github.com/rcrowley/go-metrics"
 )
 
-type resourceOperator func(interface{}, configuration.Transforms) []*metrics.MetricPoint
+type resourceHandler func(interface{}, configuration.Transforms) []*metrics.MetricPoint
 
 type stateMetricsSource struct {
 	lister     *lister
 	transforms configuration.Transforms
 	source     string
 	filters    filter.Filter
-	funcs      map[string]resourceOperator
+	funcs      map[string]resourceHandler
 
 	pps gometrics.Counter
 	eps gometrics.Counter
@@ -41,8 +41,9 @@ func NewStateMetricsSource(lister *lister, transforms configuration.Transforms) 
 	fpsKey := reporting.EncodeKey("source.points.filtered", pt)
 
 	transforms.Source = getDefault(util.GetNodeName(), transforms.Source)
+	transforms.Prefix = getDefault(transforms.Prefix, "kubernetes.")
 
-	funcs := make(map[string]resourceOperator)
+	funcs := make(map[string]resourceHandler)
 	funcs[jobs] = pointsForJob
 	funcs[cronJobs] = pointsForCronJob
 	funcs[daemonSets] = pointsForDaemonSet

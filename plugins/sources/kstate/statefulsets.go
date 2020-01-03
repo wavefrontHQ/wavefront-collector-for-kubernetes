@@ -25,7 +25,7 @@ func pointsForStatefulSet(item interface{}, transforms configuration.Transforms)
 	tags := buildTags("statefulset", ss.Name, ss.Namespace, transforms.Tags)
 	now := time.Now().Unix()
 
-	desired := floatVal(ss.Spec.Replicas, 0.0)
+	desired := floatVal(ss.Spec.Replicas, 1.0)
 	ready := float64(ss.Status.ReadyReplicas)
 	current := float64(ss.Status.CurrentReplicas)
 	updated := float64(ss.Status.UpdatedReplicas)

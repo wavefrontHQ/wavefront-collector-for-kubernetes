@@ -24,7 +24,7 @@ func pointsForReplicaSet(item interface{}, transforms configuration.Transforms) 
 
 	tags := buildTags("replicaset", rs.Name, rs.Namespace, transforms.Tags)
 	now := time.Now().Unix()
-	desired := floatVal(rs.Spec.Replicas, 0.0)
+	desired := floatVal(rs.Spec.Replicas, 1.0)
 	available := float64(rs.Status.AvailableReplicas)
 	ready := float64(rs.Status.ReadyReplicas)
 

@@ -23,7 +23,7 @@ func pointsForDeployment(item interface{}, transforms configuration.Transforms) 
 
 	tags := buildTags("deployment", deployment.Name, deployment.Namespace, transforms.Tags)
 	now := time.Now().Unix()
-	desired := floatVal(deployment.Spec.Replicas, 0.0)
+	desired := floatVal(deployment.Spec.Replicas, 1.0)
 	available := float64(deployment.Status.AvailableReplicas)
 	ready := float64(deployment.Status.ReadyReplicas)
 

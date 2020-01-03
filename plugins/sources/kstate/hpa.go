@@ -25,7 +25,7 @@ func pointsForHPA(item interface{}, transforms configuration.Transforms) []*metr
 	tags := buildTags("hpa", hpa.Name, hpa.Namespace, transforms.Tags)
 	now := time.Now().Unix()
 	maxReplicas := float64(hpa.Spec.MaxReplicas)
-	minReplicas := floatVal(hpa.Spec.MinReplicas, 0.0)
+	minReplicas := floatVal(hpa.Spec.MinReplicas, 1.0)
 	currReplicas := float64(hpa.Status.CurrentReplicas)
 	desiredReplicas := float64(hpa.Status.DesiredReplicas)
 
