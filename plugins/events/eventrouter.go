@@ -27,7 +27,7 @@ import (
 )
 
 var Log = log.WithField("system", "events")
-var leadershipName = "wf_collector_events"
+var leadershipName = "eventRouter"
 var filteredEvents = gometrics.GetOrRegisterCounter("events.filtered", gometrics.DefaultRegistry)
 var receivedEvents = gometrics.GetOrRegisterCounter("events.received", gometrics.DefaultRegistry)
 var sentEvents = gometrics.GetOrRegisterCounter("events.sent", gometrics.DefaultRegistry)
@@ -44,7 +44,7 @@ type EventRouter struct {
 	filters           eventFilter
 }
 
-func CreateEventRouter(clientset kubernetes.Interface, cfg configuration.EventsConfig, sink wavefront.WavefrontSink, daemon bool) *EventRouter {
+func NewEventRouter(clientset kubernetes.Interface, cfg configuration.EventsConfig, sink wavefront.WavefrontSink, daemon bool) *EventRouter {
 	sharedInformers := informers.NewSharedInformerFactory(clientset, time.Minute)
 	eventsInformer := sharedInformers.Core().V1().Events()
 

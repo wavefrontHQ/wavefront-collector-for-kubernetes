@@ -4,16 +4,18 @@
 package discovery
 
 import (
-	gm "github.com/rcrowley/go-metrics"
-	log "github.com/sirupsen/logrus"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/leadership"
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
 
+	gm "github.com/rcrowley/go-metrics"
+
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -45,6 +47,7 @@ type Manager struct {
 	ruleHandler     discovery.RuleHandler
 	podListener     *podHandler
 	serviceListener *serviceHandler
+	leadershipMgr   *leadership.Manager
 	stopCh          chan struct{}
 }
 
@@ -56,6 +59,7 @@ func NewDiscoveryManager(cfg RunConfig) *Manager {
 		discoverer: newDiscoverer(cfg.Handler, cfg.DiscoveryConfig),
 	}
 	mgr.ruleHandler = newRuleHandler(mgr.discoverer, cfg)
+	mgr.leadershipMgr = leadership.NewManager(mgr, subscriberName, cfg.KubeClient)
 	return mgr
 }
 
@@ -71,33 +75,12 @@ func (dm *Manager) Start() {
 	dm.serviceListener = newServiceHandler(dm.runConfig.KubeClient, dm.discoverer)
 	dm.podListener.start()
 
-	if !dm.runConfig.Daemon {
-		dm.serviceListener.start()
-	} else {
+	if dm.runConfig.Daemon {
 		// in daemon mode, service discovery is performed by only one collector agent in a cluster
 		// kick off leader election to determine if this agent should handle it
-		ch, err := leadership.Subscribe(dm.runConfig.KubeClient.CoreV1(), subscriberName)
-		if err != nil {
-			log.Errorf("discovery: leader election error: %q", err)
-		} else {
-			go func() {
-				for {
-					select {
-					case isLeader := <-ch:
-						if isLeader {
-							log.Infof("elected leader: %s starting service discovery", leadership.Leader())
-							dm.serviceListener.start()
-						} else {
-							log.Infof("stopping service discovery. new leader: %s", leadership.Leader())
-							dm.serviceListener.stop()
-						}
-					case <-dm.stopCh:
-						log.Infof("stopping service discovery")
-						return
-					}
-				}
-			}()
-		}
+		dm.leadershipMgr.Start()
+	} else {
+		dm.serviceListener.start()
 	}
 }
 
@@ -112,6 +95,16 @@ func (dm *Manager) Stop() {
 
 	dm.discoverer.Stop()
 	dm.ruleHandler.DeleteAll()
+}
+
+func (dm *Manager) Resume() {
+	log.Infof("elected leader: %s starting service discovery", leadership.Leader())
+	dm.serviceListener.start()
+}
+
+func (dm *Manager) Pause() {
+	log.Infof("stopping service discovery. new leader: %s", leadership.Leader())
+	dm.serviceListener.stop()
 }
 
 // implements ConfigHandler interface for handling configuration changes

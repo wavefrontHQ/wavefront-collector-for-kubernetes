@@ -130,7 +130,7 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 	var eventRouter *events.EventRouter
 	if cfg.EnableEvents {
 		events.Log.Info("Events collection enabled")
-		eventRouter = events.CreateEventRouter(kubeClient, cfg.EventsConfig, sinkManager, cfg.Daemon)
+		eventRouter = events.NewEventRouter(kubeClient, cfg.EventsConfig, sinkManager, cfg.Daemon)
 	} else {
 		events.Log.Info("Events collection disabled")
 	}

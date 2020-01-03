@@ -50,10 +50,10 @@ func (lm *Manager) run(ch <-chan bool) {
 		select {
 		case isLeader := <-ch:
 			if isLeader {
-				log.Infof("%s: elected leader on node: %s", lm.name, Leader())
+				log.Infof("resuming %s: node %s elected leader", lm.name, Leader())
 				go func() { lm.system.Resume() }()
 			} else {
-				log.Infof("%s: demoted from leadership. new leader: %s", lm.name, Leader())
+				log.Infof("pausing %s: demoted from leadership. new leader: %s", lm.name, Leader())
 				lm.system.Pause()
 			}
 		case <-lm.stop:
