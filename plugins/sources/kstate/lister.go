@@ -11,6 +11,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/leadership"
+	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
 
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/api/autoscaling/v2beta1"
@@ -50,8 +51,12 @@ func newLister(kubeClient kubernetes.Interface) *lister {
 			kubeClient: kubeClient,
 			informers:  buildInformers(kubeClient),
 		}
-		// start the informers only for the leader
-		leadership.NewManager(singleton, "kstate", kubeClient).Start()
+		if util.GetDaemonMode() == "" {
+			singleton.Resume()
+		} else {
+			// start the informers only for the leader
+			leadership.NewManager(singleton, "kstate", kubeClient).Start()
+		}
 	})
 	return singleton
 }
@@ -82,7 +87,7 @@ func (l *lister) List(resource string) ([]interface{}, error) {
 }
 
 func (l *lister) Resume() {
-	log.Infof("resuming kstate lister")
+	log.Infof("starting kstate lister")
 	l.stopCh = make(chan struct{})
 	for k, informer := range l.informers {
 		log.Debugf("starting %s informer", k)
