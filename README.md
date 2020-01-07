@@ -9,7 +9,8 @@ The Wavefront Collector for Kubernetes enables monitoring Kubernetes clusters an
 * Multiple sources of metrics providing comprehensive insight:
   - Kubernetes source: For [core kubernetes metrics](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/docs/metrics.md#kubernetes-source)
   - Prometheus source: For scraping prometheus metric endpoints (API server, etcd, NGINX etc)
-  - Telegraf source: For [host](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/docs/metrics.md#telegraf-source) and [application](https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes/blob/master/docs/discovery.md#plugin-types) level metrics.
+  - Kubernetes state source: For [resource state metrics](https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes/blob/master/docs/metrics.md#kubernetes-state-source)    
+  - Telegraf source: For [host](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/docs/metrics.md#telegraf-source) and [application](https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes/blob/master/docs/discovery.md#plugin-types) level metrics
   - Systemd source: For [host level systemd metrics](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/docs/metrics.md#systemd-source)
 * [Auto discovery](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/docs/discovery.md) of pods and services based on annotation and configuration
 * Daemonset mode for high scalability with leader election for monitoring cluster level resources

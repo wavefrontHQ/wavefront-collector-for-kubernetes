@@ -95,7 +95,9 @@ func (er *EventRouter) Resume() {
 }
 
 func (er *EventRouter) Pause() {
-	close(er.stop)
+	if er.stop != nil {
+		close(er.stop)
+	}
 }
 
 func (er *EventRouter) Stop() {

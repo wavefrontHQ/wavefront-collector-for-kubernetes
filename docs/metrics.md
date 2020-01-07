@@ -1,16 +1,24 @@
 # Metrics
 
+## Table of Contents
+* [Kubernetes Source](https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes/blob/master/docs/metrics.md#kubernetes-source)
+* [Kubernetes State Source](https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes/blob/master/docs/metrics.md#kubernetes-state-source)
+* [Prometheus Source](https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes/blob/master/docs/metrics.md#prometheus-source)
+* [Systemd Source](https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes/blob/master/docs/metrics.md#systemd-source)
+* [Telegraf Source](https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes/blob/master/docs/metrics.md#telegraf-source)
+* [Collector Health](https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes/blob/master/docs/metrics.md#collector-health-metrics)
+
 ## Kubernetes Source
 
 Metrics collected per resource:
 
 | Resource | Metrics |
 |----------|---------|
-| Cluster | CPU, Memory |
-| Namespace | CPU, Memory |
-| Nodes | CPU, Memory, Network, Filesystem, Storage, Uptime |
-| Pods | CPU, Memory, Network, Filesystem, Storage, Uptime, Restarts |
-| Pod_Containers | CPU, Memory, Filesystem, Storage, Accelerator, Uptime |
+| Cluster | CPU, Memory, Pod/Container counts |
+| Namespace | CPU, Memory, Pod/Container counts |
+| Nodes | CPU, Memory, Network, Filesystem, Storage, Uptime, Pod/Container counts |
+| Pods | CPU, Memory, Network, Filesystem, Storage, Uptime, Restarts, Phase |
+| Pod_Containers | CPU, Memory, Filesystem, Storage, Accelerator, Uptime, Restarts, Status |
 | System_Containers | CPU, Memory, Uptime |
 
 Metrics collected per type:
@@ -65,6 +73,8 @@ Metrics collected per type:
 | accelerator.duty_cycle | Duty cycle of an accelerator. |
 | accelerator.request | Number of accelerator devices requested by container. |
 | uptime  | Number of milliseconds since the container was started. |
+| <cluster, ns, node>.pod.count | Pod counts by cluster, namespaces and nodes. |
+| <cluster, ns, node>.pod_container.count | Container counts by cluster, namespaces and nodes. |
 
 ## Kubernetes State Source
 | Resource | Metric Name | Description |
