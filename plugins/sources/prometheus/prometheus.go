@@ -192,8 +192,7 @@ func (src *prometheusMetricsSource) buildPoints(metricFamilies map[string]*dto.M
 
 			for _, point := range points {
 				if src.isValidMetric(point.Metric, point.Tags) {
-					tagsStr := src.encodeTags(point.Tags)
-					point.StrTags = tagsStr
+					point.StrTags = src.encodeTags(point.Tags)
 					point.Tags = nil
 					result = append(result, point)
 				}
@@ -241,8 +240,8 @@ func (src *prometheusMetricsSource) buildQuantiles(name string, m *dto.Metric, n
 	var result []*metrics.MetricPoint
 	for _, q := range m.GetSummary().Quantile {
 		if !math.IsNaN(q.GetValue()) {
-			tags["quantile"] = fmt.Sprintf("%v", q.GetQuantile())
-			point := src.metricPoint(name, float64(q.GetValue()), now, src.source, tags)
+			newTags := combineTags(tags, "quantile", fmt.Sprintf("%v", q.GetQuantile()))
+			point := src.metricPoint(name, float64(q.GetValue()), now, src.source, newTags)
 			result = append(result, point)
 		}
 	}
@@ -258,8 +257,8 @@ func (src *prometheusMetricsSource) buildQuantiles(name string, m *dto.Metric, n
 func (src *prometheusMetricsSource) buildHistos(name string, m *dto.Metric, now int64, tags map[string]string) []*metrics.MetricPoint {
 	var result []*metrics.MetricPoint
 	for _, b := range m.GetHistogram().Bucket {
-		tags["le"] = fmt.Sprintf("%v", b.GetUpperBound())
-		point := src.metricPoint(name, float64(b.GetCumulativeCount()), now, src.source, tags)
+		newTags := combineTags(tags, "le", fmt.Sprintf("%v", b.GetUpperBound()))
+		point := src.metricPoint(name, float64(b.GetCumulativeCount()), now, src.source, newTags)
 		result = append(result, point)
 	}
 	point := src.metricPoint(name+".count", float64(m.GetHistogram().GetSampleCount()), now, src.source, tags)
@@ -307,6 +306,15 @@ func (src *prometheusMetricsSource) isValidMetric(name string, tags map[string]s
 	filteredPoints.Inc(1)
 	log.Tracef("dropping metric: %s", name)
 	return false
+}
+
+func combineTags(tags map[string]string, key, val string) map[string]string {
+	newTags := make(map[string]string, len(tags)+1)
+	for k, v := range tags {
+		newTags[k] = v
+	}
+	newTags[key] = val
+	return newTags
 }
 
 type prometheusProvider struct {
