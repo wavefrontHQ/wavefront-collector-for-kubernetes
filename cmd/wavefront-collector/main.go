@@ -107,6 +107,9 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 	// always read from the environment variable
 	cfg.Daemon = os.Getenv(util.DaemonModeEnvVar) != ""
 
+	// used by sources to determine metric name when emitting metrics
+	setEnvVar("convertPaths", strconv.FormatBool(*cfg.ConvertPaths))
+
 	clusterName := cfg.ClusterName
 
 	kubeClient := createKubeClientOrDie(*cfg.Sources.SummaryConfig)
@@ -199,6 +202,10 @@ func fillDefaults(cfg *configuration.Config) {
 	}
 	if cfg.DiscoveryConfig.DiscoveryInterval == 0 {
 		cfg.DiscoveryConfig.DiscoveryInterval = 10 * time.Minute
+	}
+	if cfg.ConvertPaths == nil {
+		convert := true
+		cfg.ConvertPaths = &convert
 	}
 }
 
@@ -449,10 +456,14 @@ func enableProfiling(enable bool) {
 func enableForcedGC(enable bool) {
 	if enable {
 		log.Info("enabling forced garbage collection")
-		err := os.Setenv(util.ForceGC, "true")
-		if err != nil {
-			log.Errorf("error setting environment variable %s: %v", util.ForceGC, err)
-		}
+		setEnvVar(util.ForceGC, "true")
+	}
+}
+
+func setEnvVar(key, val string) {
+	err := os.Setenv(key, val)
+	if err != nil {
+		log.Errorf("error setting environment variable %s: %v", key, err)
 	}
 }
 

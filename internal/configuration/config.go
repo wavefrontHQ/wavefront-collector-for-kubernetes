@@ -33,6 +33,9 @@ type Config struct {
 	// Included as a point tag on all metrics sent to Wavefront.
 	ClusterName string `yaml:"clusterName"`
 
+	// When true will convert all _ (underscore) characters in final metric name to dot. Defaults to true.
+	ConvertPaths *bool `yaml:"convertPaths"`
+
 	// list of Wavefront sinks. At least 1 is required.
 	Sinks []*WavefrontSinkConfig `yaml:"sinks"`
 
@@ -82,6 +85,9 @@ type Transforms struct {
 
 	// Filters to be applied prior to emitting the metrics to Wavefront.
 	Filters filter.Config `yaml:"filters"`
+
+	// Whether to convert all _ (underscore) characters in final metric name to dot.
+	ConvertPaths *bool `yaml:"convertPaths"`
 }
 
 // Configuration options for the Wavefront sink

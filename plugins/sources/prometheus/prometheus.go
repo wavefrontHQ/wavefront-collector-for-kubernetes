@@ -11,6 +11,8 @@ import (
 	"math"
 	"net/http"
 	"net/url"
+	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -49,29 +51,37 @@ type prometheusMetricsSource struct {
 	tags       map[string]string
 	buf        *bytes.Buffer
 	filters    filter.Filter
+	replacer   *strings.Replacer
 	client     *http.Client
 	pps        gometrics.Counter
 	eps        gometrics.Counter
 }
 
-func NewPrometheusMetricsSource(metricsURL, prefix, source, discovered string, tags map[string]string, filters filter.Filter, httpCfg httputil.ClientConfig) (metrics.MetricsSource, error) {
+func NewPrometheusMetricsSource(metricsURL, discovered string, transforms configuration.Transforms, httpCfg httputil.ClientConfig) (metrics.MetricsSource, error) {
 	client, err := httpClient(metricsURL, httpCfg)
 	if err != nil {
 		log.Errorf("error creating http client: %q", err)
 		return nil, err
 	}
 
-	pt := extractTags(tags, discovered, metricsURL)
+	pt := extractTags(transforms.Tags, discovered, metricsURL)
 	ppsKey := reporting.EncodeKey("target.points.collected", pt)
 	epsKey := reporting.EncodeKey("target.collect.errors", pt)
 
+	replacer := strings.NewReplacer("_", ".")
+	if transforms.ConvertPaths != nil && !*transforms.ConvertPaths {
+		log.Debugf("retaining underscores for %s", metricsURL)
+		replacer = strings.NewReplacer("_", "_")
+	}
+
 	return &prometheusMetricsSource{
 		metricsURL: metricsURL,
-		prefix:     prefix,
-		source:     source,
-		tags:       tags,
+		prefix:     transforms.Prefix,
+		source:     transforms.Source,
+		tags:       transforms.Tags,
 		buf:        bytes.NewBufferString(""),
-		filters:    filters,
+		filters:    filter.FromConfig(transforms.Filters),
+		replacer:   replacer,
 		client:     client,
 		pps:        gometrics.GetOrRegisterCounter(ppsKey, gometrics.DefaultRegistry),
 		eps:        gometrics.GetOrRegisterCounter(epsKey, gometrics.DefaultRegistry),
@@ -205,7 +215,7 @@ func (src *prometheusMetricsSource) buildPoints(metricFamilies map[string]*dto.M
 
 func (src *prometheusMetricsSource) metricPoint(name string, value float64, ts int64, source string, tags map[string]string) *metrics.MetricPoint {
 	return &metrics.MetricPoint{
-		Metric:    src.prefix + strings.Replace(name, "_", ".", -1),
+		Metric:    src.prefix + src.replacer.Replace(name),
 		Value:     value,
 		Timestamp: ts,
 		Source:    source,
@@ -345,6 +355,12 @@ func NewPrometheusProvider(cfg configuration.PrometheusSourceConfig) (metrics.Me
 
 	source := configuration.GetStringValue(cfg.Source, util.GetNodeName())
 	source = configuration.GetStringValue(source, "prom_source")
+	cfg.Transforms.Source = source
+
+	if cfg.ConvertPaths == nil {
+		convert, _ := strconv.ParseBool(os.Getenv("convertPaths"))
+		cfg.Transforms.ConvertPaths = &convert
+	}
 
 	name := ""
 	if len(cfg.Name) > 0 {
@@ -358,12 +374,9 @@ func NewPrometheusProvider(cfg configuration.PrometheusSourceConfig) (metrics.Me
 	log.Debugf("name: %s discovered: %s", name, discovered)
 
 	httpCfg := cfg.HTTPClientConfig
-	prefix := cfg.Prefix
-	tags := cfg.Tags
-	filters := filter.FromConfig(cfg.Filters)
 
 	var sources []metrics.MetricsSource
-	metricsSource, err := NewPrometheusMetricsSource(cfg.URL, prefix, source, discovered, tags, filters, httpCfg)
+	metricsSource, err := NewPrometheusMetricsSource(cfg.URL, discovered, cfg.Transforms, httpCfg)
 	if err == nil {
 		sources = append(sources, metricsSource)
 	} else {
