@@ -6,10 +6,10 @@ package agent
 import (
 	log "github.com/sirupsen/logrus"
 
-	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/discovery"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/events"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/manager"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/discovery"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/events"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/manager"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources"
 )
 
 type Agent struct {

@@ -6,9 +6,9 @@ package configuration
 import (
 	"time"
 
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/httputil"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/httputil"
 
 	"k8s.io/client-go/kubernetes"
 )

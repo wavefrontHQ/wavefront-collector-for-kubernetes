@@ -10,8 +10,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
 
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

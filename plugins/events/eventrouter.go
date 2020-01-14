@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/events"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/leadership"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sinks/wavefront"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/events"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/leadership"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sinks/wavefront"
 	"github.com/wavefronthq/wavefront-sdk-go/event"
 
 	gometrics "github.com/rcrowley/go-metrics"

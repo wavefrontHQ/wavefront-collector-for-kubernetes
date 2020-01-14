@@ -6,7 +6,7 @@ package systemd
 import (
 	"testing"
 
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
 )
 
 func TestFromQuery(t *testing.T) {

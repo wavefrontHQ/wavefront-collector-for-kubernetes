@@ -19,9 +19,9 @@ package processors
 
 import (
 	log "github.com/sirupsen/logrus"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 	kube_api "k8s.io/api/core/v1"
 	kube_client "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"

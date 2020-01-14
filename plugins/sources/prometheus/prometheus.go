@@ -16,12 +16,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/httputil"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/leadership"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/httputil"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/leadership"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 
 	log "github.com/sirupsen/logrus"
 

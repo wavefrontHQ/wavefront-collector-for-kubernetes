@@ -3,7 +3,7 @@
 
 package kstate
 
-import "github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
+import "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 
 func buildTags(key, name, ns string, srcTags map[string]string) map[string]string {
 	tags := make(map[string]string, len(srcTags)+2)

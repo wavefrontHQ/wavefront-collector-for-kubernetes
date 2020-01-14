@@ -10,7 +10,7 @@ import (
 
 	"github.com/spf13/pflag"
 
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/options"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/options"
 	kubeFlag "k8s.io/apiserver/pkg/util/flag"
 	"k8s.io/apiserver/pkg/util/logs"
 )

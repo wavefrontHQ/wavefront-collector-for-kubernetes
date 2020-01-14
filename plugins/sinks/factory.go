@@ -20,8 +20,8 @@ package sinks
 import (
 	log "github.com/sirupsen/logrus"
 
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sinks/wavefront"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sinks/wavefront"
 )
 
 type SinkFactory struct {

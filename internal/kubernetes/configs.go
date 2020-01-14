@@ -26,7 +26,7 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	kube_rest "k8s.io/client-go/rest"

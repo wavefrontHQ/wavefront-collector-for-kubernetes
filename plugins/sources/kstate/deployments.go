@@ -8,8 +8,8 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 
 	appsv1 "k8s.io/api/apps/v1"
 )

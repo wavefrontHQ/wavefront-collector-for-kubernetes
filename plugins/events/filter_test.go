@@ -5,7 +5,7 @@ package events
 import (
 	"testing"
 
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
 )
 
 func TestWhitelist(t *testing.T) {

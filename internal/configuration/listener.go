@@ -6,7 +6,7 @@ package configuration
 import (
 	log "github.com/sirupsen/logrus"
 
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 )
 
 type listener struct {

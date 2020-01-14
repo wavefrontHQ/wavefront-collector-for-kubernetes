@@ -4,10 +4,10 @@
 package prometheus
 
 import (
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery/utils"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/sources/prometheus"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery/utils"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources/prometheus"
 )
 
 func NewTargetHandler(useAnnotations bool, handler metrics.ProviderHandler, prefix string) discovery.TargetHandler {
