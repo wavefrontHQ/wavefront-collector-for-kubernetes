@@ -44,6 +44,9 @@ type Config struct {
 
 	DiscoveryConfig discovery.Config `yaml:"discovery"`
 
+	// whether to omit the .bucket suffix for prometheus histogram metrics. Defaults to false.
+	OmitBucketSuffix bool `yaml:"omitBucketSuffix"`
+
 	// Internal use only
 	Daemon bool `yaml:"-"`
 }

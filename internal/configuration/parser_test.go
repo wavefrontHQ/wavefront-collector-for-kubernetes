@@ -14,6 +14,7 @@ clusterName: new-collector
 enableDiscovery: true
 enableEvents: true
 defaultCollectionInterval: 10s
+omitBucketSuffix: true
 
 sinks:
 - proxyAddress: wavefront-proxy.default.svc.cluster.local:2878

@@ -11,6 +11,8 @@ import (
 	"math"
 	"net/http"
 	"net/url"
+	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -52,6 +54,8 @@ type prometheusMetricsSource struct {
 	client     *http.Client
 	pps        gometrics.Counter
 	eps        gometrics.Counter
+
+	omitBucketSuffix bool
 }
 
 func NewPrometheusMetricsSource(metricsURL, prefix, source, discovered string, tags map[string]string, filters filter.Filter, httpCfg httputil.ClientConfig) (metrics.MetricsSource, error) {
@@ -65,16 +69,19 @@ func NewPrometheusMetricsSource(metricsURL, prefix, source, discovered string, t
 	ppsKey := reporting.EncodeKey("target.points.collected", pt)
 	epsKey := reporting.EncodeKey("target.collect.errors", pt)
 
+	omitBucketSuffix, _ := strconv.ParseBool(os.Getenv("omitBucketSuffix"))
+
 	return &prometheusMetricsSource{
-		metricsURL: metricsURL,
-		prefix:     prefix,
-		source:     source,
-		tags:       tags,
-		buf:        bytes.NewBufferString(""),
-		filters:    filters,
-		client:     client,
-		pps:        gometrics.GetOrRegisterCounter(ppsKey, gometrics.DefaultRegistry),
-		eps:        gometrics.GetOrRegisterCounter(epsKey, gometrics.DefaultRegistry),
+		metricsURL:       metricsURL,
+		prefix:           prefix,
+		source:           source,
+		tags:             tags,
+		buf:              bytes.NewBufferString(""),
+		filters:          filters,
+		client:           client,
+		pps:              gometrics.GetOrRegisterCounter(ppsKey, gometrics.DefaultRegistry),
+		eps:              gometrics.GetOrRegisterCounter(epsKey, gometrics.DefaultRegistry),
+		omitBucketSuffix: omitBucketSuffix,
 	}, nil
 }
 
@@ -256,9 +263,10 @@ func (src *prometheusMetricsSource) buildQuantiles(name string, m *dto.Metric, n
 // Get Buckets from histogram metric
 func (src *prometheusMetricsSource) buildHistos(name string, m *dto.Metric, now int64, tags map[string]string) []*metrics.MetricPoint {
 	var result []*metrics.MetricPoint
+	histName := src.histoName(name)
 	for _, b := range m.GetHistogram().Bucket {
 		newTags := combineTags(tags, "le", fmt.Sprintf("%v", b.GetUpperBound()))
-		point := src.metricPoint(name, float64(b.GetCumulativeCount()), now, src.source, newTags)
+		point := src.metricPoint(histName, float64(b.GetCumulativeCount()), now, src.source, newTags)
 		result = append(result, point)
 	}
 	point := src.metricPoint(name+".count", float64(m.GetHistogram().GetSampleCount()), now, src.source, tags)
@@ -315,6 +323,13 @@ func combineTags(tags map[string]string, key, val string) map[string]string {
 	}
 	newTags[key] = val
 	return newTags
+}
+
+func (src *prometheusMetricsSource) histoName(name string) string {
+	if src.omitBucketSuffix {
+		return name
+	}
+	return name + ".bucket"
 }
 
 type prometheusProvider struct {

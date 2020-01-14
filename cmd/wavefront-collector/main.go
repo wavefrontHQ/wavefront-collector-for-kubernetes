@@ -107,6 +107,9 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 	// always read from the environment variable
 	cfg.Daemon = os.Getenv(util.DaemonModeEnvVar) != ""
 
+	// backwards compat: used by prometheus sources to format histogram metric names
+	setEnvVar("omitBucketSuffix", strconv.FormatBool(cfg.OmitBucketSuffix))
+
 	clusterName := cfg.ClusterName
 
 	kubeClient := createKubeClientOrDie(*cfg.Sources.SummaryConfig)
@@ -449,10 +452,14 @@ func enableProfiling(enable bool) {
 func enableForcedGC(enable bool) {
 	if enable {
 		log.Info("enabling forced garbage collection")
-		err := os.Setenv(util.ForceGC, "true")
-		if err != nil {
-			log.Errorf("error setting environment variable %s: %v", util.ForceGC, err)
-		}
+		setEnvVar(util.ForceGC, "true")
+	}
+}
+
+func setEnvVar(key, val string) {
+	err := os.Setenv(key, val)
+	if err != nil {
+		log.Errorf("error setting environment variable %s: %v", key, err)
 	}
 }
 
