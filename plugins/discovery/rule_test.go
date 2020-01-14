@@ -4,10 +4,10 @@
 package discovery
 
 import (
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 	"testing"
 
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
 )
 
 func TestRuleDelete(t *testing.T) {

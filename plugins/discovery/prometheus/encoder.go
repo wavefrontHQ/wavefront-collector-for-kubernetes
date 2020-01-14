@@ -8,11 +8,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/configuration"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery/utils"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/httputil"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery/utils"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/httputil"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 
 	log "github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

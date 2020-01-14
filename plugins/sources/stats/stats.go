@@ -5,7 +5,7 @@ package stats
 
 import (
 	"fmt"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/leadership"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/leadership"
 	"strconv"
 	"strings"
 	"time"
@@ -13,9 +13,9 @@ import (
 	gometrics "github.com/rcrowley/go-metrics"
 	"github.com/wavefronthq/go-metrics-wavefront/reporting"
 
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/filter"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 )
 
 type internalMetricsSource struct {
@@ -51,7 +51,7 @@ func newInternalMetricsSource(prefix string, tags map[string]string, filters fil
 		filters: filters,
 
 		zeroFilters: zeroFilters,
-		source:      getDefault(util.GetNodeName(), "wavefront-kubernetes-collector"),
+		source:      getDefault(util.GetNodeName(), "wavefront-collector-for-kubernetes"),
 		pps:         gometrics.GetOrRegisterCounter(ppsKey, gometrics.DefaultRegistry),
 		fps:         gometrics.GetOrRegisterCounter(fpsKey, gometrics.DefaultRegistry),
 	}, nil

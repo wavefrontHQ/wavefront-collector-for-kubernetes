@@ -8,7 +8,7 @@ import (
 
 	"github.com/spf13/pflag"
 
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/flags"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/flags"
 )
 
 type CollectorRunOptions struct {

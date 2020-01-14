@@ -22,8 +22,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/events"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/events"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 )
 
 type DummySink struct {

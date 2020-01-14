@@ -4,7 +4,7 @@
 package discovery
 
 import (
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
 
 	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"

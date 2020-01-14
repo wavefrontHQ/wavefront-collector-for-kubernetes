@@ -19,7 +19,7 @@ package util
 
 import (
 	"fmt"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 	"sort"
 	"strings"
 )

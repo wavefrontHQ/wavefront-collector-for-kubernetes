@@ -5,15 +5,15 @@ package discovery
 
 import (
 	"fmt"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/metrics"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 	"strings"
 	"sync"
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/discovery"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/discovery/prometheus"
-	"github.com/wavefronthq/wavefront-kubernetes-collector/plugins/discovery/telegraf"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/discovery/prometheus"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/discovery/telegraf"
 )
 
 type delegate struct {

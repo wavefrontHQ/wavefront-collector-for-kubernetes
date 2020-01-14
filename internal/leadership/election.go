@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/wavefronthq/wavefront-kubernetes-collector/internal/util"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 
 	"github.com/rcrowley/go-metrics"
 	log "github.com/sirupsen/logrus"
