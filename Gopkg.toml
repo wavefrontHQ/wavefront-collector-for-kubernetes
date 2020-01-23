@@ -4,11 +4,11 @@
 
 [[override]]
   name = "github.com/wavefronthq/wavefront-sdk-go"
-  revision = "86329984eb326ae0dc2b51ff12944fb4f9c70638"
+  revision = "v0.9.5"
 
 [[constraint]]
   name = "github.com/wavefronthq/go-metrics-wavefront"
-  version = "v1.0.1"
+  version = "v1.0.2"
 
 [[constraint]]
   name = "github.com/influxdata/telegraf"
