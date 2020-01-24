@@ -4,6 +4,12 @@ The Wavefront Collector for Kubernetes can auto-discover pods and services that 
 
 Pods/Services can be discovered based on annotations and discovery rules. Discovery rules are provided via the configuration file.
 
+## Table of Contents
+* [Annotation based discovery](#annotation-based-discovery)
+* [Rule based discovery](#rule-based-discovery)
+* [Use Cases](#use-cases)
+* [Disabling Discovery](#disabling-auto-discovery)
+
 ## Annotation based discovery
 **Note**: Annotation based discovery is only supported for prometheus endpoints currently.
 

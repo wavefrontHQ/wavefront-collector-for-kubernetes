@@ -1,12 +1,12 @@
 # Metrics
 
 ## Table of Contents
-* [Kubernetes Source](https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes/blob/master/docs/metrics.md#kubernetes-source)
-* [Kubernetes State Source](https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes/blob/master/docs/metrics.md#kubernetes-state-source)
-* [Prometheus Source](https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes/blob/master/docs/metrics.md#prometheus-source)
-* [Systemd Source](https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes/blob/master/docs/metrics.md#systemd-source)
-* [Telegraf Source](https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes/blob/master/docs/metrics.md#telegraf-source)
-* [Collector Health](https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes/blob/master/docs/metrics.md#collector-health-metrics)
+* [Kubernetes Source](#kubernetes-source)
+* [Kubernetes State Source](#kubernetes-state-source)
+* [Prometheus Source](#prometheus-source)
+* [Systemd Source](#systemd-source)
+* [Telegraf Source](#telegraf-source)
+* [Collector Health](#collector-health-metrics)
 
 ## Kubernetes Source
 

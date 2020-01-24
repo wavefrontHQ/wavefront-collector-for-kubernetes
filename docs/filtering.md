@@ -1,5 +1,9 @@
 # Filtering
 
+## Table of Contents
+* [Metrics Filtering](#metrics-filtering)
+* [Events Filtering](#events-filtering)
+
 ## Metrics Filtering
 
 The Wavefront Collector for Kubernetes supports filtering metrics before they are reported to Wavefront. The following filtering options are supported for metrics:
