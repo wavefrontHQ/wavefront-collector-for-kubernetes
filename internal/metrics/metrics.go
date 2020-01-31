@@ -732,6 +732,16 @@ var MetricNodeEphemeralStorageReservation = Metric{
 	},
 }
 
+var MetricNodeCondition = Metric{
+	MetricDescriptor: MetricDescriptor{
+		Name:        "status/condition",
+		Description: "Node conditions",
+		Type:        MetricGauge,
+		ValueType:   ValueInt64,
+		Units:       UnitsCount,
+	},
+}
+
 var MetricPodPhase = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "status/phase",

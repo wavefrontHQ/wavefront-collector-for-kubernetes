@@ -118,13 +118,17 @@ func (converter *pointConverter) Process(batch *metrics.DataBatch) (*metrics.Dat
 			if source == "" {
 				source = hostname
 			}
-			for labelName, labelValue := range metric.Labels {
-				tags[labelName] = labelValue
+			labels := metric.Labels
+			if labels == nil {
+				labels = make(map[string]string, len(tags))
 			}
-			processTags(tags)
+			for k, v := range tags {
+				labels[k] = v
+			}
+			processTags(labels)
 
 			// convert to a point and add it to the data batch
-			point := converter.metricPoint(converter.cleanMetricName(metricType, metric.Name), value, ts, source, tags)
+			point := converter.metricPoint(converter.cleanMetricName(metricType, metric.Name), value, ts, source, labels)
 			batch.MetricPoints = converter.filterAppend(batch.MetricPoints, point)
 			converter.collectedPoints.Inc(1)
 		}
