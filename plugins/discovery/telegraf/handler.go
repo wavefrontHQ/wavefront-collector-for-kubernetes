@@ -18,16 +18,12 @@ import (
 
 var defaultEncoder = telegrafEncoder{}
 
-func NewTargetHandler(plugin string, handler metrics.ProviderHandler) discovery.TargetHandler {
-	registryName := strings.Replace(plugin, "/", ".", -1)
-	return discovery.NewHandler(
-		discovery.ProviderInfo{
-			Handler: handler,
-			Factory: telegraf.NewFactory(),
-			Encoder: defaultEncoder,
-		},
-		discovery.NewRegistry(registryName),
-	)
+func NewProviderInfo(handler metrics.ProviderHandler) discovery.ProviderInfo {
+	return discovery.ProviderInfo{
+		Handler: handler,
+		Factory: telegraf.NewFactory(),
+		Encoder: defaultEncoder,
+	}
 }
 
 type telegrafEncoder struct{}
@@ -36,9 +32,9 @@ func NewEncoder() discovery.Encoder {
 	return telegrafEncoder{}
 }
 
-func (e telegrafEncoder) Encode(ip, kind string, meta metav1.ObjectMeta, rule interface{}) (interface{}, bool) {
+func (e telegrafEncoder) Encode(ip, kind string, meta metav1.ObjectMeta, rule interface{}) (string, interface{}, bool) {
 	if ip == "" || ip == "None" {
-		return configuration.TelegrafSourceConfig{}, false
+		return "", configuration.TelegrafSourceConfig{}, false
 	}
 
 	result := configuration.TelegrafSourceConfig{
@@ -54,7 +50,7 @@ func (e telegrafEncoder) Encode(ip, kind string, meta metav1.ObjectMeta, rule in
 
 	// panics if rule is not of expected type
 	cfg := rule.(discovery.PluginConfig)
-	name := discovery.ResourceName(kind, meta)
+	name := uniqueName(discovery.ResourceName(kind, meta), cfg.Port)
 	pluginName := strings.Replace(cfg.Type, "telegraf/", "", -1)
 
 	result.Discovered = "rule"
@@ -86,5 +82,12 @@ func (e telegrafEncoder) Encode(ip, kind string, meta metav1.ObjectMeta, rule in
 	}
 	result.Filters = cfg.Filters
 
-	return result, true
+	return name, result, true
+}
+
+func uniqueName(name, port string) string {
+	if port == "" {
+		return name
+	}
+	return fmt.Sprintf("%s:%s", name, port)
 }

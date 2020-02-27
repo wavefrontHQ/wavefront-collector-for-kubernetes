@@ -20,7 +20,6 @@ import (
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/agent"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
-	discConfig "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
 	kube_config "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/kubernetes"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/leadership"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
@@ -241,11 +240,6 @@ func registerListeners(ag *agent.Agent, opt *options.CollectorRunOptions) {
 		listener := configuration.NewFileListener(handler)
 		watcher := util.NewFileWatcher(opt.ConfigFile, listener, 30*time.Second)
 		watcher.Watch()
-	}
-	if opt.EnableDiscovery && opt.DiscoveryConfigFile != "" && opt.ConfigFile == "" {
-		listener := discConfig.NewFileListener(handler)
-		discWatcher = util.NewFileWatcher(opt.DiscoveryConfigFile, listener, 30*time.Second)
-		discWatcher.Watch()
 	}
 }
 
@@ -480,8 +474,6 @@ func (r *reloader) Handle(cfg interface{}) {
 	switch cfg.(type) {
 	case *configuration.Config:
 		r.handleCollectorCfg(cfg.(*configuration.Config))
-	case *discConfig.Config:
-		r.ag.Handle(cfg)
 	}
 }
 

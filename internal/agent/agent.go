@@ -26,12 +26,6 @@ func NewAgent(pm manager.FlushManager, dm *discovery.Manager, er *events.EventRo
 	}
 }
 
-func (a *Agent) Handle(cfg interface{}) {
-	if a.dm != nil {
-		a.dm.Handle(cfg)
-	}
-}
-
 func (a *Agent) Start() {
 	log.Infof("Starting agent")
 	a.pm.Start()

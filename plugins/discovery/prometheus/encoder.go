@@ -73,10 +73,10 @@ func newPrometheusEncoder(prefix string) prometheusEncoder {
 	}
 }
 
-func (e prometheusEncoder) Encode(ip, kind string, meta metav1.ObjectMeta, cfg interface{}) (interface{}, bool) {
+func (e prometheusEncoder) Encode(ip, kind string, meta metav1.ObjectMeta, cfg interface{}) (string, interface{}, bool) {
 	if ip == "" || ip == "None" {
 		log.Debugf("missing ip for %s=%s", kind, meta.Name)
-		return configuration.PrometheusSourceConfig{}, false
+		return "", configuration.PrometheusSourceConfig{}, false
 	}
 
 	result := configuration.PrometheusSourceConfig{
@@ -89,7 +89,9 @@ func (e prometheusEncoder) Encode(ip, kind string, meta metav1.ObjectMeta, cfg i
 	discoveryType := "annotation"
 	if cfg != nil {
 		rule = cfg.(discovery.PluginConfig)
-		discoveryType = "rule"
+		if rule.Name != "" {
+			discoveryType = "rule"
+		}
 	}
 	result.Discovered = discoveryType
 
@@ -104,12 +106,12 @@ func (e prometheusEncoder) Encode(ip, kind string, meta metav1.ObjectMeta, cfg i
 	collectionDuration, err := time.ParseDuration(collectionInterval)
 	if err != nil {
 		log.Errorf("error parsing collection interval: %s %v", collectionInterval, err)
-		return result, false
+		return "", result, false
 	}
 	timeoutDuration, err := time.ParseDuration(timeout)
 	if err != nil {
 		log.Errorf("error parsing timeout: %s %v", timeout, err)
-		return result, false
+		return "", result, false
 	}
 	result.Collection = configuration.CollectionConfig{
 		Interval: collectionDuration,
@@ -119,7 +121,7 @@ func (e prometheusEncoder) Encode(ip, kind string, meta metav1.ObjectMeta, cfg i
 	scrape := utils.Param(meta, e.scrapeAnnotation, "", "false")
 	if rule.Name == "" && scrape != "true" {
 		log.Debugf("prometheus scrape=false for %s=%s", kind, meta.Name)
-		return result, false
+		return "", result, false
 	}
 
 	scheme := utils.Param(meta, e.schemeAnnotation, rule.Scheme, "http")
@@ -136,6 +138,7 @@ func (e prometheusEncoder) Encode(ip, kind string, meta metav1.ObjectMeta, cfg i
 	}
 	name := discovery.ResourceName(kind, meta)
 	port = sanitizePort(meta.Name, port)
+	name = uniqueName(name, port)
 
 	encodeBase(&result, scheme, ip, port, path, name, source, prefix)
 	utils.EncodeMeta(result.Tags, kind, meta)
@@ -147,9 +150,9 @@ func (e prometheusEncoder) Encode(ip, kind string, meta metav1.ObjectMeta, cfg i
 
 	err = encodeHTTPConf(&result, rule.Conf, insecureSkipVerify, serverName)
 	if err != nil {
-		return result, false
+		return "", result, false
 	}
-	return result, true
+	return name, result, true
 }
 
 func encodeHTTPConf(cfg *configuration.PrometheusSourceConfig, conf, insecure, serverName string) error {
@@ -191,4 +194,11 @@ func sanitizePort(name, port string) string {
 
 func customAnnotation(annotationFormat, prefix string) string {
 	return fmt.Sprintf(annotationFormat, prefix)
+}
+
+func uniqueName(name, port string) string {
+	if port == "" {
+		return name
+	}
+	return fmt.Sprintf("%s:%s", name, port)
 }

@@ -36,6 +36,7 @@ func (resType ResourceType) String() string {
 	}
 }
 
+// Resource encapsulates metadata about a Kubernetes resource
 type Resource struct {
 	Kind   string
 	IP     string
@@ -46,47 +47,17 @@ type Resource struct {
 	ServiceSpec v1.ServiceSpec
 }
 
-// Discoverer discovers resources based on rules or annotations
+// Discoverer discovers endpoints from resources based on rules or annotations
 type Discoverer interface {
 	Discover(resource Resource)
 	Delete(resource Resource)
+	DeleteAll()
 	Stop()
 }
 
-// RuleHandler handles the loading of discovery rules
-type RuleHandler interface {
-	// Handles all the discovery rules
-	HandleAll(cfg []PluginConfig) error
-	// Handle a single discovery rule
-	Handle(cfg PluginConfig) error
-	// Deletes all the rules
-	DeleteAll()
-	// Delete the rule and discovered targets
-	Delete(name string)
-	// Count of currently loaded rules
-	Count() int
-}
-
+// Encoder generates a configuration to collect data from a given resource based on the given rules
 type Encoder interface {
-	Encode(ip, kind string, meta metav1.ObjectMeta, rule interface{}) (interface{}, bool)
-}
-
-// Handles discovery of targets
-type TargetHandler interface {
-	Handle(resource Resource, cfg interface{})
-	Encoding(name string) interface{}
-	Delete(name string)
-	DeleteMissing(input map[string]bool)
-	Count() int
-}
-
-// Registry for tracking discovered targets
-type TargetRegistry interface {
-	Register(name string, handler TargetHandler)
-	Unregister(name string)
-	Handler(name string) TargetHandler
-	Encoding(name string) interface{}
-	Count() int
+	Encode(ip, kind string, meta metav1.ObjectMeta, rule interface{}) (string, interface{}, bool)
 }
 
 // ResourceLister lists kubernetes resources based on custom criteria
@@ -94,4 +65,18 @@ type ResourceLister interface {
 	ListPods(ns string, labels map[string]string) ([]*v1.Pod, error)
 	ListServices(ns string, labels map[string]string) ([]*v1.Service, error)
 	ListNodes() ([]*v1.Node, error)
+}
+
+// Endpoint captures the data around a specific endpoint to collect data from
+type Endpoint struct {
+	Name       string
+	PluginType string
+	Config     interface{}
+}
+
+// EndpointHandler handles the configuration of a source to collect data from discovered endpoints
+type EndpointHandler interface {
+	Encode(resource Resource, rule PluginConfig) (string, interface{}, bool)
+	Add(ep *Endpoint)
+	Delete(ep *Endpoint)
 }

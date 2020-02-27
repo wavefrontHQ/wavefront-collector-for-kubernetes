@@ -45,9 +45,9 @@ func TestEncode(t *testing.T) {
 	encoder := newPrometheusEncoder(prefix)
 
 	// should return nil without pod IP
-	promCfg, ok := encoder.Encode("", "pod", pod.ObjectMeta, discovery.PluginConfig{})
+	name, promCfg, ok := encoder.Encode("", "pod", pod.ObjectMeta, discovery.PluginConfig{})
 	if ok {
-		t.Errorf("expected empty scrapeURL. actual: %s", promCfg)
+		t.Errorf("expected empty scrapeURL for %s. actual: %s", promCfg, name)
 	}
 
 	pod.Status = v1.PodStatus{
@@ -55,21 +55,21 @@ func TestEncode(t *testing.T) {
 	}
 
 	// should return nil if empty cfg and no scrape annotation
-	promCfg, ok = encoder.Encode("10.2.3.4", "pod", pod.ObjectMeta, discovery.PluginConfig{})
+	name, promCfg, ok = encoder.Encode("10.2.3.4", "pod", pod.ObjectMeta, discovery.PluginConfig{})
 	if ok {
 		t.Errorf("expected empty scrapeURL. actual: %s", promCfg)
 	}
 
 	// should return nil if scrape annotation is set to false
 	pod.Annotations = map[string]string{customAnnotation(scrapeAnnotationFormat, prefix): "false"}
-	promCfg, ok = encoder.Encode("10.2.3.4", "pod", pod.ObjectMeta, discovery.PluginConfig{})
+	name, promCfg, ok = encoder.Encode("10.2.3.4", "pod", pod.ObjectMeta, discovery.PluginConfig{})
 	if ok {
 		t.Errorf("expected empty scrapeURL. actual: %s", promCfg)
 	}
 
 	// expect non-empty when scrape annotation set to true
 	pod.Annotations[customAnnotation(scrapeAnnotationFormat, prefix)] = "true"
-	promCfg, ok = encoder.Encode("10.2.3.4", "pod", pod.ObjectMeta, discovery.PluginConfig{})
+	name, promCfg, ok = encoder.Encode("10.2.3.4", "pod", pod.ObjectMeta, discovery.PluginConfig{})
 	if !ok {
 		t.Error("expected non-empty scrapeURL.")
 	}
@@ -83,7 +83,7 @@ func TestEncode(t *testing.T) {
 	pod.Annotations[customAnnotation(labelsAnnotationFormat, prefix)] = "false"
 	pod.Annotations[customAnnotation(timeoutAnnotationFormat, prefix)] = "60s"
 
-	promCfg, ok = encoder.Encode("10.2.3.4", "pod", pod.ObjectMeta, discovery.PluginConfig{})
+	name, promCfg, ok = encoder.Encode("10.2.3.4", "pod", pod.ObjectMeta, discovery.PluginConfig{Name: "test"})
 	if !ok {
 		t.Error("expected non-empty scrapeURL.")
 	}
@@ -91,7 +91,7 @@ func TestEncode(t *testing.T) {
 
 	resName := discovery.ResourceName(discovery.PodType.String(), pod.ObjectMeta)
 	assert.Equal(t, fmt.Sprintf("https://%s:9102/prometheus", pod.Status.PodIP), pcfg.URL)
-	assert.Equal(t, resName, pcfg.Name)
+	assert.Equal(t, resName+":9102", pcfg.Name)
 	assert.Equal(t, "rule", pcfg.Discovered)
 	assert.Equal(t, "test", pcfg.Source)
 	assert.Equal(t, "test.", pcfg.Prefix)
@@ -110,17 +110,17 @@ func TestEncode(t *testing.T) {
 		Conf: `
 bearer_token_file: '/var/run/secrets/kubernetes.io/serviceaccount/token'
 tls_config:
-  ca_file: '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
-  insecure_skip_verify: true
+ ca_file: '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
+ insecure_skip_verify: true
 `,
 	}
 	pod.Annotations = map[string]string{}
 
-	promCfg, ok = encoder.Encode("10.2.3.4", "pod", pod.ObjectMeta, cfg)
+	name, promCfg, ok = encoder.Encode("10.2.3.4", "pod", pod.ObjectMeta, cfg)
 	pcfg = promCfg.(configuration.PrometheusSourceConfig)
 
 	assert.Equal(t, fmt.Sprintf("https://%s:9103/path", pod.Status.PodIP), pcfg.URL)
-	assert.Equal(t, resName, pcfg.Name)
+	assert.Equal(t, resName+":9103", pcfg.Name)
 	assert.Equal(t, "rule", pcfg.Discovered)
 	assert.Equal(t, "test", pcfg.Source)
 	assert.Equal(t, "foo.", pcfg.Prefix)
