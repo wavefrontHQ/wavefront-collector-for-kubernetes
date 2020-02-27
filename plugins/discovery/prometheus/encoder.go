@@ -5,6 +5,7 @@ package prometheus
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -28,6 +29,8 @@ const (
 	sourceAnnotationFormat             = "%s/source"
 	collectionIntervalAnnotationFormat = "%s/collectionInterval"
 	timeoutAnnotationFormat            = "%s/timeout"
+	insecureSkipVerifyFormat           = "%s/insecureSkipVerify"
+	serverNameFormat                   = "%s/serverName"
 )
 
 // used as source for discovered resources
@@ -47,6 +50,8 @@ type prometheusEncoder struct {
 	sourceAnnotation             string
 	collectionIntervalAnnotation string
 	timeoutAnnotation            string
+	insecureSkipVerifyAnnotation string
+	serverNameAnnotation         string
 }
 
 func newPrometheusEncoder(prefix string) prometheusEncoder {
@@ -63,6 +68,8 @@ func newPrometheusEncoder(prefix string) prometheusEncoder {
 		sourceAnnotation:             customAnnotation(sourceAnnotationFormat, prefix),
 		collectionIntervalAnnotation: customAnnotation(collectionIntervalAnnotationFormat, prefix),
 		timeoutAnnotation:            customAnnotation(timeoutAnnotationFormat, prefix),
+		insecureSkipVerifyAnnotation: customAnnotation(insecureSkipVerifyFormat, prefix),
+		serverNameAnnotation:         customAnnotation(serverNameFormat, prefix),
 	}
 }
 
@@ -121,6 +128,8 @@ func (e prometheusEncoder) Encode(ip, kind string, meta metav1.ObjectMeta, cfg i
 	prefix := utils.Param(meta, e.prefixAnnotation, rule.Prefix, "")
 	source := utils.Param(meta, e.sourceAnnotation, rule.Source, nodeName)
 	includeLabels := utils.Param(meta, e.labelsAnnotation, rule.IncludeLabels, "true")
+	insecureSkipVerify := utils.Param(meta, e.insecureSkipVerifyAnnotation, "", "true")
+	serverName := utils.Param(meta, e.serverNameAnnotation, "", "")
 
 	if source == "" {
 		source = meta.Name
@@ -136,20 +145,28 @@ func (e prometheusEncoder) Encode(ip, kind string, meta metav1.ObjectMeta, cfg i
 	}
 	result.Filters = rule.Filters
 
-	err = encodeConf(&result, rule.Conf)
+	err = encodeHTTPConf(&result, rule.Conf, insecureSkipVerify, serverName)
 	if err != nil {
 		return result, false
 	}
 	return result, true
 }
 
-func encodeConf(cfg *configuration.PrometheusSourceConfig, conf string) error {
+func encodeHTTPConf(cfg *configuration.PrometheusSourceConfig, conf, insecure, serverName string) error {
 	if conf != "" {
 		httpConf, err := httputil.FromYAML([]byte(conf))
 		if err != nil {
 			return err
 		}
 		cfg.HTTPClientConfig = httpConf
+	} else {
+		insecureBool, _ := strconv.ParseBool(insecure)
+		cfg.HTTPClientConfig = httputil.ClientConfig{
+			TLSConfig: httputil.TLSConfig{
+				InsecureSkipVerify: insecureBool,
+				ServerName:         serverName,
+			},
+		}
 	}
 	return nil
 }
