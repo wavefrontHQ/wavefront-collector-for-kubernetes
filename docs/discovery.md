@@ -25,6 +25,8 @@ Additional annotations that apply:
 - `prometheus.io/includeLabels`: Whether to include Kubernetes labels as tags on reported metrics. Defaults to **true**.
 - `prometheus.io/source`: Optional source for the reported metrics. Defaults to the node name on which collection is performed.
 - `prometheus.io/collectionInterval`: Custom collection interval. Defaults to 1m. Format is `[0-9]+(ms|[smhdwy])`.
+- `prometheus.io/insecureSkipVerify`: Whether to skip https cert validation. Defaults to true.
+- `prometheus.io/serverName`: The cert hostname to verify for the discovered targets.
 
 ## Rule based discovery
 Discovery rules encompass a few distinct aspects:
