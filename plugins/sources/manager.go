@@ -236,6 +236,12 @@ func scrape(provider metrics.MetricsSourceProvider, channel chan *metrics.DataBa
 		latency := now.Sub(scrapeStart)
 		scrapeLatency.Update(latency.Nanoseconds())
 
+		log.WithFields(log.Fields{
+			"name":          source.Name(),
+			"total_metrics": len(dataBatch.MetricPoints) + len(dataBatch.MetricSets),
+			"latency":       latency,
+		}).Debug("Finished querying source")
+
 		// always send the collected data even if latency > timeout
 		channel <- dataBatch
 
@@ -243,12 +249,6 @@ func scrape(provider metrics.MetricsSourceProvider, channel chan *metrics.DataBa
 			scrapeTimeouts.Inc(1)
 			log.Warningf("'%s' high response latency: %s", source.Name(), latency)
 		}
-
-		log.WithFields(log.Fields{
-			"name":          source.Name(),
-			"total_metrics": len(dataBatch.MetricPoints) + len(dataBatch.MetricSets),
-			"latency":       latency,
-		}).Debug("Finished querying source")
 	}
 }
 
