@@ -136,13 +136,6 @@ func (sink *wavefrontSink) send(batch *metrics.DataBatch) {
 	before := errPoints.Count()
 	for _, point := range batch.MetricPoints {
 		tags := make(map[string]string)
-
-		for k, v := range point.Tags {
-			if len(v) > 0 {
-				tags[k] = v
-			}
-		}
-
 		if len(point.StrTags) > 0 {
 			for _, tag := range strings.Split(point.StrTags, " ") {
 				if len(tag) > 0 {

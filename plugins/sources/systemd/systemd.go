@@ -21,13 +21,14 @@ package systemd
 
 import (
 	"fmt"
-	"github.com/wavefronthq/go-metrics-wavefront/reporting"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
 	"math"
 	"os"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/wavefronthq/go-metrics-wavefront/reporting"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
@@ -49,6 +50,7 @@ type systemdMetricsSource struct {
 	collectRestartMetrics   bool
 	unitsFilter             *unitFilter
 	filters                 filter.Filter
+	tagsEncoder             util.TagsEncoder
 
 	pps gm.Counter
 	fps gm.Counter
@@ -80,9 +82,9 @@ func (src *systemdMetricsSource) ScrapeMetrics() (*DataBatch, error) {
 	}
 
 	// channel for gathering collected metrics
-	gather := make(chan *MetricPoint, 1000)
+	gather := make(chan *MetricPointWithTags, 1000)
 	done := make(chan bool)
-	var points []*MetricPoint
+	var points []*MetricPointWithStrTags
 
 	// goroutine for gathering collected metrics
 	go func() {
@@ -161,7 +163,7 @@ func (src *systemdMetricsSource) ScrapeMetrics() (*DataBatch, error) {
 	return result, err
 }
 
-func (src *systemdMetricsSource) collectUnitStatusMetrics(conn *dbus.Conn, units []unit, ch chan<- *MetricPoint, now int64) {
+func (src *systemdMetricsSource) collectUnitStatusMetrics(conn *dbus.Conn, units []unit, ch chan<- *MetricPointWithTags, now int64) {
 	for _, unit := range units {
 		serviceType := ""
 		if strings.HasSuffix(unit.Name, ".service") {
@@ -202,7 +204,7 @@ func (src *systemdMetricsSource) collectUnitStatusMetrics(conn *dbus.Conn, units
 	}
 }
 
-func (src *systemdMetricsSource) collectSockets(conn *dbus.Conn, units []unit, ch chan<- *MetricPoint, now int64) {
+func (src *systemdMetricsSource) collectSockets(conn *dbus.Conn, units []unit, ch chan<- *MetricPointWithTags, now int64) {
 	for _, unit := range units {
 		if !strings.HasSuffix(unit.Name, ".socket") {
 			continue
@@ -234,7 +236,7 @@ func (src *systemdMetricsSource) collectSockets(conn *dbus.Conn, units []unit, c
 	}
 }
 
-func (src *systemdMetricsSource) collectUnitStartTimeMetrics(conn *dbus.Conn, units []unit, ch chan<- *MetricPoint, now int64) {
+func (src *systemdMetricsSource) collectUnitStartTimeMetrics(conn *dbus.Conn, units []unit, ch chan<- *MetricPointWithTags, now int64) {
 	var startTimeUsec uint64
 	for _, unit := range units {
 		if unit.ActiveState != "active" {
@@ -253,7 +255,7 @@ func (src *systemdMetricsSource) collectUnitStartTimeMetrics(conn *dbus.Conn, un
 	}
 }
 
-func (src *systemdMetricsSource) collectUnitTasksMetrics(conn *dbus.Conn, units []unit, ch chan<- *MetricPoint, now int64) {
+func (src *systemdMetricsSource) collectUnitTasksMetrics(conn *dbus.Conn, units []unit, ch chan<- *MetricPointWithTags, now int64) {
 	var val uint64
 	for _, unit := range units {
 		if strings.HasSuffix(unit.Name, ".service") {
@@ -285,7 +287,7 @@ func (src *systemdMetricsSource) collectUnitTasksMetrics(conn *dbus.Conn, units 
 	}
 }
 
-func (src *systemdMetricsSource) collectTimers(conn *dbus.Conn, units []unit, ch chan<- *MetricPoint, now int64) {
+func (src *systemdMetricsSource) collectTimers(conn *dbus.Conn, units []unit, ch chan<- *MetricPointWithTags, now int64) {
 	for _, unit := range units {
 		if !strings.HasSuffix(unit.Name, ".timer") {
 			continue
@@ -302,7 +304,7 @@ func (src *systemdMetricsSource) collectTimers(conn *dbus.Conn, units []unit, ch
 	}
 }
 
-func (src *systemdMetricsSource) collectSummaryMetrics(summary map[string]float64, ch chan<- *MetricPoint, now int64) {
+func (src *systemdMetricsSource) collectSummaryMetrics(summary map[string]float64, ch chan<- *MetricPointWithTags, now int64) {
 	for stateName, count := range summary {
 		tags := map[string]string{}
 		setTag(tags, "state_name", stateName)
@@ -310,7 +312,7 @@ func (src *systemdMetricsSource) collectSummaryMetrics(summary map[string]float6
 	}
 }
 
-func (src *systemdMetricsSource) collectSystemState(conn *dbus.Conn, ch chan<- *MetricPoint, now int64) error {
+func (src *systemdMetricsSource) collectSystemState(conn *dbus.Conn, ch chan<- *MetricPointWithTags, now int64) error {
 	systemState, err := conn.GetManagerProperty("SystemState")
 	if err != nil {
 		return fmt.Errorf("couldn't get system state: %s", err)
@@ -356,9 +358,13 @@ func (src *systemdMetricsSource) filterUnits(units []unit) []unit {
 	return filtered
 }
 
-func (src *systemdMetricsSource) filterAppend(slice []*MetricPoint, point *MetricPoint) []*MetricPoint {
+func (src *systemdMetricsSource) filterAppend(slice []*MetricPointWithStrTags, point *MetricPointWithTags) []*MetricPointWithStrTags {
 	if src.filters == nil || src.filters.Match(point.Metric, point.Tags) {
-		return append(slice, point)
+		newPoint := &metrics.MetricPointWithStrTags{
+			MetricPoint: point.MetricPoint,
+			StrTags:     src.tagsEncoder.Encode(point.Tags),
+		}
+		return append(slice, newPoint)
 	}
 	src.fps.Inc(1)
 	log.Debugf("dropping metric: %s", point.Metric)
@@ -388,13 +394,15 @@ func setTag(tags map[string]string, key, val string) {
 	}
 }
 
-func (src *systemdMetricsSource) metricPoint(name string, value float64, ts int64, tags map[string]string) *MetricPoint {
-	return &MetricPoint{
-		Metric:    src.prefix + strings.Replace(name, "_", ".", -1),
-		Value:     value,
-		Timestamp: ts,
-		Source:    src.source,
-		Tags:      tags,
+func (src *systemdMetricsSource) metricPoint(name string, value float64, ts int64, tags map[string]string) *MetricPointWithTags {
+	return &MetricPointWithTags{
+		MetricPoint: MetricPoint{
+			Metric:    src.prefix + strings.Replace(name, "_", ".", -1),
+			Value:     value,
+			Timestamp: ts,
+			Source:    src.source,
+		},
+		Tags: tags,
 	}
 }
 
@@ -443,6 +451,7 @@ func NewProvider(cfg configuration.SystemdSourceConfig) (MetricsSourceProvider, 
 		collectRestartMetrics:   collectRestartMetrics,
 		unitsFilter:             unitsFilter,
 		filters:                 filters,
+		tagsEncoder:             util.NewTagsEncoder(),
 		pps:                     gm.GetOrRegisterCounter(ppsKey, gm.DefaultRegistry),
 		fps:                     gm.GetOrRegisterCounter(fpsKey, gm.DefaultRegistry),
 		eps:                     gm.GetOrRegisterCounter(epsKey, gm.DefaultRegistry),

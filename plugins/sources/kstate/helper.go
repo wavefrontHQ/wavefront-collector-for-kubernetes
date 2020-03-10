@@ -15,13 +15,14 @@ func buildTags(key, name, ns string, srcTags map[string]string) map[string]strin
 	return tags
 }
 
-func metricPoint(prefix, name string, value float64, ts int64, source string, tags map[string]string) *metrics.MetricPoint {
-	return &metrics.MetricPoint{
-		Metric:    prefix + name,
-		Value:     value,
-		Timestamp: ts,
-		Source:    source,
-		Tags:      tags,
+func metricPoint(prefix, name string, value float64, ts int64, source string, tags map[string]string) *metrics.MetricPointWithTags {
+	return &metrics.MetricPointWithTags{
+		MetricPoint: metrics.MetricPoint{
+			Metric:    prefix + name,
+			Value:     value,
+			Timestamp: ts,
+			Source:    source},
+		Tags: tags,
 	}
 }
 

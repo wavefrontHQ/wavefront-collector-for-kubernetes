@@ -141,7 +141,7 @@ type DataBatch struct {
 	Timestamp time.Time
 	// Should use key functions from ms_keys.go
 	MetricSets   map[string]*MetricSet
-	MetricPoints []*MetricPoint
+	MetricPoints []*MetricPointWithStrTags
 }
 
 // A place from where the metrics should be scraped.
@@ -176,8 +176,18 @@ type MetricPoint struct {
 	Value     float64
 	Timestamp int64
 	Source    string
-	Tags      map[string]string
-	StrTags   string
+}
+
+// Represents a single point in Wavefront metric format.
+type MetricPointWithTags struct {
+	MetricPoint
+	Tags map[string]string
+}
+
+// Represents a single point in Wavefront metric format.
+type MetricPointWithStrTags struct {
+	MetricPoint
+	StrTags string
 }
 
 // ProviderHandler is an interface for dynamically adding and removing MetricSourceProviders

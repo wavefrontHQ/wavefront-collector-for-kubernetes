@@ -15,7 +15,7 @@ import (
 	"k8s.io/api/autoscaling/v2beta1"
 )
 
-func pointsForHPA(item interface{}, transforms configuration.Transforms) []*metrics.MetricPoint {
+func pointsForHPA(item interface{}, transforms configuration.Transforms) []*metrics.MetricPointWithTags {
 	hpa, ok := item.(*v2beta1.HorizontalPodAutoscaler)
 	if !ok {
 		log.Errorf("invalid type: %s", reflect.TypeOf(item).String())
@@ -29,7 +29,7 @@ func pointsForHPA(item interface{}, transforms configuration.Transforms) []*metr
 	currReplicas := float64(hpa.Status.CurrentReplicas)
 	desiredReplicas := float64(hpa.Status.DesiredReplicas)
 
-	return []*metrics.MetricPoint{
+	return []*metrics.MetricPointWithTags{
 		metricPoint(transforms.Prefix, "hpa.max_replicas", maxReplicas, now, transforms.Source, tags),
 		metricPoint(transforms.Prefix, "hpa.min_replicas", minReplicas, now, transforms.Source, tags),
 		metricPoint(transforms.Prefix, "hpa.current_replicas", currReplicas, now, transforms.Source, tags),

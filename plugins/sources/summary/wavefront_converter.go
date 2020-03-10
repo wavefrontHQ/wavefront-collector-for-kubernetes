@@ -18,10 +18,11 @@ import (
 
 // converts MetricSets to MetricPoints.
 type pointConverter struct {
-	cluster string
-	prefix  string
-	tags    map[string]string
-	filters filter.Filter
+	cluster     string
+	prefix      string
+	tags        map[string]string
+	filters     filter.Filter
+	tagsEncoder util.TagsEncoder
 
 	collectedPoints gm.Counter
 	filteredPoints  gm.Counter
@@ -40,6 +41,7 @@ func NewPointConverter(cfg configuration.SummaySourceConfig, cluster string) (me
 		prefix:          configuration.GetStringValue(cfg.Prefix, "kubernetes."),
 		tags:            cfg.Tags,
 		filters:         filter.FromConfig(cfg.Filters),
+		tagsEncoder:     util.NewTagsEncoder(),
 		collectedPoints: gm.GetOrRegisterCounter(reporting.EncodeKey("source.points.collected", pt), gm.DefaultRegistry),
 		filteredPoints:  gm.GetOrRegisterCounter(reporting.EncodeKey("source.points.filtered", pt), gm.DefaultRegistry),
 	}, nil
@@ -136,9 +138,13 @@ func (converter *pointConverter) Process(batch *metrics.DataBatch) (*metrics.Dat
 	return batch, nil
 }
 
-func (converter *pointConverter) filterAppend(slice []*metrics.MetricPoint, point *metrics.MetricPoint) []*metrics.MetricPoint {
+func (converter *pointConverter) filterAppend(slice []*metrics.MetricPointWithStrTags, point *metrics.MetricPointWithTags) []*metrics.MetricPointWithStrTags {
 	if converter.filters == nil || converter.filters.Match(point.Metric, point.Tags) {
-		return append(slice, point)
+		newPoint := &metrics.MetricPointWithStrTags{
+			MetricPoint: point.MetricPoint,
+			StrTags:     converter.tagsEncoder.Encode(point.Tags),
+		}
+		return append(slice, newPoint)
 	}
 	converter.filteredPoints.Inc(1)
 	log.WithField("name", point.Metric).Trace("Dropping metric")
@@ -162,13 +168,14 @@ func (converter *pointConverter) addLabelTags(ms *metrics.MetricSet, tags map[st
 	}
 }
 
-func (converter *pointConverter) metricPoint(name string, value float64, ts int64, source string, tags map[string]string) *metrics.MetricPoint {
-	return &metrics.MetricPoint{
-		Metric:    name,
-		Value:     value,
-		Timestamp: ts,
-		Source:    source,
-		Tags:      tags,
+func (converter *pointConverter) metricPoint(name string, value float64, ts int64, source string, tags map[string]string) *metrics.MetricPointWithTags {
+	return &metrics.MetricPointWithTags{
+		MetricPoint: metrics.MetricPoint{
+			Metric:    name,
+			Value:     value,
+			Timestamp: ts,
+			Source:    source},
+		Tags: tags,
 	}
 }
 

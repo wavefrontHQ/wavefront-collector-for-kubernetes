@@ -5,10 +5,11 @@ package stats
 
 import (
 	"fmt"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/leadership"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/leadership"
 
 	gometrics "github.com/rcrowley/go-metrics"
 	"github.com/wavefronthq/go-metrics-wavefront/reporting"
@@ -20,9 +21,10 @@ import (
 
 type internalMetricsSource struct {
 	metrics.DefaultMetricsSourceProvider
-	prefix  string
-	tags    map[string]string
-	filters filter.Filter
+	prefix      string
+	tags        map[string]string
+	filters     filter.Filter
+	tagsEncoder util.TagsEncoder
 
 	source      string
 	zeroFilters []string
@@ -46,10 +48,10 @@ func newInternalMetricsSource(prefix string, tags map[string]string, filters fil
 		tags = make(map[string]string, 1)
 	}
 	return &internalMetricsSource{
-		prefix:  prefix,
-		tags:    tags,
-		filters: filters,
-
+		prefix:      prefix,
+		tags:        tags,
+		filters:     filters,
+		tagsEncoder: util.NewTagsEncoder(),
 		zeroFilters: zeroFilters,
 		source:      getDefault(util.GetNodeName(), "wavefront-collector-for-kubernetes"),
 		pps:         gometrics.GetOrRegisterCounter(ppsKey, gometrics.DefaultRegistry),
@@ -77,7 +79,7 @@ func (src *internalMetricsSource) internalStats() (*metrics.DataBatch, error) {
 	result := &metrics.DataBatch{
 		Timestamp: now,
 	}
-	var points []*metrics.MetricPoint
+	var points []*metrics.MetricPointWithStrTags
 
 	src.tags["leading"] = strconv.FormatBool(leadership.Leading())
 
@@ -111,9 +113,9 @@ func (src *internalMetricsSource) internalStats() (*metrics.DataBatch, error) {
 	return result, nil
 }
 
-func (src *internalMetricsSource) addHisto(name string, min, max int64, mean float64, percentiles []float64, now int64) []*metrics.MetricPoint {
+func (src *internalMetricsSource) addHisto(name string, min, max int64, mean float64, percentiles []float64, now int64) []*metrics.MetricPointWithStrTags {
 	// convert from nanoseconds to milliseconds
-	var points []*metrics.MetricPoint
+	var points []*metrics.MetricPointWithStrTags
 	points = src.filterAppend(points, src.point(combine(name, "duration.min"), float64(min)/1e6, now))
 	points = src.filterAppend(points, src.point(combine(name, "duration.max"), float64(max)/1e6, now))
 	points = src.filterAppend(points, src.point(combine(name, "duration.mean"), mean/1e6, now))
@@ -125,8 +127,8 @@ func (src *internalMetricsSource) addHisto(name string, min, max int64, mean flo
 	return points
 }
 
-func (src *internalMetricsSource) addRate(name string, count int64, m1, mean float64, now int64) []*metrics.MetricPoint {
-	var points []*metrics.MetricPoint
+func (src *internalMetricsSource) addRate(name string, count int64, m1, mean float64, now int64) []*metrics.MetricPointWithStrTags {
+	var points []*metrics.MetricPointWithStrTags
 	points = src.filterAppend(points, src.point(combine(name, "rate.count"), float64(count), now))
 	points = src.filterAppend(points, src.point(combine(name, "rate.m1"), m1, now))
 	points = src.filterAppend(points, src.point(combine(name, "rate.mean"), mean, now))
@@ -137,19 +139,20 @@ func combine(prefix, name string) string {
 	return fmt.Sprintf("%s.%s", prefix, name)
 }
 
-func (src *internalMetricsSource) point(name string, value float64, ts int64) *metrics.MetricPoint {
+func (src *internalMetricsSource) point(name string, value float64, ts int64) *metrics.MetricPointWithTags {
 	name, tags := reporting.DecodeKey(name)
 	if value == 0.0 && src.filterName(name) {
 		// don't emit internal counts with zero values
 		return nil
 	}
 
-	return &metrics.MetricPoint{
-		Metric:    src.prefix + "collector." + strings.Replace(name, "_", ".", -1),
-		Value:     value,
-		Timestamp: ts,
-		Source:    src.source,
-		Tags:      src.buildTags(tags),
+	return &metrics.MetricPointWithTags{
+		MetricPoint: metrics.MetricPoint{
+			Metric:    src.prefix + "collector." + strings.Replace(name, "_", ".", -1),
+			Value:     value,
+			Timestamp: ts,
+			Source:    src.source},
+		Tags: src.buildTags(tags),
 	}
 }
 
@@ -170,12 +173,16 @@ func (src *internalMetricsSource) buildTags(tags map[string]string) map[string]s
 	return tags
 }
 
-func (src *internalMetricsSource) filterAppend(slice []*metrics.MetricPoint, point *metrics.MetricPoint) []*metrics.MetricPoint {
+func (src *internalMetricsSource) filterAppend(slice []*metrics.MetricPointWithStrTags, point *metrics.MetricPointWithTags) []*metrics.MetricPointWithStrTags {
 	if point == nil {
 		return slice
 	}
 	if src.filters == nil || src.filters.Match(point.Metric, point.Tags) {
-		return append(slice, point)
+		newPoint := &metrics.MetricPointWithStrTags{
+			MetricPoint: point.MetricPoint,
+			StrTags:     src.tagsEncoder.Encode(point.Tags),
+		}
+		return append(slice, newPoint)
 	}
 	src.fps.Inc(1)
 	return slice

@@ -20,18 +20,18 @@ import (
 	gometrics "github.com/rcrowley/go-metrics"
 )
 
-type resourceHandler func(interface{}, configuration.Transforms) []*metrics.MetricPoint
+type resourceHandler func(interface{}, configuration.Transforms) []*metrics.MetricPointWithTags
 
 type stateMetricsSource struct {
-	lister     *lister
-	transforms configuration.Transforms
-	source     string
-	filters    filter.Filter
-	funcs      map[string]resourceHandler
-
-	pps gometrics.Counter
-	eps gometrics.Counter
-	fps gometrics.Counter
+	lister      *lister
+	transforms  configuration.Transforms
+	source      string
+	filters     filter.Filter
+	funcs       map[string]resourceHandler
+	tagsEncoder util.TagsEncoder
+	pps         gometrics.Counter
+	eps         gometrics.Counter
+	fps         gometrics.Counter
 }
 
 func NewStateMetricsSource(lister *lister, transforms configuration.Transforms) (metrics.MetricsSource, error) {
@@ -53,13 +53,14 @@ func NewStateMetricsSource(lister *lister, transforms configuration.Transforms) 
 	funcs[horizontalPodAutoscalers] = pointsForHPA
 
 	return &stateMetricsSource{
-		lister:     lister,
-		transforms: transforms,
-		filters:    filter.FromConfig(transforms.Filters),
-		funcs:      funcs,
-		pps:        gometrics.GetOrRegisterCounter(ppsKey, gometrics.DefaultRegistry),
-		eps:        gometrics.GetOrRegisterCounter(epsKey, gometrics.DefaultRegistry),
-		fps:        gometrics.GetOrRegisterCounter(fpsKey, gometrics.DefaultRegistry),
+		lister:      lister,
+		transforms:  transforms,
+		filters:     filter.FromConfig(transforms.Filters),
+		funcs:       funcs,
+		tagsEncoder: util.NewTagsEncoder(),
+		pps:         gometrics.GetOrRegisterCounter(ppsKey, gometrics.DefaultRegistry),
+		eps:         gometrics.GetOrRegisterCounter(epsKey, gometrics.DefaultRegistry),
+		fps:         gometrics.GetOrRegisterCounter(fpsKey, gometrics.DefaultRegistry),
 	}, nil
 }
 
@@ -79,26 +80,26 @@ func (src *stateMetricsSource) ScrapeMetrics() (*metrics.DataBatch, error) {
 		Timestamp: time.Now(),
 	}
 
-	var points []*metrics.MetricPoint
+	var points []*metrics.MetricPointWithTags
 	for resType := range src.funcs {
 		points = append(points, src.pointsForResource(resType)...)
 	}
 
-	n := 0
 	for _, point := range points {
 		if src.keep(point.Metric, point.Tags) {
-			// in-place filtering
-			points[n] = point
-			n++
+			newPoint := &metrics.MetricPointWithStrTags{
+				MetricPoint: point.MetricPoint,
+				StrTags:     src.tagsEncoder.Encode(point.Tags),
+			}
+			result.MetricPoints = append(result.MetricPoints, newPoint)
 		}
 	}
-	result.MetricPoints = points[:n]
 
 	src.pps.Inc(int64(len(result.MetricPoints)))
 	return result, nil
 }
 
-func (src *stateMetricsSource) pointsForResource(resType string) []*metrics.MetricPoint {
+func (src *stateMetricsSource) pointsForResource(resType string) []*metrics.MetricPointWithTags {
 	items, err := src.lister.List(resType)
 	if err != nil {
 		log.Errorf("error listing %s: %v", resType, err)
@@ -114,7 +115,7 @@ func (src *stateMetricsSource) pointsForResource(resType string) []*metrics.Metr
 		return nil
 	}
 
-	var points []*metrics.MetricPoint
+	var points []*metrics.MetricPointWithTags
 	for _, item := range items {
 		points = append(points, f(item, src.transforms)...)
 	}

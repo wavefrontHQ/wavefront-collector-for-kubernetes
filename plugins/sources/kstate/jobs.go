@@ -15,7 +15,7 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 )
 
-func pointsForJob(item interface{}, transforms configuration.Transforms) []*metrics.MetricPoint {
+func pointsForJob(item interface{}, transforms configuration.Transforms) []*metrics.MetricPointWithTags {
 	job, ok := item.(*batchv1.Job)
 	if !ok {
 		log.Errorf("invalid type: %s", reflect.TypeOf(item).String())
@@ -30,7 +30,7 @@ func pointsForJob(item interface{}, transforms configuration.Transforms) []*metr
 	completions := floatVal(job.Spec.Completions, -1.0)
 	parallelism := floatVal(job.Spec.Parallelism, -1.0)
 
-	return []*metrics.MetricPoint{
+	return []*metrics.MetricPointWithTags{
 		metricPoint(transforms.Prefix, "job.active", active, now, transforms.Source, tags),
 		metricPoint(transforms.Prefix, "job.failed", failed, now, transforms.Source, tags),
 		metricPoint(transforms.Prefix, "job.succeeded", succeeded, now, transforms.Source, tags),

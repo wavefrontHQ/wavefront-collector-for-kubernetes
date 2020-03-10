@@ -5,9 +5,10 @@ package telegraf
 
 import (
 	"fmt"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/leadership"
 	"strings"
 	"time"
+
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/leadership"
 
 	"github.com/influxdata/telegraf"
 	telegrafPlugins "github.com/influxdata/telegraf/plugins/inputs"
@@ -85,8 +86,9 @@ func (t *telegrafPluginSource) Name() string {
 
 func (t *telegrafPluginSource) ScrapeMetrics() (*metrics.DataBatch, error) {
 	result := &telegrafDataBatch{
-		DataBatch: metrics.DataBatch{Timestamp: time.Now()},
-		source:    t,
+		DataBatch:   metrics.DataBatch{Timestamp: time.Now()},
+		tagsEncoder: util.NewTagsEncoder(),
+		source:      t,
 	}
 
 	// Gather invokes callbacks on telegrafDataBatch

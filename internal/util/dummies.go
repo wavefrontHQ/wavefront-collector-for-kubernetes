@@ -90,12 +90,13 @@ func (dummy *DummyMetricsSource) Name() string {
 func (dummy *DummyMetricsSource) ScrapeMetrics() (*metrics.DataBatch, error) {
 	time.Sleep(dummy.latency)
 
-	point := &metrics.MetricPoint{
-		Metric:    strings.Replace(dummy.Name(), " ", ".", -1),
-		Value:     1,
-		Timestamp: time.Now().UnixNano() / 1000,
-		Source:    dummy.Name(),
-		Tags:      map[string]string{"tag": "tag"},
+	point := &metrics.MetricPointWithStrTags{
+		MetricPoint: metrics.MetricPoint{
+			Metric:    strings.Replace(dummy.Name(), " ", ".", -1),
+			Value:     1,
+			Timestamp: time.Now().UnixNano() / 1000,
+			Source:    dummy.Name()},
+		StrTags: NewTagsEncoder().Encode(map[string]string{"tag": "tag"}),
 	}
 
 	res := &metrics.DataBatch{

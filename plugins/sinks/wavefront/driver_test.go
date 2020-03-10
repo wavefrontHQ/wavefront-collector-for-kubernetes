@@ -63,11 +63,11 @@ func TestPrefix(t *testing.T) {
 	assert.NoError(t, err)
 
 	db := metrics.DataBatch{
-		MetricPoints: []*metrics.MetricPoint{
-			{
+		MetricPoints: []*metrics.MetricPointWithStrTags{
+			{MetricPoint: metrics.MetricPoint{
 				Metric: "cpu.idle",
 				Value:  1.0,
-				Source: "fakeSource",
+				Source: "fakeSource"},
 			},
 		},
 	}

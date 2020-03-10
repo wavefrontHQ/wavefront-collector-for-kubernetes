@@ -1,4 +1,5 @@
-FROM scratch
+# FROM scratch
+FROM ubuntu:16.04
 
 COPY wavefront-collector /
 COPY ca-certificates.crt /etc/ssl/certs/

@@ -15,7 +15,7 @@ import (
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 )
 
-func pointsForCronJob(item interface{}, transforms configuration.Transforms) []*metrics.MetricPoint {
+func pointsForCronJob(item interface{}, transforms configuration.Transforms) []*metrics.MetricPointWithTags {
 	job, ok := item.(*batchv1beta1.CronJob)
 	if !ok {
 		log.Errorf("invalid type: %s", reflect.TypeOf(item).String())
@@ -26,7 +26,7 @@ func pointsForCronJob(item interface{}, transforms configuration.Transforms) []*
 	now := time.Now().Unix()
 	active := float64(len(job.Status.Active))
 
-	return []*metrics.MetricPoint{
+	return []*metrics.MetricPointWithTags{
 		metricPoint(transforms.Prefix, "cronjob.active", active, now, transforms.Source, tags),
 	}
 }

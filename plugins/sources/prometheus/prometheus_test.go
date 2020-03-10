@@ -1,11 +1,11 @@
 package prometheus
 
 import (
-	"bytes"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 )
 
 var metricsStr = `
@@ -21,7 +21,7 @@ http_request_duration_seconds_count{label="good"} 3
 
 func TestNoFilters(t *testing.T) {
 	src := &prometheusMetricsSource{
-		buf: bytes.NewBufferString(""),
+		tagsEncoder: util.NewTagsEncoder(),
 	}
 
 	metrics, err := src.parseMetrics([]byte(metricsStr), nil)
@@ -38,8 +38,8 @@ func TestMetricWhitelist(t *testing.T) {
 	f := filter.NewGlobFilter(cfg)
 
 	src := &prometheusMetricsSource{
-		buf:     bytes.NewBufferString(""),
-		filters: f,
+		tagsEncoder: util.NewTagsEncoder(),
+		filters:     f,
 	}
 
 	metrics, err := src.parseMetrics([]byte(metricsStr), nil)
@@ -56,8 +56,8 @@ func TestMetricBlacklist(t *testing.T) {
 	f := filter.NewGlobFilter(cfg)
 
 	src := &prometheusMetricsSource{
-		buf:     bytes.NewBufferString(""),
-		filters: f,
+		tagsEncoder: util.NewTagsEncoder(),
+		filters:     f,
 	}
 
 	metrics, err := src.parseMetrics([]byte(metricsStr), nil)
@@ -74,8 +74,8 @@ func TestMetricTagWhitelist(t *testing.T) {
 	f := filter.NewGlobFilter(cfg)
 
 	src := &prometheusMetricsSource{
-		buf:     bytes.NewBufferString(""),
-		filters: f,
+		tagsEncoder: util.NewTagsEncoder(),
+		filters:     f,
 	}
 
 	metrics, err := src.parseMetrics([]byte(metricsStr), nil)
@@ -92,8 +92,8 @@ func TestMetricTagBlacklist(t *testing.T) {
 	f := filter.NewGlobFilter(cfg)
 
 	src := &prometheusMetricsSource{
-		buf:     bytes.NewBufferString(""),
-		filters: f,
+		tagsEncoder: util.NewTagsEncoder(),
+		filters:     f,
 	}
 
 	metrics, err := src.parseMetrics([]byte(metricsStr), nil)

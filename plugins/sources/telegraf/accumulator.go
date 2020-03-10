@@ -13,12 +13,14 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 )
 
 // Implements the telegraf Accumulator interface
 type telegrafDataBatch struct {
 	metrics.DataBatch
-	source *telegrafPluginSource
+	tagsEncoder util.TagsEncoder
+	source      *telegrafPluginSource
 }
 
 func (t *telegrafDataBatch) preparePoints(measurement string, fields map[string]interface{}, tags map[string]string, timestamp ...time.Time) {
@@ -55,12 +57,14 @@ func (t *telegrafDataBatch) preparePoints(measurement string, fields map[string]
 			metricName = t.source.prefix + "." + metricName
 		}
 
-		point := &metrics.MetricPoint{
-			Metric:    metricName,
-			Value:     value,
-			Timestamp: ts.UnixNano() / 1000,
-			Source:    t.source.source,
-			Tags:      t.buildTags(tags),
+		point := &metrics.MetricPointWithTags{
+			MetricPoint: metrics.MetricPoint{
+				Metric:    metricName,
+				Value:     value,
+				Timestamp: ts.UnixNano() / 1000,
+				Source:    t.source.source,
+			},
+			Tags: t.buildTags(tags),
 		}
 		t.MetricPoints = t.filterAppend(t.MetricPoints, point)
 	}
@@ -81,9 +85,13 @@ func (t *telegrafDataBatch) buildTags(pointTags map[string]string) map[string]st
 	return result
 }
 
-func (t *telegrafDataBatch) filterAppend(slice []*metrics.MetricPoint, point *metrics.MetricPoint) []*metrics.MetricPoint {
+func (t *telegrafDataBatch) filterAppend(slice []*metrics.MetricPointWithStrTags, point *metrics.MetricPointWithTags) []*metrics.MetricPointWithStrTags {
 	if t.source.filters == nil || t.source.filters.Match(point.Metric, point.Tags) {
-		return append(slice, point)
+		newPoint := &metrics.MetricPointWithStrTags{
+			MetricPoint: point.MetricPoint,
+			StrTags:     t.tagsEncoder.Encode(point.Tags),
+		}
+		return append(slice, newPoint)
 	}
 	t.source.pointsFiltered.Inc(1)
 	log.Tracef("dropping metric: %s", point.Metric)

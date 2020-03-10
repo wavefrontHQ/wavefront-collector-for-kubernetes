@@ -204,13 +204,14 @@ func TestTagExclude(t *testing.T) {
 	}
 }
 
-func point(name string, value float64, ts int64, source string, tags map[string]string) *metrics.MetricPoint {
-	return &metrics.MetricPoint{
-		Metric:    strings.Replace(name, "_", ".", -1),
-		Value:     value,
-		Timestamp: ts,
-		Source:    source,
-		Tags:      tags,
+func point(name string, value float64, ts int64, source string, tags map[string]string) *metrics.MetricPointWithTags {
+	return &metrics.MetricPointWithTags{
+		MetricPoint: metrics.MetricPoint{
+			Metric:    strings.Replace(name, "_", ".", -1),
+			Value:     value,
+			Timestamp: ts,
+			Source:    source},
+		Tags: tags,
 	}
 }
 

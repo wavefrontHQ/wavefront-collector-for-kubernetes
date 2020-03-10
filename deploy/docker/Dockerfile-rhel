@@ -21,7 +21,7 @@ COPY license.txt /licenses
 RUN mkdir -p /etc/collector
 
 COPY collector.yaml /etc/collector
-
+ 
 COPY wavefront-collector /
 
 #   nobody:nobody

@@ -10,7 +10,6 @@ import (
 	"io/ioutil"
 	"math"
 	"net/http"
-	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -45,15 +44,15 @@ func init() {
 }
 
 type prometheusMetricsSource struct {
-	metricsURL string
-	prefix     string
-	source     string
-	tags       map[string]string
-	buf        *bytes.Buffer
-	filters    filter.Filter
-	client     *http.Client
-	pps        gometrics.Counter
-	eps        gometrics.Counter
+	metricsURL  string
+	prefix      string
+	source      string
+	tags        map[string]string
+	tagsEncoder util.TagsEncoder
+	filters     filter.Filter
+	client      *http.Client
+	pps         gometrics.Counter
+	eps         gometrics.Counter
 
 	omitBucketSuffix bool
 }
@@ -76,7 +75,7 @@ func NewPrometheusMetricsSource(metricsURL, prefix, source, discovered string, t
 		prefix:           prefix,
 		source:           source,
 		tags:             tags,
-		buf:              bytes.NewBufferString(""),
+		tagsEncoder:      util.NewTagsEncoder(),
 		filters:          filters,
 		client:           client,
 		pps:              gometrics.GetOrRegisterCounter(ppsKey, gometrics.DefaultRegistry),
@@ -162,7 +161,7 @@ func (src *prometheusMetricsSource) ScrapeMetrics() (*metrics.DataBatch, error) 
 	return result, nil
 }
 
-func (src *prometheusMetricsSource) parseMetrics(buf []byte, header http.Header) ([]*metrics.MetricPoint, error) {
+func (src *prometheusMetricsSource) parseMetrics(buf []byte, header http.Header) ([]*metrics.MetricPointWithStrTags, error) {
 	var parser expfmt.TextParser
 
 	// parse even if the buffer begins with a newline
@@ -178,14 +177,14 @@ func (src *prometheusMetricsSource) parseMetrics(buf []byte, header http.Header)
 	return src.buildPoints(metricFamilies)
 }
 
-func (src *prometheusMetricsSource) buildPoints(metricFamilies map[string]*dto.MetricFamily) ([]*metrics.MetricPoint, error) {
+func (src *prometheusMetricsSource) buildPoints(metricFamilies map[string]*dto.MetricFamily) ([]*metrics.MetricPointWithStrTags, error) {
 	now := time.Now().Unix()
-	var result []*metrics.MetricPoint
+	var result []*metrics.MetricPointWithStrTags
 
 	for metricName, mf := range metricFamilies {
 		for _, m := range mf.Metric {
 			tags := src.buildTags(m)
-			var points []*metrics.MetricPoint
+			var points []*metrics.MetricPointWithTags
 			if mf.GetType() == dto.MetricType_SUMMARY {
 				// summary point
 				points = src.buildQuantiles(metricName, m, now, tags)
@@ -199,9 +198,11 @@ func (src *prometheusMetricsSource) buildPoints(metricFamilies map[string]*dto.M
 
 			for _, point := range points {
 				if src.isValidMetric(point.Metric, point.Tags) {
-					point.StrTags = src.encodeTags(point.Tags)
-					point.Tags = nil
-					result = append(result, point)
+					newPoint := &metrics.MetricPointWithStrTags{
+						MetricPoint: point.MetricPoint,
+						StrTags:     src.tagsEncoder.Encode(point.Tags),
+					}
+					result = append(result, newPoint)
 				}
 			}
 		}
@@ -210,19 +211,21 @@ func (src *prometheusMetricsSource) buildPoints(metricFamilies map[string]*dto.M
 	return result, nil
 }
 
-func (src *prometheusMetricsSource) metricPoint(name string, value float64, ts int64, source string, tags map[string]string) *metrics.MetricPoint {
-	return &metrics.MetricPoint{
-		Metric:    src.prefix + strings.Replace(name, "_", ".", -1),
-		Value:     value,
-		Timestamp: ts,
-		Source:    source,
-		Tags:      tags,
+func (src *prometheusMetricsSource) metricPoint(name string, value float64, ts int64, source string, tags map[string]string) *metrics.MetricPointWithTags {
+	return &metrics.MetricPointWithTags{
+		MetricPoint: metrics.MetricPoint{
+			Metric:    src.prefix + strings.Replace(name, "_", ".", -1),
+			Value:     value,
+			Timestamp: ts,
+			Source:    source,
+		},
+		Tags: tags,
 	}
 }
 
 // Get name and value from metric
-func (src *prometheusMetricsSource) buildPoint(name string, m *dto.Metric, now int64, tags map[string]string) []*metrics.MetricPoint {
-	var result []*metrics.MetricPoint
+func (src *prometheusMetricsSource) buildPoint(name string, m *dto.Metric, now int64, tags map[string]string) []*metrics.MetricPointWithTags {
+	var result []*metrics.MetricPointWithTags
 	if m.Gauge != nil {
 		if !math.IsNaN(m.GetGauge().GetValue()) {
 			point := src.metricPoint(name+".gauge", float64(m.GetGauge().GetValue()), now, src.source, tags)
@@ -243,8 +246,8 @@ func (src *prometheusMetricsSource) buildPoint(name string, m *dto.Metric, now i
 }
 
 // Get Quantiles from summary metric
-func (src *prometheusMetricsSource) buildQuantiles(name string, m *dto.Metric, now int64, tags map[string]string) []*metrics.MetricPoint {
-	var result []*metrics.MetricPoint
+func (src *prometheusMetricsSource) buildQuantiles(name string, m *dto.Metric, now int64, tags map[string]string) []*metrics.MetricPointWithTags {
+	var result []*metrics.MetricPointWithTags
 	for _, q := range m.GetSummary().Quantile {
 		if !math.IsNaN(q.GetValue()) {
 			newTags := combineTags(tags, "quantile", fmt.Sprintf("%v", q.GetQuantile()))
@@ -261,8 +264,8 @@ func (src *prometheusMetricsSource) buildQuantiles(name string, m *dto.Metric, n
 }
 
 // Get Buckets from histogram metric
-func (src *prometheusMetricsSource) buildHistos(name string, m *dto.Metric, now int64, tags map[string]string) []*metrics.MetricPoint {
-	var result []*metrics.MetricPoint
+func (src *prometheusMetricsSource) buildHistos(name string, m *dto.Metric, now int64, tags map[string]string) []*metrics.MetricPointWithTags {
+	var result []*metrics.MetricPointWithTags
 	histName := src.histoName(name)
 	for _, b := range m.GetHistogram().Bucket {
 		newTags := combineTags(tags, "le", fmt.Sprintf("%v", b.GetUpperBound()))
@@ -292,19 +295,6 @@ func (src *prometheusMetricsSource) buildTags(m *dto.Metric) map[string]string {
 		}
 	}
 	return tags
-}
-
-func (src *prometheusMetricsSource) encodeTags(tags map[string]string) string {
-	src.buf.Reset()
-	for k, v := range tags {
-		if len(v) > 0 {
-			src.buf.WriteString(" ")
-			src.buf.WriteString(url.QueryEscape(k))
-			src.buf.WriteString("=")
-			src.buf.WriteString(url.QueryEscape(v))
-		}
-	}
-	return src.buf.String()
 }
 
 func (src *prometheusMetricsSource) isValidMetric(name string, tags map[string]string) bool {

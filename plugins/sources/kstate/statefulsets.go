@@ -15,7 +15,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 )
 
-func pointsForStatefulSet(item interface{}, transforms configuration.Transforms) []*metrics.MetricPoint {
+func pointsForStatefulSet(item interface{}, transforms configuration.Transforms) []*metrics.MetricPointWithTags {
 	ss, ok := item.(*appsv1.StatefulSet)
 	if !ok {
 		log.Errorf("invalid type: %s", reflect.TypeOf(item).String())
@@ -30,7 +30,7 @@ func pointsForStatefulSet(item interface{}, transforms configuration.Transforms)
 	current := float64(ss.Status.CurrentReplicas)
 	updated := float64(ss.Status.UpdatedReplicas)
 
-	return []*metrics.MetricPoint{
+	return []*metrics.MetricPointWithTags{
 		metricPoint(transforms.Prefix, "statefulset.desired_replicas", desired, now, transforms.Source, tags),
 		metricPoint(transforms.Prefix, "statefulset.current_replicas", current, now, transforms.Source, tags),
 		metricPoint(transforms.Prefix, "statefulset.ready_replicas", ready, now, transforms.Source, tags),
