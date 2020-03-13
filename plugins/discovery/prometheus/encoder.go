@@ -130,7 +130,7 @@ func (e prometheusEncoder) Encode(ip, kind string, meta metav1.ObjectMeta, cfg i
 	prefix := utils.Param(meta, e.prefixAnnotation, rule.Prefix, "")
 	source := utils.Param(meta, e.sourceAnnotation, rule.Source, nodeName)
 	includeLabels := utils.Param(meta, e.labelsAnnotation, rule.IncludeLabels, "true")
-	insecureSkipVerify := utils.Param(meta, e.insecureSkipVerifyAnnotation, "", "true")
+	insecureSkipVerify := utils.Param(meta, e.insecureSkipVerifyAnnotation, "", "")
 	serverName := utils.Param(meta, e.serverNameAnnotation, "", "")
 
 	if source == "" {
@@ -163,7 +163,12 @@ func encodeHTTPConf(cfg *configuration.PrometheusSourceConfig, conf, insecure, s
 		}
 		cfg.HTTPClientConfig = httpConf
 	} else {
-		insecureBool, _ := strconv.ParseBool(insecure)
+		insecureBool := true
+		if len(insecure) > 0 {
+			insecureBool, _ = strconv.ParseBool(insecure)
+		} else if len(serverName) > 0 {
+			insecureBool = false
+		}
 		cfg.HTTPClientConfig = httputil.ClientConfig{
 			TLSConfig: httputil.TLSConfig{
 				InsecureSkipVerify: insecureBool,
