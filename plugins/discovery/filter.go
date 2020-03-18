@@ -5,8 +5,6 @@ package discovery
 
 import (
 	"fmt"
-	"strconv"
-
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
 
@@ -18,7 +16,6 @@ type resourceFilter struct {
 	images     glob.Glob
 	namespaces glob.Glob
 	labels     map[string]glob.Glob
-	port       int64
 }
 
 func newResourceFilter(conf discovery.PluginConfig) (*resourceFilter, error) {
@@ -36,15 +33,6 @@ func newResourceFilter(conf discovery.PluginConfig) (*resourceFilter, error) {
 
 	if rf.kind != discovery.NodeType.String() && rf.images == nil && rf.labels == nil && rf.namespaces == nil {
 		return nil, fmt.Errorf("no selectors specified")
-	}
-
-	// port
-	if rf.images != nil && conf.Port != "" {
-		val, err := strconv.ParseInt(conf.Port, 10, 32)
-		if err != nil {
-			return nil, err
-		}
-		rf.port = val
 	}
 	return rf, nil
 }
@@ -74,18 +62,7 @@ func (r *resourceFilter) matches(resource discovery.Resource) bool {
 	if r.images != nil {
 		for _, container := range resource.PodSpec.Containers {
 			if r.images.Match(container.Image) {
-				if r.port == 0 {
-					// assume port exists
-					return true
-				}
-
-				// verify matching port exists if port was specified
-				for _, cPort := range container.Ports {
-					if int64(cPort.ContainerPort) == r.port {
-						return true
-					}
-				}
-				return false
+				return true
 			}
 		}
 		return false
