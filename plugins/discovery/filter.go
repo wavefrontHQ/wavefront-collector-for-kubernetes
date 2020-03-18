@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
+	"strconv"
 
 	"github.com/gobwas/glob"
 )
@@ -33,6 +34,13 @@ func newResourceFilter(conf discovery.PluginConfig) (*resourceFilter, error) {
 
 	if rf.kind != discovery.NodeType.String() && rf.images == nil && rf.labels == nil && rf.namespaces == nil {
 		return nil, fmt.Errorf("no selectors specified")
+	}
+
+	if conf.Port != "" {
+		_, err := strconv.ParseInt(conf.Port, 10, 32)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return rf, nil
 }
