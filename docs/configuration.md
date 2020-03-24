@@ -12,7 +12,8 @@ Usage of ./wavefront-collector:
       --log-level string               one of info, debug or trace (default "info")
       --profile                        enable pprof (for debugging)
       --version                        print version info and exit
-      --max-procs int                  max number of CPUs that can be used simultaneously. Less than 1 for default (number of cores)
+      --max-procs int                  max number of CPUs that can be used simultaneously.
+                                       Less than 1 for default (number of cores)
 ```
 
 ## Configuration file
@@ -34,7 +35,7 @@ enableDiscovery: true
 # Whether event collection is enabled. Requires Wavefront Proxy v6.0+.
 enableEvents: false
 
-# The global interval at which data is flushsed. Defaults to 60 seconds.
+# The global interval at which data is flushed. Defaults to 60 seconds.
 # Duration type specified as [0-9]+(ms|[smhdwy])
 flushInterval: 60s
 
