@@ -1,0 +1,31 @@
+# Sample pod annotated with prometheus scrape annotations supported by the Wavefront Collector
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    k8s-app: prom-example
+    name: prom-example
+  name: prom-example
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: prom-example
+  template:
+    metadata:
+      labels:
+        k8s-app: prom-example
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/scheme: 'https'
+        prometheus.io/port: '8443'
+        prometheus.io/path: '/healthmetrics'
+    spec:
+      containers:
+      - name: prom-example
+        image: <ENTER_SAMPLE_IMAGE>
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8443
+          protocol: TCP

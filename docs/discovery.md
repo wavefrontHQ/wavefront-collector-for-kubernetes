@@ -28,6 +28,8 @@ Additional annotations that apply:
 - `prometheus.io/insecureSkipVerify`: Whether to skip https cert validation. Defaults to true.
 - `prometheus.io/serverName`: The cert hostname to verify for the discovered targets.
 
+See an [example](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/deploy/examples/prometheus-annotations-example.yaml) for how to annotate a pod with the above annotations.
+
 ## Rule based discovery
 Discovery rules encompass a few distinct aspects:
 - *Selectors*: The criteria for identifying matching kubernetes resources using container images, resource labels and namespaces.
