@@ -29,8 +29,6 @@ Refer to the [installation instructions](https://docs.wavefront.com/kubernetes.h
 
 The installation instructions use a default configuration suitable for most use cases. Refer to the [documentation](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/tree/master/docs) for details on all the configuration options.
 
-**Note:** Refer [here](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/tree/v0.9.8/docs) for documentation for `v0.9.x` of the Collector.
-
 ## OpenShift
 This collector supports monitoring of Openshift Origin 3.9 clusters. See [openshift.md](https://github.com/wavefronthq/wavefront-kubernetes-collector/tree/master/docs/openshift.md) for detailed installation instructions.
 

@@ -123,6 +123,8 @@ Varies by scrape target.
 
 ## Telegraf Source
 
+Host metrics:
+
 | Metric Prefix | Metrics Collected |
 |------------|-------------|
 | mem. | [metrics list](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/mem#metrics) |
@@ -136,6 +138,28 @@ Varies by scrape target.
 | system. | [metrics list](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/system#metrics) |
 | kernel. | [metrics list](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/kernel#measurements--fields) |
 | processes. | [metrics list](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/processes#measurements--fields) |
+
+Application metrics:
+
+| Plugin Name | Metrics Collected |
+|------------|-------------|
+| activemq | [metrics list](https://github.com/influxdata/telegraf/tree/1.10.4/plugins/inputs/activemq#measurements--fields) |
+| apache | [metrics list](https://github.com/influxdata/telegraf/tree/1.10.4/plugins/inputs/apache#measurements--fields) |
+| consul | [metrics list](https://github.com/influxdata/telegraf/tree/1.10.4/plugins/inputs/consul#metrics) |
+| couchbase | [metrics list](https://github.com/influxdata/telegraf/tree/1.10.4/plugins/inputs/couchbase#measurements) |
+| couchdb | [metrics list](https://github.com/influxdata/telegraf/tree/1.10.4/plugins/inputs/couchdb#measurements--fields) |
+| haproxy | [metrics list](https://github.com/influxdata/telegraf/tree/1.10.4/plugins/inputs/haproxy#metrics) |
+| jolokia2 | [metrics list](https://github.com/influxdata/telegraf/tree/1.10.4/plugins/inputs/jolokia2#jolokia2-input-plugins) |
+| memcached | [metrics list](https://github.com/influxdata/telegraf/tree/1.10.4/plugins/inputs/memcached#measurements--fields) |
+| mongodb | [metrics list](https://github.com/influxdata/telegraf/tree/1.10.4/plugins/inputs/mongodb#metrics) |
+| mysql | [metrics list](https://github.com/influxdata/telegraf/tree/1.10.4/plugins/inputs/mysql#metrics) |
+| nginx | [metrics list](https://github.com/influxdata/telegraf/tree/1.10.4/plugins/inputs/nginx#measurements--fields) |
+| nginx plus | [metrics list](https://github.com/influxdata/telegraf/tree/1.10.4/plugins/inputs/nginx_plus#measurements--fields) |
+| postgresql | [metrics list](https://github.com/influxdata/telegraf/tree/1.10.4/plugins/inputs/postgresql#postgresql-plugin) |
+| rabbitmq | [metrics list](https://github.com/influxdata/telegraf/tree/1.10.4/plugins/inputs/rabbitmq#measurements--fields) |
+| redis | [metrics list](https://github.com/influxdata/telegraf/tree/1.10.4/plugins/inputs/redis#measurements--fields) |
+| riak | [metrics list](https://github.com/influxdata/telegraf/tree/1.10.4/plugins/inputs/riak#measurements--fields) |
+| zookeeper | [metrics list](https://github.com/influxdata/telegraf/tree/1.10.4/plugins/inputs/zookeeper#metrics) |
 
 ## Collector Health Metrics
 

@@ -157,10 +157,17 @@ source: <string>
 
 ### telegraf_source
 ```yaml
-# The list of plugins to be enabled. Empty list defaults to enabling all plugins.
-# Supported plugins are: mem, net, netstat, linux_sysctl_fs, swap, cpu, disk, diskio, system, kernel, processes
+# The list of plugins to be enabled. Empty list defaults to enabling all host plugins.
+# Supported host plugins are: mem, net, netstat, linux_sysctl_fs, swap, cpu, disk, diskio, system, kernel, processes
 plugins: []
+
+# The configuration specific to a single plugin provided in toml format:
+# https://github.com/toml-lang/toml
+# parsed using https://github.com/influxdata/toml
+conf: |
+  [ <Telegraf Plugin Config> ]
 ```
+See a reference [example](https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes/blob/master/deploy/examples/conf.example.yaml#L78) for details.
 
 ### systemd_source
 ```yaml
