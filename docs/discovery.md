@@ -15,7 +15,7 @@ Pods/Services can be discovered based on annotations and discovery rules. Discov
 
 [Annotations](https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/) are metadata you attach to Kubernetes objects. Amongst other uses, they can act as pointers for monitoring tools.
 
-The collector can dynamically discover pods/services annotated with `prometheus.io/scrape` set to **true**. Additional annotations can be provided to inform the collector on how to perform the collection and what prefix and tags should be added to the emitted metrics.
+The collector can dynamically discover pods/services annotated with `prometheus.io/scrape` set to **true**. Additional annotations can be provided to inform the collector on how to perform the collection and what prefix and tags to add to the emitted metrics.
 
 Additional annotations that apply:
 - `prometheus.io/scheme`: Defaults to **http**.
@@ -32,7 +32,7 @@ See an [example](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/b
 
 ## Rule based discovery
 Discovery rules encompass a few distinct aspects:
-- *Selectors*: The criteria for identifying matching kubernetes resources using container images, resource labels and namespaces.
+- *Selectors*: The criteria for identifying matching kubernetes resources using container images, resource labels and/or namespaces.
 - *Plugin Type*: The [type](#plugin-types) of source plugin to use for collecting metrics from the discovered targets.
 - *Plugin Config*: Configuration information on how to collect metrics from the discovered targets.
 - *Transformations*: Adds prefix, tags and filters on the collected data before emitting them to Wavefront.
@@ -116,8 +116,9 @@ See the reference [example](https://github.com/wavefrontHQ/wavefront-kubernetes-
 
 ### Plugin Types
 The supported plugin types are:
-- **prometheus**: Can be used to collect metrics from prometheus metric endpoints.
-- **telegraf/pluginName**: Can be used to collect metrics from applications that are supported by telegraf. See [here](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/825fda0a1251fd1d17fa03cb8c91deb7924c90de/plugins/sources/telegraf/all.go#L14) for the list of supported applications.  
+- **prometheus**: For collecting metrics from prometheus metric endpoints.
+- **telegraf/pluginName**: For collecting metrics from applications that are supported by telegraf. See [here](https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes/blob/master/docs/metrics.md#telegraf-source) for the list of supported applications.
+
   **Note:** The version of telegraf embedded within the collector is 1.10.x.
 
 ## Use Cases

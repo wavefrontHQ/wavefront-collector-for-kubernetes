@@ -2,24 +2,21 @@
 
 [Wavefront](https://docs.wavefront.com) is a high-performance streaming analytics platform for monitoring and optimizing your environment and applications.
 
-The Wavefront Collector for Kubernetes enables monitoring Kubernetes clusters and sending metrics to Wavefront.
+The Wavefront Collector for Kubernetes is an agent that runs as a [DaemonSet](https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/) on each node within a Kubernetes cluster. It collects metrics about the cluster and sends them to the Wavefront SaaS service.
 
 ## Features
 * Collects real-time metrics from all layers of a Kubernetes environment
 * Multiple sources of metrics providing comprehensive insight:
-  - Kubernetes source: For [core kubernetes metrics](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/docs/metrics.md#kubernetes-source)
+  - Kubernetes (kubelet) source: For [core kubernetes metrics](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/docs/metrics.md#kubernetes-source)
   - Prometheus source: For scraping prometheus metric endpoints (API server, etcd, NGINX etc)
   - Kubernetes state source: For [resource state metrics](https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes/blob/master/docs/metrics.md#kubernetes-state-source)    
-  - Telegraf source: For [host](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/docs/metrics.md#telegraf-source) and [application](https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes/blob/master/docs/discovery.md#plugin-types) level metrics
+  - Telegraf source: For [host and application](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/docs/metrics.md#telegraf-source) level metrics
   - Systemd source: For [host level systemd metrics](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/docs/metrics.md#systemd-source)
 * [Auto discovery](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/docs/discovery.md) of pods and services based on annotation and configuration
 * Daemonset mode for high scalability with leader election for monitoring cluster level resources
 * Rich [filtering](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/docs/filtering.md) support
 * Auto reload of configuration changes
 * [Internal metrics](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/docs/metrics.md#collector-health-metrics) for tracking the collector health and configuration
-
-## Prerequisites
-- Kubernetes 1.9+
 
 ## Installation
 

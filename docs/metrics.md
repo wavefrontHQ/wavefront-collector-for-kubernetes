@@ -10,6 +10,8 @@
 
 ## Kubernetes Source
 
+These metrics are collected from the `/stats/summary` endpoint on each [kubelet](https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/) running on a node.
+
 Metrics collected per resource:
 
 | Resource | Metrics |
@@ -77,6 +79,8 @@ Metrics collected per type:
 | <cluster, ns, node>.pod_container.count | Container counts by cluster, namespaces and nodes. |
 
 ## Kubernetes State Source
+These are cluster level metrics about the state of Kubernetes objects collected by the Collector leader instance.
+
 | Resource | Metric Name | Description |
 |----------|---------|-------------|
 | Deployment | deployment.desired_replicas | Number of desired pods. |
@@ -108,6 +112,8 @@ Metrics collected per type:
 Varies by scrape target.
 
 ## Systemd Source
+
+These are Linux systemd metrics that can be collected by each Collector instance.
 
 | Metric Name | Description |
 |------------|-------------|
@@ -162,6 +168,8 @@ Application metrics:
 | zookeeper | [metrics list](https://github.com/influxdata/telegraf/tree/1.10.4/plugins/inputs/zookeeper#metrics) |
 
 ## Collector Health Metrics
+
+These are internal metrics about the health and configuration of the Wavefront Collector.
 
 | Metric Name | Description |
 |------------|-------------|

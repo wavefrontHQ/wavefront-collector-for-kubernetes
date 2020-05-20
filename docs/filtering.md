@@ -1,8 +1,12 @@
 # Filtering
 
 ## Table of Contents
+* [Introduction](#introduction)
 * [Metrics Filtering](#metrics-filtering)
 * [Events Filtering](#events-filtering)
+
+## Introduction
+The Wavefront Collector supports filtering metrics and events. Filters are based on [glob patterns](https://github.com/gobwas/glob#syntax) (similar to standard wildcards).
 
 ## Metrics Filtering
 
