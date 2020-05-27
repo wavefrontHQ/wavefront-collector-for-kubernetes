@@ -10,7 +10,7 @@ import (
 )
 
 func ResourceName(kind string, meta metav1.ObjectMeta) string {
-	if kind == ServiceType.String() {
+	if meta.Namespace != "" {
 		return meta.Namespace + "-" + kind + "-" + meta.Name
 	}
 	return kind + "-" + meta.Name
