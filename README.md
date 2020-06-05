@@ -2,10 +2,10 @@
 
 [Wavefront](https://docs.wavefront.com) is a high-performance streaming analytics platform for monitoring and optimizing your environment and applications.
 
-The Wavefront Collector for Kubernetes is an agent that runs as a [DaemonSet](https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/) on each node within a Kubernetes cluster. It collects metrics about the cluster and sends them to the Wavefront SaaS service.
+The Wavefront Collector for Kubernetes is an agent that runs as a [DaemonSet](https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/) on each node within a Kubernetes cluster. It collects metrics and events about the cluster and sends them to the Wavefront SaaS service.
 
 ## Features
-* Collects real-time metrics from all layers of a Kubernetes environment
+* Collects real-time data from all layers of a Kubernetes environment
 * Multiple sources of metrics providing comprehensive insight:
   - Kubernetes (kubelet) source: For [core kubernetes metrics](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/docs/metrics.md#kubernetes-source)
   - Prometheus source: For scraping prometheus metric endpoints (API server, etcd, NGINX etc)

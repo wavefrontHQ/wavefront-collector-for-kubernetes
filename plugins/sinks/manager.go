@@ -110,7 +110,7 @@ func (this *sinkManager) ExportData(data *metrics.DataBatch) {
 				// everything ok
 			case <-time.After(this.exportDataTimeout):
 				sinkTimeouts.Inc(1)
-				log.WithField("name", sh.sink.Name()).Info("Data push failed")
+				log.WithField("name", sh.sink.Name()).Info("Data push timed out. Increasing sinkExportDataTimeout may help.")
 			}
 		}(sh, &wg)
 	}
