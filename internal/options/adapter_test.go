@@ -53,6 +53,38 @@ func TestAddSummarySource(t *testing.T) {
 	assert.Equal(t, 2, len(summ.Tags))
 }
 
+func TestAddStateSource(t *testing.T) {
+	uri, err := buildStateSource("kstate.")
+	assert.NoError(t, err)
+
+	cfg := &configuration.Config{Sources: &configuration.SourceConfig{}}
+	addStateSource(cfg, uri)
+
+	state := cfg.Sources.StateConfig
+	assert.Equal(t, "kstate.", state.Prefix)
+	assert.Equal(t, 2, len(state.Tags))
+
+	// without any prefix
+	uri, err = buildStateSource("")
+	assert.NoError(t, err)
+
+	cfg = &configuration.Config{Sources: &configuration.SourceConfig{}}
+	addStateSource(cfg, uri)
+
+	state = cfg.Sources.StateConfig
+	assert.Equal(t, "", state.Prefix)
+	assert.Equal(t, 2, len(state.Tags))
+}
+
+func buildStateSource(prefix string) (flags.Uri, error) {
+	values := url.Values{}
+	if prefix != "" {
+		addVal(values, "prefix", prefix)
+	}
+	encodeTags(values, "", map[string]string{"k1": "v1", "k2": "v2"})
+	return buildUri("kubernetes.state", "", values.Encode())
+}
+
 func TestAddPrometheusSource(t *testing.T) {
 	values := url.Values{}
 	values["url"] = []string{"http://kube-state-metrics.kube-system.svc.cluster.local:8080/metrics"}

@@ -82,6 +82,8 @@ func addSources(cfg *configuration.Config, sources flags.Uris) {
 		switch src.Key {
 		case "kubernetes.summary_api":
 			addSummarySource(cfg, src)
+		case "kubernetes.state":
+			addStateSource(cfg, src)
 		case "prometheus":
 			addPrometheusSource(cfg, src)
 		case "telegraf":
@@ -111,6 +113,14 @@ func addSummarySource(cfg *configuration.Config, uri flags.Uri) {
 		summary.URL = fmt.Sprintf("%s://%s%s", u.Scheme, u.Host, u.Path)
 	}
 	cfg.Sources.SummaryConfig = summary
+}
+
+func addStateSource(cfg *configuration.Config, uri flags.Uri) {
+	vals := uri.Val.Query()
+	state := &configuration.KubernetesStateSourceConfig{
+		Transforms: getTransforms(vals),
+	}
+	cfg.Sources.StateConfig = state
 }
 
 func addPrometheusSource(cfg *configuration.Config, uri flags.Uri) {
