@@ -282,8 +282,10 @@ func NewWavefrontSink(cfg configuration.WavefrontSinkConfig) (WavefrontSink, err
 		}
 		var err error
 		storage.WavefrontClient, err = senders.NewDirectSender(&senders.DirectConfiguration{
-			Server: cfg.Server,
-			Token:  cfg.Token,
+			Server:        cfg.Server,
+			Token:         cfg.Token,
+			BatchSize:     cfg.BatchSize,
+			MaxBufferSize: cfg.MaxBufferSize,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("error creating direct sender: %s", err.Error())

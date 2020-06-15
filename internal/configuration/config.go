@@ -97,6 +97,11 @@ type WavefrontSinkConfig struct {
 	// The Wavefront API token with direct data ingestion permission. Only required for direct ingestion.
 	Token string `yaml:"token"`
 
+	// Batch and buffer size. Optional properties used for direct ingestion.
+	// See https://github.com/wavefrontHQ/wavefront-sdk-go/blob/master/senders/configs.go#L11 for details.
+	BatchSize     int `yaml:"batchSize"`
+	MaxBufferSize int `yaml:"maxBufferSize"`
+
 	// The Wavefront proxy service address of the form wavefront-proxy.default.svc.cluster.local:2878.
 	ProxyAddress string `yaml:"proxyAddress"`
 
