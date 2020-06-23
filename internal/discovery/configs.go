@@ -11,13 +11,17 @@ import (
 
 // configuration for auto discovery
 type Config struct {
-	// frequency of evaluating discovery rules. Defaults to 10 minutes.
+	// frequency of evaluating discovery rules. Defaults to 5 minutes.
 	// format is [0-9]+(ms|[smhdwy])
 	DiscoveryInterval time.Duration `yaml:"discovery_interval"`
 
 	// the annotation prefix for annotations based discovery
 	// if specified, this substitutes the default prefix such as "prometheus.io" etc that is used during discovery
 	AnnotationPrefix string `yaml:"annotation_prefix"`
+
+	// enables support for sourcing plugin configurations dynamically from configmaps
+	// with the annotation "wavefront.com/discovery-config: 'true'". Defaults to false.
+	EnableRuntimePlugins bool `yaml:"enable_runtime_plugins"`
 
 	// list of discovery rules
 	PluginConfigs []PluginConfig `yaml:"plugins"`
