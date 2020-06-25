@@ -37,9 +37,9 @@ Discovery rules encompass a few distinct aspects:
 - *Plugin Config*: Configuration information on how to collect metrics from the discovered targets.
 - *Transformations*: Adds prefix, tags and filters on the collected data before emitting them to Wavefront.
 
-The rules are provided to the collector under the `discovery_configs` section within the top-level `--config-file`. The collector watches for configuration changes and can dynamically reload changes to the rules without having to restart it.
+The rules can be supplied under the `discovery` section within the top-level `--config-file` or dynamically via [runtime configurations](#runtime-configurations).
 
-The collector fetches all the pods/services on startup. It also listens for runtime changes. The first rule that matches a pod/service is used to collect metrics from the matching target.
+The collector fetches all the pods/services on startup. It also listens for runtime changes. The rules that match a pod/service are used to collect metrics from the matching targets.
 
 ### Configuration file
 Source: [configs.go](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/internal/discovery/configs.go)
@@ -120,6 +120,26 @@ The supported plugin types are:
 - **telegraf/pluginName**: For collecting metrics from applications that are supported by telegraf. See [here](https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes/blob/master/docs/metrics.md#telegraf-source) for the list of supported applications.
 
   **Note:** The version of telegraf embedded within the collector is 1.10.x.
+
+### Runtime Configurations
+Runtime configurations allow specifying discovery rules via [configmaps](https://kubernetes.io/docs/concepts/configuration/configmap/) outside of the main configuration file.
+
+This feature can be enabled in the main config file:
+```yaml
+discovery:
+  # flag to enable runtime configurations
+  enable_runtime_plugins: true
+
+  # frequency of evaluating changes to runtime configs (adds/updates/deletes)
+  discovery_interval: 5m
+```
+The configmaps should be annotated with `wavefront.com/discovery-config: 'true'` and deployed under the same namespace as the Wavefront collector.
+
+Discovery rules specified in the main config and via runtime configs are combined together to form a single set of rules to drive auto-discovery decisions.
+
+The `discovery_interval` controls how often runtime config changes are evaluated. This is pertinent as any changes requires the collector to re-evaluate all pods/services for discovery/data collection.
+
+See the reference [example](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/deploy/examples/memcached-runtime-config.yaml) for details.
 
 ## Use Cases
 Together, annotation and rule based discovery can be used to easily collect metrics from the Kubernetes control plane (apiserver, etcd, dns etc), NGINX ingresses, and any application that exposes a Prometheus scrape endpoint.

@@ -83,6 +83,14 @@ discovery:
   # when specified, this replaces prefixes such as `prometheus.io` etc
   annotation_prefix: "wavefront.com"
 
+  # frequency of evaluating discovery rules. Defaults to 5 minutes.
+  # format is [0-9]+(ms|[smhdwy])
+  discovery_interval: 5m
+
+  # enables support for sourcing runtime discovery rules from configmaps
+  # with the annotation "wavefront.com/discovery-config: 'true'". Default is false.
+  enable_runtime_plugins: true
+
   plugins:
   # see auto-discovery for details
 
