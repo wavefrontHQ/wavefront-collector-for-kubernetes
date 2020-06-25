@@ -23,7 +23,7 @@ func newPodHandler(kubeClient kubernetes.Interface, discoverer discovery.Discove
 	client := kubeClient.CoreV1().RESTClient()
 	fieldSelector := util.GetFieldSelector("pods")
 	lw := cache.NewListWatchFromClient(client, "pods", v1.NamespaceAll, fieldSelector)
-	inf := cache.NewSharedInformer(lw, &v1.Pod{}, 10*time.Minute)
+	inf := cache.NewSharedInformer(lw, &v1.Pod{}, 1*time.Hour)
 
 	inf.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {

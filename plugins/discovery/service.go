@@ -31,7 +31,7 @@ func newServiceHandler(kubeClient kubernetes.Interface, discoverer discovery.Dis
 			return s.Watch(options)
 		},
 	}
-	inf := cache.NewSharedInformer(lw, &v1.Service{}, 10*time.Minute)
+	inf := cache.NewSharedInformer(lw, &v1.Service{}, 1*time.Hour)
 
 	inf.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
