@@ -200,7 +200,7 @@ func fillDefaults(cfg *configuration.Config) {
 		cfg.ClusterName = "k8s-cluster"
 	}
 	if cfg.DiscoveryConfig.DiscoveryInterval == 0 {
-		cfg.DiscoveryConfig.DiscoveryInterval = 10 * time.Minute
+		cfg.DiscoveryConfig.DiscoveryInterval = 5 * time.Minute
 	}
 }
 
