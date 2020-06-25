@@ -75,7 +75,7 @@ func (dm *Manager) Start() {
 		cfg, _ = dm.configListener.Config()
 	}
 	dm.discoverer = newDiscoverer(dm.runConfig.Handler, cfg, dm.runConfig.Lister)
-	dm.resyncConfig()
+	dm.startResyncConfig()
 
 	// init discovery handlers
 	dm.podListener = newPodHandler(dm.runConfig.KubeClient, dm.discoverer)
@@ -117,9 +117,9 @@ func (dm *Manager) Pause() {
 	dm.serviceListener.stop()
 }
 
-// resyncConfig periodically checks for changes to the discovery config.
+// startResyncConfig periodically checks for changes to the discovery config.
 // It stops monitoring existing resources and reloads the discovery manager on changes
-func (dm *Manager) resyncConfig() {
+func (dm *Manager) startResyncConfig() {
 	if !dm.runConfig.DiscoveryConfig.EnableRuntimePlugins {
 		log.Info("runtime plugins disabled")
 		return

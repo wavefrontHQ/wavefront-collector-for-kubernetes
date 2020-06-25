@@ -24,7 +24,7 @@ const (
 )
 
 type configHandler struct {
-	ch       chan struct{}
+	stopCh   chan struct{}
 	informer cache.SharedInformer
 
 	mtx         sync.RWMutex
@@ -176,13 +176,13 @@ func combine(cfg discovery.Config, cfgs map[string]discovery.Config) discovery.C
 }
 
 func (handler *configHandler) start() bool {
-	handler.ch = make(chan struct{})
-	go handler.informer.Run(handler.ch)
-	return cache.WaitForCacheSync(handler.ch, handler.informer.HasSynced)
+	handler.stopCh = make(chan struct{})
+	go handler.informer.Run(handler.stopCh)
+	return cache.WaitForCacheSync(handler.stopCh, handler.informer.HasSynced)
 }
 
 func (handler *configHandler) stop() {
-	if handler.ch != nil {
-		close(handler.ch)
+	if handler.stopCh != nil {
+		close(handler.stopCh)
 	}
 }
