@@ -29,6 +29,8 @@ rules:
   - get
   - update
   - create
+  - list
+  - watch
 
 # required for kubernetes_state_source
 - apiGroups:
