@@ -37,10 +37,13 @@ func (opts *CollectorRunOptions) Convert() (*configuration.Config, error) {
 	addInternalStatsSource(cfg, opts.InternalStatsPrefix)
 	extractSinkProperties(cfg)
 
-	if opts.EnableDiscovery && opts.DiscoveryConfigFile != "" {
-		cfg.DiscoveryConfig.PluginConfigs = loadDiscoveryFileOrDie(opts.DiscoveryConfigFile)
+	if opts.EnableDiscovery {
+		cfg.DiscoveryConfig.EnableRuntimePlugins = opts.EnableRuntimeConfigs
 		if cfg.DiscoveryConfig.DiscoveryInterval == 0 {
-			cfg.DiscoveryConfig.DiscoveryInterval = 10 * time.Minute
+			cfg.DiscoveryConfig.DiscoveryInterval = 5 * time.Minute
+		}
+		if opts.DiscoveryConfigFile != "" {
+			cfg.DiscoveryConfig.PluginConfigs = loadDiscoveryFileOrDie(opts.DiscoveryConfigFile)
 		}
 	}
 	return cfg, nil

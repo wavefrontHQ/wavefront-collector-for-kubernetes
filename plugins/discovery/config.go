@@ -1,6 +1,7 @@
 package discovery
 
 import (
+	"io/ioutil"
 	"reflect"
 	"sort"
 	"sync"
@@ -43,7 +44,10 @@ func newConfigHandler(kubeClient kubernetes.Interface, cfg discovery.Config) *co
 
 	ns := util.GetNamespaceName()
 	if ns == "" {
-		return handler
+		ns = readNamespaceFromFile()
+		if ns == "" {
+			return handler
+		}
 	}
 
 	s := kubeClient.CoreV1().ConfigMaps(ns)
@@ -173,6 +177,17 @@ func combine(cfg discovery.Config, cfgs map[string]discovery.Config) discovery.C
 	}
 	log.Debugf("total plugin configs: %d", len(runCfg.PluginConfigs))
 	return *runCfg
+}
+
+func readNamespaceFromFile() string {
+	data, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
+	if err != nil {
+		log.Errorf("error reading namespace: %v", err)
+		return ""
+	}
+	ns := string(data)
+	log.Infof("loaded namespace from file: %s", ns)
+	return ns
 }
 
 func (handler *configHandler) start() bool {

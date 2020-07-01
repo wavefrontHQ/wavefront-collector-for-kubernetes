@@ -34,6 +34,7 @@ type CollectorRunOptions struct {
 	Sinks                 flags.Uris
 	SinkExportDataTimeout time.Duration
 	EnableDiscovery       bool
+	EnableRuntimeConfigs  bool
 	DiscoveryConfigFile   string
 	InternalStatsPrefix   string
 	ScrapeTimeout         time.Duration
@@ -65,6 +66,8 @@ func (opts *CollectorRunOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.MarkDeprecated("sink_export_data_timeout", "set sinkExportDataTimeout in configuration file")
 	fs.BoolVar(&opts.EnableDiscovery, "enable-discovery", true, "enable auto discovery")
 	fs.MarkDeprecated("enable-discovery", "set enableDiscovery in configuration file")
+	fs.BoolVar(&opts.EnableRuntimeConfigs, "enable-runtime-configs", false, "enable runtime configs")
+	fs.MarkDeprecated("enable-runtime-configs", "set enable-runtime-configs in configuration file")
 	fs.StringVar(&opts.DiscoveryConfigFile, "discovery_config", "", "optional discovery configuration file")
 	fs.MarkDeprecated("discovery_config", "set discovery_configs in configuration file")
 	fs.StringVar(&opts.InternalStatsPrefix, "internal_stats_prefix", "kubernetes.", "optional prefix for internal collector stats")
