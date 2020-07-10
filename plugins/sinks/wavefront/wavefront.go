@@ -226,6 +226,11 @@ func (sink *wavefrontSink) emitHeartbeat(sender senders.Sender, cfg configuratio
 	}
 
 	go func() {
+		log.Debug("emitting heartbeat metric")
+		err := sender.SendMetric("~wavefront.kubernetes.collector.version", cfg.Version, 0, source, tags)
+		if err != nil {
+			log.Debugf("error emitting heartbeat metric :%v", err)
+		}
 		for {
 			select {
 			case <-ticker.C:
