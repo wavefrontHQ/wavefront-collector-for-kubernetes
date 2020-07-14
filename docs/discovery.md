@@ -133,11 +133,11 @@ discovery:
   # frequency of evaluating changes to runtime configs (adds/updates/deletes)
   discovery_interval: 5m
 ```
-The configmaps should be annotated with `wavefront.com/discovery-config: 'true'` and deployed under the same namespace as the Wavefront collector.
+The runtime configmaps should be annotated with `wavefront.com/discovery-config: 'true'` and deployed under the same namespace as the Wavefront collector.
 
 Discovery rules specified in the main config and via runtime configs are combined together to form a single set of rules to drive auto-discovery decisions.
 
-The `discovery_interval` controls how often runtime config changes are evaluated. This is pertinent as any changes requires the collector to re-evaluate all pods/services for discovery/data collection.
+The `discovery_interval` controls how often runtime config changes are evaluated. This is pertinent as runtime changes requires the collector to re-evaluate all pods/services for discovery/data collection.
 
 See the reference [example](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/deploy/examples/memcached-runtime-config.yaml) for details.
 
