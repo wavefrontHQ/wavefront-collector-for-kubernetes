@@ -5,6 +5,7 @@ package wavefront
 
 import (
 	"fmt"
+	"math/rand"
 	"net/url"
 	"os"
 	"runtime/debug"
@@ -66,6 +67,7 @@ type wavefrontSink struct {
 	testMode          bool
 	testReceivedLines []string
 	forceGC           bool
+	logPercent        float32
 	stopHeartbeat     chan struct{}
 }
 
@@ -104,12 +106,20 @@ func (sink *wavefrontSink) sendPoint(metricName string, value float64, ts int64,
 	err := sink.WavefrontClient.SendMetric(metricName, value, ts, source, tags)
 	if err != nil {
 		errPoints.Inc(1)
-		log.WithFields(log.Fields{
+		sink.logVerboseError(log.Fields{
 			"name":  metricName,
 			"error": err,
-		}).Debug("error sending metric")
+		}, "error sending metric")
 	} else {
 		sentPoints.Inc(1)
+	}
+}
+
+func (sink *wavefrontSink) logVerboseError(f log.Fields, msg string) {
+	if log.IsLevelEnabled(log.DebugLevel) {
+		log.WithFields(f).Error(msg)
+	} else if sink.loggingAllowed() {
+		log.WithFields(f).Errorf("%s %s", "[sampled error]", msg)
 	}
 }
 
@@ -197,7 +207,10 @@ func (sink *wavefrontSink) ExportEvent(ev *events.Event) {
 		ev.Options...,
 	)
 	if err != nil {
-		log.Debugf("Error sending events: %v", err)
+		sink.logVerboseError(log.Fields{
+			"message": ev.Message,
+			"error":   err,
+		}, "error sending event")
 		errEvents.Inc(1)
 	} else {
 		sentEvents.Inc(1)
@@ -209,6 +222,10 @@ func getDefault(val, defaultVal string) string {
 		return defaultVal
 	}
 	return val
+}
+
+func (sink *wavefrontSink) loggingAllowed() bool {
+	return rand.Float32() <= sink.logPercent
 }
 
 func (sink *wavefrontSink) emitHeartbeat(sender senders.Sender, cfg configuration.WavefrontSinkConfig) {
@@ -262,6 +279,7 @@ func NewWavefrontSink(cfg configuration.WavefrontSinkConfig) (WavefrontSink, err
 	storage := &wavefrontSink{
 		ClusterName: configuration.GetStringValue(cfg.ClusterName, "k8s-cluster"),
 		testMode:    cfg.TestMode,
+		logPercent:  0.01,
 	}
 
 	if cfg.ProxyAddress != "" {
@@ -309,6 +327,11 @@ func NewWavefrontSink(cfg configuration.WavefrontSinkConfig) (WavefrontSink, err
 
 	// force garbage collection if experimental flag enabled
 	storage.forceGC = os.Getenv(util.ForceGC) != ""
+
+	// configure error logging percentage
+	if cfg.ErrorLogPercent > 0.0 && cfg.ErrorLogPercent <= 1.0 {
+		storage.logPercent = cfg.ErrorLogPercent
+	}
 
 	// emit heartbeat metric
 	storage.emitHeartbeat(storage.WavefrontClient, cfg)

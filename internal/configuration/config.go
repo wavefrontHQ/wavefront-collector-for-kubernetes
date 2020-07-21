@@ -108,6 +108,11 @@ type WavefrontSinkConfig struct {
 	// If set to true, metrics are emitted to stdout instead. Defaults to false.
 	TestMode bool `yaml:"testMode"`
 
+	// Errors that occur when sending individual data points are verbose and logged at debug level by default.
+	// This property enables surfacing a small percentage of error messages even when debug logging is disabled.
+	// Defaults to 0.01 or 1% of errors. Valid values are > 0.0 and <= 1.0.
+	ErrorLogPercent float32 `yaml:"errorLogPercent"`
+
 	// Note: Properties below are for internal use only. These cannot be set via the configuration file.
 
 	// Internal: Cluster name pulled in from the top level property.
