@@ -82,13 +82,6 @@ func (nae *NodeAutoscalingEnricher) Process(batch *metrics.DataBatch) (*metrics.
 					setFloat(metricSet, &metrics.MetricNodeEphemeralStorageReservation, float64(epheRequested)/float64(allocatableEphemeralStorage.Value()))
 				}
 			}
-
-			for _, condition := range node.Status.Conditions {
-				addLabeledIntMetric(metricSet, &metrics.MetricNodeCondition, map[string]string{
-					"status":    string(condition.Status),
-					"condition": string(condition.Type),
-				}, nodeConditionInt64(condition.Status))
-			}
 		}
 	}
 	return batch, nil
@@ -106,17 +99,6 @@ func setFloat(metricSet *metrics.MetricSet, metric *metrics.Metric, value float6
 		MetricType: metrics.MetricGauge,
 		ValueType:  metrics.ValueFloat,
 		FloatValue: value,
-	}
-}
-
-func nodeConditionInt64(status kube_api.ConditionStatus) int64 {
-	switch status {
-	case kube_api.ConditionTrue:
-		return 1
-	case kube_api.ConditionFalse:
-		return 0
-	default:
-		return -1
 	}
 }
 

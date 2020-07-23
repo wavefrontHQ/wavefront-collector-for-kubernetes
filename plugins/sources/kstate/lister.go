@@ -32,6 +32,7 @@ const (
 	jobs                     = "jobs"
 	cronJobs                 = "cronjobs"
 	horizontalPodAutoscalers = "horizontalpodautoscalers"
+	nodes                    = "nodes"
 )
 
 var (
@@ -70,6 +71,7 @@ func buildInformers(kubeClient kubernetes.Interface) map[string]cache.SharedInfo
 	m[jobs] = buildInformer(jobs, &batchv1.Job{}, kubeClient.BatchV1().RESTClient())
 	m[cronJobs] = buildInformer(cronJobs, &batchv1beta1.CronJob{}, kubeClient.BatchV1beta1().RESTClient())
 	m[horizontalPodAutoscalers] = buildInformer(horizontalPodAutoscalers, &v2beta1.HorizontalPodAutoscaler{}, kubeClient.AutoscalingV2beta1().RESTClient())
+	m[nodes] = buildInformer(nodes, &v1.Node{}, kubeClient.CoreV1().RESTClient())
 	return m
 }
 

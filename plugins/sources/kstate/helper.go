@@ -8,11 +8,23 @@ import "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metri
 func buildTags(key, name, ns string, srcTags map[string]string) map[string]string {
 	tags := make(map[string]string, len(srcTags)+2)
 	tags[key] = name
-	tags["namespace_name"] = ns
+
+	if ns != "" {
+		tags["namespace_name"] = ns
+	}
+
 	for k, v := range srcTags {
 		tags[k] = v
 	}
 	return tags
+}
+
+func copyLabels(in map[string]string, out map[string]string) {
+	for key, value := range in {
+		if len(key) > 0 && len(value) > 0 {
+			out["label."+key] = value
+		}
+	}
 }
 
 func metricPoint(prefix, name string, value float64, ts int64, source string, tags map[string]string) *metrics.MetricPoint {
