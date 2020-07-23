@@ -1,0 +1,37 @@
+---
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  # Adding the prefix a- is to make sure the psp for wavefront is the first to be used for validation
+  # PKS core has psp:restricted binds to system:authenticated which will be applied prior to wavefront-psp if no a- prefix
+  # Due to the restriction of psp:restricted, wf pod could not be deployed, and the following error message will be shown:
+  # message: container has runAsNonRoot and image will run as root
+  name: a-wavefront-psp
+spec:
+  privileged: false
+  # Required to prevent escalations to root.
+  allowPrivilegeEscalation: false
+  allowedCapabilities:
+    - '*'
+  # Allow core volume types.
+  hostNetwork: true
+  hostPorts:
+    - min: 0
+      max: 65535
+  volumes:
+    - 'secret'
+    - 'hostPath'
+    # If using allowedHostPaths, hostPath volume type need to be specified
+  allowedHostPaths:
+    # wavefront-collector is referencing to the hostPath /etc/ssl/certs as ssl-certs
+    - pathPrefix: "/etc/ssl/certs"
+      readOnly: true
+  runAsUser:
+    # Require the container to run without root privileges.
+    rule: 'RunAsAny'
+  seLinux:
+    rule: 'RunAsAny'
+  supplementalGroups:
+    rule: 'RunAsAny'
+  fsGroup:
+    rule: 'RunAsAny'

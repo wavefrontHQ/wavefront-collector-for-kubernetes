@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    k8s-app: wavefront-proxy
+    name: wavefront-proxy
+  name: wavefront-proxy
+  namespace: pks-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: wavefront-proxy
+  template:
+    metadata:
+      labels:
+        k8s-app: wavefront-proxy
+    spec:
+      serviceAccountName: wavefront-collector
+      containers:
+      - name: wavefront-proxy
+        image: wavefronthq/proxy:8.2
+        imagePullPolicy: Always
+        env:
+        - name: WAVEFRONT_URL
+          value: https://try.wavefront.com/api/
+        - name: WAVEFRONT_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: wavefront-secret
+              key: wavefront-token
+        ports:
+        - containerPort: 2878
+          protocol: TCP
+        securityContext:
+          privileged: false
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wavefront-proxy
+  namespace: pks-system
+  labels:
+    k8s-app: wavefront-proxy
+spec:
+  ports:
+  - name: http-metrics
+    port: 2878
+    targetPort: 2878
+    protocol: TCP
+  selector:
+    k8s-app: wavefront-proxy
