@@ -139,7 +139,7 @@ Discovery rules specified in the main config and via runtime configs are combine
 
 The `discovery_interval` controls how often runtime config changes are evaluated. This is pertinent as runtime changes requires the collector to re-evaluate all pods/services for discovery/data collection.
 
-See the reference [example](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/deploy/examples/memcached-runtime-config.yaml) for details.
+See the reference [example](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/deploy/examples/runtime/memcached-runtime-config.yaml) for details.
 
 ## Use Cases
 Together, annotation and rule based discovery can be used to easily collect metrics from the Kubernetes control plane (apiserver, etcd, dns etc), NGINX ingresses, and any application that exposes a Prometheus scrape endpoint.
