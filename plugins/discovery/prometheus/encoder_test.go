@@ -91,7 +91,7 @@ func TestEncode(t *testing.T) {
 
 	resName := discovery.ResourceName(discovery.PodType.String(), pod.ObjectMeta)
 	assert.Equal(t, fmt.Sprintf("https://%s:9102/prometheus", pod.Status.PodIP), pcfg.URL)
-	assert.Equal(t, resName+":9102", pcfg.Name)
+	assert.Equal(t, resName+":9102/prometheus", pcfg.Name)
 	assert.Equal(t, "rule", pcfg.Discovered)
 	assert.Equal(t, "test", pcfg.Source)
 	assert.Equal(t, "test.", pcfg.Prefix)
@@ -120,7 +120,7 @@ tls_config:
 	pcfg = promCfg.(configuration.PrometheusSourceConfig)
 
 	assert.Equal(t, fmt.Sprintf("https://%s:9103/path", pod.Status.PodIP), pcfg.URL)
-	assert.Equal(t, resName+":9103", pcfg.Name)
+	assert.Equal(t, resName+":9103/path", pcfg.Name)
 	assert.Equal(t, "rule", pcfg.Discovered)
 	assert.Equal(t, "test", pcfg.Source)
 	assert.Equal(t, "foo.", pcfg.Prefix)
