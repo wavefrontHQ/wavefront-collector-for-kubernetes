@@ -63,7 +63,7 @@ type sinkManager struct {
 }
 
 func NewSinkManager(sinks []wavefront.WavefrontSink, exportDataTimeout, stopTimeout time.Duration) (wavefront.WavefrontSink, error) {
-	sinkHolders := []sinkHolder{}
+	var sinkHolders []sinkHolder
 	for _, sink := range sinks {
 		sh := sinkHolder{
 			sink:              sink,
@@ -97,9 +97,9 @@ func NewSinkManager(sinks []wavefront.WavefrontSink, exportDataTimeout, stopTime
 }
 
 // Guarantees that the export will complete in sinkExportDataTimeout.
-func (this *sinkManager) ExportData(data *metrics.DataBatch) {
+func (sm *sinkManager) ExportData(data *metrics.DataBatch) {
 	var wg sync.WaitGroup
-	for _, sh := range this.sinkHolders {
+	for _, sh := range sm.sinkHolders {
 		wg.Add(1)
 		go func(sh sinkHolder, wg *sync.WaitGroup) {
 			defer wg.Done()
@@ -108,7 +108,7 @@ func (this *sinkManager) ExportData(data *metrics.DataBatch) {
 			case sh.dataBatchChannel <- data:
 				log.WithField("name", sh.sink.Name()).Info("Data push complete")
 				// everything ok
-			case <-time.After(this.exportDataTimeout):
+			case <-time.After(sm.exportDataTimeout):
 				sinkTimeouts.Inc(1)
 				log.WithField("name", sh.sink.Name()).Info("Data push timed out. Increasing sinkExportDataTimeout may help.")
 			}
@@ -118,9 +118,9 @@ func (this *sinkManager) ExportData(data *metrics.DataBatch) {
 	wg.Wait()
 }
 
-func (this *sinkManager) ExportEvent(event *events.Event) {
+func (sm *sinkManager) ExportEvent(event *events.Event) {
 	var wg sync.WaitGroup
-	for _, sh := range this.sinkHolders {
+	for _, sh := range sm.sinkHolders {
 		wg.Add(1)
 		go func(sh sinkHolder, wg *sync.WaitGroup) {
 			defer wg.Done()
@@ -129,7 +129,7 @@ func (this *sinkManager) ExportEvent(event *events.Event) {
 			case sh.eventBatchChannel <- event:
 				log.WithField("name", sh.sink.Name()).Debug("Events push complete")
 				// everything ok
-			case <-time.After(this.exportDataTimeout):
+			case <-time.After(sm.exportDataTimeout):
 				sinkTimeouts.Inc(1)
 				log.WithField("name", sh.sink.Name()).Info("Events push failed")
 			}
@@ -139,12 +139,12 @@ func (this *sinkManager) ExportEvent(event *events.Event) {
 	wg.Wait()
 }
 
-func (this *sinkManager) Name() string {
+func (sm *sinkManager) Name() string {
 	return "Manager"
 }
 
-func (this *sinkManager) Stop() {
-	for _, sh := range this.sinkHolders {
+func (sm *sinkManager) Stop() {
+	for _, sh := range sm.sinkHolders {
 		log.Infof("Running stop for: %s", sh.sink.Name())
 
 		go func(sh sinkHolder) {
@@ -153,7 +153,7 @@ func (this *sinkManager) Stop() {
 				// everything ok
 				log.Infof("Stop sent to sink: %s", sh.sink.Name())
 
-			case <-time.After(this.stopTimeout):
+			case <-time.After(sm.stopTimeout):
 				log.Warningf("Failed to stop sink: %s", sh.sink.Name())
 			}
 			return

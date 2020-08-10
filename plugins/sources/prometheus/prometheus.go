@@ -5,12 +5,11 @@ package prometheus
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"math"
 	"net/http"
-	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -49,7 +48,6 @@ type prometheusMetricsSource struct {
 	prefix     string
 	source     string
 	tags       map[string]string
-	buf        *bytes.Buffer
 	filters    filter.Filter
 	client     *http.Client
 	pps        gometrics.Counter
@@ -76,7 +74,6 @@ func NewPrometheusMetricsSource(metricsURL, prefix, source, discovered string, t
 		prefix:           prefix,
 		source:           source,
 		tags:             tags,
-		buf:              bytes.NewBufferString(""),
 		filters:          filters,
 		client:           client,
 		pps:              gometrics.GetOrRegisterCounter(ppsKey, gometrics.DefaultRegistry),
@@ -143,16 +140,16 @@ func (src *prometheusMetricsSource) ScrapeMetrics() (*metrics.DataBatch, error) 
 		return nil, fmt.Errorf("error retrieving prometheus metrics from %s", src.metricsURL)
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
+	points, err := src.parseMetrics(bufio.NewReader(resp.Body))
 	if err != nil {
 		collectErrors.Inc(1)
 		src.eps.Inc(1)
-		return nil, err
-	}
-	points, err := src.parseMetrics(body, resp.Header)
-	if err != nil {
-		collectErrors.Inc(1)
-		src.eps.Inc(1)
+
+		// read the body in full to prevent memory leak
+		_, copyErr := io.Copy(ioutil.Discard, resp.Body)
+		if copyErr != nil {
+			log.Errorf("error discarding response body: %v", copyErr)
+		}
 		return result, err
 	}
 	result.MetricPoints = points
@@ -162,15 +159,8 @@ func (src *prometheusMetricsSource) ScrapeMetrics() (*metrics.DataBatch, error) 
 	return result, nil
 }
 
-func (src *prometheusMetricsSource) parseMetrics(buf []byte, header http.Header) ([]*metrics.MetricPoint, error) {
+func (src *prometheusMetricsSource) parseMetrics(reader io.Reader) ([]*metrics.MetricPoint, error) {
 	var parser expfmt.TextParser
-
-	// parse even if the buffer begins with a newline
-	buf = bytes.TrimPrefix(buf, []byte("\n"))
-	// Read raw data
-	buffer := bytes.NewBuffer(buf)
-	reader := bufio.NewReader(buffer)
-
 	metricFamilies, err := parser.TextToMetricFamilies(reader)
 	if err != nil {
 		log.Errorf("reading text format failed: %s", err)
@@ -199,8 +189,6 @@ func (src *prometheusMetricsSource) buildPoints(metricFamilies map[string]*dto.M
 
 			for _, point := range points {
 				if src.isValidMetric(point.Metric, point.Tags) {
-					point.StrTags = src.encodeTags(point.Tags)
-					point.Tags = nil
 					result = append(result, point)
 				}
 			}
@@ -225,17 +213,17 @@ func (src *prometheusMetricsSource) buildPoint(name string, m *dto.Metric, now i
 	var result []*metrics.MetricPoint
 	if m.Gauge != nil {
 		if !math.IsNaN(m.GetGauge().GetValue()) {
-			point := src.metricPoint(name+".gauge", float64(m.GetGauge().GetValue()), now, src.source, tags)
+			point := src.metricPoint(name+".gauge", m.GetGauge().GetValue(), now, src.source, tags)
 			result = append(result, point)
 		}
 	} else if m.Counter != nil {
 		if !math.IsNaN(m.GetCounter().GetValue()) {
-			point := src.metricPoint(name+".counter", float64(m.GetCounter().GetValue()), now, src.source, tags)
+			point := src.metricPoint(name+".counter", m.GetCounter().GetValue(), now, src.source, tags)
 			result = append(result, point)
 		}
 	} else if m.Untyped != nil {
 		if !math.IsNaN(m.GetUntyped().GetValue()) {
-			point := src.metricPoint(name+".value", float64(m.GetUntyped().GetValue()), now, src.source, tags)
+			point := src.metricPoint(name+".value", m.GetUntyped().GetValue(), now, src.source, tags)
 			result = append(result, point)
 		}
 	}
@@ -248,13 +236,13 @@ func (src *prometheusMetricsSource) buildQuantiles(name string, m *dto.Metric, n
 	for _, q := range m.GetSummary().Quantile {
 		if !math.IsNaN(q.GetValue()) {
 			newTags := combineTags(tags, "quantile", fmt.Sprintf("%v", q.GetQuantile()))
-			point := src.metricPoint(name, float64(q.GetValue()), now, src.source, newTags)
+			point := src.metricPoint(name, q.GetValue(), now, src.source, newTags)
 			result = append(result, point)
 		}
 	}
 	point := src.metricPoint(name+".count", float64(m.GetSummary().GetSampleCount()), now, src.source, tags)
 	result = append(result, point)
-	point = src.metricPoint(name+".sum", float64(m.GetSummary().GetSampleSum()), now, src.source, tags)
+	point = src.metricPoint(name+".sum", m.GetSummary().GetSampleSum(), now, src.source, tags)
 	result = append(result, point)
 
 	return result
@@ -271,7 +259,7 @@ func (src *prometheusMetricsSource) buildHistos(name string, m *dto.Metric, now 
 	}
 	point := src.metricPoint(name+".count", float64(m.GetHistogram().GetSampleCount()), now, src.source, tags)
 	result = append(result, point)
-	point = src.metricPoint(name+".sum", float64(m.GetHistogram().GetSampleSum()), now, src.source, tags)
+	point = src.metricPoint(name+".sum", m.GetHistogram().GetSampleSum(), now, src.source, tags)
 	result = append(result, point)
 	return result
 }
@@ -292,19 +280,6 @@ func (src *prometheusMetricsSource) buildTags(m *dto.Metric) map[string]string {
 		}
 	}
 	return tags
-}
-
-func (src *prometheusMetricsSource) encodeTags(tags map[string]string) string {
-	src.buf.Reset()
-	for k, v := range tags {
-		if len(v) > 0 {
-			src.buf.WriteString(" ")
-			src.buf.WriteString(url.QueryEscape(k))
-			src.buf.WriteString("=")
-			src.buf.WriteString(url.QueryEscape(v))
-		}
-	}
-	return src.buf.String()
 }
 
 func (src *prometheusMetricsSource) isValidMetric(name string, tags map[string]string) bool {
