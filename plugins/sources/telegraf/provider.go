@@ -152,6 +152,7 @@ func NewProvider(cfg configuration.TelegrafSourceConfig) (metrics.MetricsSourceP
 	filters := filter.FromConfig(cfg.Filters)
 	tags := cfg.Tags
 	discovered := cfg.Discovered
+	hostPlugin := true
 
 	var sources []metrics.MetricsSource
 	for _, name := range plugins {
@@ -165,6 +166,7 @@ func NewProvider(cfg configuration.TelegrafSourceConfig) (metrics.MetricsSourceP
 				}
 			}
 			sources = append(sources, newTelegrafPluginSource(name, plugin, prefix, tags, filters, discovered))
+			hostPlugin = hostPlugin && (pluginType(name) == "telegraf_host")
 		} else {
 			log.Errorf("telegraf plugin %s not found", name)
 			var availablePlugins []string
@@ -184,7 +186,7 @@ func NewProvider(cfg configuration.TelegrafSourceConfig) (metrics.MetricsSourceP
 	}
 
 	// use leader election if static source (not discovered) and is not a host plugin
-	useLeaderElection := cfg.UseLeaderElection || (cfg.Discovered == "" && cfg.Conf != "")
+	useLeaderElection := cfg.UseLeaderElection || (cfg.Discovered == "" && !hostPlugin)
 
 	return &telegrafProvider{
 		name:              name,
