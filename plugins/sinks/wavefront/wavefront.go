@@ -87,7 +87,9 @@ func (sink *wavefrontSink) sendPoint(metricName string, value float64, ts int64,
 	}
 	if sink.filters != nil && !sink.filters.Match(metricName, tags) {
 		filteredPoints.Inc(1)
-		log.WithField("name", metricName).Trace("Dropping metric")
+		if log.IsLevelEnabled(log.TraceLevel) {
+			log.WithField("name", metricName).Trace("Dropping metric")
+		}
 		return
 	}
 

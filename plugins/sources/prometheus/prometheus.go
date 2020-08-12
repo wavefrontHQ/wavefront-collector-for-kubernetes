@@ -287,7 +287,9 @@ func (src *prometheusMetricsSource) isValidMetric(name string, tags map[string]s
 		return true
 	}
 	filteredPoints.Inc(1)
-	log.Tracef("dropping metric: %s", name)
+	if log.IsLevelEnabled(log.TraceLevel) {
+		log.Tracef("dropping metric: %s", name)
+	}
 	return false
 }
 
