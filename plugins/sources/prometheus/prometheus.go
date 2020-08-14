@@ -172,21 +172,18 @@ func (src *prometheusMetricsSource) buildPoints(metricFamilies map[string]*dto.M
 	now := time.Now().Unix()
 	var result []*metrics.MetricPoint
 
-	log.Infof("filterAppend enabled")
-
 	for metricName, mf := range metricFamilies {
 		for _, m := range mf.Metric {
-			tags := src.buildTags(m)
 			var points []*metrics.MetricPoint
 			if mf.GetType() == dto.MetricType_SUMMARY {
 				// summary point
-				points = src.buildQuantiles(metricName, m, now, tags)
+				points = src.buildQuantiles(metricName, m, now, src.buildTags(m))
 			} else if mf.GetType() == dto.MetricType_HISTOGRAM {
 				// histogram point
-				points = src.buildHistos(metricName, m, now, tags)
+				points = src.buildHistos(metricName, m, now, src.buildTags(m))
 			} else {
 				// standard point
-				points = src.buildPoint(metricName, m, now, tags)
+				points = src.buildPoint(metricName, m, now)
 			}
 
 			if len(points) > 0 {
@@ -208,30 +205,40 @@ func (src *prometheusMetricsSource) metricPoint(name string, value float64, ts i
 	}
 }
 
-func (src *prometheusMetricsSource) filterAppend(slice []*metrics.MetricPoint, point *metrics.MetricPoint) []*metrics.MetricPoint {
+func (src *prometheusMetricsSource) filterAppend(slice []*metrics.MetricPoint, point *metrics.MetricPoint, m *dto.Metric) []*metrics.MetricPoint {
+	// check whether we can avoid creating tags till after filtering.
+	// basically if only metric name based filters are configured on the source
+	// perform the filtering decision first and then create the tags
+	if point.Tags == nil && (src.filters == nil || src.filters.UsesTags()) {
+		point.Tags = src.buildTags(m)
+	}
+
 	if src.isValidMetric(point.Metric, point.Tags) {
+		if point.Tags == nil {
+			point.Tags = src.buildTags(m)
+		}
 		return append(slice, point)
 	}
 	return slice
 }
 
 // Get name and value from metric
-func (src *prometheusMetricsSource) buildPoint(name string, m *dto.Metric, now int64, tags map[string]string) []*metrics.MetricPoint {
+func (src *prometheusMetricsSource) buildPoint(name string, m *dto.Metric, now int64) []*metrics.MetricPoint {
 	var result []*metrics.MetricPoint
 	if m.Gauge != nil {
 		if !math.IsNaN(m.GetGauge().GetValue()) {
-			point := src.metricPoint(name+".gauge", m.GetGauge().GetValue(), now, src.source, tags)
-			result = src.filterAppend(result, point)
+			point := src.metricPoint(name+".gauge", m.GetGauge().GetValue(), now, src.source, nil)
+			result = src.filterAppend(result, point, m)
 		}
 	} else if m.Counter != nil {
 		if !math.IsNaN(m.GetCounter().GetValue()) {
-			point := src.metricPoint(name+".counter", m.GetCounter().GetValue(), now, src.source, tags)
-			result = src.filterAppend(result, point)
+			point := src.metricPoint(name+".counter", m.GetCounter().GetValue(), now, src.source, nil)
+			result = src.filterAppend(result, point, m)
 		}
 	} else if m.Untyped != nil {
 		if !math.IsNaN(m.GetUntyped().GetValue()) {
-			point := src.metricPoint(name+".value", m.GetUntyped().GetValue(), now, src.source, tags)
-			result = src.filterAppend(result, point)
+			point := src.metricPoint(name+".value", m.GetUntyped().GetValue(), now, src.source, nil)
+			result = src.filterAppend(result, point, m)
 		}
 	}
 	return result
@@ -244,13 +251,13 @@ func (src *prometheusMetricsSource) buildQuantiles(name string, m *dto.Metric, n
 		if !math.IsNaN(q.GetValue()) {
 			newTags := combineTags(tags, "quantile", fmt.Sprintf("%v", q.GetQuantile()))
 			point := src.metricPoint(name, q.GetValue(), now, src.source, newTags)
-			result = src.filterAppend(result, point)
+			result = src.filterAppend(result, point, m)
 		}
 	}
 	point := src.metricPoint(name+".count", float64(m.GetSummary().GetSampleCount()), now, src.source, tags)
-	result = src.filterAppend(result, point)
+	result = src.filterAppend(result, point, m)
 	point = src.metricPoint(name+".sum", m.GetSummary().GetSampleSum(), now, src.source, tags)
-	result = src.filterAppend(result, point)
+	result = src.filterAppend(result, point, m)
 
 	return result
 }
@@ -262,12 +269,12 @@ func (src *prometheusMetricsSource) buildHistos(name string, m *dto.Metric, now 
 	for _, b := range m.GetHistogram().Bucket {
 		newTags := combineTags(tags, "le", fmt.Sprintf("%v", b.GetUpperBound()))
 		point := src.metricPoint(histName, float64(b.GetCumulativeCount()), now, src.source, newTags)
-		result = src.filterAppend(result, point)
+		result = src.filterAppend(result, point, m)
 	}
 	point := src.metricPoint(name+".count", float64(m.GetHistogram().GetSampleCount()), now, src.source, tags)
-	result = src.filterAppend(result, point)
+	result = src.filterAppend(result, point, m)
 	point = src.metricPoint(name+".sum", m.GetHistogram().GetSampleSum(), now, src.source, tags)
-	result = src.filterAppend(result, point)
+	result = src.filterAppend(result, point, m)
 	return result
 }
 
