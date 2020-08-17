@@ -132,7 +132,10 @@ func (src *prometheusMetricsSource) ScrapeMetrics() (*metrics.DataBatch, error) 
 		src.eps.Inc(1)
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		io.Copy(ioutil.Discard, resp.Body)
+		resp.Body.Close()
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		collectErrors.Inc(1)
@@ -144,12 +147,6 @@ func (src *prometheusMetricsSource) ScrapeMetrics() (*metrics.DataBatch, error) 
 	if err != nil {
 		collectErrors.Inc(1)
 		src.eps.Inc(1)
-
-		// read the body in full to prevent memory leak
-		_, copyErr := io.Copy(ioutil.Discard, resp.Body)
-		if copyErr != nil {
-			log.Errorf("error discarding response body: %v", copyErr)
-		}
 		return result, err
 	}
 	result.MetricPoints = points
@@ -163,7 +160,7 @@ func (src *prometheusMetricsSource) parseMetrics(reader io.Reader) ([]*metrics.M
 	var parser expfmt.TextParser
 	metricFamilies, err := parser.TextToMetricFamilies(reader)
 	if err != nil {
-		log.Errorf("reading text format failed: %s", err)
+		return nil, fmt.Errorf("reading text format failed: %s", err)
 	}
 	return src.buildPoints(metricFamilies)
 }
