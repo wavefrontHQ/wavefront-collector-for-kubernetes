@@ -160,7 +160,7 @@ func (src *prometheusMetricsSource) parseMetrics(reader io.Reader) ([]*metrics.M
 	var parser expfmt.TextParser
 	metricFamilies, err := parser.TextToMetricFamilies(reader)
 	if err != nil {
-		return nil, fmt.Errorf("reading text format failed: %s", err)
+		log.Errorf("reading text format failed: %s", err)
 	}
 	return src.buildPoints(metricFamilies)
 }
