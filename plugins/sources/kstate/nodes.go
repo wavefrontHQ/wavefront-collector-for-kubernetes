@@ -18,18 +18,36 @@ func pointsForNode(item interface{}, transforms configuration.Transforms) []*met
 		log.Errorf("invalid type: %s", reflect.TypeOf(item).String())
 		return nil
 	}
-
 	now := time.Now().Unix()
-	points := make([]*metrics.MetricPoint, 0)
-	for _, condition := range node.Status.Conditions {
+	points := buildNodeConditions(node, transforms, now)
+	points = append(points, buildNodeTaints(node, transforms, now)...)
+	return points
+}
+
+func buildNodeConditions(node *v1.Node, transforms configuration.Transforms, ts int64) []*metrics.MetricPoint {
+	points := make([]*metrics.MetricPoint, len(node.Status.Conditions))
+	for i, condition := range node.Status.Conditions {
 		tags := buildTags("nodename", node.Name, "", transforms.Tags)
 		copyLabels(node.GetLabels(), tags)
 		tags["status"] = string(condition.Status)
 		tags["condition"] = string(condition.Type)
 
 		// add status and condition (condition.status and condition.type)
-		point := metricPoint(transforms.Prefix, "node.status.condition", nodeConditionFloat64(condition.Status), now, transforms.Source, tags)
-		points = append(points, point)
+		points[i] = metricPoint(transforms.Prefix, "node.status.condition",
+			nodeConditionFloat64(condition.Status), ts, transforms.Source, tags)
+	}
+	return points
+}
+
+func buildNodeTaints(node *v1.Node, transforms configuration.Transforms, ts int64) []*metrics.MetricPoint {
+	points := make([]*metrics.MetricPoint, len(node.Spec.Taints))
+	for i, taint := range node.Spec.Taints {
+		tags := buildTags("nodename", node.Name, "", transforms.Tags)
+		copyLabels(node.GetLabels(), tags)
+		tags["key"] = taint.Key
+		tags["value"] = taint.Value
+		tags["effect"] = string(taint.Effect)
+		points[i] = metricPoint(transforms.Prefix, "node.spec.taint", 1.0, ts, transforms.Source, tags)
 	}
 	return points
 }
