@@ -108,6 +108,7 @@ These are cluster level metrics about the state of Kubernetes objects collected 
 | HorizontalPodAutoscaler | hpa.max_replicas | Upper limit for the number of replicas to which the autoscaler can scale up. |
 | HorizontalPodAutoscaler | hpa.current_replicas | Current number of replicas of pods managed by this autoscaler, as last seen by the autoscaler. |
 | Node | node.status.condition | Status of all running nodes. |
+| Node | node.spec.taint | Node taints (one metric per node taint). |
 
 ## Prometheus Source
 Varies by scrape target.
