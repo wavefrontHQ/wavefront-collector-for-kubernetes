@@ -33,7 +33,7 @@ var (
 )
 
 func TestNewMetricName(t *testing.T) {
-	converter := fakeWavefrontConverter(t, configuration.SummaySourceConfig{})
+	converter := fakeWavefrontConverter(t, configuration.SummarySourceConfig{})
 	name := "cpu/usage"
 	mtype := "pod_container"
 	newName := converter.(*pointConverter).cleanMetricName(mtype, name)
@@ -41,7 +41,7 @@ func TestNewMetricName(t *testing.T) {
 }
 
 func TestStoreTimeseriesMultipleTimeseriesInput(t *testing.T) {
-	fakeConverter := fakeWavefrontConverter(t, configuration.SummaySourceConfig{})
+	fakeConverter := fakeWavefrontConverter(t, configuration.SummarySourceConfig{})
 	batch := generateFakeBatch()
 	count := len(batch.MetricSets)
 	data, err := fakeConverter.Process(batch)
@@ -52,7 +52,7 @@ func TestStoreTimeseriesMultipleTimeseriesInput(t *testing.T) {
 }
 
 func TestFiltering(t *testing.T) {
-	fakeConverter := fakeWavefrontConverter(t, configuration.SummaySourceConfig{
+	fakeConverter := fakeWavefrontConverter(t, configuration.SummarySourceConfig{
 		Transforms: configuration.Transforms{
 			Filters: filter.Config{
 				MetricWhitelist: []string{"kubernetes*cpu*"},
@@ -67,7 +67,7 @@ func TestFiltering(t *testing.T) {
 	assert.Equal(t, 8, len(data.MetricSets))
 	assert.Equal(t, 2, len(data.MetricPoints))
 
-	fakeConverter = fakeWavefrontConverter(t, configuration.SummaySourceConfig{
+	fakeConverter = fakeWavefrontConverter(t, configuration.SummarySourceConfig{
 		Transforms: configuration.Transforms{
 			Filters: filter.Config{
 				MetricBlacklist: []string{"kubernetes*cpu*"},
@@ -84,7 +84,7 @@ func TestFiltering(t *testing.T) {
 }
 
 func TestPrefix(t *testing.T) {
-	fakeConverter := fakeWavefrontConverter(t, configuration.SummaySourceConfig{
+	fakeConverter := fakeWavefrontConverter(t, configuration.SummarySourceConfig{
 		Transforms: configuration.Transforms{Prefix: "k8s."},
 	})
 	name := "cpu/usage"
@@ -124,7 +124,7 @@ func generateMetricSet(name string, metricType metrics.MetricType, value int64) 
 	return set
 }
 
-func fakeWavefrontConverter(t *testing.T, cfg configuration.SummaySourceConfig) metrics.DataProcessor {
+func fakeWavefrontConverter(t *testing.T, cfg configuration.SummarySourceConfig) metrics.DataProcessor {
 	converter, err := NewPointConverter(cfg, "k8s-cluster")
 	if err != nil {
 		t.Error(err)

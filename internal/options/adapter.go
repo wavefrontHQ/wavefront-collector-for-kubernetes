@@ -102,7 +102,7 @@ func addSources(cfg *configuration.Config, sources flags.Uris) {
 
 func addSummarySource(cfg *configuration.Config, uri flags.Uri) {
 	vals := uri.Val.Query()
-	summary := &configuration.SummaySourceConfig{
+	summary := &configuration.SummarySourceConfig{
 		KubeletPort:       flags.DecodeValue(vals, "kubeletPort"),
 		KubeletHttps:      flags.DecodeValue(vals, "kubeletHttps"),
 		InClusterConfig:   flags.DecodeValue(vals, "inClusterConfig"),

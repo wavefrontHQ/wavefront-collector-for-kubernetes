@@ -299,7 +299,7 @@ func getPodListerOrDie(kubeClient *kube_client.Clientset) v1listers.PodLister {
 	return podLister
 }
 
-func createKubeClientOrDie(cfg configuration.SummaySourceConfig) *kube_client.Clientset {
+func createKubeClientOrDie(cfg configuration.SummarySourceConfig) *kube_client.Clientset {
 	kubeConfig, err := kube_config.GetKubeClientConfig(cfg)
 	if err != nil {
 		log.Fatalf("Failed to get client config: %v", err)
@@ -308,7 +308,7 @@ func createKubeClientOrDie(cfg configuration.SummaySourceConfig) *kube_client.Cl
 }
 
 func createDataProcessorsOrDie(kubeClient *kube_client.Clientset, cluster string, podLister v1listers.PodLister,
-	cfg configuration.SummaySourceConfig) []metrics.DataProcessor {
+	cfg configuration.SummarySourceConfig) []metrics.DataProcessor {
 
 	labelCopier, err := util.NewLabelCopier(",", []string{}, []string{})
 	if err != nil {

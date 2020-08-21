@@ -143,7 +143,9 @@ func (er *EventRouter) addEvent(obj interface{}) {
 
 	receivedEvents.Inc(1)
 	if !er.filters.matches(tags) {
-		Log.WithField("event", e.Message).Trace("Dropping event")
+		if log.IsLevelEnabled(log.TraceLevel) {
+			Log.WithField("event", e.Message).Trace("Dropping event")
+		}
 		filteredEvents.Inc(1)
 		return
 	}
@@ -161,10 +163,6 @@ func (er *EventRouter) addEvent(obj interface{}) {
 		tags,
 		event.Type(eType),
 	))
-}
-
-func (er *EventRouter) filterEvent(tags map[string]string) bool {
-	return true
 }
 
 func newEvent(message string, ts time.Time, host string, tags map[string]string, options ...event.Option) *events.Event {

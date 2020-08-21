@@ -28,7 +28,7 @@ type pointConverter struct {
 }
 
 // NewPointConverter creates a new processor that converts summary stats data into the Wavefront point format
-func NewPointConverter(cfg configuration.SummaySourceConfig, cluster string) (metrics.DataProcessor, error) {
+func NewPointConverter(cfg configuration.SummarySourceConfig, cluster string) (metrics.DataProcessor, error) {
 	cluster = strings.TrimSpace(cluster)
 	if cluster == "" {
 		cluster = "k8s-cluster"

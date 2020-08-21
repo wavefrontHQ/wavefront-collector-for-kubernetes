@@ -38,7 +38,7 @@ const (
 	defaultInClusterConfig    = true
 )
 
-func GetKubeConfigs(cfg configuration.SummaySourceConfig) (*kube_client.Config, *KubeletClientConfig, error) {
+func GetKubeConfigs(cfg configuration.SummarySourceConfig) (*kube_client.Config, *KubeletClientConfig, error) {
 
 	kubeConfig, err := kube_config.GetKubeClientConfig(cfg)
 	if err != nil {

@@ -474,7 +474,7 @@ func (sp *summaryProvider) getNodeInfo(node *kube_api.Node) (NodeInfo, error) {
 	return info, nil
 }
 
-func NewSummaryProvider(cfg configuration.SummaySourceConfig) (MetricsSourceProvider, error) {
+func NewSummaryProvider(cfg configuration.SummarySourceConfig) (MetricsSourceProvider, error) {
 	hostIDAnnotation := ""
 
 	// create clients

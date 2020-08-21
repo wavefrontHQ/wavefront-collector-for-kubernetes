@@ -64,7 +64,7 @@ type EventsFilter struct {
 
 // SourceConfig contains configuration for various sources
 type SourceConfig struct {
-	SummaryConfig     *SummaySourceConfig          `yaml:"kubernetes_source"`
+	SummaryConfig     *SummarySourceConfig         `yaml:"kubernetes_source"`
 	PrometheusConfigs []*PrometheusSourceConfig    `yaml:"prometheus_sources"`
 	TelegrafConfigs   []*TelegrafSourceConfig      `yaml:"telegraf_sources"`
 	SystemdConfig     *SystemdSourceConfig         `yaml:"systemd_source"`
@@ -134,7 +134,7 @@ type CollectionConfig struct {
 }
 
 // Configuration options for the Kubernetes summary source
-type SummaySourceConfig struct {
+type SummarySourceConfig struct {
 	Transforms `yaml:",inline"`
 
 	Collection CollectionConfig `yaml:"collection"`
