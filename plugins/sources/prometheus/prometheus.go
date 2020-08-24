@@ -5,6 +5,7 @@ package prometheus
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -143,7 +144,14 @@ func (src *prometheusMetricsSource) ScrapeMetrics() (*metrics.DataBatch, error) 
 		return nil, fmt.Errorf("error retrieving prometheus metrics from %s", src.metricsURL)
 	}
 
-	points, err := src.parseMetrics(bufio.NewReader(resp.Body))
+	body, err := readResponse(resp.Body, resp.ContentLength)
+	if err != nil {
+		collectErrors.Inc(1)
+		src.eps.Inc(1)
+		return nil, err
+	}
+
+	points, err := src.parseMetrics(body)
 	if err != nil {
 		collectErrors.Inc(1)
 		src.eps.Inc(1)
@@ -156,8 +164,27 @@ func (src *prometheusMetricsSource) ScrapeMetrics() (*metrics.DataBatch, error) 
 	return result, nil
 }
 
-func (src *prometheusMetricsSource) parseMetrics(reader io.Reader) ([]*metrics.MetricPoint, error) {
+func readResponse(body io.ReadCloser, cLen int64) ([]byte, error) {
+	if cLen > 0 {
+		buf := bytes.NewBuffer(make([]byte, 0, cLen))
+		_, err := buf.ReadFrom(body)
+		if err != nil {
+			return nil, err
+		}
+		return buf.Bytes(), nil
+	}
+	return ioutil.ReadAll(body)
+}
+
+func (src *prometheusMetricsSource) parseMetrics(buf []byte) ([]*metrics.MetricPoint, error) {
 	var parser expfmt.TextParser
+
+	// parse even if the buffer begins with a newline
+	buf = bytes.TrimPrefix(buf, []byte("\n"))
+	// Read raw data
+	buffer := bytes.NewBuffer(buf)
+	reader := bufio.NewReader(buffer)
+
 	metricFamilies, err := parser.TextToMetricFamilies(reader)
 	if err != nil {
 		log.Errorf("reading text format failed: %s", err)
