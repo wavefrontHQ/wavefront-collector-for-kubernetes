@@ -239,7 +239,9 @@ func (src *prometheusMetricsSource) filterAppend(slice []*metrics.MetricPoint, p
 
 	if src.isValidMetric(point.Metric, point.Tags) {
 		if point.Tags == nil {
-			point.Tags = src.buildTags(m)
+			// skip allocating intermediate maps and pass label pairs and src tags directly to the sink
+			point.Labels = m.Label
+			point.SrcTags = src.tags
 		}
 		return append(slice, point)
 	}
