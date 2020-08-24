@@ -1,7 +1,6 @@
 package prometheus
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -24,7 +23,7 @@ http_request_duration_seconds_count{label="good"} 3
 func TestNoFilters(t *testing.T) {
 	src := &prometheusMetricsSource{}
 
-	points, err := src.parseMetrics(strings.NewReader(metricsStr))
+	points, err := src.parseMetrics([]byte(metricsStr))
 	if err != nil {
 		assert.FailNow(t, err.Error())
 	}
@@ -41,7 +40,7 @@ func TestMetricWhitelist(t *testing.T) {
 		filters: f,
 	}
 
-	points, err := src.parseMetrics(strings.NewReader(metricsStr))
+	points, err := src.parseMetrics([]byte(metricsStr))
 	if err != nil {
 		assert.FailNow(t, err.Error())
 	}
@@ -58,7 +57,7 @@ func TestMetricBlacklist(t *testing.T) {
 		filters: f,
 	}
 
-	points, err := src.parseMetrics(strings.NewReader(metricsStr))
+	points, err := src.parseMetrics([]byte(metricsStr))
 	if err != nil {
 		assert.FailNow(t, err.Error())
 	}
@@ -75,7 +74,7 @@ func TestMetricTagWhitelist(t *testing.T) {
 		filters: f,
 	}
 
-	points, err := src.parseMetrics(strings.NewReader(metricsStr))
+	points, err := src.parseMetrics([]byte(metricsStr))
 	if err != nil {
 		assert.FailNow(t, err.Error())
 	}
@@ -92,7 +91,7 @@ func TestMetricTagBlacklist(t *testing.T) {
 		filters: f,
 	}
 
-	points, err := src.parseMetrics(strings.NewReader(metricsStr))
+	points, err := src.parseMetrics([]byte(metricsStr))
 	if err != nil {
 		assert.FailNow(t, err.Error())
 	}
