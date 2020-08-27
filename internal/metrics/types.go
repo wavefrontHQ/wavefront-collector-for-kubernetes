@@ -22,8 +22,6 @@ package metrics
 
 import (
 	dto "github.com/prometheus/client_model/go"
-	"net/url"
-	"strings"
 	"time"
 )
 
@@ -186,7 +184,6 @@ type MetricPoint struct {
 	Labels []*dto.LabelPair
 
 	SrcTags map[string]string
-	StrTags string
 }
 
 func (m *MetricPoint) AddCustomTags(tags map[string]string) {
@@ -199,24 +196,6 @@ func (m *MetricPoint) AddCustomTags(tags map[string]string) {
 		k, v := label.GetName(), label.GetValue()
 		if len(k) > 0 && len(v) > 0 {
 			tags[k] = v
-		}
-	}
-
-	if len(m.StrTags) > 0 {
-		for _, tag := range strings.Split(m.StrTags, " ") {
-			if len(tag) > 0 {
-				s := strings.Split(tag, "=")
-				if len(s) == 2 {
-					k, v := s[0], s[1]
-					if len(v) > 0 {
-						key, _ := url.QueryUnescape(k)
-						val, _ := url.QueryUnescape(v)
-						if len(key) > 0 && len(val) > 0 {
-							tags[key] = val
-						}
-					}
-				}
-			}
 		}
 	}
 }
