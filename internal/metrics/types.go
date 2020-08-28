@@ -21,6 +21,7 @@
 package metrics
 
 import (
+	dto "github.com/prometheus/client_model/go"
 	"time"
 )
 
@@ -177,7 +178,26 @@ type MetricPoint struct {
 	Timestamp int64
 	Source    string
 	Tags      map[string]string
-	StrTags   string
+
+	// Embed Prometheus labels directly to avoid memory allocations
+	// Converted to map[string]string at sink export time
+	Labels []*dto.LabelPair
+
+	SrcTags map[string]string
+}
+
+func (m *MetricPoint) AddCustomTags(tags map[string]string) {
+	for k, v := range m.SrcTags {
+		if len(k) > 0 && len(v) > 0 {
+			tags[k] = v
+		}
+	}
+	for _, label := range m.Labels {
+		k, v := label.GetName(), label.GetValue()
+		if len(k) > 0 && len(v) > 0 {
+			tags[k] = v
+		}
+	}
 }
 
 // ProviderHandler is an interface for dynamically adding and removing MetricSourceProviders

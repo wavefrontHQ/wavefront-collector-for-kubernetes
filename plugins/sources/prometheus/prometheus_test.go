@@ -1,11 +1,12 @@
 package prometheus
 
 import (
-	"bytes"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 )
 
 var metricsStr = `
@@ -20,15 +21,13 @@ http_request_duration_seconds_count{label="good"} 3
 `
 
 func TestNoFilters(t *testing.T) {
-	src := &prometheusMetricsSource{
-		buf: bytes.NewBufferString(""),
-	}
+	src := &prometheusMetricsSource{}
 
-	metrics, err := src.parseMetrics([]byte(metricsStr), nil)
+	points, err := src.parseMetrics([]byte(metricsStr))
 	if err != nil {
 		assert.FailNow(t, err.Error())
 	}
-	assert.Equal(t, 8, len(metrics), "wrong number of metrics")
+	assert.Equal(t, 8, len(points), "wrong number of points")
 }
 
 func TestMetricWhitelist(t *testing.T) {
@@ -38,15 +37,14 @@ func TestMetricWhitelist(t *testing.T) {
 	f := filter.NewGlobFilter(cfg)
 
 	src := &prometheusMetricsSource{
-		buf:     bytes.NewBufferString(""),
 		filters: f,
 	}
 
-	metrics, err := src.parseMetrics([]byte(metricsStr), nil)
+	points, err := src.parseMetrics([]byte(metricsStr))
 	if err != nil {
 		assert.FailNow(t, err.Error())
 	}
-	assert.Equal(t, 1, len(metrics), "wrong number of metrics")
+	assert.Equal(t, 1, len(points), "wrong number of points")
 }
 
 func TestMetricBlacklist(t *testing.T) {
@@ -56,15 +54,14 @@ func TestMetricBlacklist(t *testing.T) {
 	f := filter.NewGlobFilter(cfg)
 
 	src := &prometheusMetricsSource{
-		buf:     bytes.NewBufferString(""),
 		filters: f,
 	}
 
-	metrics, err := src.parseMetrics([]byte(metricsStr), nil)
+	points, err := src.parseMetrics([]byte(metricsStr))
 	if err != nil {
 		assert.FailNow(t, err.Error())
 	}
-	assert.Equal(t, 7, len(metrics), "wrong number of metrics")
+	assert.Equal(t, 7, len(points), "wrong number of points")
 }
 
 func TestMetricTagWhitelist(t *testing.T) {
@@ -74,15 +71,14 @@ func TestMetricTagWhitelist(t *testing.T) {
 	f := filter.NewGlobFilter(cfg)
 
 	src := &prometheusMetricsSource{
-		buf:     bytes.NewBufferString(""),
 		filters: f,
 	}
 
-	metrics, err := src.parseMetrics([]byte(metricsStr), nil)
+	points, err := src.parseMetrics([]byte(metricsStr))
 	if err != nil {
 		assert.FailNow(t, err.Error())
 	}
-	assert.Equal(t, 1, len(metrics), "wrong number of metrics")
+	assert.Equal(t, 1, len(points), "wrong number of points")
 }
 
 func TestMetricTagBlacklist(t *testing.T) {
@@ -92,13 +88,24 @@ func TestMetricTagBlacklist(t *testing.T) {
 	f := filter.NewGlobFilter(cfg)
 
 	src := &prometheusMetricsSource{
-		buf:     bytes.NewBufferString(""),
 		filters: f,
 	}
 
-	metrics, err := src.parseMetrics([]byte(metricsStr), nil)
+	points, err := src.parseMetrics([]byte(metricsStr))
 	if err != nil {
 		assert.FailNow(t, err.Error())
 	}
-	assert.Equal(t, 7, len(metrics), "wrong number of metrics")
+	assert.Equal(t, 7, len(points), "wrong number of points")
+}
+
+var tempTags = map[string]string{"pod_name": "prometheus_pod_xyz", "namespace_name": "default"}
+var result *metrics.MetricPoint
+
+func BenchmarkMetricPoint(b *testing.B) {
+	src := &prometheusMetricsSource{prefix: "prefix."}
+	var r *metrics.MetricPoint
+	for i := 0; i < b.N; i++ {
+		r = src.metricPoint("http.requests.total.count", 1.0, 0, "", tempTags)
+	}
+	result = r
 }

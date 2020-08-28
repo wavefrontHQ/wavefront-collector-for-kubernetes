@@ -141,7 +141,9 @@ func (converter *pointConverter) filterAppend(slice []*metrics.MetricPoint, poin
 		return append(slice, point)
 	}
 	converter.filteredPoints.Inc(1)
-	log.WithField("name", point.Metric).Trace("Dropping metric")
+	if log.IsLevelEnabled(log.TraceLevel) {
+		log.WithField("name", point.Metric).Trace("Dropping metric")
+	}
 	return slice
 }
 

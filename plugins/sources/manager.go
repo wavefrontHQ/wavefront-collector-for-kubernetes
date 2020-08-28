@@ -300,10 +300,8 @@ func appendProvider(slice []metrics.MetricsSourceProvider, provider metrics.Metr
 		return slice
 	}
 	slice = append(slice, provider)
-	if err == nil {
-		if i, ok := provider.(metrics.ConfigurabeMetricsSourceProvider); ok {
-			i.Configure(cfg.Interval, cfg.Timeout)
-		}
+	if i, ok := provider.(metrics.ConfigurabeMetricsSourceProvider); ok {
+		i.Configure(cfg.Interval, cfg.Timeout)
 	}
 	return slice
 }

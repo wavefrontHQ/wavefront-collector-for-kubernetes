@@ -43,11 +43,13 @@ func (d *defaultEndpointHandler) Encode(resource Resource, rule PluginConfig) (s
 	ip := resource.IP
 	meta := resource.Meta
 
-	log.WithFields(log.Fields{
-		"kind":      kind,
-		"name":      meta.Name,
-		"namespace": meta.Namespace,
-	}).Debug("handling resource")
+	if log.IsLevelEnabled(log.DebugLevel) {
+		log.WithFields(log.Fields{
+			"kind":      kind,
+			"name":      meta.Name,
+			"namespace": meta.Namespace,
+		}).Debug("handling resource")
+	}
 
 	if delegate, ok := d.providers[pluginType(rule)]; ok {
 		return delegate.Encoder.Encode(ip, kind, meta, rule)

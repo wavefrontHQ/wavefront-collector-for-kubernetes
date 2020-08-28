@@ -6,7 +6,6 @@ package wavefront
 import (
 	"fmt"
 	"math/rand"
-	"net/url"
 	"os"
 	"runtime/debug"
 	"strconv"
@@ -87,7 +86,9 @@ func (sink *wavefrontSink) sendPoint(metricName string, value float64, ts int64,
 	}
 	if sink.filters != nil && !sink.filters.Match(metricName, tags) {
 		filteredPoints.Inc(1)
-		log.WithField("name", metricName).Trace("Dropping metric")
+		if log.IsLevelEnabled(log.TraceLevel) {
+			log.WithField("name", metricName).Trace("Dropping metric")
+		}
 		return
 	}
 
@@ -152,24 +153,9 @@ func (sink *wavefrontSink) send(batch *metrics.DataBatch) {
 				tags[k] = v
 			}
 		}
+		// add label pairs, string encoded tags etc
+		point.AddCustomTags(tags)
 
-		if len(point.StrTags) > 0 {
-			for _, tag := range strings.Split(point.StrTags, " ") {
-				if len(tag) > 0 {
-					s := strings.Split(tag, "=")
-					if len(s) == 2 {
-						k, v := s[0], s[1]
-						if len(v) > 0 {
-							key, _ := url.QueryUnescape(k)
-							val, _ := url.QueryUnescape(v)
-							if len(key) > 0 && len(val) > 0 {
-								tags[key] = val
-							}
-						}
-					}
-				}
-			}
-		}
 		tags["cluster"] = sink.ClusterName
 		sink.sendPoint(point.Metric, point.Value, point.Timestamp, point.Source, tags)
 	}
