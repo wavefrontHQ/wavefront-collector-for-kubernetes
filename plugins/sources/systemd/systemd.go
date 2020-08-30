@@ -426,7 +426,7 @@ func NewProvider(cfg configuration.SystemdSourceConfig) (MetricsSourceProvider, 
 	collectStartTimeMetrics := cfg.IncludeStartTimeMetrics
 	collectRestartMetrics := cfg.IncludeRestartMetrics
 
-	unitsFilter := fromConfig(cfg.UnitWhitelist, cfg.UnitBlacklist)
+	unitsFilter := fromConfig(cfg.UnitAllowList, cfg.UnitDenyList)
 	filters := filter.FromConfig(cfg.Filters)
 
 	pt := map[string]string{"type": "systemd"}

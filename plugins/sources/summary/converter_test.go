@@ -55,7 +55,7 @@ func TestFiltering(t *testing.T) {
 	fakeConverter := fakeWavefrontConverter(t, configuration.SummaySourceConfig{
 		Transforms: configuration.Transforms{
 			Filters: filter.Config{
-				MetricWhitelist: []string{"kubernetes*cpu*"},
+				MetricAllowList: []string{"kubernetes*cpu*"},
 			},
 		},
 	})
@@ -70,7 +70,7 @@ func TestFiltering(t *testing.T) {
 	fakeConverter = fakeWavefrontConverter(t, configuration.SummaySourceConfig{
 		Transforms: configuration.Transforms{
 			Filters: filter.Config{
-				MetricBlacklist: []string{"kubernetes*cpu*"},
+				MetricDenyList: []string{"kubernetes*cpu*"},
 			},
 		},
 	})

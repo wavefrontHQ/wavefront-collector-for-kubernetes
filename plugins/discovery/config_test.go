@@ -46,13 +46,13 @@ plugins:
     tags:
       env: prod
     filters:
-      metricWhitelist:
+      metricAllowList:
       - '*foo*'
       - 'bar*'
-      metricBlacklist:
+      metricDenyList:
       - 'kube.dns.go.*'
       - 'kube.dns.probe.*'
-      metricTagWhitelist:
+      metricTagAllowList:
         env:
         - 'prod1*'
         - 'prod2*'

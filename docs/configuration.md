@@ -189,12 +189,12 @@ startTimeMetrics: <true|false>
 restartMetrics: <true|false>
 
 # List of glob patterns. Metrics from matching systemd unit names are reported.
-unitWhitelist:
+unitAllowList:
 - 'docker*'
 - 'kubelet*'
 
 # List of glob patterns. Metrics from matching systemd unit names are not reported.
-unitBlacklist:
+unitDenyList:
 - '*mount*'
 - 'etc*'
 ```
@@ -214,23 +214,23 @@ tags:
 
 # Filters to be applied to metrics collected by a source or reported by sinks.
 filters:
-  # List of glob patterns. Only metrics with names matching the whitelist are reported.
-  metricWhitelist:
+  # List of glob patterns. Only metrics with names matching the list are reported.
+  metricAllowList:
   - 'kube.dns.http.*'
   - 'kube.dns.process.*'
 
-  # List of glob patterns. Metrics with names matching the blacklist are dropped.
-  metricBlacklist:
+  # List of glob patterns. Metrics with names matching the list are dropped.
+  metricDenyList:
   - 'kube.dns.go.*'
 
-  # Map of tag names to list of glob patterns. Only metrics containing tag keys and values matching the whitelist will be reported.
-  metricTagWhitelist:
+  # Map of tag names to list of glob patterns. Only metrics containing tag keys and values matching the list will be reported.
+  metricTagAllowList:
     env:
     - 'prod*'
     - 'staging*'
 
-  # Map of tag names to list of glob patterns. Metrics containing blacklisted tag keys and values will be dropped.
-  metricTagBlacklist:
+  # Map of tag names to list of glob patterns. Metrics containing these tag keys and values will be dropped.
+  metricTagDenyList:
     env:
     - 'test*'
 

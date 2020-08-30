@@ -13,7 +13,7 @@ data:
     # sample configuration to filter events
     # events:
     #   filters:
-    #     tagWhitelistSets:
+    #     tagAllowListSets:
     #     - kind:
     #       - "Pod"
     #       reason:
@@ -42,7 +42,7 @@ data:
         prefix: 'kubernetes.'
 
         filters:
-          metricBlacklist:
+          metricDenyList:
           - 'kubernetes.sys_container.*'
 
       internal_stats_source:
@@ -68,7 +68,7 @@ data:
       #   prefix: 'kube.apiserver.'
       #
       #   filters:
-      #     metricWhitelist:
+      #     metricAllowList:
       #     - 'kube.apiserver.apiserver.*'
       #     - 'kube.apiserver.etcd.*'
       #     - 'kube.apiserver.process.*'
@@ -285,7 +285,7 @@ data:
         scheme: http
         prefix: kube.dns.
         filters:
-          metricWhitelist:
+          metricAllowList:
           - 'kube.dns.http.request.duration.microseconds'
           - 'kube.dns.http.request.size.bytes'
           - 'kube.dns.http.requests.total.counter'
@@ -307,7 +307,7 @@ data:
         scheme: http
         prefix: kube.coredns.
         filters:
-          metricWhitelist:
+          metricAllowList:
           - 'kube.coredns.coredns.cache.*'
           - 'kube.coredns.coredns.dns.request.count.total.counter'
           - 'kube.coredns.coredns.dns.request.duration.seconds'

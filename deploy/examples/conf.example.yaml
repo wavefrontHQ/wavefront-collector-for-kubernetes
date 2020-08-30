@@ -19,7 +19,7 @@ data:
 
       filters:
         # Filter out infrequently used kube-state-metrics.
-        metricBlacklist:
+        metricDenyList:
         - 'kube.configmap.annotations.gauge'
         - 'kube.configmap.metadata.resource.version.gauge'
         - 'kube.endpoint.*'
@@ -67,7 +67,7 @@ data:
         prefix: 'kubernetes.'
 
         filters:
-          metricBlacklist:
+          metricDenylist:
           - 'kubernetes.sys_container.*'
 
       internal_stats_source:
@@ -100,7 +100,7 @@ data:
         prefix: 'kube.apiserver.'
 
         filters:
-          metricWhitelist:
+          metricAllowList:
           - 'kube.apiserver.apiserver.*'
           - 'kube.apiserver.etcd.*'
           - 'kube.apiserver.process.*'
@@ -317,7 +317,7 @@ data:
         scheme: http
         prefix: kube.dns.
         filters:
-          metricWhitelist:
+          metricAllowList:
           - 'kube.dns.http.request.duration.microseconds'
           - 'kube.dns.http.request.size.bytes'
           - 'kube.dns.http.requests.total.counter'
@@ -339,7 +339,7 @@ data:
         scheme: http
         prefix: kube.coredns.
         filters:
-          metricWhitelist:
+          metricAllowList:
           - 'kube.coredns.coredns.cache.*'
           - 'kube.coredns.coredns.dns.request.count.total.counter'
           - 'kube.coredns.coredns.dns.request.duration.seconds'
