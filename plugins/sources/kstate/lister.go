@@ -28,6 +28,7 @@ const (
 	daemonSets               = "daemonsets"
 	deployments              = "deployments"
 	replicaSets              = "replicasets"
+	replicationControllers   = "replicationcontrollers"
 	statefulSets             = "statefulsets"
 	jobs                     = "jobs"
 	cronJobs                 = "cronjobs"
@@ -72,6 +73,7 @@ func buildInformers(kubeClient kubernetes.Interface) map[string]cache.SharedInfo
 	m[cronJobs] = buildInformer(cronJobs, &batchv1beta1.CronJob{}, kubeClient.BatchV1beta1().RESTClient())
 	m[horizontalPodAutoscalers] = buildInformer(horizontalPodAutoscalers, &v2beta1.HorizontalPodAutoscaler{}, kubeClient.AutoscalingV2beta1().RESTClient())
 	m[nodes] = buildInformer(nodes, &v1.Node{}, kubeClient.CoreV1().RESTClient())
+	m[replicationControllers] = buildInformer(replicationControllers, &v1.ReplicationController{}, kubeClient.CoreV1().RESTClient())
 	return m
 }
 

@@ -49,6 +49,7 @@ func NewStateMetricsSource(lister *lister, transforms configuration.Transforms) 
 	funcs[daemonSets] = pointsForDaemonSet
 	funcs[deployments] = pointsForDeployment
 	funcs[replicaSets] = pointsForReplicaSet
+	funcs[replicationControllers] = pointsForReplicationController
 	funcs[statefulSets] = pointsForStatefulSet
 	funcs[horizontalPodAutoscalers] = pointsForHPA
 	funcs[nodes] = pointsForNode
