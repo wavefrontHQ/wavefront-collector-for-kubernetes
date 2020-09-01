@@ -89,6 +89,9 @@ These are cluster level metrics about the state of Kubernetes objects collected 
 | Replicaset | replicaset.desired_replicas | Number of desired replicas. |
 | Replicaset | replicaset.available_replicas | Number of available replicas (ready for at least minReadySeconds). |
 | Replicaset | replicaset.ready_replicas | Number of ready replicas. |
+| ReplicationController | replicationcontroller.desired_replicas | Number of desired replicas. |
+| ReplicationController | replicationcontroller.available_replicas | Number of available replicas (ready for at least minReadySeconds). |
+| ReplicationController | replicationcontroller.ready_replicas | Number of ready replicas. |
 | Daemonset | daemonset.desired_scheduled | Total number of nodes that should be running the daemon pod. |
 | Daemonset | daemonset.current_scheduled | Number of nodes that are running at least 1 daemon pod and are supposed to run the daemon pod. |
 | Daemonset | daemonset.misscheduled | Number of nodes that are running the daemon pod, but are not supposed to run the daemon pod. |
