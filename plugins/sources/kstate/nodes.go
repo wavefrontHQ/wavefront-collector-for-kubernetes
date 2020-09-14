@@ -21,6 +21,7 @@ func pointsForNode(item interface{}, transforms configuration.Transforms) []*met
 	now := time.Now().Unix()
 	points := buildNodeConditions(node, transforms, now)
 	points = append(points, buildNodeTaints(node, transforms, now)...)
+	points = append(points, buildNodeInfo(node, transforms, now))
 	return points
 }
 
@@ -50,6 +51,24 @@ func buildNodeTaints(node *v1.Node, transforms configuration.Transforms, ts int6
 		points[i] = metricPoint(transforms.Prefix, "node.spec.taint", 1.0, ts, transforms.Source, tags)
 	}
 	return points
+}
+
+func buildNodeInfo(node *v1.Node, transforms configuration.Transforms, ts int64) *metrics.MetricPoint {
+	tags := buildTags("nodename", node.Name, "", transforms.Tags)
+	copyLabels(node.GetLabels(), tags)
+	tags["kernel_version"] = node.Status.NodeInfo.KernelVersion
+	tags["os_image"] = node.Status.NodeInfo.OSImage
+	tags["container_runtime_version"] = node.Status.NodeInfo.ContainerRuntimeVersion
+	tags["kubelet_version"] = node.Status.NodeInfo.KubeletVersion
+	tags["kubeproxy_version"] = node.Status.NodeInfo.KubeProxyVersion
+	tags["provider_id"] = node.Spec.ProviderID
+	tags["pod_cidr"] = node.Spec.PodCIDR
+	for _, address := range node.Status.Addresses {
+		if address.Type == "InternalIP" {
+			tags["internal_ip"] = address.Address
+		}
+	}
+	return metricPoint(transforms.Prefix, "node.info", 1.0, ts, transforms.Source, tags)
 }
 
 func nodeConditionFloat64(status v1.ConditionStatus) float64 {
