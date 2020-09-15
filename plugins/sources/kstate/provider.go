@@ -29,9 +29,10 @@ type stateMetricsSource struct {
 	filters    filter.Filter
 	funcs      map[string]resourceHandler
 
-	pps gometrics.Counter
-	eps gometrics.Counter
-	fps gometrics.Counter
+	pps                  gometrics.Counter
+	eps                  gometrics.Counter
+	fps                  gometrics.Counter
+	internalMetricsNames []string
 }
 
 func NewStateMetricsSource(lister *lister, transforms configuration.Transforms) (metrics.MetricsSource, error) {
@@ -55,13 +56,14 @@ func NewStateMetricsSource(lister *lister, transforms configuration.Transforms) 
 	funcs[nodes] = pointsForNode
 
 	return &stateMetricsSource{
-		lister:     lister,
-		transforms: transforms,
-		filters:    filter.FromConfig(transforms.Filters),
-		funcs:      funcs,
-		pps:        gometrics.GetOrRegisterCounter(ppsKey, gometrics.DefaultRegistry),
-		eps:        gometrics.GetOrRegisterCounter(epsKey, gometrics.DefaultRegistry),
-		fps:        gometrics.GetOrRegisterCounter(fpsKey, gometrics.DefaultRegistry),
+		lister:               lister,
+		transforms:           transforms,
+		filters:              filter.FromConfig(transforms.Filters),
+		funcs:                funcs,
+		pps:                  gometrics.GetOrRegisterCounter(ppsKey, gometrics.DefaultRegistry),
+		eps:                  gometrics.GetOrRegisterCounter(epsKey, gometrics.DefaultRegistry),
+		fps:                  gometrics.GetOrRegisterCounter(fpsKey, gometrics.DefaultRegistry),
+		internalMetricsNames: []string{ppsKey, epsKey, fpsKey},
 	}, nil
 }
 
@@ -74,6 +76,12 @@ func getDefault(val, defaultVal string) string {
 
 func (src *stateMetricsSource) Name() string {
 	return "kstate_source"
+}
+
+func (src *stateMetricsSource) CleanUp() {
+	for _, name := range src.internalMetricsNames {
+		gometrics.Unregister(name)
+	}
 }
 
 func (src *stateMetricsSource) ScrapeMetrics() (*metrics.DataBatch, error) {

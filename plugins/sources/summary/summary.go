@@ -46,10 +46,12 @@ import (
 const VolumeResourcePrefix = "Volume:"
 
 var collectErrors gm.Counter
+var collectErrorsName string
 
 func init() {
 	pt := map[string]string{"type": "kubernetes.summary_api"}
-	collectErrors = gm.GetOrRegisterCounter(reporting.EncodeKey("source.collect.errors", pt), gm.DefaultRegistry)
+	collectErrorsName = reporting.EncodeKey("source.collect.errors", pt)
+	collectErrors = gm.GetOrRegisterCounter(collectErrorsName, gm.DefaultRegistry)
 }
 
 type NodeInfo struct {
@@ -75,6 +77,10 @@ func NewSummaryMetricsSource(node NodeInfo, client *kubelet.KubeletClient) Metri
 
 func (src *summaryMetricsSource) Name() string {
 	return src.String()
+}
+
+func (src *summaryMetricsSource) CleanUp() {
+	gm.Unregister(collectErrorsName)
 }
 
 func (src *summaryMetricsSource) String() string {

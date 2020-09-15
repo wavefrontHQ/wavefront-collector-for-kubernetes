@@ -45,14 +45,15 @@ func init() {
 }
 
 type prometheusMetricsSource struct {
-	metricsURL string
-	prefix     string
-	source     string
-	tags       map[string]string
-	filters    filter.Filter
-	client     *http.Client
-	pps        gometrics.Counter
-	eps        gometrics.Counter
+	metricsURL           string
+	prefix               string
+	source               string
+	tags                 map[string]string
+	filters              filter.Filter
+	client               *http.Client
+	pps                  gometrics.Counter
+	eps                  gometrics.Counter
+	internalMetricsNames []string
 
 	omitBucketSuffix bool
 }
@@ -71,15 +72,16 @@ func NewPrometheusMetricsSource(metricsURL, prefix, source, discovered string, t
 	omitBucketSuffix, _ := strconv.ParseBool(os.Getenv("omitBucketSuffix"))
 
 	return &prometheusMetricsSource{
-		metricsURL:       metricsURL,
-		prefix:           prefix,
-		source:           source,
-		tags:             tags,
-		filters:          filters,
-		client:           client,
-		pps:              gometrics.GetOrRegisterCounter(ppsKey, gometrics.DefaultRegistry),
-		eps:              gometrics.GetOrRegisterCounter(epsKey, gometrics.DefaultRegistry),
-		omitBucketSuffix: omitBucketSuffix,
+		metricsURL:           metricsURL,
+		prefix:               prefix,
+		source:               source,
+		tags:                 tags,
+		filters:              filters,
+		client:               client,
+		pps:                  gometrics.GetOrRegisterCounter(ppsKey, gometrics.DefaultRegistry),
+		eps:                  gometrics.GetOrRegisterCounter(epsKey, gometrics.DefaultRegistry),
+		internalMetricsNames: []string{ppsKey, epsKey},
+		omitBucketSuffix:     omitBucketSuffix,
 	}, nil
 }
 
@@ -120,6 +122,12 @@ func httpClient(metricsURL string, cfg httputil.ClientConfig) (*http.Client, err
 
 func (src *prometheusMetricsSource) Name() string {
 	return fmt.Sprintf("prometheus_source: %s", src.metricsURL)
+}
+
+func (src *prometheusMetricsSource) CleanUp() {
+	for _, name := range src.internalMetricsNames {
+		gometrics.Unregister(name)
+	}
 }
 
 func (src *prometheusMetricsSource) ScrapeMetrics() (*metrics.DataBatch, error) {

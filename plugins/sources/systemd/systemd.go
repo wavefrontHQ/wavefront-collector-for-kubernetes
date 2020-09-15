@@ -21,13 +21,14 @@ package systemd
 
 import (
 	"fmt"
-	"github.com/wavefronthq/go-metrics-wavefront/reporting"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
 	"math"
 	"os"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/wavefronthq/go-metrics-wavefront/reporting"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
@@ -50,13 +51,20 @@ type systemdMetricsSource struct {
 	unitsFilter             *unitFilter
 	filters                 filter.Filter
 
-	pps gm.Counter
-	fps gm.Counter
-	eps gm.Counter
+	pps                  gm.Counter
+	fps                  gm.Counter
+	eps                  gm.Counter
+	internalMetricsNames []string
 }
 
 func (src *systemdMetricsSource) Name() string {
 	return "systemd_metrics_source"
+}
+
+func (src *systemdMetricsSource) CleanUp() {
+	for _, name := range src.internalMetricsNames {
+		gm.Unregister(name)
+	}
 }
 
 func (src *systemdMetricsSource) ScrapeMetrics() (*DataBatch, error) {
@@ -446,6 +454,7 @@ func NewProvider(cfg configuration.SystemdSourceConfig) (MetricsSourceProvider, 
 		pps:                     gm.GetOrRegisterCounter(ppsKey, gm.DefaultRegistry),
 		fps:                     gm.GetOrRegisterCounter(fpsKey, gm.DefaultRegistry),
 		eps:                     gm.GetOrRegisterCounter(epsKey, gm.DefaultRegistry),
+		internalMetricsNames:    []string{ppsKey, fpsKey, epsKey},
 	}
 
 	return &systemdProvider{
