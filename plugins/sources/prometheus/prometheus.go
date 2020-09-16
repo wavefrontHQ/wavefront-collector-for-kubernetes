@@ -124,7 +124,7 @@ func (src *prometheusMetricsSource) Name() string {
 	return fmt.Sprintf("prometheus_source: %s", src.metricsURL)
 }
 
-func (src *prometheusMetricsSource) CleanUp() {
+func (src *prometheusMetricsSource) Cleanup() {
 	for _, name := range src.internalMetricsNames {
 		gometrics.Unregister(name)
 	}

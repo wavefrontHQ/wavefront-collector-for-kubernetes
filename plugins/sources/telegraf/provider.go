@@ -82,7 +82,7 @@ func extractTags(tags map[string]string, name, discovered string) map[string]str
 	return result
 }
 
-func (t *telegrafPluginSource) CleanUp() {
+func (t *telegrafPluginSource) Cleanup() {
 	gm.Unregister(reporting.EncodeKey("target.collect.errors", t.targetTags))
 	gm.Unregister(reporting.EncodeKey("target.collect.errors", t.targetTags))
 }

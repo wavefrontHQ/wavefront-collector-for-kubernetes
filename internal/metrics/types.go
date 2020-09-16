@@ -150,7 +150,7 @@ type DataBatch struct {
 type MetricsSource interface {
 	Name() string
 	ScrapeMetrics() (*DataBatch, error)
-	CleanUp()
+	Cleanup()
 }
 
 // Provider of list of sources to be scraped.

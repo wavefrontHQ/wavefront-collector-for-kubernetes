@@ -25,11 +25,10 @@ type internalMetricsSource struct {
 	tags    map[string]string
 	filters filter.Filter
 
-	source               string
-	zeroFilters          []string
-	pps                  gometrics.Counter
-	fps                  gometrics.Counter
-	internalMetricsNames []string
+	source      string
+	zeroFilters []string
+	pps         gometrics.Counter
+	fps         gometrics.Counter
 }
 
 func newInternalMetricsSource(prefix string, tags map[string]string, filters filter.Filter) (metrics.MetricsSource, error) {
@@ -52,11 +51,10 @@ func newInternalMetricsSource(prefix string, tags map[string]string, filters fil
 		tags:    tags,
 		filters: filters,
 
-		zeroFilters:          zeroFilters,
-		source:               getDefault(util.GetNodeName(), "wavefront-collector-for-kubernetes"),
-		pps:                  gometrics.GetOrRegisterCounter(ppsKey, gometrics.DefaultRegistry),
-		fps:                  gometrics.GetOrRegisterCounter(fpsKey, gometrics.DefaultRegistry),
-		internalMetricsNames: []string{ppsKey, fpsKey},
+		zeroFilters: zeroFilters,
+		source:      getDefault(util.GetNodeName(), "wavefront-collector-for-kubernetes"),
+		pps:         gometrics.GetOrRegisterCounter(ppsKey, gometrics.DefaultRegistry),
+		fps:         gometrics.GetOrRegisterCounter(fpsKey, gometrics.DefaultRegistry),
 	}, nil
 }
 
@@ -71,11 +69,7 @@ func (src *internalMetricsSource) Name() string {
 	return "internal_stats_source"
 }
 
-func (src *internalMetricsSource) CleanUp() {
-	for _, name := range src.internalMetricsNames {
-		gometrics.Unregister(name)
-	}
-}
+func (src *internalMetricsSource) Cleanup() {}
 
 func (src *internalMetricsSource) ScrapeMetrics() (*metrics.DataBatch, error) {
 	return src.internalStats()

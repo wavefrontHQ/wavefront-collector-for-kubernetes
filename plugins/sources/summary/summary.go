@@ -79,7 +79,7 @@ func (src *summaryMetricsSource) Name() string {
 	return src.String()
 }
 
-func (src *summaryMetricsSource) CleanUp() {
+func (src *summaryMetricsSource) Cleanup() {
 	gm.Unregister(collectErrorsName)
 }
 

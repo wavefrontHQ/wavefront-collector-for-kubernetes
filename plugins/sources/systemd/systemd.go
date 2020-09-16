@@ -51,21 +51,16 @@ type systemdMetricsSource struct {
 	unitsFilter             *unitFilter
 	filters                 filter.Filter
 
-	pps                  gm.Counter
-	fps                  gm.Counter
-	eps                  gm.Counter
-	internalMetricsNames []string
+	pps gm.Counter
+	fps gm.Counter
+	eps gm.Counter
 }
 
 func (src *systemdMetricsSource) Name() string {
 	return "systemd_metrics_source"
 }
 
-func (src *systemdMetricsSource) CleanUp() {
-	for _, name := range src.internalMetricsNames {
-		gm.Unregister(name)
-	}
-}
+func (src *systemdMetricsSource) Cleanup() {}
 
 func (src *systemdMetricsSource) ScrapeMetrics() (*DataBatch, error) {
 	// gathers metrics from systemd using dbus. collection is done in parallel to reduce wait time for responses.
@@ -454,7 +449,6 @@ func NewProvider(cfg configuration.SystemdSourceConfig) (MetricsSourceProvider, 
 		pps:                     gm.GetOrRegisterCounter(ppsKey, gm.DefaultRegistry),
 		fps:                     gm.GetOrRegisterCounter(fpsKey, gm.DefaultRegistry),
 		eps:                     gm.GetOrRegisterCounter(epsKey, gm.DefaultRegistry),
-		internalMetricsNames:    []string{ppsKey, fpsKey, epsKey},
 	}
 
 	return &systemdProvider{
