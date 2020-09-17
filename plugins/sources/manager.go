@@ -166,11 +166,8 @@ func (sm *sourceManagerImpl) AddProvider(provider metrics.MetricsSourceProvider)
 }
 
 func (sm *sourceManagerImpl) DeleteProvider(name string) {
-	if provider, found := sm.metricsSourceProviders[name]; found {
-		for _, source := range provider.GetMetricsSources() {
-			source.Cleanup()
-		}
-	} else {
+	provider, found := sm.metricsSourceProviders[name]
+	if !found {
 		log.Debugf("Metrics Source Provider '%s' not found", name)
 		return
 	}
@@ -187,6 +184,11 @@ func (sm *sourceManagerImpl) DeleteProvider(name string) {
 		close(quit)
 		delete(sm.metricsSourceQuits, name)
 	}
+
+	for _, source := range provider.GetMetricsSources() {
+		source.Cleanup()
+	}
+
 	log.WithField("name", name).Info("Deleted provider")
 }
 
