@@ -5,9 +5,10 @@ package telegraf
 
 import (
 	"fmt"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/leadership"
 	"strings"
 	"time"
+
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/leadership"
 
 	"github.com/influxdata/telegraf"
 	telegrafPlugins "github.com/influxdata/telegraf/plugins/inputs"
@@ -33,8 +34,10 @@ type telegrafPluginSource struct {
 	pointsCollected gm.Counter
 	pointsFiltered  gm.Counter
 	errors          gm.Counter
-	targetPPS       gm.Counter
-	targetEPS       gm.Counter
+
+	targetTags map[string]string
+	targetPPS  gm.Counter
+	targetEPS  gm.Counter
 }
 
 func newTelegrafPluginSource(name string, plugin telegraf.Input, prefix string, tags map[string]string, filters filter.Filter, discovered string) *telegrafPluginSource {
@@ -56,9 +59,9 @@ func newTelegrafPluginSource(name string, plugin telegraf.Input, prefix string, 
 		errors:          gm.GetOrRegisterCounter(errors, gm.DefaultRegistry),
 	}
 	if discovered != "" {
-		pt = extractTags(tags, pluginType, discovered)
-		tsp.targetPPS = gm.GetOrRegisterCounter(reporting.EncodeKey("target.points.collected", pt), gm.DefaultRegistry)
-		tsp.targetEPS = gm.GetOrRegisterCounter(reporting.EncodeKey("target.collect.errors", pt), gm.DefaultRegistry)
+		tsp.targetTags = extractTags(tags, pluginType, discovered)
+		tsp.targetPPS = gm.GetOrRegisterCounter(reporting.EncodeKey("target.points.collected", tsp.targetTags), gm.DefaultRegistry)
+		tsp.targetEPS = gm.GetOrRegisterCounter(reporting.EncodeKey("target.collect.errors", tsp.targetTags), gm.DefaultRegistry)
 	}
 	return tsp
 }
@@ -77,6 +80,11 @@ func extractTags(tags map[string]string, name, discovered string) map[string]str
 	}
 	result["type"] = name
 	return result
+}
+
+func (t *telegrafPluginSource) Cleanup() {
+	gm.Unregister(reporting.EncodeKey("target.collect.errors", t.targetTags))
+	gm.Unregister(reporting.EncodeKey("target.collect.errors", t.targetTags))
 }
 
 func (t *telegrafPluginSource) Name() string {

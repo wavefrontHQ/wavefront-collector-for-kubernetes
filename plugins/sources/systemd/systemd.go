@@ -21,13 +21,14 @@ package systemd
 
 import (
 	"fmt"
-	"github.com/wavefronthq/go-metrics-wavefront/reporting"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
 	"math"
 	"os"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/wavefronthq/go-metrics-wavefront/reporting"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
@@ -58,6 +59,8 @@ type systemdMetricsSource struct {
 func (src *systemdMetricsSource) Name() string {
 	return "systemd_metrics_source"
 }
+
+func (src *systemdMetricsSource) Cleanup() {}
 
 func (src *systemdMetricsSource) ScrapeMetrics() (*DataBatch, error) {
 	// gathers metrics from systemd using dbus. collection is done in parallel to reduce wait time for responses.

@@ -21,8 +21,9 @@
 package metrics
 
 import (
-	dto "github.com/prometheus/client_model/go"
 	"time"
+
+	dto "github.com/prometheus/client_model/go"
 )
 
 type MetricType int8
@@ -149,6 +150,7 @@ type DataBatch struct {
 type MetricsSource interface {
 	Name() string
 	ScrapeMetrics() (*DataBatch, error)
+	Cleanup()
 }
 
 // Provider of list of sources to be scraped.

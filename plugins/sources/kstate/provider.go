@@ -76,6 +76,8 @@ func (src *stateMetricsSource) Name() string {
 	return "kstate_source"
 }
 
+func (src *stateMetricsSource) Cleanup() {}
+
 func (src *stateMetricsSource) ScrapeMetrics() (*metrics.DataBatch, error) {
 	result := &metrics.DataBatch{
 		Timestamp: time.Now(),

@@ -5,10 +5,11 @@ package stats
 
 import (
 	"fmt"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/leadership"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/leadership"
 
 	gometrics "github.com/rcrowley/go-metrics"
 	"github.com/wavefronthq/go-metrics-wavefront/reporting"
@@ -67,6 +68,8 @@ func getDefault(val, defaultVal string) string {
 func (src *internalMetricsSource) Name() string {
 	return "internal_stats_source"
 }
+
+func (src *internalMetricsSource) Cleanup() {}
 
 func (src *internalMetricsSource) ScrapeMetrics() (*metrics.DataBatch, error) {
 	return src.internalStats()

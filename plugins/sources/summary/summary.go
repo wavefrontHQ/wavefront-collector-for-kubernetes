@@ -77,6 +77,8 @@ func (src *summaryMetricsSource) Name() string {
 	return src.String()
 }
 
+func (src *summaryMetricsSource) Cleanup() {}
+
 func (src *summaryMetricsSource) String() string {
 	return fmt.Sprintf("kubelet_summary:%s:%d", src.node.IP, src.node.Port)
 }

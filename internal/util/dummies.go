@@ -87,6 +87,8 @@ func (dummy *DummyMetricsSource) Name() string {
 	return dummy.name
 }
 
+func (src *DummyMetricsSource) Cleanup() {}
+
 func (dummy *DummyMetricsSource) ScrapeMetrics() (*metrics.DataBatch, error) {
 	time.Sleep(dummy.latency)
 
