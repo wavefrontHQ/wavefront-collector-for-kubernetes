@@ -46,7 +46,7 @@ func newDiscoverer(handler metrics.ProviderHandler, discoveryCfg discovery.Confi
 		lister:          lister,
 		delegates:       makeDelegates(discoveryCfg),
 		ruleCount:       gm.GetOrRegisterGauge("discovery.rules.count", gm.DefaultRegistry),
-		endpoints:       make(map[string][]*discovery.Endpoint),
+		endpoints:       make(map[string][]*discovery.Endpoint, 32),
 		endpointHandler: discovery.NewEndpointHandler(makeProviders(handler, discoveryCfg)),
 	}
 	d.ruleCount.Update(int64(len(d.delegates)))
