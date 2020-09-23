@@ -68,7 +68,7 @@ func (r *resourceFilter) matches(resource discovery.Resource) bool {
 		return false
 	}
 	if r.images != nil {
-		for _, container := range resource.PodSpec.Containers {
+		for _, container := range resource.Containers {
 			if r.images.Match(container.Image) {
 				return true
 			}

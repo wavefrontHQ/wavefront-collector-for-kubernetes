@@ -43,8 +43,8 @@ type Resource struct {
 	Meta   metav1.ObjectMeta
 	Status string
 
-	PodSpec     v1.PodSpec
-	ServiceSpec v1.ServiceSpec
+	// list of containers for a pod resource
+	Containers []v1.Container
 }
 
 // Discoverer discovers endpoints from resources based on rules or annotations

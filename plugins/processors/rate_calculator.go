@@ -18,6 +18,9 @@
 package processors
 
 import (
+	"sync"
+	"time"
+
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 
 	log "github.com/sirupsen/logrus"
@@ -25,7 +28,11 @@ import (
 
 type RateCalculator struct {
 	rateMetricsMapping map[string]metrics.Metric
+
+	lock               sync.Mutex
 	previousMetricSets map[string]*metrics.MetricSet
+	cachePruneInterval time.Duration
+	lastPruneTime      time.Time
 }
 
 func (rc *RateCalculator) Name() string {
@@ -33,6 +40,9 @@ func (rc *RateCalculator) Name() string {
 }
 
 func (rc *RateCalculator) Process(batch *metrics.DataBatch) (*metrics.DataBatch, error) {
+	rc.lock.Lock()
+	defer rc.lock.Unlock()
+
 	for key, newMs := range batch.MetricSets {
 		oldMs, found := rc.previousMetricSets[key]
 		if !found {
@@ -120,12 +130,28 @@ func (rc *RateCalculator) Process(batch *metrics.DataBatch) (*metrics.DataBatch,
 		}
 		rc.previousMetricSets[key] = newMs
 	}
+
+	// periodically prune deleted pods, containers etc from the internal cache
+	log.Debugf("rate cache size: %d", len(rc.previousMetricSets))
+	if rc.lastPruneTime.Before(time.Now().Add(-1 * rc.cachePruneInterval)) {
+		log.Infof("pruning rate cache. cache size: %d lastPruneTime: %v", len(rc.previousMetricSets), rc.lastPruneTime)
+		for key := range rc.previousMetricSets {
+			if _, found := batch.MetricSets[key]; !found {
+				log.Debugf("removing key %s from rate cache", key)
+				delete(rc.previousMetricSets, key)
+			}
+		}
+		rc.lastPruneTime = time.Now()
+		log.Infof("cache pruning completed. cache size: %d", len(rc.previousMetricSets))
+	}
 	return batch, nil
 }
 
 func NewRateCalculator(rateMetricsMapping map[string]metrics.Metric) *RateCalculator {
 	return &RateCalculator{
 		rateMetricsMapping: rateMetricsMapping,
-		previousMetricSets: make(map[string]*metrics.MetricSet, 0),
+		previousMetricSets: make(map[string]*metrics.MetricSet, 256),
+		cachePruneInterval: 5 * time.Minute,
+		lastPruneTime:      time.Now(),
 	}
 }

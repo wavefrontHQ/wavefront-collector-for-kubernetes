@@ -28,35 +28,46 @@ func newPodHandler(kubeClient kubernetes.Interface, discoverer discovery.Discove
 	inf.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			pod := obj.(*v1.Pod)
-			discoverer.Discover(discovery.Resource{
-				Kind:    discovery.PodType.String(),
-				IP:      pod.Status.PodIP,
-				Meta:    pod.ObjectMeta,
-				PodSpec: pod.Spec,
-			})
+			podUpdated(pod, discoverer)
 		},
 		UpdateFunc: func(_, obj interface{}) {
 			pod := obj.(*v1.Pod)
-			discoverer.Discover(discovery.Resource{
-				Kind:    discovery.PodType.String(),
-				IP:      pod.Status.PodIP,
-				Meta:    pod.ObjectMeta,
-				PodSpec: pod.Spec,
-			})
+			podUpdated(pod, discoverer)
 		},
 		DeleteFunc: func(obj interface{}) {
 			pod := obj.(*v1.Pod)
 			discoverer.Delete(discovery.Resource{
-				Kind:    discovery.PodType.String(),
-				IP:      pod.Status.PodIP,
-				Meta:    pod.ObjectMeta,
-				PodSpec: pod.Spec,
+				Kind:       discovery.PodType.String(),
+				IP:         pod.Status.PodIP,
+				Meta:       pod.ObjectMeta,
+				Containers: pod.Spec.Containers,
 			})
 		},
 	})
 	return &podHandler{
 		informer: inf,
 	}
+}
+
+func podUpdated(pod *v1.Pod, discoverer discovery.Discoverer) {
+	if podReady(pod) {
+		discoverer.Discover(discovery.Resource{
+			Kind:       discovery.PodType.String(),
+			IP:         pod.Status.PodIP,
+			Meta:       pod.ObjectMeta,
+			Containers: pod.Spec.Containers,
+		})
+	}
+}
+
+func podReady(pod *v1.Pod) bool {
+	if pod.Status.Phase != "Running" {
+		return false
+	}
+	if pod.Status.PodIP == "" || pod.Status.PodIP == "None" {
+		return false
+	}
+	return true
 }
 
 func (handler *podHandler) start() {
