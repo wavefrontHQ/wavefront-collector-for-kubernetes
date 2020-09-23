@@ -15,20 +15,20 @@ type Filter interface {
 }
 
 type globFilter struct {
-	metricWhitelist    glob.Glob
-	metricBlacklist    glob.Glob
-	metricTagWhitelist map[string]glob.Glob
-	metricTagBlacklist map[string]glob.Glob
+	metricAllowList    glob.Glob
+	metricDenyList     glob.Glob
+	metricTagAllowList map[string]glob.Glob
+	metricTagDenyList  map[string]glob.Glob
 	tagInclude         glob.Glob
 	tagExclude         glob.Glob
 }
 
 func NewGlobFilter(cfg Config) Filter {
 	return &globFilter{
-		metricWhitelist:    Compile(cfg.MetricWhitelist),
-		metricBlacklist:    Compile(cfg.MetricBlacklist),
-		metricTagWhitelist: MultiCompile(cfg.MetricTagWhitelist),
-		metricTagBlacklist: MultiCompile(cfg.MetricTagBlacklist),
+		metricAllowList:    Compile(cfg.MetricAllowList),
+		metricDenyList:     Compile(cfg.MetricDenyList),
+		metricTagAllowList: MultiCompile(cfg.MetricTagAllowList),
+		metricTagDenyList:  MultiCompile(cfg.MetricTagDenyList),
 		tagInclude:         Compile(cfg.TagInclude),
 		tagExclude:         Compile(cfg.TagExclude),
 	}
@@ -72,22 +72,22 @@ func MultiSetCompile(filters []map[string][]string) []map[string]glob.Glob {
 }
 
 func (gf *globFilter) UsesTags() bool {
-	return gf.metricTagWhitelist != nil || gf.metricTagBlacklist != nil ||
+	return gf.metricTagAllowList != nil || gf.metricTagDenyList != nil ||
 		gf.tagExclude != nil || gf.tagInclude != nil
 }
 
 func (gf *globFilter) Match(name string, tags map[string]string) bool {
-	if gf.metricWhitelist != nil && !gf.metricWhitelist.Match(name) {
+	if gf.metricAllowList != nil && !gf.metricAllowList.Match(name) {
 		return false
 	}
-	if gf.metricBlacklist != nil && gf.metricBlacklist.Match(name) {
+	if gf.metricDenyList != nil && gf.metricDenyList.Match(name) {
 		return false
 	}
 
-	if gf.metricTagWhitelist != nil && !MatchesTags(gf.metricTagWhitelist, tags) {
+	if gf.metricTagAllowList != nil && !MatchesTags(gf.metricTagAllowList, tags) {
 		return false
 	}
-	if gf.metricTagBlacklist != nil && MatchesTags(gf.metricTagBlacklist, tags) {
+	if gf.metricTagDenyList != nil && MatchesTags(gf.metricTagDenyList, tags) {
 		return false
 	}
 

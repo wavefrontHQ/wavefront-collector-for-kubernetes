@@ -10,26 +10,26 @@ import (
 )
 
 type unitFilter struct {
-	unitWhitelist glob.Glob
-	unitBlacklist glob.Glob
+	unitAllowList glob.Glob
+	unitDenyList  glob.Glob
 }
 
 func (uf *unitFilter) match(name string) bool {
-	if uf.unitWhitelist != nil && !uf.unitWhitelist.Match(name) {
+	if uf.unitAllowList != nil && !uf.unitAllowList.Match(name) {
 		return false
 	}
-	if uf.unitBlacklist != nil && uf.unitBlacklist.Match(name) {
+	if uf.unitDenyList != nil && uf.unitDenyList.Match(name) {
 		return false
 	}
 	return true
 }
 
-func fromConfig(whitelist, blacklist []string) *unitFilter {
-	if len(whitelist) == 0 && len(blacklist) == 0 {
+func fromConfig(allowList, denyList []string) *unitFilter {
+	if len(allowList) == 0 && len(denyList) == 0 {
 		return nil
 	}
 	return &unitFilter{
-		unitWhitelist: filter.Compile(whitelist),
-		unitBlacklist: filter.Compile(blacklist),
+		unitAllowList: filter.Compile(allowList),
+		unitDenyList:  filter.Compile(denyList),
 	}
 }

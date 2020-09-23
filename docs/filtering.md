@@ -12,10 +12,10 @@ The Wavefront Collector supports filtering metrics and events. Filters are based
 
 The Wavefront Collector for Kubernetes supports filtering metrics before they are reported to Wavefront. The following filtering options are supported for metrics:
 
-  * **metricWhitelist**: List of glob patterns. Only metrics with names matching the whitelist are reported.
-  * **metricBlacklist**: List of glob patterns. Metrics with names matching the blacklist are dropped.
-  * **metricTagWhitelist**: Map of tag names to list of glob patterns. Only metrics containing tag keys and values matching the whitelist will be reported.
-  * **metricTagBlacklist**: Map of tag names to list of glob patterns. Metrics containing blacklisted tag keys and values will be dropped.
+  * **metricAllowList**: List of glob patterns. Only metrics with names matching this list are reported.
+  * **metricDenyList**: List of glob patterns. Metrics with names matching this list are dropped.
+  * **metricTagAllowList**: Map of tag names to list of glob patterns. Only metrics containing tag keys and values matching this list will be reported.
+  * **metricTagDenyList**: Map of tag names to list of glob patterns. Metrics containing these tag keys and values will be dropped.
   * **tagInclude**: List of glob patterns. Tags with matching keys will be included. All other tags will be excluded.
   * **tagExclude**: List of glob patterns. Tags with matching keys will be excluded.
 
@@ -30,18 +30,18 @@ sinks:
   # global sink level filter
   filters:
     # Filter out all go runtime metrics for kube-dns and apiserver.
-    metricBlacklist:
+    metricDenyList:
     - 'kube.dns.go.*'
     - 'kube.apiserver.go.*'
 
-    # Whitelist metrics that have an environment tag of production or staging
-    metricTagWhitelist:
+    # Allow metrics that have an environment tag of production or staging
+    metricTagAllowList:
       env:
       - 'prod*'
       - 'staging*'
 
-    # Blacklist metrics that have an environment tag of test.
-    metricTagBlacklist:
+    # Block metrics that have an environment tag of test.
+    metricTagDenyList:
       env:
       - 'test*'
 ```
@@ -55,17 +55,17 @@ prometheus_sources:
 
     filters:
       # Filter out all go runtime metrics
-      metricBlacklist:
+      metricDenyList:
       - 'prom.app.go.*'
 
-      # Whitelist metrics that have an environment tag of production or staging
-      metricTagWhitelist:
+      # Allow metrics that have an environment tag of production or staging
+      metricTagAllowList:
         env:
         - 'prod*'
         - 'staging*'
 
-      # Blacklist metrics that have an environment tag of test.
-      metricTagBlacklist:
+      # Block metrics that have an environment tag of test.
+      metricTagDenyList:
         env:
         - 'test*'
 ```
@@ -81,11 +81,11 @@ discovery_configs:
 
     # filtering rules to be applied towards kube-dns metrics
     filters:
-      metricBlacklist:
+      metricDenyList:
       - 'kube.dns.go.*'
       - 'kube.dns.probe.*'
 
-      metricTagWhitelist:
+      metricTagAllowList:
         env:
         - 'prod1*'
         - 'prod2*'
@@ -98,17 +98,17 @@ discovery_configs:
 
 The Wavefront Collector for Kubernetes also supports filtering events before they are reported to Wavefront. The following filtering options are supported for events:
 
-* **tagWhitelist**: Map of tag names to list of glob patterns. Only events containing tag keys and values matching the whitelist will be reported.
-* **tagBlacklist**: Map of tag names to list of glob patterns. Events containing blacklisted tag keys and values will be dropped.
-* **tagWhitelistSets**: List of maps of tag names to list of glob patterns. Filters within each map are AND'd. Filters between the maps are OR'd.
-* **tagBlacklistSets**: List of maps of tag names to list of glob patterns. Filters within each map are AND'd. Filters between the maps are OR'd.
+* **tagAllowList**: Map of tag names to list of glob patterns. Only events containing tag keys and values matching the list will be reported.
+* **tagDenyList**: Map of tag names to list of glob patterns. Events containing these tag keys and values will be dropped.
+* **tagAllowListSets**: List of maps of tag names to list of glob patterns. Filters within each map are AND'd. Filters between the maps are OR'd.
+* **tagDenyListSets**: List of maps of tag names to list of glob patterns. Filters within each map are AND'd. Filters between the maps are OR'd.
 
-Event filtering is specified within the top level events section in the config. For example to whitelist either Pod or DaemonSet events with a specific reason:
+Event filtering is specified within the top level events section in the config. For example to allow either Pod or DaemonSet events with a specific reason:
 
 ```yaml
 events:
   filters:
-    tagWhitelistSets:
+    tagAllowListSets:
     - kind:
      - "Pod"
      reason:

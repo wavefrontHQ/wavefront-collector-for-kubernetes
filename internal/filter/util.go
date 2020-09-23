@@ -13,6 +13,10 @@ func FromQuery(vals map[string][]string) Config {
 		return Config{}
 	}
 
+	// this is legacy code retained for backwards compat when using CLI flags (instead of config file)
+	// newer terminology (allow/deny) has not been back ported for now. This function and associated calls
+	// can just be deleted once we choose to stop supporting the older CLI flags method for good.
+
 	metricWhitelist := vals[MetricWhitelist]
 	metricBlacklist := vals[MetricBlacklist]
 	metricTagWhitelist := parseFilters(vals[MetricTagWhitelist])
@@ -40,23 +44,35 @@ func FromConfig(cfg Config) Filter {
 		return nil
 	}
 
-	metricWhitelist := cfg.MetricWhitelist
-	metricBlacklist := cfg.MetricBlacklist
-	metricTagWhitelist := cfg.MetricTagWhitelist
-	metricTagBlacklist := cfg.MetricTagBlacklist
+	metricAllowList := cfg.MetricWhitelist
+	if len(cfg.MetricAllowList) > 0 {
+		metricAllowList = cfg.MetricAllowList
+	}
+	metricDenyList := cfg.MetricBlacklist
+	if len(cfg.MetricDenyList) > 0 {
+		metricDenyList = cfg.MetricDenyList
+	}
+	metricTagAllowList := cfg.MetricTagWhitelist
+	if len(cfg.MetricTagAllowList) > 0 {
+		metricTagAllowList = cfg.MetricTagAllowList
+	}
+	metricTagDenyList := cfg.MetricTagBlacklist
+	if len(cfg.MetricTagDenyList) > 0 {
+		metricTagDenyList = cfg.MetricTagDenyList
+	}
 	tagInclude := cfg.TagInclude
 	tagExclude := cfg.TagExclude
 
-	if len(metricWhitelist) == 0 && len(metricBlacklist) == 0 && len(metricTagWhitelist) == 0 &&
-		len(metricTagBlacklist) == 0 && len(tagInclude) == 0 && len(tagExclude) == 0 {
+	if len(metricAllowList) == 0 && len(metricDenyList) == 0 && len(metricTagAllowList) == 0 &&
+		len(metricTagDenyList) == 0 && len(tagInclude) == 0 && len(tagExclude) == 0 {
 		return nil
 	}
 
 	return NewGlobFilter(Config{
-		MetricWhitelist:    metricWhitelist,
-		MetricBlacklist:    metricBlacklist,
-		MetricTagWhitelist: metricTagWhitelist,
-		MetricTagBlacklist: metricTagBlacklist,
+		MetricAllowList:    metricAllowList,
+		MetricDenyList:     metricDenyList,
+		MetricTagAllowList: metricTagAllowList,
+		MetricTagDenyList:  metricTagDenyList,
 		TagInclude:         tagInclude,
 		TagExclude:         tagExclude,
 	})

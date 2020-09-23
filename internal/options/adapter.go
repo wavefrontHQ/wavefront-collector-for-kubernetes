@@ -153,8 +153,8 @@ func addSystemdSource(cfg *configuration.Config, uri flags.Uri) {
 		IncludeTaskMetrics:      flags.DecodeBoolean(vals, "taskMetrics"),
 		IncludeRestartMetrics:   flags.DecodeBoolean(vals, "restartMetrics"),
 		IncludeStartTimeMetrics: flags.DecodeBoolean(vals, "startTimeMetrics"),
-		UnitWhitelist:           vals["unitWhitelist"],
-		UnitBlacklist:           vals["unitBlacklist"],
+		UnitAllowList:           vals["unitWhitelist"],
+		UnitDenyList:            vals["unitBlacklist"],
 		Transforms:              getTransforms(vals),
 	}
 	cfg.Sources.SystemdConfig = systemd

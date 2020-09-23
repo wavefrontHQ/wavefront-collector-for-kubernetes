@@ -30,11 +30,11 @@ func TestNoFilters(t *testing.T) {
 	assert.Equal(t, 8, len(points), "wrong number of points")
 }
 
-func TestMetricWhitelist(t *testing.T) {
+func TestMetricAllowList(t *testing.T) {
 	cfg := filter.Config{
-		MetricWhitelist: []string{"*seconds.count*"},
+		MetricAllowList: []string{"*seconds.count*"},
 	}
-	f := filter.NewGlobFilter(cfg)
+	f := filter.FromConfig(cfg)
 
 	src := &prometheusMetricsSource{
 		filters: f,
@@ -47,11 +47,11 @@ func TestMetricWhitelist(t *testing.T) {
 	assert.Equal(t, 1, len(points), "wrong number of points")
 }
 
-func TestMetricBlacklist(t *testing.T) {
+func TestMetricDenyList(t *testing.T) {
 	cfg := filter.Config{
-		MetricBlacklist: []string{"*seconds.count*"},
+		MetricDenyList: []string{"*seconds.count*"},
 	}
-	f := filter.NewGlobFilter(cfg)
+	f := filter.FromConfig(cfg)
 
 	src := &prometheusMetricsSource{
 		filters: f,
@@ -64,11 +64,11 @@ func TestMetricBlacklist(t *testing.T) {
 	assert.Equal(t, 7, len(points), "wrong number of points")
 }
 
-func TestMetricTagWhitelist(t *testing.T) {
+func TestMetricTagAllowList(t *testing.T) {
 	cfg := filter.Config{
-		MetricTagWhitelist: map[string][]string{"label": {"good"}},
+		MetricTagAllowList: map[string][]string{"label": {"good"}},
 	}
-	f := filter.NewGlobFilter(cfg)
+	f := filter.FromConfig(cfg)
 
 	src := &prometheusMetricsSource{
 		filters: f,
@@ -81,11 +81,11 @@ func TestMetricTagWhitelist(t *testing.T) {
 	assert.Equal(t, 1, len(points), "wrong number of points")
 }
 
-func TestMetricTagBlacklist(t *testing.T) {
+func TestMetricTagDenyList(t *testing.T) {
 	cfg := filter.Config{
-		MetricTagBlacklist: map[string][]string{"label": {"ba*"}},
+		MetricTagDenyList: map[string][]string{"label": {"ba*"}},
 	}
-	f := filter.NewGlobFilter(cfg)
+	f := filter.FromConfig(cfg)
 
 	src := &prometheusMetricsSource{
 		filters: f,

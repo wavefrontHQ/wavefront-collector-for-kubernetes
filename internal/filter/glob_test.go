@@ -94,9 +94,9 @@ func TestDeleteTags(t *testing.T) {
 	}
 }
 
-func TestMetricWhitelist(t *testing.T) {
+func TestMetricAllowList(t *testing.T) {
 	cfg := Config{
-		MetricWhitelist: []string{"foo"},
+		MetricAllowList: []string{"foo"},
 	}
 	f := NewGlobFilter(cfg)
 
@@ -110,16 +110,16 @@ func TestMetricWhitelist(t *testing.T) {
 		t.Errorf("name pass error")
 	}
 
-	cfg.MetricWhitelist = []string{"foo*"}
+	cfg.MetricAllowList = []string{"foo*"}
 	f = NewGlobFilter(cfg)
 	if !f.Match(pt.Metric, pt.Tags) {
 		t.Errorf("name pass error")
 	}
 }
 
-func TestMetricBlacklist(t *testing.T) {
+func TestMetricDenyList(t *testing.T) {
 	cfg := Config{
-		MetricBlacklist: []string{"foo"},
+		MetricDenyList: []string{"foo"},
 	}
 	f := NewGlobFilter(cfg)
 	pt := point("foobar", 1.0, 0, "", nil)
@@ -127,16 +127,16 @@ func TestMetricBlacklist(t *testing.T) {
 		t.Errorf("name drop error")
 	}
 
-	cfg.MetricBlacklist = []string{"foo*"}
+	cfg.MetricDenyList = []string{"foo*"}
 	f = NewGlobFilter(cfg)
 	if f.Match(pt.Metric, pt.Tags) {
 		t.Errorf("name drop error")
 	}
 }
 
-func TestMetricTagWhitelist(t *testing.T) {
+func TestMetricTagAllowList(t *testing.T) {
 	cfg := Config{
-		MetricTagWhitelist: map[string][]string{
+		MetricTagAllowList: map[string][]string{
 			"foo": {"va*"},
 		},
 	}
@@ -152,9 +152,9 @@ func TestMetricTagWhitelist(t *testing.T) {
 	}
 }
 
-func TestMetricTagBlacklist(t *testing.T) {
+func TestMetricTagDenyList(t *testing.T) {
 	cfg := Config{
-		MetricTagBlacklist: map[string][]string{
+		MetricTagDenyList: map[string][]string{
 			"foo": {"va*"},
 		},
 	}

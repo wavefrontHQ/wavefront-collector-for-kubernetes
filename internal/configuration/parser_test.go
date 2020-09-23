@@ -22,10 +22,10 @@ sinks:
     env: gcp-dev
     image: 0.9.9-rc3
   filters:
-    metricWhitelist:
+    metricAllowList:
     - 'kubernetes.node.*'
 
-    metricTagWhitelist:
+    metricTagAllowList:
       nodename:
       - 'gke-vikramr-cluster*wj2d'
 
@@ -34,12 +34,12 @@ sinks:
 
 events:
   filters:
-    tagWhitelist:
+    tagAllowList:
       namespace:
       - "default"
       component:
       - "pp"
-    tagWhitelistSets:
+    tagAllowListSets:
     - kind:
       - "Pod"
       reason:
@@ -96,8 +96,8 @@ func TestFromYAML(t *testing.T) {
 	}
 
 	assert.True(t, cfg.EnableEvents)
-	assert.Equal(t, "default", cfg.EventsConfig.Filters.TagWhitelist["namespace"][0])
-	assert.Equal(t, "pp", cfg.EventsConfig.Filters.TagWhitelist["component"][0])
+	assert.Equal(t, "default", cfg.EventsConfig.Filters.TagAllowList["namespace"][0])
+	assert.Equal(t, "pp", cfg.EventsConfig.Filters.TagAllowList["component"][0])
 
 	assert.True(t, len(cfg.Sources.PrometheusConfigs) > 0)
 	assert.Equal(t, "kubernetes.", cfg.Sources.SummaryConfig.Prefix)

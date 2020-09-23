@@ -56,9 +56,18 @@ type EventsConfig struct {
 }
 
 type EventsFilter struct {
-	TagWhitelist     map[string][]string   `yaml:"tagWhitelist"`
-	TagBlacklist     map[string][]string   `yaml:"tagBlacklist"`
+	TagAllowList     map[string][]string   `yaml:"tagAllowList"`
+	TagDenyList      map[string][]string   `yaml:"tagDenyList"`
+	TagAllowListSets []map[string][]string `yaml:"tagAllowListSets"`
+	TagDenyListSets  []map[string][]string `yaml:"tagDenyListSets"`
+
+	// Deprecated: Use TagAllowList
+	TagWhitelist map[string][]string `yaml:"tagWhitelist"`
+	// Deprecated: Use TagDenyList
+	TagBlacklist map[string][]string `yaml:"tagBlacklist"`
+	// Deprecated: Use TagAllowListSets
 	TagWhitelistSets []map[string][]string `yaml:"tagWhitelistSets"`
+	// Deprecated: Use TagDenyListSets
 	TagBlacklistSets []map[string][]string `yaml:"tagBlacklistSets"`
 }
 
@@ -209,9 +218,9 @@ type SystemdSourceConfig struct {
 
 	IncludeRestartMetrics bool `yaml:"restartMetrics"`
 
-	UnitWhitelist []string `yaml:"unitWhitelist"`
+	UnitAllowList []string `yaml:"unitAllowList"`
 
-	UnitBlacklist []string `yaml:"unitBlacklist"`
+	UnitDenyList []string `yaml:"unitDenyList"`
 }
 
 type StatsSourceConfig struct {

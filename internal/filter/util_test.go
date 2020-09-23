@@ -13,6 +13,7 @@ func TestFromConfig(t *testing.T) {
 	f := FromConfig(Config{})
 	assert.Equal(t, nil, f)
 
+	// verify previous fields still work for backwards compat
 	f = FromConfig(Config{
 		MetricWhitelist:    []string{"foo*", "bar*"},
 		MetricTagBlacklist: map[string][]string{"env": {"dev*", "test*"}},
@@ -20,9 +21,27 @@ func TestFromConfig(t *testing.T) {
 
 	gf, ok := f.(*globFilter)
 	assert.True(t, ok)
+	assert.NotNil(t, gf.metricAllowList)
+	assert.NotNil(t, gf.metricTagDenyList)
+	assert.Nil(t, gf.metricDenyList)
+	assert.Nil(t, gf.metricTagAllowList)
+	assert.Nil(t, gf.tagInclude)
+	assert.Nil(t, gf.tagExclude)
 
-	assert.Nil(t, gf.metricBlacklist)
-	assert.Nil(t, gf.metricTagWhitelist)
+	// verify new fields work
+	f = FromConfig(Config{
+		MetricAllowList:    []string{"foo*", "bar*"},
+		MetricDenyList:     []string{"foo*", "bar*"},
+		MetricTagAllowList: map[string][]string{"env": {"dev*", "test*"}},
+		MetricTagDenyList:  map[string][]string{"env": {"dev*", "test*"}},
+	})
+
+	gf, ok = f.(*globFilter)
+	assert.True(t, ok)
+	assert.NotNil(t, gf.metricAllowList)
+	assert.NotNil(t, gf.metricDenyList)
+	assert.NotNil(t, gf.metricTagAllowList)
+	assert.NotNil(t, gf.metricTagDenyList)
 	assert.Nil(t, gf.tagInclude)
 	assert.Nil(t, gf.tagExclude)
 }
@@ -51,8 +70,8 @@ func TestFromQuery(t *testing.T) {
 		t.Errorf("error creating filter")
 	}
 
-	if gf.metricWhitelist == nil || gf.metricBlacklist == nil || gf.metricTagWhitelist == nil ||
-		gf.metricTagBlacklist == nil || gf.tagInclude == nil || gf.tagExclude == nil {
+	if gf.metricAllowList == nil || gf.metricDenyList == nil || gf.metricTagAllowList == nil ||
+		gf.metricTagDenyList == nil || gf.tagInclude == nil || gf.tagExclude == nil {
 		t.Errorf("error creating filter")
 	}
 }

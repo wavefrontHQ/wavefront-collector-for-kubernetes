@@ -43,13 +43,13 @@ plugins:
     tags:
       env: prod
     filters:
-      metricWhitelist:
+      metricAllowList:
       - '*foo*'
       - 'bar*'
-      metricBlacklist:
+      metricDenyList:
       - 'kube.dns.go.*'
       - 'kube.dns.probe.*'
-      metricTagWhitelist:
+      metricTagAllowList:
         env:
         - 'prod1*'
         - 'prod2*'
@@ -67,13 +67,13 @@ func TestFromYAML(t *testing.T) {
 	if len(cfg.PluginConfigs) != 3 {
 		t.Errorf("invalid number of plugins")
 	}
-	if len(cfg.PluginConfigs[2].Filters.MetricWhitelist) != 2 {
+	if len(cfg.PluginConfigs[2].Filters.MetricAllowList) != 2 {
 		t.Errorf("error parsing filters")
 	}
-	if len(cfg.PluginConfigs[2].Filters.MetricBlacklist) != 2 {
+	if len(cfg.PluginConfigs[2].Filters.MetricDenyList) != 2 {
 		t.Errorf("error parsing filters")
 	}
-	if len(cfg.PluginConfigs[2].Filters.MetricTagWhitelist) != 2 {
+	if len(cfg.PluginConfigs[2].Filters.MetricTagAllowList) != 2 {
 		t.Errorf("error parsing filters")
 	}
 	if len(cfg.PluginConfigs[0].Selectors.Images) != 2 {
