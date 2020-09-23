@@ -37,10 +37,10 @@ func newPodHandler(kubeClient kubernetes.Interface, discoverer discovery.Discove
 		DeleteFunc: func(obj interface{}) {
 			pod := obj.(*v1.Pod)
 			discoverer.Delete(discovery.Resource{
-				Kind:    discovery.PodType.String(),
-				IP:      pod.Status.PodIP,
-				Meta:    pod.ObjectMeta,
-				PodSpec: pod.Spec,
+				Kind:       discovery.PodType.String(),
+				IP:         pod.Status.PodIP,
+				Meta:       pod.ObjectMeta,
+				Containers: pod.Spec.Containers,
 			})
 		},
 	})
@@ -52,10 +52,10 @@ func newPodHandler(kubeClient kubernetes.Interface, discoverer discovery.Discove
 func podUpdated(pod *v1.Pod, discoverer discovery.Discoverer) {
 	if podReady(pod) {
 		discoverer.Discover(discovery.Resource{
-			Kind:    discovery.PodType.String(),
-			IP:      pod.Status.PodIP,
-			Meta:    pod.ObjectMeta,
-			PodSpec: pod.Spec,
+			Kind:       discovery.PodType.String(),
+			IP:         pod.Status.PodIP,
+			Meta:       pod.ObjectMeta,
+			Containers: pod.Spec.Containers,
 		})
 	}
 }

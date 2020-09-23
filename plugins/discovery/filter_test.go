@@ -194,10 +194,8 @@ func TestAll(t *testing.T) {
 
 func makeResource(containers []v1.Container, labels map[string]string, ns string) discovery.Resource {
 	return discovery.Resource{
-		Kind: discovery.PodType.String(),
-		PodSpec: v1.PodSpec{
-			Containers: containers,
-		},
+		Kind:       discovery.PodType.String(),
+		Containers: containers,
 		Meta: metav1.ObjectMeta{
 			Labels:    labels,
 			Namespace: ns,
