@@ -9,6 +9,7 @@ BINARY_NAME=wavefront-collector
 ifndef TEMP_DIR
 TEMP_DIR:=$(shell mktemp -d /tmp/wavefront.XXXXXX)
 endif
+WIN_TEMP_DIR=c:$(TEMP_DIR)
 
 VERSION?=1.2.4
 GIT_COMMIT:=$(shell git rev-parse --short HEAD)
@@ -60,6 +61,16 @@ container_rhel: build
 	rm -rf $(TEMP_DIR)
 ifneq ($(OVERRIDE_IMAGE_NAME),)
 	sudo docker tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OVERRIDE_IMAGE_NAME)
+endif
+
+#This rule need to be run on Windows 19 server with golang, cygwin, mktemp and docker installed.
+container_win: build
+	cp $(OUT_DIR)/$(ARCH)/$(BINARY_NAME) $(WIN_TEMP_DIR)
+	cp deploy/docker/Dockerfile-win $(WIN_TEMP_DIR)/Dockerfile
+	docker build --pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(WIN_TEMP_DIR)
+	rm -rf $(WIN_TEMP_DIR)
+ifneq ($(OVERRIDE_IMAGE_NAME),)
+	docker tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OVERRIDE_IMAGE_NAME)
 endif
 
 clean:
