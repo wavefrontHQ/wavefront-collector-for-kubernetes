@@ -1,0 +1,12 @@
+image: wavefronthq/wavefront-kubernetes-collector:1.2.4
+manifests:
+  -
+    image: wavefronthq/wavefront-kubernetes-collector:1.2.4-linux
+    platform:
+      architecture: amd64
+      os: linux
+  -
+    image: wavefronthq/wavefront-kubernetes-collector:1.2.4-windows
+    platform:
+      architecture: amd64
+      os: windows

@@ -7,9 +7,12 @@ GOLANG_VERSION?=1.13
 BINARY_NAME=wavefront-collector
 
 ifndef TEMP_DIR
-TEMP_DIR:=$(shell mktemp -d /tmp/wavefront.XXXXXX)
+	ifeq ($(OS),Windows_NT)
+		TEMP_DIR:=$(shell mktemp -d $(TEMP)/wavefront.XXXXXX)
+	else
+		TEMP_DIR:=$(shell mktemp -d /tmp/wavefront.XXXXXX)
+	endif
 endif
-WIN_TEMP_DIR=c:$(TEMP_DIR)
 
 VERSION?=1.2.4
 GIT_COMMIT:=$(shell git rev-parse --short HEAD)
@@ -45,10 +48,10 @@ container:
 		&& GOARCH=$(ARCH) CGO_ENABLED=0 go build -ldflags \"$(LDFLAGS)\" -o /build/$(BINARY_NAME) github.com/wavefronthq/wavefront-collector-for-kubernetes/cmd/wavefront-collector/"
 
 	cp deploy/docker/Dockerfile $(TEMP_DIR)
-	docker build --pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(TEMP_DIR)
+	docker build --pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION)-linux $(TEMP_DIR)
 	rm -rf $(TEMP_DIR)
 ifneq ($(OVERRIDE_IMAGE_NAME),)
-	docker tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OVERRIDE_IMAGE_NAME)
+	docker tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION)-linux $(OVERRIDE_IMAGE_NAME)
 endif
 
 #This rule need to be run on RHEL with podman installed.
@@ -65,12 +68,12 @@ endif
 
 #This rule need to be run on Windows 19 server with golang, cygwin, mktemp and docker installed.
 container_win: build
-	cp $(OUT_DIR)/$(ARCH)/$(BINARY_NAME) $(WIN_TEMP_DIR)
-	cp deploy/docker/Dockerfile-win $(WIN_TEMP_DIR)/Dockerfile
-	docker build --pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(WIN_TEMP_DIR)
-	rm -rf $(WIN_TEMP_DIR)
+	cp $(OUT_DIR)/$(ARCH)/$(BINARY_NAME) $(TEMP_DIR)
+	cp deploy/docker/Dockerfile-win $(TEMP_DIR)/Dockerfile
+	docker build --pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION)-windows $(TEMP_DIR)
+	rm -rf $(TEMP_DIR)
 ifneq ($(OVERRIDE_IMAGE_NAME),)
-	docker tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OVERRIDE_IMAGE_NAME)
+	docker tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION)-windows $(OVERRIDE_IMAGE_NAME)
 endif
 
 clean:
