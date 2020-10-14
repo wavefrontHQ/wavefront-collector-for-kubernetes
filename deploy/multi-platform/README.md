@@ -10,14 +10,14 @@ Refer to [Manifest tool sample usage](https://github.com/estesp/manifest-tool#sa
 	For Linux platform:
 	```
 	make container
-	docker tag <Image-ID> wavefronthq/wavefront-kubernetes-collector:1.2.4-linux
+	docker tag wavefronthq/wavefront-kubernetes-collector:1.2.4 wavefronthq/wavefront-kubernetes-collector:1.2.4-linux
 	docker push wavefronthq/wavefront-kubernetes-collector:1.2.4-linux
 	```
 
 	For Windows platform:
 	```
 	make container_win
-	docker tag <Image-ID> wavefronthq/wavefront-kubernetes-collector:1.2.4-windows
+	docker tag wavefronthq/wavefront-kubernetes-collector:1.2.4 wavefronthq/wavefront-kubernetes-collector:1.2.4-windows
 	docker push wavefronthq/wavefront-kubernetes-collector:1.2.4-windows
 	```
 
