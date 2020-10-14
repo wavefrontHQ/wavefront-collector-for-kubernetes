@@ -48,10 +48,10 @@ container:
 		&& GOARCH=$(ARCH) CGO_ENABLED=0 go build -ldflags \"$(LDFLAGS)\" -o /build/$(BINARY_NAME) github.com/wavefronthq/wavefront-collector-for-kubernetes/cmd/wavefront-collector/"
 
 	cp deploy/docker/Dockerfile $(TEMP_DIR)
-	docker build --pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION)-linux $(TEMP_DIR)
+	docker build --pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(TEMP_DIR)
 	rm -rf $(TEMP_DIR)
 ifneq ($(OVERRIDE_IMAGE_NAME),)
-	docker tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION)-linux $(OVERRIDE_IMAGE_NAME)
+	docker tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OVERRIDE_IMAGE_NAME)
 endif
 
 #This rule need to be run on RHEL with podman installed.
@@ -70,10 +70,10 @@ endif
 container_win: build
 	cp $(OUT_DIR)/$(ARCH)/$(BINARY_NAME) $(TEMP_DIR)
 	cp deploy/docker/Dockerfile-win $(TEMP_DIR)/Dockerfile
-	docker build --pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION)-windows $(TEMP_DIR)
+	docker build --pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(TEMP_DIR)
 	rm -rf $(TEMP_DIR)
 ifneq ($(OVERRIDE_IMAGE_NAME),)
-	docker tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION)-windows $(OVERRIDE_IMAGE_NAME)
+	docker tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OVERRIDE_IMAGE_NAME)
 endif
 
 clean:
