@@ -27,6 +27,11 @@ Refer to the [installation instructions](https://docs.wavefront.com/kubernetes.h
 
 The installation instructions use a default configuration suitable for most use cases. Refer to the [documentation](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/tree/master/docs) for details on all the configuration options.
 
+## Building
+
+The project currently uses `dep` to manage dependencies. Run `dep ensure` to pull down
+the necessary external libraries. Running `make` uses a docker container to build. 
+
 ## Contributing
 Public contributions are always welcome. Please feel free to report issues or submit pull requests.
 

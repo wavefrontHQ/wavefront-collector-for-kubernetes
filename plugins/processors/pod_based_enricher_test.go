@@ -33,114 +33,25 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
-var batches = []*metrics.DataBatch{
-	{
-		Timestamp: time.Now(),
-		MetricSets: map[string]*metrics.MetricSet{
-			metrics.PodContainerKey("ns1", "pod1", "c1"): {
-				Labels: map[string]string{
-					metrics.LabelMetricSetType.Key: metrics.MetricSetTypePodContainer,
-					metrics.LabelPodName.Key:       "pod1",
-					metrics.LabelNamespaceName.Key: "ns1",
-					metrics.LabelContainerName.Key: "c1",
-				},
-				MetricValues: map[string]metrics.MetricValue{},
-			},
-
-			metrics.PodKey("ns1", "pod1"): {
-				Labels: map[string]string{
-					metrics.LabelMetricSetType.Key: metrics.MetricSetTypePod,
-					metrics.LabelPodName.Key:       "pod1",
-					metrics.LabelNamespaceName.Key: "ns1",
-				},
-				MetricValues: map[string]metrics.MetricValue{},
-			},
-		},
-	},
-	{
-		Timestamp: time.Now(),
-		MetricSets: map[string]*metrics.MetricSet{
-			metrics.PodContainerKey("ns1", "pod1", "c1"): {
-				Labels: map[string]string{
-					metrics.LabelMetricSetType.Key: metrics.MetricSetTypePodContainer,
-					metrics.LabelPodName.Key:       "pod1",
-					metrics.LabelNamespaceName.Key: "ns1",
-					metrics.LabelContainerName.Key: "c1",
-				},
-				MetricValues: map[string]metrics.MetricValue{},
-			},
-		},
-	},
-	{
-		Timestamp: time.Now(),
-		MetricSets: map[string]*metrics.MetricSet{
-			metrics.PodKey("ns1", "pod1"): {
-				Labels: map[string]string{
-					metrics.LabelMetricSetType.Key: metrics.MetricSetTypePod,
-					metrics.LabelPodName.Key:       "pod1",
-					metrics.LabelNamespaceName.Key: "ns1",
-				},
-				MetricValues: map[string]metrics.MetricValue{},
-			},
-		},
-	},
-}
-
 const otherResource = "example.com/resource1"
 
+type enricherTestContext struct {
+	pod *kube_api.Pod
+	batch *metrics.DataBatch
+	collectionInterval time.Duration
+}
+
 func TestPodEnricher(t *testing.T) {
-	pod := kube_api.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "pod1",
-			Namespace: "ns1",
-		},
-		Spec: kube_api.PodSpec{
-			NodeName: "node1",
-			Containers: []kube_api.Container{
-				{
-					Name:  "c1",
-					Image: "k8s.gcr.io/pause:2.0",
-					Resources: kube_api.ResourceRequirements{
-						Requests: kube_api.ResourceList{
-							kube_api.ResourceCPU:              *resource.NewMilliQuantity(100, resource.DecimalSI),
-							kube_api.ResourceMemory:           *resource.NewQuantity(555, resource.DecimalSI),
-							kube_api.ResourceEphemeralStorage: *resource.NewQuantity(1000, resource.DecimalSI),
-						},
-					},
-				},
-				{
-					Name:  "nginx",
-					Image: "k8s.gcr.io/pause:2.0",
-					Resources: kube_api.ResourceRequirements{
-						Requests: kube_api.ResourceList{
-							kube_api.ResourceCPU:              *resource.NewMilliQuantity(333, resource.DecimalSI),
-							kube_api.ResourceMemory:           *resource.NewQuantity(1000, resource.DecimalSI),
-							kube_api.ResourceEphemeralStorage: *resource.NewQuantity(2000, resource.DecimalSI),
-							otherResource:                     *resource.NewQuantity(2, resource.DecimalSI),
-						},
-						Limits: kube_api.ResourceList{
-							kube_api.ResourceCPU:              *resource.NewMilliQuantity(2222, resource.DecimalSI),
-							kube_api.ResourceMemory:           *resource.NewQuantity(3333, resource.DecimalSI),
-							kube_api.ResourceEphemeralStorage: *resource.NewQuantity(5000, resource.DecimalSI),
-							otherResource:                     *resource.NewQuantity(2, resource.DecimalSI),
-						},
-					},
-				},
-			},
-		},
+	tc := setup()
+	podBasedEnricher := createEnricher(t, tc)
+
+	var batches = []*metrics.DataBatch{
+		createContainerBatch(),
+		createContainerBatch(),
+		createPodBatch(),
 	}
 
-	store := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc})
-	podLister := v1listers.NewPodLister(store)
-	store.Add(&pod)
-	labelCopier, err := util.NewLabelCopier(",", []string{}, []string{})
-	assert.NoError(t, err)
-
-	podBasedEnricher := PodBasedEnricher{
-		podLister:   podLister,
-		labelCopier: labelCopier,
-	}
-
+	var err error
 	for _, batch := range batches {
 		batch, err = podBasedEnricher.Process(batch)
 		assert.NoError(t, err)
@@ -159,6 +70,135 @@ func TestPodEnricher(t *testing.T) {
 		checkRequests(t, containerMs, 100, 555, 1000, -1)
 		checkLimits(t, containerMs, 0, 0, 0)
 	}
+}
+
+func TestStatusRunning(t *testing.T) {
+	tc := setup()
+	tc.pod.Status = kube_api.PodStatus{
+		ContainerStatuses: []kube_api.ContainerStatus{
+			{
+				Name: "c1",
+				State: createCrashState(time.Now().Add(-10 * time.Minute), time.Now().Add(-5 * time.Minute)),
+			},
+		},
+	}
+
+	podBasedEnricher := createEnricher(t, tc)
+
+	batch, err := podBasedEnricher.Process(tc.batch)
+	assert.NoError(t, err)
+
+	containerMs, found := batch.MetricSets[metrics.PodContainerKey("ns1", "pod1", "c1")]
+	assert.True(t, found)
+
+	expectedStatus := metrics.LabeledMetric{
+		Name: "status",
+		Labels: map[string]string{
+			"status": "terminated",
+			"reason": "bad juju",
+		},
+		MetricValue: metrics.MetricValue{
+			IntValue:   3,
+			MetricType: metrics.MetricGauge,
+		},
+	}
+	assert.Equal(t, expectedStatus, containerMs.LabeledMetrics[0])
+}
+
+func TestStatusMissedTermination(t *testing.T) {
+	tc := setup()
+
+	now := time.Now()
+	firstStart := now.Add(-10 * time.Minute)
+	crashTime := now.Add(-30 * time.Second)
+	latestStart := now.Add(-5 * time.Second)
+
+	missedCollectionTime := now
+
+	tc.pod.Status = kube_api.PodStatus{
+		ContainerStatuses: []kube_api.ContainerStatus{
+			{
+				Name:                 "c1",
+				State:                createGoodState(latestStart),
+				LastTerminationState: createCrashState(firstStart, crashTime),
+			},
+		},
+	}
+
+	podBasedEnricher := createEnricher(t, tc)
+
+	tc.batch.Timestamp = missedCollectionTime
+	expectedStatus := metrics.LabeledMetric{
+		Name: "status",
+		Labels: map[string]string{
+			"status": "terminated",
+			"reason": "bad juju",
+		},
+		MetricValue: metrics.MetricValue{
+			IntValue:   3,
+			MetricType: metrics.MetricGauge,
+		},
+	}
+	assert.Equal(t, expectedStatus, processBatch(t, podBasedEnricher, tc.batch))
+}
+
+func TestStatusPassedTermination(t *testing.T) {
+	tc := setup()
+
+	now := time.Now()
+	firstStart := now.Add(-10 * time.Minute)
+	crashTime := now.Add(-30 * time.Second)
+	latestStart := now.Add(-5 * time.Second)
+
+	followingCollectionTime := now.Add(tc.collectionInterval)
+
+	tc.pod.Status = kube_api.PodStatus{
+		ContainerStatuses: []kube_api.ContainerStatus{
+			{
+				Name: "c1",
+				State: createGoodState(latestStart),
+				LastTerminationState: createCrashState(firstStart, crashTime),
+			},
+		},
+	}
+
+	podBasedEnricher := createEnricher(t, tc)
+
+	expectedStatus := metrics.LabeledMetric{
+		Name: "status",
+		Labels: map[string]string{
+			"status": "running",
+		},
+		MetricValue: metrics.MetricValue{
+			IntValue:   1,
+			MetricType: metrics.MetricGauge,
+		},
+	}
+	batch2 := createContainerBatch()
+	batch2.Timestamp = followingCollectionTime
+	assert.Equal(t, expectedStatus, processBatch(t, podBasedEnricher, batch2))
+}
+
+func processBatch(t assert.TestingT, podBasedEnricher *PodBasedEnricher, batch *metrics.DataBatch) metrics.LabeledMetric {
+	var err error
+	batch, err = podBasedEnricher.Process(batch)
+	assert.NoError(t, err)
+
+	containerMs, found := batch.MetricSets[metrics.PodContainerKey("ns1", "pod1", "c1")]
+	assert.True(t, found)
+	return containerMs.LabeledMetrics[0]
+}
+
+func createEnricher(t *testing.T, tc *enricherTestContext) *PodBasedEnricher {
+	store := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc})
+	podLister := v1listers.NewPodLister(store)
+	err := store.Add(tc.pod)
+	assert.NoError(t, err)
+
+	labelCopier, err := util.NewLabelCopier(",", []string{}, []string{})
+	assert.NoError(t, err)
+
+	return NewPodBasedEnricher(podLister, labelCopier, tc.collectionInterval)
 }
 
 func checkRequests(t *testing.T, ms *metrics.MetricSet, cpu, mem, storage, other int64) {
@@ -193,4 +233,110 @@ func checkLimits(t *testing.T, ms *metrics.MetricSet, cpu, mem int64, storage in
 	storageVal, found := ms.MetricValues[metrics.MetricEphemeralStorageLimit.Name]
 	assert.True(t, found)
 	assert.Equal(t, storage, storageVal.IntValue)
+}
+
+func setup() *enricherTestContext {
+	return &enricherTestContext{
+		collectionInterval: time.Minute,
+		batch: createContainerBatch(),
+		pod: &kube_api.Pod{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "pod1",
+				Namespace: "ns1",
+			},
+			Spec: kube_api.PodSpec{
+				NodeName: "node1",
+				Containers: []kube_api.Container{
+					{
+						Name:  "c1",
+						Image: "k8s.gcr.io/pause:2.0",
+						Resources: kube_api.ResourceRequirements{
+							Requests: kube_api.ResourceList{
+								kube_api.ResourceCPU:              *resource.NewMilliQuantity(100, resource.DecimalSI),
+								kube_api.ResourceMemory:           *resource.NewQuantity(555, resource.DecimalSI),
+								kube_api.ResourceEphemeralStorage: *resource.NewQuantity(1000, resource.DecimalSI),
+							},
+						},
+					},
+					{
+						Name:  "nginx",
+						Image: "k8s.gcr.io/pause:2.0",
+						Resources: kube_api.ResourceRequirements{
+							Requests: kube_api.ResourceList{
+								kube_api.ResourceCPU:              *resource.NewMilliQuantity(333, resource.DecimalSI),
+								kube_api.ResourceMemory:           *resource.NewQuantity(1000, resource.DecimalSI),
+								kube_api.ResourceEphemeralStorage: *resource.NewQuantity(2000, resource.DecimalSI),
+								otherResource:                     *resource.NewQuantity(2, resource.DecimalSI),
+							},
+							Limits: kube_api.ResourceList{
+								kube_api.ResourceCPU:              *resource.NewMilliQuantity(2222, resource.DecimalSI),
+								kube_api.ResourceMemory:           *resource.NewQuantity(3333, resource.DecimalSI),
+								kube_api.ResourceEphemeralStorage: *resource.NewQuantity(5000, resource.DecimalSI),
+								otherResource:                     *resource.NewQuantity(2, resource.DecimalSI),
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func createContainerBatch() *metrics.DataBatch {
+	return &metrics.DataBatch{
+		Timestamp: time.Now(),
+		MetricSets: map[string]*metrics.MetricSet{
+			metrics.PodContainerKey("ns1", "pod1", "c1"): {
+				Labels: map[string]string{
+					metrics.LabelMetricSetType.Key: metrics.MetricSetTypePodContainer,
+					metrics.LabelPodName.Key:       "pod1",
+					metrics.LabelNamespaceName.Key: "ns1",
+					metrics.LabelContainerName.Key: "c1",
+				},
+				MetricValues: map[string]metrics.MetricValue{},
+			},
+		},
+	}
+}
+
+func createPodBatch() *metrics.DataBatch {
+	return &metrics.DataBatch{
+		Timestamp: time.Now(),
+		MetricSets: map[string]*metrics.MetricSet{
+			metrics.PodKey("ns1", "pod1"): {
+				Labels: map[string]string{
+					metrics.LabelMetricSetType.Key: metrics.MetricSetTypePod,
+					metrics.LabelPodName.Key:       "pod1",
+					metrics.LabelNamespaceName.Key: "ns1",
+				},
+				MetricValues: map[string]metrics.MetricValue{},
+			},
+		},
+	}
+}
+
+func createCrashState(startTime time.Time, crashTime time.Time) kube_api.ContainerState {
+	return kube_api.ContainerState{
+		Terminated: &kube_api.ContainerStateTerminated{
+			Reason:  "bad juju",
+			Message: "broken",
+			StartedAt: metav1.Time{
+				Time: startTime,
+			},
+			FinishedAt: metav1.Time{
+				Time: crashTime,
+			},
+			ContainerID: "",
+		},
+	}
+}
+
+func createGoodState(timestamp time.Time) kube_api.ContainerState {
+	return kube_api.ContainerState{
+		Running: &kube_api.ContainerStateRunning{
+			StartedAt: metav1.Time{
+				Time: timestamp,
+			},
+		},
+	}
 }

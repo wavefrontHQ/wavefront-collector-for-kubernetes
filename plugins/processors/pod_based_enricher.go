@@ -19,6 +19,7 @@ package processors
 
 import (
 	"fmt"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 
@@ -30,8 +31,9 @@ import (
 )
 
 type PodBasedEnricher struct {
-	podLister   v1listers.PodLister
-	labelCopier *util.LabelCopier
+	podLister          v1listers.PodLister
+	labelCopier        *util.LabelCopier
+	collectionInterval time.Duration
 }
 
 func (pbe *PodBasedEnricher) Name() string {
@@ -50,7 +52,7 @@ func (pbe *PodBasedEnricher) Process(batch *metrics.DataBatch) (*metrics.DataBat
 				log.Debugf("Failed to get pod %s from cache: %v", metrics.PodKey(namespace, podName), err)
 				continue
 			}
-			pbe.addPodInfo(k, v, pod, batch, newMs)
+			pbe.addPodInfo(v, pod, batch, newMs)
 		case metrics.MetricSetTypePodContainer:
 			namespace := v.Labels[metrics.LabelNamespaceName.Key]
 			podName := v.Labels[metrics.LabelPodName.Key]
@@ -96,7 +98,7 @@ func (pbe *PodBasedEnricher) addContainerInfo(key string, containerMs *metrics.M
 			if !pod.Status.StartTime.IsZero() {
 				containerMs.EntityCreateTime = pod.Status.StartTime.Time
 			}
-			addContainerStatus(containerMs, &metrics.MetricContainerStatus, containerStatus)
+			pbe.addContainerStatus(batch.Timestamp, containerMs, &metrics.MetricContainerStatus, containerStatus)
 			break
 		}
 	}
@@ -128,13 +130,12 @@ func (pbe *PodBasedEnricher) addContainerInfo(key string, containerMs *metrics.M
 				podMs.EntityCreateTime = pod.Status.StartTime.Time
 			}
 			newMs[podKey] = podMs
-			pbe.addPodInfo(podKey, podMs, pod, batch, newMs)
+			pbe.addPodInfo(podMs, pod, batch, newMs)
 		}
 	}
 }
 
-func (pbe *PodBasedEnricher) addPodInfo(key string, podMs *metrics.MetricSet, pod *kube_api.Pod, batch *metrics.DataBatch, newMs map[string]*metrics.MetricSet) {
-
+func (pbe *PodBasedEnricher) addPodInfo(podMs *metrics.MetricSet, pod *kube_api.Pod, batch *metrics.DataBatch, newMs map[string]*metrics.MetricSet) {
 	// Add UID and create time to pod
 	podMs.Labels[metrics.LabelPodId.Key] = string(pod.UID)
 	if !pod.Status.StartTime.IsZero() {
@@ -174,7 +175,7 @@ func (pbe *PodBasedEnricher) addPodInfo(key string, podMs *metrics.MetricSet, po
 		updateContainerResourcesAndLimits(containerMs, container)
 		newMs[containerKey] = containerMs
 	}
-	updateContainerStatus(newMs, &metrics.MetricContainerStatus, pod, pod.Status.ContainerStatuses)
+	pbe.updateContainerStatus(newMs, pod, pod.Status.ContainerStatuses, batch.Timestamp)
 }
 
 func updateContainerResourcesAndLimits(metricSet *metrics.MetricSet, container kube_api.Container) {
@@ -235,9 +236,11 @@ func updateContainerResourcesAndLimits(metricSet *metrics.MetricSet, container k
 	}
 }
 
-func addContainerStatus(containerMs *metrics.MetricSet, metric *metrics.Metric, status kube_api.ContainerStatus) {
+func (pbe *PodBasedEnricher) addContainerStatus(collectionTime time.Time, containerMs *metrics.MetricSet, metric *metrics.Metric, status kube_api.ContainerStatus) {
 	labels := make(map[string]string, 2)
-	stateInt, state, reason := convertContainerState(status.State)
+
+	stateInt, state, reason := pbe.findContainerState(collectionTime, status)
+
 	if stateInt > 0 {
 		labels["status"] = state
 		if reason != "" {
@@ -247,7 +250,21 @@ func addContainerStatus(containerMs *metrics.MetricSet, metric *metrics.Metric, 
 	addLabeledIntMetric(containerMs, metric, labels, stateInt)
 }
 
-func updateContainerStatus(metricSets map[string]*metrics.MetricSet, metric *metrics.Metric, pod *kube_api.Pod, statuses []kube_api.ContainerStatus) {
+func (pbe *PodBasedEnricher) findContainerState(collectionTime time.Time, status kube_api.ContainerStatus) (int64, string, string) {
+	if status.LastTerminationState.Terminated == nil {
+		return convertContainerState(status.State)
+	}
+
+	lastTerminationTime := status.LastTerminationState.Terminated.FinishedAt.Time
+	lastCollectionTime := collectionTime.Add(-1*pbe.collectionInterval)
+	if lastCollectionTime.After(lastTerminationTime) {
+		return convertContainerState(status.State)
+	}
+
+	return convertContainerState(status.LastTerminationState)
+}
+
+func (pbe *PodBasedEnricher) updateContainerStatus(metricSets map[string]*metrics.MetricSet, pod *kube_api.Pod, statuses []kube_api.ContainerStatus, collectionTime time.Time) {
 	if len(statuses) == 0 {
 		return
 	}
@@ -258,7 +275,7 @@ func updateContainerStatus(metricSets map[string]*metrics.MetricSet, metric *met
 			log.Debugf("Container key %s not found", containerKey)
 			continue
 		}
-		addContainerStatus(containerMs, &metrics.MetricContainerStatus, status)
+		pbe.addContainerStatus(collectionTime, containerMs, &metrics.MetricContainerStatus, status)
 	}
 }
 
@@ -314,9 +331,10 @@ func intValue(value int64) metrics.MetricValue {
 	}
 }
 
-func NewPodBasedEnricher(podLister v1listers.PodLister, labelCopier *util.LabelCopier) (*PodBasedEnricher, error) {
+func NewPodBasedEnricher(podLister v1listers.PodLister, labelCopier *util.LabelCopier, collectionInterval time.Duration) *PodBasedEnricher {
 	return &PodBasedEnricher{
-		podLister:   podLister,
-		labelCopier: labelCopier,
-	}, nil
+		podLister:          podLister,
+		labelCopier:        labelCopier,
+		collectionInterval: collectionInterval,
+	}
 }

@@ -139,7 +139,7 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 
 	// create data processors
 	podLister := getPodListerOrDie(kubeClient)
-	dataProcessors := createDataProcessorsOrDie(kubeClient, clusterName, podLister, *cfg.Sources.SummaryConfig)
+	dataProcessors := createDataProcessorsOrDie(kubeClient, clusterName, podLister, cfg)
 
 	// create discovery manager
 	handler := sourceManager.(metrics.ProviderHandler)
@@ -307,8 +307,7 @@ func createKubeClientOrDie(cfg configuration.SummarySourceConfig) *kube_client.C
 	return kube_client.NewForConfigOrDie(kubeConfig)
 }
 
-func createDataProcessorsOrDie(kubeClient *kube_client.Clientset, cluster string, podLister v1listers.PodLister,
-	cfg configuration.SummarySourceConfig) []metrics.DataProcessor {
+func createDataProcessorsOrDie(kubeClient *kube_client.Clientset, cluster string, podLister v1listers.PodLister, cfg *configuration.Config) []metrics.DataProcessor {
 
 	labelCopier, err := util.NewLabelCopier(",", []string{}, []string{})
 	if err != nil {
@@ -320,10 +319,8 @@ func createDataProcessorsOrDie(kubeClient *kube_client.Clientset, cluster string
 		processors.NewRateCalculator(metrics.RateMetricsMapping),
 	}
 
-	podBasedEnricher, err := processors.NewPodBasedEnricher(podLister, labelCopier)
-	if err != nil {
-		log.Fatalf("Failed to create PodBasedEnricher: %v", err)
-	}
+	collectionInterval := calculateCollectionInterval(cfg)
+	podBasedEnricher := processors.NewPodBasedEnricher(podLister, labelCopier, collectionInterval)
 	dataProcessors = append(dataProcessors, podBasedEnricher)
 
 	namespaceBasedEnricher, err := processors.NewNamespaceBasedEnricher(kubeClient)
@@ -370,13 +367,21 @@ func createDataProcessorsOrDie(kubeClient *kube_client.Clientset, cluster string
 	dataProcessors = append(dataProcessors, nodeAutoscalingEnricher)
 
 	// this always needs to be the last processor
-	wavefrontCoverter, err := summary.NewPointConverter(cfg, cluster)
+	wavefrontCoverter, err := summary.NewPointConverter(*cfg.Sources.SummaryConfig, cluster)
 	if err != nil {
 		log.Fatalf("Failed to create WavefrontPointConverter: %v", err)
 	}
 	dataProcessors = append(dataProcessors, wavefrontCoverter)
 
 	return dataProcessors
+}
+
+func calculateCollectionInterval(cfg *configuration.Config) time.Duration {
+	collectionInterval := cfg.DefaultCollectionInterval
+	if cfg.Sources.SummaryConfig.Collection.Interval > 0 {
+		collectionInterval = cfg.Sources.SummaryConfig.Collection.Interval
+	}
+	return collectionInterval
 }
 
 func getServiceListerOrDie(kubeClient *kube_client.Clientset) v1listers.ServiceLister {
