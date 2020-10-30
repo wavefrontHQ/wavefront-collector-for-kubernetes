@@ -256,7 +256,7 @@ func (pbe *PodBasedEnricher) findContainerState(collectionTime time.Time, status
 	}
 
 	lastTerminationTime := status.LastTerminationState.Terminated.FinishedAt.Time
-	lastCollectionTime := collectionTime.Add(-1*pbe.collectionInterval)
+	lastCollectionTime := collectionTime.Add(-1 * pbe.collectionInterval)
 	if lastCollectionTime.After(lastTerminationTime) {
 		return convertContainerState(status.State)
 	}

@@ -36,8 +36,8 @@ import (
 const otherResource = "example.com/resource1"
 
 type enricherTestContext struct {
-	pod *kube_api.Pod
-	batch *metrics.DataBatch
+	pod                *kube_api.Pod
+	batch              *metrics.DataBatch
 	collectionInterval time.Duration
 }
 
@@ -77,8 +77,8 @@ func TestStatusRunning(t *testing.T) {
 	tc.pod.Status = kube_api.PodStatus{
 		ContainerStatuses: []kube_api.ContainerStatus{
 			{
-				Name: "c1",
-				State: createCrashState(time.Now().Add(-10 * time.Minute), time.Now().Add(-5 * time.Minute)),
+				Name:  "c1",
+				State: createCrashState(time.Now().Add(-10*time.Minute), time.Now().Add(-5*time.Minute)),
 			},
 		},
 	}
@@ -155,8 +155,8 @@ func TestStatusPassedTermination(t *testing.T) {
 	tc.pod.Status = kube_api.PodStatus{
 		ContainerStatuses: []kube_api.ContainerStatus{
 			{
-				Name: "c1",
-				State: createGoodState(latestStart),
+				Name:                 "c1",
+				State:                createGoodState(latestStart),
 				LastTerminationState: createCrashState(firstStart, crashTime),
 			},
 		},
@@ -238,7 +238,7 @@ func checkLimits(t *testing.T, ms *metrics.MetricSet, cpu, mem int64, storage in
 func setup() *enricherTestContext {
 	return &enricherTestContext{
 		collectionInterval: time.Minute,
-		batch: createContainerBatch(),
+		batch:              createContainerBatch(),
 		pod: &kube_api.Pod{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "pod1",
