@@ -30,7 +30,15 @@ The installation instructions use a default configuration suitable for most use 
 ## Building
 
 The project currently uses `dep` to manage dependencies. Run `dep ensure` to pull down
-the necessary external libraries. Running `make` uses a docker container to build. 
+the necessary external libraries. 
+
+Build using `make` and the provided `Makefile`. 
+
+Commonly used `make` options include: 
+* `fmt` to `go fmt` all your code
+* `tests` to run all the unit tests 
+* `build` that creates a local executable
+* `container` that uses a docker container to build for consistency and reproducability 
 
 ## Contributing
 Public contributions are always welcome. Please feel free to report issues or submit pull requests.
