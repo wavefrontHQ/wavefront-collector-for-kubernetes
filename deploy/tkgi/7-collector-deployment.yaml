@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wavefront-collector
+  namespace: pks-system
+  labels:
+    k8s-app: wavefront-collector
+    name: wavefront-collector
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: wavefront-collector
+  template:
+    metadata:
+      labels:
+        k8s-app: wavefront-collector
+    spec:
+      serviceAccountName: wavefront-collector
+      containers:
+      - name: wavefront-collector
+        image: wavefronthq/wavefront-kubernetes-collector:1.2.4
+        imagePullPolicy: Always
+        command:
+        - /wavefront-collector
+        - --config-file=/etc/collector/collector.yaml
+        volumeMounts:
+        - mountPath: /etc/collector/
+          name: collector-config
+          readOnly: true
+        env:
+        - name: POD_NAMESPACE_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+      volumes:
+      - name: collector-config
+        configMap:
+          name: collector-config

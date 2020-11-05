@@ -39,16 +39,16 @@ data:
         kubeletHttps: true
         useServiceAccount: true
         insecure: true
-        prefix: 'pks.'
+        prefix: 'pks.kubernetes.'
 
         filters:
           metricBlacklist:
           - 'kubernetes.sys_container.*'
 
       internal_stats_source:
-        prefix: 'pks.'
+        prefix: 'pks.kubernetes.'
 
       kubernetes_state_source:
-        prefix: 'pks.'
+        prefix: 'pks.kubernetes.'
 
 
