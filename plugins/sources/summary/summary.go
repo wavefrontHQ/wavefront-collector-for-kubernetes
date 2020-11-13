@@ -254,6 +254,11 @@ func (src *summaryMetricsSource) decodeCPUStats(metrics *MetricSet, cpu *stats.C
 		return
 	}
 	src.addIntMetric(metrics, &MetricCpuUsage, cpu.UsageCoreNanoSeconds)
+
+	if cpu.UsageNanoCores != nil {
+		millicores := *cpu.UsageNanoCores / 1e6
+		src.addIntMetric(metrics, &MetricCpuUsageCores, &millicores)
+	}
 }
 
 func (src *summaryMetricsSource) decodeEphemeralStorageStats(metrics *MetricSet, storage *stats.FsStats) {
