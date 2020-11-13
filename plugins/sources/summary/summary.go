@@ -254,8 +254,8 @@ func (src *summaryMetricsSource) decodeCPUStats(metrics *MetricSet, cpu *stats.C
 		return
 	}
 	src.addIntMetric(metrics, &MetricCpuUsage, cpu.UsageCoreNanoSeconds)
-	
-	millicores := *cpu.UsageNanoCores/1000
+
+	millicores := *cpu.UsageNanoCores / 1000
 	src.addIntMetric(metrics, &MetricCpuUsageCores, &millicores)
 }
 
