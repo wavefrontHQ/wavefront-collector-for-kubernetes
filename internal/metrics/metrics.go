@@ -264,10 +264,10 @@ var MetricCpuUsage = Metric{
 var MetricCpuUsageCores = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "cpu/usage_millicores",
-		Description: "Cumulative CPU usage on all cores",
+		Description: "Cumulative CPU usage on all cores averaged over time window",
 		Type:        MetricCumulative,
 		ValueType:   ValueInt64,
-		Units:       UnitsNanoseconds,
+		Units:       UnitsMillicores,
 	},
 }
 
