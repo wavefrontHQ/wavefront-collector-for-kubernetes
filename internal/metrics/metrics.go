@@ -261,6 +261,16 @@ var MetricCpuUsage = Metric{
 	},
 }
 
+var MetricCpuUsageCores = Metric{
+	MetricDescriptor: MetricDescriptor{
+		Name:        "cpu/usage_millicores",
+		Description: "Cumulative CPU usage on all cores",
+		Type:        MetricCumulative,
+		ValueType:   ValueInt64,
+		Units:       UnitsNanoseconds,
+	},
+}
+
 var MetricEphemeralStorageUsage = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "ephemeral_storage/usage",
