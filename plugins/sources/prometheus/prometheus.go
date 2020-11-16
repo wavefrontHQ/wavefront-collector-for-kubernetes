@@ -4,7 +4,6 @@
 package prometheus
 
 import (
-	"bufio"
 	"bytes"
 	"fmt"
 	"io"
@@ -187,17 +186,20 @@ func readResponse(body io.ReadCloser, cLen int64) ([]byte, error) {
 func (src *prometheusMetricsSource) parseMetrics(buf []byte) ([]*metrics.MetricPoint, error) {
 	var parser expfmt.TextParser
 
-	// parse even if the buffer begins with a newline
-	buf = bytes.TrimPrefix(buf, []byte("\n"))
-	// Read raw data
-	buffer := bytes.NewBuffer(buf)
-	reader := bufio.NewReader(buffer)
+	metricReader := NewMetricReader(bytes.NewReader(buf))
 
-	metricFamilies, err := parser.TextToMetricFamilies(reader)
-	if err != nil {
-		log.Errorf("reading text format failed: %s", err)
+	var points = make([]*metrics.MetricPoint,0)
+	var err error
+	for !metricReader.Done() {
+		reader := bytes.NewReader(metricReader.Read())
+		metricFamilies, err := parser.TextToMetricFamilies(reader)
+		if err != nil {
+			log.Errorf("reading text format failed: %s", err)
+		}
+		batch, err := src.buildPoints(metricFamilies)
+		points = append(points, batch...)
 	}
-	return src.buildPoints(metricFamilies)
+	return points, err
 }
 
 func (src *prometheusMetricsSource) buildPoints(metricFamilies map[string]*dto.MetricFamily) ([]*metrics.MetricPoint, error) {
