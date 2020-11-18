@@ -35,6 +35,7 @@ Metrics collected per type:
 | cpu.request | CPU request (the guaranteed amount of resources) in millicores. |
 | cpu.usage | Cumulative amount of consumed CPU time on all cores in nanoseconds. |
 | cpu.usage_rate | CPU usage on all cores in millicores. |
+| cpu.usage_millicores | CPU usage (sum of all cores) averaged over the sample window in millicores. |
 | cpu.load | CPU load in milliloads, i.e., runnable threads * 1000. |
 | memory.limit | Memory hard limit in bytes. |
 | memory.major_page_faults | Number of major page faults. |
