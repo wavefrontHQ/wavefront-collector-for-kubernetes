@@ -184,13 +184,13 @@ func readResponse(body io.ReadCloser, cLen int64) ([]byte, error) {
 }
 
 func (src *prometheusMetricsSource) parseMetrics(buf []byte) ([]*metrics.MetricPoint, error) {
-	var parser expfmt.TextParser
 
 	metricReader := NewMetricReader(bytes.NewReader(buf))
 
 	var points = make([]*metrics.MetricPoint,0)
 	var err error
 	for !metricReader.Done() {
+		var parser expfmt.TextParser
 		reader := bytes.NewReader(metricReader.Read())
 		metricFamilies, err := parser.TextToMetricFamilies(reader)
 		if err != nil {
