@@ -33,12 +33,12 @@ func (laReader *LookaheadReader) Read() []byte {
 	}
 	// the scanner slice changes unexpectedly in some cases so a defensive copy
 	// protects us from that
-	retVal:=makeDefensiveCopy(laReader.scanner.Bytes())
+	retVal := makeDefensiveCopy(laReader.scanner.Bytes())
 	laReader.advanceLine()
 	return retVal
 }
 
-func makeDefensiveCopy(buf []byte) []byte{
+func makeDefensiveCopy(buf []byte) []byte {
 	retVal := make([]byte, len(buf))
 	copy(retVal, buf)
 	return retVal

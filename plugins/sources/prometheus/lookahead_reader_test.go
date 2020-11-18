@@ -29,7 +29,7 @@ func TestLAMultiLineRead(t *testing.T) {
 	lineOne := []byte("ONE LINE")
 	lineTwo := []byte("TWO LINE")
 
-	file := append(lineOne,'\n')
+	file := append(lineOne, '\n')
 	file = append(file, lineTwo...)
 	file = append(file, '\n')
 
