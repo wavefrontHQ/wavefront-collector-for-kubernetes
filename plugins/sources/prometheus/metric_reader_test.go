@@ -13,18 +13,6 @@ func TestMetricEmptyFile(t *testing.T) {
 	assertEmptyMetricReader(t, reader)
 }
 
-// one metric
-// two metric
-// two metric sets
-
-//# HELP ack_level_update ack_level_update counter
-//# TYPE ack_level_update counter
-//ack_level_update{operation="TimerActiveQueueProcessor",type="history"} 1.599204e+06
-//ack_level_update{operation="TransferActiveQueueProcessor",type="history"} 1.599186e+06
-//# HELP acquire_shards_count acquire_shards_count counter
-//# TYPE acquire_shards_count counter
-//acquire_shards_count{operation="ShardController",type="history"} 2904
-
 var metricOne string = `# HELP ack_level_update ack_level_update counter
 # TYPE ack_level_update counter
 ack_level_update{operation="TimerActiveQueueProcessor",type="history"} 1.599204e+06
@@ -97,27 +85,6 @@ func TestMetricLeadingWhitespace(t *testing.T) {
 
 	assertEmptyMetricReader(t, reader)
 }
-
-//TODO remove
-//func TestMetricBigGuns(t *testing.T) {
-//
-//	file, err := ioutil.ReadFile("/Users/joe/workspace/prometheus-example-app/raw_metrics/kube_state_metrics")
-//	assert.NoError(t, err)
-//
-//	byteReader := bytes.NewReader(file)
-//	reader := prometheus.NewMetricReader(byteReader)
-//
-//	out, err := os.Create("/Users/joe/workspace/prometheus-example-app/raw_metrics/eaten")
-//	defer out.Close()
-//	assert.NoError(t,err)
-//
-//	writer := bufio.NewWriter(out)
-//	for !reader.Done() {
-//		metric := reader.Read()
-//		writer.Write(metric)
-//	}
-//	writer.Flush()
-//}
 
 func assertEmptyMetricReader(t *testing.T, reader *prometheus.MetricReader) {
 	assert.True(t, reader.Done())
