@@ -48,7 +48,7 @@ type Config struct {
 	OmitBucketSuffix bool `yaml:"omitBucketSuffix"`
 
 	// whether to use the older prometheus parsing mechanism.
-	UseClassicPrometheusParser bool `yaml:"useClassicPrometheusParser"`
+	UseClassicPrometheusParser *bool `yaml:"useClassicPrometheusParser"`
 
 	// Internal use only
 	Daemon bool `yaml:"-"`

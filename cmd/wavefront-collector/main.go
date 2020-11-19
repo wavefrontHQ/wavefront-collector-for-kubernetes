@@ -110,7 +110,7 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 	setEnvVar("omitBucketSuffix", strconv.FormatBool(cfg.OmitBucketSuffix))
 
 	// used to toggle which prometheus parsing we use
-	setEnvVar("useClassicPrometheusParser", strconv.FormatBool(cfg.UseClassicPrometheusParser))
+	setEnvVar("useClassicPrometheusParser", strconv.FormatBool(*cfg.UseClassicPrometheusParser))
 
 	clusterName := cfg.ClusterName
 
@@ -204,6 +204,10 @@ func fillDefaults(cfg *configuration.Config) {
 	}
 	if cfg.DiscoveryConfig.DiscoveryInterval == 0 {
 		cfg.DiscoveryConfig.DiscoveryInterval = 5 * time.Minute
+	}
+	if cfg.UseClassicPrometheusParser == nil {
+		classicParser := true
+		cfg.UseClassicPrometheusParser = &classicParser
 	}
 }
 
