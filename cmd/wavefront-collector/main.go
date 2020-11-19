@@ -109,6 +109,9 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 	// backwards compat: used by prometheus sources to format histogram metric names
 	setEnvVar("omitBucketSuffix", strconv.FormatBool(cfg.OmitBucketSuffix))
 
+	// used to toggle which prometheus parsing we use
+	setEnvVar("useClassicPrometheusParser", strconv.FormatBool(*cfg.UseClassicPrometheusParser))
+
 	clusterName := cfg.ClusterName
 
 	kubeClient := createKubeClientOrDie(*cfg.Sources.SummaryConfig)
@@ -201,6 +204,10 @@ func fillDefaults(cfg *configuration.Config) {
 	}
 	if cfg.DiscoveryConfig.DiscoveryInterval == 0 {
 		cfg.DiscoveryConfig.DiscoveryInterval = 5 * time.Minute
+	}
+	if cfg.UseClassicPrometheusParser == nil {
+		classicParser := true
+		cfg.UseClassicPrometheusParser = &classicParser
 	}
 }
 
