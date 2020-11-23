@@ -80,20 +80,44 @@ func (rm *flushManagerImpl) Stop() {
 }
 
 func (rm *flushManagerImpl) push() {
-	dataList := sources.Manager().GetPendingMetrics()
-	for _, data := range dataList {
-		for _, p := range rm.processors {
-			if len(data.MetricSets) > 0 {
-				newData, err := p.Process(data)
-				if err == nil {
-					data = newData
-				} else {
-					log.Errorf("Error in processor: %v", err)
-					return
-				}
-			}
+	dataBatches := sources.Manager().GetPendingMetrics()
+	combinedBatch := &metrics.DataBatch{}
+
+	for _, data := range dataBatches {
+		if len(data.MetricSets) > 0 {
+			// In deployment mode, the metric sets are spread across different data batches
+			// as data is collected independently from each node in the cluster
+			// combine all the metric sets and process them together below
+			combineMetricSets(data, combinedBatch)
+			continue
 		}
 		// Export data to sinks
 		rm.sink.ExportData(data)
+	}
+
+	// process the combined metric sets
+	if len(combinedBatch.MetricSets) > 0 {
+		for _, p := range rm.processors {
+			processedBatch, err := p.Process(combinedBatch)
+			if err == nil {
+				combinedBatch = processedBatch
+			} else {
+				log.Errorf("Error in processor: %v", err)
+				return
+			}
+		}
+		// Export to sinks
+		rm.sink.ExportData(combinedBatch)
+	}
+}
+
+func combineMetricSets(src, dst *metrics.DataBatch) {
+	// use the most recent timestamp for the shared batch
+	dst.Timestamp = src.Timestamp
+	if dst.MetricSets == nil {
+		dst.MetricSets = make(map[string]*metrics.MetricSet)
+	}
+	for k, v := range src.MetricSets {
+		dst.MetricSets[k] = v
 	}
 }
