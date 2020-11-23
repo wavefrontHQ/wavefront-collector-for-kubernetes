@@ -112,6 +112,7 @@ func (rm *flushManagerImpl) push() {
 }
 
 func combineMetricSets(src, dst *metrics.DataBatch) {
+	// use the most recent timestamp for the shared batch
 	dst.Timestamp = src.Timestamp
 	if dst.MetricSets == nil {
 		dst.MetricSets = make(map[string]*metrics.MetricSet)
