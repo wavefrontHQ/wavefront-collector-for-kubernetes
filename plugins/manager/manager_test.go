@@ -21,6 +21,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources"
@@ -46,4 +48,54 @@ func TestFlow(t *testing.T) {
 	if sink.GetExportCount() < 4 || sink.GetExportCount() > 5 {
 		t.Fatalf("Wrong number of exports executed: %d", sink.GetExportCount())
 	}
+}
+
+func TestCombineMetricSets(t *testing.T) {
+	dst := &metrics.DataBatch{}
+	assert.Nil(t, dst.MetricSets)
+
+	firstBatch := createDataBatch("node_1")
+	combineMetricSets(firstBatch, dst)
+	assert.Equal(t, 4, len(dst.MetricSets))
+	testKeysAndValues(t, firstBatch, dst)
+
+	secondBatch := createDataBatch("node_2")
+	combineMetricSets(secondBatch, dst)
+	assert.Equal(t, 8, len(dst.MetricSets))
+	testKeysAndValues(t, secondBatch, dst)
+}
+
+func testKeysAndValues(t *testing.T, src, dst *metrics.DataBatch) {
+	for k, v := range src.MetricSets {
+		if dstVal, found := dst.MetricSets[k]; found {
+			assert.Equal(t, v, dstVal)
+		} else {
+			assert.Fail(t, "failed to find metric set: %s", k)
+		}
+	}
+}
+
+func createDataBatch(prefix string) *metrics.DataBatch {
+	batch := metrics.DataBatch{
+		Timestamp:  time.Now(),
+		MetricSets: map[string]*metrics.MetricSet{},
+	}
+	batch.MetricSets[prefix+"m1"] = createMetricSet("cpu/limit", metrics.MetricGauge, 1000)
+	batch.MetricSets[prefix+"m2"] = createMetricSet("cpu/usage", metrics.MetricCumulative, 43363664)
+	batch.MetricSets[prefix+"m3"] = createMetricSet("memory/limit", metrics.MetricGauge, -1)
+	batch.MetricSets[prefix+"m4"] = createMetricSet("memory/usage", metrics.MetricGauge, 487424)
+	return &batch
+}
+
+func createMetricSet(name string, metricType metrics.MetricType, value int64) *metrics.MetricSet {
+	set := &metrics.MetricSet{
+		MetricValues: map[string]metrics.MetricValue{
+			name: {
+				MetricType: metricType,
+				ValueType:  metrics.ValueInt64,
+				IntValue:   value,
+			},
+		},
+	}
+	return set
 }
