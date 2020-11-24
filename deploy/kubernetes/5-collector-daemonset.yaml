@@ -27,7 +27,7 @@ spec:
 
       containers:
       - name: wavefront-collector
-        image: wavefronthq/wavefront-kubernetes-collector:1.2.5
+        image: wavefronthq/wavefront-kubernetes-collector:1.2.6
         imagePullPolicy: IfNotPresent
         command:
         - /wavefront-collector
