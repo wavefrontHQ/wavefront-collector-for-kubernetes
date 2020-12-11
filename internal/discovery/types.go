@@ -76,7 +76,6 @@ type Endpoint struct {
 
 // EndpointHandler handles the configuration of a source to collect data from discovered endpoints
 type EndpointHandler interface {
-	Encode(resource Resource, rule PluginConfig) (string, interface{}, bool)
 	Add(ep *Endpoint)
 	Delete(ep *Endpoint)
 }

@@ -29,27 +29,34 @@ type delegate struct {
 }
 
 type discoverer struct {
-	wg        sync.WaitGroup
-	queue     chan discovery.Resource
+	wg    sync.WaitGroup
+	mtx   sync.RWMutex
+	queue chan discovery.Resource
+
 	lister    discovery.ResourceLister
-	mtx       sync.RWMutex
-	delegates map[string]*delegate
 	ruleCount gm.Gauge
 
 	endpoints       map[string][]*discovery.Endpoint
 	endpointHandler discovery.EndpointHandler
+
+	endpointCreator endpointCreator
 }
 
 func newDiscoverer(handler metrics.ProviderHandler, discoveryCfg discovery.Config, lister discovery.ResourceLister) discovery.Discoverer {
+	ec := endpointCreator{
+		delegates:                  makeDelegates(discoveryCfg),
+		providers:                  makeProviders(handler, discoveryCfg),
+		disableAnnotationDiscovery: discoveryCfg.DisableAnnotationDiscovery,
+	}
 	d := &discoverer{
 		queue:           make(chan discovery.Resource, 1000),
 		lister:          lister,
-		delegates:       makeDelegates(discoveryCfg),
 		ruleCount:       gm.GetOrRegisterGauge("discovery.rules.count", gm.DefaultRegistry),
 		endpoints:       make(map[string][]*discovery.Endpoint, 32),
 		endpointHandler: discovery.NewEndpointHandler(makeProviders(handler, discoveryCfg)),
+		endpointCreator: ec,
 	}
-	d.ruleCount.Update(int64(len(d.delegates)))
+	d.ruleCount.Update(int64(len(d.endpointCreator.delegates)))
 	go d.dequeue()
 	go d.discoverNodeEndpoints(discoveryCfg.PluginConfigs)
 	return d
@@ -138,21 +145,7 @@ func (d *discoverer) internalDiscover(resource discovery.Resource) {
 	d.mtx.Lock()
 	defer d.mtx.Unlock()
 
-	var eps []*discovery.Endpoint
-	for _, delegate := range d.delegates {
-		if delegate.filter.matches(resource) {
-			if ep := d.makeEndpoint(resource, delegate.plugin); ep != nil {
-				eps = append(eps, ep)
-			}
-		}
-	}
-
-	if len(eps) == 0 {
-		// delegate to runtime handlers if no matching delegate
-		if ep := d.makeEndpoint(resource, discovery.PluginConfig{Type: "prometheus"}); ep != nil {
-			eps = append(eps, ep)
-		}
-	}
+	eps := d.endpointCreator.discoverEndpoints(resource)
 
 	resourceName := discovery.ResourceName(resource.Kind, resource.Meta)
 	oldEps := d.endpoints[resourceName]
@@ -186,17 +179,6 @@ func (d *discoverer) internalDelete(resource discovery.Resource) {
 	for _, ep := range eps {
 		d.endpointHandler.Delete(ep)
 	}
-}
-
-func (d *discoverer) makeEndpoint(resource discovery.Resource, plugin discovery.PluginConfig) *discovery.Endpoint {
-	if name, cfg, ok := d.endpointHandler.Encode(resource, plugin); ok {
-		return &discovery.Endpoint{
-			Name:       name,
-			Config:     cfg,
-			PluginType: pluginType(plugin),
-		}
-	}
-	return nil
 }
 
 func (d *discoverer) discoverNodeEndpoints(plugins []discovery.PluginConfig) {
@@ -243,7 +225,7 @@ func (d *discoverer) discoverNodeEndpoint(plugin discovery.PluginConfig) error {
 	d.mtx.Lock()
 	defer d.mtx.Unlock()
 
-	if ep := d.makeEndpoint(resource, plugin); ep != nil {
+	if ep := d.endpointCreator.makeEndpoint(resource, plugin); ep != nil {
 		name := discovery.ResourceName(resource.Kind, resource.Meta)
 		var eps []*discovery.Endpoint
 		if val, ok := d.endpoints[name]; ok {
