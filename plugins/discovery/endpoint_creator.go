@@ -26,7 +26,7 @@ func (e *endpointCreator) discoverEndpointsWithRules(resource discovery.Resource
 func (e *endpointCreator) discoverEndpointsWithAnnotations(resource discovery.Resource) []*discovery.Endpoint {
 	var eps []*discovery.Endpoint
 	// delegate to runtime handlers if no matching delegate
-	if ep := e.makeEndpoint(resource, discovery.PluginConfig{Type: "prometheus", Name: "example"}); ep != nil {
+	if ep := e.makeEndpoint(resource, discovery.PluginConfig{Type: "prometheus"}); ep != nil {
 		eps = append(eps, ep)
 	}
 

@@ -1,6 +1,8 @@
 package discovery
 
 import (
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
@@ -9,12 +11,11 @@ import (
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/discovery/telegraf"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"testing"
 )
 
 func makeDummyProviders(handler metrics.ProviderHandler) map[string]discovery.ProviderInfo {
 	providers := make(map[string]discovery.ProviderInfo, 2)
-	providers["prometheus"] = prometheus.NewProviderInfo(handler, "prom.")
+	providers["prometheus"] = prometheus.NewProviderInfo(handler, "prom")
 	providers["telegraf"] = telegraf.NewProviderInfo(handler)
 	return providers
 }
@@ -45,9 +46,16 @@ func Test_endpointCreator_discoverEndpoints_annotations_happen_when_not_disabled
 	}
 
 	resource := discovery.Resource{
-		Kind:       discovery.PodType.String(),
-		IP:         "0.0.0.0",
-		Meta:       metav1.ObjectMeta{},
+		Kind: discovery.PodType.String(),
+		IP:   "0.0.0.0",
+		Meta: metav1.ObjectMeta{
+			Annotations: map[string]string{
+				"prom/scrape": "true",
+				"prom/scheme": "https",
+				"prom/port":   "8443",
+				"prom/path":   "/healthmetrics",
+			},
+		},
 		Containers: make([]v1.Container, 0),
 	}
 
@@ -62,6 +70,31 @@ func Test_endpointCreator_discoverEndpoints_annotations_happen_by_default(t *tes
 	}
 
 	resource := discovery.Resource{
+		Kind: discovery.PodType.String(),
+		IP:   "0.0.0.0",
+		Meta: metav1.ObjectMeta{
+			Annotations: map[string]string{
+				"prom/scrape": "true",
+				"prom/scheme": "https",
+				"prom/port":   "8443",
+				"prom/path":   "/healthmetrics",
+			},
+		},
+		Containers: make([]v1.Container, 0),
+	}
+
+	got := e.discoverEndpoints(resource)
+	assert.Equal(t, 1, len(got))
+}
+
+func Test_endpointCreator_doesnt_discover_endpoints_unless_annotated(t *testing.T) {
+	e := &endpointCreator{
+		delegates:                  nil,
+		providers:                  makeDummyProviders(util.NewDummyProviderHandler(1)),
+		disableAnnotationDiscovery: false,
+	}
+
+	resource := discovery.Resource{
 		Kind:       discovery.PodType.String(),
 		IP:         "0.0.0.0",
 		Meta:       metav1.ObjectMeta{},
@@ -69,5 +102,5 @@ func Test_endpointCreator_discoverEndpoints_annotations_happen_by_default(t *tes
 	}
 
 	got := e.discoverEndpoints(resource)
-	assert.Equal(t, 1, len(got))
+	assert.Equal(t, 0, len(got))
 }
