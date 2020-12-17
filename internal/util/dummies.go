@@ -175,6 +175,12 @@ func NewDummyDataProcessor(latency time.Duration) *DummyDataProcessor {
 	}
 }
 
+func NewDummyProviderHandler(count int) *DummyProviderHandler {
+	return &DummyProviderHandler{
+		count: count,
+	}
+}
+
 type DummyProviderHandler struct {
 	count int
 }

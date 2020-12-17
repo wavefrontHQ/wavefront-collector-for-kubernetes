@@ -38,25 +38,6 @@ func NewEndpointHandler(providers map[string]ProviderInfo) EndpointHandler {
 	}
 }
 
-func (d *defaultEndpointHandler) Encode(resource Resource, rule PluginConfig) (string, interface{}, bool) {
-	kind := resource.Kind
-	ip := resource.IP
-	meta := resource.Meta
-
-	if log.IsLevelEnabled(log.DebugLevel) {
-		log.WithFields(log.Fields{
-			"kind":      kind,
-			"name":      meta.Name,
-			"namespace": meta.Namespace,
-		}).Debug("handling resource")
-	}
-
-	if delegate, ok := d.providers[pluginType(rule)]; ok {
-		return delegate.Encoder.Encode(ip, kind, meta, rule)
-	}
-	return "", nil, false
-}
-
 func (d *defaultEndpointHandler) Add(ep *Endpoint) {
 	if delegate, ok := d.providers[ep.PluginType]; ok {
 		provider, err := delegate.Factory.Build(ep.Config)

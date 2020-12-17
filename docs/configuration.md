@@ -91,6 +91,9 @@ discovery:
   # with the annotation "wavefront.com/discovery-config: 'true'". Default is false.
   enable_runtime_plugins: true
 
+  # disables discovery based on annotations. Default is false.
+  disable_annotation_discovery: false
+
   plugins:
   # see auto-discovery for details
 

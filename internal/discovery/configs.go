@@ -23,6 +23,9 @@ type Config struct {
 	// with the annotation "wavefront.com/discovery-config: 'true'". Defaults to false.
 	EnableRuntimePlugins bool `yaml:"enable_runtime_plugins"`
 
+	// disables annotation based discovery. Defaults to false.
+	DisableAnnotationDiscovery bool `yaml:"disable_annotation_discovery"`
+
 	// list of discovery rules
 	PluginConfigs []PluginConfig `yaml:"plugins"`
 
