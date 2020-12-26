@@ -28,10 +28,15 @@ Additional annotations that apply:
 - `prometheus.io/insecureSkipVerify`: Whether to skip https cert validation. Defaults to true.
 - `prometheus.io/serverName`: The cert hostname to verify for the discovered targets.
 
-### Disabling annotation Discovery
-Auto discovery based on pod annotations is enabled by default, but can be disabled by setting the `disable_annotation_discovery` configuration option to `true`.
-
 See an [example](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/deploy/examples/prometheus-annotations-example.yaml) for how to annotate a pod with the above annotations.
+
+### Disabling annotation discovery
+Discovery based on annotations is enabled by default, but can be disabled by setting the `disable_annotation_discovery` configuration option to `true`:
+
+```
+discovery:
+  disable_annotation_discovery: true
+```
 
 ## Rule based discovery
 Discovery rules encompass a few distinct aspects:
