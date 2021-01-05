@@ -1,0 +1,6 @@
+bases:
+- ../common/
+
+images:
+- name: wavefronthq/wavefront-kubernetes-collector
+  newTag: YOUR_IMAGE_TAG
