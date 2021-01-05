@@ -1,0 +1,13 @@
+bases:
+- ../../common/
+
+namespace: wavefront-collector
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+configMapGenerator:
+- name: collector-config
+  behavior: replace
+  files:
+  - collector.yaml
