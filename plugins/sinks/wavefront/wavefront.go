@@ -28,6 +28,7 @@ import (
 const (
 	proxyClient  = 1
 	directClient = 2
+	testClient   = 3
 )
 
 var (
@@ -58,16 +59,80 @@ type WavefrontSink interface {
 }
 
 type wavefrontSink struct {
-	WavefrontClient   senders.Sender
-	ClusterName       string
-	Prefix            string
-	globalTags        map[string]string
-	filters           filter.Filter
-	testMode          bool
-	testReceivedLines []string
-	forceGC           bool
-	logPercent        float32
-	stopHeartbeat     chan struct{}
+	WavefrontClient senders.Sender
+	ClusterName     string
+	Prefix          string
+	globalTags      map[string]string
+	filters         filter.Filter
+	forceGC         bool
+	logPercent      float32
+	stopHeartbeat   chan struct{}
+}
+
+func NewWavefrontSink(cfg configuration.WavefrontSinkConfig) (WavefrontSink, error) {
+	storage := &wavefrontSink{
+		ClusterName: configuration.GetStringValue(cfg.ClusterName, "k8s-cluster"),
+		logPercent:  0.01,
+	}
+
+	if cfg.RedirectToLog {
+		storage.WavefrontClient = NewTestSender()
+		clientType.Update(testClient)
+	} else if cfg.ProxyAddress != "" {
+		s := strings.Split(cfg.ProxyAddress, ":")
+		host, portStr := s[0], s[1]
+		port, err := strconv.Atoi(portStr)
+
+		if err != nil {
+			return nil, fmt.Errorf("error parsing proxy port: %s", err.Error())
+		}
+		storage.WavefrontClient, err = senders.NewProxySender(&senders.ProxyConfiguration{
+			Host:        host,
+			MetricsPort: port,
+			EventsPort:  port,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("error creating proxy sender: %s", err.Error())
+		}
+		clientType.Update(proxyClient)
+	} else if cfg.Server != "" {
+		if len(cfg.Token) == 0 {
+			return nil, fmt.Errorf("token missing for Wavefront sink")
+		}
+		var err error
+		storage.WavefrontClient, err = senders.NewDirectSender(&senders.DirectConfiguration{
+			Server:        cfg.Server,
+			Token:         cfg.Token,
+			BatchSize:     cfg.BatchSize,
+			MaxBufferSize: cfg.MaxBufferSize,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("error creating direct sender: %s", err.Error())
+		}
+		clientType.Update(directClient)
+	}
+	if storage.WavefrontClient == nil {
+		return nil, fmt.Errorf("proxyAddress or server property required for Wavefront sink")
+	}
+
+	storage.globalTags = cfg.Tags
+	if cfg.Prefix != "" {
+		storage.Prefix = strings.Trim(cfg.Prefix, ".")
+	}
+	storage.filters = filter.FromConfig(cfg.Filters)
+
+	// force garbage collection if experimental flag enabled
+	storage.forceGC = os.Getenv(util.ForceGC) != ""
+
+	// configure error logging percentage
+	if cfg.ErrorLogPercent > 0.0 && cfg.ErrorLogPercent <= 1.0 {
+		storage.logPercent = cfg.ErrorLogPercent
+	}
+
+	// emit heartbeat metric
+	storage.emitHeartbeat(storage.WavefrontClient, cfg)
+
+	return storage, nil
 }
 
 func (sink *wavefrontSink) Name() string {
@@ -94,16 +159,6 @@ func (sink *wavefrontSink) sendPoint(metricName string, value float64, ts int64,
 
 	tags = combineGlobalTags(tags, sink.globalTags)
 
-	if sink.testMode {
-		tagStr := ""
-		for k, v := range tags {
-			tagStr += k + "=\"" + v + "\" "
-		}
-		line := fmt.Sprintf("%s %f %d source=\"%s\" %s\n", metricName, value, ts, source, tagStr)
-		sink.testReceivedLines = append(sink.testReceivedLines, line)
-		log.Infoln(line)
-		return
-	}
 	err := sink.WavefrontClient.SendMetric(metricName, value, ts, source, tags)
 	if err != nil {
 		errPoints.Inc(1)
@@ -172,12 +227,6 @@ func (sink *wavefrontSink) send(batch *metrics.DataBatch) {
 }
 
 func (sink *wavefrontSink) ExportData(batch *metrics.DataBatch) {
-	if sink.testMode {
-		//clear lines from last batch
-		sink.testReceivedLines = sink.testReceivedLines[:0]
-		sink.send(batch)
-		return
-	}
 	sink.send(batch)
 }
 
@@ -259,68 +308,4 @@ func (sink *wavefrontSink) logStatus() {
 			"errors": errEvents.Count(),
 		}).Info("Events processed")
 	}
-}
-
-func NewWavefrontSink(cfg configuration.WavefrontSinkConfig) (WavefrontSink, error) {
-	storage := &wavefrontSink{
-		ClusterName: configuration.GetStringValue(cfg.ClusterName, "k8s-cluster"),
-		testMode:    cfg.TestMode,
-		logPercent:  0.01,
-	}
-
-	if cfg.ProxyAddress != "" {
-		s := strings.Split(cfg.ProxyAddress, ":")
-		host, portStr := s[0], s[1]
-		port, err := strconv.Atoi(portStr)
-
-		if err != nil {
-			return nil, fmt.Errorf("error parsing proxy port: %s", err.Error())
-		}
-		storage.WavefrontClient, err = senders.NewProxySender(&senders.ProxyConfiguration{
-			Host:        host,
-			MetricsPort: port,
-			EventsPort:  port,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("error creating proxy sender: %s", err.Error())
-		}
-		clientType.Update(proxyClient)
-	} else if cfg.Server != "" {
-		if len(cfg.Token) == 0 {
-			return nil, fmt.Errorf("token missing for Wavefront sink")
-		}
-		var err error
-		storage.WavefrontClient, err = senders.NewDirectSender(&senders.DirectConfiguration{
-			Server:        cfg.Server,
-			Token:         cfg.Token,
-			BatchSize:     cfg.BatchSize,
-			MaxBufferSize: cfg.MaxBufferSize,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("error creating direct sender: %s", err.Error())
-		}
-		clientType.Update(directClient)
-	}
-	if storage.WavefrontClient == nil {
-		return nil, fmt.Errorf("proxyAddress or server property required for Wavefront sink")
-	}
-
-	storage.globalTags = cfg.Tags
-	if cfg.Prefix != "" {
-		storage.Prefix = strings.Trim(cfg.Prefix, ".")
-	}
-	storage.filters = filter.FromConfig(cfg.Filters)
-
-	// force garbage collection if experimental flag enabled
-	storage.forceGC = os.Getenv(util.ForceGC) != ""
-
-	// configure error logging percentage
-	if cfg.ErrorLogPercent > 0.0 && cfg.ErrorLogPercent <= 1.0 {
-		storage.logPercent = cfg.ErrorLogPercent
-	}
-
-	// emit heartbeat metric
-	storage.emitHeartbeat(storage.WavefrontClient, cfg)
-
-	return storage, nil
 }

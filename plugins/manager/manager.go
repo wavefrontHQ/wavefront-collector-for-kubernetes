@@ -42,15 +42,20 @@ type flushManagerImpl struct {
 	flushInterval time.Duration
 	ticker        *time.Ticker
 	stopChan      chan struct{}
+
+	pushOnce bool
+	pushed   bool
 }
 
 // NewFlushManager crates a new PushManager
 func NewFlushManager(processors []metrics.DataProcessor,
-	sink wavefront.WavefrontSink, flushInterval time.Duration) (FlushManager, error) {
+	sink wavefront.WavefrontSink, flushInterval time.Duration, runOnce bool) (FlushManager, error) {
 	manager := flushManagerImpl{
 		processors:    processors,
 		sink:          sink,
 		flushInterval: flushInterval,
+		pushOnce:      runOnce,
+		pushed:        false,
 		stopChan:      make(chan struct{}),
 	}
 
@@ -79,6 +84,13 @@ func (rm *flushManagerImpl) Stop() {
 	rm.stopChan <- struct{}{}
 }
 
+func (rm *flushManagerImpl) shouldPush() bool {
+	if rm.pushOnce && rm.pushed {
+		return false
+	}
+	return true
+}
+
 func (rm *flushManagerImpl) push() {
 	dataBatches := sources.Manager().GetPendingMetrics()
 	combinedBatch := &metrics.DataBatch{}
@@ -91,8 +103,10 @@ func (rm *flushManagerImpl) push() {
 			combineMetricSets(data, combinedBatch)
 			continue
 		}
-		// Export data to sinks
-		rm.sink.ExportData(data)
+
+		if rm.shouldPush() {
+			rm.sink.ExportData(data)
+		}
 	}
 
 	// process the combined metric sets
@@ -106,9 +120,13 @@ func (rm *flushManagerImpl) push() {
 				return
 			}
 		}
-		// Export to sinks
-		rm.sink.ExportData(combinedBatch)
+
+		if rm.shouldPush() {
+			rm.sink.ExportData(combinedBatch)
+		}
 	}
+
+	rm.pushed = true
 }
 
 func combineMetricSets(src, dst *metrics.DataBatch) {
