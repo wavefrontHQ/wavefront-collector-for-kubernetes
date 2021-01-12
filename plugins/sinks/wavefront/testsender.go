@@ -7,10 +7,12 @@ import (
 	"github.com/wavefronthq/wavefront-sdk-go/histogram"
 	"github.com/wavefronthq/wavefront-sdk-go/senders"
 	"sort"
+	"sync"
 )
 
 type TestSender struct {
 	testReceivedLines string
+	mutex             sync.Mutex
 }
 
 func NewTestSender() senders.Sender {
@@ -22,10 +24,21 @@ func NewTestSender() senders.Sender {
 
 func (t *TestSender) SendMetric(name string, value float64, _ int64, source string, tags map[string]string) error {
 	line := fmt.Sprintf("Metric: %s %f source=\"%s\" %s\n", name, value, source, orderedTagString(tags))
+
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
+
 	t.testReceivedLines += line
 	log.Infoln(line)
 
 	return nil
+}
+
+func (t *TestSender) GetReceivedLines() string {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
+
+	return t.testReceivedLines
 }
 
 func (t *TestSender) SendEvent(name string, startMillis, endMillis int64, source string, tags map[string]string, setters ...event.Option) error {

@@ -76,5 +76,5 @@ func TestPrefix(t *testing.T) {
 }
 
 func getMetrics(sink WavefrontSink) string {
-	return sink.(*wavefrontSink).WavefrontClient.(*TestSender).testReceivedLines
+	return sink.(*wavefrontSink).WavefrontClient.(*TestSender).GetReceivedLines()
 }

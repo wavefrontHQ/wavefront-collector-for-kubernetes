@@ -44,7 +44,6 @@ type flushManagerImpl struct {
 	stopChan      chan struct{}
 
 	pushOnce bool
-	pushed   bool
 }
 
 // NewFlushManager crates a new PushManager
@@ -55,7 +54,6 @@ func NewFlushManager(processors []metrics.DataProcessor,
 		sink:          sink,
 		flushInterval: flushInterval,
 		pushOnce:      runOnce,
-		pushed:        false,
 		stopChan:      make(chan struct{}),
 	}
 
@@ -68,10 +66,20 @@ func (rm *flushManagerImpl) Start() {
 }
 
 func (rm *flushManagerImpl) run() {
+	nullExporter := func(batch *metrics.DataBatch) {
+		return
+	}
+
+	firstPush := true
 	for {
 		select {
 		case <-rm.ticker.C:
-			go rm.push()
+			if rm.shouldPush(firstPush) {
+				go rm.push(rm.sink.ExportData)
+			} else {
+				go rm.push(nullExporter)
+			}
+			firstPush = false
 		case <-rm.stopChan:
 			rm.ticker.Stop()
 			rm.sink.Stop()
@@ -84,14 +92,14 @@ func (rm *flushManagerImpl) Stop() {
 	rm.stopChan <- struct{}{}
 }
 
-func (rm *flushManagerImpl) shouldPush() bool {
-	if rm.pushOnce && rm.pushed {
+func (rm *flushManagerImpl) shouldPush(firstPush bool) bool {
+	if rm.pushOnce && !firstPush {
 		return false
 	}
 	return true
 }
 
-func (rm *flushManagerImpl) push() {
+func (rm *flushManagerImpl) push(export func(*metrics.DataBatch)) {
 	dataBatches := sources.Manager().GetPendingMetrics()
 	combinedBatch := &metrics.DataBatch{}
 
@@ -104,9 +112,9 @@ func (rm *flushManagerImpl) push() {
 			continue
 		}
 
-		if rm.shouldPush() {
-			rm.sink.ExportData(data)
-		}
+		// export is either sink.ExportData or a null exporter for testing
+		// hopefully we can simplify threading and simplify this up in the future
+		export(data)
 	}
 
 	// process the combined metric sets
@@ -121,12 +129,8 @@ func (rm *flushManagerImpl) push() {
 			}
 		}
 
-		if rm.shouldPush() {
-			rm.sink.ExportData(combinedBatch)
-		}
+		export(combinedBatch)
 	}
-
-	rm.pushed = true
 }
 
 func combineMetricSets(src, dst *metrics.DataBatch) {
