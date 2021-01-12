@@ -1,6 +1,0 @@
-bases:
-- ../common/
-
-images:
-- name: wavefronthq/wavefront-kubernetes-collector
-  newTag: 1.2.6
