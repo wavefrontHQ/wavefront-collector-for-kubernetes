@@ -15,8 +15,8 @@ import (
 
 func NewFakeWavefrontSink() *wavefrontSink {
 	return &wavefrontSink{
-		testMode:    true,
-		ClusterName: "testCluster",
+		WavefrontClient: NewTestSender(),
+		ClusterName:     "testCluster",
 	}
 }
 
@@ -24,7 +24,7 @@ func TestStoreTimeseriesEmptyInput(t *testing.T) {
 	fakeSink := NewFakeWavefrontSink()
 	db := metrics.DataBatch{}
 	fakeSink.ExportData(&db)
-	assert.Equal(t, 0, len(fakeSink.testReceivedLines))
+	assert.Equal(t, 0, len(getMetrics(fakeSink)))
 }
 
 func TestName(t *testing.T) {
@@ -53,8 +53,8 @@ func TestCreateWavefrontSinkWithNoEmptyInputs(t *testing.T) {
 
 func TestPrefix(t *testing.T) {
 	cfg := configuration.WavefrontSinkConfig{
-		ProxyAddress: "wavefront-proxy:2878",
-		TestMode:     true,
+		ProxyAddress:  "wavefront-proxy:2878",
+		RedirectToLog: true,
 		Transforms: configuration.Transforms{
 			Prefix: "test.",
 		},
@@ -72,7 +72,9 @@ func TestPrefix(t *testing.T) {
 		},
 	}
 	sink.ExportData(&db)
-	wfSink := sink.(*wavefrontSink)
-	assert.Equal(t, 1, len(wfSink.testReceivedLines))
-	assert.True(t, strings.Contains(wfSink.testReceivedLines[0], "test.cpu.idle"))
+	assert.True(t, strings.Contains(getMetrics(sink), "test.cpu.idle"))
+}
+
+func getMetrics(sink WavefrontSink) string {
+	return sink.(*wavefrontSink).WavefrontClient.(*TestSender).GetReceivedLines()
 }

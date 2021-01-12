@@ -52,6 +52,9 @@ type Config struct {
 
 	// Internal use only
 	Daemon bool `yaml:"-"`
+
+	// If set to true, one emission interval executes and none after. Defaults to false.
+	FlushOnce bool `yaml:"flushOnce"`
 }
 
 type EventsConfig struct {
@@ -118,7 +121,7 @@ type WavefrontSinkConfig struct {
 	ProxyAddress string `yaml:"proxyAddress"`
 
 	// If set to true, metrics are emitted to stdout instead. Defaults to false.
-	TestMode bool `yaml:"testMode"`
+	RedirectToLog bool `yaml:"redirectToLog"`
 
 	// Errors that occur when sending individual data points are verbose and logged at debug level by default.
 	// This property enables surfacing a small percentage of error messages even when debug logging is disabled.

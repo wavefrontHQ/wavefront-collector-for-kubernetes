@@ -38,7 +38,7 @@ func TestFlow(t *testing.T) {
 
 	sources.Manager().AddProvider(provider)
 
-	manager, _ := NewFlushManager([]metrics.DataProcessor{processor}, sink, 100*time.Millisecond)
+	manager, _ := NewFlushManager([]metrics.DataProcessor{processor}, sink, 100*time.Millisecond, false)
 	manager.Start()
 
 	// 4-5 cycles
@@ -46,6 +46,28 @@ func TestFlow(t *testing.T) {
 	manager.Stop()
 
 	if sink.GetExportCount() < 4 || sink.GetExportCount() > 5 {
+		t.Fatalf("Wrong number of exports executed: %d", sink.GetExportCount())
+	}
+}
+
+func TestRunOnce(t *testing.T) {
+	provider := util.NewDummyMetricsSourceProvider(
+		"p1", 100*time.Millisecond, 100*time.Millisecond,
+		util.NewDummyMetricsSource("src", time.Millisecond))
+
+	sink := util.NewDummySink("sink", time.Millisecond)
+	processor := util.NewDummyDataProcessor(time.Millisecond)
+
+	sources.Manager().AddProvider(provider)
+
+	manager, _ := NewFlushManager([]metrics.DataProcessor{processor}, sink, 100*time.Millisecond, true)
+	manager.Start()
+
+	// 4-5 cycles
+	time.Sleep(time.Millisecond * 550)
+	manager.Stop()
+
+	if sink.GetExportCount() > 1 {
 		t.Fatalf("Wrong number of exports executed: %d", sink.GetExportCount())
 	}
 }
