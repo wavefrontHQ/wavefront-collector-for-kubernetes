@@ -1,5 +1,3 @@
-# Need to change YOUR_CLUSTER and YOUR_API_TOKEN accordingly
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:

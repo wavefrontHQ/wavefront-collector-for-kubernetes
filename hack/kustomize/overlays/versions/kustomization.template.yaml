@@ -1,5 +1,5 @@
 bases:
-- ../common/
+- ../../base/
 
 images:
 - name: wavefronthq/wavefront-kubernetes-collector
