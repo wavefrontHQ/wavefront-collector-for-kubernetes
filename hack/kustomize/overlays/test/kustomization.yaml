@@ -1,7 +1,5 @@
 bases:
-- ../../versions/
-
-namespace: wavefront-collector
+ - ../../base
 
 generatorOptions:
   disableNameSuffixHash: true
