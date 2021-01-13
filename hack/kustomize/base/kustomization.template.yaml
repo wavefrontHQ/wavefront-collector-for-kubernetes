@@ -1,5 +1,5 @@
 ---
-namespace: wavefront-collector
+namespace: NAMESPACE
 resources:
 - proxy.yaml
 - 0-collector-namespace.yaml
@@ -8,3 +8,7 @@ resources:
 - 3-collector-service-account.yaml
 - 4-collector-config.yaml
 - 5-collector-daemonset.yaml
+
+images:
+- name: wavefronthq/wavefront-kubernetes-collector
+  newTag: YOUR_IMAGE_TAG
