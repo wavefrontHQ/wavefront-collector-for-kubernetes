@@ -11,4 +11,5 @@ resources:
 
 images:
 - name: wavefronthq/wavefront-kubernetes-collector
+  newName: YOUR_IMAGE_NAME
   newTag: YOUR_IMAGE_TAG

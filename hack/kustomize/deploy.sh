@@ -6,6 +6,7 @@
 # 2. NAMESPACE (OPTIONAL)
 # 3. IMAGE(OPTIONAL) -- if missing build from source
 
+DEFAULT_IMAGE_NAME="wavefronthq\/wavefront-kubernetes-collector"
 DEFAULT_VERSION="1.2.6"
 
 WAVEFRONT_CLUSTER=$1
@@ -26,7 +27,7 @@ NAMESPACE_VERSION=$(echo "$VERSION" | tr . -)
 
 # TODO: input the base image
 # input the diff image
-# emit the output out to a log dump and then diff becomes easy
+IMAGE_NAME=${DEFAULT_IMAGE_NAME}
 
 BASE_DIR="base"
 OVERLAYS_DIR="overlays"
@@ -36,7 +37,7 @@ OVERLAYS_DIR="overlays"
 
 #TODO: Migrate these sed to use kustomize edit
 sed "s/YOUR_CLUSTER/${WAVEFRONT_CLUSTER}/g; s/YOUR_API_TOKEN/${API_TOKEN}/g" ${BASE_DIR}/proxy.template.yaml > ${BASE_DIR}/proxy.yaml
-sed "s/NAMESPACE/${NAMESPACE_VERSION}-wavefront-collector/g" ${BASE_DIR}/kustomization.template.yaml | sed "s/YOUR_IMAGE_TAG/${VERSION}/g" > ${BASE_DIR}/kustomization.yaml
+sed "s/NAMESPACE/${NAMESPACE_VERSION}-wavefront-collector/g" ${BASE_DIR}/kustomization.template.yaml | sed "s/YOUR_IMAGE_TAG/${VERSION}/g" | sed "s/YOUR_IMAGE_NAME/${IMAGE_NAME}/g" > ${BASE_DIR}/kustomization.yaml
 
 sed "s/YOUR_CLUSTER_NAME/cluster-${VERSION}/g" ${OVERLAYS_DIR}/test/collector.yaml.template | sed "s/NAMESPACE/${NAMESPACE_VERSION}-wavefront-collector/g" > ${OVERLAYS_DIR}/test/collector.yaml
 
