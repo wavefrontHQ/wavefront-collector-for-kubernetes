@@ -2,26 +2,54 @@
 
 # This script automates the deployment of the collector to a specific k8s cluster
 
-# 1. VERSION (OPTIONAL)
-# 2. NAMESPACE (OPTIONAL)
-# 3. IMAGE(OPTIONAL) -- if missing build from source
-
 DEFAULT_IMAGE_NAME="wavefronthq\/wavefront-kubernetes-collector"
 DEFAULT_VERSION="1.2.6"
 
-#TODO: use getopts instead?
-WAVEFRONT_CLUSTER=$1
-API_TOKEN=$2
-VERSION=$3
-IMAGE=$4
-PROFILE=$5
-
-echo "$WAVEFRONT_CLUSTER $API_TOKEN $VERSION $IMAGE $PROFILE"
-
-if [[ -z ${WAVEFRONT_CLUSTER} || -z ${API_TOKEN} ]] ; then
-    #TODO: source these from environment variables if not provided
-    echo "wavefront cluster and token required"
+function print_usage_and_exit() {
+    echo "Failure: $1"
+    echo "Usage: $0 [flags] [options]"
+    echo -e "\t-c wavefront instance name (required)"
+    echo -e "\t-t wavefront token (required)"
+    echo -e "\t-i collector docker image name"
+    echo -e "\t-v collector docker image version"
+    echo -e "\t-p kustomize overlay to deploy"
     exit 1
+}
+
+WF_CLUSTER=
+WF_TOKEN=
+VERSION=
+IMAGE=
+PROFILE=
+
+while getopts "c:t:v:i:p:" opt; do
+  case $opt in
+    c)
+      WF_CLUSTER="$OPTARG"
+      ;;
+    t)
+      WF_TOKEN="$OPTARG"
+      ;;
+    v)
+      VERSION="$OPTARG"
+      ;;
+    i)
+      IMAGE="$OPTARG"
+      ;;
+    p)
+      PROFILE="$OPTARG"
+      ;;
+    \?)
+      print_usage_and_exit "Invalid option: -$OPTARG"
+      ;;
+  esac
+done
+
+echo "$WF_CLUSTER $VERSION $IMAGE $PROFILE"
+
+if [[ -z ${WF_CLUSTER} || -z ${WF_TOKEN} ]] ; then
+    #TODO: source these from environment variables if not provided
+    print_usage_and_exit "wavefront instance and token required"
 fi
 
 if [[ -z ${VERSION} ]] ; then
@@ -46,7 +74,7 @@ fi
 #TODO: need to replace the kustomize template to source from temp directory
 
 #TODO: Migrate these sed to use kustomize edit
-sed "s/YOUR_CLUSTER/${WAVEFRONT_CLUSTER}/g; s/YOUR_API_TOKEN/${API_TOKEN}/g" ${BASE_DIR}/proxy.template.yaml > ${BASE_DIR}/proxy.yaml
+sed "s/YOUR_CLUSTER/${WF_CLUSTER}/g; s/YOUR_API_TOKEN/${WF_TOKEN}/g" ${BASE_DIR}/proxy.template.yaml > ${BASE_DIR}/proxy.yaml
 sed "s/NAMESPACE/${NAMESPACE_VERSION}-wavefront-collector/g" ${BASE_DIR}/kustomization.template.yaml | sed "s/YOUR_IMAGE_TAG/${VERSION}/g" | sed "s/YOUR_IMAGE_NAME/${IMAGE}/g" > ${BASE_DIR}/kustomization.yaml
 
 sed "s/YOUR_CLUSTER_NAME/cluster-${VERSION}/g" ${OVERLAYS_DIR}/test/collector.yaml.template | sed "s/NAMESPACE/${NAMESPACE_VERSION}-wavefront-collector/g" > ${OVERLAYS_DIR}/test/collector.yaml
