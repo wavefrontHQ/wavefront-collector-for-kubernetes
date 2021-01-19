@@ -4,6 +4,26 @@
 
 DEFAULT_IMAGE_NAME="wavefronthq\/wavefront-kubernetes-collector"
 DEFAULT_VERSION="1.2.6"
+DEFAULT_USE_CLASSIC_PROMETHEUS=false
+DEFAULT_FLUSH_ONCE=false
+DEFAULT_FLUSH_INTERVAL=30
+DEFAULT_COLLECTION_INTERVAL=60
+
+if [[ -z ${FLUSH_ONCE} ]] ; then
+    FLUSH_ONCE=${DEFAULT_FLUSH_ONCE}
+fi
+
+if [[ -z ${FLUSH_INTERVAL} ]] ; then
+    FLUSH_INTERVAL=${DEFAULT_FLUSH_INTERVAL}
+fi
+
+if [[ -z ${COLLECTION_INTERVAL} ]] ; then
+    COLLECTION_INTERVAL=${DEFAULT_COLLECTION_INTERVAL}
+fi
+
+if [[ -z ${USE_CLASSIC_PROMETHEUS} ]] ; then
+    USE_CLASSIC_PROMETHEUS=${DEFAULT_USE_CLASSIC_PROMETHEUS}
+fi
 
 function print_usage_and_exit() {
     echo "Failure: $1"
@@ -52,6 +72,9 @@ if [[ -z ${WF_CLUSTER} || -z ${WF_TOKEN} ]] ; then
     print_usage_and_exit "wavefront instance and token required"
 fi
 
+BASE_DIR="base"
+OVERLAYS_DIR="overlays"
+
 if [[ -z ${VERSION} ]] ; then
     VERSION=${DEFAULT_VERSION}
 fi
@@ -61,15 +84,6 @@ if [[ -z ${IMAGE} ]] ; then
     IMAGE=${DEFAULT_IMAGE_NAME}
 fi
 
-BASE_DIR="base"
-OVERLAYS_DIR="overlays"
-
-if [[ -z ${PROFILE} ]] ; then
-    PROFILE=${OVERLAYS_DIR}/test
-else
-    PROFILE=${OVERLAYS_DIR}/${PROFILE}
-fi
-
 #TODO: temp directory for intermediate files
 #TODO: need to replace the kustomize template to source from temp directory
 
@@ -77,6 +91,10 @@ fi
 sed "s/YOUR_CLUSTER/${WF_CLUSTER}/g; s/YOUR_API_TOKEN/${WF_TOKEN}/g" ${BASE_DIR}/proxy.template.yaml > ${BASE_DIR}/proxy.yaml
 sed "s/NAMESPACE/${NAMESPACE_VERSION}-wavefront-collector/g" ${BASE_DIR}/kustomization.template.yaml | sed "s/YOUR_IMAGE_TAG/${VERSION}/g" | sed "s/YOUR_IMAGE_NAME/${IMAGE}/g" > ${BASE_DIR}/kustomization.yaml
 
-sed "s/YOUR_CLUSTER_NAME/cluster-${VERSION}/g" ${OVERLAYS_DIR}/test/collector.yaml.template | sed "s/NAMESPACE/${NAMESPACE_VERSION}-wavefront-collector/g" > ${OVERLAYS_DIR}/test/collector.yaml
+sed "s/YOUR_CLUSTER_NAME/cluster-${VERSION}/g" ${OVERLAYS_DIR}/test/collector.yaml.template | sed "s/NAMESPACE/${NAMESPACE_VERSION}-wavefront-collector/g" \
+|  sed "s/FLUSH_ONCE/${FLUSH_ONCE}/g" \
+|  sed "s/FLUSH_INTERVAL/${FLUSH_INTERVAL}/g" \
+|  sed "s/COLLECTION_INTERVAL/${COLLECTION_INTERVAL}/g" \
+|  sed "s/USE_CLASSIC_PROMETHEUS/${USE_CLASSIC_PROMETHEUS}/g" > ${OVERLAYS_DIR}/test/collector.yaml \
 
-kustomize build ${PROFILE} | kubectl apply -f -
+kustomize build ${OVERLAYS_DIR}/test | kubectl apply -f -

@@ -52,7 +52,11 @@ function cleanup() {
 }
 
 echo "deploying collector ${DEFAULT_IMAGE_NAME} ${DEFAULT_VERSION}"
-./deploy.sh -c ${WAVEFRONT_CLUSTER} -t ${API_TOKEN} -v ${DEFAULT_VERSION} -i ${DEFAULT_IMAGE_NAME} -p flushonce
+FLUSH_INTERVAL=5; \
+FLUSH_ONCE=true; \
+COLLECTION_INTERVAL=10; \
+USE_CLASSIC_PROMETHEUS=true; \
+./deploy.sh -c ${WAVEFRONT_CLUSTER} -t ${API_TOKEN} -v ${DEFAULT_VERSION} -i ${DEFAULT_IMAGE_NAME}
 
 echo "waiting for logs..."
 sleep 30

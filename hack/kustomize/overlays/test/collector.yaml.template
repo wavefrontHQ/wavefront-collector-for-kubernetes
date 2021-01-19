@@ -1,7 +1,11 @@
 clusterName: YOUR_CLUSTER_NAME
 enableEvents: false
 enableDiscovery: true
-flushInterval: 30s
+useClassicPrometheusParser: USE_CLASSIC_PROMETHEUS
+flushOnce: FLUSH_ONCE
+flushInterval: FLUSH_INTERVALs
+defaultCollectionInterval: COLLECTION_INTERVALs
+
 
 sinks:
 - proxyAddress: wavefront-proxy.NAMESPACE.svc.cluster.local:2878
