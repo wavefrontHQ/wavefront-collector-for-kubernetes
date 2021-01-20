@@ -63,17 +63,10 @@ function cleanup() {
 }
 
 echo "deploying collector ${IMAGE_NAME} ${VERSION}"
-export FLUSH_INTERVAL=15
-export FLUSH_ONCE=true
-export COLLECTION_INTERVAL=10
-export USE_CLASSIC_PROMETHEUS=false
 
+env FLUSH_ONCE=true \
+USE_CLASSIC_PROMETHEUS=false \
 ./deploy.sh -c ${WAVEFRONT_CLUSTER} -t ${API_TOKEN} -v ${VERSION} -i ${IMAGE_NAME}
-
-export FLUSH_INTERVAL=
-export FLUSH_ONCE=
-export COLLECTION_INTERVAL=
-export USE_CLASSIC_PROMETHEUS=
 
 echo "waiting for logs..."
 sleep 30
