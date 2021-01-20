@@ -1,33 +1,24 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: v1
+kind: Pod
 metadata:
   labels:
     k8s-app: prom-example
     name: prom-example
+  annotations:
+    prometheus.io/scrape: 'true'
+    prometheus.io/scheme: 'http'
+    prometheus.io/port: '8443'
+    prometheus.io/prefix: 'prom-example.'
   name: prom-example
   namespace: default
 spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      k8s-app: prom-example
-  template:
-    metadata:
-      labels:
-        k8s-app: prom-example
-      annotations:
-        prometheus.io/scrape: 'true'
-        prometheus.io/scheme: 'http'
-        prometheus.io/port: '8443'
-        prometheus.io/prefix: 'prom-example.'
-    spec:
-      containers:
-      - name: prom-example
-        image: vikramraman/prom-example-app:metrics
-        imagePullPolicy: Always
-        command:
-        - /bin/prometheus-example-app
-        - --num=10
-        ports:
-        - containerPort: 8443
-          protocol: TCP
+  containers:
+  - name: prom-example
+    image: vikramraman/prom-example-app:metrics
+    imagePullPolicy: Always
+    command:
+    - /bin/prometheus-example-app
+    - --num=10
+    ports:
+    - containerPort: 8443
+      protocol: TCP

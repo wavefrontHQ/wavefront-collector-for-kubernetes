@@ -1,4 +1,4 @@
-#! /bin/bash
+#! /bin/bash -e
 
 # This script automates the deployment of the collector to a specific k8s cluster
 
@@ -8,9 +8,13 @@ DEFAULT_USE_CLASSIC_PROMETHEUS=false
 DEFAULT_FLUSH_ONCE=false
 DEFAULT_FLUSH_INTERVAL=30
 DEFAULT_COLLECTION_INTERVAL=60
+REDIRECT_TO_LOG=false
 
-if [[ -z ${FLUSH_ONCE} ]] ; then
+if [[ -z ${FLUSH_ONCE} ]] ;
+then
     FLUSH_ONCE=${DEFAULT_FLUSH_ONCE}
+else
+    REDIRECT_TO_LOG=true
 fi
 
 if [[ -z ${FLUSH_INTERVAL} ]] ; then
@@ -93,6 +97,7 @@ sed "s/NAMESPACE/${NAMESPACE_VERSION}-wavefront-collector/g" ${BASE_DIR}/kustomi
 
 sed "s/YOUR_CLUSTER_NAME/cluster-${VERSION}/g" ${OVERLAYS_DIR}/test/collector.yaml.template | sed "s/NAMESPACE/${NAMESPACE_VERSION}-wavefront-collector/g" \
 |  sed "s/FLUSH_ONCE/${FLUSH_ONCE}/g" \
+|  sed "s/REDIRECT_TO_LOG/${REDIRECT_TO_LOG}/g" \
 |  sed "s/FLUSH_INTERVAL/${FLUSH_INTERVAL}/g" \
 |  sed "s/COLLECTION_INTERVAL/${COLLECTION_INTERVAL}/g" \
 |  sed "s/USE_CLASSIC_PROMETHEUS/${USE_CLASSIC_PROMETHEUS}/g" > ${OVERLAYS_DIR}/test/collector.yaml \

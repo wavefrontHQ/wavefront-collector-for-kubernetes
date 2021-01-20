@@ -9,6 +9,7 @@ defaultCollectionInterval: COLLECTION_INTERVALs
 
 sinks:
 - proxyAddress: wavefront-proxy.NAMESPACE.svc.cluster.local:2878
+  redirectToLog: REDIRECT_TO_LOG
   filters:
     # Filter out generated labels
     tagExclude:

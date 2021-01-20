@@ -1,16 +1,27 @@
-#! /bin/bash
+#! /bin/bash -e
 
 # This script automates the functional testing of the collector
 
-DEFAULT_VERSION="1.2.7-beta1"
-DEFAULT_IMAGE_NAME="vikramraman\/wavefront-collector"
+DEFAULT_VERSION="1.2.6"
+DEFAULT_IMAGE_NAME="wavefronthq\/wavefront-collector"
 
 WAVEFRONT_CLUSTER=$1
 API_TOKEN=$2
+VERSION=$3
+IMAGE_NAME=$4
+
 
 OUT_DIR=/tmp
 PROM_DUMP=${OUT_DIR}/prom.txt
 SORTED_FILE=${OUT_DIR}/sorted.txt
+
+if [[ -z ${VERSION} ]] ; then
+    VERSION=${DEFAULT_VERSION}
+fi
+
+if [[ -z ${IMAGE_NAME} ]] ; then
+    IMAGE_NAME=${DEFAULT_IMAGE_NAME}
+fi
 
 function print_msg_and_exit() {
     echo -e "$1"
@@ -51,17 +62,23 @@ function cleanup() {
     #TODO: cleanup other files here
 }
 
-echo "deploying collector ${DEFAULT_IMAGE_NAME} ${DEFAULT_VERSION}"
-FLUSH_INTERVAL=5; \
-FLUSH_ONCE=true; \
-COLLECTION_INTERVAL=10; \
-USE_CLASSIC_PROMETHEUS=true; \
-./deploy.sh -c ${WAVEFRONT_CLUSTER} -t ${API_TOKEN} -v ${DEFAULT_VERSION} -i ${DEFAULT_IMAGE_NAME}
+echo "deploying collector ${IMAGE_NAME} ${VERSION}"
+export FLUSH_INTERVAL=15
+export FLUSH_ONCE=true
+export COLLECTION_INTERVAL=10
+export USE_CLASSIC_PROMETHEUS=false
+
+./deploy.sh -c ${WAVEFRONT_CLUSTER} -t ${API_TOKEN} -v ${VERSION} -i ${IMAGE_NAME}
+
+export FLUSH_INTERVAL=
+export FLUSH_ONCE=
+export COLLECTION_INTERVAL=
+export USE_CLASSIC_PROMETHEUS=
 
 echo "waiting for logs..."
 sleep 30
 
-NAMESPACE_VERSION=$(echo "${DEFAULT_VERSION}" | tr . -)
+NAMESPACE_VERSION=$(echo "${VERSION}" | tr . -)
 NS=${NAMESPACE_VERSION}-wavefront-collector
 
 PODS=`kubectl -n ${NS} get pod -l k8s-app=wavefront-collector | awk '{print $1}' | tail +2`

@@ -22,8 +22,8 @@ func NewTestSender() senders.Sender {
 	}
 }
 
-func (t *TestSender) SendMetric(name string, value float64, _ int64, source string, tags map[string]string) error {
-	line := fmt.Sprintf("Metric: %s %f source=\"%s\" %s\n", name, value, source, orderedTagString(tags))
+func (t *TestSender) SendMetric(name string, value float64, _ int64, _ string, tags map[string]string) error {
+	line := fmt.Sprintf("Metric: %s %f %s\n", name, value, orderedTagString(tags))
 
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
@@ -58,7 +58,9 @@ func orderedTagString(tags map[string]string) string {
 
 	tagStr := ""
 	for _, tagName := range tagNames {
-		tagStr += tagName + "=\"" + tags[tagName] + "\" "
+		if tagName != "cluster" {
+			tagStr += tagName + "=\"" + tags[tagName] + "\" "
+		}
 	}
 	return tagStr
 }
