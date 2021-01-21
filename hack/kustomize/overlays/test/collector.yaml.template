@@ -1,0 +1,45 @@
+clusterName: YOUR_CLUSTER_NAME
+enableEvents: false
+enableDiscovery: true
+useClassicPrometheusParser: USE_CLASSIC_PROMETHEUS
+flushOnce: FLUSH_ONCE
+flushInterval: FLUSH_INTERVALs
+defaultCollectionInterval: COLLECTION_INTERVALs
+
+
+sinks:
+- proxyAddress: wavefront-proxy.NAMESPACE.svc.cluster.local:2878
+  redirectToLog: REDIRECT_TO_LOG
+  filters:
+    # Filter out generated labels
+    tagExclude:
+    - 'label?controller?revision*'
+    - 'label?pod?template*'
+    - 'annotation_kubectl_kubernetes_io_last_applied_configuration'
+
+sources:
+  kubernetes_source:
+    url: 'https://kubernetes.default.svc'
+    kubeletPort: 10250
+    kubeletHttps: true
+    useServiceAccount: true
+    insecure: true
+    prefix: 'kubernetes.'
+
+    filters:
+      metricDenyList:
+      - 'kubernetes.sys_container.*'
+
+  internal_stats_source:
+    prefix: 'kubernetes.'
+
+  kubernetes_state_source:
+    prefix: 'kubernetes.'
+
+  telegraf_sources:
+  # enable all telegraf plugins
+  - plugins: []
+
+# discovery rules for auto-discovery of pods and services
+discovery:
+  enable_runtime_plugins: true
