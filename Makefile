@@ -2,6 +2,7 @@ PREFIX?=wavefronthq
 DOCKER_IMAGE=wavefront-kubernetes-collector
 ARCH?=amd64
 OUT_DIR?=./_output
+KUSTOMIZE_DIR=./hack/kustomize
 GOLANG_VERSION?=1.13
 
 BINARY_NAME=wavefront-collector
@@ -14,6 +15,7 @@ VERSION?=1.2.7
 GIT_COMMIT:=$(shell git rev-parse --short HEAD)
 
 REPO_DIR:=$(shell pwd)
+KUSTOMIZE_DIR=${REPO_DIR}/hack/kustomize
 
 # for testing, the built image will also be tagged with this name provided via an environment variable
 OVERRIDE_IMAGE_NAME?=${COLLECTOR_TEST_IMAGE}
@@ -49,6 +51,11 @@ container:
 ifneq ($(OVERRIDE_IMAGE_NAME),)
 	docker tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OVERRIDE_IMAGE_NAME)
 endif
+
+output-test:
+	if [ -z ${WAVEFRONT_API_KEY} ]; then echo "Need to set WAVEFRONT_API_KEY" && exit 1; fi
+	kind load docker-image wavefronthq/wavefront-kubernetes-collector:$(VERSION) --name kind
+	(cd $(KUSTOMIZE_DIR) && ./test.sh nimba $(WAVEFRONT_API_KEY) $(VERSION))
 
 #This rule need to be run on RHEL with podman installed.
 container_rhel: build
