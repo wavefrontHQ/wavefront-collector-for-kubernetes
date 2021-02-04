@@ -25,14 +25,20 @@ const (
 )
 
 type configHandler struct {
-	stopCh   chan struct{}
-	informer cache.SharedInformer
+	stopCh            chan struct{}
+	configMapInformer cache.SharedInformer
+	secretInformer    cache.SharedInformer
 
 	mtx         sync.RWMutex
 	cfg         discovery.Config            // main configuration obtained by combining wired and dynamic configuration
 	wiredCfg    discovery.Config            // wired configuration
 	runtimeCfgs map[string]discovery.Config // dynamic runtime configurations
 	changed     bool                        // flag for tracking runtime cfg changes
+}
+
+type configResource struct {
+	meta metav1.ObjectMeta
+	data map[string]string
 }
 
 func newConfigHandler(kubeClient kubernetes.Interface, cfg discovery.Config) *configHandler {
@@ -50,6 +56,12 @@ func newConfigHandler(kubeClient kubernetes.Interface, cfg discovery.Config) *co
 		}
 	}
 
+	handler.configMapInformer = newConfMapInformer(kubeClient, ns, handler)
+	handler.secretInformer = newSecretInformer(kubeClient, ns, handler)
+	return handler
+}
+
+func newConfMapInformer(kubeClient kubernetes.Interface, ns string, handler *configHandler) cache.SharedInformer {
 	s := kubeClient.CoreV1().ConfigMaps(ns)
 	lw := &cache.ListWatch{
 		ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
@@ -64,20 +76,47 @@ func newConfigHandler(kubeClient kubernetes.Interface, cfg discovery.Config) *co
 	inf.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			cfg := obj.(*v1.ConfigMap)
-			handler.updated(cfg)
+			handler.updated(&configResource{cfg.ObjectMeta, cfg.Data})
 		},
 		UpdateFunc: func(_, obj interface{}) {
 			cfg := obj.(*v1.ConfigMap)
-			handler.updated(cfg)
+			handler.updated(&configResource{cfg.ObjectMeta, cfg.Data})
 		},
 		DeleteFunc: func(obj interface{}) {
 			cfg := obj.(*v1.ConfigMap)
-			handler.deleted(cfg)
+			handler.deleted(cfg.Name)
 		},
 	})
+	return inf
+}
 
-	handler.informer = inf
-	return handler
+func newSecretInformer(kubeClient kubernetes.Interface, ns string, handler *configHandler) cache.SharedInformer {
+	s := kubeClient.CoreV1().Secrets(ns)
+	lw := &cache.ListWatch{
+		ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
+			return s.List(options)
+		},
+		WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
+			return s.Watch(options)
+		},
+	}
+
+	inf := cache.NewSharedInformer(lw, &v1.Secret{}, 1*time.Hour)
+	inf.AddEventHandler(cache.ResourceEventHandlerFuncs{
+		AddFunc: func(obj interface{}) {
+			secret := obj.(*v1.Secret)
+			handler.updated(&configResource{secret.ObjectMeta, convertSecretData(secret.Data)})
+		},
+		UpdateFunc: func(_, obj interface{}) {
+			secret := obj.(*v1.Secret)
+			handler.updated(&configResource{secret.ObjectMeta, convertSecretData(secret.Data)})
+		},
+		DeleteFunc: func(obj interface{}) {
+			secret := obj.(*v1.Secret)
+			handler.deleted(secret.Name)
+		},
+	})
+	return inf
 }
 
 // Config gets the combined discovery configuration and a boolean indicating whether
@@ -100,35 +139,35 @@ func (handler *configHandler) Config() (discovery.Config, bool) {
 	return handler.cfg, false
 }
 
-func (handler *configHandler) updated(cmap *v1.ConfigMap) {
-	if !annotated(cmap.GetAnnotations()) {
+func (handler *configHandler) updated(configResource *configResource) {
+	if !annotated(configResource.meta.Annotations) {
 		// delegate to deleted and return
-		log.Infof("no runtime annotation on %s", cmap.Name)
-		handler.deleted(cmap)
+		log.Infof("no runtime annotation on %s", configResource.meta.Name)
+		handler.deleted(configResource.meta.Name)
 		return
 	}
 
-	loaded, err := load(cmap)
+	loaded, err := load(configResource.data)
 	if err != nil {
-		log.Errorf("error loading discovery config: %s error: %v", cmap.Name, err)
+		log.Errorf("error loading discovery config: %s error: %v", configResource.meta.Name, err)
 		return
 	}
-	log.Infof("loaded discovery configuration from %s", cmap.Name)
+	log.Infof("loaded discovery configuration from %s", configResource.meta.Name)
 
 	handler.mtx.Lock()
 	defer handler.mtx.Unlock()
 
 	// update the internal map entry
-	handler.runtimeCfgs[cmap.Name] = loaded
+	handler.runtimeCfgs[configResource.meta.Name] = loaded
 	handler.changed = true
 }
 
-func (handler *configHandler) deleted(cmap *v1.ConfigMap) {
+func (handler *configHandler) deleted(name string) {
 	handler.mtx.Lock()
 	defer handler.mtx.Unlock()
-	if _, found := handler.runtimeCfgs[cmap.Name]; found {
-		log.Infof("deleted discovery configuration from %s", cmap.Name)
-		delete(handler.runtimeCfgs, cmap.Name)
+	if _, found := handler.runtimeCfgs[name]; found {
+		log.Infof("deleted discovery configuration from %s", name)
+		delete(handler.runtimeCfgs, name)
 		handler.changed = true
 	}
 }
@@ -140,10 +179,10 @@ func annotated(annotations map[string]string) bool {
 	return false
 }
 
-func load(cmap *v1.ConfigMap) (discovery.Config, error) {
+func load(data map[string]string) (discovery.Config, error) {
 	cfg := &discovery.Config{}
-	for _, data := range cmap.Data {
-		loadedCfg, err := discovery.FromYAML([]byte(data))
+	for _, config := range data {
+		loadedCfg, err := discovery.FromYAML([]byte(config))
 		if err != nil {
 			return *cfg, err
 		}
@@ -190,10 +229,19 @@ func readNamespaceFromFile() string {
 	return ns
 }
 
+func convertSecretData(data map[string][]byte) map[string]string {
+	stringData := make(map[string]string)
+	for key, value := range data {
+		stringData[key] = string(value)
+	}
+	return stringData
+}
+
 func (handler *configHandler) start() bool {
 	handler.stopCh = make(chan struct{})
-	go handler.informer.Run(handler.stopCh)
-	return cache.WaitForCacheSync(handler.stopCh, handler.informer.HasSynced)
+	go handler.configMapInformer.Run(handler.stopCh)
+	go handler.secretInformer.Run(handler.stopCh)
+	return cache.WaitForCacheSync(handler.stopCh, handler.configMapInformer.HasSynced, handler.secretInformer.HasSynced)
 }
 
 func (handler *configHandler) stop() {

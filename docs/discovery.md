@@ -130,7 +130,7 @@ The supported plugin types are:
   **Note:** The version of telegraf embedded within the collector is 1.10.x.
 
 ### Runtime Configurations
-Runtime configurations allow specifying discovery rules via [configmaps](https://kubernetes.io/docs/concepts/configuration/configmap/) outside of the main configuration file.
+Runtime configurations allow specifying discovery rules via [configmaps](https://kubernetes.io/docs/concepts/configuration/configmap/) or [secrets](https://kubernetes.io/docs/concepts/configuration/secret/) outside of the main configuration file.
 
 This feature can be enabled in the main config file:
 ```yaml
@@ -147,7 +147,7 @@ Discovery rules specified in the main config and via runtime configs are combine
 
 The `discovery_interval` controls how often runtime config changes are evaluated. This is pertinent as runtime changes requires the collector to re-evaluate all pods/services for discovery/data collection.
 
-See the reference [example](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/deploy/examples/runtime/memcached-runtime-config.yaml) for details.
+See the reference [configmap example](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/deploy/examples/runtime/memcached-runtime-config.yaml) or [secret example](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/deploy/examples/runtime/memcached-runtime-secret-config.yaml) for details.
 
 ## Use Cases
 Together, annotation and rule based discovery can be used to easily collect metrics from the Kubernetes control plane (apiserver, etcd, dns etc), NGINX ingresses, and any application that exposes a Prometheus scrape endpoint.

@@ -8,7 +8,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -62,8 +61,8 @@ plugins:
 `
 
 func TestLoad(t *testing.T) {
-	cmap := makeCfgMap("test", map[string]string{"plugins": sampleConfigString})
-	cfg, err := load(cmap)
+	configResource := makeConfigResource("test", map[string]string{"plugins": sampleConfigString})
+	cfg, err := load(configResource.data)
 	assert.NoError(t, err)
 	assert.True(t, len(cfg.PluginConfigs) == 3)
 }
@@ -92,15 +91,15 @@ func TestCombine(t *testing.T) {
 
 func TestAdd(t *testing.T) {
 	ch := makeFakeConfigHandler(discovery.Config{PluginConfigs: makePlugins(2, "main")})
-	cmap := makeCfgMap("test", map[string]string{"plugins": sampleConfigString})
+	configResource := makeConfigResource("test", map[string]string{"plugins": sampleConfigString})
 
-	// no changes as missing annotation on cmap
-	ch.updated(cmap)
+	// no changes as missing annotation on configResource
+	ch.updated(configResource)
 	assert.True(t, ch.changed == false)
 
 	// changes when annotation is present
-	cmap.SetAnnotations(map[string]string{discoveryAnnotation: "true"})
-	ch.updated(cmap)
+	configResource.meta.SetAnnotations(map[string]string{discoveryAnnotation: "true"})
+	ch.updated(configResource)
 	assert.True(t, ch.changed)
 
 	cfg, changed := ch.Config()
@@ -110,16 +109,16 @@ func TestAdd(t *testing.T) {
 
 func TestDelete(t *testing.T) {
 	ch := makeFakeConfigHandler(discovery.Config{PluginConfigs: makePlugins(2, "main")})
-	cmap := makeCfgMap("test", map[string]string{"plugins": sampleConfigString})
-	cmap.SetAnnotations(map[string]string{discoveryAnnotation: "true"})
-	ch.updated(cmap)
+	configResource := makeConfigResource("test", map[string]string{"plugins": sampleConfigString})
+	configResource.meta.SetAnnotations(map[string]string{discoveryAnnotation: "true"})
+	ch.updated(configResource)
 
 	cfg, changed := ch.Config()
 	assert.True(t, changed)
 	assert.Equal(t, 5, len(cfg.PluginConfigs))
 
 	// delete the config map and validate the plugins are removed
-	ch.deleted(cmap)
+	ch.deleted(configResource.meta.Name)
 	cfg, changed = ch.Config()
 	assert.True(t, changed)
 	assert.Equal(t, 2, len(cfg.PluginConfigs))
@@ -143,11 +142,11 @@ func makePlugins(n int, prefix string) []discovery.PluginConfig {
 	return plugins
 }
 
-func makeCfgMap(name string, data map[string]string) *v1.ConfigMap {
-	return &v1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
+func makeConfigResource(name string, data map[string]string) *configResource {
+	return &configResource{
+		meta: metav1.ObjectMeta{
 			Name: name,
 		},
-		Data: data,
+		data: data,
 	}
 }

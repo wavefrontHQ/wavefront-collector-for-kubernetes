@@ -17,6 +17,7 @@ rules:
   - nodes/stats
   - pods
   - replicationcontrollers
+  - secrets
   - services
   verbs:
   - get
