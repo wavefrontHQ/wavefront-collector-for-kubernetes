@@ -85,6 +85,8 @@ if [[ -z ${IMAGE} ]] ; then
     IMAGE=${DEFAULT_IMAGE_NAME}
 fi
 
+echo "FLUSH ONCE: ${FLUSH_ONCE}"
+
 #TODO: temp directory for intermediate files
 #TODO: need to replace the kustomize template to source from temp directory
 

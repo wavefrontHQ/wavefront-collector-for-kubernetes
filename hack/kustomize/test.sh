@@ -3,7 +3,7 @@
 # This script automates the functional testing of the collector
 
 DEFAULT_VERSION="1.2.6"
-DEFAULT_IMAGE_NAME="wavefronthq\/wavefront-collector"
+DEFAULT_IMAGE_NAME="wavefronthq\/wavefront-kubernetes-collector"
 
 WAVEFRONT_CLUSTER=$1
 API_TOKEN=$2
@@ -62,6 +62,10 @@ function cleanup() {
     #TODO: cleanup other files here
 }
 
+echo "deploying prometheus endpoint"
+
+kubectl apply -f ../deploy/prom-example.yaml
+
 echo "deploying collector ${IMAGE_NAME} ${VERSION}"
 
 env FLUSH_ONCE=true \
@@ -92,3 +96,5 @@ done
 
 validate_metrics prometheus ${PROM_DUMP} files/prometheus-baseline.txt
 #TODO: add validation for other metric sources
+
+FLUSH_ONCE=false ./deploy.sh -c ${WAVEFRONT_CLUSTER} -t ${API_TOKEN} -v ${VERSION} -i ${IMAGE_NAME}
