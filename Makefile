@@ -54,8 +54,11 @@ endif
 
 output-test:
 	if [ -z ${WAVEFRONT_API_KEY} ]; then echo "Need to set WAVEFRONT_API_KEY" && exit 1; fi
-	kind load docker-image wavefronthq/wavefront-kubernetes-collector:$(VERSION) --name kind
+	docker exec -it kind-control-plane crictl rmi $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) || true
+	kind load docker-image $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) --name kind
 	(cd $(KUSTOMIZE_DIR) && ./test.sh nimba $(WAVEFRONT_API_KEY) $(VERSION))
+
+full-loop: build tests container output-test
 
 #This rule need to be run on RHEL with podman installed.
 container_rhel: build
