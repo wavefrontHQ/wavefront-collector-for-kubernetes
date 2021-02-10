@@ -124,6 +124,12 @@ func TestDelete(t *testing.T) {
 	assert.Equal(t, 2, len(cfg.PluginConfigs))
 }
 
+func TestConvertByteArrayData(t *testing.T) {
+	secretData :=  map[string][]byte{"plugins": []byte(sampleConfigString)}
+	convertedData := convertByteArrayData(secretData)
+	assert.Equal(t,  map[string]string{"plugins": sampleConfigString}, convertedData)
+}
+
 func makeFakeConfigHandler(wired discovery.Config) *configHandler {
 	return &configHandler{
 		wiredCfg:    wired,
