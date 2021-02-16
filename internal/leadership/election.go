@@ -4,7 +4,6 @@
 package leadership
 
 import (
-	"context"
 	"fmt"
 	"sync"
 	"time"
@@ -79,7 +78,7 @@ func startLeaderElection(client v1.CoreV1Interface) error {
 		}
 		go func() {
 			for {
-				le.Run(context.Background())
+				le.Run()
 			}
 		}()
 		started = true
@@ -109,7 +108,7 @@ func getLeaderElector(client v1.CoreV1Interface) (*leaderelection.LeaderElector,
 		RenewDeadline: 45 * time.Second,
 		RetryPeriod:   30 * time.Second,
 		Callbacks: leaderelection.LeaderCallbacks{
-			OnStartedLeading: func(ctx context.Context) {},
+			OnStartedLeading: func(stop <-chan struct{}) {},
 			OnStoppedLeading: func() {},
 			OnNewLeader: func(identity string) {
 				lock.Lock()
@@ -146,7 +145,6 @@ func getResourceLock(ns string, name string, client v1.CoreV1Interface, resource
 		ns,
 		name,
 		client,
-		nil,
 		resourcelock.ResourceLockConfig{
 			Identity:      resourceLockID,
 			EventRecorder: &record.FakeRecorder{},

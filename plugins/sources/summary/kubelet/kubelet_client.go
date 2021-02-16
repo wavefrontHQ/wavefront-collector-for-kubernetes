@@ -36,7 +36,6 @@ import (
 	cadvisor "github.com/google/cadvisor/info/v1"
 	"github.com/json-iterator/go"
 	log "github.com/sirupsen/logrus"
-	stats "k8s.io/kubernetes/pkg/kubelet/apis/stats/v1alpha1"
 )
 
 type Host struct {
@@ -161,14 +160,14 @@ func (kc *KubeletClient) GetAllRawContainers(host Host, start, end time.Time) ([
 	return kc.getAllContainers(u, start, end)
 }
 
-func (kc *KubeletClient) GetSummary(host Host) (*stats.Summary, error) {
+func (kc *KubeletClient) GetSummary(host Host) (*Summary, error) {
 	u := kc.getUrl(host, "/stats/summary/")
 
 	req, err := http.NewRequest("GET", u, nil)
 	if err != nil {
 		return nil, err
 	}
-	summary := &stats.Summary{}
+	summary := &Summary{}
 	client := kc.client
 	if client == nil {
 		client = http.DefaultClient

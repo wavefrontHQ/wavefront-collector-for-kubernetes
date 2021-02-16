@@ -32,7 +32,6 @@ import (
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources/summary/kubelet"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	util "k8s.io/client-go/util/testing"
-	stats "k8s.io/kubernetes/pkg/kubelet/apis/stats/v1alpha1"
 )
 
 const (
@@ -137,22 +136,22 @@ func testingSummaryMetricsSource() *summaryMetricsSource {
 func TestDecodeSummaryMetrics(t *testing.T) {
 
 	ms := testingSummaryMetricsSource()
-	summary := stats.Summary{
-		Node: stats.NodeStats{
+	summary := kubelet.Summary{
+		Node: kubelet.NodeStats{
 			NodeName:  nodeInfo.NodeName,
 			StartTime: metav1.NewTime(startTime),
 			CPU:       genTestSummaryCPU(seedNode),
 			Memory:    genTestSummaryMemory(seedNode),
 			Network:   genTestSummaryNetwork(seedNode),
-			SystemContainers: []stats.ContainerStats{
-				genTestSummaryContainer(stats.SystemContainerKubelet, seedKubelet),
-				genTestSummaryContainer(stats.SystemContainerRuntime, seedRuntime),
-				genTestSummaryContainer(stats.SystemContainerMisc, seedMisc),
+			SystemContainers: []kubelet.ContainerStats{
+				genTestSummaryContainer(kubelet.SystemContainerKubelet, seedKubelet),
+				genTestSummaryContainer(kubelet.SystemContainerRuntime, seedRuntime),
+				genTestSummaryContainer(kubelet.SystemContainerMisc, seedMisc),
 			},
 			Fs: genTestSummaryFsStats(seedNode),
 		},
-		Pods: []stats.PodStats{{
-			PodRef: stats.PodReference{
+		Pods: []kubelet.PodStats{{
+			PodRef: kubelet.PodReference{
 				Name:      pName0,
 				Namespace: namespace0,
 			},
@@ -161,22 +160,22 @@ func TestDecodeSummaryMetrics(t *testing.T) {
 			EphemeralStorage: genTestSummaryFsStats(seedPod0),
 			CPU:              genTestSummaryCPU(seedPod0),
 			Memory:           genTestSummaryMemory(seedPod0),
-			Containers: []stats.ContainerStats{
+			Containers: []kubelet.ContainerStats{
 				genTestSummaryContainer(cName00, seedPod0Container0),
 				genTestSummaryContainer(cName01, seedPod0Container1),
 				genTestSummaryTerminatedContainer(cName00, seedPod0Container0),
 			},
 		}, {
-			PodRef: stats.PodReference{
+			PodRef: kubelet.PodReference{
 				Name:      pName1,
 				Namespace: namespace0,
 			},
 			StartTime: metav1.NewTime(startTime),
 			Network:   genTestSummaryNetwork(seedPod1),
-			Containers: []stats.ContainerStats{
+			Containers: []kubelet.ContainerStats{
 				genTestSummaryContainer(cName10, seedPod1Container),
 			},
-			VolumeStats: []stats.VolumeStats{{
+			VolumeStats: []kubelet.VolumeStats{{
 				Name:    "A",
 				FsStats: *genTestSummaryFsStats(seedPod1),
 			}, {
@@ -184,27 +183,27 @@ func TestDecodeSummaryMetrics(t *testing.T) {
 				FsStats: *genTestSummaryFsStats(seedPod1),
 			}},
 		}, {
-			PodRef: stats.PodReference{
+			PodRef: kubelet.PodReference{
 				Name:      pName2,
 				Namespace: namespace1,
 			},
 			StartTime: metav1.NewTime(startTime),
 			Network:   genTestSummaryNetwork(seedPod2),
-			Containers: []stats.ContainerStats{
+			Containers: []kubelet.ContainerStats{
 				genTestSummaryContainer(cName20, seedPod2Container0),
 				genTestSummaryContainer(cName21, seedPod2Container1),
 			},
 		}, {
-			PodRef: stats.PodReference{
+			PodRef: kubelet.PodReference{
 				Name:      pName3,
 				Namespace: namespace0,
 			},
-			Containers: []stats.ContainerStats{
+			Containers: []kubelet.ContainerStats{
 				genTestSummaryContainer(cName30, seedPod3Container0),
 			},
-			VolumeStats: []stats.VolumeStats{{
+			VolumeStats: []kubelet.VolumeStats{{
 				Name: "C",
-				FsStats: stats.FsStats{
+				FsStats: kubelet.FsStats{
 					AvailableBytes: &availableFsBytes,
 					UsedBytes:      &usedFsBytes,
 					CapacityBytes:  &totalFsBytes,
@@ -215,25 +214,25 @@ func TestDecodeSummaryMetrics(t *testing.T) {
 			},
 			},
 		}, {
-			PodRef: stats.PodReference{
+			PodRef: kubelet.PodReference{
 				Name:      pName4,
 				Namespace: namespace0,
 			},
 			StartTime: metav1.NewTime(startTime),
 			Network:   genTestSummaryNetwork(seedPod4),
-			Containers: []stats.ContainerStats{
+			Containers: []kubelet.ContainerStats{
 				genTestSummaryContainer(cName40, seedPod4Container0),
 				genTestSummaryTerminatedContainerNoStats(cName41),
 				genTestSummaryTerminatedContainerBlankStats(cName42),
 			},
 		}, {
-			PodRef: stats.PodReference{
+			PodRef: kubelet.PodReference{
 				Name:      pName5,
 				Namespace: namespace0,
 			},
 			Network:   genTestSummaryNetwork(seedPod5),
 			StartTime: metav1.NewTime(startTime),
-			Containers: []stats.ContainerStats{
+			Containers: []kubelet.ContainerStats{
 				genTestSummaryContainerWithAccelerator(cName50, seedPod5Container0),
 			},
 		}},
@@ -428,8 +427,8 @@ func TestDecodeSummaryMetrics(t *testing.T) {
 	}
 }
 
-func genTestSummaryTerminatedContainer(name string, seed int) stats.ContainerStats {
-	return stats.ContainerStats{
+func genTestSummaryTerminatedContainer(name string, seed int) kubelet.ContainerStats {
+	return kubelet.ContainerStats{
 		Name:      name,
 		StartTime: metav1.NewTime(startTime.Add(-time.Minute)),
 		CPU:       genTestSummaryZeroCPU(seed),
@@ -439,15 +438,15 @@ func genTestSummaryTerminatedContainer(name string, seed int) stats.ContainerSta
 	}
 }
 
-func genTestSummaryTerminatedContainerNoStats(name string) stats.ContainerStats {
-	return stats.ContainerStats{
+func genTestSummaryTerminatedContainerNoStats(name string) kubelet.ContainerStats {
+	return kubelet.ContainerStats{
 		Name:      name,
 		StartTime: metav1.NewTime(startTime.Add(-time.Minute)),
 	}
 }
 
-func genTestSummaryTerminatedContainerBlankStats(name string) stats.ContainerStats {
-	return stats.ContainerStats{
+func genTestSummaryTerminatedContainerBlankStats(name string) kubelet.ContainerStats {
+	return kubelet.ContainerStats{
 		Name:      name,
 		StartTime: metav1.NewTime(startTime.Add(-time.Minute)),
 		CPU:       genTestSummaryBlankCPU(),
@@ -455,8 +454,8 @@ func genTestSummaryTerminatedContainerBlankStats(name string) stats.ContainerSta
 	}
 }
 
-func genTestSummaryContainer(name string, seed int) stats.ContainerStats {
-	return stats.ContainerStats{
+func genTestSummaryContainer(name string, seed int) kubelet.ContainerStats {
+	return kubelet.ContainerStats{
 		Name:      name,
 		StartTime: metav1.NewTime(startTime),
 		CPU:       genTestSummaryCPU(seed),
@@ -466,8 +465,8 @@ func genTestSummaryContainer(name string, seed int) stats.ContainerStats {
 	}
 }
 
-func genTestSummaryContainerWithAccelerator(name string, seed int) stats.ContainerStats {
-	return stats.ContainerStats{
+func genTestSummaryContainerWithAccelerator(name string, seed int) kubelet.ContainerStats {
+	return kubelet.ContainerStats{
 		Name:         name,
 		StartTime:    metav1.NewTime(startTime),
 		CPU:          genTestSummaryCPU(seed),
@@ -475,8 +474,8 @@ func genTestSummaryContainerWithAccelerator(name string, seed int) stats.Contain
 	}
 }
 
-func genTestSummaryAccelerator(seed int) []stats.AcceleratorStats {
-	return []stats.AcceleratorStats{
+func genTestSummaryAccelerator(seed int) []kubelet.AcceleratorStats {
+	return []kubelet.AcceleratorStats{
 		{
 			Make:        "nvidia",
 			Model:       "Tesla P100",
@@ -488,8 +487,8 @@ func genTestSummaryAccelerator(seed int) []stats.AcceleratorStats {
 	}
 }
 
-func genTestSummaryZeroCPU(seed int) *stats.CPUStats {
-	cpu := stats.CPUStats{
+func genTestSummaryZeroCPU(seed int) *kubelet.CPUStats {
+	cpu := kubelet.CPUStats{
 		Time:                 metav1.NewTime(scrapeTime),
 		UsageNanoCores:       uint64Val(seed, -seed),
 		UsageCoreNanoSeconds: uint64Val(seed, offsetCPUUsageCoreSeconds),
@@ -498,8 +497,8 @@ func genTestSummaryZeroCPU(seed int) *stats.CPUStats {
 	return &cpu
 }
 
-func genTestSummaryCPU(seed int) *stats.CPUStats {
-	cpu := stats.CPUStats{
+func genTestSummaryCPU(seed int) *kubelet.CPUStats {
+	cpu := kubelet.CPUStats{
 		Time:                 metav1.NewTime(scrapeTime),
 		UsageNanoCores:       uint64Val(seed, offsetCPUUsageCores),
 		UsageCoreNanoSeconds: uint64Val(seed, offsetCPUUsageCoreSeconds),
@@ -508,14 +507,14 @@ func genTestSummaryCPU(seed int) *stats.CPUStats {
 	return &cpu
 }
 
-func genTestSummaryBlankCPU() *stats.CPUStats {
-	return &stats.CPUStats{
+func genTestSummaryBlankCPU() *kubelet.CPUStats {
+	return &kubelet.CPUStats{
 		Time: metav1.NewTime(scrapeTime),
 	}
 }
 
-func genTestSummaryZeroMemory(seed int) *stats.MemoryStats {
-	return &stats.MemoryStats{
+func genTestSummaryZeroMemory(seed int) *kubelet.MemoryStats {
+	return &kubelet.MemoryStats{
 		Time:            metav1.NewTime(scrapeTime),
 		UsageBytes:      uint64Val(seed, offsetMemUsageBytes),
 		WorkingSetBytes: uint64Val(seed, offsetMemWorkingSetBytes),
@@ -525,8 +524,8 @@ func genTestSummaryZeroMemory(seed int) *stats.MemoryStats {
 	}
 }
 
-func genTestSummaryMemory(seed int) *stats.MemoryStats {
-	return &stats.MemoryStats{
+func genTestSummaryMemory(seed int) *kubelet.MemoryStats {
+	return &kubelet.MemoryStats{
 		Time:            metav1.NewTime(scrapeTime),
 		UsageBytes:      uint64Val(seed, offsetMemUsageBytes),
 		WorkingSetBytes: uint64Val(seed, offsetMemWorkingSetBytes),
@@ -536,16 +535,16 @@ func genTestSummaryMemory(seed int) *stats.MemoryStats {
 	}
 }
 
-func genTestSummaryBlankMemory() *stats.MemoryStats {
-	return &stats.MemoryStats{
+func genTestSummaryBlankMemory() *kubelet.MemoryStats {
+	return &kubelet.MemoryStats{
 		Time: metav1.NewTime(scrapeTime),
 	}
 }
 
-func genTestSummaryNetwork(seed int) *stats.NetworkStats {
-	return &stats.NetworkStats{
+func genTestSummaryNetwork(seed int) *kubelet.NetworkStats {
+	return &kubelet.NetworkStats{
 		Time: metav1.NewTime(scrapeTime),
-		InterfaceStats: stats.InterfaceStats{
+		InterfaceStats: kubelet.InterfaceStats{
 			RxBytes:  uint64Val(seed, offsetNetRxBytes),
 			RxErrors: uint64Val(seed, offsetNetRxErrors),
 			TxBytes:  uint64Val(seed, offsetNetTxBytes),
@@ -554,8 +553,8 @@ func genTestSummaryNetwork(seed int) *stats.NetworkStats {
 	}
 }
 
-func genTestSummaryFsStats(seed int) *stats.FsStats {
-	return &stats.FsStats{
+func genTestSummaryFsStats(seed int) *kubelet.FsStats {
+	return &kubelet.FsStats{
 		AvailableBytes: uint64Val(seed, offsetFsAvailable),
 		CapacityBytes:  uint64Val(seed, offsetFsCapacity),
 		UsedBytes:      uint64Val(seed, offsetFsUsed),
@@ -597,8 +596,8 @@ func checkAcceleratorMetric(t *testing.T, metrics *core.MetricSet, key string, m
 }
 
 func TestScrapeSummaryMetrics(t *testing.T) {
-	summary := stats.Summary{
-		Node: stats.NodeStats{
+	summary := kubelet.Summary{
+		Node: kubelet.NodeStats{
 			NodeName:  nodeInfo.NodeName,
 			StartTime: metav1.NewTime(startTime),
 		},
@@ -626,7 +625,7 @@ func TestScrapeSummaryMetrics(t *testing.T) {
 
 func TestDecodeEphemeralStorageStatsForContainer(t *testing.T) {
 	ms := testingSummaryMetricsSource()
-	rootFs := &stats.FsStats{}
-	logs := &stats.FsStats{}
+	rootFs := &kubelet.FsStats{}
+	logs := &kubelet.FsStats{}
 	ms.decodeEphemeralStorageStatsForContainer(nil, rootFs, logs)
 }
