@@ -39,8 +39,7 @@ import (
 	kube_client "k8s.io/client-go/kubernetes"
 	v1listers "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/tools/cache"
-
-	stats "github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources/summary/kubelet"
+	stats "k8s.io/kubernetes/pkg/kubelet/apis/stats/v1alpha1"
 )
 
 // Prefix used for the LabelResourceID for volume metrics.
@@ -89,7 +88,7 @@ func (src *summaryMetricsSource) ScrapeMetrics() (*DataBatch, error) {
 		Timestamp: time.Now(),
 	}
 
-	summary, err := func() (*kubelet.Summary, error) {
+	summary, err := func() (*stats.Summary, error) {
 		return src.kubeletClient.GetSummary(src.node.Host)
 	}()
 
