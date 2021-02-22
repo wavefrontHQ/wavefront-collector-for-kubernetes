@@ -1,6 +1,7 @@
 package discovery
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -135,7 +136,7 @@ func makePlugins(n int, prefix string) []discovery.PluginConfig {
 	plugins := make([]discovery.PluginConfig, n)
 	for i := 0; i < n; i++ {
 		plugins[0] = discovery.PluginConfig{
-			Name: prefix + "-plugin-" + string(i),
+			Name: prefix + "-plugin-" + fmt.Sprint(i),
 			Type: "prometheus",
 		}
 	}
