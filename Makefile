@@ -3,7 +3,7 @@ DOCKER_IMAGE=wavefront-kubernetes-collector
 ARCH?=amd64
 OUT_DIR?=./_output
 KUSTOMIZE_DIR=./hack/kustomize
-GOLANG_VERSION?=1.13
+GOLANG_VERSION?=1.15
 
 BINARY_NAME=wavefront-collector
 
@@ -22,7 +22,7 @@ OVERRIDE_IMAGE_NAME?=${COLLECTOR_TEST_IMAGE}
 
 LDFLAGS=-w -X main.version=$(VERSION) -X main.commit=$(GIT_COMMIT)
 
-all: build
+all: container
 
 fmt:
 	find . -type f -name "*.go" | grep -v "./vendor*" | xargs gofmt -s -w
@@ -39,7 +39,7 @@ build: clean fmt
 driver: clean fmt
 	GOARCH=$(ARCH) CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o $(OUT_DIR)/$(ARCH)/$(BINARY_NAME)-test ./cmd/test-driver/
 
-container:
+container: fmt
 	# Run build in a container in order to have reproducible builds
 	docker run --rm -v $(TEMP_DIR):/build -v $(REPO_DIR):/go/src/github.com/wavefronthq/wavefront-collector-for-kubernetes -w /go/src/github.com/wavefronthq/wavefront-collector-for-kubernetes golang:$(GOLANG_VERSION) /bin/bash -c "\
 		cp /etc/ssl/certs/ca-certificates.crt /build \
