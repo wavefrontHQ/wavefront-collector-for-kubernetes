@@ -39,7 +39,7 @@ build: clean fmt
 driver: clean fmt
 	GOARCH=$(ARCH) CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o $(OUT_DIR)/$(ARCH)/$(BINARY_NAME)-test ./cmd/test-driver/
 
-container: fmt
+container:
 	# Run build in a container in order to have reproducible builds
 	docker run --rm -v $(TEMP_DIR):/build -v $(REPO_DIR):/go/src/github.com/wavefronthq/wavefront-collector-for-kubernetes -w /go/src/github.com/wavefronthq/wavefront-collector-for-kubernetes golang:$(GOLANG_VERSION) /bin/bash -c "\
 		cp /etc/ssl/certs/ca-certificates.crt /build \
