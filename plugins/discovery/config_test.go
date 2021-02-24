@@ -126,9 +126,9 @@ func TestDelete(t *testing.T) {
 }
 
 func TestConvertByteArrayData(t *testing.T) {
-	secretData :=  map[string][]byte{"plugins": []byte(sampleConfigString)}
+	secretData := map[string][]byte{"plugins": []byte(sampleConfigString)}
 	convertedData := convertByteArrayData(secretData)
-	assert.Equal(t,  map[string]string{"plugins": sampleConfigString}, convertedData)
+	assert.Equal(t, map[string]string{"plugins": sampleConfigString}, convertedData)
 }
 
 func makeFakeConfigHandler(wired discovery.Config) *configHandler {
