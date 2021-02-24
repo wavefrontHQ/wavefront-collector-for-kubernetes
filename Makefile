@@ -3,7 +3,7 @@ DOCKER_IMAGE=wavefront-kubernetes-collector
 ARCH?=amd64
 OUT_DIR?=./_output
 KUSTOMIZE_DIR=./hack/kustomize
-GOLANG_VERSION?=1.13
+GOLANG_VERSION?=1.15
 
 BINARY_NAME=wavefront-collector
 
@@ -11,7 +11,7 @@ ifndef TEMP_DIR
 TEMP_DIR:=$(shell mktemp -d /tmp/wavefront.XXXXXX)
 endif
 
-VERSION?=1.3.0
+VERSION?=1.3.1
 GIT_COMMIT:=$(shell git rev-parse --short HEAD)
 
 REPO_DIR:=$(shell pwd)
@@ -22,7 +22,7 @@ OVERRIDE_IMAGE_NAME?=${COLLECTOR_TEST_IMAGE}
 
 LDFLAGS=-w -X main.version=$(VERSION) -X main.commit=$(GIT_COMMIT)
 
-all: build
+all: container
 
 fmt:
 	find . -type f -name "*.go" | grep -v "./vendor*" | xargs gofmt -s -w

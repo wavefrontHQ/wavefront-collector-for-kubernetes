@@ -35,7 +35,7 @@ import (
 	. "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 
-	"github.com/coreos/go-systemd/dbus"
+	"github.com/coreos/go-systemd/v22/dbus"
 	gm "github.com/rcrowley/go-metrics"
 	log "github.com/sirupsen/logrus"
 )

@@ -3,7 +3,7 @@
 # This script automates the deployment of the collector to a specific k8s cluster
 
 DEFAULT_IMAGE_NAME="wavefronthq\/wavefront-kubernetes-collector"
-DEFAULT_VERSION="1.2.6"
+DEFAULT_VERSION="1.3.0"
 DEFAULT_USE_CLASSIC_PROMETHEUS=false
 DEFAULT_FLUSH_ONCE=false
 
