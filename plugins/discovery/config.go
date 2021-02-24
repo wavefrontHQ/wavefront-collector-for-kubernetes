@@ -105,11 +105,11 @@ func newSecretInformer(kubeClient kubernetes.Interface, ns string, handler *conf
 	inf.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			secret := obj.(*v1.Secret)
-			handler.updated(&configResource{secret.ObjectMeta, convertSecretData(secret.Data)})
+			handler.updated(&configResource{secret.ObjectMeta, convertByteArrayData(secret.Data)})
 		},
 		UpdateFunc: func(_, obj interface{}) {
 			secret := obj.(*v1.Secret)
-			handler.updated(&configResource{secret.ObjectMeta, convertSecretData(secret.Data)})
+			handler.updated(&configResource{secret.ObjectMeta, convertByteArrayData(secret.Data)})
 		},
 		DeleteFunc: func(obj interface{}) {
 			secret := obj.(*v1.Secret)
@@ -229,7 +229,7 @@ func readNamespaceFromFile() string {
 	return ns
 }
 
-func convertSecretData(data map[string][]byte) map[string]string {
+func convertByteArrayData(data map[string][]byte) map[string]string {
 	stringData := make(map[string]string)
 	for key, value := range data {
 		stringData[key] = string(value)
