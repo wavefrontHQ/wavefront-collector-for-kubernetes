@@ -2,7 +2,7 @@
 
 # This script automates the functional testing of the collector
 
-DEFAULT_VERSION="1.2.6"
+DEFAULT_VERSION="1.3.0"
 DEFAULT_IMAGE_NAME="wavefronthq\/wavefront-kubernetes-collector"
 
 WAVEFRONT_CLUSTER=$1
