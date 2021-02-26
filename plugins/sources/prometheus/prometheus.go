@@ -251,7 +251,6 @@ func (src *prometheusMetricsSource) buildPoints(metricFamilies map[string]*dto.M
 			}
 		}
 	}
-	log.Debugf("%s total points: %d", src.Name(), len(result))
 	return result, nil
 }
 
