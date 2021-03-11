@@ -34,7 +34,7 @@ spec:
     ## If set to true, DaemonSet will be used for the collector.
     ## If set to false, Deployment will be used for the collector.
     ## Setting this to true is strongly recommended
-    useDaemonset: false
+    useDaemonset: true
 
     ## If installing into a TKGi/PKS environment, set this to true
     # usePKSPrefix: false
