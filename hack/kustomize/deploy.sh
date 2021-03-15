@@ -4,7 +4,6 @@
 
 DEFAULT_IMAGE_NAME="wavefronthq\/wavefront-kubernetes-collector"
 DEFAULT_VERSION="1.3.0"
-DEFAULT_USE_CLASSIC_PROMETHEUS=false
 DEFAULT_FLUSH_ONCE=false
 
 if [[ -z ${FLUSH_ONCE} ]] ; then
@@ -20,10 +19,6 @@ if $FLUSH_ONCE ;
     REDIRECT_TO_LOG=false
     FLUSH_INTERVAL=30
     COLLECTION_INTERVAL=60
-fi
-
-if [[ -z ${USE_CLASSIC_PROMETHEUS} ]] ; then
-    USE_CLASSIC_PROMETHEUS=${DEFAULT_USE_CLASSIC_PROMETHEUS}
 fi
 
 function print_usage_and_exit() {
@@ -98,7 +93,6 @@ sed "s/YOUR_CLUSTER_NAME/cluster-${VERSION}/g" ${OVERLAYS_DIR}/test/collector.ya
 |  sed "s/FLUSH_ONCE/${FLUSH_ONCE}/g" \
 |  sed "s/REDIRECT_TO_LOG/${REDIRECT_TO_LOG}/g" \
 |  sed "s/FLUSH_INTERVAL/${FLUSH_INTERVAL}/g" \
-|  sed "s/COLLECTION_INTERVAL/${COLLECTION_INTERVAL}/g" \
-|  sed "s/USE_CLASSIC_PROMETHEUS/${USE_CLASSIC_PROMETHEUS}/g" > ${OVERLAYS_DIR}/test/collector.yaml \
+|  sed "s/COLLECTION_INTERVAL/${COLLECTION_INTERVAL}/g" > ${OVERLAYS_DIR}/test/collector.yaml
 
 kustomize build ${OVERLAYS_DIR}/test | kubectl apply -f -

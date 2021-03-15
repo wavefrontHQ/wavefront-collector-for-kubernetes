@@ -1,7 +1,6 @@
 clusterName: YOUR_CLUSTER_NAME
 enableEvents: false
 enableDiscovery: true
-useClassicPrometheusParser: USE_CLASSIC_PROMETHEUS
 flushOnce: FLUSH_ONCE
 flushInterval: FLUSH_INTERVALs
 defaultCollectionInterval: COLLECTION_INTERVALs
@@ -43,3 +42,4 @@ sources:
 # discovery rules for auto-discovery of pods and services
 discovery:
   enable_runtime_plugins: true
+  annotationPrefix: "wavefront.com"

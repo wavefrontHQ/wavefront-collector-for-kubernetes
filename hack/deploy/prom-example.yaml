@@ -5,10 +5,10 @@ metadata:
     k8s-app: prom-example
     name: prom-example
   annotations:
-    prometheus.io/scrape: 'true'
-    prometheus.io/scheme: 'http'
-    prometheus.io/port: '8443'
-    prometheus.io/prefix: 'prom-example.'
+    wavefront.com/scrape: 'true'
+    wavefront.com/scheme: 'http'
+    wavefront.com/port: '8443'
+    wavefront.com/prefix: 'prom-example.'
   name: prom-example
   namespace: default
 spec:
