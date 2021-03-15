@@ -47,9 +47,6 @@ type Config struct {
 	// whether to omit the .bucket suffix for prometheus histogram metrics. Defaults to false.
 	OmitBucketSuffix bool `yaml:"omitBucketSuffix"`
 
-	// whether to use the older prometheus parsing mechanism.
-	UseClassicPrometheusParser *bool `yaml:"useClassicPrometheusParser"`
-
 	// Internal use only
 	Daemon bool `yaml:"-"`
 

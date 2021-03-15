@@ -4,7 +4,6 @@
 package prometheus
 
 import (
-	"bufio"
 	"bytes"
 	"fmt"
 	"io"
@@ -55,8 +54,7 @@ type prometheusMetricsSource struct {
 	eps                  gometrics.Counter
 	internalMetricsNames []string
 
-	omitBucketSuffix  bool
-	classicProcessing bool
+	omitBucketSuffix bool
 }
 
 func NewPrometheusMetricsSource(metricsURL, prefix, source, discovered string, tags map[string]string, filters filter.Filter, httpCfg httputil.ClientConfig) (metrics.MetricsSource, error) {
@@ -71,7 +69,6 @@ func NewPrometheusMetricsSource(metricsURL, prefix, source, discovered string, t
 	epsKey := reporting.EncodeKey("target.collect.errors", pt)
 
 	omitBucketSuffix, _ := strconv.ParseBool(os.Getenv("omitBucketSuffix"))
-	classicProcessing, _ := strconv.ParseBool(os.Getenv("useClassicPrometheusParser"))
 
 	return &prometheusMetricsSource{
 		metricsURL:           metricsURL,
@@ -84,7 +81,6 @@ func NewPrometheusMetricsSource(metricsURL, prefix, source, discovered string, t
 		eps:                  gometrics.GetOrRegisterCounter(epsKey, gometrics.DefaultRegistry),
 		internalMetricsNames: []string{ppsKey, epsKey},
 		omitBucketSuffix:     omitBucketSuffix,
-		classicProcessing:    classicProcessing,
 	}, nil
 }
 
@@ -162,12 +158,7 @@ func (src *prometheusMetricsSource) ScrapeMetrics() (*metrics.DataBatch, error) 
 		return nil, err
 	}
 
-	var points []*metrics.MetricPoint
-	if src.classicProcessing {
-		points, err = src.parseMetricsAllAtOnce(body)
-	} else {
-		points, err = src.parseMetrics(body)
-	}
+	points, err := src.parseMetrics(body)
 
 	if err != nil {
 		collectErrors.Inc(1)
@@ -191,22 +182,6 @@ func readResponse(body io.ReadCloser, cLen int64) ([]byte, error) {
 		return buf.Bytes(), nil
 	}
 	return ioutil.ReadAll(body)
-}
-
-func (src *prometheusMetricsSource) parseMetricsAllAtOnce(buf []byte) ([]*metrics.MetricPoint, error) {
-	var parser expfmt.TextParser
-
-	// parse even if the buffer begins with a newline
-	buf = bytes.TrimPrefix(buf, []byte("\n"))
-	// Read raw data
-	buffer := bytes.NewBuffer(buf)
-	reader := bufio.NewReader(buffer)
-
-	metricFamilies, err := parser.TextToMetricFamilies(reader)
-	if err != nil {
-		log.Errorf("reading text format failed: %s", err)
-	}
-	return src.buildPoints(metricFamilies)
 }
 
 func (src *prometheusMetricsSource) parseMetrics(buf []byte) ([]*metrics.MetricPoint, error) {
