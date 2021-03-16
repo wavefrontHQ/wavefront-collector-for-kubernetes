@@ -42,4 +42,4 @@ sources:
 # discovery rules for auto-discovery of pods and services
 discovery:
   enable_runtime_plugins: true
-  annotationPrefix: "wavefront.com"
+  annotation_prefix: 'wavefront.com'
