@@ -2,8 +2,6 @@
 This page contains the Installation and Configuration steps to monitor Openshift using Wavefront Collector Operator.
 
 **Supported Versions**: Openshift Enterprise 3.11
-**Wavefront Collector for Kubernetes Version**: 1.3.0
-**Wavefront Proxy Version**: 9.2
 
 1. Log in to the Openshift master node.
 2. Log in to the Openshift cluster:
