@@ -52,6 +52,10 @@ ifneq ($(OVERRIDE_IMAGE_NAME),)
 	docker tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OVERRIDE_IMAGE_NAME)
 endif
 
+redeploy:
+	if [ -z ${WAVEFRONT_API_KEY} ]; then echo "Need to set WAVEFRONT_API_KEY" && exit 1; fi
+	(cd $(KUSTOMIZE_DIR) && ./deploy.sh -c nimba -t ${WAVEFRONT_API_KEY} -v ${VERSION} -i "$(PREFIX)\/$(DOCKER_IMAGE)")
+
 output-test:
 	if [ -z ${WAVEFRONT_API_KEY} ]; then echo "Need to set WAVEFRONT_API_KEY" && exit 1; fi
 	docker exec -it kind-control-plane crictl rmi $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) || true
