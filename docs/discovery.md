@@ -31,7 +31,7 @@ Additional annotations that apply:
 See an [example](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/deploy/examples/prometheus-annotations-example.yaml) for how to annotate a pod with the above annotations.
 
 ### Automatically import all of your Prometheus metrics
-Changing your `annotationPrefix` from `wavefront.com` to `prometheus.io` will allow you to scrape all your pods already annotated for prometheus discovery.
+Changing your `annotation_prefix` from `wavefront.com` to `prometheus.io` will allow you to scrape all your pods already annotated for prometheus discovery.
 
 ### Disabling annotation discovery
 Discovery based on annotations is enabled by default, but can be disabled by setting the `disable_annotation_discovery` configuration option to `true`:
