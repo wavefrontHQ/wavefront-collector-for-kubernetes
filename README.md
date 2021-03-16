@@ -29,9 +29,6 @@ The installation instructions use a default configuration suitable for most use 
 
 ## Building
 
-The project currently uses `dep` to manage dependencies. Run `dep ensure` to pull down
-the necessary external libraries. 
-
 Build using `make` and the provided `Makefile`. 
 
 Commonly used `make` options include: 
