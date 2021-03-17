@@ -1,6 +1,7 @@
 package prometheus
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -20,10 +21,14 @@ http_request_duration_seconds_sum{label="bad"} 6
 http_request_duration_seconds_count{label="good"} 3
 `
 
+func testMetricReader() *bytes.Reader {
+	return bytes.NewReader([]byte(metricsStr))
+}
+
 func TestNoFilters(t *testing.T) {
 	src := &prometheusMetricsSource{}
 
-	points, err := src.parseMetrics([]byte(metricsStr))
+	points, err := src.parseMetrics(testMetricReader())
 	if err != nil {
 		assert.FailNow(t, err.Error())
 	}
@@ -40,7 +45,7 @@ func TestMetricAllowList(t *testing.T) {
 		filters: f,
 	}
 
-	points, err := src.parseMetrics([]byte(metricsStr))
+	points, err := src.parseMetrics(testMetricReader())
 	if err != nil {
 		assert.FailNow(t, err.Error())
 	}
@@ -57,7 +62,7 @@ func TestMetricDenyList(t *testing.T) {
 		filters: f,
 	}
 
-	points, err := src.parseMetrics([]byte(metricsStr))
+	points, err := src.parseMetrics(testMetricReader())
 	if err != nil {
 		assert.FailNow(t, err.Error())
 	}
@@ -74,7 +79,7 @@ func TestMetricTagAllowList(t *testing.T) {
 		filters: f,
 	}
 
-	points, err := src.parseMetrics([]byte(metricsStr))
+	points, err := src.parseMetrics(testMetricReader())
 	if err != nil {
 		assert.FailNow(t, err.Error())
 	}
@@ -91,7 +96,7 @@ func TestMetricTagDenyList(t *testing.T) {
 		filters: f,
 	}
 
-	points, err := src.parseMetrics([]byte(metricsStr))
+	points, err := src.parseMetrics(testMetricReader())
 	if err != nil {
 		assert.FailNow(t, err.Error())
 	}

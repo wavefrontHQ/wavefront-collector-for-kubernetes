@@ -254,7 +254,7 @@ func scrape(provider metrics.MetricsSourceProvider, channel chan *metrics.DataBa
 			"name":          source.Name(),
 			"total_metrics": len(dataBatch.MetricPoints) + len(dataBatch.MetricSets),
 			"latency":       latency,
-		}).Debug("Finished querying source")
+		}).Infof("Finished querying source")
 	}
 }
 
