@@ -1,5 +1,10 @@
 language: go
 
+# safelist
+branches:
+  only:
+    - master
+
 # workaround for case sensitive build issues with wavefrontHQ
 go_import_path: github.com/wavefronthq/wavefront-collector-for-kubernetes
 
