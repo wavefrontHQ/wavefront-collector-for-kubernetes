@@ -201,16 +201,7 @@ func (sink *wavefrontSink) send(batch *metrics.DataBatch) {
 
 	before := errPoints.Count()
 	for _, point := range batch.MetricPoints {
-		tags := make(map[string]string)
-
-		for k, v := range point.Tags {
-			if len(v) > 0 {
-				tags[k] = v
-			}
-		}
-		// add label pairs, string encoded tags etc
-		point.AddCustomTags(tags)
-
+		tags := point.GetTags()
 		tags["cluster"] = sink.ClusterName
 		sink.sendPoint(point.Metric, point.Value, point.Timestamp, point.Source, tags)
 	}

@@ -103,14 +103,25 @@ func TestMetricTagDenyList(t *testing.T) {
 	assert.Equal(t, 7, len(points), "wrong number of points")
 }
 
+func TestPointTags(t *testing.T) {
+	src := &prometheusMetricsSource{}
+
+	points, err := src.parseMetrics(bytes.NewReader([]byte(`http_request_duration_seconds_count{label="good"} 3`)))
+	if err != nil {
+		assert.FailNow(t, err.Error())
+	}
+	assert.Equal(t, map[string]string{"label": "good"}, points[0].GetTags(), "wrong point tags")
+}
+
 var tempTags = map[string]string{"pod_name": "prometheus_pod_xyz", "namespace_name": "default"}
 var result *metrics.MetricPoint
 
 func BenchmarkMetricPoint(b *testing.B) {
 	src := &prometheusMetricsSource{prefix: "prefix."}
+	pointBuilder := NewPointBuilder(src)
 	var r *metrics.MetricPoint
 	for i := 0; i < b.N; i++ {
-		r = src.metricPoint("http.requests.total.count", 1.0, 0, "", tempTags)
+		r = pointBuilder.metricPoint("http.requests.total.count", 1.0, 0, "", tempTags)
 	}
 	result = r
 }
