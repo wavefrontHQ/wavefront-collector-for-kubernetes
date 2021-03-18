@@ -7,18 +7,6 @@ go:
   - "1.15.x"
   - master 
 
-env:
-  - DEP_VERSION="0.5.0"
-
-before_install:
-  # Download the binary to bin folder in $GOPATH
-  - curl -L -s https://github.com/golang/dep/releases/download/v${DEP_VERSION}/dep-linux-amd64 -o $GOPATH/bin/dep
-  # Make the binary executable
-  - chmod +x $GOPATH/bin/dep
-
-install:
-  - dep ensure
-
 matrix:
   # It's ok if our code fails on unstable development versions of Go.
   allow_failures:
