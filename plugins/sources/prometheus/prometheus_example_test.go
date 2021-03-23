@@ -10,7 +10,6 @@ import (
 
 // example pulled from https://github.com/prometheus/docs/blob/master/content/docs/instrumenting/exposition_formats.md
 
-
 func TestParsingOfCounterPoints(t *testing.T) {
 	src := &prometheusMetricsSource{}
 

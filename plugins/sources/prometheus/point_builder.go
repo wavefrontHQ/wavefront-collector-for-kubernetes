@@ -73,7 +73,6 @@ func (pb *pointBuilder) metricPoint(name string, value float64, ts int64, source
 
 func (pb *pointBuilder) filterAppend(slice []*metrics.MetricPoint, point *metrics.MetricPoint, m *dto.Metric) []*metrics.MetricPoint {
 	tags := pb.buildTags(m)
-	//point.SetLabelPairs(pb.dedup(tags))
 
 	if pb.isValidMetric(point.Metric, tags) {
 		return append(slice, point)
