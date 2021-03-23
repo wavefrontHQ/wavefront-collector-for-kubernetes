@@ -73,7 +73,7 @@ func (pb *pointBuilder) metricPoint(name string, value float64, ts int64, source
 
 func (pb *pointBuilder) filterAppend(slice []*metrics.MetricPoint, point *metrics.MetricPoint, m *dto.Metric) []*metrics.MetricPoint {
 	tags := pb.buildTags(m)
-	point.SetLabelPairs(pb.dedup(tags))
+	//point.SetLabelPairs(pb.dedup(tags))
 
 	if pb.isValidMetric(point.Metric, tags) {
 		return append(slice, point)
@@ -87,16 +87,19 @@ func (pb *pointBuilder) buildPoint(name string, m *dto.Metric, now int64) []*met
 	if m.Gauge != nil {
 		if !math.IsNaN(m.GetGauge().GetValue()) {
 			point := pb.metricPoint(name+".gauge", m.GetGauge().GetValue(), now, pb.source, nil)
+			point.SetLabelPairs(pb.dedup(pb.buildTags(m)))
 			result = pb.filterAppend(result, point, m)
 		}
 	} else if m.Counter != nil {
 		if !math.IsNaN(m.GetCounter().GetValue()) {
 			point := pb.metricPoint(name+".counter", m.GetCounter().GetValue(), now, pb.source, nil)
+			point.SetLabelPairs(pb.dedup(pb.buildTags(m)))
 			result = pb.filterAppend(result, point, m)
 		}
 	} else if m.Untyped != nil {
 		if !math.IsNaN(m.GetUntyped().GetValue()) {
 			point := pb.metricPoint(name+".value", m.GetUntyped().GetValue(), now, pb.source, nil)
+			point.SetLabelPairs(pb.dedup(pb.buildTags(m)))
 			result = pb.filterAppend(result, point, m)
 		}
 	}
@@ -110,6 +113,7 @@ func (pb *pointBuilder) buildQuantiles(name string, m *dto.Metric, now int64, ta
 		if !math.IsNaN(q.GetValue()) {
 			newTags := combineTags(tags, "quantile", fmt.Sprintf("%v", q.GetQuantile()))
 			point := pb.metricPoint(name, q.GetValue(), now, pb.source, newTags)
+			point.SetLabelPairs(pb.dedup(newTags))
 			result = pb.filterAppend(result, point, m)
 		}
 	}
@@ -128,6 +132,7 @@ func (pb *pointBuilder) buildHistos(name string, m *dto.Metric, now int64, tags 
 	for _, b := range m.GetHistogram().Bucket {
 		newTags := combineTags(tags, "le", fmt.Sprintf("%v", b.GetUpperBound()))
 		point := pb.metricPoint(histName, float64(b.GetCumulativeCount()), now, pb.source, newTags)
+		point.SetLabelPairs(pb.dedup(newTags))
 		result = pb.filterAppend(result, point, m)
 	}
 	point := pb.metricPoint(name+".count", float64(m.GetHistogram().GetSampleCount()), now, pb.source, tags)
