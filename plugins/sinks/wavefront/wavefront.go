@@ -220,6 +220,10 @@ func (sink *wavefrontSink) send(batch *metrics.DataBatch) {
 		log.WithField("count", after).Warning("Error sending one or more points")
 	}
 
+	// This seems like an odd place for this considering that we still have references to the big
+	// memory user, the DataBatch. However, moving it until that reference was released actually
+	// reduced the effectiveness of this flag. The garbage collector has some interesting ideas about
+	// what to clean and when.
 	if sink.forceGC {
 		log.Info("sink: forcing memory release")
 		debug.FreeOSMemory()
