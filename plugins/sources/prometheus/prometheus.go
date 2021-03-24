@@ -192,15 +192,6 @@ func (src *prometheusMetricsSource) isValidMetric(name string, tags map[string]s
 	return false
 }
 
-func combineTags(tags map[string]string, key, val string) map[string]string {
-	newTags := make(map[string]string, len(tags)+1)
-	for k, v := range tags {
-		newTags[k] = v
-	}
-	newTags[key] = val
-	return newTags
-}
-
 type prometheusProvider struct {
 	metrics.DefaultMetricsSourceProvider
 	name              string

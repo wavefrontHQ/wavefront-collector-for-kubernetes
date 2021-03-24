@@ -62,19 +62,18 @@ func (pb *pointBuilder) buildPoints(metricFamilies map[string]*dto.MetricFamily)
 }
 
 func (pb *pointBuilder) metricPoint(name string, value float64, ts int64, source string, tags map[string]string) *metrics.MetricPoint {
-	return &metrics.MetricPoint{
+	point := &metrics.MetricPoint{
 		Metric:    pb.prefix + strings.Replace(name, "_", ".", -1),
 		Value:     value,
 		Timestamp: ts,
 		Source:    source,
-		Tags:      tags,
 	}
+	point.SetLabelPairs(pb.dedup(tags)) //store tags as LabelPairs for memory optimization
+	return point
 }
 
-func (pb *pointBuilder) filterAppend(slice []*metrics.MetricPoint, point *metrics.MetricPoint, m *dto.Metric) []*metrics.MetricPoint {
-	tags := pb.buildTags(m)
-
-	if pb.isValidMetric(point.Metric, tags) {
+func (pb *pointBuilder) filterAppend(slice []*metrics.MetricPoint, point *metrics.MetricPoint) []*metrics.MetricPoint {
+	if pb.isValidMetric(point.Metric, point.GetTags()) {
 		return append(slice, point)
 	}
 	return slice
@@ -85,21 +84,18 @@ func (pb *pointBuilder) buildPoint(name string, m *dto.Metric, now int64) []*met
 	var result []*metrics.MetricPoint
 	if m.Gauge != nil {
 		if !math.IsNaN(m.GetGauge().GetValue()) {
-			point := pb.metricPoint(name+".gauge", m.GetGauge().GetValue(), now, pb.source, nil)
-			point.SetLabelPairs(pb.dedup(pb.buildTags(m)))
-			result = pb.filterAppend(result, point, m)
+			point := pb.metricPoint(name+".gauge", m.GetGauge().GetValue(), now, pb.source, pb.buildTags(m))
+			result = pb.filterAppend(result, point)
 		}
 	} else if m.Counter != nil {
 		if !math.IsNaN(m.GetCounter().GetValue()) {
-			point := pb.metricPoint(name+".counter", m.GetCounter().GetValue(), now, pb.source, nil)
-			point.SetLabelPairs(pb.dedup(pb.buildTags(m)))
-			result = pb.filterAppend(result, point, m)
+			point := pb.metricPoint(name+".counter", m.GetCounter().GetValue(), now, pb.source, pb.buildTags(m))
+			result = pb.filterAppend(result, point)
 		}
 	} else if m.Untyped != nil {
 		if !math.IsNaN(m.GetUntyped().GetValue()) {
-			point := pb.metricPoint(name+".value", m.GetUntyped().GetValue(), now, pb.source, nil)
-			point.SetLabelPairs(pb.dedup(pb.buildTags(m)))
-			result = pb.filterAppend(result, point, m)
+			point := pb.metricPoint(name+".value", m.GetUntyped().GetValue(), now, pb.source, pb.buildTags(m))
+			result = pb.filterAppend(result, point)
 		}
 	}
 	return result
@@ -110,16 +106,16 @@ func (pb *pointBuilder) buildQuantiles(name string, m *dto.Metric, now int64, ta
 	var result []*metrics.MetricPoint
 	for _, q := range m.GetSummary().Quantile {
 		if !math.IsNaN(q.GetValue()) {
-			newTags := combineTags(tags, "quantile", fmt.Sprintf("%v", q.GetQuantile()))
+			newTags := copyOf(tags)
+			newTags["quantile"] = fmt.Sprintf("%v", q.GetQuantile())
 			point := pb.metricPoint(name, q.GetValue(), now, pb.source, newTags)
-			point.SetLabelPairs(pb.dedup(newTags))
-			result = pb.filterAppend(result, point, m)
+			result = pb.filterAppend(result, point)
 		}
 	}
 	point := pb.metricPoint(name+".count", float64(m.GetSummary().GetSampleCount()), now, pb.source, tags)
-	result = pb.filterAppend(result, point, m)
+	result = pb.filterAppend(result, point)
 	point = pb.metricPoint(name+".sum", m.GetSummary().GetSampleSum(), now, pb.source, tags)
-	result = pb.filterAppend(result, point, m)
+	result = pb.filterAppend(result, point)
 
 	return result
 }
@@ -129,15 +125,15 @@ func (pb *pointBuilder) buildHistos(name string, m *dto.Metric, now int64, tags 
 	var result []*metrics.MetricPoint
 	histName := pb.histoName(name)
 	for _, b := range m.GetHistogram().Bucket {
-		newTags := combineTags(tags, "le", fmt.Sprintf("%v", b.GetUpperBound()))
+		newTags := copyOf(tags)
+		newTags["le"] = fmt.Sprintf("%v", b.GetUpperBound())
 		point := pb.metricPoint(histName, float64(b.GetCumulativeCount()), now, pb.source, newTags)
-		point.SetLabelPairs(pb.dedup(newTags))
-		result = pb.filterAppend(result, point, m)
+		result = pb.filterAppend(result, point)
 	}
 	point := pb.metricPoint(name+".count", float64(m.GetHistogram().GetSampleCount()), now, pb.source, tags)
-	result = pb.filterAppend(result, point, m)
+	result = pb.filterAppend(result, point)
 	point = pb.metricPoint(name+".sum", m.GetHistogram().GetSampleSum(), now, pb.source, tags)
-	result = pb.filterAppend(result, point, m)
+	result = pb.filterAppend(result, point)
 	return result
 }
 
@@ -175,4 +171,12 @@ func (pb *pointBuilder) dedup(tags map[string]string) []metrics.LabelPair {
 		})
 	}
 	return result
+}
+
+func copyOf(tags map[string]string) map[string]string {
+	newTags := make(map[string]string, len(tags)+1)
+	for k, v := range tags {
+		newTags[k] = v
+	}
+	return newTags
 }
