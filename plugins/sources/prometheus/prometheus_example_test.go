@@ -5,11 +5,13 @@ package prometheus
 
 import (
 	"bytes"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 	"sort"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 )
 
 // example pulled from https://github.com/prometheus/docs/blob/master/content/docs/instrumenting/exposition_formats.md

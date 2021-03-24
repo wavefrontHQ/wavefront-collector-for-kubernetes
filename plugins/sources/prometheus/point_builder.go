@@ -10,6 +10,7 @@ import (
 	"time"
 
 	dto "github.com/prometheus/client_model/go"
+
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 )
@@ -35,7 +36,7 @@ func NewPointBuilder(src *prometheusMetricsSource) *pointBuilder {
 
 }
 
-func (pb *pointBuilder) buildPoints(metricFamilies map[string]*dto.MetricFamily) ([]*metrics.MetricPoint, error) {
+func (pb *pointBuilder) build(metricFamilies map[string]*dto.MetricFamily) ([]*metrics.MetricPoint, error) {
 	now := time.Now().Unix()
 	var result []*metrics.MetricPoint
 
@@ -43,14 +44,11 @@ func (pb *pointBuilder) buildPoints(metricFamilies map[string]*dto.MetricFamily)
 		for _, m := range mf.Metric {
 			var points []*metrics.MetricPoint
 			if mf.GetType() == dto.MetricType_SUMMARY {
-				// summary point
-				points = pb.buildQuantiles(metricName, m, now, pb.buildTags(m))
+				points = pb.buildSummaryPoints(metricName, m, now, pb.buildTags(m))
 			} else if mf.GetType() == dto.MetricType_HISTOGRAM {
-				// histogram point
-				points = pb.buildHistos(metricName, m, now, pb.buildTags(m))
+				points = pb.buildHistogramPoints(metricName, m, now, pb.buildTags(m))
 			} else {
-				// standard point
-				points = pb.buildPoint(metricName, m, now)
+				points = pb.buildPoints(metricName, m, now)
 			}
 
 			if len(points) > 0 {
@@ -68,7 +66,7 @@ func (pb *pointBuilder) metricPoint(name string, value float64, ts int64, source
 		Timestamp: ts,
 		Source:    source,
 	}
-	point.SetLabelPairs(pb.dedup(tags)) //store tags as LabelPairs for memory optimization
+	point.SetLabelPairs(pb.deduplicate(tags)) //store tags as LabelPairs for memory optimization
 	return point
 }
 
@@ -80,7 +78,7 @@ func (pb *pointBuilder) filterAppend(slice []*metrics.MetricPoint, point *metric
 }
 
 // Get name and value from metric
-func (pb *pointBuilder) buildPoint(name string, m *dto.Metric, now int64) []*metrics.MetricPoint {
+func (pb *pointBuilder) buildPoints(name string, m *dto.Metric, now int64) []*metrics.MetricPoint {
 	var result []*metrics.MetricPoint
 	if m.Gauge != nil {
 		if !math.IsNaN(m.GetGauge().GetValue()) {
@@ -102,7 +100,7 @@ func (pb *pointBuilder) buildPoint(name string, m *dto.Metric, now int64) []*met
 }
 
 // Get Quantiles from summary metric
-func (pb *pointBuilder) buildQuantiles(name string, m *dto.Metric, now int64, tags map[string]string) []*metrics.MetricPoint {
+func (pb *pointBuilder) buildSummaryPoints(name string, m *dto.Metric, now int64, tags map[string]string) []*metrics.MetricPoint {
 	var result []*metrics.MetricPoint
 	for _, q := range m.GetSummary().Quantile {
 		if !math.IsNaN(q.GetValue()) {
@@ -121,9 +119,9 @@ func (pb *pointBuilder) buildQuantiles(name string, m *dto.Metric, now int64, ta
 }
 
 // Get Buckets from histogram metric
-func (pb *pointBuilder) buildHistos(name string, m *dto.Metric, now int64, tags map[string]string) []*metrics.MetricPoint {
+func (pb *pointBuilder) buildHistogramPoints(name string, m *dto.Metric, now int64, tags map[string]string) []*metrics.MetricPoint {
 	var result []*metrics.MetricPoint
-	histName := pb.histoName(name)
+	histName := pb.histogramName(name)
 	for _, b := range m.GetHistogram().Bucket {
 		newTags := copyOf(tags)
 		newTags["le"] = fmt.Sprintf("%v", b.GetUpperBound())
@@ -155,14 +153,14 @@ func (pb *pointBuilder) buildTags(m *dto.Metric) map[string]string {
 	return tags
 }
 
-func (pb *pointBuilder) histoName(name string) string {
+func (pb *pointBuilder) histogramName(name string) string {
 	if pb.omitBucketSuffix {
 		return name
 	}
 	return name + ".bucket"
 }
 
-func (pb *pointBuilder) dedup(tags map[string]string) []metrics.LabelPair {
+func (pb *pointBuilder) deduplicate(tags map[string]string) []metrics.LabelPair {
 	result := make([]metrics.LabelPair, 0)
 	for k, v := range tags {
 		result = append(result, metrics.LabelPair{

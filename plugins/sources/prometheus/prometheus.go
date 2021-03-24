@@ -175,7 +175,7 @@ func (src *prometheusMetricsSource) parseMetrics(reader io.Reader) ([]*metrics.M
 		if err != nil {
 			log.Errorf("reading text format failed: %s", err)
 		}
-		batch, err := pointBuilder.buildPoints(metricFamilies)
+		batch, err := pointBuilder.build(metricFamilies)
 		points = append(points, batch...)
 	}
 	return points, err
