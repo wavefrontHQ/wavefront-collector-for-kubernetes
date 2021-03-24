@@ -5,6 +5,7 @@ package prometheus
 
 import (
 	"bytes"
+	"github.com/stretchr/testify/require"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -15,9 +16,7 @@ func TestNoFilters(t *testing.T) {
 	src := &prometheusMetricsSource{}
 
 	points, err := src.parseMetrics(testMetricReader())
-	if err != nil {
-		assert.FailNow(t, err.Error())
-	}
+	require.NoError(t, err, "parsing metrics")
 	assert.Equal(t, 8, len(points), "wrong number of points")
 }
 
@@ -32,9 +31,7 @@ func TestMetricAllowList(t *testing.T) {
 	}
 
 	points, err := src.parseMetrics(testMetricReader())
-	if err != nil {
-		assert.FailNow(t, err.Error())
-	}
+	require.NoError(t, err, "parsing metrics")
 	assert.Equal(t, 1, len(points), "wrong number of points")
 }
 
@@ -49,9 +46,7 @@ func TestMetricDenyList(t *testing.T) {
 	}
 
 	points, err := src.parseMetrics(testMetricReader())
-	if err != nil {
-		assert.FailNow(t, err.Error())
-	}
+	require.NoError(t, err, "parsing metrics")
 	assert.Equal(t, 7, len(points), "wrong number of points")
 }
 
@@ -66,9 +61,7 @@ func TestMetricTagAllowList(t *testing.T) {
 	}
 
 	points, err := src.parseMetrics(testMetricReader())
-	if err != nil {
-		assert.FailNow(t, err.Error())
-	}
+	require.NoError(t, err, "parsing metrics")
 	assert.Equal(t, 1, len(points), "wrong number of points")
 }
 
@@ -83,9 +76,7 @@ func TestMetricTagDenyList(t *testing.T) {
 	}
 
 	points, err := src.parseMetrics(testMetricReader())
-	if err != nil {
-		assert.FailNow(t, err.Error())
-	}
+	require.NoError(t, err, "parsing metrics")
 	assert.Equal(t, 7, len(points), "wrong number of points")
 }
 
