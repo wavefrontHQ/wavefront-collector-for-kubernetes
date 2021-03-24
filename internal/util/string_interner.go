@@ -3,6 +3,8 @@
 
 package util
 
+// What is an interner? Is that a thing? Good question, here's a good description
+// https://en.wikipedia.org/wiki/String_interning
 type StringInterner map[string]*string
 
 func NewStringInterner() StringInterner {
