@@ -196,6 +196,11 @@ func (m *MetricPoint) GetTags() map[string]string {
 	for _, labelPair := range m.labelPairs {
 		tags[*labelPair.Name] = *labelPair.Value
 	}
+
+	for k, v := range m.Tags {
+		tags[k] = v
+	}
+
 	return tags
 }
 
