@@ -70,14 +70,15 @@ if [[ -z ${IMAGE_NAME} ]] ; then
     IMAGE_NAME=${DEFAULT_IMAGE_NAME}
 fi
 
-echo "deploying prometheus endpoint"
-
-kubectl apply -f ../deploy/prom-example.yaml
-
 echo "deploying collector ${IMAGE_NAME} ${VERSION}"
 
 env FLUSH_ONCE=true \
 ./deploy.sh -c ${WAVEFRONT_CLUSTER} -t ${API_TOKEN} -v ${VERSION} -i ${IMAGE_NAME}
+
+echo "deploying configuration for additional targets"
+
+kubectl apply -f ../deploy/mysql-config.yaml
+kubectl apply -f ../deploy/memcached-config.yaml
 
 echo "waiting for logs..."
 sleep 30
@@ -95,6 +96,8 @@ cleanup
 
 # TODO: relies on the prefix from the sample app to isolate prom metrics
 PROM_PREFIX="prom-example."
+
+sleep 30
 
 for pod in ${PODS} ; do
     dump_metrics ${pod} ${PROM_PREFIX} ${PROM_DUMP} ${NS}
