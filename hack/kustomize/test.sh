@@ -98,6 +98,7 @@ cleanup
 PROM_PREFIX="prom-example."
 
 sleep 30
+echo "***********SLEEEEEEEEEEEP**********"
 
 for pod in ${PODS} ; do
     dump_metrics ${pod} ${PROM_PREFIX} ${PROM_DUMP} ${NS}
