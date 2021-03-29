@@ -49,7 +49,7 @@ function cleanup() {
     #TODO: cleanup other files here
 }
 
-DEFAULT_VERSION="1.3.2"
+DEFAULT_VERSION="1.3.3"
 DEFAULT_IMAGE_NAME="wavefronthq\/wavefront-kubernetes-collector"
 
 WAVEFRONT_CLUSTER=$1
