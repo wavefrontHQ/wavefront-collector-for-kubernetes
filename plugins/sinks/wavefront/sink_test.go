@@ -13,7 +13,7 @@ import (
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 )
 
-func NewFakeWavefrontSink() *wavefrontSink {
+func NewTestWavefrontSink() *wavefrontSink {
 	return &wavefrontSink{
 		WavefrontClient: NewTestSender(),
 		ClusterName:     "testCluster",
@@ -21,14 +21,14 @@ func NewFakeWavefrontSink() *wavefrontSink {
 }
 
 func TestStoreTimeseriesEmptyInput(t *testing.T) {
-	fakeSink := NewFakeWavefrontSink()
+	fakeSink := NewTestWavefrontSink()
 	db := metrics.DataBatch{}
 	fakeSink.ExportData(&db)
 	assert.Equal(t, 0, len(getMetrics(fakeSink)))
 }
 
 func TestName(t *testing.T) {
-	fakeSink := NewFakeWavefrontSink()
+	fakeSink := NewTestWavefrontSink()
 	name := fakeSink.Name()
 	assert.Equal(t, name, "wavefront_sink")
 }
@@ -69,6 +69,30 @@ func TestPrefix(t *testing.T) {
 				Value:  1.0,
 				Source: "fakeSource",
 			},
+		},
+	}
+	sink.ExportData(&db)
+	assert.True(t, strings.Contains(getMetrics(sink), "test.cpu.idle"))
+}
+func TestNilPointDataBatch(t *testing.T) {
+	cfg := configuration.WavefrontSinkConfig{
+		ProxyAddress:  "wavefront-proxy:2878",
+		RedirectToLog: true,
+		Transforms: configuration.Transforms{
+			Prefix: "test.",
+		},
+	}
+	sink, err := NewWavefrontSink(cfg)
+	assert.NoError(t, err)
+
+	db := metrics.DataBatch{
+		MetricPoints: []*metrics.MetricPoint{
+			{
+				Metric: "cpu.idle",
+				Value:  1.0,
+				Source: "fakeSource",
+			},
+			nil,
 		},
 	}
 	sink.ExportData(&db)
