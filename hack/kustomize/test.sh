@@ -1,4 +1,5 @@
 #!/bin/bash -e
+source ../deploy/k8s-utils.sh
 
 # This script automates the functional testing of the collector
 
@@ -97,8 +98,7 @@ cleanup
 # TODO: relies on the prefix from the sample app to isolate prom metrics
 PROM_PREFIX="prom-example."
 
-sleep 30
-echo "***********SLEEEEEEEEEEEP**********"
+wait_for_cluster_ready
 
 for pod in ${PODS} ; do
     dump_metrics ${pod} ${PROM_PREFIX} ${PROM_DUMP} ${NS}

@@ -1,3 +1,6 @@
+source ./k8s-utils.sh
+wait_for_cluster_ready
+
 echo "deploying prometheus endpoint"
 
 kubectl apply -f prom-example.yaml

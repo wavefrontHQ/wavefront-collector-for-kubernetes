@@ -75,8 +75,8 @@ nuke-kind:
 	kind delete cluster
 	kind create cluster
 
-open-k9s:
-	k9s
+k9s:
+	watch -n 1 k9s
 
 #This rule need to be run on RHEL with podman installed.
 container_rhel: build
