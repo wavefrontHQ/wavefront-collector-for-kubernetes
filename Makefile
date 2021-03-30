@@ -1,10 +1,13 @@
 PREFIX?=wavefronthq
 DOCKER_IMAGE=wavefront-kubernetes-collector
 ARCH?=amd64
-OUT_DIR?=./_output
-KUSTOMIZE_DIR=./hack/kustomize
-GOLANG_VERSION?=1.15
 
+REPO_DIR=$(shell git rev-parse --show-toplevel)
+KUSTOMIZE_DIR=$(REPO_DIR)/hack/kustomize
+DEPLOY_DIR=$(REPO_DIR)/hack/deploy
+OUT_DIR?=$(REPO_DIR)/_output
+
+GOLANG_VERSION?=1.15
 BINARY_NAME=wavefront-collector
 
 ifndef TEMP_DIR
@@ -13,9 +16,6 @@ endif
 
 VERSION?=1.3.3
 GIT_COMMIT:=$(shell git rev-parse --short HEAD)
-
-REPO_DIR:=$(shell pwd)
-KUSTOMIZE_DIR=${REPO_DIR}/hack/kustomize
 
 # for testing, the built image will also be tagged with this name provided via an environment variable
 OVERRIDE_IMAGE_NAME?=${COLLECTOR_TEST_IMAGE}
@@ -52,17 +52,30 @@ ifneq ($(OVERRIDE_IMAGE_NAME),)
 	docker tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OVERRIDE_IMAGE_NAME)
 endif
 
-redeploy:
-	if [ -z ${WAVEFRONT_API_KEY} ]; then echo "Need to set WAVEFRONT_API_KEY" && exit 1; fi
+redeploy: token-check
 	(cd $(KUSTOMIZE_DIR) && ./deploy.sh -c nimba -t ${WAVEFRONT_API_KEY} -v ${VERSION} -i "$(PREFIX)\/$(DOCKER_IMAGE)")
 
-output-test:
-	if [ -z ${WAVEFRONT_API_KEY} ]; then echo "Need to set WAVEFRONT_API_KEY" && exit 1; fi
+deploy-targets:
+	(cd $(DEPLOY_DIR) && ./deploy-targets.sh)
+
+output-test: token-check
 	docker exec -it kind-control-plane crictl rmi $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) || true
 	kind load docker-image $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) --name kind
 	(cd $(KUSTOMIZE_DIR) && ./test.sh nimba $(WAVEFRONT_API_KEY) $(VERSION))
 
-full-loop: build tests container output-test
+token-check:
+	if [ -z ${WAVEFRONT_API_KEY} ]; then echo "Need to set WAVEFRONT_API_KEY" && exit 1; fi
+
+full-loop: token-check build tests container output-test
+
+nuke-loop: token-check nuke-kind deploy-targets full-loop
+
+nuke-kind:
+	kind delete cluster
+	kind create cluster
+
+k9s:
+	watch -n 1 k9s
 
 #This rule need to be run on RHEL with podman installed.
 container_rhel: build

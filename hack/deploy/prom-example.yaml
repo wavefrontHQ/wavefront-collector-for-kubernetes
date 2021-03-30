@@ -15,6 +15,7 @@ spec:
   containers:
   - name: prom-example
     image: vikramraman/prom-example-app:metrics
+#    image: jgeeatvmware/crash-loop:1
     imagePullPolicy: Always
     command:
     - /bin/prometheus-example-app
