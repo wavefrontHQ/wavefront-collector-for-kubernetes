@@ -1,11 +1,13 @@
 PREFIX?=wavefronthq
 DOCKER_IMAGE=wavefront-kubernetes-collector
 ARCH?=amd64
-OUT_DIR?=./_output
-KUSTOMIZE_DIR=./hack/kustomize
-DEPLOY_DIR=./hack/deploy
-GOLANG_VERSION?=1.15
 
+REPO_DIR=$(shell git rev-parse --show-toplevel)
+KUSTOMIZE_DIR=$(REPO_DIR)/hack/kustomize
+DEPLOY_DIR=$(REPO_DIR)/hack/deploy
+OUT_DIR?=$(REPO_DIR)/_output
+
+GOLANG_VERSION?=1.15
 BINARY_NAME=wavefront-collector
 
 ifndef TEMP_DIR
@@ -14,9 +16,6 @@ endif
 
 VERSION?=1.3.2
 GIT_COMMIT:=$(shell git rev-parse --short HEAD)
-
-REPO_DIR:=$(shell pwd)
-KUSTOMIZE_DIR=${REPO_DIR}/hack/kustomize
 
 # for testing, the built image will also be tagged with this name provided via an environment variable
 OVERRIDE_IMAGE_NAME?=${COLLECTOR_TEST_IMAGE}
