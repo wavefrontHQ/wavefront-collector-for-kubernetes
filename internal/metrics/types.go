@@ -194,11 +194,11 @@ func (m *MetricPoint) SetLabelPairs(pairs []LabelPair) {
 }
 
 func (m *MetricPoint) GetTags() map[string]string {
-
 	tags := make(map[string]string, len(m.labelPairs))
 	for _, labelPair := range m.labelPairs {
 		tags[*labelPair.Name] = *labelPair.Value
 	}
+
 	m.RLock()
 	defer m.RUnlock()
 	for k, v := range m.Tags {
