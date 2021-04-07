@@ -13,7 +13,7 @@ fi
 if $FLUSH_ONCE ;
   then
     REDIRECT_TO_LOG=true
-    FLUSH_INTERVAL=15
+    FLUSH_INTERVAL=18
     COLLECTION_INTERVAL=10
   else
     REDIRECT_TO_LOG=false

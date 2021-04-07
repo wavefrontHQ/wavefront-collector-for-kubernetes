@@ -62,6 +62,8 @@ IMAGE_NAME=$4
 OUT_DIR=/tmp
 PROM_DUMP=${OUT_DIR}/prom.txt
 SORTED_FILE=${OUT_DIR}/sorted.txt
+METRIC_NAMES_FILE=${OUT_DIR}/metric-names.txt
+UNIQUE_METRIC_NAMES_FILE=${OUT_DIR}/unique-metric-names.txt
 
 if [[ -z ${VERSION} ]] ; then
     VERSION=${DEFAULT_VERSION}
@@ -100,12 +102,20 @@ PROM_PREFIX="prom-example."
 
 wait_for_cluster_ready
 
+rm -f ${METRIC_NAMES_FILE} ${UNIQUE_METRIC_NAMES_FILE}
+
 for pod in ${PODS} ; do
     dump_metrics ${pod} ${PROM_PREFIX} ${PROM_DUMP} ${NS}
     #TODO: dump_metrics for other prefixes for diff metric sources
+    kubectl logs ${pod} -n ${NS} | awk '/Metric/ {print $2}' >>  ${METRIC_NAMES_FILE}
 done
 
+sort -u <${METRIC_NAMES_FILE} >${UNIQUE_METRIC_NAMES_FILE}
+sed -i '' '/~wavefront/d' ${UNIQUE_METRIC_NAMES_FILE}
+rm -f ${METRIC_NAMES_FILE}
+
 validate_metrics prometheus ${PROM_DUMP} files/prometheus-baseline.txt
+validate_metrics metric-names ${UNIQUE_METRIC_NAMES_FILE} files/metric-names-baseline.txt
 #TODO: add validation for other metric sources
 
 FLUSH_ONCE=false ./deploy.sh -c ${WAVEFRONT_CLUSTER} -t ${API_TOKEN} -v ${VERSION} -i ${IMAGE_NAME}
