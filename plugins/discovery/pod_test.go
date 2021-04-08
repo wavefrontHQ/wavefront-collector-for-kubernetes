@@ -36,7 +36,7 @@ func TestUpdatePodDoesntPanic(t *testing.T) {
 
 	obj := cache.DeletedFinalStateUnknown{Key: "bar", Obj: pod}
 
-	assert.NotPanics(t, func() { updatePodIfValid(obj, fakeDiscoverer) }, "things")
+	assert.NotPanics(t, func() { updatePodIfValid(obj, fakeDiscoverer) }, "updatePodIfValid panicked")
 }
 
 func TestDeletePodDoesntPanic(t *testing.T) {
@@ -52,5 +52,5 @@ func TestDeletePodDoesntPanic(t *testing.T) {
 
 	obj := cache.DeletedFinalStateUnknown{Key: "bar", Obj: pod}
 
-	assert.NotPanics(t, func() { deletePodIfValid(obj, fakeDiscoverer) }, "things")
+	assert.NotPanics(t, func() { deletePodIfValid(obj, fakeDiscoverer) }, "deletePodIfValid panicked")
 }

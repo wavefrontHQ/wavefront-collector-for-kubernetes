@@ -42,8 +42,8 @@ func newPodHandler(kubeClient kubernetes.Interface, discoverer discovery.Discove
 }
 
 func deletePodIfValid(obj interface{}, discoverer discovery.Discoverer) {
-	if _, ok := obj.(cache.DeletedFinalStateUnknown); !ok {
-		pod := obj.(*v1.Pod)
+	pod, ok := obj.(*v1.Pod)
+	if ok {
 		discoverer.Delete(discovery.Resource{
 			Kind:       discovery.PodType.String(),
 			IP:         pod.Status.PodIP,
@@ -54,10 +54,8 @@ func deletePodIfValid(obj interface{}, discoverer discovery.Discoverer) {
 }
 
 func updatePodIfValid(obj interface{}, discoverer discovery.Discoverer) {
-	if _, ok := obj.(cache.DeletedFinalStateUnknown); !ok {
-		pod := obj.(*v1.Pod)
-		podUpdated(pod, discoverer)
-	}
+	pod, ok := obj.(*v1.Pod)
+	if ok { podUpdated( pod, discoverer ) }
 }
 
 func podUpdated(pod *v1.Pod, discoverer discovery.Discoverer) {

@@ -59,12 +59,12 @@ func newConfigHandler(kubeClient kubernetes.Interface, cfg discovery.Config) *co
 		}
 	}
 
-	handler.configMapInformer = newConfMapInformer(kubeClient, ns, handler)
+	handler.configMapInformer = newConfigMapInformer(kubeClient, ns, handler)
 	handler.secretInformer = newSecretInformer(kubeClient, ns, handler)
 	return handler
 }
 
-func newConfMapInformer(kubeClient kubernetes.Interface, ns string, handler *configHandler) cache.SharedInformer {
+func newConfigMapInformer(kubeClient kubernetes.Interface, ns string, handler *configHandler) cache.SharedInformer {
 	s := kubeClient.CoreV1().ConfigMaps(ns)
 	lw := &cache.ListWatch{
 		ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
@@ -78,19 +78,26 @@ func newConfMapInformer(kubeClient kubernetes.Interface, ns string, handler *con
 	inf := cache.NewSharedInformer(lw, &v1.ConfigMap{}, 1*time.Hour)
 	inf.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
-			cfg := obj.(*v1.ConfigMap)
-			handler.updated(&configResource{cfg.ObjectMeta, cfg.Data})
+			updateConfigMapIfValid(obj, handler)
 		},
 		UpdateFunc: func(_, obj interface{}) {
-			cfg := obj.(*v1.ConfigMap)
-			handler.updated(&configResource{cfg.ObjectMeta, cfg.Data})
+			updateConfigMapIfValid(obj, handler)
 		},
 		DeleteFunc: func(obj interface{}) {
-			cfg := obj.(*v1.ConfigMap)
-			handler.deleted(cfg.Name)
+			deleteConfigMapIfValid(obj, handler)
 		},
 	})
 	return inf
+}
+
+func deleteConfigMapIfValid(obj interface{}, handler *configHandler) {
+	cfg, ok := obj.(*v1.ConfigMap)
+	if ok { handler.deleted(cfg.Name) }
+}
+
+func updateConfigMapIfValid(obj interface{}, handler *configHandler) {
+	cfg, ok := obj.(*v1.ConfigMap)
+	if ok { handler.updated(&configResource{cfg.ObjectMeta, cfg.Data})}
 }
 
 func newSecretInformer(kubeClient kubernetes.Interface, ns string, handler *configHandler) cache.SharedInformer {
@@ -107,19 +114,26 @@ func newSecretInformer(kubeClient kubernetes.Interface, ns string, handler *conf
 	inf := cache.NewSharedInformer(lw, &v1.Secret{}, 1*time.Hour)
 	inf.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
-			secret := obj.(*v1.Secret)
-			handler.updated(&configResource{secret.ObjectMeta, convertByteArrayData(secret.Data)})
+			updateSecretIfValid(obj, handler)
 		},
 		UpdateFunc: func(_, obj interface{}) {
-			secret := obj.(*v1.Secret)
-			handler.updated(&configResource{secret.ObjectMeta, convertByteArrayData(secret.Data)})
+			updateSecretIfValid(obj, handler)
 		},
 		DeleteFunc: func(obj interface{}) {
-			secret := obj.(*v1.Secret)
-			handler.deleted(secret.Name)
+			deleteSecretIfValid(obj, handler)
 		},
 	})
 	return inf
+}
+
+func deleteSecretIfValid(obj interface{}, handler *configHandler) {
+	secret, ok := obj.(*v1.Secret)
+	if ok { handler.deleted(secret.Name) }
+}
+
+func updateSecretIfValid(obj interface{}, handler *configHandler) {
+	secret, ok := obj.(*v1.Secret)
+	if ok { handler.updated(&configResource{secret.ObjectMeta, convertByteArrayData(secret.Data)}) }
 }
 
 // Config gets the combined discovery configuration and a boolean indicating whether
