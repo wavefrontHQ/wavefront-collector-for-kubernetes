@@ -55,7 +55,9 @@ func deletePodIfValid(obj interface{}, discoverer discovery.Discoverer) {
 
 func updatePodIfValid(obj interface{}, discoverer discovery.Discoverer) {
 	pod, ok := obj.(*v1.Pod)
-	if ok { podUpdated( pod, discoverer ) }
+	if ok {
+		podUpdated(pod, discoverer)
+	}
 }
 
 func podUpdated(pod *v1.Pod, discoverer discovery.Discoverer) {

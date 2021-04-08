@@ -62,7 +62,7 @@ func deleteServiceIfValid(obj interface{}, discoverer discovery.Discoverer) {
 
 func updateServiceIfValid(obj interface{}, discoverer discovery.Discoverer) {
 	service, ok := obj.(*v1.Service)
-	if ok && hasIP(service.Spec.ClusterIP){
+	if ok && hasIP(service.Spec.ClusterIP) {
 		discoverer.Discover(discovery.Resource{
 			Kind: discovery.ServiceType.String(),
 			IP:   service.Spec.ClusterIP,

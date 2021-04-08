@@ -92,12 +92,16 @@ func newConfigMapInformer(kubeClient kubernetes.Interface, ns string, handler *c
 
 func deleteConfigMapIfValid(obj interface{}, handler *configHandler) {
 	cfg, ok := obj.(*v1.ConfigMap)
-	if ok { handler.deleted(cfg.Name) }
+	if ok {
+		handler.deleted(cfg.Name)
+	}
 }
 
 func updateConfigMapIfValid(obj interface{}, handler *configHandler) {
 	cfg, ok := obj.(*v1.ConfigMap)
-	if ok { handler.updated(&configResource{cfg.ObjectMeta, cfg.Data})}
+	if ok {
+		handler.updated(&configResource{cfg.ObjectMeta, cfg.Data})
+	}
 }
 
 func newSecretInformer(kubeClient kubernetes.Interface, ns string, handler *configHandler) cache.SharedInformer {
@@ -128,12 +132,16 @@ func newSecretInformer(kubeClient kubernetes.Interface, ns string, handler *conf
 
 func deleteSecretIfValid(obj interface{}, handler *configHandler) {
 	secret, ok := obj.(*v1.Secret)
-	if ok { handler.deleted(secret.Name) }
+	if ok {
+		handler.deleted(secret.Name)
+	}
 }
 
 func updateSecretIfValid(obj interface{}, handler *configHandler) {
 	secret, ok := obj.(*v1.Secret)
-	if ok { handler.updated(&configResource{secret.ObjectMeta, convertByteArrayData(secret.Data)}) }
+	if ok {
+		handler.updated(&configResource{secret.ObjectMeta, convertByteArrayData(secret.Data)})
+	}
 }
 
 // Config gets the combined discovery configuration and a boolean indicating whether
