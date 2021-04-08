@@ -80,20 +80,26 @@ func TestTimeout(t *testing.T) {
 }
 
 func TestMultipleMetrics(t *testing.T) {
+	interval := 10 * time.Millisecond
 	msp1 := util.NewDummyMetricsSourceProvider(
-		"p1", 10*time.Millisecond, 10*time.Millisecond,
+		"p1", interval, interval,
 		util.NewDummyMetricsSource("s1", 0))
 
 	msp2 := util.NewDummyMetricsSourceProvider(
-		"p2", 10*time.Millisecond, 10*time.Millisecond,
+		"p2", interval, interval,
 		util.NewDummyMetricsSource("s2", 0))
 
 	Manager().AddProvider(msp1)
 	Manager().AddProvider(msp2)
 
-	time.Sleep(105 * time.Millisecond)
+	s2Intervals := 10
+	s2wait := time.Duration(s2Intervals)*interval + 5*time.Millisecond // fudge factor
+	time.Sleep(s2wait)
 	Manager().DeleteProvider("p2")
-	time.Sleep(95 * time.Millisecond)
+
+	s1Intervals := 20
+	s1wait := time.Duration(s1Intervals)*interval - s2wait
+	time.Sleep(s1wait)
 	Manager().DeleteProvider("p1")
 
 	dataBatchList := Manager().GetPendingMetrics()
@@ -107,8 +113,8 @@ func TestMultipleMetrics(t *testing.T) {
 
 	Manager().StopProviders()
 
-	assert.True(t, (counts["s1"] >= 19) && (counts["s1"] <= 21), counts["s1"], "incorrect s1 count - counts: %vs", counts)
-	assert.True(t, (counts["s2"] >= 10) && (counts["s2"] <= 11), "incorrect s2 count - counts: %v", counts)
+	assert.True(t, (counts["s1"] >= s1Intervals-1) && (counts["s1"] <= s1Intervals+1), "incorrect s1 scrape count - expected %v, actual: %v", s1Intervals, counts["s1"])
+	assert.True(t, (counts["s2"] >= s2Intervals-1) && (counts["s2"] <= s2Intervals+1), "incorrect s2 scrape count - expected %v, actual: %v", s2Intervals, counts["s2"])
 }
 
 func TestConfig(t *testing.T) {

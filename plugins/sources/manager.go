@@ -76,7 +76,7 @@ type sourceManagerImpl struct {
 
 	metricsSourcesMtx      sync.Mutex
 	metricsSourceProviders map[string]metrics.MetricsSourceProvider
-	metricsSourceTickers   map[string]*time.Ticker
+	metricsSourceTimers    map[string]*IntervalTimer
 	metricsSourceQuits     map[string]chan struct{}
 
 	responseMtx sync.Mutex
@@ -89,7 +89,7 @@ func Manager() SourceManager {
 		singleton = &sourceManagerImpl{
 			responseChannel:           make(chan *metrics.DataBatch),
 			metricsSourceProviders:    make(map[string]metrics.MetricsSourceProvider),
-			metricsSourceTickers:      make(map[string]*time.Ticker),
+			metricsSourceTimers:       make(map[string]*IntervalTimer),
 			metricsSourceQuits:        make(map[string]chan struct{}),
 			defaultCollectionInterval: time.Minute,
 		}
@@ -133,7 +133,6 @@ func (sm *sourceManagerImpl) AddProvider(provider metrics.MetricsSourceProvider)
 	sm.metricsSourcesMtx.Lock()
 	defer sm.metricsSourcesMtx.Unlock()
 
-	var ticker *time.Ticker
 	var interval time.Duration
 	if provider.CollectionInterval() > 0 {
 		interval = provider.CollectionInterval()
@@ -145,41 +144,22 @@ func (sm *sourceManagerImpl) AddProvider(provider metrics.MetricsSourceProvider)
 			"collection_interval": sm.defaultCollectionInterval,
 		}).Info("Using default collection interval")
 	}
-	ticker = time.NewTicker(interval)
+	intervalTimer := NewIntervalTimer(interval)
 
 	quit := make(chan struct{})
 
 	sm.metricsSourceProviders[name] = provider
-	sm.metricsSourceTickers[name] = ticker
+	sm.metricsSourceTimers[name] = intervalTimer
 	sm.metricsSourceQuits[name] = quit
 
 	providerCount.Update(int64(len(sm.metricsSourceProviders)))
 
-	// WIP SPIKE
-	//go func() {
-	//	timer := time.NewTimer(interval)
-	//	start := time.Now()
-	//	for {
-	//		select {
-	//		case <-timer.C:
-	//			scrape(provider, sm.responseChannel)
-	//			scrapeEnd := time.Now().Sub(start)
-	//			timeToNextScrape := interval - (scrapeEnd % interval)
-	//			if timeToNextScrape < time.Second {
-	//				timeToNextScrape += interval
-	//			}
-	//			timer.Reset(timeToNextScrape)
-	//		case <-quit:
-	//			return
-	//		}
-	//	}
-	//}()
-
 	go func() {
 		for {
 			select {
-			case <-ticker.C:
+			case <-intervalTimer.C:
 				scrape(provider, sm.responseChannel)
+				intervalTimer.Reset()
 			case <-quit:
 				return
 			}
@@ -198,9 +178,9 @@ func (sm *sourceManagerImpl) DeleteProvider(name string) {
 	defer sm.metricsSourcesMtx.Unlock()
 
 	delete(sm.metricsSourceProviders, name)
-	if ticker, ok := sm.metricsSourceTickers[name]; ok {
+	if ticker, ok := sm.metricsSourceTimers[name]; ok {
 		ticker.Stop()
-		delete(sm.metricsSourceTickers, name)
+		delete(sm.metricsSourceTimers, name)
 	}
 	if quit, ok := sm.metricsSourceQuits[name]; ok {
 		close(quit)
@@ -332,12 +312,4 @@ func appendProvider(slice []metrics.MetricsSourceProvider, provider metrics.Metr
 		i.Configure(cfg.Interval, cfg.Timeout)
 	}
 	return slice
-}
-
-func waitInterval(interval time.Duration, period time.Duration) time.Duration {
-	wait := interval - (period % interval)
-	if wait < 500*time.Millisecond {
-		wait += interval
-	}
-	return wait
 }
