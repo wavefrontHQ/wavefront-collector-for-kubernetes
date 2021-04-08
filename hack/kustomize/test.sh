@@ -76,16 +76,18 @@ echo "deploying collector ${IMAGE_NAME} ${VERSION}"
 env FLUSH_ONCE=true \
 ./deploy.sh -c ${WAVEFRONT_CLUSTER} -t ${API_TOKEN} -v ${VERSION} -i ${IMAGE_NAME}
 
+NAMESPACE_VERSION=$(echo "${VERSION}" | tr . -)
+NS=${NAMESPACE_VERSION}-wavefront-collector
+
 echo "deploying configuration for additional targets"
 
+kubectl config set-context --current --namespace=${NS}
 kubectl apply -f ../deploy/mysql-config.yaml
 kubectl apply -f ../deploy/memcached-config.yaml
+kubectl config set-context --current --namespace=default
 
 echo "waiting for logs..."
 sleep 30
-
-NAMESPACE_VERSION=$(echo "${VERSION}" | tr . -)
-NS=${NAMESPACE_VERSION}-wavefront-collector
 
 PODS=`kubectl -n ${NS} get pod -l k8s-app=wavefront-collector | awk '{print $1}' | tail +2`
 if [[ -z ${PODS} ]] ; then
