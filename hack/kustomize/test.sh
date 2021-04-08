@@ -114,6 +114,8 @@ done
 
 sort -u <${METRIC_NAMES_FILE} >${UNIQUE_METRIC_NAMES_FILE}
 sed -i '' '/~wavefront/d' ${UNIQUE_METRIC_NAMES_FILE}
+sed -i '' '/~pod.network/d' ${UNIQUE_METRIC_NAMES_FILE}
+
 rm -f ${METRIC_NAMES_FILE}
 
 validate_metrics prometheus ${PROM_DUMP} files/prometheus-baseline.txt

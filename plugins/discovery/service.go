@@ -35,20 +35,13 @@ func newServiceHandler(kubeClient kubernetes.Interface, discoverer discovery.Dis
 
 	inf.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
-			service := obj.(*v1.Service)
-			serviceUpdated(service, discoverer)
+			updateServiceIfValid(obj, discoverer)
 		},
 		UpdateFunc: func(_, obj interface{}) {
-			service := obj.(*v1.Service)
-			serviceUpdated(service, discoverer)
+			updateServiceIfValid(obj, discoverer)
 		},
 		DeleteFunc: func(obj interface{}) {
-			service := obj.(*v1.Service)
-			discoverer.Discover(discovery.Resource{
-				Kind: discovery.ServiceType.String(),
-				IP:   service.Spec.ClusterIP,
-				Meta: service.ObjectMeta,
-			})
+			deleteServiceIfValid(obj, discoverer)
 		},
 	})
 	return &serviceHandler{
@@ -56,8 +49,20 @@ func newServiceHandler(kubeClient kubernetes.Interface, discoverer discovery.Dis
 	}
 }
 
-func serviceUpdated(service *v1.Service, discoverer discovery.Discoverer) {
-	if hasIP(service.Spec.ClusterIP) {
+func deleteServiceIfValid(obj interface{}, discoverer discovery.Discoverer) {
+	service, ok := obj.(*v1.Service)
+	if ok {
+		discoverer.Discover(discovery.Resource{
+			Kind: discovery.ServiceType.String(),
+			IP:   service.Spec.ClusterIP,
+			Meta: service.ObjectMeta,
+		})
+	}
+}
+
+func updateServiceIfValid(obj interface{}, discoverer discovery.Discoverer) {
+	service, ok := obj.(*v1.Service)
+	if ok && hasIP(service.Spec.ClusterIP) {
 		discoverer.Discover(discovery.Resource{
 			Kind: discovery.ServiceType.String(),
 			IP:   service.Spec.ClusterIP,

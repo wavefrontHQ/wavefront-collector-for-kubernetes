@@ -5,6 +5,8 @@ package discovery
 
 import (
 	"fmt"
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/client-go/tools/cache"
 	"testing"
 	"time"
 
@@ -134,6 +136,42 @@ func TestConvertByteArrayData(t *testing.T) {
 	assert.Equal(t, map[string]string{"plugins": sampleConfigString}, convertedData)
 }
 
+func TestUpdateConfigIfValidDoesntPanic(t *testing.T) {
+	fakeConfigHandler := makeFakeConfigHandler(discovery.Config{PluginConfigs: makePlugins(2, "main")})
+	configResource := makeConfigMap("test", map[string]string{"plugins": sampleConfigString})
+
+	obj := cache.DeletedFinalStateUnknown{Key: "bar", Obj: configResource}
+
+	assert.NotPanics(t, func() { updateConfigMapIfValid(obj, fakeConfigHandler) }, "updateConfigMapIfValid panicked")
+}
+
+func TestDeleteConfigIfValidDoesntPanic(t *testing.T) {
+	fakeConfigHandler := makeFakeConfigHandler(discovery.Config{PluginConfigs: makePlugins(2, "main")})
+	configResource := makeConfigMap("test", map[string]string{"plugins": sampleConfigString})
+
+	obj := cache.DeletedFinalStateUnknown{Key: "bar", Obj: configResource}
+
+	assert.NotPanics(t, func() { deleteConfigMapIfValid(obj, fakeConfigHandler) }, "deleteConfigMapIfValid panicked")
+}
+
+func TestUpdateSecretIfValidDoesntPanic(t *testing.T) {
+	fakeConfigHandler := makeFakeConfigHandler(discovery.Config{PluginConfigs: makePlugins(2, "main")})
+	configResource := makeSecret("test", map[string]string{"plugins": sampleConfigString})
+
+	obj := cache.DeletedFinalStateUnknown{Key: "bar", Obj: configResource}
+
+	assert.NotPanics(t, func() { updateSecretIfValid(obj, fakeConfigHandler) }, "updateConfigMapIfValid panicked")
+}
+
+func TestDeleteSecretIfValidDoesntPanic(t *testing.T) {
+	fakeConfigHandler := makeFakeConfigHandler(discovery.Config{PluginConfigs: makePlugins(2, "main")})
+	configResource := makeSecret("test", map[string]string{"plugins": sampleConfigString})
+
+	obj := cache.DeletedFinalStateUnknown{Key: "bar", Obj: configResource}
+
+	assert.NotPanics(t, func() { deleteSecretIfValid(obj, fakeConfigHandler) }, "deleteConfigMapIfValid panicked")
+}
+
 func makeFakeConfigHandler(wired discovery.Config) *configHandler {
 	return &configHandler{
 		wiredCfg:    wired,
@@ -158,5 +196,23 @@ func makeConfigResource(name string, data map[string]string) *configResource {
 			Name: name,
 		},
 		data: data,
+	}
+}
+
+func makeConfigMap(name string, data map[string]string) *v1.ConfigMap {
+	return &v1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+		Data: data,
+	}
+}
+
+func makeSecret(name string, data map[string]string) *v1.Secret {
+	return &v1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+		StringData: data,
 	}
 }
