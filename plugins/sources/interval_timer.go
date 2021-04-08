@@ -23,8 +23,13 @@ func NewIntervalTimer(interval time.Duration) *IntervalTimer {
 
 func (t *IntervalTimer) waitToNextInterval(now time.Time) time.Duration {
 	wait := t.interval - (now.Sub(t.startTime) % t.interval)
-	if wait < 500*time.Millisecond {
+	per10K := 333 // 3.33%
+	if wait < scaleInterval(t.interval, per10K) {
 		wait += t.interval
 	}
 	return wait
+}
+
+func scaleInterval(interval time.Duration, per10K int) time.Duration {
+	return (interval*time.Duration(per10K) + 10_000 - 1) / 10_000
 }

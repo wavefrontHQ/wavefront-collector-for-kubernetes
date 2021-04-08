@@ -113,8 +113,10 @@ func TestMultipleMetrics(t *testing.T) {
 
 	Manager().StopProviders()
 
-	assert.True(t, (counts["s1"] >= s1Intervals-1) && (counts["s1"] <= s1Intervals+1), "incorrect s1 scrape count - expected %v, actual: %v", s1Intervals, counts["s1"])
-	assert.True(t, (counts["s2"] >= s2Intervals-1) && (counts["s2"] <= s2Intervals+1), "incorrect s2 scrape count - expected %v, actual: %v", s2Intervals, counts["s2"])
+	assert.True(t, (counts["s1"] >= s1Intervals-1) && (counts["s1"] <= s1Intervals+1),
+		"incorrect s1 scrape count - expected %v, actual: %v", s1Intervals, counts["s1"])
+	assert.True(t, (counts["s2"] >= s2Intervals-1) && (counts["s2"] <= s2Intervals+1),
+		"incorrect s2 scrape count - expected %v, actual: %v", s2Intervals, counts["s2"])
 }
 
 func TestConfig(t *testing.T) {
