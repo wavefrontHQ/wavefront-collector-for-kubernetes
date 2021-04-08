@@ -3,7 +3,6 @@ module github.com/wavefronthq/wavefront-collector-for-kubernetes
 go 1.15
 
 require (
-	github.com/StackExchange/wmi v0.0.0-20180116203802-5d049714c4a6 // indirect
 	github.com/alecthomas/units v0.0.0-20190924025748-f65c72e2690d // indirect
 	github.com/armon/go-metrics v0.3.0 // indirect
 	github.com/cockroachdb/apd v1.1.0 // indirect
@@ -62,7 +61,7 @@ require (
 	k8s.io/apimachinery v0.17.1
 	k8s.io/apiserver v0.15.7
 	k8s.io/client-go v0.15.7
-	k8s.io/kubernetes v1.16.3
+	k8s.io/kubernetes v1.16.15
 	k8s.io/utils v0.0.0-20191114200735-6ca3b61696b6 // indirect
 )
 
