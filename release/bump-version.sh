@@ -1,8 +1,10 @@
 #!/bin/bash -e
 
-RELEASED_VERSION="1.3.1"
-CURRENT_VERSION="1.3.2"
-NEXT_VERSION="1.3.3"
+cd "$(dirname "$0")" # cd to directory that bump-version.sh is in
+
+RELEASED_VERSION="1.3.2"
+CURRENT_VERSION="1.3.4"
+NEXT_VERSION="1.3.5"
 
 KUSTOMIZE_DIR=../hack/kustomize
 DEPLOY_DIR=../deploy
