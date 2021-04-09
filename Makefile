@@ -14,7 +14,7 @@ ifndef TEMP_DIR
 TEMP_DIR:=$(shell mktemp -d /tmp/wavefront.XXXXXX)
 endif
 
-VERSION?=1.3.3
+VERSION?=1.3.4
 GIT_COMMIT:=$(shell git rev-parse --short HEAD)
 
 # for testing, the built image will also be tagged with this name provided via an environment variable
