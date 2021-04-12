@@ -8,9 +8,11 @@ type IntervalTimer struct {
 	startTime time.Time
 }
 
-func (t *IntervalTimer) Reset() {
-	waitTime := t.waitToNextInterval(time.Now())
+func (t *IntervalTimer) Reset() int64 {
+	diff := time.Now().Sub(t.startTime)
+	waitTime := t.waitToNextInterval(diff)
 	t.Timer.Reset(waitTime)
+	return int64((diff + waitTime) / t.interval)
 }
 
 func NewIntervalTimer(interval time.Duration) *IntervalTimer {
@@ -21,8 +23,8 @@ func NewIntervalTimer(interval time.Duration) *IntervalTimer {
 	}
 }
 
-func (t *IntervalTimer) waitToNextInterval(now time.Time) time.Duration {
-	wait := t.interval - (now.Sub(t.startTime) % t.interval)
+func (t *IntervalTimer) waitToNextInterval(diff time.Duration) time.Duration {
+	wait := t.interval - (diff % t.interval)
 	per10K := 333 // 3.33%
 	if wait < scaleInterval(t.interval, per10K) {
 		wait += t.interval

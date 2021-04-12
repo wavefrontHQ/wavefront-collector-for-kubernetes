@@ -47,6 +47,7 @@ var (
 	providerCount  gometrics.Gauge
 	scrapeErrors   gometrics.Counter
 	scrapeTimeouts gometrics.Counter
+	scrapesMissed  gometrics.Counter
 	scrapeLatency  gometrics.Histogram
 	singleton      *sourceManagerImpl
 	once           sync.Once
@@ -56,6 +57,7 @@ func init() {
 	providerCount = gometrics.GetOrRegisterGauge("source.manager.providers", gometrics.DefaultRegistry)
 	scrapeErrors = gometrics.GetOrRegisterCounter("source.manager.scrape.errors", gometrics.DefaultRegistry)
 	scrapeTimeouts = gometrics.GetOrRegisterCounter("source.manager.scrape.timeouts", gometrics.DefaultRegistry)
+	scrapesMissed = gometrics.GetOrRegisterCounter("source.manager.scrape.missed", gometrics.DefaultRegistry)
 	scrapeLatency = reporting.NewHistogram()
 	_ = gometrics.Register("source.manager.scrape.latency", scrapeLatency)
 }
@@ -159,7 +161,7 @@ func (sm *sourceManagerImpl) AddProvider(provider metrics.MetricsSourceProvider)
 			select {
 			case <-intervalTimer.C:
 				scrape(provider, sm.responseChannel)
-				intervalTimer.Reset()
+				scrapesMissed.Inc(intervalTimer.Reset())
 			case <-quit:
 				return
 			}
