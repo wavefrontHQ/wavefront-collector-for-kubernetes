@@ -19,7 +19,7 @@ func (p factory) Build(cfg interface{}) (metrics.MetricsSourceProvider, error) {
 	c := cfg.(configuration.TelegrafSourceConfig)
 	provider, err := NewProvider(c)
 	if err == nil {
-		if i, ok := provider.(metrics.ConfigurabeMetricsSourceProvider); ok {
+		if i, ok := provider.(metrics.ConfigurableMetricsSourceProvider); ok {
 			i.Configure(c.Collection.Interval, c.Collection.Timeout)
 		}
 	}
