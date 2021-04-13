@@ -116,7 +116,7 @@ func TestConfig(t *testing.T) {
 
 	provider = &testProvider{}
 
-	if i, ok := provider.(metrics.ConfigurabeMetricsSourceProvider); ok {
+	if i, ok := provider.(metrics.ConfigurableMetricsSourceProvider); ok {
 		i.Configure(time.Hour*1, time.Minute*1)
 		log.Infof("Name: %s - CollectionInterval: %v", provider.Name(), provider.CollectionInterval())
 	}
