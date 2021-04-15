@@ -1,7 +1,6 @@
 package sources
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -39,33 +38,7 @@ func TestReset(t *testing.T) {
 	t.Run("lastResetTime is set", func(t *testing.T) {
 		timer := NewIntervalTimer(15 * time.Second)
 		timer.Reset()
-		//assert.Equal(t, time.Now(),timer.lastResetTime)
 		assert.NotZero(t, timer.lastResetTime)
-	})
-
-	t.Run("timer is reset", func(t *testing.T) {
-		timer := NewIntervalTimer(15 * time.Millisecond)
-		calls := make(chan int, 0)
-		missed := make(chan int64, 0)
-		go func(calls chan int, missed chan int64) {
-			calledCurrent, missedCurrent := 0, int64(0)
-			for {
-				select {
-				case <-timer.C:
-					fmt.Println("in timer call")
-					calledCurrent = <-calls
-					missedCurrent = <-missed
-					calls <- calledCurrent + 1
-					missed <- timer.intervalsMissed() + missedCurrent
-					timer.Reset()
-				}
-			}
-		}(calls, missed)
-		calls <- 0
-		missed <- 0
-		time.Sleep(3 * time.Second)
-		assert.Equal(t, 1, <-calls, "timer wasn't called the expected number of times")
-		assert.Zero(t, <-missed)
 	})
 }
 

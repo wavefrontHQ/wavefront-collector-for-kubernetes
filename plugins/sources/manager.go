@@ -161,8 +161,7 @@ func (sm *sourceManagerImpl) AddProvider(provider metrics.MetricsSourceProvider)
 			select {
 			case <-intervalTimer.C:
 				scrape(provider, sm.responseChannel)
-				scrapesMissed.Inc(intervalTimer.intervalsMissed())
-				intervalTimer.Reset()
+				scrapesMissed.Inc(intervalTimer.Reset())
 			case <-quit:
 				return
 			}

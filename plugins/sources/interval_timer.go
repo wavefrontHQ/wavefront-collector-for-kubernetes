@@ -9,20 +9,14 @@ type IntervalTimer struct {
 	lastResetTime time.Time
 }
 
-func (t *IntervalTimer) Reset() {
+func (t *IntervalTimer) Reset() (intervalsMissed int64){
+	intervals := t.intervalsMissed()
 	nowTime := time.Now()
 	t.lastResetTime = nowTime
 	diff := nowTime.Sub(t.startTime)
 	waitTime := t.waitToNextInterval(diff)
 	t.Timer.Reset(waitTime)
-}
-
-func (t *IntervalTimer) intervalsMissed() (intervalsMissed int64) {
-	nowTime := time.Now()
-	if t.lastResetTime.IsZero() || nowTime.Sub(t.lastResetTime) < t.interval {
-		return 0
-	}
-	return int64((nowTime.Sub(t.lastResetTime) / t.interval) - 1)
+	return intervals
 }
 
 func NewIntervalTimer(interval time.Duration) *IntervalTimer {
@@ -31,6 +25,14 @@ func NewIntervalTimer(interval time.Duration) *IntervalTimer {
 		interval:  interval,
 		startTime: time.Now(),
 	}
+}
+
+func (t *IntervalTimer) intervalsMissed() (intervalsMissed int64) {
+	nowTime := time.Now()
+	if t.lastResetTime.IsZero() || nowTime.Sub(t.lastResetTime) < t.interval {
+		return 0
+	}
+	return int64((nowTime.Sub(t.lastResetTime) / t.interval) - 1)
 }
 
 func (t *IntervalTimer) waitToNextInterval(diff time.Duration) time.Duration {
