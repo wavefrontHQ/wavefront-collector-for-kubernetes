@@ -42,6 +42,7 @@ function validate_metrics() {
        green "${TYPE} validation succeeded"
     else
        red "${TYPE} validation failed"
+       diff -u ${SORTED_FILE} ${BASELINE}
     fi
 }
 

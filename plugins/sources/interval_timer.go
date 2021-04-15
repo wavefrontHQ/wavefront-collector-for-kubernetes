@@ -9,7 +9,7 @@ type IntervalTimer struct {
 	lastResetTime time.Time
 }
 
-func (t *IntervalTimer) Reset() (intervalsMissed int64){
+func (t *IntervalTimer) Reset() (intervalsMissed int64) {
 	intervals := t.intervalsMissed()
 	nowTime := time.Now()
 	t.lastResetTime = nowTime
