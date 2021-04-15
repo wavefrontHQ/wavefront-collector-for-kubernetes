@@ -4,15 +4,25 @@ import "time"
 
 type IntervalTimer struct {
 	*time.Timer
-	interval  time.Duration
-	startTime time.Time
+	interval      time.Duration
+	startTime     time.Time
+	lastResetTime time.Time
 }
 
-func (t *IntervalTimer) Reset() int64 {
-	diff := time.Now().Sub(t.startTime)
+func (t *IntervalTimer) Reset() {
+	nowTime := time.Now()
+	t.lastResetTime = nowTime
+	diff := nowTime.Sub(t.startTime)
 	waitTime := t.waitToNextInterval(diff)
 	t.Timer.Reset(waitTime)
-	return int64((diff + waitTime) / t.interval)
+}
+
+func (t *IntervalTimer) intervalsMissed() (intervalsMissed int64) {
+	nowTime := time.Now()
+	if t.lastResetTime.IsZero() || nowTime.Sub(t.lastResetTime) < t.interval {
+		return 0
+	}
+	return int64((nowTime.Sub(t.lastResetTime) / t.interval) - 1)
 }
 
 func NewIntervalTimer(interval time.Duration) *IntervalTimer {
@@ -25,7 +35,7 @@ func NewIntervalTimer(interval time.Duration) *IntervalTimer {
 
 func (t *IntervalTimer) waitToNextInterval(diff time.Duration) time.Duration {
 	wait := t.interval - (diff % t.interval)
-	per10K := 333 // 3.33%
+	per10K := 333 // 3.33%. This was chosen arbitrarily. If you have a better idea, change it!
 	if wait < scaleInterval(t.interval, per10K) {
 		wait += t.interval
 	}
