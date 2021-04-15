@@ -37,8 +37,8 @@ function validate_metrics() {
 
     echo "validating ${TYPE} metrics"
 
-    diff -q ${SORTED_FILE} ${BASELINE}
-    if [[ $? -eq 0 ]] ; then
+    if  diff ${SORTED_FILE} ${BASELINE} >/dev/null 2>&1
+    then
        green "${TYPE} validation succeeded"
     else
        red "${TYPE} validation failed"

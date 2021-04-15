@@ -173,10 +173,6 @@ kubernetes.pod.memory.request
 kubernetes.pod.memory.rss
 kubernetes.pod.memory.usage
 kubernetes.pod.memory.working_set
-kubernetes.pod.network.rx
-kubernetes.pod.network.rx_errors
-kubernetes.pod.network.tx
-kubernetes.pod.network.tx_errors
 kubernetes.pod.restart_count
 kubernetes.pod.status.phase
 kubernetes.pod.uptime
