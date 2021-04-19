@@ -37,11 +37,14 @@ function validate_metrics() {
 
     echo "validating ${TYPE} metrics"
 
-    diff -q ${SORTED_FILE} ${BASELINE}
-    if [[ $? -eq 0 ]] ; then
+    if  diff ${SORTED_FILE} ${BASELINE} >/dev/null 2>&1
+    then
        green "${TYPE} validation succeeded"
     else
        red "${TYPE} validation failed"
+       diff -u ${SORTED_FILE} ${BASELINE} >/tmp/diff.txt || true
+       cat /tmp/diff.txt
+       rm /tmp/diff.txt
     fi
 }
 
@@ -114,7 +117,6 @@ done
 
 sort -u <${METRIC_NAMES_FILE} >${UNIQUE_METRIC_NAMES_FILE}
 sed -i '' '/~wavefront/d' ${UNIQUE_METRIC_NAMES_FILE}
-sed -i '' '/~pod.network/d' ${UNIQUE_METRIC_NAMES_FILE}
 
 rm -f ${METRIC_NAMES_FILE}
 

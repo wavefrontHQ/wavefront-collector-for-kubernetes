@@ -93,6 +93,7 @@ kubernetes.collector.source.manager.scrape.latency.duration.p75
 kubernetes.collector.source.manager.scrape.latency.duration.p95
 kubernetes.collector.source.manager.scrape.latency.duration.p99
 kubernetes.collector.source.manager.scrape.latency.duration.p999
+kubernetes.collector.source.manager.scrape.missed
 kubernetes.collector.source.manager.scrape.timeouts
 kubernetes.collector.source.points.collected
 kubernetes.collector.version
