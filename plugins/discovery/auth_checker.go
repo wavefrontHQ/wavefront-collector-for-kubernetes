@@ -75,7 +75,7 @@ func (checker *AuthChecker) canListSecretsAPI() bool {
 			ResourceAttributes: &v1.ResourceAttributes{
 				Namespace: checker.namespace,
 				Verb:      "list",
-				Resource:  "Secret",
+				Resource:  "secrets",
 			},
 		},
 	}
