@@ -73,6 +73,34 @@ func TestAuthChecker(t *testing.T) {
 			assert.False(t, checker.CanListSecrets())
 			assert.Equal(t, 2, len(logSpy.messages))
 		})
+		t.Run("Log lost access", func(t *testing.T) {
+			spy := &AccessSpy{allowed: true}
+			logSpy := &LogSpy{}
+			checker := discovery.TestAuthChecker(spy, "namespace", 1*time.Nanosecond, 1*time.Hour, logSpy.infof)
+
+			assert.True(t, checker.CanListSecrets())
+			assert.Equal(t, 0, len(logSpy.messages))
+
+			spy.allowed = false
+			assert.False(t, checker.CanListSecrets())
+			assert.Equal(t, 1, len(logSpy.messages))
+		})
+		t.Run("Log toggle access", func(t *testing.T) {
+			spy := &AccessSpy{allowed: false}
+			logSpy := &LogSpy{}
+			checker := discovery.TestAuthChecker(spy, "namespace", 1*time.Nanosecond, 1*time.Hour, logSpy.infof)
+
+			assert.False(t, checker.CanListSecrets())
+			assert.Equal(t, 1, len(logSpy.messages))
+
+			spy.allowed = true
+			assert.True(t, checker.CanListSecrets())
+			assert.Equal(t, 1, len(logSpy.messages))
+
+			spy.allowed = false
+			assert.False(t, checker.CanListSecrets())
+			assert.Equal(t, 2, len(logSpy.messages))
+		})
 
 	})
 }

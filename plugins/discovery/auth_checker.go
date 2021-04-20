@@ -17,7 +17,7 @@ type AuthChecker struct {
 	refreshInterval time.Duration
 	reportInterval  time.Duration
 	lastChecked     time.Time
-	lastLogged      time.Time
+	lastReported    time.Time
 	logger          func(format string, args ...interface{})
 }
 
@@ -58,14 +58,15 @@ func (checker *AuthChecker) timeToRefresh() bool {
 
 func (checker *AuthChecker) reportAccess() {
 	if checker.hasAccess {
+		checker.lastReported = time.Time{}
 		return
 	}
-	if time.Now().Sub(checker.lastLogged) < checker.reportInterval {
+	if time.Now().Sub(checker.lastReported) < checker.reportInterval {
 		return
 	}
 
-	checker.lastLogged = time.Now()
-	checker.logger("Secret Access Not Available for Configuration")
+	checker.lastReported = time.Now()
+	checker.logger("Secret Access Disabled for Configuration")
 }
 
 func (checker *AuthChecker) canListSecretsAPI() bool {
