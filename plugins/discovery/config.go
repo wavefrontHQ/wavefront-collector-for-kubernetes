@@ -11,8 +11,6 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	authorizationapi "k8s.io/api/authorization/v1"
-
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 
@@ -105,41 +103,25 @@ func updateConfigMapIfValid(obj interface{}, handler *configHandler) {
 	}
 }
 
-func iCanAccessSecrets(kubeClient kubernetes.Interface, ns string) bool {
-	sar := &authorizationapi.SelfSubjectAccessReview{
-		Spec: authorizationapi.SelfSubjectAccessReviewSpec{
-			ResourceAttributes: &authorizationapi.ResourceAttributes{
-				Namespace: ns,
-				Verb:      "list",
-				Resource:  "Secret",
-			},
-		},
-	}
-	sarClient := kubeClient.AuthorizationV1().SelfSubjectAccessReviews()
-	review, err := sarClient.Create(sar)
-	if err != nil {
-		// TODO ADD A LOG MESSAGE
-		return false
-	}
-	return review.Status.Allowed
+var emptySecretList = &v1.SecretList{
+	ListMeta: metav1.ListMeta{
+		Continue:           "false",
+		RemainingItemCount: nil,
+		ResourceVersion:    "0",
+	},
+	Items: make([]v1.Secret, 0),
 }
 
 func newSecretInformer(kubeClient kubernetes.Interface, ns string, handler *configHandler) cache.SharedInformer {
+	authChecker := NewAuthChecker(kubeClient.AuthorizationV1().SelfSubjectAccessReviews(),
+		ns, time.Minute, 12*time.Hour)
 	s := kubeClient.CoreV1().Secrets(ns)
 	lw := &cache.ListWatch{
 		ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
-			if iCanAccessSecrets(kubeClient, ns) {
-				// TODO ADD A PERIODIC(?) LOG MESSAGE
+			if authChecker.CanListSecrets() {
 				return s.List(options)
 			} else {
-				return &v1.SecretList{
-					ListMeta: metav1.ListMeta{
-						Continue:           "false",
-						RemainingItemCount: nil,
-						ResourceVersion:    "0",
-					},
-					Items: make([]v1.Secret, 0),
-				}, nil
+				return emptySecretList, nil
 			}
 		},
 		WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
