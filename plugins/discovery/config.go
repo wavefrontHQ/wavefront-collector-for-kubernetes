@@ -279,9 +279,7 @@ func convertByteArrayData(data map[string][]byte) map[string]string {
 func (handler *configHandler) start() bool {
 	handler.stopCh = make(chan struct{})
 	go handler.configMapInformer.Run(handler.stopCh)
-	if handler.secretInformer != nil {
-		go handler.secretInformer.Run(handler.stopCh)
-	}
+	go handler.secretInformer.Run(handler.stopCh)
 	return cache.WaitForCacheSync(handler.stopCh, handler.configMapInformer.HasSynced, handler.secretInformer.HasSynced)
 }
 
