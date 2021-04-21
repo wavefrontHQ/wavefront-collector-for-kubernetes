@@ -1,7 +1,6 @@
 package discovery_test
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -25,7 +24,7 @@ func TestAuthChecker(t *testing.T) {
 
 			assert.True(t, checker.CanListSecrets())
 			assert.True(t, checker.CanListSecrets())
-			assert.Equal(t, 1, len(spy.parameters), "Premature repeat api call")
+			assert.Equal(t, 1, spy.callCount, "Premature repeat api call")
 		})
 
 		t.Run("refreshes access", func(t *testing.T) {
@@ -34,7 +33,7 @@ func TestAuthChecker(t *testing.T) {
 
 			assert.True(t, checker.CanListSecrets())
 			assert.True(t, checker.CanListSecrets())
-			assert.Equal(t, 2, len(spy.parameters), "Failed to Refresh")
+			assert.Equal(t, 2, spy.callCount, "Failed to Refresh")
 		})
 	})
 
@@ -45,7 +44,7 @@ func TestAuthChecker(t *testing.T) {
 			checker := discovery.TestAuthChecker(spy, "namespace", 1*time.Nanosecond, time.Hour, logSpy.infof)
 
 			assert.True(t, checker.CanListSecrets())
-			assert.Equal(t, 0, len(logSpy.messages))
+			assert.Equal(t, 0, logSpy.messageCount)
 		})
 		t.Run("Log with no access", func(t *testing.T) {
 			spy := &AccessSpy{allowed: false}
@@ -53,7 +52,7 @@ func TestAuthChecker(t *testing.T) {
 			checker := discovery.TestAuthChecker(spy, "namespace", 1*time.Nanosecond, time.Hour, logSpy.infof)
 
 			assert.False(t, checker.CanListSecrets())
-			assert.Equal(t, 1, len(logSpy.messages))
+			assert.Equal(t, 1, logSpy.messageCount)
 		})
 		t.Run("Only log once with no access", func(t *testing.T) {
 			spy := &AccessSpy{allowed: false}
@@ -62,7 +61,7 @@ func TestAuthChecker(t *testing.T) {
 
 			assert.False(t, checker.CanListSecrets())
 			assert.False(t, checker.CanListSecrets())
-			assert.Equal(t, 1, len(logSpy.messages))
+			assert.Equal(t, 1, logSpy.messageCount)
 		})
 		t.Run("Log again after interval expires", func(t *testing.T) {
 			spy := &AccessSpy{allowed: false}
@@ -71,7 +70,7 @@ func TestAuthChecker(t *testing.T) {
 
 			assert.False(t, checker.CanListSecrets())
 			assert.False(t, checker.CanListSecrets())
-			assert.Equal(t, 2, len(logSpy.messages))
+			assert.Equal(t, 2, logSpy.messageCount)
 		})
 		t.Run("Log lost access", func(t *testing.T) {
 			spy := &AccessSpy{allowed: true}
@@ -79,11 +78,11 @@ func TestAuthChecker(t *testing.T) {
 			checker := discovery.TestAuthChecker(spy, "namespace", 1*time.Nanosecond, 1*time.Hour, logSpy.infof)
 
 			assert.True(t, checker.CanListSecrets())
-			assert.Equal(t, 0, len(logSpy.messages))
+			assert.Equal(t, 0, logSpy.messageCount)
 
 			spy.allowed = false
 			assert.False(t, checker.CanListSecrets())
-			assert.Equal(t, 1, len(logSpy.messages))
+			assert.Equal(t, 1, logSpy.messageCount)
 		})
 		t.Run("Log toggle access", func(t *testing.T) {
 			spy := &AccessSpy{allowed: false}
@@ -91,27 +90,27 @@ func TestAuthChecker(t *testing.T) {
 			checker := discovery.TestAuthChecker(spy, "namespace", 1*time.Nanosecond, 1*time.Hour, logSpy.infof)
 
 			assert.False(t, checker.CanListSecrets())
-			assert.Equal(t, 1, len(logSpy.messages))
+			assert.Equal(t, 1, logSpy.messageCount)
 
 			spy.allowed = true
 			assert.True(t, checker.CanListSecrets())
-			assert.Equal(t, 1, len(logSpy.messages))
+			assert.Equal(t, 1, logSpy.messageCount)
 
 			spy.allowed = false
 			assert.False(t, checker.CanListSecrets())
-			assert.Equal(t, 2, len(logSpy.messages))
+			assert.Equal(t, 2, logSpy.messageCount)
 		})
 
 	})
 }
 
 type AccessSpy struct {
-	parameters []*v1.ResourceAttributes
-	allowed    bool
+	callCount int
+	allowed   bool
 }
 
 func (spy *AccessSpy) Create(sar *v1.SelfSubjectAccessReview) (result *v1.SelfSubjectAccessReview, err error) {
-	spy.parameters = append(spy.parameters, sar.Spec.ResourceAttributes)
+	spy.callCount++
 	return &v1.SelfSubjectAccessReview{
 		Status: v1.SubjectAccessReviewStatus{
 			Allowed: spy.allowed,
@@ -120,10 +119,9 @@ func (spy *AccessSpy) Create(sar *v1.SelfSubjectAccessReview) (result *v1.SelfSu
 }
 
 type LogSpy struct {
-	messages []string
+	messageCount int
 }
 
 func (spy *LogSpy) infof(format string, args ...interface{}) {
-	msg := fmt.Sprintf(format, args...)
-	spy.messages = append(spy.messages, msg)
+	spy.messageCount++
 }
