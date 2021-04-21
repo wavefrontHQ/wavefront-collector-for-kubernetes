@@ -103,13 +103,15 @@ func updateConfigMapIfValid(obj interface{}, handler *configHandler) {
 	}
 }
 
-var emptySecretList = &v1.SecretList{
-	ListMeta: metav1.ListMeta{
-		Continue:           "false",
-		RemainingItemCount: nil,
-		ResourceVersion:    "0",
-	},
-	Items: make([]v1.Secret, 0),
+func emptySecretList() *v1.SecretList {
+	return &v1.SecretList{
+		ListMeta: metav1.ListMeta{
+			Continue:           "false",
+			RemainingItemCount: nil,
+			ResourceVersion:    "0",
+		},
+		Items: make([]v1.Secret, 0),
+	}
 }
 
 func newSecretInformer(kubeClient kubernetes.Interface, ns string, handler *configHandler) cache.SharedInformer {
@@ -121,7 +123,7 @@ func newSecretInformer(kubeClient kubernetes.Interface, ns string, handler *conf
 			if authChecker.CanListSecrets() {
 				return s.List(options)
 			} else {
-				return emptySecretList, nil
+				return emptySecretList(), nil
 			}
 		},
 		WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
