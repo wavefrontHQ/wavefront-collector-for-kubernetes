@@ -74,7 +74,7 @@ Metrics collected per type:
 | accelerator.memory_total | Memory capacity of an accelerator. |
 | accelerator.memory_used | Memory used of an accelerator. |
 | accelerator.duty_cycle | Duty cycle of an accelerator. |
-| accelerator.request | Number of accelerator devices requested by container. |
+| accelerator.request | Number of accelerator devices requested by container. eg. nvidia.com.gpu.request |
 | uptime  | Number of milliseconds since the container was started. |
 | <cluster, ns, node>.pod.count | Pod counts by cluster, namespaces and nodes. |
 | <cluster, ns, node>.pod_container.count | Container counts by cluster, namespaces and nodes. |
