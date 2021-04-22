@@ -75,7 +75,7 @@ func NewWavefrontSink(cfg configuration.WavefrontSinkConfig) (WavefrontSink, err
 		logPercent:  0.01,
 	}
 
-	if cfg.RedirectToLog {
+	if cfg.TestMode {
 		storage.WavefrontClient = NewTestSender()
 		clientType.Update(testClient)
 	} else if cfg.ProxyAddress != "" {

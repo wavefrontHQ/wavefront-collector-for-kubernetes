@@ -1,0 +1,29 @@
+package main
+
+type MetricGrammar Peg {
+    Name string
+    Value string
+    Timestamp string
+    Tags map[string]string
+    currentTag string
+}
+
+MetricGrammar <- metricName ' ' metricValue (' ' timestamp)? ' ' tags !.
+
+tags <- { p.Tags = map[string]string{} } tag ( ' ' tag )*
+
+tag <- tagName '=' tagValue
+
+tagName <- ( '"' <( ALNUM / [/\-_.] )+> '"' /  <( ALNUM / [\-_.] )+> ) { p.currentTag = text }
+
+tagValue <- '"' <( '\\"' / [^"] )+> '"' { p.Tags[p.currentTag] = text }
+
+timestamp <- <DIGIT DIGIT DIGIT DIGIT DIGIT DIGIT DIGIT DIGIT DIGIT DIGIT (DIGIT DIGIT DIGIT)? (DIGIT DIGIT DIGIT)?>  { p.Timestamp = text }
+
+metricValue <- <'-'? DIGIT+ ( '.' DIGIT+ )?> { p.Value = text }
+
+metricName <- ( '"' <'~'? ( ALNUM / [~\-_./,] )+> '"' /  <'~'? ( ALNUM / [~\-_./,] )+> ) { p.Name = text }
+
+ALNUM <- [a-zA-Z0-9]
+
+DIGIT <- [0-9]

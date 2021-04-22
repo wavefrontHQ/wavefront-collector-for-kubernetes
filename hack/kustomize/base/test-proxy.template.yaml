@@ -17,15 +17,15 @@ spec:
     spec:
       containers:
       - name: wavefront-proxy
-        image: wavefronthq/proxy:9.1
+        image: wavefronthq/test-proxy:YOUR_IMAGE_TAG
         imagePullPolicy: IfNotPresent
-        env:
-          - name: WAVEFRONT_URL
-            value: https://YOUR_CLUSTER.wavefront.com/api/
-          - name: WAVEFRONT_TOKEN
-            value: YOUR_API_TOKEN
+        command: [ "/test-proxy", "-proxy", ":2878" ]
         ports:
-        - containerPort: 2878
+        - name: proxy
+          containerPort: 2878
+          protocol: TCP
+        - name: control
+          containerPort: 8888
           protocol: TCP
         securityContext:
           privileged: false
