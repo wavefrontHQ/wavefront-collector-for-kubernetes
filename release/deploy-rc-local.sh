@@ -1,13 +1,22 @@
 #!/usr/bin/env bash
 
+function print_msg_and_exit() {
+    echo -e "$1"
+    exit 1
+}
+
 NS=wavefront-collector
 ROOT_DIR=$(git rev-parse --show-toplevel)
 TEMP_DIR=$(mktemp -d)
 CURRENT_VERSION=1.3.4
 VERSION=1.3.5-rc2
 WF_CLUSTER=nimba
-WF_TOKEN=0ce14176-ce9e-4bc8-ade9-8d63567a5e52
 K8S_CLUSTER=$VERSION-release-test
+
+if [[ -z ${WF_TOKEN} ]] ; then
+    #TODO: source these from environment variables if not provided
+    print_msg_and_exit "wavefront token required"
+fi
 
 echo "Temp dir: $TEMP_DIR"
 
@@ -30,3 +39,4 @@ pushd $TEMP_DIR
   kubectl apply -f $TEMP_DIR/.
   kubectl config set-context --current --namespace=default
 popd
+
