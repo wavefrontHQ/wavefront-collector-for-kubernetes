@@ -11,7 +11,6 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 
@@ -104,11 +103,28 @@ func updateConfigMapIfValid(obj interface{}, handler *configHandler) {
 	}
 }
 
+func emptySecretList() *v1.SecretList {
+	return &v1.SecretList{
+		ListMeta: metav1.ListMeta{
+			Continue:           "false",
+			RemainingItemCount: nil,
+			ResourceVersion:    "0",
+		},
+		Items: make([]v1.Secret, 0),
+	}
+}
+
 func newSecretInformer(kubeClient kubernetes.Interface, ns string, handler *configHandler) cache.SharedInformer {
+	authChecker := NewAuthChecker(kubeClient.AuthorizationV1().SelfSubjectAccessReviews(),
+		ns, time.Minute, 12*time.Hour)
 	s := kubeClient.CoreV1().Secrets(ns)
 	lw := &cache.ListWatch{
 		ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
-			return s.List(options)
+			if authChecker.CanListSecrets() {
+				return s.List(options)
+			} else {
+				return emptySecretList(), nil
+			}
 		},
 		WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
 			return s.Watch(options)

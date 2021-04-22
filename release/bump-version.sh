@@ -2,7 +2,6 @@
 
 cd "$(dirname "$0")" # cd to directory that bump-version.sh is in
 
-source ./VERSION
 
 KUSTOMIZE_DIR=../hack/kustomize
 DEPLOY_DIR=../deploy
