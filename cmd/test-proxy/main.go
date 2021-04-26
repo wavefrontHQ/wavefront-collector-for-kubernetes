@@ -4,10 +4,11 @@ import (
 	"bufio"
 	"encoding/json"
 	"flag"
-	log "github.com/sirupsen/logrus"
 	"net"
 	"net/http"
 	"os"
+
+	log "github.com/sirupsen/logrus"
 )
 
 var proxyAddr = ":7777"
@@ -27,29 +28,31 @@ func main() {
 
 	store := NewMetricStore()
 
-	go func() {
-		log.Infof("tcp metrics server listening on %s", proxyAddr)
-		listener, err := net.Listen("tcp", proxyAddr)
-		if err != nil {
-			log.Error(err.Error())
-			os.Exit(1)
-		}
-		for {
-			conn, err := listener.Accept()
-			if err != nil {
-				log.Error(err.Error())
-				continue
-			}
-			go HandleIncomingMetrics(store, conn)
-		}
-	}()
-
+	go ServeProxy(store)
 	http.HandleFunc("/metrics", DumpMetricsHandler(store))
-	http.HandleFunc("/metrics/diff", DiffMetricsHandler(store)) // ?prefixes=prom-example,foo,bar&spec=names,values,timestamps,tagnames,tagvalues
+	http.HandleFunc("/metrics/diff", DiffMetricsHandler(store))
+
 	log.Infof("http control server listening on %s", controlAddr)
 	if err := http.ListenAndServe(controlAddr, nil); err != nil {
 		log.Error(err.Error())
 		os.Exit(1)
+	}
+}
+
+func ServeProxy(store *MetricStore) {
+	log.Infof("tcp metrics server listening on %s", proxyAddr)
+	listener, err := net.Listen("tcp", proxyAddr)
+	if err != nil {
+		log.Error(err.Error())
+		os.Exit(1)
+	}
+	for {
+		conn, err := listener.Accept()
+		if err != nil {
+			log.Error(err.Error())
+			continue
+		}
+		go HandleIncomingMetrics(store, conn)
 	}
 }
 
