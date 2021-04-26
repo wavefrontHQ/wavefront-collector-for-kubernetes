@@ -117,8 +117,8 @@ type WavefrontSinkConfig struct {
 	// The Wavefront proxy service address of the form wavefront-proxy.default.svc.cluster.local:2878.
 	ProxyAddress string `yaml:"proxyAddress"`
 
-	// If set to true, metrics are emitted to stdout instead. Defaults to false.
-	RedirectToLog bool `yaml:"redirectToLog"`
+	// If set to true, metrics are stored in an in-memory sink.
+	TestMode bool `yaml:"testMode"`
 
 	// Errors that occur when sending individual data points are verbose and logged at debug level by default.
 	// This property enables surfacing a small percentage of error messages even when debug logging is disabled.

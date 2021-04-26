@@ -10,7 +10,7 @@ data:
     flushInterval: 30s
 
     sinks:
-    - proxyAddress: wavefront-proxy.wavefront-collector.svc.cluster.local:2878
+    - proxyAddress: wavefront-proxy.NAMESPACE.svc.cluster.local:2878
       filters:
         # Optimized metrics collection to omit peripheral metrics.
         metricDenyList:

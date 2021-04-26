@@ -37,6 +37,7 @@ func TestCreateWavefrontSinkWithNoEmptyInputs(t *testing.T) {
 	cfg := configuration.WavefrontSinkConfig{
 		ProxyAddress: "wavefront-proxy:2878",
 		ClusterName:  "testCluster",
+		TestMode:     true,
 		Transforms: configuration.Transforms{
 			Prefix: "testPrefix",
 		},
@@ -53,8 +54,8 @@ func TestCreateWavefrontSinkWithNoEmptyInputs(t *testing.T) {
 
 func TestPrefix(t *testing.T) {
 	cfg := configuration.WavefrontSinkConfig{
-		ProxyAddress:  "wavefront-proxy:2878",
-		RedirectToLog: true,
+		ProxyAddress: "wavefront-proxy:2878",
+		TestMode:     true,
 		Transforms: configuration.Transforms{
 			Prefix: "test.",
 		},
@@ -76,8 +77,8 @@ func TestPrefix(t *testing.T) {
 }
 func TestNilPointDataBatch(t *testing.T) {
 	cfg := configuration.WavefrontSinkConfig{
-		ProxyAddress:  "wavefront-proxy:2878",
-		RedirectToLog: true,
+		ProxyAddress: "wavefront-proxy:2878",
+		TestMode:     true,
 		Transforms: configuration.Transforms{
 			Prefix: "test.",
 		},

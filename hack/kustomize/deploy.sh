@@ -3,20 +3,17 @@
 # This script automates the deployment of the collector to a specific k8s cluster
 
 DEFAULT_IMAGE_NAME="wavefronthq\/wavefront-kubernetes-collector"
+
 DEFAULT_VERSION="1.3.5"
-DEFAULT_FLUSH_ONCE=false
+USE_TEST_PROXY="${USE_TEST_PROXY:-false}"
+FLUSH_ONCE="${FLUSH_ONCE:-false}"
 
-if [[ -z ${FLUSH_ONCE} ]] ; then
-    FLUSH_ONCE=${DEFAULT_FLUSH_ONCE}
-fi
-
-if $FLUSH_ONCE ;
+if [ "$USE_TEST_PROXY" = true ] ;
   then
-    REDIRECT_TO_LOG=true
+    FLUSH_ONCE=true
     FLUSH_INTERVAL=18
     COLLECTION_INTERVAL=10
   else
-    REDIRECT_TO_LOG=false
     FLUSH_INTERVAL=30
     COLLECTION_INTERVAL=60
 fi
@@ -28,7 +25,6 @@ function print_usage_and_exit() {
     echo -e "\t-t wavefront token (required)"
     echo -e "\t-i collector docker image name"
     echo -e "\t-v collector docker image version"
-    echo -e "\t-p kustomize overlay to deploy"
     exit 1
 }
 
@@ -36,9 +32,8 @@ WF_CLUSTER=
 WF_TOKEN=
 VERSION=
 IMAGE=
-PROFILE=
 
-while getopts "c:t:v:i:p:" opt; do
+while getopts "c:t:v:i:" opt; do
   case $opt in
     c)
       WF_CLUSTER="$OPTARG"
@@ -52,24 +47,19 @@ while getopts "c:t:v:i:p:" opt; do
     i)
       IMAGE="$OPTARG"
       ;;
-    p)
-      PROFILE="$OPTARG"
-      ;;
     \?)
       print_usage_and_exit "Invalid option: -$OPTARG"
       ;;
   esac
 done
 
-echo "$WF_CLUSTER $VERSION $IMAGE $PROFILE"
+echo "$WF_CLUSTER $VERSION $IMAGE"
 
 if [[ -z ${WF_CLUSTER} || -z ${WF_TOKEN} ]] ; then
     #TODO: source these from environment variables if not provided
     print_usage_and_exit "wavefront instance and token required"
 fi
 
-BASE_DIR="base"
-OVERLAYS_DIR="overlays"
 
 if [[ -z ${VERSION} ]] ; then
     VERSION=${DEFAULT_VERSION}
@@ -82,17 +72,17 @@ fi
 
 echo "FLUSH ONCE: ${FLUSH_ONCE}"
 
-#TODO: temp directory for intermediate files
-#TODO: need to replace the kustomize template to source from temp directory
+if $USE_TEST_PROXY ; then
+  sed "s/YOUR_IMAGE_TAG/${VERSION}/g" base/test-proxy.template.yaml > base/proxy.yaml
+else
+  sed "s/YOUR_CLUSTER/${WF_CLUSTER}/g; s/YOUR_API_TOKEN/${WF_TOKEN}/g" base/proxy.template.yaml > base/proxy.yaml
+fi
 
-#TODO: Migrate these sed to use kustomize edit
-sed "s/YOUR_CLUSTER/${WF_CLUSTER}/g; s/YOUR_API_TOKEN/${WF_TOKEN}/g" ${BASE_DIR}/proxy.template.yaml > ${BASE_DIR}/proxy.yaml
-sed "s/NAMESPACE/${NAMESPACE_VERSION}-wavefront-collector/g" ${BASE_DIR}/kustomization.template.yaml | sed "s/YOUR_IMAGE_TAG/${VERSION}/g" | sed "s/YOUR_IMAGE_NAME/${IMAGE}/g" > ${BASE_DIR}/kustomization.yaml
+sed "s/NAMESPACE/${NAMESPACE_VERSION}-wavefront-collector/g" base/kustomization.template.yaml | sed "s/YOUR_IMAGE_TAG/${VERSION}/g" | sed "s/YOUR_IMAGE_NAME/${IMAGE}/g" > base/kustomization.yaml
 
-sed "s/YOUR_CLUSTER_NAME/cluster-${VERSION}/g" ${OVERLAYS_DIR}/test/collector.yaml.template | sed "s/NAMESPACE/${NAMESPACE_VERSION}-wavefront-collector/g" \
+sed "s/YOUR_CLUSTER_NAME/cluster-${VERSION}/g" overlays/test/collector.yaml.template | sed "s/NAMESPACE/${NAMESPACE_VERSION}-wavefront-collector/g" \
 |  sed "s/FLUSH_ONCE/${FLUSH_ONCE}/g" \
-|  sed "s/REDIRECT_TO_LOG/${REDIRECT_TO_LOG}/g" \
 |  sed "s/FLUSH_INTERVAL/${FLUSH_INTERVAL}/g" \
-|  sed "s/COLLECTION_INTERVAL/${COLLECTION_INTERVAL}/g" > ${OVERLAYS_DIR}/test/collector.yaml
+|  sed "s/COLLECTION_INTERVAL/${COLLECTION_INTERVAL}/g" > overlays/test/collector.yaml
 
-kustomize build ${OVERLAYS_DIR}/test | kubectl apply -f -
+kustomize build overlays/test | kubectl apply -f -

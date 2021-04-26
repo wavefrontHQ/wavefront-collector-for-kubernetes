@@ -31,13 +31,25 @@ tests:
 	go clean -testcache
 	go test -timeout 30s -race ./...
 
-build: clean fmt
-	go vet -composites=false ./...
+build: clean fmt vet
 	GOARCH=$(ARCH) CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o $(OUT_DIR)/$(ARCH)/$(BINARY_NAME) ./cmd/wavefront-collector/
+
+vet:
+	go vet -composites=false ./...
 
 # test driver for local development
 driver: clean fmt
 	GOARCH=$(ARCH) CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o $(OUT_DIR)/$(ARCH)/$(BINARY_NAME)-test ./cmd/test-driver/
+
+nuke-loop: token-check nuke-kind deploy-targets full-loop
+
+full-loop: token-check build tests containers output-test
+
+nuke-kind:
+	kind delete cluster
+	kind create cluster
+
+containers: container test-proxy-container
 
 container:
 	# Run build in a container in order to have reproducible builds
@@ -47,10 +59,27 @@ container:
 
 	cp deploy/docker/Dockerfile $(TEMP_DIR)
 	docker build --pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(TEMP_DIR)
-	rm -rf $(TEMP_DIR)
 ifneq ($(OVERRIDE_IMAGE_NAME),)
 	docker tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OVERRIDE_IMAGE_NAME)
 endif
+
+test-proxy-container:
+	docker run --rm \
+		-v $(REPO_DIR):/go/src/github.com/wavefronthq/wavefront-collector-for-kubernetes \
+		-v $(TEMP_DIR):/go/src/github.com/wavefronthq/wavefront-collector-for-kubernetes/_output/$(ARCH) \
+		-w /go/src/github.com/wavefronthq/wavefront-collector-for-kubernetes golang:$(GOLANG_VERSION) \
+		/usr/bin/make test-proxy
+	docker build --pull -f $(REPO_DIR)/hack/deploy/Dockerfile.test-proxy -t $(PREFIX)/test-proxy:$(VERSION) $(TEMP_DIR)
+
+test-proxy: peg $(REPO_DIR)/cmd/test-proxy/metric_grammar.peg.go clean fmt vet
+	GOARCH=$(ARCH) CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o $(OUT_DIR)/$(ARCH)/test-proxy ./cmd/test-proxy/...
+
+peg:
+	@which peg > /dev/null || \
+		(cd $(REPO_DIR)/..; GOARCH=$(ARCH) CGO_ENABLED=0 go get -u github.com/pointlander/peg)
+
+%.peg.go: %.peg
+	peg -switch -inline $<
 
 redeploy: token-check
 	(cd $(KUSTOMIZE_DIR) && ./deploy.sh -c nimba -t ${WAVEFRONT_API_KEY} -v ${VERSION} -i "$(PREFIX)\/$(DOCKER_IMAGE)")
@@ -61,18 +90,14 @@ deploy-targets:
 output-test: token-check
 	docker exec -it kind-control-plane crictl rmi $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) || true
 	kind load docker-image $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) --name kind
+
+	docker exec -it kind-control-plane crictl rmi $(PREFIX)/test-proxy:$(VERSION) || true
+	kind load docker-image $(PREFIX)/test-proxy:$(VERSION) --name kind
+
 	(cd $(KUSTOMIZE_DIR) && ./test.sh nimba $(WAVEFRONT_API_KEY) $(VERSION))
 
 token-check:
 	if [ -z ${WAVEFRONT_API_KEY} ]; then echo "Need to set WAVEFRONT_API_KEY" && exit 1; fi
-
-full-loop: token-check build tests container output-test
-
-nuke-loop: token-check nuke-kind deploy-targets full-loop
-
-nuke-kind:
-	kind delete cluster
-	kind create cluster
 
 k9s:
 	watch -n 1 k9s
@@ -84,7 +109,6 @@ container_rhel: build
 	cp deploy/docker/Dockerfile-rhel $(TEMP_DIR)/Dockerfile
 	cp deploy/examples/openshift-config.yaml $(TEMP_DIR)/collector.yaml
 	sudo docker build --pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(TEMP_DIR)
-	rm -rf $(TEMP_DIR)
 ifneq ($(OVERRIDE_IMAGE_NAME),)
 	sudo docker tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OVERRIDE_IMAGE_NAME)
 endif
@@ -92,5 +116,6 @@ endif
 clean:
 	rm -f $(OUT_DIR)/$(ARCH)/$(BINARY_NAME)
 	rm -f $(OUT_DIR)/$(ARCH)/$(BINARY_NAME)-test
+	rm -f $(OUT_DIR)/$(ARCH)/test-proxy
 
 .PHONY: all fmt container clean
