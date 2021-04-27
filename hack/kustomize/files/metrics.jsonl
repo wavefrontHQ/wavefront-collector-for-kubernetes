@@ -1,3 +1,13 @@
+{"Name":"cpu.usage.guest"}
+{"Name":"cpu.usage.guest.nice"}
+{"Name":"cpu.usage.idle"}
+{"Name":"cpu.usage.iowait"}
+{"Name":"cpu.usage.irq"}
+{"Name":"cpu.usage.nice"}
+{"Name":"cpu.usage.softirq"}
+{"Name":"cpu.usage.steal"}
+{"Name":"cpu.usage.system"}
+{"Name":"cpu.usage.user"}
 {"Name":"disk.free"}
 {"Name":"disk.inodes.free"}
 {"Name":"disk.inodes.total"}
@@ -96,6 +106,7 @@
 {"Name":"kubernetes.collector.source.manager.scrape.missed"}
 {"Name":"kubernetes.collector.source.manager.scrape.timeouts"}
 {"Name":"kubernetes.collector.source.points.collected"}
+{"Name":"kubernetes.collector.target.points.collected"}
 {"Name":"kubernetes.collector.version"}
 {"Name":"kubernetes.collector.wavefront.events.sent.count"}
 {"Name":"kubernetes.collector.wavefront.points.sent.count"}
