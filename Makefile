@@ -53,15 +53,18 @@ containers: container test-proxy-container
 
 container:
 	# Run build in a container in order to have reproducible builds
-	docker run --rm -v $(TEMP_DIR):/build -v $(REPO_DIR):/go/src/github.com/wavefronthq/wavefront-collector-for-kubernetes -w /go/src/github.com/wavefronthq/wavefront-collector-for-kubernetes golang:$(GOLANG_VERSION) /bin/bash -c "\
-		cp /etc/ssl/certs/ca-certificates.crt /build \
-		&& GOARCH=$(ARCH) CGO_ENABLED=0 go build -ldflags \"$(LDFLAGS)\" -o /build/$(BINARY_NAME) github.com/wavefronthq/wavefront-collector-for-kubernetes/cmd/wavefront-collector/"
-
-	cp deploy/docker/Dockerfile $(TEMP_DIR)
-	docker build --pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(TEMP_DIR)
+	docker build \
+	--build-arg BINARY_NAME=$(BINARY_NAME) --build-arg LDFLAGS="$(LDFLAGS)" \
+	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) .
 ifneq ($(OVERRIDE_IMAGE_NAME),)
 	docker tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OVERRIDE_IMAGE_NAME)
 endif
+
+release:
+	# Run build in a container in order to have reproducible builds
+	docker buildx build --platform linux/amd64,linux/arm64 --push \
+	--build-arg BINARY_NAME=$(BINARY_NAME) --build-arg LDFLAGS="$(LDFLAGS)" \
+	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) .
 
 test-proxy-container:
 	docker run --rm \
@@ -118,4 +121,4 @@ clean:
 	rm -f $(OUT_DIR)/$(ARCH)/$(BINARY_NAME)-test
 	rm -f $(OUT_DIR)/$(ARCH)/test-proxy
 
-.PHONY: all fmt container clean
+.PHONY: all fmt container clean release
