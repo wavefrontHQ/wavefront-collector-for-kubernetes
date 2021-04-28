@@ -36,7 +36,13 @@ sources:
 
   telegraf_sources:
   # enable all telegraf plugins
-  - plugins: []
+  - plugins:  [ mysql ]
+    conf: |
+        servers = ["root:password123@tcp(mysql-release.default.svc.cluster.local:3306)/?tls=false"]
+        table_schema_databases                    = []
+        gather_table_io_waits                     = true
+        gather_table_lock_waits                   = true
+        gather_index_io_waits                     = true
 
 # discovery rules for auto-discovery of pods and services
 discovery:
