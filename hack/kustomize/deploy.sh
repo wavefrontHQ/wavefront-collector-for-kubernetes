@@ -65,6 +65,7 @@ if [[ -z ${VERSION} ]] ; then
     VERSION=${DEFAULT_VERSION}
 fi
 NAMESPACE_VERSION=$(echo "$VERSION" | tr . -)
+NAMESPACE_NAME=${NAMESPACE_VERSION}-wavefront-collector
 
 if [[ -z ${IMAGE} ]] ; then
     IMAGE=${DEFAULT_IMAGE_NAME}
@@ -80,9 +81,18 @@ fi
 
 sed "s/NAMESPACE/${NAMESPACE_VERSION}-wavefront-collector/g" base/kustomization.template.yaml | sed "s/YOUR_IMAGE_TAG/${VERSION}/g" | sed "s/YOUR_IMAGE_NAME/${IMAGE}/g" > base/kustomization.yaml
 
-sed "s/YOUR_CLUSTER_NAME/cluster-${VERSION}/g" overlays/test/collector.yaml.template | sed "s/NAMESPACE/${NAMESPACE_VERSION}-wavefront-collector/g" \
+sed "s/YOUR_CLUSTER_NAME/cluster-${VERSION}/g" overlays/test/collector.yaml.template | sed "s/NAMESPACE/${NAMESPACE_NAME}/g" \
 |  sed "s/FLUSH_ONCE/${FLUSH_ONCE}/g" \
 |  sed "s/FLUSH_INTERVAL/${FLUSH_INTERVAL}/g" \
 |  sed "s/COLLECTION_INTERVAL/${COLLECTION_INTERVAL}/g" > overlays/test/collector.yaml
+
+# if the collector doesn't get redeployed, then the timing of picking up the
+# FLUSH_ONCE config change creates inconsistent outputs
+
+# also, if we uploaded a new collector image and didn't change the daemonset,
+# will it get picked up?
+if [[ $FLUSH_ONCE == "true" ]]; then
+  kubectl delete namespace $NAMESPACE_NAME || true
+fi
 
 kustomize build overlays/test | kubectl apply -f -

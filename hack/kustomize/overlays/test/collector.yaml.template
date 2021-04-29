@@ -36,6 +36,7 @@ sources:
 
   telegraf_sources:
   # enable all telegraf plugins
+  - plugins: [ ]
   - plugins:  [ mysql ]
     conf: |
         servers = ["root:password123@tcp(mysql-release.default.svc.cluster.local:3306)/?tls=false"]
