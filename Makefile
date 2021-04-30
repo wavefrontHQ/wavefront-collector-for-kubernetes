@@ -1,4 +1,5 @@
 PREFIX?=wavefronthq
+GCP_PROJECT=wavefront-gcp-dev
 DOCKER_IMAGE=wavefront-kubernetes-collector
 ARCH?=amd64
 
@@ -9,6 +10,10 @@ OUT_DIR?=$(REPO_DIR)/_output
 
 GOLANG_VERSION?=1.15
 BINARY_NAME=wavefront-collector
+
+
+COLLECTOR_NAMESPACE="1-3-6-wavefront-collector"
+TARGETS_NAMESPACE=collector-targets
 
 ifndef TEMP_DIR
 TEMP_DIR:=$(shell mktemp -d /tmp/wavefront.XXXXXX)
@@ -117,5 +122,30 @@ clean:
 	rm -f $(OUT_DIR)/$(ARCH)/$(BINARY_NAME)
 	rm -f $(OUT_DIR)/$(ARCH)/$(BINARY_NAME)-test
 	rm -f $(OUT_DIR)/$(ARCH)/test-proxy
+
+target-gke:
+	gcloud config set project $(GCP_PROJECT)
+
+nuke-gke: target-gke
+# 	gcloud container clusters delete $(USER)-test-cluster-1 --region=us-central1-c --quiet
+	#gcloud container clusters create $(USER)-test-cluster-1 --region=us-central1-c --enable-ip-alias --create-subnetwork range=/21
+	kubectl create clusterrolebinding --clusterrole cluster-admin \
+		--user $$(gcloud auth list --filter=status:ACTIVE --format="value(account)") \
+		clusterrolebinding
+
+clean-gke: target-gke
+	kubectl delete namespace $(COLLECTOR_NAMESPACE)
+	kubectl delete namespace $(TARGETS_NAMESPACE)
+
+push-to-gcr: test-proxy-container container
+	#docker build --pull -f $(REPO_DIR)/hack/deploy/Dockerfile.test-proxy -t $(PREFIX)/test-proxy:$(VERSION) $(TEMP_DIR)
+	docker tag $(PREFIX)/test-proxy:$(VERSION) us.gcr.io/$(GCP_PROJECT)/test-proxy:$(VERSION)
+	docker push us.gcr.io/$(GCP_PROJECT)/test-proxy:$(VERSION)
+
+	docker tag $(PREFIX)/wavefront-kubernetes-collector:$(VERSION) us.gcr.io/$(GCP_PROJECT)/wavefront-kubernetes-collector:$(VERSION)
+	docker push us.gcr.io/$(GCP_PROJECT)/wavefront-kubernetes-collector:$(VERSION)
+
+output-test-gke: token-check
+	(cd $(KUSTOMIZE_DIR) && ./test.sh nimba $(WAVEFRONT_API_KEY) $(VERSION))
 
 .PHONY: all fmt container clean
