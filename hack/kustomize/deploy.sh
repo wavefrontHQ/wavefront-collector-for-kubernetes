@@ -1,10 +1,9 @@
 #! /bin/bash -e
 
 # This script automates the deployment of the collector to a specific k8s cluster
+DEFAULT_DOCKER_HOST="wavefronthq"
 
-DEFAULT_IMAGE_NAME="wavefronthq\/wavefront-kubernetes-collector"
-
-DEFAULT_VERSION="1.3.5"
+DEFAULT_VERSION="1.3.6"
 USE_TEST_PROXY="${USE_TEST_PROXY:-false}"
 FLUSH_ONCE="${FLUSH_ONCE:-false}"
 
@@ -31,9 +30,9 @@ function print_usage_and_exit() {
 WF_CLUSTER=
 WF_TOKEN=
 VERSION=
-IMAGE=
+DOCKER_HOST=
 
-while getopts "c:t:v:i:" opt; do
+while getopts "c:t:v:d:" opt; do
   case $opt in
     c)
       WF_CLUSTER="$OPTARG"
@@ -44,8 +43,8 @@ while getopts "c:t:v:i:" opt; do
     v)
       VERSION="$OPTARG"
       ;;
-    i)
-      IMAGE="$OPTARG"
+    d)
+      DOCKER_HOST="$OPTARG"
       ;;
     \?)
       print_usage_and_exit "Invalid option: -$OPTARG"
@@ -64,22 +63,21 @@ fi
 if [[ -z ${VERSION} ]] ; then
     VERSION=${DEFAULT_VERSION}
 fi
-NAMESPACE_VERSION=$(echo "$VERSION" | tr . -)
-NAMESPACE_NAME=${NAMESPACE_VERSION}-wavefront-collector
+NAMESPACE_NAME=wavefront-collector
 
-if [[ -z ${IMAGE} ]] ; then
-    IMAGE=${DEFAULT_IMAGE_NAME}
+if [[ -z ${DOCKER_HOST} ]] ; then
+    DOCKER_HOST=${DEFAULT_DOCKER_HOST}
 fi
 
 echo "FLUSH ONCE: ${FLUSH_ONCE}"
 
 if $USE_TEST_PROXY ; then
-  sed "s/YOUR_IMAGE_TAG/${VERSION}/g" base/test-proxy.template.yaml > base/proxy.yaml
+  sed "s/DOCKER_HOST/${DOCKER_HOST}/g" base/test-proxy.template.yaml  |  sed "s/YOUR_IMAGE_TAG/${VERSION}/g"> base/proxy.yaml
 else
   sed "s/YOUR_CLUSTER/${WF_CLUSTER}/g; s/YOUR_API_TOKEN/${WF_TOKEN}/g" base/proxy.template.yaml > base/proxy.yaml
 fi
 
-sed "s/NAMESPACE/${NAMESPACE_VERSION}-wavefront-collector/g" base/kustomization.template.yaml | sed "s/YOUR_IMAGE_TAG/${VERSION}/g" | sed "s/YOUR_IMAGE_NAME/${IMAGE}/g" > base/kustomization.yaml
+ sed "s/DOCKER_HOST/${DOCKER_HOST}/g" base/kustomization.template.yaml | sed "s/YOUR_IMAGE_TAG/${VERSION}/g"  > base/kustomization.yaml
 
 sed "s/YOUR_CLUSTER_NAME/cluster-${VERSION}/g" overlays/test/collector.yaml.template | sed "s/NAMESPACE/${NAMESPACE_NAME}/g" \
 |  sed "s/FLUSH_ONCE/${FLUSH_ONCE}/g" \

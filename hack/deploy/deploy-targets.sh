@@ -3,6 +3,8 @@ wait_for_cluster_ready
 
 echo "deploying prometheus endpoint"
 
+kubectl create namespace collector-targets || true
+
 kubectl apply -f prom-example.yaml
 
 echo "deploying memcached"
