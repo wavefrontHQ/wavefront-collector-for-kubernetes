@@ -12,7 +12,7 @@ GOLANG_VERSION?=1.15
 BINARY_NAME=wavefront-collector
 
 
-COLLECTOR_NAMESPACE="1-3-6-wavefront-collector"
+COLLECTOR_NAMESPACE="wavefront-collector"
 TARGETS_NAMESPACE=collector-targets
 
 ifndef TEMP_DIR
@@ -46,9 +46,9 @@ vet:
 driver: clean fmt
 	GOARCH=$(ARCH) CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o $(OUT_DIR)/$(ARCH)/$(BINARY_NAME)-test ./cmd/test-driver/
 
-nuke-loop: token-check nuke-kind deploy-targets full-loop
+nuke-loop: token-check nuke-kind full-loop
 
-full-loop: token-check build tests containers output-test
+full-loop: token-check deploy-targets build tests containers output-test
 
 nuke-kind:
 	kind delete cluster
@@ -147,5 +147,7 @@ push-to-gcr: test-proxy-container container
 
 output-test-gke: token-check
 	(cd $(KUSTOMIZE_DIR) && ./test.sh nimba $(WAVEFRONT_API_KEY) $(VERSION) "us.gcr.io\/$(GCP_PROJECT)")
+
+full-loop-gke: token-check deploy-targets build tests push-to-gcr output-test-gke
 
 .PHONY: all fmt container clean
