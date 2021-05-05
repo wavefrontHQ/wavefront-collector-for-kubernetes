@@ -134,8 +134,8 @@ nuke-gke: target-gke
 		clusterrolebinding
 
 clean-gke: target-gke
-	kubectl delete namespace $(COLLECTOR_NAMESPACE)
-	kubectl delete namespace $(TARGETS_NAMESPACE)
+	kubectl delete namespace $(COLLECTOR_NAMESPACE) || true
+	kubectl delete namespace $(TARGETS_NAMESPACE) || true
 
 push-to-gcr: test-proxy-container container
 	#docker build --pull -f $(REPO_DIR)/hack/deploy/Dockerfile.test-proxy -t $(PREFIX)/test-proxy:$(VERSION) $(TEMP_DIR)
@@ -146,6 +146,6 @@ push-to-gcr: test-proxy-container container
 	docker push us.gcr.io/$(GCP_PROJECT)/wavefront-kubernetes-collector:$(VERSION)
 
 output-test-gke: token-check
-	(cd $(KUSTOMIZE_DIR) && ./test.sh nimba $(WAVEFRONT_API_KEY) $(VERSION))
+	(cd $(KUSTOMIZE_DIR) && ./test.sh nimba $(WAVEFRONT_API_KEY) $(VERSION) "us.gcr.io\/$(GCP_PROJECT)\/$(DOCKER_IMAGE)")
 
 .PHONY: all fmt container clean
