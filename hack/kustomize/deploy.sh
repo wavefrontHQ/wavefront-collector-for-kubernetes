@@ -63,6 +63,7 @@ fi
 if [[ -z ${VERSION} ]] ; then
     VERSION=${DEFAULT_VERSION}
 fi
+
 NAMESPACE_NAME=wavefront-collector
 
 if [[ -z ${DOCKER_HOST} ]] ; then
