@@ -73,6 +73,9 @@ if [[ $DIFF_COUNT -gt 0 ]] ; then
   jq "." "$RES"
   red "FAILED: METRICS OUTPUT DID NOT MATCH EXACTLY"
   echo "$RES"
+  if which pbcopy > /dev/null; then
+    echo "$RES" | pbcopy
+  fi
   EXIT_CODE=1
 else
   green "SUCCEEDED"
