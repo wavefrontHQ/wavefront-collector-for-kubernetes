@@ -11,10 +11,6 @@ OUT_DIR?=$(REPO_DIR)/_output
 GOLANG_VERSION?=1.15
 BINARY_NAME=wavefront-collector
 
-
-COLLECTOR_NAMESPACE="wavefront-collector"
-TARGETS_NAMESPACE=collector-targets
-
 ifndef TEMP_DIR
 TEMP_DIR:=$(shell mktemp -d /tmp/wavefront.XXXXXX)
 endif
