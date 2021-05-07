@@ -48,7 +48,7 @@ driver: clean fmt
 
 nuke-loop: token-check nuke-kind full-loop
 
-full-loop: token-check deploy-targets build tests containers output-test
+full-loop: token-check clean-cluster deploy-targets build tests containers output-test
 
 nuke-kind:
 	kind delete cluster
@@ -123,19 +123,28 @@ clean:
 	rm -f $(OUT_DIR)/$(ARCH)/$(BINARY_NAME)-test
 	rm -f $(OUT_DIR)/$(ARCH)/test-proxy
 
+clean-cluster:
+	(cd $(DEPLOY_DIR) && ./uninstall-targets.sh)
+	(cd $(KUSTOMIZE_DIR) && ./clean-deploy.sh)
+
 target-gke:
 	gcloud config set project $(GCP_PROJECT)
+	gcloud auth configure-docker --quiet
 
-nuke-gke: target-gke
-# 	gcloud container clusters delete $(USER)-test-cluster-1 --region=us-central1-c --quiet
-	#gcloud container clusters create $(USER)-test-cluster-1 --region=us-central1-c --enable-ip-alias --create-subnetwork range=/21
+gke-cluster-name-check:
+	if [ -z ${GKE_CLUSTER_NAME} ]; then echo "Need to set GKE_CLUSTER_NAME" && exit 1; fi
+
+delete-gke-cluster: gke-cluster-name-check target-gke
+	echo "Deleting GKE K8s Cluster: $(GKE_CLUSTER_NAME)"
+	gcloud container clusters delete $(GKE_CLUSTER_NAME) --region=us-central1-c --quiet
+
+create-gke-cluster: gke-cluster-name-check target-gke
+	echo "Creating GKE K8s Cluster: $(GKE_CLUSTER_NAME)"
+	gcloud container clusters create $(GKE_CLUSTER_NAME) --region=us-central1-c --enable-ip-alias --create-subnetwork range=/21
+	gcloud container clusters get-credentials $(GKE_CLUSTER_NAME) --zone us-central1c --project $(GCP_PROJECT)
 	kubectl create clusterrolebinding --clusterrole cluster-admin \
 		--user $$(gcloud auth list --filter=status:ACTIVE --format="value(account)") \
 		clusterrolebinding
-
-clean-gke: target-gke
-	kubectl delete namespace $(COLLECTOR_NAMESPACE) || true
-	kubectl delete namespace $(TARGETS_NAMESPACE) || true
 
 push-to-gcr: test-proxy-container container
 	#docker build --pull -f $(REPO_DIR)/hack/deploy/Dockerfile.test-proxy -t $(PREFIX)/test-proxy:$(VERSION) $(TEMP_DIR)
@@ -148,6 +157,6 @@ push-to-gcr: test-proxy-container container
 output-test-gke: token-check
 	(cd $(KUSTOMIZE_DIR) && ./test.sh nimba $(WAVEFRONT_API_KEY) $(VERSION) "us.gcr.io\/$(GCP_PROJECT)")
 
-full-loop-gke: token-check deploy-targets build tests push-to-gcr output-test-gke
+full-loop-gke: token-check clean-cluster deploy-targets build tests push-to-gcr output-test-gke
 
 .PHONY: all fmt container clean
