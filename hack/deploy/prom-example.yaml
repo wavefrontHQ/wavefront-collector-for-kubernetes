@@ -10,7 +10,7 @@ metadata:
     wavefront.com/port: '8443'
     wavefront.com/prefix: 'prom-example.'
   name: prom-example
-  namespace: default
+  namespace: collector-targets
 spec:
   containers:
   - name: prom-example

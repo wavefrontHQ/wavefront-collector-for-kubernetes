@@ -16,28 +16,27 @@ function print_msg_and_exit() {
     exit 1
 }
 
-DEFAULT_VERSION="1.3.3"
-DEFAULT_IMAGE_NAME="wavefronthq\/wavefront-kubernetes-collector"
+DEFAULT_VERSION="1.3.6"
+DEFAULT_DOCKER_HOST="wavefronthq"
 
 WAVEFRONT_CLUSTER=$1
 API_TOKEN=$2
 VERSION=$3
-IMAGE_NAME=$4
+DOCKER_HOST=$4
 
 if [[ -z ${VERSION} ]] ; then
     VERSION=${DEFAULT_VERSION}
 fi
 
-if [[ -z ${IMAGE_NAME} ]] ; then
-    IMAGE_NAME=${DEFAULT_IMAGE_NAME}
+if [[ -z ${DOCKER_HOST} ]] ; then
+    DOCKER_HOST=${DEFAULT_DOCKER_HOST}
 fi
 
 echo "deploying collector $IMAGE_NAME $VERSION"
 
-env USE_TEST_PROXY=true ./deploy.sh -c "$WAVEFRONT_CLUSTER" -t "$API_TOKEN" -v $VERSION -i $IMAGE_NAME
+env USE_TEST_PROXY=true ./deploy.sh -c "$WAVEFRONT_CLUSTER" -t "$API_TOKEN" -v $VERSION -d $DOCKER_HOST
 
-NAMESPACE_VERSION=$(echo "${VERSION}" | tr . -)
-NS=${NAMESPACE_VERSION}-wavefront-collector
+NS=wavefront-collector
 
 echo "deploying configuration for additional targets"
 
@@ -70,7 +69,7 @@ fi
 DIFF_COUNT=$(jq "(.Missing | length) + (.Extra | length)" "$RES")
 EXIT_CODE=0
 if [[ $DIFF_COUNT -gt 0 ]] ; then
-  jq "." "$RES"
+  jq "." "$RES"``
   red "FAILED: METRICS OUTPUT DID NOT MATCH EXACTLY"
   echo "$RES"
   if which pbcopy > /dev/null; then
@@ -81,6 +80,6 @@ else
   green "SUCCEEDED"
 fi
 
-env USE_TEST_PROXY=false ./deploy.sh -c "$WAVEFRONT_CLUSTER" -t "$API_TOKEN" -v $VERSION -i $IMAGE_NAME
+env USE_TEST_PROXY=false ./deploy.sh -c "$WAVEFRONT_CLUSTER" -t "$API_TOKEN" -v $VERSION -d $DOCKER_HOST
 
 exit "$EXIT_CODE"
