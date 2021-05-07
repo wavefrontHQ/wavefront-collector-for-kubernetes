@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: wavefront-proxy
-        image: wavefronthq/test-proxy:YOUR_IMAGE_TAG
+        image: DOCKER_HOST/test-proxy:YOUR_IMAGE_TAG
         imagePullPolicy: IfNotPresent
         command: [ "/test-proxy", "-proxy", ":2878" ]
         ports:

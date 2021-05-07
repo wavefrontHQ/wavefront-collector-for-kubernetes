@@ -1,5 +1,5 @@
 ---
-namespace: NAMESPACE
+namespace: wavefront-collector
 resources:
 - proxy.yaml
 - 0-collector-namespace.yaml
@@ -11,5 +11,5 @@ resources:
 
 images:
 - name: wavefronthq/wavefront-kubernetes-collector
-  newName: YOUR_IMAGE_NAME
+  newName: DOCKER_HOST/wavefront-kubernetes-collector
   newTag: YOUR_IMAGE_TAG

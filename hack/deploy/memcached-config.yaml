@@ -16,4 +16,4 @@ stringData:
         - 'docker.io/bitnami/memcached:*'
       port: 11211
       conf: |
-        servers = ["memcached-release.default.svc.cluster.local:11211"]
+        servers = ["memcached-release.collector-targets.svc.cluster.local:11211"]

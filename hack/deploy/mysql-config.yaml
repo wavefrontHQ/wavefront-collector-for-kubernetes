@@ -13,12 +13,12 @@ data:
         images:
         - "docker.io/bitnami/mysql*"
         namespaces:
-        - default
+        - collector-targets
       port: 3306
       collection:
         interval: "20s"
       conf: |
-        servers = ["root:password123@tcp(mysql-release.default.svc.cluster.local:3306)/?tls=false"]
+        servers = ["root:password123@tcp(mysql-release.collector-targets.svc.cluster.local:3306)/?tls=false"]
         perf_events_statements_digest_text_limit  = 120
         perf_events_statements_limit              = 250
         perf_events_statements_time_limit         = 86400
