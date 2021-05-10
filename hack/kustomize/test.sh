@@ -69,7 +69,10 @@ fi
 DIFF_COUNT=$(jq "(.Missing | length) + (.Extra | length)" "$RES")
 EXIT_CODE=0
 if [[ $DIFF_COUNT -gt 0 ]] ; then
-  jq "." "$RES"``
+  red "MISSING: $(jq "(.Missing | length)" "$RES")"
+  jq -c '.Missing[]' "$RES" | sort > missing.json
+  red "Extra: $(jq "(.Extra | length)" "$RES")"
+  jq -c '.Extra[]' "$RES" | sort > extra.json
   red "FAILED: METRICS OUTPUT DID NOT MATCH EXACTLY"
   echo "$RES"
   if which pbcopy > /dev/null; then
