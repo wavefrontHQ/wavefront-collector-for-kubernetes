@@ -1,2 +1,4 @@
 overlays/**/proxy.yaml
 base/**/proxy.yaml
+extra.json
+missing.json
