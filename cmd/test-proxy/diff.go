@@ -130,6 +130,8 @@ func metricKeyMap(metrics []*Metric, keyers map[string][]keyer) map[string]*Metr
 }
 
 func disjunct(a, b map[string]*Metric) (onlyInA []*Metric, onlyInB []*Metric) {
+	onlyInA = []*Metric{}
+	onlyInB = []*Metric{}
 	for x := range a {
 		if _, exists := b[x]; !exists {
 			onlyInA = append(onlyInA, a[x])
