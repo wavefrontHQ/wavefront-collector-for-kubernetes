@@ -1,4 +1,5 @@
 overlays/**/proxy.yaml
 base/**/proxy.yaml
-extra.json
-missing.json
+extra.jsonl
+missing.jsonl
+overlays/test/collector.yaml
