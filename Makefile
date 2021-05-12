@@ -68,10 +68,13 @@ test-proxy-container:
 	-t $(PREFIX)/test-proxy:$(VERSION) .
 
 release:
+	docker buildx create --use
 	# Run build in a container in order to have reproducible builds
-	docker buildx build --platform linux/amd64,linux/arm64 \
-	--build-arg BINARY_NAME=$(BINARY_NAME) --build-arg LDFLAGS="$(LDFLAGS)" \
-	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) .
+	$(shell docker buildx build --platform linux/amd64,linux/arm64 \
+                                	--build-arg BINARY_NAME=$(BINARY_NAME) --build-arg LDFLAGS="$(LDFLAGS)" \
+                                	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) . || (docker buildx rm; echo "builder REMOVED"; exit 1))
+	docker buildx rm
+	# for value in $(docker buildx ls | grep -v default | grep -v /run/docker.sock | awk '{print $1}'); do; docker buildx rm $value; done
 
 test-proxy: peg $(REPO_DIR)/cmd/test-proxy/metric_grammar.peg.go clean fmt vet
 	GOARCH=$(ARCH) CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o $(OUT_DIR)/$(ARCH)/test-proxy ./cmd/test-proxy/...
@@ -162,4 +165,4 @@ output-test-gke: token-check
 
 full-loop-gke: token-check gke-connect-to-cluster clean-cluster deploy-targets build tests push-to-gcr output-test-gke
 
-.PHONY: all fmt container clean
+.PHONY: all fmt container clean release
