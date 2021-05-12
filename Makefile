@@ -130,6 +130,9 @@ target-gke:
 gke-cluster-name-check:
 	if [ -z ${GKE_CLUSTER_NAME} ]; then echo "Need to set GKE_CLUSTER_NAME" && exit 1; fi
 
+gke-connect-to-cluster: gke-cluster-name-check
+	gcloud container clusters get-credentials $(GKE_CLUSTER_NAME) --zone us-central1-c --project $(GCP_PROJECT)
+
 delete-gke-cluster: gke-cluster-name-check target-gke
 	echo "Deleting GKE K8s Cluster: $(GKE_CLUSTER_NAME)"
 	gcloud container clusters delete $(GKE_CLUSTER_NAME) --region=us-central1-c --quiet
@@ -137,7 +140,7 @@ delete-gke-cluster: gke-cluster-name-check target-gke
 create-gke-cluster: gke-cluster-name-check target-gke
 	echo "Creating GKE K8s Cluster: $(GKE_CLUSTER_NAME)"
 	gcloud container clusters create $(GKE_CLUSTER_NAME) --region=us-central1-c --enable-ip-alias --create-subnetwork range=/21
-	gcloud container clusters get-credentials $(GKE_CLUSTER_NAME) --zone us-central1c --project $(GCP_PROJECT)
+	gcloud container clusters get-credentials $(GKE_CLUSTER_NAME) --zone us-central1-c --project $(GCP_PROJECT)
 	kubectl create clusterrolebinding --clusterrole cluster-admin \
 		--user $$(gcloud auth list --filter=status:ACTIVE --format="value(account)") \
 		clusterrolebinding
@@ -153,6 +156,6 @@ push-to-gcr: test-proxy-container container
 output-test-gke: token-check
 	(cd $(KUSTOMIZE_DIR) && ./test.sh nimba $(WAVEFRONT_API_KEY) $(VERSION) "us.gcr.io\/$(GCP_PROJECT)")
 
-full-loop-gke: token-check clean-cluster deploy-targets build tests push-to-gcr output-test-gke
+full-loop-gke: token-check gke-connect-to-cluster clean-cluster deploy-targets build tests push-to-gcr output-test-gke
 
 .PHONY: all fmt container clean
