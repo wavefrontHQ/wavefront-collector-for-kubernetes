@@ -69,7 +69,7 @@ test-proxy-container:
 
 release:
 	# Run build in a container in order to have reproducible builds
-	docker buildx build --platform linux/amd64,linux/arm64 --push \
+	docker buildx build --platform linux/amd64,linux/arm64 \
 	--build-arg BINARY_NAME=$(BINARY_NAME) --build-arg LDFLAGS="$(LDFLAGS)" \
 	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) .
 
