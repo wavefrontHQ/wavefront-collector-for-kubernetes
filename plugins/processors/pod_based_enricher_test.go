@@ -78,6 +78,38 @@ func TestStatusRunning(t *testing.T) {
 		ContainerStatuses: []kube_api.ContainerStatus{
 			{
 				Name:  "c1",
+				State: createGoodState(time.Now().Add(-5 * time.Second)),
+			},
+		},
+	}
+
+	podBasedEnricher := createEnricher(t, tc)
+
+	batch, err := podBasedEnricher.Process(tc.batch)
+	assert.NoError(t, err)
+
+	containerMs, found := batch.MetricSets[metrics.PodContainerKey("ns1", "pod1", "c1")]
+	assert.True(t, found)
+
+	expectedStatus := metrics.LabeledMetric{
+		Name: "status",
+		Labels: map[string]string{
+			"status": "running",
+		},
+		MetricValue: metrics.MetricValue{
+			IntValue:   1,
+			MetricType: metrics.MetricGauge,
+		},
+	}
+	assert.Equal(t, expectedStatus, containerMs.LabeledMetrics[0])
+}
+
+func TestStatusTerminated(t *testing.T) {
+	tc := setup()
+	tc.pod.Status = kube_api.PodStatus{
+		ContainerStatuses: []kube_api.ContainerStatus{
+			{
+				Name:  "c1",
 				State: createCrashState(time.Now().Add(-10*time.Minute), time.Now().Add(-5*time.Minute)),
 			},
 		},
@@ -94,8 +126,9 @@ func TestStatusRunning(t *testing.T) {
 	expectedStatus := metrics.LabeledMetric{
 		Name: "status",
 		Labels: map[string]string{
-			"status": "terminated",
-			"reason": "bad juju",
+			"status":    "terminated",
+			"reason":    "bad juju",
+			"exit_code": "137",
 		},
 		MetricValue: metrics.MetricValue{
 			IntValue:   3,
@@ -131,8 +164,9 @@ func TestStatusMissedTermination(t *testing.T) {
 	expectedStatus := metrics.LabeledMetric{
 		Name: "status",
 		Labels: map[string]string{
-			"status": "terminated",
-			"reason": "bad juju",
+			"status":    "terminated",
+			"reason":    "bad juju",
+			"exit_code": "137",
 		},
 		MetricValue: metrics.MetricValue{
 			IntValue:   3,
@@ -327,6 +361,7 @@ func createCrashState(startTime time.Time, crashTime time.Time) kube_api.Contain
 				Time: crashTime,
 			},
 			ContainerID: "",
+			ExitCode:    137,
 		},
 	}
 }
