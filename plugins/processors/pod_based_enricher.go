@@ -239,18 +239,19 @@ func updateContainerResourcesAndLimits(metricSet *metrics.MetricSet, container k
 func (pbe *PodBasedEnricher) addContainerStatus(collectionTime time.Time, containerMs *metrics.MetricSet, metric *metrics.Metric, status kube_api.ContainerStatus) {
 	labels := make(map[string]string, 2)
 
-	stateInt, state, reason := pbe.findContainerState(collectionTime, status)
+	stateInt, state, reason, exitCode := pbe.findContainerState(collectionTime, status)
 
 	if stateInt > 0 {
 		labels["status"] = state
 		if reason != "" {
 			labels["reason"] = reason
+			labels["exit_code"] = fmt.Sprint(exitCode)
 		}
 	}
 	addLabeledIntMetric(containerMs, metric, labels, stateInt)
 }
 
-func (pbe *PodBasedEnricher) findContainerState(collectionTime time.Time, status kube_api.ContainerStatus) (int64, string, string) {
+func (pbe *PodBasedEnricher) findContainerState(collectionTime time.Time, status kube_api.ContainerStatus) (int64, string, string, int32) {
 	if status.LastTerminationState.Terminated == nil {
 		return convertContainerState(status.State)
 	}
@@ -296,17 +297,17 @@ func convertPhase(phase kube_api.PodPhase) int64 {
 	}
 }
 
-func convertContainerState(state kube_api.ContainerState) (int64, string, string) {
+func convertContainerState(state kube_api.ContainerState) (int64, string, string, int32) {
 	if state.Running != nil {
-		return 1, "running", ""
+		return 1, "running", "", 0
 	}
 	if state.Waiting != nil {
-		return 2, "waiting", state.Waiting.Reason
+		return 2, "waiting", state.Waiting.Reason, 0
 	}
 	if state.Terminated != nil {
-		return 3, "terminated", state.Terminated.Reason
+		return 3, "terminated", state.Terminated.Reason, state.Terminated.ExitCode
 	}
-	return 0, "", ""
+	return 0, "", "", 0
 }
 
 // addLabeledIntMetric is a convenience method for adding the labeled metric and value to the metric set.
