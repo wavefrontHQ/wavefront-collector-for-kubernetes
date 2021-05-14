@@ -4,3 +4,4 @@ _output
 .DS_Store
 osstp_golang.yml
 hack/kustomize/base/kustomization.yaml
+callgrind.out*
