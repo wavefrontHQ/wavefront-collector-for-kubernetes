@@ -1,7 +1,0 @@
-FROM scratch
-
-COPY test-proxy /
-
-# nobody:nobody
-USER 65534:65534
-ENTRYPOINT ["/test-proxy"]

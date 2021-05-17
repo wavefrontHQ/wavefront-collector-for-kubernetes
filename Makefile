@@ -68,12 +68,9 @@ release:
 	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) .
 
 test-proxy-container:
-	docker run --rm \
-		-v $(REPO_DIR):/go/src/github.com/wavefronthq/wavefront-collector-for-kubernetes \
-		-v $(TEMP_DIR):/go/src/github.com/wavefronthq/wavefront-collector-for-kubernetes/_output/$(ARCH) \
-		-w /go/src/github.com/wavefronthq/wavefront-collector-for-kubernetes golang:$(GOLANG_VERSION) \
-		/usr/bin/make test-proxy
-	docker build --pull -f $(REPO_DIR)/hack/deploy/Dockerfile.test-proxy -t $(PREFIX)/test-proxy:$(VERSION) $(TEMP_DIR)
+	docker build \
+	--pull -f $(REPO_DIR)/Dockerfile.test-proxy \
+	-t $(PREFIX)/test-proxy:$(VERSION) .
 
 test-proxy: peg $(REPO_DIR)/cmd/test-proxy/metric_grammar.peg.go clean fmt vet
 	GOARCH=$(ARCH) CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o $(OUT_DIR)/$(ARCH)/test-proxy ./cmd/test-proxy/...
