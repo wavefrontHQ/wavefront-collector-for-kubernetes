@@ -7,6 +7,8 @@ KUSTOMIZE_DIR=../hack/kustomize
 DEPLOY_DIR=../deploy
 TMP_FILE=/tmp/temporary
 
+source ./VERSION
+
 GIT_BRANCH="bump-${CURRENT_VERSION}"
 git checkout -b $GIT_BRANCH
 
