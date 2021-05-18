@@ -61,16 +61,17 @@ ifneq ($(OVERRIDE_IMAGE_NAME),)
 	docker tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OVERRIDE_IMAGE_NAME)
 endif
 
+test-proxy-container:
+	docker build \
+	--build-arg BINARY_NAME=test-proxy --build-arg LDFLAGS="$(LDFLAGS)" \
+	--pull -f $(REPO_DIR)/Dockerfile.test-proxy \
+	-t $(PREFIX)/test-proxy:$(VERSION) .
+
 release:
 	# Run build in a container in order to have reproducible builds
 	docker buildx build --platform linux/amd64,linux/arm64 --push \
 	--build-arg BINARY_NAME=$(BINARY_NAME) --build-arg LDFLAGS="$(LDFLAGS)" \
 	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) .
-
-test-proxy-container:
-	docker build \
-	--pull -f $(REPO_DIR)/Dockerfile.test-proxy \
-	-t $(PREFIX)/test-proxy:$(VERSION) .
 
 test-proxy: peg $(REPO_DIR)/cmd/test-proxy/metric_grammar.peg.go clean fmt vet
 	GOARCH=$(ARCH) CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o $(OUT_DIR)/$(ARCH)/test-proxy ./cmd/test-proxy/...
@@ -120,6 +121,7 @@ clean:
 	rm -f $(OUT_DIR)/$(ARCH)/test-proxy
 
 clean-cluster:
+	# TODO: handle helm uninstall too
 	(cd $(DEPLOY_DIR) && ./uninstall-targets.sh)
 	(cd $(KUSTOMIZE_DIR) && ./clean-deploy.sh)
 

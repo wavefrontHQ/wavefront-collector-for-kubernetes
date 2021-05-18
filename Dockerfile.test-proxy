@@ -1,6 +1,7 @@
 FROM golang:1.15 as builder
 
 # Base Setup
+ARG BINARY_NAME
 ARG LDFLAGS
 WORKDIR /workspace
 # Copy the Go Modules manifests
@@ -15,8 +16,7 @@ RUN go mod download
 COPY . .
 
 # Then build
-RUN CGO_ENABLED=0 GOOS=linux GO111MODULE=on go build -ldflags "${LDFLAGS}" -a -o test-proxy cmd/test-proxy/main.go
-
+RUN CGO_ENABLED=0 GOOS=linux GO111MODULE=on go build -ldflags "${LDFLAGS}" -a -o ${BINARY_NAME} ./cmd/test-proxy/...
 
 FROM scratch
 WORKDIR /
