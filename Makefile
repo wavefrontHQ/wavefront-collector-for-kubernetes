@@ -1,6 +1,6 @@
 PREFIX?=wavefronthq
 GCP_PROJECT=wavefront-gcp-dev
-DOCKER_IMAGE=wavefront-kubernetes-collector
+DOCKER_IMAGE?=wavefront-kubernetes-collector
 ARCH?=amd64
 
 REPO_DIR=$(shell git rev-parse --show-toplevel)
@@ -11,11 +11,16 @@ OUT_DIR?=$(REPO_DIR)/_output
 GOLANG_VERSION?=1.15
 BINARY_NAME=wavefront-collector
 
+RELEASE_TYPE?=release
+RC_NUMBER?=1
+GIT_BRANCH=$(shell git rev-parse --abbrev-ref HEAD)
+GIT_HUB_REPO=wavefrontHQ/wavefront-collector-for-kubernetes
+
 ifndef TEMP_DIR
 TEMP_DIR:=$(shell mktemp -d /tmp/wavefront.XXXXXX)
 endif
 
-VERSION?=1.3.6
+VERSION?=1.3.7
 GIT_COMMIT:=$(shell git rev-parse --short HEAD)
 
 # for testing, the built image will also be tagged with this name provided via an environment variable
@@ -67,17 +72,22 @@ test-proxy-container:
 	--pull -f $(REPO_DIR)/Dockerfile.test-proxy \
 	-t $(PREFIX)/test-proxy:$(VERSION) .
 
-release:
-	docker buildx create --use
-	
-	# Run build in a container in order to have reproducible builds
-	docker buildx build --platform linux/amd64,linux/arm64 \
-								--load \
-								--build-arg BINARY_NAME=$(BINARY_NAME) --build-arg LDFLAGS="$(LDFLAGS)" \
-								--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) . || (docker buildx rm; echo "builder REMOVED"; exit 1)
+github-release:
+	curl -X POST -H "Content-Type:application/json" -H "Authorization: token $(GITHUB_TOKEN)" \
+		-d '{"tag_name":"v$(VERSION)", "target_commitish":"$(GIT_BRANCH)", "name":"Release v$(VERSION)", \
+		"body": "Description for v$(VERSION)", "draft": true, "prerelease": false}' "https://api.github.com/repos/$(GIT_HUB_REPO)/releases"
 
-	docker buildx rm
-	# for value in $(docker buildx ls | grep -v default | grep -v /run/docker.sock | awk '{print $1}'); do; docker buildx rm $value; done
+release:
+	docker buildx create --use --node wavefront_collector_builder
+ifeq ($(RELEASE_TYPE), release)
+	docker buildx build --platform linux/amd64,linux/arm64 --push \
+	--build-arg BINARY_NAME=$(BINARY_NAME) --build-arg LDFLAGS="$(LDFLAGS)" \
+	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) -t $(PREFIX)/$(DOCKER_IMAGE):latest .
+else
+	docker buildx build --platform linux/amd64,linux/arm64 --push \
+	--build-arg BINARY_NAME=$(BINARY_NAME) --build-arg LDFLAGS="$(LDFLAGS)" \
+	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION)-rc-$(RC_NUMBER) .
+endif
 
 test-proxy: peg $(REPO_DIR)/cmd/test-proxy/metric_grammar.peg.go clean fmt vet
 	GOARCH=$(ARCH) CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o $(OUT_DIR)/$(ARCH)/test-proxy ./cmd/test-proxy/...
