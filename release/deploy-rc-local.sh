@@ -8,8 +8,8 @@ function print_msg_and_exit() {
 NS=wavefront-collector
 ROOT_DIR=$(git rev-parse --show-toplevel)
 TEMP_DIR=$(mktemp -d)
-CURRENT_VERSION=1.3.4
-VERSION=1.3.5-rc2
+CURRENT_VERSION=1.4.0
+VERSION=1.4.1-rc1
 WF_CLUSTER=nimba
 K8S_CLUSTER=$VERSION-release-test
 
