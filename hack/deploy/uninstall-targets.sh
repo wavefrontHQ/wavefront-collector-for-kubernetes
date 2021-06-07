@@ -12,3 +12,5 @@ helm uninstall mysql-release --namespace collector-targets || true
 
 echo "deleting  namespace collector-targets"
 kubectl delete namespace collector-targets || true
+
+echo "targets uninstalled"
