@@ -16,6 +16,8 @@ RC_NUMBER?=1
 GIT_BRANCH=$(shell git rev-parse --abbrev-ref HEAD)
 GIT_HUB_REPO=wavefrontHQ/wavefront-collector-for-kubernetes
 
+K8S_ENV=$(shell cd $(DEPLOY_DIR) && ./get-k8s-cluster-env.sh)
+
 ifndef TEMP_DIR
 TEMP_DIR:=$(shell mktemp -d /tmp/wavefront.XXXXXX)
 endif
@@ -47,14 +49,6 @@ vet:
 driver: clean fmt
 	GOARCH=$(ARCH) CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o $(OUT_DIR)/$(ARCH)/$(BINARY_NAME)-test ./cmd/test-driver/
 
-nuke-loop: token-check nuke-kind full-loop
-
-full-loop: token-check clean-cluster deploy-targets build tests containers output-test
-
-nuke-kind:
-	kind delete cluster
-	kind create cluster
-
 containers: container test-proxy-container
 
 container:
@@ -65,12 +59,6 @@ container:
 ifneq ($(OVERRIDE_IMAGE_NAME),)
 	docker tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OVERRIDE_IMAGE_NAME)
 endif
-
-test-proxy-container:
-	docker build \
-	--build-arg BINARY_NAME=test-proxy --build-arg LDFLAGS="$(LDFLAGS)" \
-	--pull -f $(REPO_DIR)/Dockerfile.test-proxy \
-	-t $(PREFIX)/test-proxy:$(VERSION) .
 
 github-release:
 	curl -X POST -H "Content-Type:application/json" -H "Authorization: token $(GITHUB_TOKEN)" \
@@ -89,6 +77,12 @@ else
 	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION)-rc-$(RC_NUMBER) .
 endif
 
+test-proxy-container:
+	docker build \
+	--build-arg BINARY_NAME=test-proxy --build-arg LDFLAGS="$(LDFLAGS)" \
+	--pull -f $(REPO_DIR)/Dockerfile.test-proxy \
+	-t $(PREFIX)/test-proxy:$(VERSION) .
+
 test-proxy: peg $(REPO_DIR)/cmd/test-proxy/metric_grammar.peg.go clean fmt vet
 	GOARCH=$(ARCH) CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o $(OUT_DIR)/$(ARCH)/test-proxy ./cmd/test-proxy/...
 
@@ -98,27 +92,6 @@ peg:
 
 %.peg.go: %.peg
 	peg -switch -inline $<
-
-redeploy: token-check
-	(cd $(KUSTOMIZE_DIR) && ./deploy.sh -c nimba -t ${WAVEFRONT_API_KEY} -v ${VERSION} -i "$(PREFIX)\/$(DOCKER_IMAGE)")
-
-deploy-targets:
-	(cd $(DEPLOY_DIR) && ./deploy-targets.sh)
-
-output-test: token-check
-	docker exec -it kind-control-plane crictl rmi $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) || true
-	kind load docker-image $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) --name kind
-
-	docker exec -it kind-control-plane crictl rmi $(PREFIX)/test-proxy:$(VERSION) || true
-	kind load docker-image $(PREFIX)/test-proxy:$(VERSION) --name kind
-
-	(cd $(KUSTOMIZE_DIR) && ./test.sh nimba $(WAVEFRONT_API_KEY) $(VERSION))
-
-token-check:
-	if [ -z ${WAVEFRONT_API_KEY} ]; then echo "Need to set WAVEFRONT_API_KEY" && exit 1; fi
-
-k9s:
-	watch -n 1 k9s
 
 #This rule need to be run on RHEL with podman installed.
 container_rhel: build
@@ -136,10 +109,30 @@ clean:
 	rm -f $(OUT_DIR)/$(ARCH)/$(BINARY_NAME)-test
 	rm -f $(OUT_DIR)/$(ARCH)/test-proxy
 
-clean-cluster:
-	# TODO: handle helm uninstall too
+deploy-targets:
+	(cd $(DEPLOY_DIR) && ./deploy-targets.sh)
+
+clean-targets:
 	(cd $(DEPLOY_DIR) && ./uninstall-targets.sh)
+
+token-check:
+	if [ -z ${WAVEFRONT_API_KEY} ]; then echo "Need to set WAVEFRONT_API_KEY" && exit 1; fi
+
+k9s:
+	watch -n 1 k9s
+
+clean-deployment:
+	# TODO: handle helm uninstall too
 	(cd $(KUSTOMIZE_DIR) && ./clean-deploy.sh)
+
+k8s-env:
+	@echo "K8s Environment: $(shell kubectl config current-context)"
+
+clean-cluster: clean-targets clean-deployment
+
+nuke-kind:
+	kind delete cluster
+	kind create cluster
 
 target-gke:
 	gcloud config set project $(GCP_PROJECT)
@@ -163,19 +156,53 @@ create-gke-cluster: gke-cluster-name-check target-gke
 		--user $$(gcloud auth list --filter=status:ACTIVE --format="value(account)") \
 		clusterrolebinding
 
-push-to-gcr: test-proxy-container container
-	#docker build --pull -f $(REPO_DIR)/hack/deploy/Dockerfile.test-proxy -t $(PREFIX)/test-proxy:$(VERSION) $(TEMP_DIR)
+delete-images-gcr:
+	gcloud container images delete us.gcr.io/$(GCP_PROJECT)/test-proxy:$(VERSION) --quiet || true
+	gcloud container images delete us.gcr.io/$(GCP_PROJECT)/wavefront-kubernetes-collector:$(VERSION) --quiet || true
+
+push-to-gcr:
 	docker tag $(PREFIX)/test-proxy:$(VERSION) us.gcr.io/$(GCP_PROJECT)/test-proxy:$(VERSION)
-	gcloud container images delete us.gcr.io/$(GCP_PROJECT)/test-proxy:$(VERSION) --quiet
 	docker push us.gcr.io/$(GCP_PROJECT)/test-proxy:$(VERSION)
 
 	docker tag $(PREFIX)/wavefront-kubernetes-collector:$(VERSION) us.gcr.io/$(GCP_PROJECT)/wavefront-kubernetes-collector:$(VERSION)
-	gcloud container images delete us.gcr.io/$(GCP_PROJECT)/wavefront-kubernetes-collector:$(VERSION) --quiet
 	docker push us.gcr.io/$(GCP_PROJECT)/wavefront-kubernetes-collector:$(VERSION)
 
-output-test-gke: token-check
-	(cd $(KUSTOMIZE_DIR) && ./test.sh nimba $(WAVEFRONT_API_KEY) $(VERSION) "us.gcr.io\/$(GCP_PROJECT)")
+push-to-kind:
+	kind load docker-image $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) --name kind
+	kind load docker-image $(PREFIX)/test-proxy:$(VERSION) --name kind
 
-full-loop-gke: token-check gke-connect-to-cluster clean-cluster deploy-targets build tests push-to-gcr output-test-gke
+delete-images-kind:
+	docker exec -it kind-control-plane crictl rmi $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) || true
+	kind load docker-image $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) --name kind
+
+	docker exec -it kind-control-plane crictl rmi $(PREFIX)/test-proxy:$(VERSION) || true
+	kind load docker-image $(PREFIX)/test-proxy:$(VERSION) --name kind
+
+push-images:
+ifeq ($(K8S_ENV), GKE)
+	make push-to-gcr
+else
+	make push-to-kind
+endif
+
+delete-images:
+ifeq ($(K8S_ENV), GKE)
+	make delete-images-gcr
+else
+	make delete-images-kind
+endif
+
+proxy-test: token-check
+ifeq ($(K8S_ENV), GKE)
+	(cd $(KUSTOMIZE_DIR) && ./test.sh nimba $(WAVEFRONT_API_KEY) $(VERSION) "us.gcr.io\/$(GCP_PROJECT)")
+else
+	(cd $(KUSTOMIZE_DIR) && ./test.sh nimba $(WAVEFRONT_API_KEY) $(VERSION))
+endif
+
+#Testing deployment and configuration changes, no code changes
+deploy-test: token-check k8s-env clean-deployment deploy-targets push-images proxy-test
+
+#Testing code, configuration and deployment changes
+integration-test: token-check k8s-env clean-deployment deploy-targets build tests containers delete-images push-images proxy-test
 
 .PHONY: all fmt container clean release
