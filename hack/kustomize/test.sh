@@ -51,7 +51,7 @@ kubectl --namespace "$NS" port-forward deploy/wavefront-proxy 8888 &
 trap 'kill $(jobs -p)' EXIT
 
 echo "waiting for logs..."
-sleep 30
+sleep 32
 
 DIR=$(dirname "$0")
 RES=$(mktemp)

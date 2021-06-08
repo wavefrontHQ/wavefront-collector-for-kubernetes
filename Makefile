@@ -122,17 +122,20 @@ k9s:
 	watch -n 1 k9s
 
 clean-deployment:
-	# TODO: handle helm uninstall too
+	(cd $(DEPLOY_DIR) && ./uninstall-wavefront-helm-release.sh)
 	(cd $(KUSTOMIZE_DIR) && ./clean-deploy.sh)
 
 k8s-env:
-	@echo "K8s Environment: $(shell kubectl config current-context)"
+	@echo "\033[92mK8s Environment: $(shell kubectl config current-context)\033[0m"
 
 clean-cluster: clean-targets clean-deployment
 
 nuke-kind:
 	kind delete cluster
 	kind create cluster
+
+kind-connect-to-cluster:
+	kubectl config use kind-kind
 
 target-gke:
 	gcloud config set project $(GCP_PROJECT)
