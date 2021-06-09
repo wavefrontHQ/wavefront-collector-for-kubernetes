@@ -107,7 +107,7 @@ proxy:
   enabled: true
   image:
     repository: wavefronthq/proxy
-    tag: 4.35
+    tag: 9.7
     pullPolicy: IfNotPresent
 
   ## The port number the proxy will listen on for metrics in Wavefront data format.
