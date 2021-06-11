@@ -125,14 +125,19 @@ var systemNameMap = map[string]string{
 }
 
 func (src *summaryMetricsSource) addCompletedPods(dataBatch *DataBatch, podList *kube_api.PodList) {
-
 	nodeLabels := map[string]string{
 		LabelNodename.Key: src.node.NodeName,
 		LabelHostname.Key: src.node.HostName,
 		LabelHostID.Key:   src.node.HostID,
 	}
 	for _, pod := range podList.Items {
-		if pod.Status.Phase == "Running" {
+		if pod.Status.Phase != "Succeeded" && pod.Status.Phase != "Failed" {
+			continue
+		}
+
+		podKey := PodKey(pod.Namespace, pod.Name)
+		if dataBatch.MetricSets[podKey] != nil {
+			log.Infof("Metric Set already exists at key %s, continuing", podKey)
 			continue
 		}
 
@@ -148,6 +153,9 @@ func (src *summaryMetricsSource) addCompletedPods(dataBatch *DataBatch, podList 
 		podMetrics.Labels[LabelPodId.Key] = string(pod.UID)
 		podMetrics.Labels[LabelPodName.Key] = pod.Name
 		podMetrics.Labels[LabelNamespaceName.Key] = pod.Namespace
+
+		dataBatch.MetricSets[podKey] = podMetrics
+		log.Infof("---got completed pods---\n %+v", podMetrics)
 	}
 	log.Debugf("End add completed pods")
 }

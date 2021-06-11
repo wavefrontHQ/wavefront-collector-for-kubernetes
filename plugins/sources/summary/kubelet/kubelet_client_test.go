@@ -18,7 +18,11 @@
 package kubelet
 
 import (
+	"io/ioutil"
+	"net"
 	"net/http/httptest"
+	"net/url"
+	"strconv"
 	"testing"
 	"time"
 
@@ -105,3 +109,31 @@ func TestAllContainers(t *testing.T) {
 	checkContainer(t, rootContainer, containers[0])
 	checkContainer(t, subcontainer, containers[1])
 }
+
+
+func TestGetPods(t *testing.T) {
+	content, err := ioutil.ReadFile("pods_summary.json")
+	require.NoError(t, err)
+	handler := util.FakeHandler{
+		StatusCode:   200,
+		RequestBody:  "",
+		ResponseBody: string(content),
+		T:            t,
+	}
+	server := httptest.NewServer(&handler)
+	defer server.Close()
+	kubeletClient := KubeletClient{}
+	u, _ := url.Parse(server.URL)
+	_, port, _ := net.SplitHostPort(u.Host)
+	portInt, _ := strconv.Atoi(port)
+	pods, err := kubeletClient.GetPods(Host{
+		IP:       net.ParseIP("127.0.0.1"),
+		Port:     portInt,
+		Resource: "",
+	})
+
+	require.NoError(t, err)
+	require.Len(t, pods.Items, 7)
+}
+
+
