@@ -36,6 +36,7 @@ import (
 	cadvisor "github.com/google/cadvisor/info/v1"
 	"github.com/json-iterator/go"
 	log "github.com/sirupsen/logrus"
+	v1 "k8s.io/api/core/v1"
 	stats "k8s.io/kubernetes/pkg/kubelet/apis/stats/v1alpha1"
 )
 
@@ -175,6 +176,23 @@ func (kc *KubeletClient) GetSummary(host Host) (*stats.Summary, error) {
 	}
 	err = kc.postRequestAndGetValue(client, req, summary)
 	return summary, err
+}
+
+func (kc *KubeletClient) GetPods(host Host) (*v1.PodList, error) {
+	u := kc.getUrl(host, "/pods/")
+
+	req, err := http.NewRequest("GET", u, nil)
+	if err != nil {
+		return nil, err
+	}
+	pods := &v1.PodList{}
+	client := kc.client
+	if client == nil {
+		client = http.DefaultClient
+	}
+	err = kc.postRequestAndGetValue(client, req, pods)
+
+	return pods, err
 }
 
 func (kc *KubeletClient) GetPort() int {

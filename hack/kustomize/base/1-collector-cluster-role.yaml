@@ -15,6 +15,7 @@ rules:
   - namespaces
   - nodes
   - nodes/stats
+  - nodes/pods
   - pods
   - replicationcontrollers
   - secrets
