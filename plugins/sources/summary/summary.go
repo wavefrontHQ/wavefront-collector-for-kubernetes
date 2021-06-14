@@ -106,7 +106,7 @@ func (src *summaryMetricsSource) ScrapeMetrics() (*DataBatch, error) {
 	}
 
 	result.MetricSets = src.decodeSummary(summary)
-	src.addCompletedPods(result, podList)
+	src.addMetricsForCompletedPods(result, podList)
 
 	return result, err
 }
@@ -124,7 +124,7 @@ var systemNameMap = map[string]string{
 	stats.SystemContainerMisc:    "system",
 }
 
-func (src *summaryMetricsSource) addCompletedPods(dataBatch *DataBatch, podList *kube_api.PodList) {
+func (src *summaryMetricsSource) addMetricsForCompletedPods(dataBatch *DataBatch, podList *kube_api.PodList) {
 	nodeLabels := map[string]string{
 		LabelNodename.Key: src.node.NodeName,
 		LabelHostname.Key: src.node.HostName,

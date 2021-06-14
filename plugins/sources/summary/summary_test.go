@@ -220,7 +220,7 @@ func TestDecodeSummaryMetrics(t *testing.T) {
 	}
 }
 
-func TestAddCompletedPods(t *testing.T) {
+func TestAddMetricsForCompletedPods(t *testing.T) {
 	statusStartTime := metav1.NewTime(startTime)
 	podList := v1.PodList{
 		Items: []v1.Pod{
@@ -277,19 +277,19 @@ func TestAddCompletedPods(t *testing.T) {
 		emptyPodList := v1.PodList{
 			Items: []v1.Pod{},
 		}
-		ms.addCompletedPods(dataBatch, &emptyPodList)
+		ms.addMetricsForCompletedPods(dataBatch, &emptyPodList)
 		assert.Equal(t, 0, len(dataBatch.MetricSets))
 	})
 
 	t.Run("adds failed or succeeded pods", func(t *testing.T) {
-		ms.addCompletedPods(dataBatch, &podList)
+		ms.addMetricsForCompletedPods(dataBatch, &podList)
 		assert.Equal(t, 3, len(dataBatch.MetricSets))
 	})
 
 	t.Run("only adds missing failed or succeeded pods", func(t *testing.T) {
 		addFakePodMetric(dataBatch, ms, podList.Items[3])
 		addFakePodMetric(dataBatch, ms, podList.Items[2])
-		ms.addCompletedPods(dataBatch, &podList)
+		ms.addMetricsForCompletedPods(dataBatch, &podList)
 		assert.Equal(t, 4, len(dataBatch.MetricSets))
 
 		podMetrics := dataBatch.MetricSets[core.PodKey(namespace0, "just-completed-pod")]
@@ -298,7 +298,7 @@ func TestAddCompletedPods(t *testing.T) {
 	})
 
 	t.Run("pod metrics values", func(t *testing.T) {
-		ms.addCompletedPods(dataBatch, &podList)
+		ms.addMetricsForCompletedPods(dataBatch, &podList)
 		podMetrics := dataBatch.MetricSets[core.PodKey(namespace0, "failed-pod")]
 		pod := podList.Items[0]
 
