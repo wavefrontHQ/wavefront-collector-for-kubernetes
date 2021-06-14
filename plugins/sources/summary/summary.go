@@ -131,13 +131,12 @@ func (src *summaryMetricsSource) addCompletedPods(dataBatch *DataBatch, podList 
 		LabelHostID.Key:   src.node.HostID,
 	}
 	for _, pod := range podList.Items {
-		if pod.Status.Phase != "Succeeded" && pod.Status.Phase != "Failed" {
+		if pod.Status.Phase != kube_api.PodSucceeded && pod.Status.Phase != kube_api.PodFailed {
 			continue
 		}
 
 		podKey := PodKey(pod.Namespace, pod.Name)
 		if dataBatch.MetricSets[podKey] != nil {
-			log.Infof("Metric Set already exists at key %s, continuing", podKey)
 			continue
 		}
 
@@ -155,9 +154,8 @@ func (src *summaryMetricsSource) addCompletedPods(dataBatch *DataBatch, podList 
 		podMetrics.Labels[LabelNamespaceName.Key] = pod.Namespace
 
 		dataBatch.MetricSets[podKey] = podMetrics
-		log.Infof("---got completed pods---\n %+v", podMetrics)
+		log.Debugf("Added MetricSet for key: %s, status: %s", podKey, pod.Status.Phase)
 	}
-	log.Debugf("End add completed pods")
 }
 
 // decodeSummary translates the kubelet statsSummary API into the flattened MetricSet API.

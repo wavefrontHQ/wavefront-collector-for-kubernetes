@@ -30,6 +30,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	kube_api "k8s.io/api/core/v1"
 	util "k8s.io/client-go/util/testing"
 )
 
@@ -110,9 +111,8 @@ func TestAllContainers(t *testing.T) {
 	checkContainer(t, subcontainer, containers[1])
 }
 
-
 func TestGetPods(t *testing.T) {
-	content, err := ioutil.ReadFile("pods_summary.json")
+	content, err := ioutil.ReadFile("k8s_api_pods.json")
 	require.NoError(t, err)
 	handler := util.FakeHandler{
 		StatusCode:   200,
@@ -134,6 +134,6 @@ func TestGetPods(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Len(t, pods.Items, 7)
+	assert.Equal(t, pods.Items[0].Status.Phase, kube_api.PodSucceeded, "Expected Pod status phase to be succeeded")
+	assert.Equal(t, pods.Items[5].Status.Phase, kube_api.PodFailed, "Expected Pod status phase to be failed")
 }
-
-
