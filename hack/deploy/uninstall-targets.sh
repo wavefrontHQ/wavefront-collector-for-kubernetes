@@ -1,16 +1,15 @@
 NS=$(kubectl get namespaces | awk '/collector-targets/ {print $1}')
 if [ -z ${NS} ]; then exit 0; fi
 
-echo "deleting prometheus endpoint"
-kubectl delete -f prom-example.yaml || true
+echo "Uninstalling targets..."
+kubectl delete -f prom-example.yaml &>/dev/null || true
 
-echo "uninstalling memcached"
-helm uninstall memcached-release --namespace collector-targets || true
+kubectl delete -f jobs.yaml &>/dev/null || true
 
-echo "uninstalling mysql"
-helm uninstall mysql-release --namespace collector-targets || true
+helm uninstall memcached-release --namespace collector-targets &>/dev/null || true
 
-echo "deleting  namespace collector-targets"
-kubectl delete namespace collector-targets || true
+helm uninstall mysql-release --namespace collector-targets &>/dev/null || true
 
-echo "targets uninstalled"
+kubectl delete namespace collector-targets &>/dev/null || true
+
+echo "Targets uninstalled"
