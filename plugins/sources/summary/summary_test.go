@@ -327,6 +327,7 @@ func TestDecodeEphemeralStorageStatsForContainer(t *testing.T) {
 
 // test support functions
 func (f *fakeSource) Name() string { return "fake" }
+
 func (f *fakeSource) ScrapeMetrics() (*core.DataBatch, error) {
 	f.scraped = true
 	return nil, nil

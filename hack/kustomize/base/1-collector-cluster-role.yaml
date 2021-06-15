@@ -14,9 +14,8 @@ rules:
   - events
   - namespaces
   - nodes
-  - nodes/stats
-  - nodes/pods
   - nodes/proxy
+  - nodes/stats
   - pods
   - replicationcontrollers
   - secrets
