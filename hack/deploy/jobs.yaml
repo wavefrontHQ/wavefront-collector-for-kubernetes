@@ -1,0 +1,45 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: job-failure
+  namespace: collector-targets
+spec:
+  completions: 1
+  parallelism: 1
+  backoffLimit: 2
+  template:
+    metadata:
+      name: job-failure
+      labels:
+        name: jobs
+    spec:
+      hostNetwork: true
+      containers:
+        - name: hello
+          image: busybox
+          args:
+            - /bin/sh
+            - -c
+            - date; echo I am down; exit 1
+      restartPolicy: Never
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: job-success
+  namespace: collector-targets
+spec:
+  completions: 1
+  parallelism: 1
+  backoffLimit: 2
+  template:
+    metadata:
+      name: say-something
+      labels:
+        name: jobs
+    spec:
+      containers:
+        - name: say-something
+          image: busybox
+          command: ["echo", "Running a job"]
+      restartPolicy: OnFailure

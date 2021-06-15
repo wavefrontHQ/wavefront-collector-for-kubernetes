@@ -85,7 +85,8 @@ func (src *summaryMetricsSource) String() string {
 
 func (src *summaryMetricsSource) ScrapeMetrics() (*DataBatch, error) {
 	result := &DataBatch{
-		Timestamp: time.Now(),
+		Timestamp:  time.Now(),
+		MetricSets: map[string]*MetricSet{},
 	}
 
 	summary, err := func() (*stats.Summary, error) {
@@ -97,9 +98,19 @@ func (src *summaryMetricsSource) ScrapeMetrics() (*DataBatch, error) {
 		return nil, err
 	}
 
-	result.MetricSets = src.decodeSummary(summary)
+	src.addSummaryMetricSets(result, summary)
 
-	return result, err
+	podList, err := func() (*kube_api.PodList, error) {
+		return src.kubeletClient.GetPods(src.node.Host)
+	}()
+
+	if err != nil {
+		collectErrors.Inc(1)
+		return nil, err
+	}
+	src.addCompletedPodMetricSets(result, podList)
+
+	return result, nil
 }
 
 const (
@@ -115,9 +126,42 @@ var systemNameMap = map[string]string{
 	stats.SystemContainerMisc:    "system",
 }
 
+func (src *summaryMetricsSource) addCompletedPodMetricSets(dataBatch *DataBatch, podList *kube_api.PodList) {
+	nodeLabels := map[string]string{
+		LabelNodename.Key: src.node.NodeName,
+		LabelHostname.Key: src.node.HostName,
+		LabelHostID.Key:   src.node.HostID,
+	}
+	for _, pod := range podList.Items {
+		if pod.Status.Phase != kube_api.PodSucceeded && pod.Status.Phase != kube_api.PodFailed {
+			continue
+		}
+
+		podKey := PodKey(pod.Namespace, pod.Name)
+		if dataBatch.MetricSets[podKey] != nil {
+			continue
+		}
+
+		podMetrics := &MetricSet{
+			Labels:              src.cloneLabels(nodeLabels),
+			MetricValues:        map[string]MetricValue{},
+			LabeledMetrics:      []LabeledMetric{},
+			CollectionStartTime: pod.Status.StartTime.Time,
+			ScrapeTime:          dataBatch.Timestamp,
+		}
+
+		podMetrics.Labels[LabelMetricSetType.Key] = MetricSetTypePod
+		podMetrics.Labels[LabelPodId.Key] = string(pod.UID)
+		podMetrics.Labels[LabelPodName.Key] = pod.Name
+		podMetrics.Labels[LabelNamespaceName.Key] = pod.Namespace
+
+		dataBatch.MetricSets[podKey] = podMetrics
+		log.Debugf("Added MetricSet for key: %s, status: %s", podKey, pod.Status.Phase)
+	}
+}
+
 // decodeSummary translates the kubelet statsSummary API into the flattened MetricSet API.
-func (src *summaryMetricsSource) decodeSummary(summary *stats.Summary) map[string]*MetricSet {
-	result := map[string]*MetricSet{}
+func (src *summaryMetricsSource) addSummaryMetricSets(dataBatch *DataBatch, summary *stats.Summary) {
 
 	labels := map[string]string{
 		LabelNodename.Key: src.node.NodeName,
@@ -125,12 +169,12 @@ func (src *summaryMetricsSource) decodeSummary(summary *stats.Summary) map[strin
 		LabelHostID.Key:   src.node.HostID,
 	}
 
-	src.decodeNodeStats(result, labels, &summary.Node)
+	src.decodeNodeStats(dataBatch.MetricSets, labels, &summary.Node)
 	for _, pod := range summary.Pods {
-		src.decodePodStats(result, labels, &pod)
+
+		src.decodePodStats(dataBatch.MetricSets, labels, &pod)
 	}
 	log.Debugf("End summary decode")
-	return result
 }
 
 // Convenience method for labels deep copy.

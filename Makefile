@@ -104,25 +104,25 @@ ifneq ($(OVERRIDE_IMAGE_NAME),)
 endif
 
 clean:
-	rm -f $(OUT_DIR)/$(ARCH)/$(BINARY_NAME)
-	rm -f $(OUT_DIR)/$(ARCH)/$(BINARY_NAME)-test
-	rm -f $(OUT_DIR)/$(ARCH)/test-proxy
+	@rm -f $(OUT_DIR)/$(ARCH)/$(BINARY_NAME)
+	@rm -f $(OUT_DIR)/$(ARCH)/$(BINARY_NAME)-test
+	@rm -f $(OUT_DIR)/$(ARCH)/test-proxy
 
 deploy-targets:
-	(cd $(DEPLOY_DIR) && ./deploy-targets.sh)
+	@(cd $(DEPLOY_DIR) && ./deploy-targets.sh)
 
 clean-targets:
-	(cd $(DEPLOY_DIR) && ./uninstall-targets.sh)
+	@(cd $(DEPLOY_DIR) && ./uninstall-targets.sh)
 
 token-check:
-	if [ -z ${WAVEFRONT_API_KEY} ]; then echo "Need to set WAVEFRONT_API_KEY" && exit 1; fi
+	@if [ -z ${WAVEFRONT_API_KEY} ]; then echo "Need to set WAVEFRONT_API_KEY" && exit 1; fi
 
 k9s:
 	watch -n 1 k9s
 
 clean-deployment:
-	(cd $(DEPLOY_DIR) && ./uninstall-wavefront-helm-release.sh)
-	(cd $(KUSTOMIZE_DIR) && ./clean-deploy.sh)
+	@(cd $(DEPLOY_DIR) && ./uninstall-wavefront-helm-release.sh)
+	@(cd $(KUSTOMIZE_DIR) && ./clean-deploy.sh)
 
 k8s-env:
 	@echo "\033[92mK8s Environment: $(shell kubectl config current-context)\033[0m"
@@ -141,7 +141,7 @@ target-gke:
 	gcloud auth configure-docker --quiet
 
 gke-cluster-name-check:
-	if [ -z ${GKE_CLUSTER_NAME} ]; then echo "Need to set GKE_CLUSTER_NAME" && exit 1; fi
+	@if [ -z ${GKE_CLUSTER_NAME} ]; then echo "Need to set GKE_CLUSTER_NAME" && exit 1; fi
 
 gke-connect-to-cluster: gke-cluster-name-check
 	gcloud container clusters get-credentials $(GKE_CLUSTER_NAME) --zone us-central1-c --project $(GCP_PROJECT)
@@ -159,26 +159,26 @@ create-gke-cluster: gke-cluster-name-check target-gke
 		clusterrolebinding
 
 delete-images-gcr:
-	gcloud container images delete us.gcr.io/$(GCP_PROJECT)/test-proxy:$(VERSION) --quiet || true
-	gcloud container images delete us.gcr.io/$(GCP_PROJECT)/wavefront-kubernetes-collector:$(VERSION) --quiet || true
+	@gcloud container images delete us.gcr.io/$(GCP_PROJECT)/test-proxy:$(VERSION) --quiet || true
+	@gcloud container images delete us.gcr.io/$(GCP_PROJECT)/wavefront-kubernetes-collector:$(VERSION) --quiet || true
 
 push-to-gcr:
-	docker tag $(PREFIX)/test-proxy:$(VERSION) us.gcr.io/$(GCP_PROJECT)/test-proxy:$(VERSION)
-	docker push us.gcr.io/$(GCP_PROJECT)/test-proxy:$(VERSION)
+	@docker tag $(PREFIX)/test-proxy:$(VERSION) us.gcr.io/$(GCP_PROJECT)/test-proxy:$(VERSION)
+	@docker push us.gcr.io/$(GCP_PROJECT)/test-proxy:$(VERSION)
 
-	docker tag $(PREFIX)/wavefront-kubernetes-collector:$(VERSION) us.gcr.io/$(GCP_PROJECT)/wavefront-kubernetes-collector:$(VERSION)
-	docker push us.gcr.io/$(GCP_PROJECT)/wavefront-kubernetes-collector:$(VERSION)
+	@docker tag $(PREFIX)/wavefront-kubernetes-collector:$(VERSION) us.gcr.io/$(GCP_PROJECT)/wavefront-kubernetes-collector:$(VERSION)
+	@docker push us.gcr.io/$(GCP_PROJECT)/wavefront-kubernetes-collector:$(VERSION)
 
 push-to-kind:
-	kind load docker-image $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) --name kind
-	kind load docker-image $(PREFIX)/test-proxy:$(VERSION) --name kind
+	@kind load docker-image $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) --name kind
+	@kind load docker-image $(PREFIX)/test-proxy:$(VERSION) --name kind
 
 delete-images-kind:
-	docker exec -it kind-control-plane crictl rmi $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) || true
-	kind load docker-image $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) --name kind
+	@docker exec -it kind-control-plane crictl rmi $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) || true
+	@kind load docker-image $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) --name kind
 
-	docker exec -it kind-control-plane crictl rmi $(PREFIX)/test-proxy:$(VERSION) || true
-	kind load docker-image $(PREFIX)/test-proxy:$(VERSION) --name kind
+	@docker exec -it kind-control-plane crictl rmi $(PREFIX)/test-proxy:$(VERSION) || true
+	@kind load docker-image $(PREFIX)/test-proxy:$(VERSION) --name kind
 
 push-images:
 ifeq ($(K8S_ENV), GKE)
@@ -196,9 +196,9 @@ endif
 
 proxy-test: token-check
 ifeq ($(K8S_ENV), GKE)
-	(cd $(KUSTOMIZE_DIR) && ./test.sh nimba $(WAVEFRONT_API_KEY) $(VERSION) "us.gcr.io\/$(GCP_PROJECT)")
+	@(cd $(KUSTOMIZE_DIR) && ./test.sh nimba $(WAVEFRONT_API_KEY) $(VERSION) "us.gcr.io\/$(GCP_PROJECT)")
 else
-	(cd $(KUSTOMIZE_DIR) && ./test.sh nimba $(WAVEFRONT_API_KEY) $(VERSION))
+	@(cd $(KUSTOMIZE_DIR) && ./test.sh nimba $(WAVEFRONT_API_KEY) $(VERSION))
 endif
 
 #Testing deployment and configuration changes, no code changes

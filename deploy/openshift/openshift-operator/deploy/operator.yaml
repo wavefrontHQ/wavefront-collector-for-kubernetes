@@ -39,6 +39,7 @@ rules:
   - namespaces
   - pods
   - nodes
+  - nodes/proxy
   - nodes/stats
   - services
   - serviceaccounts
