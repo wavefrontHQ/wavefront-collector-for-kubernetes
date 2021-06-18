@@ -13,7 +13,7 @@ VERSION=1.4.1-rc1
 WF_CLUSTER=nimba
 K8S_CLUSTER=$VERSION-release-test
 
-if [[ -z ${WF_TOKEN} ]] ; then
+if [[ -z ${WAVEFRONT_TOKEN} ]] ; then
     #TODO: source these from environment variables if not provided
     print_msg_and_exit "wavefront token required"
 fi
@@ -31,7 +31,7 @@ cp ${ROOT_DIR}/hack/deploy/prom-example.yaml $TEMP_DIR/.
 cp ${ROOT_DIR}/hack/kustomize/base/proxy.template.yaml $TEMP_DIR/proxy.yaml
 
 pushd $TEMP_DIR
-  sed -i '' "s/YOUR_CLUSTER/${WF_CLUSTER}/g; s/YOUR_API_TOKEN/${WF_TOKEN}/g" ${TEMP_DIR}/proxy.yaml
+  sed -i '' "s/YOUR_CLUSTER/${WF_CLUSTER}/g; s/YOUR_API_TOKEN/${WAVEFRONT_TOKEN}/g" ${TEMP_DIR}/proxy.yaml
   sed -i '' "s/k8s-cluster/${K8S_CLUSTER}/g" ${TEMP_DIR}/4-collector-config.yaml
   sed -i '' "s/${CURRENT_VERSION}/${VERSION}/g" ${TEMP_DIR}/5-collector-daemonset.yaml
 
