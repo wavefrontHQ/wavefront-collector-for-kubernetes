@@ -28,7 +28,7 @@ function print_usage_and_exit() {
 }
 
 WF_CLUSTER=
-WF_TOKEN=
+WAVEFRONT_TOKEN=
 VERSION=
 DOCKER_HOST=
 
@@ -38,7 +38,7 @@ while getopts "c:t:v:d:" opt; do
       WF_CLUSTER="$OPTARG"
       ;;
     t)
-      WF_TOKEN="$OPTARG"
+      WAVEFRONT_TOKEN="$OPTARG"
       ;;
     v)
       VERSION="$OPTARG"
@@ -54,7 +54,7 @@ done
 
 echo "$WF_CLUSTER $VERSION $IMAGE"
 
-if [[ -z ${WF_CLUSTER} || -z ${WF_TOKEN} ]] ; then
+if [[ -z ${WF_CLUSTER} || -z ${WAVEFRONT_TOKEN} ]] ; then
     #TODO: source these from environment variables if not provided
     print_usage_and_exit "wavefront instance and token required"
 fi
@@ -75,7 +75,7 @@ echo "FLUSH ONCE: ${FLUSH_ONCE}"
 if $USE_TEST_PROXY ; then
   sed "s/DOCKER_HOST/${DOCKER_HOST}/g" base/test-proxy.template.yaml  |  sed "s/YOUR_IMAGE_TAG/${VERSION}/g"> base/proxy.yaml
 else
-  sed "s/YOUR_CLUSTER/${WF_CLUSTER}/g; s/YOUR_API_TOKEN/${WF_TOKEN}/g" base/proxy.template.yaml > base/proxy.yaml
+  sed "s/YOUR_CLUSTER/${WF_CLUSTER}/g; s/YOUR_API_TOKEN/${WAVEFRONT_TOKEN}/g" base/proxy.template.yaml > base/proxy.yaml
 fi
 
  sed "s/DOCKER_HOST/${DOCKER_HOST}/g" base/kustomization.template.yaml | sed "s/YOUR_IMAGE_TAG/${VERSION}/g"  > base/kustomization.yaml

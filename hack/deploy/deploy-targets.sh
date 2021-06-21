@@ -18,4 +18,5 @@ helm upgrade --install mysql-release bitnami/mysql \
 --set auth.rootPassword=password123 \
 --namespace collector-targets &>/dev/null || true
 
+wait_for_cluster_ready
 echo "Finished deploying targets"
