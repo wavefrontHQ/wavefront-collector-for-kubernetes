@@ -15,23 +15,20 @@ Pods/Services can be discovered based on annotations and discovery rules. Discov
 
 [Annotations](https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/) are metadata you attach to Kubernetes objects. Amongst other uses, they can act as pointers for monitoring tools.
 
-The collector can dynamically discover pods/services annotated with `wavefront.com/scrape` set to **true**. Additional annotations can be provided to inform the collector on how to perform the collection and what prefix and tags to add to the emitted metrics.
+The collector can dynamically discover pods/services annotated with `prometheus.io/scrape` set to **true**. Additional annotations can be provided to inform the collector on how to perform the collection and what prefix and tags to add to the emitted metrics.
 
 Additional annotations that apply:
-- `wavefront.com/scheme`: Defaults to **http**.
-- `wavefront.com/path`: Defaults to **/metrics**.
-- `wavefront.com/port`: Defaults to a port free target if omitted.
-- `wavefront.com/prefix`: Dot suffixed string to prefix reported metrics. Defaults to an empty string.
-- `wavefront.com/includeLabels`: Whether to include Kubernetes labels as tags on reported metrics. Defaults to **true**.
-- `wavefront.com/source`: Optional source for the reported metrics. Defaults to the node name on which collection is performed.
-- `wavefront.com/collectionInterval`: Custom collection interval. Defaults to 1m. Format is `[0-9]+(ms|[smhdwy])`.
-- `wavefront.com/insecureSkipVerify`: Whether to skip https cert validation. Defaults to true.
-- `wavefront.com/serverName`: The cert hostname to verify for the discovered targets.
+- `prometheus.io/scheme`: Defaults to **http**.
+- `prometheus.io/path`: Defaults to **/metrics**.
+- `prometheus.io/port`: Defaults to a port free target if omitted.
+- `prometheus.io/prefix`: Dot suffixed string to prefix reported metrics. Defaults to an empty string.
+- `prometheus.io/includeLabels`: Whether to include Kubernetes labels as tags on reported metrics. Defaults to **true**.
+- `prometheus.io/source`: Optional source for the reported metrics. Defaults to the node name on which collection is performed.
+- `prometheus.io/collectionInterval`: Custom collection interval. Defaults to 1m. Format is `[0-9]+(ms|[smhdwy])`.
+- `prometheus.io/insecureSkipVerify`: Whether to skip https cert validation. Defaults to true.
+- `prometheus.io/serverName`: The cert hostname to verify for the discovered targets.
 
 See an [example](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/deploy/examples/prometheus-annotations-example.yaml) for how to annotate a pod with the above annotations.
-
-### Automatically import all of your Prometheus metrics
-Changing your `annotation_prefix` from `wavefront.com` to `prometheus.io` will allow you to scrape all your pods already annotated for prometheus discovery.
 
 ### Disabling annotation discovery
 Discovery based on annotations is enabled by default, but can be disabled by setting the `disable_annotation_discovery` configuration option to `true`:
