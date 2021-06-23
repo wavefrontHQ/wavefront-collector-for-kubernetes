@@ -81,7 +81,7 @@ sources:
 discovery:
   # optional prefix for annotation based discovery.
   # when specified, this replaces prefixes such as `prometheus.io` etc
-  annotation_prefix: "wavefront.com"
+  annotation_prefix: "prometheus.io"
 
   # frequency of evaluating discovery rules. Defaults to 5 minutes.
   # format is [0-9]+(ms|[smhdwy])
