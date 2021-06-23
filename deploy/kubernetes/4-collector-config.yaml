@@ -90,8 +90,6 @@ data:
 
     # discovery rules for auto-discovery of pods and services
     discovery:
-      annotation_prefix: 'wavefront.com'
-
       enable_runtime_plugins: true
 
       plugins:
