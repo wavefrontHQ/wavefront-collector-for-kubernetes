@@ -16,6 +16,11 @@ RC_NUMBER?=1
 GIT_BRANCH=$(shell git rev-parse --abbrev-ref HEAD)
 GIT_HUB_REPO=wavefrontHQ/wavefront-collector-for-kubernetes
 
+ECR_REPO_PREFIX=tobs/k8s/saas
+WAVEFRONT_DEV_AWS_ACC_ID=095415062695
+AWS_REGION=us-west-2
+ECR_ENDPOINT=${WAVEFRONT_DEV_AWS_ACC_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
+
 K8S_ENV=$(shell cd $(DEPLOY_DIR) && ./get-k8s-cluster-env.sh)
 
 ifndef TEMP_DIR
@@ -140,6 +145,10 @@ target-gke:
 	gcloud config set project $(GCP_PROJECT)
 	gcloud auth configure-docker --quiet
 
+target-eks:
+	aws eks --region $(AWS_REGION) update-kubeconfig --name k8s-saas-team-dev
+	aws ecr get-login-password --region $(AWS_REGION) | sudo docker login --username AWS --password-stdin $(ECR_ENDPOINT)
+
 gke-cluster-name-check:
 	@if [ -z ${GKE_CLUSTER_NAME} ]; then echo "Need to set GKE_CLUSTER_NAME" && exit 1; fi
 
@@ -168,6 +177,13 @@ push-to-gcr:
 
 	@docker tag $(PREFIX)/wavefront-kubernetes-collector:$(VERSION) us.gcr.io/$(GCP_PROJECT)/wavefront-kubernetes-collector:$(VERSION)
 	@docker push us.gcr.io/$(GCP_PROJECT)/wavefront-kubernetes-collector:$(VERSION)
+
+push-to-ecr:
+	@docker tag $(PREFIX)/test-proxy:$(VERSION) ${ECR_ENDPOINT}/${ECR_REPO_PREFIX}/test-proxy:${VERSION}
+	@docker push ${ECR_ENDPOINT}/${ECR_REPO_PREFIX}/test-proxy:${VERSION}
+
+	@docker tag $(PREFIX)/wavefront-kubernetes-collector:$(VERSION) ${ECR_ENDPOINT}/${ECR_REPO_PREFIX}/wavefront-kubernetes-collector:${VERSION}
+	@docker push ${ECR_ENDPOINT}/${ECR_REPO_PREFIX}/wavefront-kubernetes-collector:${VERSION}
 
 push-to-kind:
 	@kind load docker-image $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) --name kind
