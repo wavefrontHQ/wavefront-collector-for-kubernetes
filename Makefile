@@ -18,6 +18,7 @@ GIT_HUB_REPO=wavefrontHQ/wavefront-collector-for-kubernetes
 
 ECR_REPO_PREFIX=tobs/k8s/saas
 WAVEFRONT_DEV_AWS_ACC_ID=095415062695
+AWS_PROFILE=wavefront-dev
 AWS_REGION=us-west-2
 ECR_ENDPOINT=${WAVEFRONT_DEV_AWS_ACC_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
 
@@ -146,7 +147,9 @@ target-gke:
 	gcloud auth configure-docker --quiet
 
 target-eks:
-	aws eks --region $(AWS_REGION) update-kubeconfig --name k8s-saas-team-dev
+	export AWS_PROFILE=$(AWS_PROFILE) # TODO: doesn't work
+	aws sts get-caller-identity
+	aws eks --region $(AWS_REGION) update-kubeconfig --name k8s-saas-team-dev --profile $(AWS_PROFILE)
 	aws ecr get-login-password --region $(AWS_REGION) | sudo docker login --username AWS --password-stdin $(ECR_ENDPOINT)
 
 gke-cluster-name-check:
@@ -172,18 +175,10 @@ delete-images-gcr:
 	@gcloud container images delete us.gcr.io/$(GCP_PROJECT)/wavefront-kubernetes-collector:$(VERSION) --quiet || true
 
 push-to-gcr:
-	@docker tag $(PREFIX)/test-proxy:$(VERSION) us.gcr.io/$(GCP_PROJECT)/test-proxy:$(VERSION)
-	@docker push us.gcr.io/$(GCP_PROJECT)/test-proxy:$(VERSION)
-
-	@docker tag $(PREFIX)/wavefront-kubernetes-collector:$(VERSION) us.gcr.io/$(GCP_PROJECT)/wavefront-kubernetes-collector:$(VERSION)
-	@docker push us.gcr.io/$(GCP_PROJECT)/wavefront-kubernetes-collector:$(VERSION)
+	./hack/make/push-container.sh $(PREFIX) $(VERSION) us.gcr.io $(GCP_PROJECT)
 
 push-to-ecr:
-	@docker tag $(PREFIX)/test-proxy:$(VERSION) ${ECR_ENDPOINT}/${ECR_REPO_PREFIX}/test-proxy:${VERSION}
-	@docker push ${ECR_ENDPOINT}/${ECR_REPO_PREFIX}/test-proxy:${VERSION}
-
-	@docker tag $(PREFIX)/wavefront-kubernetes-collector:$(VERSION) ${ECR_ENDPOINT}/${ECR_REPO_PREFIX}/wavefront-kubernetes-collector:${VERSION}
-	@docker push ${ECR_ENDPOINT}/${ECR_REPO_PREFIX}/wavefront-kubernetes-collector:${VERSION}
+	./hack/make/push-container.sh $(PREFIX) $(VERSION) $(ECR_ENDPOINT) $(ECR_REPO_PREFIX)
 
 push-to-kind:
 	@kind load docker-image $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) --name kind
