@@ -1,20 +1,8 @@
 #!/bin/bash -e
 source ../deploy/k8s-utils.sh
+source ../make/script-tools.sh
 
 # This script automates the functional testing of the collector
-
-function green {
-    echo -e $'\e[32m'$1$'\e[0m'
-}
-
-function red {
-    echo -e $'\e[31m'$1$'\e[0m'
-}
-
-function print_msg_and_exit() {
-    red "$1"
-    exit 1
-}
 
 DEFAULT_VERSION="1.3.6"
 DEFAULT_DOCKER_HOST="wavefronthq"

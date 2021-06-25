@@ -147,8 +147,6 @@ target-gke:
 	gcloud auth configure-docker --quiet
 
 target-eks:
-	export AWS_PROFILE=$(AWS_PROFILE) # TODO: doesn't work
-	aws sts get-caller-identity
 	aws eks --region $(AWS_REGION) update-kubeconfig --name k8s-saas-team-dev --profile $(AWS_PROFILE)
 	aws ecr get-login-password --region $(AWS_REGION) | sudo docker login --username AWS --password-stdin $(ECR_ENDPOINT)
 
