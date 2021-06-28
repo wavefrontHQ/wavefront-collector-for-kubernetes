@@ -51,8 +51,7 @@ build: clean fmt vet
 	GOARCH=$(ARCH) CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o $(OUT_DIR)/$(ARCH)/$(BINARY_NAME) ./cmd/wavefront-collector/
 
 vet:
-	./hack/make/vet.sh
-	go vet -composites=false ./...
+	@./hack/make/vet.sh
 
 # test driver for local development
 driver: clean fmt
@@ -90,15 +89,10 @@ else
 endif
 
 test-proxy-container:
-	./hack/make/test-proxy-container.sh
-	docker build \
-	--build-arg BINARY_NAME=test-proxy --build-arg LDFLAGS="$(LDFLAGS)" \
-	--pull -f $(REPO_DIR)/Dockerfile.test-proxy \
-	-t $(PREFIX)/test-proxy:$(VERSION) .
+	@LDFLAGS="$(LDFLAGS)" REPO_DIR=$(REPO_DIR) PREFIX=$(PREFIX) VERSION=$(VERSION) ./hack/make/test-proxy-container.sh
 
 test-proxy: peg $(REPO_DIR)/cmd/test-proxy/metric_grammar.peg.go clean fmt vet
-	./hack/make/test-proxy.sh
-	GOARCH=$(ARCH) CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o $(OUT_DIR)/$(ARCH)/test-proxy ./cmd/test-proxy/...
+	@ARCH=$(ARCH) LDFLAGS="$(LDFLAGS)" OUT_DIR=$(OUT_DIR) ./hack/make/test-proxy.sh
 
 peg:
 	@REPO_DIR=$(REPO_DIR) ARCH=$(ARCH) ./hack/make/peg.sh
