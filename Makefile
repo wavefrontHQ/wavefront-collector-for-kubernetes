@@ -42,22 +42,27 @@ fmt:
 	find . -type f -name "*.go" | grep -v "./vendor*" | xargs goimports -w
 
 tests:
+	./hack/make/tests.sh
 	go clean -testcache
 	go test -timeout 30s -race ./...
 
 build: clean fmt vet
+	./hack/make/build.sh
 	GOARCH=$(ARCH) CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o $(OUT_DIR)/$(ARCH)/$(BINARY_NAME) ./cmd/wavefront-collector/
 
 vet:
+	./hack/make/vet.sh
 	go vet -composites=false ./...
 
 # test driver for local development
 driver: clean fmt
+	./hack/make/driver.sh
 	GOARCH=$(ARCH) CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o $(OUT_DIR)/$(ARCH)/$(BINARY_NAME)-test ./cmd/test-driver/
 
 containers: container test-proxy-container
 
 container:
+	./hack/make/container.sh
 	# Run build in a container in order to have reproducible builds
 	docker build \
 	--build-arg BINARY_NAME=$(BINARY_NAME) --build-arg LDFLAGS="$(LDFLAGS)" \
@@ -67,10 +72,12 @@ ifneq ($(OVERRIDE_IMAGE_NAME),)
 endif
 
 github-release:
+	./hack/make/github-release.sh
 	curl -X POST -H "Content-Type:application/json" -H "Authorization: token $(GITHUB_TOKEN)" \
 		-d '{"tag_name":"v$(VERSION)", "target_commitish":"$(GIT_BRANCH)", "name":"Release v$(VERSION)", "body": "Description for v$(VERSION)", "draft": true, "prerelease": false}' "https://api.github.com/repos/$(GIT_HUB_REPO)/releases"
 
 release:
+	./hack/make/release.sh
 	docker buildx create --use --node wavefront_collector_builder
 ifeq ($(RELEASE_TYPE), release)
 	docker buildx build --platform linux/amd64,linux/arm64 --push \
@@ -83,17 +90,18 @@ else
 endif
 
 test-proxy-container:
+	./hack/make/test-proxy-container.sh
 	docker build \
 	--build-arg BINARY_NAME=test-proxy --build-arg LDFLAGS="$(LDFLAGS)" \
 	--pull -f $(REPO_DIR)/Dockerfile.test-proxy \
 	-t $(PREFIX)/test-proxy:$(VERSION) .
 
 test-proxy: peg $(REPO_DIR)/cmd/test-proxy/metric_grammar.peg.go clean fmt vet
+	./hack/make/test-proxy.sh
 	GOARCH=$(ARCH) CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o $(OUT_DIR)/$(ARCH)/test-proxy ./cmd/test-proxy/...
 
 peg:
-	@which peg > /dev/null || \
-		(cd $(REPO_DIR)/..; GOARCH=$(ARCH) CGO_ENABLED=0 go get -u github.com/pointlander/peg)
+	@REPO_DIR=$(REPO_DIR) ARCH=$(ARCH) ./hack/make/peg.sh
 
 %.peg.go: %.peg
 	peg -switch -inline $<
@@ -174,25 +182,13 @@ delete-images-kind:
 	@PREFIX=$(PREFIX) DOCKER_IMAGE=$(DOCKER_IMAGE) VERSION=$(VERSION) ./hack/make/delete-images-kind.sh
 
 push-images:
-ifeq ($(K8S_ENV), GKE)
-	make push-to-gcr
-else
-	make push-to-kind
-endif
+	K8S_ENV=$(K8S_ENV) PREFIX=$(PREFIX) VERSION=$(VERSION) GCP_PROJECT=$(GCP_PROJECT) DOCKER_IMAGE=$(DOCKER_IMAGE) ./hack/make/push-images.sh
 
 delete-images:
-ifeq ($(K8S_ENV), GKE)
-	make delete-images-gcr
-else
-	make delete-images-kind
-endif
+	@K8S_ENV=$(K8S_ENV) GCP_PROJECT=$(GCP_PROJECT) VERSION=$(VERSION) PREFIX=$(PREFIX) DOCKER_IMAGE=$(DOCKER_IMAGE) ./hack/make/delete-images.sh
 
 proxy-test: token-check
-ifeq ($(K8S_ENV), GKE)
-	@(cd $(KUSTOMIZE_DIR) && ./test.sh nimba $(WAVEFRONT_TOKEN) $(VERSION) "us.gcr.io\/$(GCP_PROJECT)")
-else
-	@(cd $(KUSTOMIZE_DIR) && ./test.sh nimba $(WAVEFRONT_TOKEN) $(VERSION))
-endif
+	@K8S_ENV=$(K8S_ENV) KUSTOMIZE_DIR=$(KUSTOMIZE_DIR) WAVEFRONT_TOKEN=$(WAVEFRONT_TOKEN) VERSION=$(VERSION) GCP_PROJECT=$(GCP_PROJECT) ./hack/make/proxy-test.sh
 
 #Testing deployment and configuration changes, no code changes
 deploy-test: token-check k8s-env clean-deployment deploy-targets push-images proxy-test
