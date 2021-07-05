@@ -28,7 +28,7 @@ ifndef TEMP_DIR
 TEMP_DIR:=$(shell mktemp -d /tmp/wavefront.XXXXXX)
 endif
 
-VERSION?=1.5.1
+VERSION?=1.5.0
 GIT_COMMIT:=$(shell git rev-parse --short HEAD)
 
 # for testing, the built image will also be tagged with this name provided via an environment variable
@@ -104,7 +104,7 @@ container_rhel: build
 	cp LICENSE $(TEMP_DIR)/license.txt
 	cp deploy/docker/Dockerfile-rhel $(TEMP_DIR)/Dockerfile
 	cp deploy/examples/openshift-config.yaml $(TEMP_DIR)/collector.yaml
-	sudo docker build --pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(TEMP_DIR)
+	podman build --pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(TEMP_DIR)
 ifneq ($(OVERRIDE_IMAGE_NAME),)
 	sudo docker tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OVERRIDE_IMAGE_NAME)
 endif
