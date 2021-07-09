@@ -19,9 +19,10 @@ package util
 
 import (
 	"fmt"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 	"sort"
 	"strings"
+
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 )
 
 // LabelCopier maps kubernetes objects' labels to metrics

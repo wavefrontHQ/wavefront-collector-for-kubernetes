@@ -34,7 +34,7 @@ import (
 	"time"
 
 	cadvisor "github.com/google/cadvisor/info/v1"
-	"github.com/json-iterator/go"
+	jsoniter "github.com/json-iterator/go"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	stats "k8s.io/kubernetes/pkg/kubelet/apis/stats/v1alpha1"
