@@ -4,8 +4,9 @@
 package summary
 
 import (
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 	"sort"
+
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 )
 
 const (

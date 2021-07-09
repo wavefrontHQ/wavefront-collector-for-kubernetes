@@ -4,8 +4,9 @@
 package wavefront
 
 import (
-	log "github.com/sirupsen/logrus"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const (

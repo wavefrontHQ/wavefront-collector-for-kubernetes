@@ -4,7 +4,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	"k8s.io/api/authorization/v1"
+	v1 "k8s.io/api/authorization/v1"
 	authv1 "k8s.io/client-go/kubernetes/typed/authorization/v1"
 )
 

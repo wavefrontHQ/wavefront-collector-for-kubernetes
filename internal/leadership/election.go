@@ -14,7 +14,7 @@ import (
 	"github.com/rcrowley/go-metrics"
 	log "github.com/sirupsen/logrus"
 
-	"k8s.io/client-go/kubernetes/typed/core/v1"
+	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/tools/leaderelection"
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
 	"k8s.io/client-go/tools/record"
