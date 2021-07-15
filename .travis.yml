@@ -7,6 +7,7 @@ before_install:
     fi
   - tar -xzf travis.tar.gz
   - gcloud auth activate-service-account --key-file wavefront-gcp-dev-bc34048ac422.json
+  - gcloud auth configure-docker
 
 install:
   - gcloud config set project wavefront-gcp-dev
