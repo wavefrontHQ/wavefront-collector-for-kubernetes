@@ -1,9 +1,7 @@
 language: go
 
 env:
-  - VERSION=2.0.0
-  - OS=linux
-  - ARCH=amd64
+  - VERSION=2.0.0 OS=linux ARCH=amd64
 
 before_install:
   - openssl aes-256-cbc -K $encrypted_ad13726c9b2f_key -iv $encrypted_ad13726c9b2f_iv -in travis.tar.gz.enc -out travis.tar.gz -d
