@@ -10,7 +10,7 @@ before_install:
     fi
   - tar -xzf travis.tar.gz
   - gcloud auth activate-service-account --key-file wavefront-gcp-dev-bc34048ac422.json
-  - curl -fsSL "https://github.com/GoogleCloudPlatform/docker-credential-gcr/releases/download/v${VERSION}/docker-credential-gcr_${OS}_${ARCH}-${VERSION}.tar.gz" | tar xz --to-stdout ./docker-credential-gcr > /usr/local/bin/docker-credential-gcr && chmod +x /usr/local/bin/docker-credential-gcr
+  - curl -fsSL "https://github.com/GoogleCloudPlatform/docker-credential-gcr/releases/download/v${VERSION}/docker-credential-gcr_${OS}_${ARCH}-${VERSION}.tar.gz" | sudo tar xz --to-stdout ./docker-credential-gcr > /usr/local/bin/docker-credential-gcr && sudo chmod +x /usr/local/bin/docker-credential-gcr
   - gcloud auth configure-docker --quiet
 
 install:
