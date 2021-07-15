@@ -39,7 +39,7 @@ LDFLAGS=-w -X main.version=$(VERSION) -X main.commit=$(GIT_COMMIT)
 all: container
 
 fmt:
-	find . -type f -name "*.go" | grep -v "./vendor*" | xargs goimports -w
+	echo "add me back... "
 
 tests:
 	go clean -testcache
