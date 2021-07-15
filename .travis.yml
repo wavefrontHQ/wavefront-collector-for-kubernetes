@@ -24,8 +24,6 @@ go_import_path: github.com/wavefronthq/wavefront-collector-for-kubernetes
 
 go:
   - "1.15.x"
-  - "1.16.x"
-  - master 
 
 matrix:
   # It's ok if our code fails on unstable development versions of Go.
@@ -45,6 +43,7 @@ notifications:
 script:
   - GKE_CLUSTER_NAME=k8s-saas-travis-ci make gke-connect-to-cluster
   - kubectl cluster-info
+  - WAVEFRONT_TOKEN="715af50c-e010-4908-89cd-e2550e805245" make integration-test
   - diff -u <(echo -n) <(goimports -d $(find . -type f -name '*.go' -not -path "./vendor/*"))
   - go test -v -race ./...                   # Run all the tests with the race detector enabled
   - go vet -composites=false ./...           # go vet is the official Go static analyzer
