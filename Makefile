@@ -34,7 +34,7 @@ include make/k8s-envs/*.mk
 all: container
 
 fmt:
-	find . -type f -name "*.go" | grep -v "./vendor*" | xargs goimports -w
+	echo "add me back... "
 
 tests:
 	go clean -testcache
