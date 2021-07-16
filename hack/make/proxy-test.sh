@@ -25,11 +25,18 @@ if [[ -z ${GCP_PROJECT} ]]; then
   print_msg_and_exit 'GCP_PROJECT required but was empty'
   #GCP_PROJECT=$DEFAULT_GCP_PROJECT
 fi
-
+WAVEFRONT_DEV_AWS_ACC_ID=095415062695
+AWS_PROFILE=wavefront-dev
+AWS_REGION=us-west-2
+ECR_ENDPOINT=${WAVEFRONT_DEV_AWS_ACC_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
 # commands ...
 pushd_check ${KUSTOMIZE_DIR}
 if [ ${K8S_ENV} == "GKE" ]; then
   ./test.sh nimba ${WAVEFRONT_TOKEN} ${VERSION} "us.gcr.io\/${GCP_PROJECT}"
+elif [ ${K8S_ENV} == "EKS" ]; then
+  echo "${ECR_ENDPOINT}\/tobs/k8s/saas"
+  echo "us.gcr.io\/${GCP_PROJECT}"
+  ./test.sh nimba ${WAVEFRONT_TOKEN} ${VERSION} "${ECR_ENDPOINT}\/tobs\/k8s\/saas"
 else
   ./test.sh nimba ${WAVEFRONT_TOKEN} ${VERSION}
 fi

@@ -31,9 +31,18 @@ if [[ -z ${VERSION} ]]; then
   #VERSION=$DEFAULT_VERSION
 fi
 
+ECR_REPO_PREFIX=tobs/k8s/saas
+
 # commands ...
 if [ ${K8S_ENV} == "GKE" ]; then
-  ./hack/make/delete-images-gcr.sh
+  gcloud container images delete us.gcr.io/${GCP_PROJECT}/test-proxy:${VERSION} --quiet &>/dev/null || true
+  gcloud container images delete us.gcr.io/${GCP_PROJECT}/wavefront-kubernetes-collector:${VERSION} --quiet &>/dev/null || true
+elif [ ${K8S_ENV} == "EKS" ]; then
+  aws ecr batch-delete-image --repository-name  ${ECR_REPO_PREFIX}/${DOCKER_IMAGE} --image-ids imageTag=${VERSION}
 else
-  ./hack/make/delete-images-kind.sh
+  docker exec -it kind-control-plane crictl rmi ${PREFIX}/${DOCKER_IMAGE}:${VERSION} || true
+	kind load docker-image ${PREFIX}/${DOCKER_IMAGE}:${VERSION} --name kind
+
+	docker exec -it kind-control-plane crictl rmi ${PREFIX}/test-proxy:${VERSION} || true
+	kind load docker-image ${PREFIX}/test-proxy:${VERSION} --name kind
 fi
