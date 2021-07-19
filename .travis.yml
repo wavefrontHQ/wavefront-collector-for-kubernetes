@@ -51,7 +51,7 @@ notifications:
 script:
   - GKE_CLUSTER_NAME=k8s-saas-travis-ci make gke-connect-to-cluster
   - kubectl cluster-info
-  - VERSION=1.6.0 WAVEFRONT_TOKEN="715af50c-e010-4908-89cd-e2550e805245" make k8s-env proxy-test
+  - VERSION=1.6.0 WAVEFRONT_TOKEN="715af50c-e010-4908-89cd-e2550e805245" make k8s-env containers delete-images push-images proxy-test
 #  - diff -u <(echo -n) <(goimports -d $(find . -type f -name '*.go' -not -path "./vendor/*"))
 #  - go test -v -race ./...                   # Run all the tests with the race detector enabled
 #  - go vet -composites=false ./...           # go vet is the official Go static analyzer
