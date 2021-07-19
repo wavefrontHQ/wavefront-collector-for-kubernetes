@@ -16,17 +16,16 @@ go:
   - "1.15.x"
   - "1.16.x"
   - master
+allow_failures:
+  - go: "1.16.x"
+  - go: master
+fast_finish: true
+script:
+  - diff -u <(echo -n) <(goimports -d $(find . -type f -name '*.go' -not -path "./vendor/*"))
+  - go test -v -race ./...                   # Run all the tests with the race detector enabled
+  - go vet -composites=false ./...           # go vet is the official Go static analyzer
 jobs:
-  allow_failures:
-    - go: "1.16.x"
-    - go: master
-  fast_finish: true
   include:
-    - stage: test
-      script:
-        - diff -u <(echo -n) <(goimports -d $(find . -type f -name '*.go' -not -path "./vendor/*"))
-        - go test -v -race ./...                   # Run all the tests with the race detector enabled
-        - go vet -composites=false ./...           # go vet is the official Go static analyzer
     - stage: deploy
       go: "1.15.x"
       env: "DCH_VERSION=2.0.0 OS=linux ARCH=amd64"
