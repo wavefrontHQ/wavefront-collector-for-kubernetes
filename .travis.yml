@@ -8,25 +8,21 @@ branches:
 # workaround for case sensitive build issues with wavefrontHQ
 go_import_path: github.com/wavefronthq/wavefront-collector-for-kubernetes
 
-go:
-  - "1.15.x"
-  - "1.16.x"
-  - master
-
 # Don't email me the results of the test runs.
 notifications:
   email: false
 
-# script always run to completion (set +e).
+go:
+  - "1.15.x"
+  - "1.16.x"
+  - master
 jobs:
+  allow_failures:
+    - go: "1.16.x"
+    - go: master
+  fast_finish: true
   include:
     - stage: test
-      allow_failures:
-        - go: "1.16.x"
-        - go: master
-      # Don't wait for tip tests to finish. Mark the test run green if the
-      # tests pass on the stable versions of Go.
-      fast_finish: true
       script:
         - diff -u <(echo -n) <(goimports -d $(find . -type f -name '*.go' -not -path "./vendor/*"))
         - go test -v -race ./...                   # Run all the tests with the race detector enabled
