@@ -26,7 +26,7 @@ script:
   - go vet -composites=false ./...           # go vet is the official Go static analyzer
 jobs:
   include:
-    - stage: deploy
+    - stage: integration tests
       go: "1.15.x"
       env: "DCH_VERSION=2.0.0 OS=linux ARCH=amd64"
       script:
@@ -39,6 +39,10 @@ jobs:
         - curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
         - chmod +x ./kubectl
         - sudo mv ./kubectl /usr/local/bin/kubectl
+        - curl https://get.helm.sh/helm-v3.6.3-linux-amd64.tar.gz
+        - tar -zxvf helm-v3.6.3-linux-amd64.tar.gz
+        - chmod +x ./kubectl
+        - mv ./helm $HOME/bin
         - gcloud auth activate-service-account --key-file wavefront-gcp-dev-bc34048ac422.json
         - gcloud config set project wavefront-gcp-dev
         - docker-credential-gcr config --token-source="gcloud"
