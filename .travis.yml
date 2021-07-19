@@ -1,7 +1,7 @@
 language: go
 
 env:
-  - VERSION=2.0.0 OS=linux ARCH=amd64
+  - DCH_VERSION=2.0.0 OS=linux ARCH=amd64
 
 before_install:
   - openssl aes-256-cbc -K $encrypted_ad13726c9b2f_key -iv $encrypted_ad13726c9b2f_iv -in travis.tar.gz.enc -out travis.tar.gz -d
@@ -10,7 +10,7 @@ before_install:
     fi
   - tar -xzf travis.tar.gz
   - gcloud auth activate-service-account --key-file wavefront-gcp-dev-bc34048ac422.json
-  - curl -fsSL "https://github.com/GoogleCloudPlatform/docker-credential-gcr/releases/download/v${VERSION}/docker-credential-gcr_${OS}_${ARCH}-${VERSION}.tar.gz" | tar xz --to-stdout ./docker-credential-gcr > ${HOME}/bin/docker-credential-gcr && chmod +x ${HOME}/bin/docker-credential-gcr
+  - curl -fsSL "https://github.com/GoogleCloudPlatform/docker-credential-gcr/releases/download/v${DCH_VERSION}/docker-credential-gcr_${OS}_${ARCH}-${DCH_VERSION}.tar.gz" | tar xz --to-stdout ./docker-credential-gcr > ${HOME}/bin/docker-credential-gcr && chmod +x ${HOME}/bin/docker-credential-gcr
   - ${HOME}/bin/docker-credential-gcr configure-docker
 
 install:
@@ -48,7 +48,7 @@ notifications:
 script:
   - GKE_CLUSTER_NAME=k8s-saas-travis-ci make gke-connect-to-cluster
   - kubectl cluster-info
-  - WAVEFRONT_TOKEN="715af50c-e010-4908-89cd-e2550e805245" make integration-test
+  - VERSION=1.6.0 WAVEFRONT_TOKEN="715af50c-e010-4908-89cd-e2550e805245" make k8s-env proxy-test
 #  - diff -u <(echo -n) <(goimports -d $(find . -type f -name '*.go' -not -path "./vendor/*"))
 #  - go test -v -race ./...                   # Run all the tests with the race detector enabled
 #  - go vet -composites=false ./...           # go vet is the official Go static analyzer
