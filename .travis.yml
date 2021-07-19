@@ -13,16 +13,6 @@ go:
   - "1.16.x"
   - master
 
-matrix:
-  # It's ok if our code fails on unstable development versions of Go.
-  allow_failures:
-    - go: "1.16.x"
-    - go: master
-
-  # Don't wait for tip tests to finish. Mark the test run green if the
-  # tests pass on the stable versions of Go.
-  fast_finish: true
-
 # Don't email me the results of the test runs.
 notifications:
   email: false
@@ -31,6 +21,12 @@ notifications:
 jobs:
   include:
     - stage: test
+      allow_failures:
+        - go: "1.16.x"
+        - go: master
+      # Don't wait for tip tests to finish. Mark the test run green if the
+      # tests pass on the stable versions of Go.
+      fast_finish: true
       script:
         - diff -u <(echo -n) <(goimports -d $(find . -type f -name '*.go' -not -path "./vendor/*"))
         - go test -v -race ./...                   # Run all the tests with the race detector enabled
