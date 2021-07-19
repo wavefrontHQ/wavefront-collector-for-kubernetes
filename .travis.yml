@@ -9,18 +9,18 @@ before_install:
     curl https://sdk.cloud.google.com > install.sh; bash install.sh --disable-prompts >/dev/null;
     fi
   - tar -xzf travis.tar.gz
-  - gcloud auth activate-service-account --key-file wavefront-gcp-dev-bc34048ac422.json
   - curl -fsSL "https://github.com/GoogleCloudPlatform/docker-credential-gcr/releases/download/v${DCH_VERSION}/docker-credential-gcr_${OS}_${ARCH}-${DCH_VERSION}.tar.gz" | tar xz --to-stdout ./docker-credential-gcr > ${HOME}/bin/docker-credential-gcr && chmod +x ${HOME}/bin/docker-credential-gcr
-  - cat $HOME/.docker/config.json || true
-  - docker-credential-gcr configure-docker
-  - cat $HOME/.docker/config.json
-  - echo "https://us.gcr.io" | docker-credential-gcr get
-
-install:
-  - gcloud config set project wavefront-gcp-dev
   - curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
   - chmod +x ./kubectl
   - sudo mv ./kubectl /usr/local/bin/kubectl
+
+install:
+  - gcloud auth activate-service-account --key-file wavefront-gcp-dev-bc34048ac422.json
+  - gcloud config set project wavefront-gcp-dev
+  - docker-credential-gcr config --token-source="gcloud"
+  - docker-credential-gcr configure-docker
+  - cat $HOME/.docker/config.json
+  - echo "https://us.gcr.io" | docker-credential-gcr get
 
 # safelist
 branches:
