@@ -46,4 +46,5 @@ jobs:
         - echo "https://us.gcr.io" | docker-credential-gcr get
         - GKE_CLUSTER_NAME=k8s-saas-travis-ci make gke-connect-to-cluster
         - kubectl cluster-info
-        - VERSION_POSTFIX="-pr${TRAVIS_PULL_REQUEST}" make integration-test
+        - [[ $TRAVIS_PULL_REQUEST -ne "false" ]]; export VERSION_POSTFIX="-pr${TRAVIS_PULL_REQUEST}"
+        - make integration-test
