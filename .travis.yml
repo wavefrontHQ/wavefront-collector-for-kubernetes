@@ -40,6 +40,8 @@ jobs:
         - curl https://get.helm.sh/helm-v3.6.3-linux-amd64.tar.gz | tar xz --to-stdout linux-amd64/helm > $HOME/bin/helm
         - chmod +x $HOME/bin/helm
         - curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"  | bash
+        - chmod +x $HOME/gopath/src/github.com/wavefronthq/wavefront-collector-for-kubernetes/kustomize
+        - mv $HOME/gopath/src/github.com/wavefronthq/wavefront-collector-for-kubernetes/kustomize $HOME/bin
         - gcloud auth activate-service-account --key-file wavefront-gcp-dev-bc34048ac422.json
         - gcloud config set project wavefront-gcp-dev
         - docker-credential-gcr config --token-source="gcloud"
