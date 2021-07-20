@@ -39,7 +39,7 @@ fmt: $(GO_IMPORTS_BIN)
 	find . -type f -name "*.go" | grep -v "./vendor*" | xargs goimports -w
 
 checkfmt: $(GO_IMPORTS_BIN)
-	@if [[ $$(goimports -d $$(find . -type f -name '*.go' -not -path "./vendor/*") | wc -l) -gt 0 ]]; then \
+	@if [ $$(goimports -d $$(find . -type f -name '*.go' -not -path "./vendor/*") | wc -l) -gt 0 ]; then \
 		echo $$'\e[31mgoimports FAILED!!!\e[0m'; \
 		goimports -d $$(find . -type f -name '*.go' -not -path "./vendor/*"); \
 		exit 1; \
