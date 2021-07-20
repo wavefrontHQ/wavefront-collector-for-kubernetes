@@ -24,6 +24,8 @@
 {"Name":"disk.inodes.used","Tags":{"cluster":"","device":"","fstype":"overlay","mode":"rw","path":"","source":""}}
 {"Name":"disk.inodes.used","Tags":{"cluster":"","device":"","fstype":"tmpfs","mode":"ro","path":"","source":""}}
 {"Name":"disk.inodes.used","Tags":{"cluster":"","device":"","fstype":"tmpfs","mode":"rw","path":"","source":""}}
+{"Name":"disk.inodes.used","Tags":{"cluster":"","device":"","fstype":"","mode":"ro","path":"","source":""}}
+{"Name":"disk.inodes.used","Tags":{"cluster":"","device":"","fstype":"","mode":"rw","path":"","source":""}}
 {"Name":"disk.total","Tags":{"cluster":"","device":"","fstype":"ext4","mode":"ro","path":"","source":""}}
 {"Name":"disk.total","Tags":{"cluster":"","device":"","fstype":"ext4","mode":"rw","path":"","source":""}}
 {"Name":"disk.total","Tags":{"cluster":"","device":"","fstype":"overlay","mode":"rw","path":"","source":""}}
