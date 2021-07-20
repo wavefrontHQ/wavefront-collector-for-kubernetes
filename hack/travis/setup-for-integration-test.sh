@@ -4,6 +4,7 @@
 # gcloud
 #
 curl https://sdk.cloud.google.com > install.sh
+chmod +x ./install.sh
 ./install.sh --disable-prompts >/dev/null;
 
 echo "$GCP_CREDS" > "$HOME/gcp-creds.json"
