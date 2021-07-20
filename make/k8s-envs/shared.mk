@@ -19,6 +19,8 @@ clean-cluster: clean-targets clean-deployment
 push-images:
 ifeq ($(K8S_ENV), GKE)
 	make push-to-gcr
+else ifeq ($(K8S_ENV), EKS)
+	make push-to-ecr
 else
 	make push-to-kind
 endif
@@ -26,6 +28,8 @@ endif
 delete-images:
 ifeq ($(K8S_ENV), GKE)
 	make delete-images-gcr
+else ifeq ($(K8S_ENV), EKS)
+	make delete-images-ecr
 else
 	make delete-images-kind
 endif

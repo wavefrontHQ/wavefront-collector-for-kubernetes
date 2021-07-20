@@ -125,6 +125,6 @@ endif
 deploy-test: token-check k8s-env clean-deployment deploy-targets push-images proxy-test
 
 #Testing code, configuration and deployment changes
-integration-test: token-check k8s-env clean-deployment deploy-targets build tests containers delete-images push-images proxy-test
+integration-test: token-check k8s-env clean-deployment deploy-targets containers delete-images push-images proxy-test
 
 .PHONY: all fmt container clean release
