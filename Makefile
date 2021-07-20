@@ -23,7 +23,8 @@ endif
 
 GO_IMPORTS_BIN:=$(if $(which goimports),$(which goimports),$(GOPATH)/bin/goimports)
 
-VERSION?=1.6.1
+VERSION_POSTFIX?=""
+VERSION?=1.6.1$(VERSION_POSTFIX)
 GIT_COMMIT:=$(shell git rev-parse --short HEAD)
 
 # for testing, the built image will also be tagged with this name provided via an environment variable
@@ -100,7 +101,6 @@ peg:
 		(cd $(REPO_DIR)/..; GOARCH=$(ARCH) CGO_ENABLED=0 go get -u github.com/pointlander/peg)
 
 $(GO_IMPORTS_BIN):
-	echo $(GO_IMPORTS_BIN)
 	@cd $(REPO_DIR)/..; GOARCH=$(ARCH) CGO_ENABLED=0 go get -u golang.org/x/tools/cmd/goimports
 
 %.peg.go: %.peg
