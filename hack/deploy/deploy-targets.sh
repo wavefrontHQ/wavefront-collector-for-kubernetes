@@ -1,4 +1,8 @@
-source ./k8s-utils.sh
+SCRIPT_DIR="$(dirname "$(realpath "$0")")"
+source "$SCRIPT_DIR/k8s-utils.sh"
+
+cd "$SCRIPT_DIR"
+
 wait_for_cluster_ready
 
 echo "Deploying targets..."
