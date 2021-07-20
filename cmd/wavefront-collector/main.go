@@ -4,8 +4,8 @@
 package main
 
 import (
-	"net/http"
 	"fmt"
+	"net/http"
 	_ "net/http/pprof"
 	"os"
 	"runtime"
