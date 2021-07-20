@@ -21,6 +21,8 @@ ifndef TEMP_DIR
 TEMP_DIR:=$(shell mktemp -d /tmp/wavefront.XXXXXX)
 endif
 
+GO_IMPORTS_BIN:=$(if $(which goimports),$(which goimports),$(GOPATH)/bin/goimports)
+
 VERSION?=1.6.1
 GIT_COMMIT:=$(shell git rev-parse --short HEAD)
 
@@ -33,8 +35,15 @@ include make/k8s-envs/*.mk
 
 all: container
 
-fmt:
-	echo "add me back... "
+fmt: $(GO_IMPORTS_BIN)
+	find . -type f -name "*.go" | grep -v "./vendor*" | xargs goimports -w
+
+checkfmt: $(GO_IMPORTS_BIN)
+	@if [[ $$(goimports -d $$(find . -type f -name '*.go' -not -path "./vendor/*") | wc -l) -gt 0 ]]; then \
+		echo $$'\e[31mgoimports FAILED!!!\e[0m'; \
+		goimports -d $$(find . -type f -name '*.go' -not -path "./vendor/*"); \
+		exit 1; \
+	fi
 
 tests:
 	go clean -testcache
@@ -89,6 +98,10 @@ test-proxy: peg $(REPO_DIR)/cmd/test-proxy/metric_grammar.peg.go clean fmt vet
 peg:
 	@which peg > /dev/null || \
 		(cd $(REPO_DIR)/..; GOARCH=$(ARCH) CGO_ENABLED=0 go get -u github.com/pointlander/peg)
+
+$(GO_IMPORTS_BIN):
+	echo $(GO_IMPORTS_BIN)
+	@cd $(REPO_DIR)/..; GOARCH=$(ARCH) CGO_ENABLED=0 go get -u golang.org/x/tools/cmd/goimports
 
 %.peg.go: %.peg
 	peg -switch -inline $<
