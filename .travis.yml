@@ -25,25 +25,6 @@ jobs:
       go: "1.15.x"
       env: "DCH_VERSION=2.0.0 OS=linux ARCH=amd64"
       script:
-        - if [ ! -d ${HOME}/google-cloud-sdk ]; then
-          curl https://sdk.cloud.google.com > install.sh; bash install.sh --disable-prompts >/dev/null;
-          fi
-        - curl -fsSL "https://github.com/GoogleCloudPlatform/docker-credential-gcr/releases/download/v${DCH_VERSION}/docker-credential-gcr_${OS}_${ARCH}-${DCH_VERSION}.tar.gz" | tar xz --to-stdout ./docker-credential-gcr > ${HOME}/bin/docker-credential-gcr && chmod +x ${HOME}/bin/docker-credential-gcr
-        - curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
-        - chmod +x ./kubectl
-        - sudo mv ./kubectl /usr/local/bin/kubectl
-        - curl https://get.helm.sh/helm-v3.6.3-linux-amd64.tar.gz | tar xz --to-stdout linux-amd64/helm > $HOME/bin/helm
-        - chmod +x $HOME/bin/helm
-        - curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"  | bash
-        - chmod +x $HOME/gopath/src/github.com/wavefronthq/wavefront-collector-for-kubernetes/kustomize
-        - mv $HOME/gopath/src/github.com/wavefronthq/wavefront-collector-for-kubernetes/kustomize $HOME/bin
-        - echo $GCP_CREDS > $HOME/gcp-creds.json
-        - gcloud auth activate-service-account --key-file $HOME/gcp-creds.json
-        - gcloud config set project wavefront-gcp-dev
-        - docker-credential-gcr config --token-source="gcloud"
-        - docker-credential-gcr configure-docker --registries="us.gcr.io"
-        - cat $HOME/.docker/config.json
-        - echo "https://us.gcr.io" | docker-credential-gcr get
+        - ./hack/travis/setup-for-integration-test.sh
         - GKE_CLUSTER_NAME=k8s-saas-travis-ci make gke-connect-to-cluster
-        - kubectl cluster-info
         - VERSION_POSTFIX="$([[ $TRAVIS_PULL_REQUEST -ne "false" ]]; echo -n "-pr${TRAVIS_PULL_REQUEST}" || echo -n "")" make integration-test
