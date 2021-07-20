@@ -101,7 +101,7 @@ peg:
 		(cd $(REPO_DIR)/..; GOARCH=$(ARCH) CGO_ENABLED=0 go get -u github.com/pointlander/peg)
 
 $(GO_IMPORTS_BIN):
-	@cd $(REPO_DIR)/..; GOARCH=$(ARCH) CGO_ENABLED=0 go get -u golang.org/x/tools/cmd/goimports
+	@(cd $(REPO_DIR)/..; GOARCH=$(ARCH) CGO_ENABLED=0 go get -u golang.org/x/tools/cmd/goimports)
 
 %.peg.go: %.peg
 	peg -switch -inline $<
