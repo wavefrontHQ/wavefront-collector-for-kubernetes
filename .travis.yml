@@ -50,4 +50,4 @@ jobs:
         - echo "https://us.gcr.io" | docker-credential-gcr get
         - GKE_CLUSTER_NAME=k8s-saas-travis-ci make gke-connect-to-cluster
         - kubectl cluster-info
-        - WAVEFRONT_TOKEN="715af50c-e010-4908-89cd-e2550e805245" make integration-test
+        - make integration-test
