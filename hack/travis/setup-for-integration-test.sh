@@ -14,8 +14,7 @@ gcloud config set project wavefront-gcp-dev
 #
 # docker-credential-gcr
 #
-DCH_VERSION=2.0.0 OS=linux ARCH=amd64 \
-curl -fsSL "https://github.com/GoogleCloudPlatform/docker-credential-gcr/releases/download/v$DCH_VERSION/docker-credential-gcr_$OS_$ARCH-$DCH_VERSION.tar.gz" \
+curl -fsSL "https://github.com/GoogleCloudPlatform/docker-credential-gcr/releases/download/v2.0.0/docker-credential-gcr_linux_amd64-2.0.0.tar.gz" \
   | (tar xz --to-stdout ./docker-credential-gcr | sudo tee /usr/local/bin/docker-credential-gcr)
 sudo chmod +x /usr/local/bin/docker-credential-gcr
 docker-credential-gcr config --token-source="gcloud"
