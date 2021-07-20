@@ -19,8 +19,8 @@ curl -fsSL "https://github.com/GoogleCloudPlatform/docker-credential-gcr/release
 sudo chmod +x /usr/local/bin/docker-credential-gcr
 docker-credential-gcr config --token-source="gcloud"
 docker-credential-gcr configure-docker --registries="us.gcr.io"
-echo "https://us.gcr.io" | docker-credential-gcr get >/dev/null \
-  || echo "docker credentials not configured properly"; exit 1
+(echo "https://us.gcr.io" | docker-credential-gcr get >/dev/null) \
+  || (echo "docker credentials not configured properly"; exit 1)
 
 #
 # kubectl
@@ -32,7 +32,7 @@ sudo mv ./kubectl /usr/local/bin/kubectl
 #
 # helm
 #
-curl https://get.helm.sh/helm-v3.6.3-linux-amd64.tar.gz | tar xz --to-stdout linux-amd64/helm | sudo tee /usr/local/bin/helm
+curl https://get.helm.sh/helm-v3.6.3-linux-amd64.tar.gz | tar xz --to-stdout linux-amd64/helm | sudo tee /usr/local/bin/helm >/dev/null
 sudo chmod +x /usr/local/bin/helm
 
 #
