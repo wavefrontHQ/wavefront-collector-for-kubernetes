@@ -1,3 +1,5 @@
+#! /bin/bash -e
+
 SCRIPT_DIR="$(dirname "$(realpath "$0")")"
 source "$SCRIPT_DIR/k8s-utils.sh"
 
