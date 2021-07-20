@@ -15,11 +15,15 @@ docker-login-eks:
 target-eks: docker-login-eks
 	@aws eks --region $(AWS_REGION) update-kubeconfig --name k8s-saas-team-dev --profile $(AWS_PROFILE)
 
-push-to-ecr:
+push-to-ecr: docker-login-eks
 	docker tag $(PREFIX)/test-proxy:$(VERSION) $(ECR_ENDPOINT)/$(TEST_PROXY_ECR_REPO):$(VERSION)
 	docker push $(ECR_ENDPOINT)/$(ECR_REPO_PREFIX)/test-proxy:$(VERSION)
 
-	make release PREFIX=$(ECR_ENDPOINT) DOCKER_IMAGE=$(COLLECTOR_ECR_REPO)
+	@aws --no-cli-pager ecr describe-images --region $(AWS_REGION) --repository-name $(COLLECTOR_ECR_REPO) --image-ids imageTag=$(VERSION) > /dev/null;\
+	EXIT_CODE=$$?;\
+	if [ $$EXIT_CODE -ne 0 ]; then\
+	    make release PREFIX=$(ECR_ENDPOINT) DOCKER_IMAGE=$(COLLECTOR_ECR_REPO);\
+	fi
 
 delete-images-ecr:
 	aws ecr batch-delete-image --region $(AWS_REGION) --repository-name  $(COLLECTOR_ECR_REPO)  --image-ids imageTag=$(VERSION) imageTag=latest || true
