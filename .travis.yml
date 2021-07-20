@@ -23,7 +23,6 @@ jobs:
   include:
     - stage: integration tests
       go: "1.15.x"
-      env: "DCH_VERSION=2.0.0 OS=linux ARCH=amd64"
       script:
         - ./hack/travis/setup-for-integration-test.sh
         - GKE_CLUSTER_NAME=k8s-saas-travis-ci make gke-connect-to-cluster
