@@ -25,11 +25,9 @@ jobs:
       go: "1.15.x"
       env: "DCH_VERSION=2.0.0 OS=linux ARCH=amd64"
       script:
-        - openssl aes-256-cbc -K $encrypted_ad13726c9b2f_key -iv $encrypted_ad13726c9b2f_iv -in travis.tar.gz.enc -out travis.tar.gz -d
         - if [ ! -d ${HOME}/google-cloud-sdk ]; then
           curl https://sdk.cloud.google.com > install.sh; bash install.sh --disable-prompts >/dev/null;
           fi
-        - tar -xzf travis.tar.gz
         - curl -fsSL "https://github.com/GoogleCloudPlatform/docker-credential-gcr/releases/download/v${DCH_VERSION}/docker-credential-gcr_${OS}_${ARCH}-${DCH_VERSION}.tar.gz" | tar xz --to-stdout ./docker-credential-gcr > ${HOME}/bin/docker-credential-gcr && chmod +x ${HOME}/bin/docker-credential-gcr
         - curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
         - chmod +x ./kubectl
@@ -39,7 +37,8 @@ jobs:
         - curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"  | bash
         - chmod +x $HOME/gopath/src/github.com/wavefronthq/wavefront-collector-for-kubernetes/kustomize
         - mv $HOME/gopath/src/github.com/wavefronthq/wavefront-collector-for-kubernetes/kustomize $HOME/bin
-        - gcloud auth activate-service-account --key-file wavefront-gcp-dev-bc34048ac422.json
+        - echo $GCP_CREDS > $HOME/gcp-creds.json
+        - gcloud auth activate-service-account --key-file $HOME/gcp-creds.json
         - gcloud config set project wavefront-gcp-dev
         - docker-credential-gcr config --token-source="gcloud"
         - docker-credential-gcr configure-docker --registries="us.gcr.io"
