@@ -5,7 +5,6 @@ docs
 hack
 *.md
 *.yml
-travis.tar.gz*
 
 # files that change frequently and invalidate the cache unnecessarily
 _output
