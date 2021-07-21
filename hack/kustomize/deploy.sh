@@ -5,17 +5,7 @@ DEFAULT_DOCKER_HOST="wavefronthq"
 
 DEFAULT_VERSION="1.3.7"
 USE_TEST_PROXY="${USE_TEST_PROXY:-false}"
-FLUSH_ONCE="${FLUSH_ONCE:-false}"
-
-if [ "$USE_TEST_PROXY" = true ] ;
-  then
-    FLUSH_ONCE=true
-    FLUSH_INTERVAL=18
-    COLLECTION_INTERVAL=7
-  else
-    FLUSH_INTERVAL=30
-    COLLECTION_INTERVAL=60
-fi
+FLUSH_ONCE="${USE_TEST_PROXY:-false}"
 
 function print_usage_and_exit() {
     echo "Failure: $1"
@@ -52,14 +42,6 @@ while getopts "c:t:v:d:" opt; do
   esac
 done
 
-echo "$WF_CLUSTER $VERSION $IMAGE"
-
-if [[ -z ${WF_CLUSTER} || -z ${WAVEFRONT_TOKEN} ]] ; then
-    #TODO: source these from environment variables if not provided
-    print_usage_and_exit "wavefront instance and token required"
-fi
-
-
 if [[ -z ${VERSION} ]] ; then
     VERSION=${DEFAULT_VERSION}
 fi
@@ -70,20 +52,7 @@ if [[ -z ${DOCKER_HOST} ]] ; then
     DOCKER_HOST=${DEFAULT_DOCKER_HOST}
 fi
 
-echo "FLUSH ONCE: ${FLUSH_ONCE}"
-
-if $USE_TEST_PROXY ; then
-  sed "s/DOCKER_HOST/${DOCKER_HOST}/g" base/test-proxy.template.yaml  |  sed "s/YOUR_IMAGE_TAG/${VERSION}/g"> base/proxy.yaml
-else
-  sed "s/YOUR_CLUSTER/${WF_CLUSTER}/g; s/YOUR_API_TOKEN/${WAVEFRONT_TOKEN}/g" base/proxy.template.yaml > base/proxy.yaml
-fi
-
- sed "s/DOCKER_HOST/${DOCKER_HOST}/g" base/kustomization.template.yaml | sed "s/YOUR_IMAGE_TAG/${VERSION}/g"  > base/kustomization.yaml
-
-sed "s/YOUR_CLUSTER_NAME/cluster-${VERSION}/g" overlays/test/collector.yaml.template | sed "s/NAMESPACE/${NAMESPACE_NAME}/g" \
-|  sed "s/FLUSH_ONCE/${FLUSH_ONCE}/g" \
-|  sed "s/FLUSH_INTERVAL/${FLUSH_INTERVAL}/g" \
-|  sed "s/COLLECTION_INTERVAL/${COLLECTION_INTERVAL}/g" > overlays/test/collector.yaml
+env USE_TEST_PROXY="$USE_TEST_PROXY" ./generate.sh -c "$WF_CLUSTER" -t "$API_TOKEN" -v $VERSION -d $DOCKER_HOST
 
 # if the collector doesn't get redeployed, then the timing of picking up the
 # FLUSH_ONCE config change creates inconsistent outputs
