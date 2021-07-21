@@ -6,7 +6,7 @@
     flushInterval: 30s
 
     sinks:
-    - proxyAddress: default-wavefrontproxy.wavefront.svc.cluster.local:2878
+    - proxyAddress: default-wavefront-proxy.wavefront.svc.cluster.local:2878
       tags:
         version: 1.5.0
 
@@ -79,15 +79,18 @@
         insecure: true
         prefix: 'kubernetes.'
         filters:
-          metricDenylist:
+          metricDenyList:
           - 'kubernetes.sys_container.*'
       internal_stats_source:
+        prefix: 'kubernetes.'
+      kubernetes_state_source:
         prefix: 'kubernetes.'
       telegraf_sources:
       - plugins: []
     discovery:
       enable_runtime_plugins: true
       discovery_interval: 1m
+      disable_annotation_discovery: true
       plugins:
       - name: redis
         type: telegraf/redis
