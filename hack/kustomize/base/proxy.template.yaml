@@ -15,6 +15,16 @@ spec:
       labels:
         app: wavefront-proxy
     spec:
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              preference:
+                matchExpressions:
+                  - key: kubernetes.io/arch
+                    operator: In
+                    values:
+                      - amd64
       containers:
       - name: wavefront-proxy
         image: wavefronthq/proxy:10.7

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-source hack/make/_script-tools.sh
+source ../deploy/k8s-utils.sh
 
 if [[ -z ${IMAGE_PREFIX} ]]; then
   print_msg_and_exit 'IMAGE_PREFIX required but was empty'

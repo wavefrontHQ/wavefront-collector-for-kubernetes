@@ -1,6 +1,5 @@
 #!/bin/bash -e
 source ../deploy/k8s-utils.sh
-source ../make/_script-tools.sh
 
 # This script automates the functional testing of the collector
 
