@@ -5,12 +5,13 @@ package wavefront
 
 import (
 	"fmt"
+	"sort"
+	"sync"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/wavefronthq/wavefront-sdk-go/event"
 	"github.com/wavefronthq/wavefront-sdk-go/histogram"
 	"github.com/wavefronthq/wavefront-sdk-go/senders"
-	"sort"
-	"sync"
 )
 
 type TestSender struct {
