@@ -26,8 +26,8 @@ push-to-ecr: docker-login-eks
 	fi
 
 delete-images-ecr:
-	aws ecr batch-delete-image --region $(AWS_REGION) --repository-name  $(COLLECTOR_ECR_REPO)  --image-ids imageTag=$(VERSION) imageTag=latest || true
-	aws ecr batch-delete-image --region $(AWS_REGION) --repository-name  $(TEST_PROXY_ECR_REPO) --image-ids imageTag=$(VERSION) || true
+	aws --no-cli-pager ecr batch-delete-image --region $(AWS_REGION) --repository-name  $(COLLECTOR_ECR_REPO)  --image-ids imageTag=$(VERSION) imageTag=latest || true
+	aws --no-cli-pager ecr batch-delete-image --region $(AWS_REGION) --repository-name  $(TEST_PROXY_ECR_REPO) --image-ids imageTag=$(VERSION) || true
 
 	# removes untagged images for multi-platform/arch build
 	aws ecr list-images --region $(AWS_REGION) --repository-name $(COLLECTOR_ECR_REPO) --filter "tagStatus=UNTAGGED" --output json > /tmp/ecr-delete-list.json || true

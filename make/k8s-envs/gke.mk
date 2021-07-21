@@ -1,4 +1,6 @@
 GCP_PROJECT=wavefront-gcp-dev
+GCR_ENDPOINT=us.gcr.io
+GCR_PREFIX=$(GCP_PROJECT)
 
 target-gke:
 	gcloud config set project $(GCP_PROJECT)
@@ -27,4 +29,8 @@ delete-images-gcr:
 	@gcloud container images delete us.gcr.io/$(GCP_PROJECT)/wavefront-kubernetes-collector:$(VERSION) --quiet || true
 
 push-to-gcr:
-	@IMAGE_PREFIX=$(PREFIX) IMAGE_VERSION=$(VERSION) REPO_ENDPOINT='us.gcr.io' REPO_PREFIX=$(GCP_PROJECT) ./hack/make/push-container.sh
+	docker tag $(PREFIX)/test-proxy:$(VERSION) $(GCR_ENDPOINT)/$(GCR_PREFIX)/test-proxy:$(VERSION)
+	docker push $(GCR_ENDPOINT)/$(GCR_PREFIX)/test-proxy:$(VERSION)
+
+	docker tag $(PREFIX)/wavefront-kubernetes-collector:$(VERSION) $(GCR_ENDPOINT)/$(GCR_PREFIX)/wavefront-kubernetes-collector:$(VERSION)
+	docker push $(GCR_ENDPOINT)/$(GCR_PREFIX)/wavefront-kubernetes-collector:$(VERSION)
