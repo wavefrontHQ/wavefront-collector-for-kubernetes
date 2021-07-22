@@ -14,8 +14,7 @@ go:
   - "1.15.x"
   - "1.16.x"
 script:
-  - echo "done!"
-#  - make checkfmt vet tests
+  - make checkfmt vet tests
 jobs:
   allow_failures:
     - go: "1.16.x"
