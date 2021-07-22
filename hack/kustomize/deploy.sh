@@ -52,7 +52,7 @@ if [[ -z ${DOCKER_HOST} ]] ; then
     DOCKER_HOST=${DEFAULT_DOCKER_HOST}
 fi
 
-env USE_TEST_PROXY="$USE_TEST_PROXY" ./generate.sh -c "$WF_CLUSTER" -t "$API_TOKEN" -v $VERSION -d $DOCKER_HOST
+env USE_TEST_PROXY="$USE_TEST_PROXY" ./generate.sh -c "$WF_CLUSTER" -t "$WAVEFRONT_TOKEN" -v $VERSION -d $DOCKER_HOST
 
 # if the collector doesn't get redeployed, then the timing of picking up the
 # FLUSH_ONCE config change creates inconsistent outputs
