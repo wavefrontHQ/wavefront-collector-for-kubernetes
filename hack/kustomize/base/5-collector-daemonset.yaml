@@ -27,7 +27,7 @@ spec:
       containers:
       - name: wavefront-collector
         image: wavefronthq/wavefront-kubernetes-collector:1.6.0
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always #this needs to be changed to IfNotPresent if you're running on kind
         command:
         - /wavefront-collector
         - --daemon=true

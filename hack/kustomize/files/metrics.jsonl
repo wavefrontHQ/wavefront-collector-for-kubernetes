@@ -62,8 +62,7 @@
 {"Name":"kubernetes.cluster.pod_container.count","Tags":{"cluster":"","source":"","type":"cluster"}}
 {"Name":"kubernetes.collector.discovery.enabled","Tags":{"cluster":"","leading":"","source":""}}
 {"Name":"kubernetes.collector.discovery.rules.count","Tags":{"cluster":"","leading":"","source":""}}
-{"Name":"kubernetes.collector.discovery.targets.registered","Tags":{"cluster":"","leading":"","source":"","type":"prometheus"}}
-{"Name":"kubernetes.collector.discovery.targets.registered","Tags":{"cluster":"","leading":"","source":"","type":"telegraf"}}
+{"Name":"kubernetes.collector.discovery.targets.registered","Tags":{"cluster":"","leading":"","source":"","type":""}}
 {"Name":"kubernetes.collector.events.filtered","Tags":{"cluster":"","leading":"","source":""}}
 {"Name":"kubernetes.collector.events.received","Tags":{"cluster":"","leading":"","source":""}}
 {"Name":"kubernetes.collector.events.sent","Tags":{"cluster":"","leading":"","source":""}}
