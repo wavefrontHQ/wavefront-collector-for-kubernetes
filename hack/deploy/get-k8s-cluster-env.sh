@@ -1,5 +1,11 @@
 #!/bin/bash -e
 
+if ! command -v kubectl &> /dev/null
+then
+    echo "No context"
+    exit 0
+fi
+
 CURRENT_CONTEXT=$(kubectl config current-context)
 
 if grep -q "kind" <<< "$CURRENT_CONTEXT"; then
