@@ -3,3 +3,4 @@ base/**/proxy.yaml
 extra.jsonl
 missing.jsonl
 overlays/test/collector.yaml
+files/combined-metrics.jsonl

@@ -44,9 +44,6 @@ sources:
         gather_table_io_waits                     = true
         gather_table_lock_waits                   = true
         gather_index_io_waits                     = true
-  - plugins:  [ memcached ]
-    conf: |
-        servers = ["memcached-release.collector-targets.svc.cluster.local:11211"]
 
 # discovery rules for auto-discovery of pods and services
 discovery:

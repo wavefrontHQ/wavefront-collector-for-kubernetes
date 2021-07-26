@@ -1,4 +1,0 @@
-clusterName: cluster-1.2.8
-flushOnce: false
-flushInterval: 15s
-defaultCollectionInterval: 10s

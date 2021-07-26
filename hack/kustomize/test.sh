@@ -42,8 +42,12 @@ sleep 32
 
 DIR=$(dirname "$0")
 RES=$(mktemp)
+K8S_ENV=$(../deploy/get-k8s-cluster-env.sh )
+
+cat files/metrics.jsonl  files/$K8S_ENV-metrics.jsonl  > files/combined-metrics.jsonl
+
 while true ; do # wait until we get a good connection
-  RES_CODE=$(curl --silent --output "$RES" --write-out "%{http_code}" --data-binary "@$DIR/files/metrics.jsonl" "http://localhost:8888/metrics/diff")
+  RES_CODE=$(curl --silent --output "$RES" --write-out "%{http_code}" --data-binary "@$DIR/files/combined-metrics.jsonl" "http://localhost:8888/metrics/diff")
   [[ $RES_CODE -eq 0 ]] || break
 done
 
