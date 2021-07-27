@@ -11,6 +11,11 @@ API_TOKEN=$2
 VERSION=$3
 DOCKER_HOST=$4
 
+K8S_ENV=$(../deploy/get-k8s-cluster-env.sh | awk '{print tolower($0)}' )
+
+echo "*******"
+echo "K8S_ENV (test.sh): $K8S_ENV"
+echo "*******"
 if [[ -z ${VERSION} ]] ; then
     VERSION=${DEFAULT_VERSION}
 fi
@@ -21,7 +26,7 @@ fi
 
 echo "deploying collector $IMAGE_NAME $VERSION"
 
-env USE_TEST_PROXY=true ./deploy.sh -c "$WAVEFRONT_CLUSTER" -t "$API_TOKEN" -v $VERSION -d $DOCKER_HOST
+env USE_TEST_PROXY=true ./deploy.sh -c "$WAVEFRONT_CLUSTER" -t "$API_TOKEN" -v $VERSION -d $DOCKER_HOST -k $K8S_ENV
 
 NS=wavefront-collector
 
@@ -42,9 +47,8 @@ sleep 32
 
 DIR=$(dirname "$0")
 RES=$(mktemp)
-K8S_ENV=$(../deploy/get-k8s-cluster-env.sh )
 
-cat files/metrics.jsonl  files/$K8S_ENV-metrics.jsonl  > files/combined-metrics.jsonl
+cat files/metrics.jsonl  overlays/test-$K8S_ENV/metrics/additional.jsonl  > files/combined-metrics.jsonl
 
 while true ; do # wait until we get a good connection
   RES_CODE=$(curl --silent --output "$RES" --write-out "%{http_code}" --data-binary "@$DIR/files/combined-metrics.jsonl" "http://localhost:8888/metrics/diff")
@@ -74,6 +78,6 @@ else
   green "SUCCEEDED"
 fi
 
-env USE_TEST_PROXY=false ./deploy.sh -c "$WAVEFRONT_CLUSTER" -t "$API_TOKEN" -v $VERSION -d $DOCKER_HOST
+env USE_TEST_PROXY=false ./deploy.sh -c "$WAVEFRONT_CLUSTER" -t "$API_TOKEN" -v $VERSION -d $DOCKER_HOST -k $K8S_ENV
 
 exit "$EXIT_CODE"

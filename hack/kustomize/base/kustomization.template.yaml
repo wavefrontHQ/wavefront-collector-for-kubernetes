@@ -13,3 +13,12 @@ images:
 - name: wavefronthq/wavefront-kubernetes-collector
   newName: DOCKER_HOST/wavefront-kubernetes-collector
   newTag: YOUR_IMAGE_TAG
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+configMapGenerator:
+  - name: collector-config
+    behavior: replace
+    files:
+      - collector.yaml
