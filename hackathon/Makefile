@@ -1,3 +1,15 @@
+WORKSPACE=$(HOME)/worksSPROK
+REPOS=$(WORKSPACE)/system \
+	$(WORKSPACE)/qa \
+	$(WORKSPACE)/wavefront-collector-for-kubernetes \
+	$(WORKSPACE)/wavefront-kubernetes-adapter \
+	$(WORKSPACE)/wavefront-operator-for-kubernetes \
+	$(WORKSPACE)/wavefront-proxy \
+	$(WORKSPACE)/prometheus-storage-adapter \
+	$(WORKSPACE)/helm \
+	$(WORKSPACE)/wavefront-kubernetes \
+	$(WORKSPACE)/tmc-wavefront-operator
+
 K8S_AND_GO_TOOLING=/usr/local/bin/wget \
     /usr/local/bin/k9s \
     /usr/local/bin/kind \
@@ -39,6 +51,7 @@ all: \
 	$(OH_MY_ZSH) \
 	tweak-defaults \
 	check-kind-cluster-running \
+	$(REPOS) \
 	$(DOTFILES)
 
 ~/*/.%: dotfiles/.%.templ
@@ -89,3 +102,36 @@ tweak-defaults:
 	@## Improve scroll speed on mac
 	@defaults write -g InitialKeyRepeat -int 10 # normal minimum is 15 (225 ms)
 	@defaults write -g KeyRepeat -int 2 # normal minimum is 2 (30 ms)
+
+
+# BEGIN: Repos
+$(WORKSPACE)/system:
+	git clone git@github.com:sunnylabs/system.git $(WORKSPACE)/system
+
+$(WORKSPACE)/qa:
+	git clone git@github.com:sunnylabs/qa.git $(WORKSPACE)/qa
+
+$(WORKSPACE)/wavefront-collector-for-kubernetes:
+	git clone git@github.com:/wavefrontHQ/wavefront-collector-for-kubernetes.git $(WORKSPACE)/wavefront-collector-for-kubernetes
+
+$(WORKSPACE)/wavefront-kubernetes-adapter:
+	git clone git@github.com:/wavefrontHQ/wavefront-kubernetes-adapter.git $(WORKSPACE)/wavefront-kubernetes-adapter
+
+$(WORKSPACE)/wavefront-operator-for-kubernetes:
+	git clone git@github.com:/wavefrontHQ/wavefront-operator-for-kubernetes.git $(WORKSPACE)/wavefront-operator-for-kubernetes
+
+$(WORKSPACE)/wavefront-proxy:
+	git clone git@github.com:/wavefrontHQ/wavefront-proxy.git $(WORKSPACE)/wavefront-proxy
+
+$(WORKSPACE)/prometheus-storage-adapter:
+	git clone git@github.com:/wavefrontHQ/prometheus-storage-adapter.git $(WORKSPACE)/prometheus-storage-adapter
+
+$(WORKSPACE)/helm:
+	git clone git@github.com:/wavefrontHQ/helm.git $(WORKSPACE)/helm
+
+$(WORKSPACE)/wavefront-kubernetes:
+	git clone git@github.com:/wavefrontHQ/wavefront-kubernetes.git $(WORKSPACE)/wavefront-kubernetes
+
+$(WORKSPACE)/tmc-wavefront-operator:
+	git clone git@gitlab.eng.vmware.com:tobs-k8s-group/tmc-wavefront-operator.git $(WORKSPACE)/tmc-wavefront-operator
+# END: Repos
