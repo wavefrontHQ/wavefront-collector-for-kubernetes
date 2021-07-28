@@ -29,21 +29,7 @@ DOTFILES=~/.nonsense \
 
 OH_MY_ZSH=$(HOME)/.oh-my-zsh
 
-~/*/.%: dotfiles/.%.templ
-	./install-dotfile.sh $^ $@
-
-~/.%: dotfiles/.%.templ
-	./install-dotfile.sh $^ $@
-
-#kind-create-cluster-and-run-integration-test:
-	# do we even use this?
-	#echo "kind-create-cluster-and-run-integration-test ain't do nuthin"
-#	# setup kind cluster
-#	kind create cluster
-#
-#	# build and deploy our code to kind
-#	cd workspace/wavefront-collector-for-kubernetes
-#	WAVEFRONT_API_KEY="<wavefront-api-key>" make integration-test
+KIND_GET_CLUSTERS_MSG=$(shell kind get clusters 2>&1)
 
 all: \
 	$(BREW_BIN) \
@@ -52,8 +38,21 @@ all: \
 	$(DOCKER_GCLOUD_STUFF) \
 	$(OH_MY_ZSH) \
 	tweak-defaults \
+	check-kind-cluster-running \
 	$(DOTFILES)
-#	kind-create-cluster-and-run-integration-test \
+
+~/*/.%: dotfiles/.%.templ
+	./install-dotfile.sh $^ $@
+
+~/.%: dotfiles/.%.templ
+	./install-dotfile.sh $^ $@
+
+check-kind-cluster-running:
+	@if [[ "$(KIND_GET_CLUSTERS_MSG)" == "No kind clusters found." ]]; then \
+		echo "You don't have a kind cluster yet! Running 'kind create cluster' for you so you can run the integration tests.";\
+		kind create cluster;\
+		echo "Run 'WAVEFRONT_API_KEY=<wavefront-api-key> make integration-test' from the '~/workspace/wavefront-collector-for-kubernetes' directory to test setup.";\
+	fi
 
 $(BREW_BIN):
 	# Install Homebrew
@@ -81,11 +80,6 @@ $(BREW_BIN):
 $(HOME)/google-cloud-sdk/bin/gcloud:
 	brew install google-cloud-sdk
 	gcloud init # setup google cloud creds
-
-#j:
-#	#if ! command -v j; then
-#	echo 'eval "$(jump shell zsh)"' >> ~/.zshrc
-#	#fi
 
 $(OH_MY_ZSH):
 	curl -fsSL 'https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh' | sh
