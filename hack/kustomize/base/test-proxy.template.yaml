@@ -5,6 +5,7 @@ metadata:
     app: wavefront-proxy
     name: wavefront-proxy
   name: wavefront-proxy
+  namespace: wavefront-collector
 spec:
   replicas: 1
   selector:
@@ -28,7 +29,7 @@ spec:
       containers:
       - name: wavefront-proxy
         image: DOCKER_HOST/test-proxy:YOUR_IMAGE_TAG
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always #this needs to be changed to IfNotPresent if you're running on kind
         command: [ "/test-proxy", "-proxy", ":2878" ]
         ports:
         - name: proxy
@@ -46,6 +47,7 @@ metadata:
   name: wavefront-proxy
   labels:
     app: wavefront-proxy
+  namespace: wavefront-collector
 spec:
   ports:
   - name: wavefront

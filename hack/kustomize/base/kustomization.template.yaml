@@ -1,15 +1,20 @@
----
-namespace: wavefront-collector
+bases:
+  - ../../../deploy/kubernetes
+
 resources:
 - proxy.yaml
-- 0-collector-namespace.yaml
-- 1-collector-cluster-role.yaml
-- 2-collector-rbac.yaml
-- 3-collector-service-account.yaml
-- 4-collector-config.yaml
-- 5-collector-daemonset.yaml
 
 images:
 - name: wavefronthq/wavefront-kubernetes-collector
   newName: DOCKER_HOST/wavefront-kubernetes-collector
   newTag: YOUR_IMAGE_TAG
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+configMapGenerator:
+  - name: collector-config
+    namespace: wavefront-collector
+    behavior: replace
+    files:
+      - collector.yaml

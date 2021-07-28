@@ -9,4 +9,4 @@ echo "generating..."
 ./generate.sh -c "fake" -t "fake" -v "fake" -d "fake"
 
 echo "deleting wavefront collector deployment"
-kustomize build overlays/test | kubectl delete -f - || true
+kustomize build base | kubectl delete -f - || true

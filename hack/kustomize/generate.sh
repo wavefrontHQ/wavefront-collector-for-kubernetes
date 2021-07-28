@@ -20,9 +20,10 @@ function print_usage_and_exit() {
     echo "Failure: $1"
     echo "Usage: $0 [flags] [options]"
     echo -e "\t-c wavefront instance name (required)"
+    echo -e "\t-d docker host (required)"
     echo -e "\t-t wavefront token (required)"
-    echo -e "\t-i collector docker image name"
     echo -e "\t-v collector docker image version"
+    echo -e "\t-k K8s ENV (required)"
     exit 1
 }
 
@@ -30,8 +31,9 @@ WF_CLUSTER=
 WAVEFRONT_TOKEN=
 VERSION=
 DOCKER_HOST=
+K8S_ENV=gke
 
-while getopts "c:t:v:d:" opt; do
+while getopts "c:t:v:d:k:" opt; do
   case $opt in
     c)
       WF_CLUSTER="$OPTARG"
@@ -44,6 +46,9 @@ while getopts "c:t:v:d:" opt; do
       ;;
     d)
       DOCKER_HOST="$OPTARG"
+      ;;
+    k)
+      K8S_ENV="$OPTARG"
       ;;
     \?)
       print_usage_and_exit "Invalid option: -$OPTARG"
@@ -79,8 +84,12 @@ fi
 
  sed "s/DOCKER_HOST/${DOCKER_HOST}/g" base/kustomization.template.yaml | sed "s/YOUR_IMAGE_TAG/${VERSION}/g"  > base/kustomization.yaml
 
-sed "s/YOUR_CLUSTER_NAME/cluster-${VERSION}/g" overlays/test/collector.yaml.template \
-| sed "s/NAMESPACE/${NAMESPACE_NAME}/g" \
-|  sed "s/FLUSH_ONCE/${FLUSH_ONCE}/g" \
-|  sed "s/FLUSH_INTERVAL/${FLUSH_INTERVAL}/g" \
-|  sed "s/COLLECTION_INTERVAL/${COLLECTION_INTERVAL}/g" > overlays/test/collector.yaml
+cat  base/collector.template.yaml overlays/test-$K8S_ENV/collector-config/overrides.yaml > base/temp-collector.yaml
+
+sed "s/YOUR_CLUSTER_NAME/cluster-${VERSION}/g" base/temp-collector.yaml |
+  sed "s/NAMESPACE/${NAMESPACE_NAME}/g" |
+  sed "s/FLUSH_ONCE/${FLUSH_ONCE}/g" |
+  sed "s/FLUSH_INTERVAL/${FLUSH_INTERVAL}/g" |
+  sed  "s/COLLECTION_INTERVAL/${COLLECTION_INTERVAL}/g" > base/collector.yaml
+
+rm base/temp-collector.yaml
