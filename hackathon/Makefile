@@ -27,19 +27,33 @@ DOTFILES=~/.nonsense \
 	~/.git-authors \
 	~/workspace/.envrc
 
+OH_MY_ZSH=$(HOME)/.oh-my-zsh
+
 ~/*/.%: dotfiles/.%.templ
 	./install-dotfile.sh $^ $@
 
 ~/.%: dotfiles/.%.templ
 	./install-dotfile.sh $^ $@
 
+#kind-create-cluster-and-run-integration-test:
+	# do we even use this?
+	#echo "kind-create-cluster-and-run-integration-test ain't do nuthin"
+#	# setup kind cluster
+#	kind create cluster
+#
+#	# build and deploy our code to kind
+#	cd workspace/wavefront-collector-for-kubernetes
+#	WAVEFRONT_API_KEY="<wavefront-api-key>" make integration-test
+
 all: \
-	$(DOTFILES) \
 	$(BREW_BIN) \
 	$(K8S_AND_GO_TOOLING) \
 	$(DEV_EFFICIENCY_TOOLS) \
 	$(DOCKER_GCLOUD_STUFF) \
-	tweak-defaults
+	$(OH_MY_ZSH) \
+	tweak-defaults \
+	$(DOTFILES)
+#	kind-create-cluster-and-run-integration-test \
 
 $(BREW_BIN):
 	# Install Homebrew
@@ -73,29 +87,11 @@ $(HOME)/google-cloud-sdk/bin/gcloud:
 #	echo 'eval "$(jump shell zsh)"' >> ~/.zshrc
 #	#fi
 
-install:
-	## Install powerlevel10k bash prompt
-	brew install romkatv/powerlevel10k/powerlevel10k
-	echo "source $(brew --prefix)/opt/powerlevel10k/powerlevel10k.zsh-theme" >>~/.zshrc
-
-	# h*cking gcloud can't just have a normal install... or can it? TODO
-	if [ ! -d ${HOME}/google-cloud-sdk ]; then
-	curl https://sdk.cloud.google.com > install.sh; bash install.sh --disable-prompts;
-	fi
-
-	if ! command -v gcloud; then
-	echo "source ~/google-cloud-sdk/path.zsh.inc" >> ~/.zshrc
-	echo "source ~/google-cloud-sdk/completion.zsh.inc" >> ~/.zshrc
-	fi
-
-	# setup kind cluster
-	kind create cluster
-
-	# build and deploy our code to kind
-	cd workspace/wavefront-collector-for-kubernetes
-	WAVEFRONT_API_KEY="<wavefront-api-key>" make integration-test
+$(OH_MY_ZSH):
+	curl -fsSL 'https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh' | sh
+	rm $(HOME)/.zshrc
 
 tweak-defaults:
-	## Improve scroll speed on mac
-	defaults write -g InitialKeyRepeat -int 10 # normal minimum is 15 (225 ms)
-	defaults write -g KeyRepeat -int 2 # normal minimum is 2 (30 ms)
+	@## Improve scroll speed on mac
+	@defaults write -g InitialKeyRepeat -int 10 # normal minimum is 15 (225 ms)
+	@defaults write -g KeyRepeat -int 2 # normal minimum is 2 (30 ms)
