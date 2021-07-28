@@ -84,15 +84,12 @@ fi
 
  sed "s/DOCKER_HOST/${DOCKER_HOST}/g" base/kustomization.template.yaml | sed "s/YOUR_IMAGE_TAG/${VERSION}/g"  > base/kustomization.yaml
 
-cat  base/collector.template.yaml overlays/test-$K8S_ENV/collector-config/overrides.yaml > base/collector.yaml
+cat  base/collector.template.yaml overlays/test-$K8S_ENV/collector-config/overrides.yaml > base/temp-collector.yaml
 
-pwd
-ls -l base
-cat  base/collector.yaml
+sed "s/YOUR_CLUSTER_NAME/cluster-${VERSION}/g" base/temp-collector.yaml |
+  sed "s/NAMESPACE/${NAMESPACE_NAME}/g" |
+  sed "s/FLUSH_ONCE/${FLUSH_ONCE}/g" |
+  sed "s/FLUSH_INTERVAL/${FLUSH_INTERVAL}/g" |
+  sed  "s/COLLECTION_INTERVAL/${COLLECTION_INTERVAL}/g" > base/collector.yaml
 
-sed -i '' "s/YOUR_CLUSTER_NAME/cluster-${VERSION}/g" base/collector.yaml
-sed -i '' "s/NAMESPACE/${NAMESPACE_NAME}/g" base/collector.yaml
-sed -i '' "s/FLUSH_ONCE/${FLUSH_ONCE}/g" base/collector.yaml
-sed -i '' "s/FLUSH_INTERVAL/${FLUSH_INTERVAL}/g" base/collector.yaml
-sed -i '' "s/COLLECTION_INTERVAL/${COLLECTION_INTERVAL}/g" base/collector.yaml
-
+rm base/temp-collector.yaml
