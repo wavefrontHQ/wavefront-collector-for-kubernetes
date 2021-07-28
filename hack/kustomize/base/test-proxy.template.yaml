@@ -5,6 +5,7 @@ metadata:
     app: wavefront-proxy
     name: wavefront-proxy
   name: wavefront-proxy
+  namespace: wavefront-collector
 spec:
   replicas: 1
   selector:
@@ -46,6 +47,7 @@ metadata:
   name: wavefront-proxy
   labels:
     app: wavefront-proxy
+  namespace: wavefront-collector
 spec:
   ports:
   - name: wavefront

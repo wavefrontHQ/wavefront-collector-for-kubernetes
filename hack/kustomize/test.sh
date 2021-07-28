@@ -13,9 +13,6 @@ DOCKER_HOST=$4
 
 K8S_ENV=$(../deploy/get-k8s-cluster-env.sh | awk '{print tolower($0)}' )
 
-echo "*******"
-echo "K8S_ENV (test.sh): $K8S_ENV"
-echo "*******"
 if [[ -z ${VERSION} ]] ; then
     VERSION=${DEFAULT_VERSION}
 fi

@@ -1,0 +1,8 @@
+---
+resources:
+- 0-collector-namespace.yaml
+- 1-collector-cluster-role.yaml
+- 2-collector-rbac.yaml
+- 3-collector-service-account.yaml
+- 4-collector-config.yaml
+- 5-collector-daemonset.yaml
