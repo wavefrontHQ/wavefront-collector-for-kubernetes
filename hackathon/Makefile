@@ -60,8 +60,6 @@ all: \
 ~/.%: dotfiles/.%.templ
 	./install-dotfile.sh $^ $@
 
-clone-repos: $(REPOS)
-
 check-kind-cluster-running:
 	@if [[ "$(KIND_GET_CLUSTERS_MSG)" == "No kind clusters found." ]]; then \
 		echo "You don't have a kind cluster yet! Running 'kind create cluster' for you so you can run the integration tests.";\
@@ -107,6 +105,8 @@ tweak-defaults:
 
 
 # BEGIN: Repos
+clone-repos: $(REPOS)
+
 $(WORKSPACE)/system:
 	git clone git@github.com:sunnylabs/system.git $(WORKSPACE)/system
 
