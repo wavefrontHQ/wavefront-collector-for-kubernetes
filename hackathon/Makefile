@@ -1,4 +1,4 @@
-WORKSPACE=$(HOME)/worksSPROK
+WORKSPACE=$(HOME)/workspace
 REPOS=$(WORKSPACE)/system \
 	$(WORKSPACE)/qa \
 	$(WORKSPACE)/wavefront-collector-for-kubernetes \
@@ -59,6 +59,8 @@ all: \
 
 ~/.%: dotfiles/.%.templ
 	./install-dotfile.sh $^ $@
+
+clone-repos: $(REPOS)
 
 check-kind-cluster-running:
 	@if [[ "$(KIND_GET_CLUSTERS_MSG)" == "No kind clusters found." ]]; then \
