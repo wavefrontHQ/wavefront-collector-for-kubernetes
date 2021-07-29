@@ -20,8 +20,7 @@ require (
 	github.com/google/btree v1.0.0 // indirect
 	github.com/google/cadvisor v0.34.0
 	github.com/googleapis/gnostic v0.3.1 // indirect
-	github.com/hashicorp/consul v1.4.5 // indirect
-	github.com/hashicorp/go-cleanhttp v0.5.1 // indirect
+	github.com/hashicorp/consul/api v1.3.0 // indirect
 	github.com/hashicorp/go-immutable-radix v1.1.0 // indirect
 	github.com/hashicorp/go-msgpack v0.5.5 // indirect
 	github.com/hashicorp/go-rootcerts v1.0.1 // indirect
@@ -38,7 +37,7 @@ require (
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/lib/pq v1.3.0 // indirect
-	github.com/mitchellh/go-testing-interface v1.0.0 // indirect
+	github.com/miekg/dns v1.1.26 // indirect
 	github.com/prometheus/client_model v0.2.0
 	github.com/prometheus/common v0.9.1
 	github.com/rcrowley/go-metrics v0.0.0-20190826022208-cac0b30c2563
@@ -52,6 +51,7 @@ require (
 	github.com/wavefronthq/wavefront-sdk-go v0.9.5
 	golang.org/x/exp v0.0.0-20200224162631-6cc2880d07d6 // indirect
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d // indirect
+	golang.org/x/sys v0.0.0-20191105231009-c1f44814a5cd // indirect
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect
 	google.golang.org/appengine v1.6.5 // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
@@ -60,7 +60,7 @@ require (
 	k8s.io/api v0.15.7
 	k8s.io/apimachinery v0.17.1
 	k8s.io/apiserver v0.15.7
-	k8s.io/client-go v0.15.7
+	k8s.io/client-go v8.0.0+incompatible
 	k8s.io/kubernetes v1.16.15
 	k8s.io/utils v0.0.0-20191114200735-6ca3b61696b6 // indirect
 )

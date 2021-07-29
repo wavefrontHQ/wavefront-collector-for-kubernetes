@@ -89,11 +89,10 @@ github.com/google/gofuzz
 github.com/googleapis/gnostic/OpenAPIv2
 github.com/googleapis/gnostic/compiler
 github.com/googleapis/gnostic/extensions
-# github.com/hashicorp/consul v1.4.5
+# github.com/hashicorp/consul/api v1.3.0
 ## explicit
 github.com/hashicorp/consul/api
 # github.com/hashicorp/go-cleanhttp v0.5.1
-## explicit
 github.com/hashicorp/go-cleanhttp
 # github.com/hashicorp/go-immutable-radix v1.1.0
 ## explicit
@@ -182,10 +181,10 @@ github.com/konsorten/go-windows-terminal-sequences
 ## explicit
 # github.com/matttproud/golang_protobuf_extensions v1.0.1
 github.com/matttproud/golang_protobuf_extensions/pbutil
+# github.com/miekg/dns v1.1.26
+## explicit
 # github.com/mitchellh/go-homedir v1.1.0
 github.com/mitchellh/go-homedir
-# github.com/mitchellh/go-testing-interface v1.0.0
-## explicit
 # github.com/mitchellh/mapstructure v1.1.2
 github.com/mitchellh/mapstructure
 # github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd
@@ -267,7 +266,8 @@ golang.org/x/net/idna
 ## explicit
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
-# golang.org/x/sys v0.0.0-20191001151750-bb3f8db39f24
+# golang.org/x/sys v0.0.0-20191105231009-c1f44814a5cd
+## explicit
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 # golang.org/x/text v0.3.2
@@ -397,7 +397,7 @@ k8s.io/apimachinery/third_party/forked/golang/reflect
 ## explicit
 k8s.io/apiserver/pkg/util/flag
 k8s.io/apiserver/pkg/util/logs
-# k8s.io/client-go v0.15.7 => k8s.io/client-go v0.0.0-20190620085101-78d2af792bab
+# k8s.io/client-go v8.0.0+incompatible => k8s.io/client-go v0.0.0-20190620085101-78d2af792bab
 ## explicit
 k8s.io/client-go/discovery
 k8s.io/client-go/informers
