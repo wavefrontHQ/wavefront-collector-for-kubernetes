@@ -14,6 +14,9 @@ clean-deployment:
 k8s-env:
 	@echo "\033[92mK8s Environment: $(shell kubectl config current-context)\033[0m"
 
+k8s-nodes-arch:
+	kubectl get nodes --label-columns='kubernetes.io/arch'
+
 clean-cluster: clean-targets clean-deployment
 
 push-images:
