@@ -39,3 +39,4 @@
 {"Name":"memcached.touch.misses","Tags":{"cluster":"","server":"memcached-release.collector-targets.svc.cluster.local:11211","source":""}}
 {"Name":"memcached.uptime","Tags":{"cluster":"","server":"memcached-release.collector-targets.svc.cluster.local:11211","source":""}}
 {"Name":"~wavefront.kubernetes.collector.version","Tags":{"cluster":"","source":"","stats_prefix":"kubernetes."}}
+{"Name":"net.icmpmsg.intype3","Tags":{"cluster":"","interface":"all","source":""}}
