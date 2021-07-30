@@ -1,6 +1,6 @@
 WORKSPACE=$(HOME)/workspace
-REPOS=$(WORKSPACE)/system \
-	$(WORKSPACE)/qa \
+REPOS=$(WORKSPACE)/docs \
+	$(WORKSPACE)/integrations \
 	$(WORKSPACE)/wavefront-collector-for-kubernetes \
 	$(WORKSPACE)/wavefront-kubernetes-adapter \
 	$(WORKSPACE)/wavefront-operator-for-kubernetes \
@@ -20,13 +20,13 @@ K8S_AND_GO_TOOLING=/usr/local/bin/wget \
     /usr/local/bin/kustomize \
     /usr/local/bin/npm
 
-DEV_EFFICIENCY_TOOLS=/usr/local/bin/git-duet \
+DEV_TOOLS=/usr/local/bin/git-duet \
 	/usr/local/bin/github \
 	/usr/local/bin/jq \
 	/usr/local/bin/jump \
-	/Applications/Flycut.app
-
-DOCKER_GCLOUD_STUFF=$(HOME)/google-cloud-sdk/bin/gcloud \
+	/Applications/Flycut.app \
+	$(HOME)/google-cloud-sdk/bin/gcloud \
+	/usr/local/bin/aws \
 	/Applications/GoLand.app \
 	/Applications/Docker.app \
 	/Applications/iTerm.app \
@@ -34,38 +34,20 @@ DOCKER_GCLOUD_STUFF=$(HOME)/google-cloud-sdk/bin/gcloud \
 
 BREW_BIN=/usr/local/bin/brew
 
-DOTFILES=~/.nonsense \
-	~/.zshrc \
-	~/.git-authors \
-	~/workspace/.envrc
+DOTFILES=$(HOME)/.git-authors
 
 OH_MY_ZSH=$(HOME)/.oh-my-zsh
 
-KIND_GET_CLUSTERS_MSG=$(shell kind get clusters 2>&1)
-
-all: \
+setup-workstation: \
 	$(BREW_BIN) \
 	$(K8S_AND_GO_TOOLING) \
-	$(DEV_EFFICIENCY_TOOLS) \
+	$(DEV_TOOLS) \
 	$(DOCKER_GCLOUD_STUFF) \
-	$(OH_MY_ZSH) \
-	tweak-defaults \
-	check-kind-cluster-running \
 	$(REPOS) \
 	$(DOTFILES)
 
-~/*/.%: dotfiles/.%.templ
-	./install-dotfile.sh $^ $@
-
-~/.%: dotfiles/.%.templ
-	./install-dotfile.sh $^ $@
-
-check-kind-cluster-running:
-	@if [[ "$(KIND_GET_CLUSTERS_MSG)" == "No kind clusters found." ]]; then \
-		echo "You don't have a kind cluster yet! Running 'kind create cluster' for you so you can run the integration tests.";\
-		kind create cluster;\
-		echo "Run 'WAVEFRONT_API_KEY=<wavefront-api-key> make integration-test' from the '~/workspace/wavefront-collector-for-kubernetes' directory to test setup.";\
-	fi
+$(HOME)/.%: make/workstation/.%.templ
+	cp $^ $@
 
 $(BREW_BIN):
 	# Install Homebrew
@@ -86,6 +68,10 @@ $(BREW_BIN):
 	brew install git-duet/tap/git-duet
 	brew link git-duet/tap/git-duet || true
 
+/usr/local/bin/aws:
+	brew install awscli
+	brew link awscli || true
+
 /usr/local/Cellar/go@1.15/1.15.14/libexec/bin/go:
 	brew install go@1.15
 	brew link go@1.15 || true
@@ -96,22 +82,17 @@ $(HOME)/google-cloud-sdk/bin/gcloud:
 
 $(OH_MY_ZSH):
 	curl -fsSL 'https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh' | sh
-	rm $(HOME)/.zshrc
 
-tweak-defaults:
-	@## Improve scroll speed on mac
-	@defaults write -g InitialKeyRepeat -int 10 # normal minimum is 15 (225 ms)
-	@defaults write -g KeyRepeat -int 2 # normal minimum is 2 (30 ms)
-
+oh-my-zsh: $(OH_MY_ZSH)
 
 # BEGIN: Repos
 clone-repos: $(REPOS)
 
-$(WORKSPACE)/system:
-	git clone git@github.com:sunnylabs/system.git $(WORKSPACE)/system
+$(WORKSPACE)/integrations:
+	git clone git@github.com:sunnylabs/integrations.git $(WORKSPACE)/integrations
 
-$(WORKSPACE)/qa:
-	git clone git@github.com:sunnylabs/qa.git $(WORKSPACE)/qa
+$(WORKSPACE)/docs:
+	git clone git@github.com:/wavefrontHQ/docs.git $(WORKSPACE)/docs
 
 $(WORKSPACE)/wavefront-collector-for-kubernetes:
 	git clone git@github.com:/wavefrontHQ/wavefront-collector-for-kubernetes.git $(WORKSPACE)/wavefront-collector-for-kubernetes

@@ -6,6 +6,15 @@ nuke-kind:
 kind-connect-to-cluster:
 	kubectl config use kind-kind
 
+ensure-kind-cluster-running:
+	@if [[ "$(shell kind get clusters 2>&1)" == "No kind clusters found." ]]; then \
+		echo "You don't have a kind cluster yet! Running 'kind create cluster' for you so you can run the integration tests.";\
+		kind create cluster;\
+		echo "Run 'WAVEFRONT_API_KEY=<wavefront-api-key> make integration-test' from the '~/workspace/wavefront-collector-for-kubernetes' directory to test setup.";\
+	else \
+		echo 'Kind cluster is already running!';\
+	fi
+
 push-to-kind:
 	echo $(PREFIX)/$(DOCKER_IMAGE):$(VERSION)
 

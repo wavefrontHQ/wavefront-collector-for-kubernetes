@@ -33,6 +33,7 @@ OVERRIDE_IMAGE_NAME?=${COLLECTOR_TEST_IMAGE}
 LDFLAGS=-w -X main.version=$(VERSION) -X main.commit=$(GIT_COMMIT)
 
 include make/k8s-envs/*.mk
+include make/workstation/setup.mk
 
 all: container
 
