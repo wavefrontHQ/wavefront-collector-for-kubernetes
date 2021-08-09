@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
+set -e
 
-cd "$(dirname "$0")" || exit # cd to deploy-local.sh is in
+cd "$(dirname "$0")" # cd to deploy-local.sh is in
 
 function print_msg_and_exit() {
     echo -e "$1"
@@ -33,7 +34,7 @@ cp "$ROOT_DIR/hack/deploy/memcached-config.yaml" "$TEMP_DIR/."
 cp "$ROOT_DIR/hack/deploy/mysql-config.yaml" "$TEMP_DIR/."
 cp "$ROOT_DIR/hack/deploy/prom-example.yaml" "$TEMP_DIR/."
 
-pushd "$TEMP_DIR" || exit
+pushd "$TEMP_DIR"
   sed -i '' "s/YOUR_CLUSTER/${WF_CLUSTER}/g; s/YOUR_API_TOKEN/${WAVEFRONT_TOKEN}/g" "$TEMP_DIR/6-wavefront-proxy.yaml"
   sed -i '' "s/k8s-cluster/${K8S_CLUSTER}/g" "$TEMP_DIR/4-collector-config.yaml"
   sed -i '' "s/wavefront-proxy.default/wavefront-proxy.${NAMESPACE}/g" "$TEMP_DIR/4-collector-config.yaml"
@@ -46,4 +47,4 @@ fi
   kubectl config set-context --current --namespace="$NAMESPACE"
   kubectl apply -f "$TEMP_DIR/."
   kubectl config set-context --current --namespace=default
-popd || exit
+popd

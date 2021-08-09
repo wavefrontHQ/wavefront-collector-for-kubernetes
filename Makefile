@@ -22,6 +22,7 @@ TEMP_DIR:=$(shell mktemp -d /tmp/wavefront.XXXXXX)
 endif
 
 GO_IMPORTS_BIN:=$(if $(which goimports),$(which goimports),$(GOPATH)/bin/goimports)
+SEMVER_CLI_BIN:=$(if $(which semver-cli),$(which semver-cli),$(GOPATH)/bin/semver-cli)
 
 VERSION_POSTFIX?=""
 VERSION?=$(shell semver-cli inc patch $$(cat ./release/VERSION))$(VERSION_POSTFIX)
@@ -101,7 +102,12 @@ peg:
 		(cd $(REPO_DIR)/..; GOARCH=$(ARCH) CGO_ENABLED=0 go get -u github.com/pointlander/peg)
 
 $(GO_IMPORTS_BIN):
-	@(cd $(REPO_DIR)/..; GOARCH=$(ARCH) CGO_ENABLED=0 go get -u golang.org/x/tools/cmd/goimports)
+	@(cd $(REPO_DIR)/..; CGO_ENABLED=0 go get -u golang.org/x/tools/cmd/goimports)
+
+semver-cli: $(SEMVER_CLI_BIN)
+
+$(SEMVER_CLI_BIN):
+	@(cd $(REPO_DIR)/..; CGO_ENABLED=0 go get -u github.com/davidrjonas/semver-cli)
 
 %.peg.go: %.peg
 	peg -switch -inline $<
@@ -140,4 +146,4 @@ deploy-test: token-check k8s-env clean-deployment deploy-targets push-images pro
 #Testing code, configuration and deployment changes
 integration-test: token-check k8s-env clean-deployment deploy-targets containers delete-images push-images proxy-test
 
-.PHONY: all fmt container clean release
+.PHONY: all fmt container clean release semver-cli

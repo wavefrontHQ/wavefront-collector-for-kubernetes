@@ -1,6 +1,11 @@
-#!/bin/bash -e
+#!/usr/bin/env bash
+set -e
 
 cd "$(dirname "$0")" # cd to directory that bump-version.sh is in
+
+pushd ../
+  make semver-cli
+popd
 
 BUMP_COMPONENT=$1
 
