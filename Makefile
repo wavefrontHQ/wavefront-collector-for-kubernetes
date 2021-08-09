@@ -25,7 +25,8 @@ GO_IMPORTS_BIN:=$(if $(which goimports),$(which goimports),$(GOPATH)/bin/goimpor
 SEMVER_CLI_BIN:=$(if $(which semver-cli),$(which semver-cli),$(GOPATH)/bin/semver-cli)
 
 VERSION_POSTFIX?=""
-VERSION?=$(shell semver-cli inc patch $$(cat ./release/VERSION))$(VERSION_POSTFIX)
+RELEASE_VERSION?=$(shell cat ./release/VERSION)
+VERSION?=$(shell semver-cli inc patch $(RELEASE_VERSION))$(VERSION_POSTFIX)
 GIT_COMMIT:=$(shell git rev-parse --short HEAD)
 
 # for testing, the built image will also be tagged with this name provided via an environment variable
@@ -76,16 +77,16 @@ github-release:
 	curl -X POST -H "Content-Type:application/json" -H "Authorization: token $(GITHUB_TOKEN)" \
 		-d '{"tag_name":"v$(VERSION)", "target_commitish":"$(GIT_BRANCH)", "name":"Release v$(VERSION)", "body": "Description for v$(VERSION)", "draft": true, "prerelease": false}' "https://api.github.com/repos/$(GIT_HUB_REPO)/releases"
 
-release: semver-cli
+release:
 	docker buildx create --use --node wavefront_collector_builder
 ifeq ($(RELEASE_TYPE), release)
 	docker buildx build --platform linux/amd64,linux/arm64 --push \
 	--build-arg BINARY_NAME=$(BINARY_NAME) --build-arg LDFLAGS="$(LDFLAGS)" \
-	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) -t $(PREFIX)/$(DOCKER_IMAGE):latest .
+	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(RELEASE_VERSION) -t $(PREFIX)/$(DOCKER_IMAGE):latest .
 else
 	docker buildx build --platform linux/amd64,linux/arm64 --push \
 	--build-arg BINARY_NAME=$(BINARY_NAME) --build-arg LDFLAGS="$(LDFLAGS)" \
-	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION)-rc-$(RC_NUMBER) .
+	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(RELEASE_VERSION)-rc-$(RC_NUMBER) .
 endif
 
 test-proxy-container:
