@@ -7,7 +7,9 @@ KUSTOMIZE_DIR=../hack/kustomize
 DEPLOY_DIR=../deploy
 TMP_FILE=/tmp/temporary
 
-source ./VERSION
+RELEASED_VERSION="1.6.0"
+CURRENT_VERSION="1.6.1"
+FUTURE_VERSION="1.6.2"
 
 GIT_BRANCH="bump-${CURRENT_VERSION}"
 git checkout -b $GIT_BRANCH
@@ -15,12 +17,11 @@ git checkout -b $GIT_BRANCH
 ## Bump to current version
 sed -i "" "s/${RELEASED_VERSION}/${CURRENT_VERSION}/g" ${DEPLOY_DIR}/kubernetes/5-collector-daemonset.yaml
 sed -i "" "s/${RELEASED_VERSION}/${CURRENT_VERSION}/g" ${DEPLOY_DIR}/openshift/collector/3-collector-deployment.yaml
-sed -i "" "s/${RELEASED_VERSION}/${CURRENT_VERSION}/g" ${KUSTOMIZE_DIR}/base/5-collector-daemonset.yaml
 sed -i "" "s/${RELEASED_VERSION}/${CURRENT_VERSION}/g" ${KUSTOMIZE_DIR}/deploy.sh
 
 ## Bump to future version
-sed -i "" "s/${CURRENT_VERSION}/${NEXT_VERSION}/g" ../Makefile
-sed -i "" "s/${CURRENT_VERSION}/${NEXT_VERSION}/g" ${KUSTOMIZE_DIR}/test.sh
+sed -i "" "s/${CURRENT_VERSION}/${FUTURE_VERSION}/g" ../Makefile
+sed -i "" "s/${CURRENT_VERSION}/${FUTURE_VERSION}/g" ${KUSTOMIZE_DIR}/test.sh
 
 git commit -am "bump version to ${CURRENT_VERSION}"
 git push --set-upstream origin $GIT_BRANCH
