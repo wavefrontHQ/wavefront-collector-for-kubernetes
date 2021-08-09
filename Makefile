@@ -24,7 +24,7 @@ endif
 GO_IMPORTS_BIN:=$(if $(which goimports),$(which goimports),$(GOPATH)/bin/goimports)
 
 VERSION_POSTFIX?=""
-VERSION?=1.6.2$(VERSION_POSTFIX)
+VERSION?=$(shell semver-cli inc patch $$(cat ./release/VERSION))$(VERSION_POSTFIX)
 GIT_COMMIT:=$(shell git rev-parse --short HEAD)
 
 # for testing, the built image will also be tagged with this name provided via an environment variable

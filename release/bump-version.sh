@@ -2,28 +2,27 @@
 
 cd "$(dirname "$0")" # cd to directory that bump-version.sh is in
 
+BUMP_COMPONENT=$1
 
-KUSTOMIZE_DIR=../hack/kustomize
+if [[ -z "${BUMP_COMPONENT}" ]] ; then
+    echo "usage: ./release/bump-version.sh <semver component to bump>"
+    exit 1
+fi
+
 DEPLOY_DIR=../deploy
-TMP_FILE=/tmp/temporary
 
-RELEASED_VERSION="1.6.0"
-CURRENT_VERSION="1.6.1"
-FUTURE_VERSION="1.6.2"
+OLD_VERSION=$(cat ./VERSION)
+NEXT_VERSION=$(semver-cli inc "$BUMP_COMPONENT" "$OLD_VERSION")
 
-GIT_BRANCH="bump-${CURRENT_VERSION}"
-git checkout -b $GIT_BRANCH
+GIT_BRANCH="bump-${NEXT_VERSION}"
+git checkout -b "$GIT_BRANCH"
 
-## Bump to current version
-sed -i "" "s/${RELEASED_VERSION}/${CURRENT_VERSION}/g" ${DEPLOY_DIR}/kubernetes/5-collector-daemonset.yaml
-sed -i "" "s/${RELEASED_VERSION}/${CURRENT_VERSION}/g" ${DEPLOY_DIR}/openshift/collector/3-collector-deployment.yaml
-sed -i "" "s/${RELEASED_VERSION}/${CURRENT_VERSION}/g" ${KUSTOMIZE_DIR}/deploy.sh
+## Bump to next version
+sed -i "" "s/${OLD_VERSION}/${NEXT_VERSION}/g" "$DEPLOY_DIR/kubernetes/5-collector-daemonset.yaml"
+sed -i "" "s/${OLD_VERSION}/${NEXT_VERSION}/g" "$DEPLOY_DIR/openshift/collector/3-collector-deployment.yaml"
+echo "$NEXT_VERSION" > ./VERSION
 
-## Bump to future version
-sed -i "" "s/${CURRENT_VERSION}/${FUTURE_VERSION}/g" ../Makefile
-sed -i "" "s/${CURRENT_VERSION}/${FUTURE_VERSION}/g" ${KUSTOMIZE_DIR}/test.sh
+git commit -am "bump version to ${NEXT_VERSION}"
+git push --set-upstream origin "$GIT_BRANCH"
 
-git commit -am "bump version to ${CURRENT_VERSION}"
-git push --set-upstream origin $GIT_BRANCH
-
-gh pr create --base master --fill --head $GIT_BRANCH --web
+gh pr create --base master --fill --head "$GIT_BRANCH" --web

@@ -3,7 +3,7 @@ source ../deploy/k8s-utils.sh
 
 # This script automates the functional testing of the collector
 
-DEFAULT_VERSION="1.3.6"
+DEFAULT_VERSION=$(semver-cli inc patch "$(cat ../../release/VERSION)")
 DEFAULT_DOCKER_HOST="wavefronthq"
 
 WAVEFRONT_CLUSTER=$1
