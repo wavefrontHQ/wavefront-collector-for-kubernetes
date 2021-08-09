@@ -5,11 +5,12 @@ function print_msg_and_exit() {
     exit 1
 }
 
-NS=wavefront-collector
+NAMESPACE=wavefront-collector
 ROOT_DIR=$(git rev-parse --show-toplevel)
 TEMP_DIR=$(mktemp -d)
-CURRENT_VERSION=1.4.0
-VERSION=1.4.1-rc1
+CURRENT_VERSION= #set if you want to test something other than version in the 5-collector-daemonset.yaml
+VERSION=         #version you want to test
+
 WF_CLUSTER=nimba
 K8S_CLUSTER=$VERSION-release-test
 
@@ -20,23 +21,27 @@ fi
 
 echo "Temp dir: $TEMP_DIR"
 
-make nuke-kind
+make clean-deployment
 make deploy-targets
 
 cp ${ROOT_DIR}/deploy/kubernetes/*  $TEMP_DIR/.
+rm $TEMP_DIR/kustomization.yaml
 
 cp ${ROOT_DIR}/hack/deploy/memcached-config.yaml $TEMP_DIR/.
 cp ${ROOT_DIR}/hack/deploy/mysql-config.yaml $TEMP_DIR/.
 cp ${ROOT_DIR}/hack/deploy/prom-example.yaml $TEMP_DIR/.
-cp ${ROOT_DIR}/hack/kustomize/base/proxy.template.yaml $TEMP_DIR/proxy.yaml
 
 pushd $TEMP_DIR
-  sed -i '' "s/YOUR_CLUSTER/${WF_CLUSTER}/g; s/YOUR_API_TOKEN/${WAVEFRONT_TOKEN}/g" ${TEMP_DIR}/proxy.yaml
+  sed -i '' "s/YOUR_CLUSTER/${WF_CLUSTER}/g; s/YOUR_API_TOKEN/${WAVEFRONT_TOKEN}/g" ${TEMP_DIR}/6-wavefront-proxy.yaml
   sed -i '' "s/k8s-cluster/${K8S_CLUSTER}/g" ${TEMP_DIR}/4-collector-config.yaml
-  sed -i '' "s/${CURRENT_VERSION}/${VERSION}/g" ${TEMP_DIR}/5-collector-daemonset.yaml
+  sed -i '' "s/wavefront-proxy.default/wavefront-proxy.${NAMESPACE}/g" ${TEMP_DIR}/4-collector-config.yaml
 
-  kubectl config set-context --current --namespace=${NS}
+if [[ -n ${CURRENT_VERSION} ]] ; then
+    echo "has current version"
+    sed -i '' "s/${CURRENT_VERSION}/${VERSION}/g" ${TEMP_DIR}/5-collector-daemonset.yaml
+fi
+
+  kubectl config set-context --current --namespace=${NAMESPACE}
   kubectl apply -f $TEMP_DIR/.
   kubectl config set-context --current --namespace=default
 popd
-

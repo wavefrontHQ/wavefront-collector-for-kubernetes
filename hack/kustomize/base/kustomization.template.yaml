@@ -5,7 +5,7 @@ resources:
 - proxy.yaml
 
 images:
-- name: wavefronthq/wavefront-kubernetes-collector
+- name: projects.registry.vmware.com/tanzu_observability/kubernetes-collector
   newName: DOCKER_HOST/wavefront-kubernetes-collector
   newTag: YOUR_IMAGE_TAG
 
