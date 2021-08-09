@@ -3,7 +3,7 @@
 # This script automates the deployment of the collector to a specific k8s cluster
 DEFAULT_DOCKER_HOST="wavefronthq"
 
-DEFAULT_VERSION="1.6.0"
+DEFAULT_VERSION="1.6.1"
 USE_TEST_PROXY="${USE_TEST_PROXY:-false}"
 FLUSH_ONCE="${USE_TEST_PROXY:-false}"
 
