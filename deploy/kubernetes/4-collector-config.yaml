@@ -24,7 +24,7 @@ data:
     #       - "SuccessfulCreate"
 
     sinks:
-    - proxyAddress: wavefront-proxy.default.svc.cluster.local:2878
+    - proxyAddress: wavefront-proxy.wavefront-proxy.svc.cluster.local:2878
       filters:
         # Optimized metrics collection to omit peripheral metrics.
         metricDenyList:
