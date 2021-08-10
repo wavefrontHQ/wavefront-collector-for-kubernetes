@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -e
 
+make clean-deployment
+make deploy-targets
+
 cd "$(dirname "$0")" # cd to deploy-local.sh is in
 
 function print_msg_and_exit() {
@@ -24,8 +27,6 @@ fi
 
 echo "Temp dir: $TEMP_DIR"
 
-make clean-deployment
-make deploy-targets
 
 cp "$ROOT_DIR"/deploy/kubernetes/*  "$TEMP_DIR/."
 rm "$TEMP_DIR"/kustomization.yaml
