@@ -22,9 +22,11 @@ TEMP_DIR:=$(shell mktemp -d /tmp/wavefront.XXXXXX)
 endif
 
 GO_IMPORTS_BIN:=$(if $(which goimports),$(which goimports),$(GOPATH)/bin/goimports)
+SEMVER_CLI_BIN:=$(if $(which semver-cli),$(which semver-cli),$(GOPATH)/bin/semver-cli)
 
 VERSION_POSTFIX?=""
-VERSION?=1.6.2$(VERSION_POSTFIX)
+RELEASE_VERSION?=$(shell cat ./release/VERSION)
+VERSION?=$(shell semver-cli inc patch $(RELEASE_VERSION))$(VERSION_POSTFIX)
 GIT_COMMIT:=$(shell git rev-parse --short HEAD)
 
 # for testing, the built image will also be tagged with this name provided via an environment variable
@@ -80,11 +82,11 @@ release:
 ifeq ($(RELEASE_TYPE), release)
 	docker buildx build --platform linux/amd64,linux/arm64 --push \
 	--build-arg BINARY_NAME=$(BINARY_NAME) --build-arg LDFLAGS="$(LDFLAGS)" \
-	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) -t $(PREFIX)/$(DOCKER_IMAGE):latest .
+	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(RELEASE_VERSION) -t $(PREFIX)/$(DOCKER_IMAGE):latest .
 else
 	docker buildx build --platform linux/amd64,linux/arm64 --push \
 	--build-arg BINARY_NAME=$(BINARY_NAME) --build-arg LDFLAGS="$(LDFLAGS)" \
-	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION)-rc-$(RC_NUMBER) .
+	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(RELEASE_VERSION)-rc-$(RC_NUMBER) .
 endif
 
 test-proxy-container:
@@ -101,7 +103,12 @@ peg:
 		(cd $(REPO_DIR)/..; GOARCH=$(ARCH) CGO_ENABLED=0 go get -u github.com/pointlander/peg)
 
 $(GO_IMPORTS_BIN):
-	@(cd $(REPO_DIR)/..; GOARCH=$(ARCH) CGO_ENABLED=0 go get -u golang.org/x/tools/cmd/goimports)
+	@(cd $(REPO_DIR)/..; CGO_ENABLED=0 go get -u golang.org/x/tools/cmd/goimports)
+
+semver-cli: $(SEMVER_CLI_BIN)
+
+$(SEMVER_CLI_BIN):
+	@(cd $(REPO_DIR)/..; CGO_ENABLED=0 go get -u github.com/davidrjonas/semver-cli)
 
 %.peg.go: %.peg
 	peg -switch -inline $<
@@ -140,4 +147,4 @@ deploy-test: token-check k8s-env clean-deployment deploy-targets push-images pro
 #Testing code, configuration and deployment changes
 integration-test: token-check k8s-env clean-deployment deploy-targets containers delete-images push-images proxy-test
 
-.PHONY: all fmt container clean release
+.PHONY: all fmt container clean release semver-cli
