@@ -86,7 +86,7 @@ fi
 
 cat  base/collector.template.yaml overlays/test-$K8S_ENV/collector-config/overrides.yaml > base/temp-collector.yaml
 
-sed "s/YOUR_CLUSTER_NAME/cluster-${VERSION}/g" base/temp-collector.yaml |
+sed "s/YOUR_CLUSTER_NAME/$(whoami)-${K8S_ENV}-${VERSION}/g" base/temp-collector.yaml |
   sed "s/NAMESPACE/${NAMESPACE_NAME}/g" |
   sed "s/FLUSH_ONCE/${FLUSH_ONCE}/g" |
   sed "s/FLUSH_INTERVAL/${FLUSH_INTERVAL}/g" |
