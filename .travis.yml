@@ -11,6 +11,9 @@ notifications:
   email: false
   slack:
     secure: P6/z7OSxcMhjIm4oAlaGtdntHrbXx4HK60PpnHVaJM3Sn39cHbe9Aq8WyvhXNVn5yYV2CLoECCZF0d/wpfLBWibDGDxgL+pKDJe5n8bNGrrKMp3KpH61s6GNt319vgJAxLKA4k0aEZgZzPfYmGxRZ1MuIuQ2plBsSQ3mwgmbUwO0fCv0fQTNOZsdqXQp9v7/NE1789T2qVM63zUKKvnkO3zjY8GeRJ0KCU+liF5fbfHvb8vxoIX6JoL7Scahh3LgXG2zAK6hi+fMPcNhAI83Gg1/AiXOQcQwxz8lx5jgzcESI5qqputSx/yI2WlK9N05K6pY0OFCJp7xIq7pd8VO6oPETdvq1ghwS4YNzNcn1OqdN15Sy0voNu5SVZiSP6e722lvVx7aVOVqC3huNsnKlG3vCxJrofWmiaiY9aLS9+MKnfaJn2DEp4cuezYnRPiHn0XBaeunyU76N3Hu4liMbQz2qtRs4JSkCZteWbiX2EF4ybZeQCdJs3DAziR9JbOCWJJFLXbO0/1NqjivFcUMQ6QvBxb60K1sQgJ7a6g+++KKm0gyFNbHKP88LI37D9U+C/2o9VShpwWU1ewk2yGWVDQef/0mt3Qlb1WGAm03iXGgh1Z4t/rj7/I/ut9Qxi4ifC2BWPy3/0HalCZaHCX6+fsNMrncnH/Bs5UbMtn3tAY=
+    on_success: change
+    on_failure: always
+
 go:
   - "1.15.x"
   - "1.16.x"
