@@ -1,16 +1,14 @@
 language: go
 
-#branches:
-#  only:
-#    - master
+branches:
+  only:
+    - master
 
 # workaround for case sensitive build issues with wavefrontHQ
 go_import_path: github.com/wavefronthq/wavefront-collector-for-kubernetes
 
 notifications:
   slack: vmware:yjnIAVzbtdV7vm5Rv5E4J9Tw
-    on_success: always
-    on_failure: always
 
 go:
   - "1.15.x"
