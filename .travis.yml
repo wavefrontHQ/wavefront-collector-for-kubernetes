@@ -9,9 +9,12 @@ go_import_path: github.com/wavefronthq/wavefront-collector-for-kubernetes
 
 notifications:
   slack: vmware:yjnIAVzbtdV7vm5Rv5E4J9Tw
+    on_success: change
+    on_failure: always
 
 go:
   - "1.15.x"
+  - "1.16.x"
 script:
   - make checkfmt vet tests
 jobs:
