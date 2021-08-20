@@ -146,7 +146,7 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 	dm := createDiscoveryManagerOrDie(kubeClient, cfg, handler, podLister)
 
 	// create uber manager
-	man, err := manager.NewFlushManager(dataProcessors, sinkManager, cfg.FlushInterval, cfg.FlushOnce)
+	man, err := manager.NewFlushManager(dataProcessors, sinkManager, cfg.FlushInterval)
 	if err != nil {
 		log.Fatalf("Failed to create main manager: %v", err)
 	}
