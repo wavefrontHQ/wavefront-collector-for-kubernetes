@@ -5,7 +5,6 @@ DEFAULT_DOCKER_HOST="wavefronthq"
 
 DEFAULT_VERSION=$(cat ../../release/VERSION)
 USE_TEST_PROXY="${USE_TEST_PROXY:-false}"
-FLUSH_ONCE="${USE_TEST_PROXY:-false}"
 
 function print_usage_and_exit() {
     echo "Failure: $1"
@@ -58,14 +57,5 @@ if [[ -z ${DOCKER_HOST} ]] ; then
 fi
 
 env USE_TEST_PROXY="$USE_TEST_PROXY" ./generate.sh -c "$WF_CLUSTER" -t "$WAVEFRONT_TOKEN" -v $VERSION -d $DOCKER_HOST -k $K8S_ENV
-
-# if the collector doesn't get redeployed, then the timing of picking up the
-# FLUSH_ONCE config change creates inconsistent outputs
-
-# also, if we uploaded a new collector image and didn't change the daemonset,
-# will it get picked up?
-if [[ $FLUSH_ONCE == "true" ]]; then
-  kubectl delete namespace $NAMESPACE_NAME || true
-fi
 
 kustomize build overlays/test-$K8S_ENV | kubectl apply -f -

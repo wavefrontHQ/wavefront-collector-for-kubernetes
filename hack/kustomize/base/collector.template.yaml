@@ -1,7 +1,6 @@
 clusterName: YOUR_CLUSTER_NAME
 enableEvents: false
 enableDiscovery: true
-flushOnce: FLUSH_ONCE
 flushInterval: FLUSH_INTERVALs
 defaultCollectionInterval: COLLECTION_INTERVALs
 

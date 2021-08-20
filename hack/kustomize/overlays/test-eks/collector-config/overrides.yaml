@@ -1,4 +1,0 @@
-
-  - plugins:  [ memcached ]
-    conf: |
-        servers = ["memcached-release.collector-targets.svc.cluster.local:11211"]
