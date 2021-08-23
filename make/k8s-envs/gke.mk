@@ -2,7 +2,9 @@ GCP_PROJECT=wavefront-gcp-dev
 GCR_ENDPOINT=us.gcr.io
 GCR_PREFIX=$(GCP_PROJECT)
 
-target-gke:
+target-gke: connect-to-gke gke-connect-to-cluster
+
+connect-to-gke:
 	gcloud config set project $(GCP_PROJECT)
 	gcloud auth configure-docker --quiet
 

@@ -49,9 +49,6 @@ type Config struct {
 
 	// Internal use only
 	Daemon bool `yaml:"-"`
-
-	// If set to true, one emission interval executes and none after. Defaults to false.
-	FlushOnce bool `yaml:"flushOnce"`
 }
 
 type EventsConfig struct {

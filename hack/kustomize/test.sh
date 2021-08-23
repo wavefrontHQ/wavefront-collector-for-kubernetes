@@ -21,18 +21,20 @@ if [[ -z ${DOCKER_HOST} ]] ; then
     DOCKER_HOST=${DEFAULT_DOCKER_HOST}
 fi
 
-echo "deploying collector $IMAGE_NAME $VERSION"
-
-env USE_TEST_PROXY=true ./deploy.sh -c "$WAVEFRONT_CLUSTER" -t "$API_TOKEN" -v $VERSION -d $DOCKER_HOST -k $K8S_ENV
 
 NS=wavefront-collector
 
 echo "deploying configuration for additional targets"
 
+kubectl create namespace $NS
 kubectl config set-context --current --namespace="$NS"
 kubectl apply -f ../deploy/mysql-config.yaml
 kubectl apply -f ../deploy/memcached-config.yaml
 kubectl config set-context --current --namespace=default
+
+echo "deploying collector $IMAGE_NAME $VERSION"
+
+env USE_TEST_PROXY=true ./deploy.sh -c "$WAVEFRONT_CLUSTER" -t "$API_TOKEN" -v $VERSION -d $DOCKER_HOST -k $K8S_ENV
 
 wait_for_cluster_ready
 
@@ -40,7 +42,7 @@ kubectl --namespace "$NS" port-forward deploy/wavefront-proxy 8888 &
 trap 'kill $(jobs -p)' EXIT
 
 echo "waiting for logs..."
-sleep 32
+sleep 45
 
 DIR=$(dirname "$0")
 RES=$(mktemp)
@@ -58,7 +60,7 @@ if [[ $RES_CODE -gt 399 ]] ; then
   exit 1
 fi
 
-DIFF_COUNT=$(jq "(.Missing | length) + (.Extra | length)" "$RES")
+DIFF_COUNT=$(jq "(.Missing | length)" "$RES")
 EXIT_CODE=0
 if [[ $DIFF_COUNT -gt 0 ]] ; then
   red "MISSING: $(jq "(.Missing | length)" "$RES")"
