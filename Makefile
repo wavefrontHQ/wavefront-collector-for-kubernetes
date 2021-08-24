@@ -108,9 +108,7 @@ $(GO_IMPORTS_BIN):
 semver-cli: $(SEMVER_CLI_BIN)
 
 $(SEMVER_CLI_BIN):
-	echo "foo $(REPO_DIR)"
-
-
+	@(cd $(REPO_DIR)/..; CGO_ENABLED=0 go get -u github.com/davidrjonas/semver-cli)
 
 %.peg.go: %.peg
 	peg -switch -inline $<
