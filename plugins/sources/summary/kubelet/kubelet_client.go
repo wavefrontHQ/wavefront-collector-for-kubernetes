@@ -24,14 +24,14 @@
 package kubelet
 
 import (
-	"bytes"
 	"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
 	"strconv"
-	"time"
+
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/kubernetes"
 
 	cadvisor "github.com/google/cadvisor/info/v1"
 	jsoniter "github.com/json-iterator/go"
@@ -63,11 +63,6 @@ func (err *ErrNotFound) Error() string {
 	return fmt.Sprintf("%q not found", err.endpoint)
 }
 
-func IsNotFoundError(err error) bool {
-	_, isNotFound := err.(*ErrNotFound)
-	return isNotFound
-}
-
 func sampleContainerStats(stats []*cadvisor.ContainerStats) []*cadvisor.ContainerStats {
 	if len(stats) == 0 {
 		return []*cadvisor.ContainerStats{}
@@ -80,13 +75,18 @@ func (kc *KubeletClient) postRequestAndGetValue(client *http.Client, req *http.R
 	if err != nil {
 		return err
 	}
-	defer response.Body.Close()
+	defer func() {
+		_ = response.Body.Close()
+	}()
+
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
 		return fmt.Errorf("failed to read response body - %v", err)
 	}
 	if response.StatusCode == http.StatusNotFound {
 		return &ErrNotFound{req.URL.String()}
+	} else if response.StatusCode == http.StatusForbidden {
+		kubernetes.Terminate("Missing ClusterRole resource nodes/stats or nodes/proxy, see https://docs.wavefront.com/kubernetes.html#kubernetes-manual-install")
 	} else if response.StatusCode != http.StatusOK {
 		return fmt.Errorf("request failed - %q, response: %q", response.Status, string(body))
 	}
@@ -116,30 +116,6 @@ func (kc *KubeletClient) parseStat(containerInfo *cadvisor.ContainerInfo) *cadvi
 	return containerInfo
 }
 
-// TODO(vmarmol): Use Kubernetes' if we export it as an API.
-type statsRequest struct {
-	// The name of the container for which to request stats.
-	// Default: /
-	ContainerName string `json:"containerName,omitempty"`
-
-	// Max number of stats to return.
-	// If start and end time are specified this limit is ignored.
-	// Default: 60
-	NumStats int `json:"num_stats,omitempty"`
-
-	// Start time for which to query information.
-	// If omitted, the beginning of time is assumed.
-	Start time.Time `json:"start,omitempty"`
-
-	// End time for which to query information.
-	// If omitted, current time is assumed.
-	End time.Time `json:"end,omitempty"`
-
-	// Whether to also include information from subcontainers.
-	// Default: false.
-	Subcontainers bool `json:"subcontainers,omitempty"`
-}
-
 func (kc *KubeletClient) getScheme() string {
 	if kc.config != nil && kc.config.EnableHttps {
 		return "https"
@@ -154,12 +130,6 @@ func (kc *KubeletClient) getUrl(host Host, path string) string {
 		Path:   path,
 	}
 	return u.String()
-}
-
-// Get stats for all non-Kubernetes containers.
-func (kc *KubeletClient) GetAllRawContainers(host Host, start, end time.Time) ([]cadvisor.ContainerInfo, error) {
-	u := kc.getUrl(host, "/stats/container/")
-	return kc.getAllContainers(u, start, end)
 }
 
 func (kc *KubeletClient) GetSummary(host Host) (*stats.Summary, error) {
@@ -197,44 +167,6 @@ func (kc *KubeletClient) GetPods(host Host) (*v1.PodList, error) {
 
 func (kc *KubeletClient) GetPort() int {
 	return int(kc.config.Port)
-}
-
-func (kc *KubeletClient) getAllContainers(url string, start, end time.Time) ([]cadvisor.ContainerInfo, error) {
-	// Request data from all subcontainers.
-	request := statsRequest{
-		ContainerName: "/",
-		NumStats:      1,
-		Start:         start,
-		End:           end,
-		Subcontainers: true,
-	}
-	body, err := jsoniter.ConfigFastest.Marshal(request)
-	if err != nil {
-		return nil, err
-	}
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(body))
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Content-Type", "application/json")
-
-	var containers map[string]cadvisor.ContainerInfo
-	client := kc.client
-	if client == nil {
-		client = http.DefaultClient
-	}
-	err = kc.postRequestAndGetValue(client, req, &containers)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get all container stats from Kubelet URL %q: %v", url, err)
-	}
-	result := make([]cadvisor.ContainerInfo, 0, len(containers))
-	for _, containerInfo := range containers {
-		cont := kc.parseStat(&containerInfo)
-		if cont != nil {
-			result = append(result, *cont)
-		}
-	}
-	return result, nil
 }
 
 func NewKubeletClient(kubeletConfig *KubeletClientConfig) (*KubeletClient, error) {
