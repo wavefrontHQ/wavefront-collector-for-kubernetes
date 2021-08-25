@@ -36,26 +36,11 @@ import (
 func TestGetPods(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
-		content, err := ioutil.ReadFile("k8s_api_pods.json")
-		require.NoError(t, err)
+		host, close := setupTestServer(t, http.StatusOK)
+		defer close()
 
-		handler := util.FakeHandler{
-			StatusCode:   200,
-			RequestBody:  "",
-			ResponseBody: string(content),
-			T:            t,
-		}
-		server := httptest.NewServer(&handler)
-		defer server.Close()
 		kubeletClient := KubeletClient{}
-		u, _ := url.Parse(server.URL)
-		_, port, _ := net.SplitHostPort(u.Host)
-		portInt, _ := strconv.Atoi(port)
-		pods, err := kubeletClient.GetPods(Host{
-			IP:       net.ParseIP("127.0.0.1"),
-			Port:     portInt,
-			Resource: "",
-		})
+		pods, err := kubeletClient.GetPods(host)
 
 		require.NoError(t, err)
 		require.Len(t, pods.Items, 7)
@@ -65,26 +50,37 @@ func TestGetPods(t *testing.T) {
 	})
 
 	t.Run("forbidden", func(t *testing.T) {
-		handlerFunc := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(http.StatusForbidden)
-		})
 		kubernetes.UseTerminateTestMode()
 
-		server := httptest.NewServer(handlerFunc)
-		defer server.Close()
+		host, close := setupTestServer(t, http.StatusForbidden)
+		defer close()
 
 		kubeletClient := KubeletClient{}
-
-		u, _ := url.Parse(server.URL)
-		_, port, _ := net.SplitHostPort(u.Host)
-		portInt, _ := strconv.Atoi(port)
-		kubeletClient.GetPods(Host{
-			IP:       net.ParseIP("127.0.0.1"),
-			Port:     portInt,
-			Resource: "",
-		})
+		kubeletClient.GetPods(host)
 
 		assert.Equal(t, "Missing ClusterRole resource nodes/stats or nodes/proxy, see https://docs.wavefront.com/kubernetes.html#kubernetes-manual-install", kubernetes.TerminationMessage)
 	})
 
+}
+
+func setupTestServer(t *testing.T, status int) (Host, func()) {
+	content, err := ioutil.ReadFile("k8s_api_pods.json")
+	require.NoError(t, err)
+
+	handler := util.FakeHandler{
+		StatusCode:   status,
+		RequestBody:  "",
+		ResponseBody: string(content),
+		T:            t,
+	}
+	server := httptest.NewServer(&handler)
+	mockServerUrl, _ := url.Parse(server.URL)
+	_, port, _ := net.SplitHostPort(mockServerUrl.Host)
+
+	mockPort, _ := strconv.Atoi(port)
+	return Host{
+		IP:       net.ParseIP("127.0.0.1"),
+		Port:     mockPort,
+		Resource: "",
+	}, server.Close
 }
