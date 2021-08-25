@@ -20,120 +20,67 @@ package kubelet
 import (
 	"io/ioutil"
 	"net"
+	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strconv"
 	"testing"
-	"time"
 
-	cadvisor_api "github.com/google/cadvisor/info/v1"
-	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/kubernetes"
 	kube_api "k8s.io/api/core/v1"
 	util "k8s.io/client-go/util/testing"
 )
 
-func checkContainer(t *testing.T, expected cadvisor_api.ContainerInfo, actual cadvisor_api.ContainerInfo) {
-	assert.True(t, actual.Spec.Eq(&expected.Spec))
-	for i, stat := range actual.Stats {
-		assert.True(t, stat.Eq(expected.Stats[i]))
-	}
-}
-
-func TestAllContainers(t *testing.T) {
-	rootContainer := cadvisor_api.ContainerInfo{
-		ContainerReference: cadvisor_api.ContainerReference{
-			Name: "/",
-		},
-		Spec: cadvisor_api.ContainerSpec{
-			CreationTime: time.Now(),
-			HasCpu:       true,
-			HasMemory:    true,
-		},
-		Stats: []*cadvisor_api.ContainerStats{
-			{
-				Timestamp: time.Now(),
-			},
-		},
-	}
-
-	subcontainer := cadvisor_api.ContainerInfo{
-		ContainerReference: cadvisor_api.ContainerReference{
-			Name: "/sub",
-		},
-		Spec: cadvisor_api.ContainerSpec{
-			CreationTime: time.Now(),
-			HasCpu:       true,
-			HasMemory:    true,
-		},
-		Stats: []*cadvisor_api.ContainerStats{
-			{
-				Timestamp: time.Now(),
-			},
-		},
-	}
-	response := map[string]cadvisor_api.ContainerInfo{
-		rootContainer.Name: {
-			ContainerReference: cadvisor_api.ContainerReference{
-				Name: rootContainer.Name,
-			},
-			Spec: rootContainer.Spec,
-			Stats: []*cadvisor_api.ContainerStats{
-				rootContainer.Stats[0],
-			},
-		},
-		subcontainer.Name: {
-			ContainerReference: cadvisor_api.ContainerReference{
-				Name: subcontainer.Name,
-			},
-			Spec: subcontainer.Spec,
-			Stats: []*cadvisor_api.ContainerStats{
-				subcontainer.Stats[0],
-			},
-		},
-	}
-	data, err := jsoniter.ConfigFastest.Marshal(&response)
-	require.NoError(t, err)
-	handler := util.FakeHandler{
-		StatusCode:   200,
-		RequestBody:  "",
-		ResponseBody: string(data),
-		T:            t,
-	}
-	server := httptest.NewServer(&handler)
-	defer server.Close()
-	kubeletClient := KubeletClient{}
-	containers, err := kubeletClient.getAllContainers(server.URL, time.Now(), time.Now().Add(time.Minute))
-	require.NoError(t, err)
-	require.Len(t, containers, 2)
-	checkContainer(t, rootContainer, containers[0])
-	checkContainer(t, subcontainer, containers[1])
-}
-
 func TestGetPods(t *testing.T) {
+
+	t.Run("success", func(t *testing.T) {
+		host, close := setupTestServer(t, http.StatusOK)
+		defer close()
+
+		kubeletClient := KubeletClient{}
+		pods, err := kubeletClient.GetPods(host)
+
+		require.NoError(t, err)
+		require.Len(t, pods.Items, 7)
+		assert.Equal(t, pods.Items[0].Status.Phase, kube_api.PodSucceeded, "Expected Pod status phase to be succeeded")
+		assert.Equal(t, pods.Items[5].Status.Phase, kube_api.PodFailed, "Expected Pod status phase to be failed")
+
+	})
+
+	t.Run("forbidden", func(t *testing.T) {
+		kubernetes.UseTerminateTestMode()
+
+		host, close := setupTestServer(t, http.StatusForbidden)
+		defer close()
+
+		kubeletClient := KubeletClient{}
+		kubeletClient.GetPods(host)
+
+		assert.Equal(t, "Missing ClusterRole resource nodes/stats or nodes/proxy, see https://docs.wavefront.com/kubernetes.html#kubernetes-manual-install", kubernetes.TerminationMessage)
+	})
+
+}
+
+func setupTestServer(t *testing.T, status int) (Host, func()) {
 	content, err := ioutil.ReadFile("k8s_api_pods.json")
 	require.NoError(t, err)
+
 	handler := util.FakeHandler{
-		StatusCode:   200,
+		StatusCode:   status,
 		RequestBody:  "",
 		ResponseBody: string(content),
 		T:            t,
 	}
 	server := httptest.NewServer(&handler)
-	defer server.Close()
-	kubeletClient := KubeletClient{}
-	u, _ := url.Parse(server.URL)
-	_, port, _ := net.SplitHostPort(u.Host)
-	portInt, _ := strconv.Atoi(port)
-	pods, err := kubeletClient.GetPods(Host{
-		IP:       net.ParseIP("127.0.0.1"),
-		Port:     portInt,
-		Resource: "",
-	})
+	mockServerUrl, _ := url.Parse(server.URL)
+	_, port, _ := net.SplitHostPort(mockServerUrl.Host)
 
-	require.NoError(t, err)
-	require.Len(t, pods.Items, 7)
-	assert.Equal(t, pods.Items[0].Status.Phase, kube_api.PodSucceeded, "Expected Pod status phase to be succeeded")
-	assert.Equal(t, pods.Items[5].Status.Phase, kube_api.PodFailed, "Expected Pod status phase to be failed")
+	mockPort, _ := strconv.Atoi(port)
+	return Host{
+		IP:       net.ParseIP("127.0.0.1"),
+		Port:     mockPort,
+		Resource: "",
+	}, server.Close
 }
