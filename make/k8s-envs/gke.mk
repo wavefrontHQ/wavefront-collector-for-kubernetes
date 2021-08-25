@@ -14,11 +14,11 @@ gke-cluster-name-check:
 gke-connect-to-cluster: gke-cluster-name-check
 	gcloud container clusters get-credentials $(GKE_CLUSTER_NAME) --zone us-central1-c --project $(GCP_PROJECT)
 
-delete-gke-cluster: gke-cluster-name-check target-gke
+delete-gke-cluster: gke-cluster-name-check connect-to-gke
 	echo "Deleting GKE K8s Cluster: $(GKE_CLUSTER_NAME)"
 	gcloud container clusters delete $(GKE_CLUSTER_NAME) --region=us-central1-c --quiet
 
-create-gke-cluster: gke-cluster-name-check target-gke
+create-gke-cluster: gke-cluster-name-check connect-to-gke
 	echo "Creating GKE K8s Cluster: $(GKE_CLUSTER_NAME)"
 	gcloud container clusters create $(GKE_CLUSTER_NAME) --machine-type=e2-standard-2 --region=us-central1-c --enable-ip-alias --create-subnetwork range=/21
 	gcloud container clusters get-credentials $(GKE_CLUSTER_NAME) --zone us-central1-c --project $(GCP_PROJECT)

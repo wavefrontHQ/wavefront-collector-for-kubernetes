@@ -64,7 +64,7 @@ driver: clean fmt
 
 containers: container test-proxy-container
 
-container:
+container: $(SEMVER_CLI_BIN)
 	# Run build in a container in order to have reproducible builds
 	docker build \
 	--build-arg BINARY_NAME=$(BINARY_NAME) --build-arg LDFLAGS="$(LDFLAGS)" \
@@ -75,7 +75,7 @@ endif
 
 github-release:
 	curl -X POST -H "Content-Type:application/json" -H "Authorization: token $(GITHUB_TOKEN)" \
-		-d '{"tag_name":"v$(VERSION)", "target_commitish":"$(GIT_BRANCH)", "name":"Release v$(VERSION)", "body": "Description for v$(VERSION)", "draft": true, "prerelease": false}' "https://api.github.com/repos/$(GIT_HUB_REPO)/releases"
+		-d '{"tag_name":"v$(RELEASE_VERSION)", "target_commitish":"$(GIT_BRANCH)", "name":"Release v$(RELEASE_VERSION)", "body": "Description for v$(RELEASE_VERSION)", "draft": true, "prerelease": false}' "https://api.github.com/repos/$(GIT_HUB_REPO)/releases"
 
 release:
 	docker buildx create --use --node wavefront_collector_builder
@@ -89,7 +89,7 @@ else
 	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(RELEASE_VERSION)-rc-$(RC_NUMBER) .
 endif
 
-test-proxy-container:
+test-proxy-container: $(SEMVER_CLI_BIN)
 	docker build \
 	--build-arg BINARY_NAME=test-proxy --build-arg LDFLAGS="$(LDFLAGS)" \
 	--pull -f $(REPO_DIR)/Dockerfile.test-proxy \
@@ -114,7 +114,7 @@ $(SEMVER_CLI_BIN):
 	peg -switch -inline $<
 
 #This rule need to be run on RHEL with podman installed.
-container_rhel: build
+container_rhel: build $(SEMVER_CLI_BIN)
 	cp $(OUT_DIR)/$(ARCH)/$(BINARY_NAME) $(TEMP_DIR)
 	cp LICENSE $(TEMP_DIR)/license.txt
 	cp deploy/docker/Dockerfile-rhel $(TEMP_DIR)/Dockerfile
@@ -132,7 +132,7 @@ clean:
 token-check:
 	@if [ -z ${WAVEFRONT_TOKEN} ]; then echo "Need to set WAVEFRONT_TOKEN" && exit 1; fi
 
-proxy-test: token-check
+proxy-test: token-check $(SEMVER_CLI_BIN)
 ifeq ($(K8S_ENV), GKE)
 	@(cd $(KUSTOMIZE_DIR) && ./test.sh nimba $(WAVEFRONT_TOKEN) $(VERSION) "us.gcr.io\/$(GCP_PROJECT)")
 else ifeq ($(K8S_ENV), EKS)
