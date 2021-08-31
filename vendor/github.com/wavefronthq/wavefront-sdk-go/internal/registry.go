@@ -9,6 +9,10 @@ import (
 type internalSender interface {
 	// Sends a single metric to Wavefront with optional timestamp and tags.
 	SendMetric(name string, value float64, ts int64, source string, tags map[string]string) error
+
+	// Sends a delta counter (counter aggregated at the Wavefront service) to Wavefront.
+	// the timestamp for a delta counter is assigned at the server side.
+	SendDeltaCounter(name string, value float64, source string, tags map[string]string) error
 }
 
 // metric registry for internal metrics
@@ -76,8 +80,16 @@ func (registry *MetricRegistry) NewCounter(name string) *MetricCounter {
 	return registry.getOrAdd(name, &MetricCounter{}).(*MetricCounter)
 }
 
+func (registry *MetricRegistry) NewDeltaCounter(name string) *DeltaCounter {
+	return registry.getOrAdd(name, &DeltaCounter{MetricCounter{}}).(*DeltaCounter)
+}
+
 func (registry *MetricRegistry) NewGauge(name string, f func() int64) *FunctionalGauge {
 	return registry.getOrAdd(name, &FunctionalGauge{value: f}).(*FunctionalGauge)
+}
+
+func (registry *MetricRegistry) NewGaugeFloat64(name string, f func() float64) *FunctionalGaugeFloat64 {
+	return registry.getOrAdd(name, &FunctionalGaugeFloat64{value: f}).(*FunctionalGaugeFloat64)
 }
 
 func (registry *MetricRegistry) Start() {
@@ -106,10 +118,16 @@ func (registry *MetricRegistry) report() {
 
 	for k, metric := range registry.metrics {
 		switch metric.(type) {
+		case *DeltaCounter:
+			deltaCount := metric.(*DeltaCounter).count()
+			registry.sender.SendDeltaCounter(registry.prefix+"."+k, float64(deltaCount), "", registry.tags)
+			metric.(*DeltaCounter).dec(deltaCount)
 		case *MetricCounter:
 			registry.sender.SendMetric(registry.prefix+"."+k, float64(metric.(*MetricCounter).count()), 0, "", registry.tags)
 		case *FunctionalGauge:
 			registry.sender.SendMetric(registry.prefix+"."+k, float64(metric.(*FunctionalGauge).instantValue()), 0, "", registry.tags)
+		case *FunctionalGaugeFloat64:
+			registry.sender.SendMetric(registry.prefix+"."+k, metric.(*FunctionalGaugeFloat64).instantValue(), 0, "", registry.tags)
 		}
 	}
 }

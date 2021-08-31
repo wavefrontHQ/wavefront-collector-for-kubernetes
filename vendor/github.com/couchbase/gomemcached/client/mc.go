@@ -1106,7 +1106,7 @@ func (c *Client) StatsMap(key string) (map[string]string, error) {
 func (c *Client) StatsMapForSpecifiedStats(key string, statsMap map[string]string) error {
 
 	// clear statsMap
-	for key := range statsMap {
+	for key, _ := range statsMap {
 		statsMap[key] = ""
 	}
 

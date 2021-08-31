@@ -11,20 +11,31 @@ import (
 )
 
 type ProxyConnectionHandler struct {
-	address     string
-	failures    int64
-	flushTicker *time.Ticker
-	done        chan struct{}
-	mtx         sync.RWMutex
-	conn        net.Conn
-	writer      *bufio.Writer
+	// keep this as first element of struct to guarantee 64-bit alignment ton 32-bit machines.
+	// atomic.* functions crash if the operand is not 64-bit aligned.
+	// See https://github.com/golang/go/issues/599
+	failures         int64
+	address          string
+	flushTicker      *time.Ticker
+	done             chan struct{}
+	mtx              sync.RWMutex
+	conn             net.Conn
+	writer           *bufio.Writer
+	internalRegistry *MetricRegistry
+
+	writeSuccesses *DeltaCounter
+	writeErrors    *DeltaCounter
 }
 
-func NewProxyConnectionHandler(address string, flushInterval time.Duration) ConnectionHandler {
-	return &ProxyConnectionHandler{
-		address:     address,
-		flushTicker: time.NewTicker(flushInterval),
+func NewProxyConnectionHandler(address string, flushInterval time.Duration, prefix string, internalRegistry *MetricRegistry) ConnectionHandler {
+	proxyConnectionHandler := &ProxyConnectionHandler{
+		address:          address,
+		flushTicker:      time.NewTicker(flushInterval),
+		internalRegistry: internalRegistry,
 	}
+	proxyConnectionHandler.writeSuccesses = internalRegistry.NewDeltaCounter(prefix + ".write.success")
+	proxyConnectionHandler.writeErrors = internalRegistry.NewDeltaCounter(prefix + ".write.errors")
+	return proxyConnectionHandler
 }
 
 func (handler *ProxyConnectionHandler) Start() {
@@ -130,7 +141,10 @@ func (handler *ProxyConnectionHandler) SendData(lines string) error {
 		handler.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 		_, err := fmt.Fprint(handler.writer, lines)
 		if err != nil {
+			handler.writeErrors.Inc()
 			atomic.AddInt64(&handler.failures, 1)
+		} else {
+			handler.writeSuccesses.Inc()
 		}
 		return err
 	}

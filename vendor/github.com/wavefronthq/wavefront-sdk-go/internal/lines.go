@@ -20,6 +20,13 @@ const (
 )
 
 type LineHandler struct {
+	// keep these two fields as first element of struct
+	// to guarantee 64-bit alignment on 32-bit machines.
+	// atomic.* functions crash if operands are not 64-bit aligned.
+	// See https://github.com/golang/go/issues/599
+	failures  int64
+	throttled int64
+
 	Reporter      Reporter
 	BatchSize     int
 	MaxBufferSize int
@@ -31,9 +38,6 @@ type LineHandler struct {
 
 	mtx                sync.Mutex
 	lockOnErrThrottled bool
-
-	failures  int64
-	throttled int64
 
 	buffer chan string
 	done   chan struct{}

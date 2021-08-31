@@ -1,11 +1,33 @@
 package histogram
 
-import "time"
+import (
+	"time"
+)
 
 // Centroid encapsulates a mean value and the count of points associated with that value.
 type Centroid struct {
 	Value float64
 	Count int
+}
+
+type Centroids []Centroid
+
+func (centroids Centroids) Compact() Centroids {
+	tmp := make(map[float64]int)
+	for _, c := range centroids {
+		if _, ok := tmp[c.Value]; ok {
+			tmp[c.Value] += c.Count
+		} else {
+			tmp[c.Value] = c.Count
+		}
+	}
+	res := make(Centroids, len(tmp))
+	idx := 0
+	for v, c := range tmp {
+		res[idx] = Centroid{Value: v, Count: c}
+		idx++
+	}
+	return res
 }
 
 // Granularity is the interval (MINUTE, HOUR and/or DAY) by which the histogram data should be aggregated.

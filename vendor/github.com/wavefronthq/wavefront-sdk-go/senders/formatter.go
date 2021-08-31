@@ -5,16 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/wavefronthq/wavefront-sdk-go/event"
-	"github.com/wavefronthq/wavefront-sdk-go/histogram"
 	"regexp"
 	"strconv"
 	"strings"
-)
 
-const (
-	deltaPrefix    = "\u2206"
-	altDeltaPrefix = "\u0394"
+	"github.com/wavefronthq/wavefront-sdk-go/event"
+	"github.com/wavefronthq/wavefront-sdk-go/histogram"
+	"github.com/wavefronthq/wavefront-sdk-go/internal"
 )
 
 var /* const */ quotation = regexp.MustCompile("\"")
@@ -32,8 +29,8 @@ func MetricLine(name string, value float64, ts int64, source string, tags map[st
 		source = defaultSource
 	}
 
-	sb := GetBuffer()
-	defer PutBuffer(sb)
+	sb := internal.GetBuffer()
+	defer internal.PutBuffer(sb)
 
 	sb.WriteString(strconv.Quote(sanitizeInternal(name)))
 	sb.WriteString(" ")
@@ -45,7 +42,7 @@ func MetricLine(name string, value float64, ts int64, source string, tags map[st
 	}
 
 	sb.WriteString(" source=")
-	sb.WriteString(strconv.Quote(sanitizeInternal(source)))
+	sb.WriteString(sanitizeValue(source))
 
 	for k, v := range tags {
 		if v == "" {
@@ -63,7 +60,7 @@ func MetricLine(name string, value float64, ts int64, source string, tags map[st
 // Gets a histogram line in the Wavefront histogram data format:
 // {!M | !H | !D} [<timestamp>] #<count> <mean> [centroids] <histogramName> source=<source> [pointTags]
 // Example: "!M 1533531013 #20 30.0 #10 5.1 request.latency source=appServer1 region=us-west"
-func HistoLine(name string, centroids []histogram.Centroid, hgs map[histogram.Granularity]bool, ts int64, source string, tags map[string]string, defaultSource string) (string, error) {
+func HistoLine(name string, centroids histogram.Centroids, hgs map[histogram.Granularity]bool, ts int64, source string, tags map[string]string, defaultSource string) (string, error) {
 	if name == "" {
 		return "", errors.New("empty distribution name")
 	}
@@ -80,15 +77,15 @@ func HistoLine(name string, centroids []histogram.Centroid, hgs map[histogram.Gr
 		source = defaultSource
 	}
 
-	sb := GetBuffer()
-	defer PutBuffer(sb)
+	sb := internal.GetBuffer()
+	defer internal.PutBuffer(sb)
 
 	if ts != 0 {
 		sb.WriteString(" ")
 		sb.WriteString(strconv.FormatInt(ts, 10))
 	}
 	// Preprocess line. We know len(hgs) > 0 here.
-	for _, centroid := range centroids {
+	for _, centroid := range centroids.Compact() {
 		sb.WriteString(" #")
 		sb.WriteString(strconv.Itoa(centroid.Count))
 		sb.WriteString(" ")
@@ -97,7 +94,7 @@ func HistoLine(name string, centroids []histogram.Centroid, hgs map[histogram.Gr
 	sb.WriteString(" ")
 	sb.WriteString(strconv.Quote(sanitizeInternal(name)))
 	sb.WriteString(" source=")
-	sb.WriteString(strconv.Quote(sanitizeInternal(source)))
+	sb.WriteString(sanitizeValue(source))
 
 	for k, v := range tags {
 		if v == "" {
@@ -111,10 +108,12 @@ func HistoLine(name string, centroids []histogram.Centroid, hgs map[histogram.Gr
 	sbBytes := sb.Bytes()
 
 	sbg := bytes.Buffer{}
-	for hg := range hgs {
-		sbg.WriteString(hg.String())
-		sbg.Write(sbBytes)
-		sbg.WriteString("\n")
+	for hg, on := range hgs {
+		if on {
+			sbg.WriteString(hg.String())
+			sbg.Write(sbBytes)
+			sbg.WriteString("\n")
+		}
 	}
 	return sbg.String(), nil
 }
@@ -140,12 +139,12 @@ func SpanLine(name string, startMillis, durationMillis int64, source, traceId, s
 		return "", errors.New("spanId is not in UUID format")
 	}
 
-	sb := GetBuffer()
-	defer PutBuffer(sb)
+	sb := internal.GetBuffer()
+	defer internal.PutBuffer(sb)
 
 	sb.WriteString(sanitizeValue(name))
 	sb.WriteString(" source=")
-	sb.WriteString(strconv.Quote(sanitizeInternal(source)))
+	sb.WriteString(sanitizeValue(source))
 	sb.WriteString(" traceId=")
 	sb.WriteString(traceId)
 	sb.WriteString(" spanId=")
@@ -202,8 +201,8 @@ func SpanLogJSON(traceId, spanId string, spanLogs []SpanLog) (string, error) {
 // EventLine encode the event to a wf proxy format
 // set endMillis to 0 for a 'Instantaneous' event
 func EventLine(name string, startMillis, endMillis int64, source string, tags map[string]string, setters ...event.Option) (string, error) {
-	sb := GetBuffer()
-	defer PutBuffer(sb)
+	sb := internal.GetBuffer()
+	defer internal.PutBuffer(sb)
 
 	annotations := map[string]string{}
 	l := map[string]interface{}{
@@ -320,19 +319,26 @@ func isUUIDFormat(str string) bool {
 
 //Sanitize string of metric name, source and key of tags according to the rule of Wavefront proxy.
 func sanitizeInternal(str string) string {
-	sb := GetBuffer()
-	defer PutBuffer(sb)
+	sb := internal.GetBuffer()
+	defer internal.PutBuffer(sb)
 
 	// first character can be \u2206 (∆ - INCREMENT) or \u0394 (Δ - GREEK CAPITAL LETTER DELTA)
 	// or ~ tilda character for internal metrics
 	skipHead := 0
-	if strings.HasPrefix(str, deltaPrefix) {
-		sb.WriteString(deltaPrefix)
+	if strings.HasPrefix(str, internal.DeltaPrefix) {
+		sb.WriteString(internal.DeltaPrefix)
 		skipHead = 3
 	}
-	if strings.HasPrefix(str, altDeltaPrefix) {
-		sb.WriteString(altDeltaPrefix)
+	if strings.HasPrefix(str, internal.AltDeltaPrefix) {
+		sb.WriteString(internal.AltDeltaPrefix)
 		skipHead = 2
+	}
+	// Second character can be ~ tilda character if first character
+	// is \u2206 (∆ - INCREMENT) or \u0394 (Δ - GREEK CAPITAL LETTER)
+	if (strings.HasPrefix(str, internal.DeltaPrefix) || strings.HasPrefix(str, internal.AltDeltaPrefix)) &&
+		str[skipHead] == 126 {
+		sb.WriteString(string(str[skipHead]))
+		skipHead += 1
 	}
 	if str[0] == 126 {
 		sb.WriteString(string(str[0]))

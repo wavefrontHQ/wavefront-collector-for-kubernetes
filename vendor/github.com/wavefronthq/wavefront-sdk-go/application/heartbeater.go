@@ -92,5 +92,12 @@ func (hb *heartbeater) AddCustomTags(tags map[string]string) {
 			return
 		}
 	}
-	hb.customTags = append(hb.customTags, tags)
+
+	newTags := make(map[string]string)
+
+	for k, v := range tags {
+		newTags[k] = v
+	}
+
+	hb.customTags = append(hb.customTags, newTags)
 }
