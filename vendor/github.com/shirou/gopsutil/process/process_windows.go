@@ -51,10 +51,10 @@ type SystemProcessInformation struct {
 
 type systemProcessorInformation struct {
 	ProcessorArchitecture uint16
-	ProcessorLevel        uint16
-	ProcessorRevision     uint16
-	Reserved              uint16
-	ProcessorFeatureBits  uint16
+	ProcessorLevel uint16
+	ProcessorRevision uint16
+	Reserved uint16
+	ProcessorFeatureBits uint16
 }
 
 type systemInfo struct {
@@ -853,7 +853,7 @@ func is32BitProcess(procHandle syscall.Handle) bool {
 }
 
 func getProcessCommandLine(pid int32) (string, error) {
-	h, err := windows.OpenProcess(windows.PROCESS_QUERY_LIMITED_INFORMATION|windows.PROCESS_VM_READ, false, uint32(pid))
+	h, err := windows.OpenProcess(windows.PROCESS_QUERY_LIMITED_INFORMATION | windows.PROCESS_VM_READ, false, uint32(pid))
 	if err == windows.ERROR_ACCESS_DENIED || err == windows.ERROR_INVALID_PARAMETER {
 		return "", nil
 	}
@@ -897,14 +897,14 @@ func getProcessCommandLine(pid int32) (string, error) {
 	}
 
 	if procIs32Bits {
-		buf := readProcessMemory(syscall.Handle(h), procIs32Bits, pebAddress+uint64(16), 4)
+		buf := readProcessMemory(syscall.Handle(h), procIs32Bits, pebAddress + uint64(16), 4)
 		if len(buf) != 4 {
 			return "", errors.New("cannot locate process user parameters")
 		}
 		userProcParams := uint64(buf[0]) | (uint64(buf[1]) << 8) | (uint64(buf[2]) << 16) | (uint64(buf[3]) << 24)
 
 		//read CommandLine field from PRTL_USER_PROCESS_PARAMETERS
-		remoteCmdLine := readProcessMemory(syscall.Handle(h), procIs32Bits, userProcParams+uint64(64), 8)
+		remoteCmdLine := readProcessMemory(syscall.Handle(h), procIs32Bits, userProcParams + uint64(64), 8)
 		if len(remoteCmdLine) != 8 {
 			return "", errors.New("cannot read cmdline field")
 		}
@@ -925,15 +925,15 @@ func getProcessCommandLine(pid int32) (string, error) {
 			return convertUTF16ToString(cmdLine), nil
 		}
 	} else {
-		buf := readProcessMemory(syscall.Handle(h), procIs32Bits, pebAddress+uint64(32), 8)
+		buf := readProcessMemory(syscall.Handle(h), procIs32Bits, pebAddress + uint64(32), 8)
 		if len(buf) != 8 {
 			return "", errors.New("cannot locate process user parameters")
 		}
-		userProcParams := uint64(buf[0]) | (uint64(buf[1]) << 8) | (uint64(buf[2]) << 16) | (uint64(buf[3]) << 24) |
+		userProcParams := uint64(buf[0]) |	(uint64(buf[1]) << 8) | (uint64(buf[2]) << 16) | (uint64(buf[3]) << 24) |
 			(uint64(buf[4]) << 32) | (uint64(buf[5]) << 40) | (uint64(buf[6]) << 48) | (uint64(buf[7]) << 56)
 
 		//read CommandLine field from PRTL_USER_PROCESS_PARAMETERS
-		remoteCmdLine := readProcessMemory(syscall.Handle(h), procIs32Bits, userProcParams+uint64(112), 16)
+		remoteCmdLine := readProcessMemory(syscall.Handle(h), procIs32Bits, userProcParams + uint64(112), 16)
 		if len(remoteCmdLine) != 16 {
 			return "", errors.New("cannot read cmdline field")
 		}
@@ -968,7 +968,7 @@ func convertUTF16ToString(src []byte) string {
 
 	srcIdx := 0
 	for i := 0; i < srcLen; i++ {
-		codePoints[i] = uint16(src[srcIdx]) | uint16(src[srcIdx+1]<<8)
+		codePoints[i] = uint16(src[srcIdx]) | uint16(src[srcIdx + 1] << 8)
 		srcIdx += 2
 	}
 	return syscall.UTF16ToString(codePoints)

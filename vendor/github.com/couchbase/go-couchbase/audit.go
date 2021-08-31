@@ -1,5 +1,7 @@
 package couchbase
 
+import ()
+
 // Sample data:
 // {"disabled":["12333", "22244"],"uid":"132492431","auditdEnabled":true,
 //  "disabledUsers":[{"name":"bill","domain":"local"},{"name":"bob","domain":"local"}],

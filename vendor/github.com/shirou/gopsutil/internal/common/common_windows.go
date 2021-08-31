@@ -69,13 +69,13 @@ var (
 	ProcNtWow64QueryInformationProcess64 = ModNt.NewProc("NtWow64QueryInformationProcess64")
 	ProcNtWow64ReadVirtualMemory64       = ModNt.NewProc("NtWow64ReadVirtualMemory64")
 
-	PdhOpenQuery                = ModPdh.NewProc("PdhOpenQuery")
-	PdhAddCounter               = ModPdh.NewProc("PdhAddCounterW")
-	PdhCollectQueryData         = ModPdh.NewProc("PdhCollectQueryData")
-	PdhGetFormattedCounterValue = ModPdh.NewProc("PdhGetFormattedCounterValue")
-	PdhCloseQuery               = ModPdh.NewProc("PdhCloseQuery")
+	PdhOpenQuery                         = ModPdh.NewProc("PdhOpenQuery")
+	PdhAddCounter                        = ModPdh.NewProc("PdhAddCounterW")
+	PdhCollectQueryData                  = ModPdh.NewProc("PdhCollectQueryData")
+	PdhGetFormattedCounterValue          = ModPdh.NewProc("PdhGetFormattedCounterValue")
+	PdhCloseQuery                        = ModPdh.NewProc("PdhCloseQuery")
 
-	procQueryDosDeviceW = Modkernel32.NewProc("QueryDosDeviceW")
+	procQueryDosDeviceW                  = Modkernel32.NewProc("QueryDosDeviceW")
 )
 
 type FILETIME struct {
