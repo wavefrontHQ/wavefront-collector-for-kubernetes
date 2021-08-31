@@ -6,7 +6,7 @@ require (
 	github.com/alecthomas/units v0.0.0-20190924025748-f65c72e2690d // indirect
 	github.com/armon/go-metrics v0.3.0 // indirect
 	github.com/cockroachdb/apd v1.1.0 // indirect
-	github.com/coreos/go-systemd/v22 v22.1.0
+	github.com/coreos/go-systemd/v22 v22.3.2
 	github.com/couchbase/go-couchbase v0.0.0-20191115001346-d9e5b3bd1ebc // indirect
 	github.com/couchbase/gomemcached v0.0.0-20191004160342-7b5da2ec40b2 // indirect
 	github.com/couchbase/goutils v0.0.0-20191018232750-b49639060d85 // indirect
