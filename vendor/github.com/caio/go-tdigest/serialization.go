@@ -15,47 +15,44 @@ var endianess = binary.BigEndian
 // AsBytes serializes the digest into a byte array so it can be
 // saved to disk or sent over the wire.
 func (t TDigest) AsBytes() ([]byte, error) {
-	buffer := new(bytes.Buffer)
+	// TODO get rid of the (now) useless error
+	return t.ToBytes(make([]byte, t.requiredSize())), nil
+}
 
-	err := binary.Write(buffer, endianess, smallEncoding)
+func (t *TDigest) requiredSize() int {
+	return 16 + (4 * len(t.summary.means)) + (len(t.summary.counts) * binary.MaxVarintLen64)
+}
 
-	if err != nil {
-		return nil, err
+// ToBytes serializes into the supplied slice, avoiding allocation if the slice
+// is large enough. The result slice is returned.
+func (t *TDigest) ToBytes(b []byte) []byte {
+	requiredSize := t.requiredSize()
+	if cap(b) < requiredSize {
+		b = make([]byte, requiredSize)
 	}
 
-	err = binary.Write(buffer, endianess, t.compression)
+	// The binary.Put* functions helpfully don't extend the slice for you, they
+	// just panic if it's not already long enough. So pre-set the slice length;
+	// we'll return it with the actual encoded length.
+	b = b[:cap(b)]
 
-	if err != nil {
-		return nil, err
-	}
-
-	err = binary.Write(buffer, endianess, int32(t.summary.Len()))
-
-	if err != nil {
-		return nil, err
-	}
+	endianess.PutUint32(b[0:4], uint32(smallEncoding))
+	endianess.PutUint64(b[4:12], math.Float64bits(t.compression))
+	endianess.PutUint32(b[12:16], uint32(t.summary.Len()))
 
 	var x float64
-	t.summary.ForEach(func(mean float64, count uint32) bool {
+	idx := 16
+	for _, mean := range t.summary.means {
 		delta := mean - x
 		x = mean
-		err = binary.Write(buffer, endianess, float32(delta))
-
-		return err == nil
-	})
-	if err != nil {
-		return nil, err
+		endianess.PutUint32(b[idx:], math.Float32bits(float32(delta)))
+		idx += 4
 	}
 
-	t.summary.ForEach(func(mean float64, count uint32) bool {
-		err = encodeUint(buffer, count)
-		return err == nil
-	})
-	if err != nil {
-		return nil, err
+	for _, count := range t.summary.counts {
+		idx += binary.PutUvarint(b[idx:], count)
 	}
-
-	return buffer.Bytes(), nil
+	return b[:idx]
 }
 
 // FromBytes reads a byte buffer with a serialized digest (from AsBytes)
@@ -119,7 +116,7 @@ func FromBytes(buf *bytes.Reader, options ...tdigestOption) (*TDigest, error) {
 		if err != nil {
 			return nil, err
 		}
-		t.summary.counts[i] = uint32(count)
+		t.summary.counts[i] = count
 		t.count += count
 	}
 
@@ -179,7 +176,7 @@ func (t *TDigest) FromBytes(buf []byte) error {
 
 		idx += read
 
-		t.summary.counts[i] = uint32(count)
+		t.summary.counts[i] = count
 		t.count += count
 	}
 
@@ -189,10 +186,10 @@ func (t *TDigest) FromBytes(buf []byte) error {
 	return nil
 }
 
-func encodeUint(buf *bytes.Buffer, n uint32) error {
-	var b [binary.MaxVarintLen32]byte
+func encodeUint(buf *bytes.Buffer, n uint64) error {
+	var b [binary.MaxVarintLen64]byte
 
-	l := binary.PutUvarint(b[:], uint64(n))
+	l := binary.PutUvarint(b[:], n)
 
 	_, err := buf.Write(b[:l])
 
@@ -201,8 +198,5 @@ func encodeUint(buf *bytes.Buffer, n uint32) error {
 
 func decodeUint(buf *bytes.Reader) (uint64, error) {
 	v, err := binary.ReadUvarint(buf)
-	if v > 0xffffffff {
-		return 0, errors.New("Something wrong, this number looks too big")
-	}
 	return v, err
 }

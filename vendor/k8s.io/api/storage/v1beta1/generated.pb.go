@@ -110,21 +110,17 @@ func (m *VolumeAttachmentList) Reset()                    { *m = VolumeAttachmen
 func (*VolumeAttachmentList) ProtoMessage()               {}
 func (*VolumeAttachmentList) Descriptor() ([]byte, []int) { return fileDescriptorGenerated, []int{10} }
 
-func (m *VolumeAttachmentSource) Reset()      { *m = VolumeAttachmentSource{} }
-func (*VolumeAttachmentSource) ProtoMessage() {}
-func (*VolumeAttachmentSource) Descriptor() ([]byte, []int) {
-	return fileDescriptorGenerated, []int{11}
-}
+func (m *VolumeAttachmentSource) Reset()                    { *m = VolumeAttachmentSource{} }
+func (*VolumeAttachmentSource) ProtoMessage()               {}
+func (*VolumeAttachmentSource) Descriptor() ([]byte, []int) { return fileDescriptorGenerated, []int{11} }
 
 func (m *VolumeAttachmentSpec) Reset()                    { *m = VolumeAttachmentSpec{} }
 func (*VolumeAttachmentSpec) ProtoMessage()               {}
 func (*VolumeAttachmentSpec) Descriptor() ([]byte, []int) { return fileDescriptorGenerated, []int{12} }
 
-func (m *VolumeAttachmentStatus) Reset()      { *m = VolumeAttachmentStatus{} }
-func (*VolumeAttachmentStatus) ProtoMessage() {}
-func (*VolumeAttachmentStatus) Descriptor() ([]byte, []int) {
-	return fileDescriptorGenerated, []int{13}
-}
+func (m *VolumeAttachmentStatus) Reset()                    { *m = VolumeAttachmentStatus{} }
+func (*VolumeAttachmentStatus) ProtoMessage()               {}
+func (*VolumeAttachmentStatus) Descriptor() ([]byte, []int) { return fileDescriptorGenerated, []int{13} }
 
 func (m *VolumeError) Reset()                    { *m = VolumeError{} }
 func (*VolumeError) ProtoMessage()               {}

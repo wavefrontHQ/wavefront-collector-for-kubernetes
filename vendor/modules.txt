@@ -6,7 +6,7 @@ github.com/alecthomas/units
 # github.com/armon/go-metrics v0.3.0
 ## explicit
 github.com/armon/go-metrics
-# github.com/caio/go-tdigest v2.3.0+incompatible
+# github.com/caio/go-tdigest v3.1.0+incompatible
 github.com/caio/go-tdigest
 # github.com/cockroachdb/apd v1.1.0
 ## explicit
@@ -228,7 +228,7 @@ github.com/sirupsen/logrus
 github.com/spf13/pflag
 # github.com/stretchr/objx v0.2.0
 github.com/stretchr/objx
-# github.com/stretchr/testify v1.4.0
+# github.com/stretchr/testify v1.5.1
 ## explicit
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/mock
@@ -243,13 +243,14 @@ github.com/tidwall/pretty
 # github.com/wavefronthq/go-metrics-wavefront v1.0.2
 ## explicit
 github.com/wavefronthq/go-metrics-wavefront/reporting
-# github.com/wavefronthq/wavefront-sdk-go v0.9.5
+# github.com/wavefronthq/wavefront-sdk-go v0.9.9
 ## explicit
 github.com/wavefronthq/wavefront-sdk-go/application
 github.com/wavefronthq/wavefront-sdk-go/event
 github.com/wavefronthq/wavefront-sdk-go/histogram
 github.com/wavefronthq/wavefront-sdk-go/internal
 github.com/wavefronthq/wavefront-sdk-go/senders
+github.com/wavefronthq/wavefront-sdk-go/version
 # golang.org/x/crypto v0.0.0-20200220183623-bac4c82f6975
 golang.org/x/crypto/pbkdf2
 golang.org/x/crypto/ssh/terminal

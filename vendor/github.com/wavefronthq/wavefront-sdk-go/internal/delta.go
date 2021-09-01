@@ -3,12 +3,12 @@ package internal
 import "strings"
 
 const (
-	deltaPrefix    = "\u2206"
-	altDeltaPrefix = "\u0394"
+	DeltaPrefix    = "\u2206"
+	AltDeltaPrefix = "\u0394"
 )
 
 func HasDeltaPrefix(name string) bool {
-	return strings.HasPrefix(name, deltaPrefix) || strings.HasPrefix(name, altDeltaPrefix)
+	return strings.HasPrefix(name, DeltaPrefix) || strings.HasPrefix(name, AltDeltaPrefix)
 }
 
 // Gets a delta counter name prefixed with ∆.
@@ -16,5 +16,5 @@ func DeltaCounterName(name string) string {
 	if HasDeltaPrefix(name) {
 		return name
 	}
-	return deltaPrefix + name
+	return DeltaPrefix + name
 }

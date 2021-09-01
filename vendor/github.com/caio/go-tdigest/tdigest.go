@@ -37,8 +37,8 @@ type TDigest struct {
 //
 // By default the digest is constructed with a configuration that
 // should be useful for most use-cases. It comes with compression
-// set to 100 and uses the global random number generator (same
-// as using math/rand top-level functions).
+// set to 100 and uses a local random number generator for
+// performance reasons.
 func New(options ...tdigestOption) (*TDigest, error) {
 	tdigest, err := newWithoutSummary(options...)
 
@@ -55,7 +55,7 @@ func newWithoutSummary(options ...tdigestOption) (*TDigest, error) {
 	tdigest := &TDigest{
 		compression: 100,
 		count:       0,
-		rng:         globalRNG{},
+		rng:         newLocalRNG(1),
 	}
 
 	for _, option := range options {
@@ -153,8 +153,7 @@ func boundedWeightedAverage(x1 float64, w1 float64, x2 float64, w2 float64) floa
 // most common value for this is 1.
 //
 // This will emit an error if `value` is NaN of if `count` is zero.
-func (t *TDigest) AddWeighted(value float64, count uint32) (err error) {
-
+func (t *TDigest) AddWeighted(value float64, count uint64) (err error) {
 	if count == 0 {
 		return fmt.Errorf("Illegal datapoint <value: %.4f, count: %d>", value, count)
 	}
@@ -182,7 +181,7 @@ func (t *TDigest) AddWeighted(value float64, count uint32) (err error) {
 	} else {
 		c := float64(t.summary.Count(closest))
 		newMean := boundedWeightedAverage(t.summary.Mean(closest), c, value, float64(count))
-		t.summary.setAt(closest, newMean, uint32(c)+count)
+		t.summary.setAt(closest, newMean, uint64(c)+count)
 	}
 	t.count += uint64(count)
 
@@ -240,7 +239,7 @@ func (t *TDigest) Compress() (err error) {
 	t.count = 0
 
 	oldTree.shuffle(t.rng)
-	oldTree.ForEach(func(mean float64, count uint32) bool {
+	oldTree.ForEach(func(mean float64, count uint64) bool {
 		err = t.AddWeighted(mean, count)
 		return err == nil
 	})
@@ -258,7 +257,7 @@ func (t *TDigest) Merge(other *TDigest) (err error) {
 		return nil
 	}
 
-	other.summary.Perm(t.rng, func(mean float64, count uint32) bool {
+	other.summary.Perm(t.rng, func(mean float64, count uint64) bool {
 		err = t.AddWeighted(mean, count)
 		return err == nil
 	})
@@ -277,7 +276,7 @@ func (t *TDigest) MergeDestructive(other *TDigest) (err error) {
 	}
 
 	other.summary.shuffle(t.rng)
-	other.summary.ForEach(func(mean float64, count uint32) bool {
+	other.summary.ForEach(func(mean float64, count uint64) bool {
 		err = t.AddWeighted(mean, count)
 		return err == nil
 	})
@@ -344,7 +343,7 @@ func interpolate(x, x0, x1 float64) float64 {
 //
 // Iteration stops when the supplied function returns false, or when all
 // centroids have been iterated.
-func (t *TDigest) ForEachCentroid(f func(mean float64, count uint32) bool) {
+func (t *TDigest) ForEachCentroid(f func(mean float64, count uint64) bool) {
 	t.summary.ForEach(f)
 }
 
@@ -364,7 +363,7 @@ func (t TDigest) findNeighbors(start int, value float64) (int, int) {
 	return start, lastNeighbor
 }
 
-func (t TDigest) chooseMergeCandidate(begin, end int, value float64, count uint32) int {
+func (t TDigest) chooseMergeCandidate(begin, end int, value float64, count uint64) int {
 	closest := t.summary.Len()
 	sum := t.summary.HeadSum(begin)
 	var n float32

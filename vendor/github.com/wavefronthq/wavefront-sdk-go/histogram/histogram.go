@@ -34,7 +34,7 @@ func GranularityOption(g Granularity) Option {
 }
 
 // Compression of the histogram
-func Compression(c uint32) Option {
+func Compression(c float64) Option {
 	return func(args *histogramImpl) {
 		args.compression = c
 	}
@@ -47,11 +47,23 @@ func MaxBins(c int) Option {
 	}
 }
 
-func defaultHistogramImpl() *histogramImpl {
-	return &histogramImpl{maxBins: 10, granularity: MINUTE, compression: 5}
+// TimeSupplier for the histogram time computations
+func TimeSupplier(supplier func() time.Time) Option {
+	return func(args *histogramImpl) {
+		args.timeSupplier = supplier
+	}
 }
 
-// Creates a new Wavefront histogram
+func defaultHistogramImpl() *histogramImpl {
+	return &histogramImpl{
+		maxBins:      10,
+		granularity:  MINUTE,
+		compression:  3.2,
+		timeSupplier: time.Now,
+	}
+}
+
+// New creates a new Wavefront histogram
 func New(setters ...Option) Histogram {
 	h := defaultHistogramImpl()
 	for _, setter := range setters {
@@ -65,9 +77,10 @@ type histogramImpl struct {
 	priorTimedBinsList []*timedBin
 	currentTimedBin    *timedBin
 
-	granularity Granularity
-	compression uint32
-	maxBins     int
+	granularity  Granularity
+	compression  float64
+	maxBins      int
+	timeSupplier func() time.Time
 }
 
 type timedBin struct {
@@ -100,8 +113,8 @@ func (h *histogramImpl) Count() uint64 {
 
 	res := uint64(0)
 	for _, bin := range h.priorTimedBinsList {
-		bin.tdigest.ForEachCentroid(func(mean float64, count uint32) bool {
-			res += 1
+		bin.tdigest.ForEachCentroid(func(mean float64, count uint64) bool {
+			res++
 			return true
 		})
 	}
@@ -117,7 +130,7 @@ func (h *histogramImpl) Quantile(q float64) float64 {
 
 	tempTdigest, _ := tdigest.New()
 	for _, bin := range h.priorTimedBinsList {
-		bin.tdigest.ForEachCentroid(func(mean float64, count uint32) bool {
+		bin.tdigest.ForEachCentroid(func(mean float64, count uint64) bool {
 			tempTdigest.Add(mean)
 			return true
 		})
@@ -138,7 +151,7 @@ func (h *histogramImpl) Max() float64 {
 	}
 	max := math.SmallestNonzeroFloat64
 	for _, bin := range h.priorTimedBinsList {
-		bin.tdigest.ForEachCentroid(func(mean float64, count uint32) bool {
+		bin.tdigest.ForEachCentroid(func(mean float64, count uint64) bool {
 			max = math.Max(max, mean)
 			return true
 		})
@@ -158,7 +171,7 @@ func (h *histogramImpl) Min() float64 {
 	}
 	min := math.MaxFloat64
 	for _, bin := range h.priorTimedBinsList {
-		bin.tdigest.ForEachCentroid(func(mean float64, count uint32) bool {
+		bin.tdigest.ForEachCentroid(func(mean float64, count uint64) bool {
 			min = math.Min(min, mean)
 			return true
 		})
@@ -175,7 +188,7 @@ func (h *histogramImpl) Sum() float64 {
 
 	sum := float64(0)
 	for _, bin := range h.priorTimedBinsList {
-		bin.tdigest.ForEachCentroid(func(mean float64, count uint32) bool {
+		bin.tdigest.ForEachCentroid(func(mean float64, count uint64) bool {
 			sum += mean * float64(count)
 			return true
 		})
@@ -194,9 +207,9 @@ func (h *histogramImpl) Mean() float64 {
 		return math.NaN()
 	}
 	t := float64(0)
-	c := uint32(0)
+	c := uint64(0)
 	for _, bin := range h.priorTimedBinsList {
-		bin.tdigest.ForEachCentroid(func(mean float64, count uint32) bool {
+		bin.tdigest.ForEachCentroid(func(mean float64, count uint64) bool {
 			t += mean * float64(count)
 			c += count
 			return true
@@ -210,12 +223,12 @@ func (h *histogramImpl) Granularity() Granularity {
 	return h.granularity
 }
 
-// Snapshot returns a copy of all samples on comlepted time slices
+// Snapshot returns a copy of all samples on completed time slices
 func (h *histogramImpl) Snapshot() []Distribution {
 	return h.distributions(false)
 }
 
-// Distributions returns all samples on comlepted time slices, and clear the histogram
+// Distributions returns all samples on completed time slices, and clears the histogram
 func (h *histogramImpl) Distributions() []Distribution {
 	return h.distributions(true)
 }
@@ -229,7 +242,7 @@ func (h *histogramImpl) distributions(clean bool) []Distribution {
 	distributions := make([]Distribution, len(h.priorTimedBinsList))
 	for idx, bin := range h.priorTimedBinsList {
 		var centroids []Centroid
-		bin.tdigest.ForEachCentroid(func(mean float64, count uint32) bool {
+		bin.tdigest.ForEachCentroid(func(mean float64, count uint64) bool {
 			centroids = append(centroids, Centroid{Value: mean, Count: int(count)})
 			return true
 		})
@@ -257,7 +270,7 @@ func (h *histogramImpl) rotateCurrentTDigestIfNeedIt() {
 }
 
 func (h *histogramImpl) now() time.Time {
-	return time.Now().Truncate(h.granularity.Duration())
+	return h.timeSupplier().Truncate(h.granularity.Duration())
 }
 
 func (h *histogramImpl) newTimedBin() *timedBin {

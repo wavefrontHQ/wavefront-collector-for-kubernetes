@@ -1356,7 +1356,7 @@ func (p *Pool) refresh() (err error) {
 	if err != nil {
 		return err
 	}
-	for i := range buckets {
+	for i, _ := range buckets {
 		b := new(Bucket)
 		*b = buckets[i]
 		b.pool = p
@@ -1509,7 +1509,7 @@ func (p *Pool) Close() {
 
 	// fine to loop through the buckets unlocked
 	// locking happens at the bucket level
-	for b := range bucketMap {
+	for b, _ := range bucketMap {
 
 		// MB-36186 make the bucket unreachable and avoid concurrent read/write map panics
 		bucket := bucketMap[b]

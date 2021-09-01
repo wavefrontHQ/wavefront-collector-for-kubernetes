@@ -2,7 +2,14 @@
 // The application details can be reported to Wavefront in the form of tags.
 package application
 
-// Encapsulates application details
+import (
+	"fmt"
+	"os"
+	"regexp"
+	"strings"
+)
+
+// Tags Encapsulates application details
 type Tags struct {
 	Application string
 	Service     string
@@ -23,15 +30,46 @@ func New(application, service string) Tags {
 }
 
 // Map with all values
-func (a Tags) Map() map[string]string {
+func (app *Tags) Map() map[string]string {
 	allTags := make(map[string]string)
-	allTags["application"] = a.Application
-	allTags["service"] = a.Service
-	allTags["cluster"] = a.Cluster
-	allTags["shard"] = a.Shard
+	allTags["application"] = app.Application
+	allTags["service"] = app.Service
+	allTags["cluster"] = app.Cluster
+	allTags["shard"] = app.Shard
 
-	for k, v := range a.CustomTags {
+	for k, v := range app.CustomTags {
 		allTags[k] = v
 	}
 	return allTags
+}
+
+// AddCustomTagsFromEnv set additional custom tags from environment variables that match the given regex.
+func (app *Tags) AddCustomTagsFromEnv(regx string) error {
+	r, err := regexp.Compile(regx)
+	if err != nil {
+		return fmt.Errorf("error creating custom tags, %v", err)
+	}
+
+	env := os.Environ()
+	for _, envVar := range env {
+		k := strings.Split(envVar, "=")[0]
+		if r.Match([]byte(k)) {
+			v := os.Getenv(k)
+			if len(v) > 0 {
+				app.CustomTags[k] = v
+			}
+		}
+	}
+	return nil
+}
+
+// AddCustomTagFromEnv Set a custom tag from the given environment variable.
+func (app *Tags) AddCustomTagFromEnv(varName, tag string) error {
+	v := os.Getenv(varName)
+	if len(v) > 0 {
+		app.CustomTags[tag] = v
+	} else {
+		return fmt.Errorf("error creating custom tag, env var '%s' not found", varName)
+	}
+	return nil
 }
