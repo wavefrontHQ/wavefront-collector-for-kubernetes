@@ -45,7 +45,7 @@ require (
 	github.com/shopspring/decimal v0.0.0-20200105231215-408a2507e114 // indirect
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/pflag v1.0.5
-	github.com/stretchr/testify v1.5.1
+	github.com/stretchr/testify v1.7.0
 	github.com/tidwall/gjson v1.7.4 // indirect
 	github.com/wavefronthq/go-metrics-wavefront v1.0.2
 	github.com/wavefronthq/wavefront-sdk-go v0.9.9
