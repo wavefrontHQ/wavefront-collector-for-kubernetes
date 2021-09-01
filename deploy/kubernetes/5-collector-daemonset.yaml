@@ -14,6 +14,8 @@ spec:
     metadata:
       labels:
         k8s-app: wavefront-collector
+      annotations:
+        installation-method: manual
     spec:
       tolerations:
       - effect: NoSchedule
@@ -53,6 +55,11 @@ spec:
             fieldRef:
               apiVersion: v1
               fieldPath: metadata.namespace
+        - name: INSTALLATION_METHOD
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.annotations['installation-method']
       volumes:
       - name: procfs
         hostPath:
