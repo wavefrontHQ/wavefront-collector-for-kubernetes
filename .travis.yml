@@ -12,7 +12,7 @@ notifications:
     if: branch = master
     rooms:
     - 'vmware:yjnIAVzbtdV7vm5Rv5E4J9Tw'
-    on_success: always
+    on_success: change
     on_failure: always
 
 go:
