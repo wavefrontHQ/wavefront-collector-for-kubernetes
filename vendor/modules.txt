@@ -10,7 +10,7 @@ github.com/armon/go-metrics
 github.com/caio/go-tdigest
 # github.com/cockroachdb/apd v1.1.0
 ## explicit
-# github.com/coreos/go-systemd/v22 v22.1.0
+# github.com/coreos/go-systemd/v22 v22.3.2
 ## explicit
 github.com/coreos/go-systemd/v22/dbus
 # github.com/couchbase/go-couchbase v0.0.0-20191115001346-d9e5b3bd1ebc
@@ -52,7 +52,7 @@ github.com/gobwas/glob/syntax/ast
 github.com/gobwas/glob/syntax/lexer
 github.com/gobwas/glob/util/runes
 github.com/gobwas/glob/util/strings
-# github.com/godbus/dbus/v5 v5.0.3
+# github.com/godbus/dbus/v5 v5.0.4
 github.com/godbus/dbus/v5
 # github.com/gofrs/uuid v3.3.0+incompatible
 ## explicit
