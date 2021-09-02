@@ -182,10 +182,13 @@ type PrometheusSourceConfig struct {
 	// Optional HTTP client configuration.
 	HTTPClientConfig httputil.ClientConfig `yaml:"httpConfig"`
 
+	// PerCluster runs only one scrape process for the whole cluster. If it is false, it runs the query on each node.
+	// Defaults to true.
+	PerCluster bool `yaml:"perCluster"`
+
 	// internal use only
-	Discovered        string `yaml:"-"`
-	Name              string `yaml:"-"`
-	UseLeaderElection bool   `yaml:"-"`
+	Discovered string `yaml:"-"`
+	Name       string `yaml:"-"`
 }
 
 // Configuration options for a Telegraf source

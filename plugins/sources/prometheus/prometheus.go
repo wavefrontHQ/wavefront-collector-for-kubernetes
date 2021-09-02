@@ -245,11 +245,9 @@ func NewPrometheusProvider(cfg configuration.PrometheusSourceConfig) (metrics.Me
 		return nil, fmt.Errorf("error creating source: %v", err)
 	}
 
-	useLeaderElection := cfg.UseLeaderElection || discovered == ""
-
 	return &prometheusProvider{
 		name:              name,
-		useLeaderElection: useLeaderElection,
+		useLeaderElection: cfg.PerCluster,
 		sources:           sources,
 	}, nil
 }
