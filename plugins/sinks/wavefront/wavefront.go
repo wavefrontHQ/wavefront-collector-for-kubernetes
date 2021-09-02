@@ -271,8 +271,9 @@ func (sink *wavefrontSink) emitHeartbeat(sender senders.Sender, cfg configuratio
 	sink.stopHeartbeat = make(chan struct{})
 	source := getDefault(util.GetNodeName(), "wavefront-collector-for-kubernetes")
 	tags := map[string]string{
-		"cluster":      cfg.ClusterName,
-		"stats_prefix": configuration.GetStringValue(cfg.Prefix, "kubernetes."),
+		"cluster":             cfg.ClusterName,
+		"stats_prefix":        configuration.GetStringValue(cfg.Prefix, "kubernetes."),
+		"installation_method": util.GetInstallationMethod(),
 	}
 
 	eventsEnabled := 0.0
