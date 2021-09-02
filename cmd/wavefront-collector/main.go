@@ -119,7 +119,7 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 	// create sources manager
 	sourceManager := sources.Manager()
 	sourceManager.SetDefaultCollectionInterval(cfg.DefaultCollectionInterval)
-	err := sourceManager.BuildProviders(*cfg.Sources)
+	err := sourceManager.BuildProviders(*cfg.Sources, kubeClient)
 	if err != nil {
 		log.Fatalf("Failed to create source manager: %v", err)
 	}

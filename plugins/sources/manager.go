@@ -24,6 +24,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
+	"k8s.io/client-go/kubernetes"
+
 	log "github.com/sirupsen/logrus"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
@@ -69,7 +72,7 @@ type SourceManager interface {
 	StopProviders()
 	GetPendingMetrics() []*metrics.DataBatch
 	SetDefaultCollectionInterval(time.Duration)
-	BuildProviders(config configuration.SourceConfig) error
+	BuildProviders(config configuration.SourceConfig, client *kubernetes.Clientset) error
 }
 
 type sourceManagerImpl struct {
@@ -102,8 +105,8 @@ func Manager() SourceManager {
 }
 
 // BuildProviders creates a new source manager with the configured MetricsSourceProviders
-func (sm *sourceManagerImpl) BuildProviders(cfg configuration.SourceConfig) error {
-	sources := buildProviders(cfg)
+func (sm *sourceManagerImpl) BuildProviders(cfg configuration.SourceConfig, client *kubernetes.Clientset) error {
+	sources := buildProviders(cfg, client)
 	for _, runtime := range sources {
 		sm.AddProvider(runtime)
 	}
@@ -268,7 +271,7 @@ func (sm *sourceManagerImpl) GetPendingMetrics() []*metrics.DataBatch {
 	return response
 }
 
-func buildProviders(cfg configuration.SourceConfig) []metrics.MetricsSourceProvider {
+func buildProviders(cfg configuration.SourceConfig, client *kubernetes.Clientset) []metrics.MetricsSourceProvider {
 	result := make([]metrics.MetricsSourceProvider, 0)
 
 	if cfg.SummaryConfig != nil {
@@ -292,8 +295,14 @@ func buildProviders(cfg configuration.SourceConfig) []metrics.MetricsSourceProvi
 		result = appendProvider(result, provider, err, srcCfg.Collection)
 	}
 	for _, srcCfg := range cfg.PrometheusConfigs {
-		provider, err := prometheus.NewPrometheusProvider(*srcCfg)
-		result = appendProvider(result, provider, err, srcCfg.Collection)
+		srcCfgs, err := prometheus.GenerateConfigs(*srcCfg, client.CoreV1().Nodes(), util.GetNodeName)
+		if err != nil {
+			log.Fatalf("invalid prometheus config: %s", err.Error())
+		}
+		for _, cfg := range srcCfgs {
+			provider, err := prometheus.NewPrometheusProvider(cfg)
+			result = appendProvider(result, provider, err, cfg.Collection)
+		}
 	}
 
 	if len(result) == 0 {

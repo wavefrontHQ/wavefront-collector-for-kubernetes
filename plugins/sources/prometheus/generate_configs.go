@@ -2,11 +2,12 @@ package prometheus
 
 import (
 	"bytes"
+	"strings"
+	"text/template"
+
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"strings"
-	"text/template"
 )
 
 type NodeLister interface {

@@ -3,13 +3,14 @@ package prometheus
 import (
 	"errors"
 	"fmt"
+	"testing"
+	"testing/quick"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/httputil"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"testing"
-	"testing/quick"
 )
 
 type StubNodeLister v1.NodeList
