@@ -15,10 +15,7 @@ require (
 	github.com/go-sql-driver/mysql v1.4.1 // indirect
 	github.com/gobwas/glob v0.2.3
 	github.com/gofrs/uuid v3.3.0+incompatible // indirect
-	github.com/gogo/protobuf v1.3.1 // indirect
-	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
-	github.com/google/btree v1.0.0 // indirect
-	github.com/google/cadvisor v0.34.0
+	github.com/google/cadvisor v0.40.0
 	github.com/googleapis/gnostic v0.3.1 // indirect
 	github.com/hashicorp/consul/api v1.3.0 // indirect
 	github.com/hashicorp/go-immutable-radix v1.1.0 // indirect
@@ -28,41 +25,32 @@ require (
 	github.com/hashicorp/golang-lru v0.5.3 // indirect
 	github.com/hashicorp/memberlist v0.1.5 // indirect
 	github.com/hashicorp/serf v0.8.5 // indirect
-	github.com/imdario/mergo v0.3.8 // indirect
 	github.com/influxdata/telegraf v0.10.2-0.20191023195903-9a4f08e94774
 	github.com/influxdata/toml v0.0.0-20190415235208-270119a8ce65
 	github.com/jackc/fake v0.0.0-20150926172116-812a484cc733 // indirect
 	github.com/jackc/pgx v3.6.0+incompatible // indirect
 	github.com/json-iterator/go v1.1.11
-	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/lib/pq v1.3.0 // indirect
 	github.com/miekg/dns v1.1.26 // indirect
 	github.com/prometheus/client_model v0.2.0
-	github.com/prometheus/common v0.9.1
+	github.com/prometheus/common v0.10.0
 	github.com/rcrowley/go-metrics v0.0.0-20190826022208-cac0b30c2563
 	github.com/shirou/gopsutil v2.20.6+incompatible
 	github.com/shopspring/decimal v0.0.0-20200105231215-408a2507e114 // indirect
-	github.com/sirupsen/logrus v1.4.2
+	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.7.0
 	github.com/tidwall/gjson v1.7.4 // indirect
 	github.com/wavefronthq/go-metrics-wavefront v1.0.2
 	github.com/wavefronthq/wavefront-sdk-go v0.9.9
-	golang.org/x/exp v0.0.0-20200224162631-6cc2880d07d6 // indirect
-	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d // indirect
-	golang.org/x/sys v0.0.0-20191105231009-c1f44814a5cd // indirect
-	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect
-	google.golang.org/appengine v1.6.5 // indirect
-	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22 // indirect
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.22.1
-	k8s.io/apimachinery v0.17.1
-	k8s.io/apiserver v0.15.7
+	k8s.io/apimachinery v0.20.6
+	k8s.io/apiserver v0.20.6
 	k8s.io/client-go v8.0.0+incompatible
 	k8s.io/kubernetes v1.16.15
-	k8s.io/utils v0.0.0-20191114200735-6ca3b61696b6 // indirect
 )
 
 exclude (
