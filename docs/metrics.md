@@ -8,6 +8,7 @@
 * [Systemd Source](#systemd-source)
 * [Telegraf Source](#telegraf-source)
 * [Collector Health](#collector-health-metrics)
+* [cAdisor Metrics](#cadvisor-metrics)
 
 ## Kubernetes Source
 
