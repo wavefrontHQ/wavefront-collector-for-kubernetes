@@ -70,10 +70,11 @@ data:
         prefix: 'kubernetes.' # Default prefix
 
 
+      # prometheus_sources:
+
       ##########################################################################
       # Static source to collect control plane metrics from the API Server
       ##########################################################################
-      # prometheus_sources:
       # - url: 'https://kubernetes.default.svc.cluster.local:443/metrics'
       #   httpConfig:
       #     bearer_token_file: '/var/run/secrets/kubernetes.io/serviceaccount/token'
@@ -87,6 +88,13 @@ data:
       #     - 'kube.apiserver.apiserver.*'
       #     - 'kube.apiserver.etcd.*'
       #     - 'kube.apiserver.process.*'
+
+      ##########################################################################
+      # Collect cAdvisor metrics
+      ##########################################################################
+      # - url: 'https://kubernetes.default.svc.cluster.local:443/api/v1/nodes/{{.NodeName}}/proxy/metrics/cadvisor'
+      #   perNode: true
+      #   prefix: 'kube.cadvisor.'
 
     # discovery rules for auto-discovery of pods and services
     discovery:
