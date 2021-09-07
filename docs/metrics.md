@@ -1,6 +1,7 @@
 # Metrics
 
 ## Table of Contents
+
 * [Kubernetes Source](#kubernetes-source)
 * [Kubernetes State Source](#kubernetes-state-source)
 * [Prometheus Source](#prometheus-source)
@@ -80,6 +81,7 @@ Metrics collected per type:
 | <cluster, ns, node>.pod_container.count | Container counts by cluster, namespaces and nodes. |
 
 ## Kubernetes State Source
+
 These are cluster level metrics about the state of Kubernetes objects collected by the Collector leader instance.
 
 | Resource | Metric Name | Description |
@@ -116,6 +118,7 @@ These are cluster level metrics about the state of Kubernetes objects collected 
 | Node | node.info | Detailed node information (kernel version, kubelet version etc). |
 
 ## Prometheus Source
+
 Varies by scrape target.
 
 ## Systemd Source
@@ -126,7 +129,7 @@ These are Linux systemd metrics that can be collected by each Collector instance
 |------------|-------------|
 | kubernetes.systemd.unit.state | Unit state (active, inactive etc). |
 | kubernetes.systemd.unit.start.time.seconds | Start time of the unit since epoch in seconds. |
-| kubernetes.systemd.system.running | Whether the system is operational (`systemctl is-system-running`). |
+| kubernetes.systemd.system.running | Whether the system is operational ( `systemctl is-system-running` ). |
 | kubernetes.systemd.units | Top level summary of systemd unit states (# of active, inactive units etc). |
 | kubernetes.systemd.service.restart.total | Service unit count of Restart triggers. |
 | kubernetes.systemd.timer.last.trigger.seconds | Seconds since epoch of last trigger. |
@@ -199,3 +202,15 @@ These are internal metrics about the health and configuration of the Wavefront C
 | kubernetes.collector.wavefront.points.* | Wavefront sink points sent, filtered, errors etc. |
 | kubernetes.collector.wavefront.events.* | Wavefront sink events sent, filtered, errors etc. |
 | kubernetes.collector.wavefront.sender.type | 1 for proxy and 0 for direct ingestion. |
+
+## cAdvisor Metrics
+
+cAdvisor exposes a prometheus endpoint which the collector can consume. Add the
+following to `prometheus_sources` . Notice the `{{.NodeName}}` in the URL and
+the `perNode: true` key.
+
+```yaml
+  - url: 'https://kubernetes.default.svc.cluster.local:443/api/v1/nodes/{{.NodeName}}/proxy/metrics/cadvisor'
+    perNode: true
+    prefix: 'kube.cadvisor.'
+```

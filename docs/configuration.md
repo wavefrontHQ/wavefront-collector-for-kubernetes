@@ -5,6 +5,7 @@ The Wavefront Collector for Kubernetes is configured via command-line flags and 
 Starting with version 1.0, most command line flags have been deprecated in favor of a top-level configuration file.
 
 ## Flags
+
 ```
 Usage of ./wavefront-collector:
       --config-file string             required configuration file
@@ -117,7 +118,6 @@ server: https://<instance>.wavefront.com
 token: <string>
 ```
 
-
 ### kubernetes_source
 
 ```yaml
@@ -146,6 +146,7 @@ auth: <string>
 See [configs.go](https://github.com/wavefronthq/wavefront-kubernetes-collector/tree/master/internal/kubernetes/configs.go) for how these properties are used.
 
 ### kubernetes_state_source
+
 Collects metrics on the state of deployments, daemonsets, statefulsets, hpas, jobs, cronjobs and replicasets.
 
 ```yaml
@@ -155,18 +156,34 @@ prefix: <string>
 ### prometheus_source
 
 ```yaml
-# The URL for a prometheus metrics endpoint. Kubernetes service URLs work across namespaces.
+# The URL for a prometheus metrics endpoint. Kubernetes service URLs work across 
+# namespaces.
+#
+# {{.NodeName}}:
+#   If your endpoint needs the node name in it, you can use {{.NodeName}}. When
+#   {{.NodeName}} is present, the collector will run one prometheus scrape
+#   process for each node. If `perNode` is true, then it will run each of the
+#   scrape processes on the collector for that node. See
+#   [collecting cAdvisor metrics](./metrics.md#cadvisor-metrics) for a usage
+#   example.
 url: <string>
 
 # Optional HTTP configuration
 httpConfig:
   [ <ClientConfig> ]
 
+# Whether or not to sample this source on every node. Defaults to false. When 
+# false, it runs one sampling process for this source for the whole cluster. 
+# `perNode` is useful for things like 
+# [collecting cAdvisor metrics](./metrics.md#cadvisor-metrics).
+perNode: <boolean>
+
 # The source (tag) to set for the metrics collected by this source. Defaults to node name.
 source: <string>
 ```
 
 ### telegraf_source
+
 ```yaml
 # The list of plugins to be enabled. Empty list defaults to enabling all host plugins.
 # Supported host plugins are: mem, net, netstat, linux_sysctl_fs, swap, cpu, disk, diskio, system, kernel, processes
@@ -178,9 +195,11 @@ plugins: []
 conf: |
   [ <Telegraf Plugin Config> ]
 ```
+
 See a reference [example](https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes/blob/master/deploy/examples/conf.example.yaml#L78) for details.
 
 ### systemd_source
+
 ```yaml
 # Whether to include systemd task metrics. Defaults to true.
 taskMetrics: <true|false>
@@ -203,8 +222,11 @@ unitDenyList:
 ```
 
 ### Common properties
+
 #### Prefix, tags and filters
+
 All sources and sinks support the following common properties:
+
 ```yaml
 # An optional dot suffixed prefix for metrics emitted by the sink or source.
 prefix: <string>
@@ -248,8 +270,11 @@ filters:
   - handler
   - image
 ```
+
 #### Custom collection intervals
+
 All sources support using a custom collection interval:
+
 ```yaml
 collection:
   # Duration type specified as [0-9]+(ms|[smhdwy])
