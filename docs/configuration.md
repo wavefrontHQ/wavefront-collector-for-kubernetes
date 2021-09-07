@@ -173,8 +173,8 @@ httpConfig:
 
 # Whether or not to sample this source on every node. Defaults to false. When 
 # false, it runs one sampling process for this source for the whole cluster. 
-# `perNode` is useful for things like 
-# [collecting cAdvisor metrics](./metrics.md#cadvisor-metrics).
+# `perNode` is useful for things like collecting cAdvisor metrics. See the
+# cAdvisor Metrics section in docs/metrics.md.
 perNode: <boolean>
 
 # The source (tag) to set for the metrics collected by this source. Defaults to
