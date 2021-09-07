@@ -247,7 +247,7 @@ func NewPrometheusProvider(cfg configuration.PrometheusSourceConfig) (metrics.Me
 
 	return &prometheusProvider{
 		name:              name,
-		useLeaderElection: cfg.PerCluster,
+		useLeaderElection: !cfg.PerNode,
 		sources:           sources,
 	}, nil
 }

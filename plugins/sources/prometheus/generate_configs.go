@@ -47,7 +47,9 @@ func interpolateVariables(config configuration.PrometheusSourceConfig, lister No
 
 func getNodeNamesForConfig(config configuration.PrometheusSourceConfig, lister NodeLister, getMyNode func() string) ([]string, error) {
 	var nodeNames []string
-	if config.PerCluster {
+	if config.PerNode {
+		nodeNames = append(nodeNames, getMyNode())
+	} else {
 		nodeList, err := lister.List(metav1.ListOptions{})
 		if err != nil {
 			return nil, err
@@ -55,8 +57,6 @@ func getNodeNamesForConfig(config configuration.PrometheusSourceConfig, lister N
 		for _, node := range nodeList.Items {
 			nodeNames = append(nodeNames, node.Name)
 		}
-	} else {
-		nodeNames = append(nodeNames, getMyNode())
 	}
 	return nodeNames, nil
 }

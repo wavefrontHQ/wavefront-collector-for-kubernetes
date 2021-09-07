@@ -182,9 +182,9 @@ type PrometheusSourceConfig struct {
 	// Optional HTTP client configuration.
 	HTTPClientConfig httputil.ClientConfig `yaml:"httpConfig"`
 
-	// PerCluster runs only one scrape process for the whole cluster. If it is false, it runs the query on each node.
-	// Defaults to true.
-	PerCluster bool `yaml:"perCluster"`
+	// PerNode runs a scrape process per node. If it is false, it runs only one scrape process for the whole cluster.
+	// Defaults to false.
+	PerNode bool `yaml:"perNode"`
 
 	// internal use only
 	Discovered string `yaml:"-"`

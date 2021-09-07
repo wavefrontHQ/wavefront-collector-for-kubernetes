@@ -50,7 +50,7 @@ func TestGenerateConfigs(t *testing.T) {
 					BearerToken:     "123",
 					BearerTokenFile: "456.txt",
 				},
-				PerCluster: true,
+				PerNode:    false,
 				Discovered: "not",
 				Name:       "something",
 			}
@@ -62,7 +62,7 @@ func TestGenerateConfigs(t *testing.T) {
 				actualConfig := configs[i]
 				assert.Equal(t, config.Transforms, actualConfig.Transforms)
 				assert.Equal(t, config.Collection, actualConfig.Collection)
-				assert.Equal(t, config.PerCluster, actualConfig.PerCluster)
+				assert.Equal(t, config.PerNode, actualConfig.PerNode)
 				assert.Equal(t, config.Discovered, actualConfig.Discovered)
 				assert.Equal(t, config.Name, actualConfig.Name)
 			}
@@ -76,8 +76,8 @@ func TestGenerateConfigs(t *testing.T) {
 				}
 				configs, err := GenerateConfigs(
 					configuration.PrometheusSourceConfig{
-						URL:        fmt.Sprintf("%s://%s:%d/%s/{{.NodeName}}/%s", scheme, hostname, port, prepath, postpath),
-						PerCluster: true,
+						URL:     fmt.Sprintf("%s://%s:%d/%s/{{.NodeName}}/%s", scheme, hostname, port, prepath, postpath),
+						PerNode: false,
 					},
 					nodeLister,
 					getMyNode,
@@ -101,8 +101,8 @@ func TestGenerateConfigs(t *testing.T) {
 		t.Run("returns an error when template cannot parse", func(t *testing.T) {
 			_, err := GenerateConfigs(
 				configuration.PrometheusSourceConfig{
-					URL:        "http://localhost:8080/{{.NodeName}}/prom{{",
-					PerCluster: true,
+					URL:     "http://localhost:8080/{{.NodeName}}/prom{{",
+					PerNode: false,
 				},
 				nodeLister,
 				getMyNode,
@@ -114,8 +114,8 @@ func TestGenerateConfigs(t *testing.T) {
 		t.Run("returns an error when template cannot parse", func(t *testing.T) {
 			_, err := GenerateConfigs(
 				configuration.PrometheusSourceConfig{
-					URL:        "http://localhost:8080/{{.NodeName}}/prom{{.Foo}}",
-					PerCluster: true,
+					URL:     "http://localhost:8080/{{.NodeName}}/prom{{.Foo}}",
+					PerNode: false,
 				},
 				nodeLister,
 				getMyNode,
@@ -124,12 +124,13 @@ func TestGenerateConfigs(t *testing.T) {
 			assert.Equal(t, "template: :1:42: executing \"\" at <.Foo>: can't evaluate field Foo in type prometheus.urlTemplateEnv", err.Error())
 		})
 
-		t.Run("when PerCluster is true", func(t *testing.T) {
-			t.Run("produces one config PER node", func(t *testing.T) {
+		t.Run("when the leader should monitor all nodes (PerNode is false)", func(t *testing.T) {
+			t.Run("produces configs foreach node", func(t *testing.T) {
+				// This is the case when the leader wants to query all nodes instead of having each node's collector do it
 				configs, err := GenerateConfigs(
 					configuration.PrometheusSourceConfig{
-						URL:        "http://localhost:8080/{{.NodeName}}/prom",
-						PerCluster: true,
+						URL:     "http://localhost:8080/{{.NodeName}}/prom",
+						PerNode: false,
 					},
 					nodeLister,
 					getMyNode,
@@ -144,7 +145,7 @@ func TestGenerateConfigs(t *testing.T) {
 				_, err := GenerateConfigs(
 					configuration.PrometheusSourceConfig{
 						URL:        "http://localhost:8080/{{.NodeName}}/prom",
-						PerCluster: true,
+						PerNode: false,
 					},
 					ErrorNodeLister(expectedErrorStr),
 					getMyNode,
@@ -154,11 +155,11 @@ func TestGenerateConfigs(t *testing.T) {
 			})
 		})
 
-		t.Run("produces one config when PerCluster is false", func(t *testing.T) {
+		t.Run("when each collector should monitor it's own node (PerNode is true)", func(t *testing.T) {
 			configs, err := GenerateConfigs(
 				configuration.PrometheusSourceConfig{
 					URL:        "http://localhost:8080/{{.NodeName}}/prom",
-					PerCluster: false,
+					PerNode: true,
 				},
 				nodeLister,
 				getMyNode,
@@ -174,7 +175,7 @@ func TestGenerateConfigs(t *testing.T) {
 			configs, err := GenerateConfigs(
 				configuration.PrometheusSourceConfig{
 					URL:        "http://localhost:8080/some_prom_endpoint",
-					PerCluster: true,
+					PerNode: false,
 				},
 				nodeLister,
 				getMyNode,
@@ -199,7 +200,7 @@ func TestGenerateConfigs(t *testing.T) {
 					BearerToken:     "123",
 					BearerTokenFile: "456.txt",
 				},
-				PerCluster: true,
+				PerNode: false,
 				Discovered: "not",
 				Name:       "something",
 			}
@@ -210,7 +211,7 @@ func TestGenerateConfigs(t *testing.T) {
 			actualConfig := configs[0]
 			assert.Equal(t, config.Transforms, actualConfig.Transforms)
 			assert.Equal(t, config.Collection, actualConfig.Collection)
-			assert.Equal(t, config.PerCluster, actualConfig.PerCluster)
+			assert.Equal(t, config.PerNode, actualConfig.PerNode)
 			assert.Equal(t, config.Discovered, actualConfig.Discovered)
 			assert.Equal(t, config.Name, actualConfig.Name)
 
