@@ -163,9 +163,8 @@ prefix: <string>
 #   If your endpoint needs the node name in it, you can use {{.NodeName}}. When
 #   {{.NodeName}} is present, the collector will run one prometheus scrape
 #   process for each node. If `perNode` is true, then it will run each of the
-#   scrape processes on the collector for that node. See
-#   [collecting cAdvisor metrics](./metrics.md#cadvisor-metrics) for a usage
-#   example.
+#   scrape processes on the collector for that node. See the cAdvisor Metrics
+#   section in docs/metrics.md for a usage example.
 url: <string>
 
 # Optional HTTP configuration
@@ -178,7 +177,8 @@ httpConfig:
 # [collecting cAdvisor metrics](./metrics.md#cadvisor-metrics).
 perNode: <boolean>
 
-# The source (tag) to set for the metrics collected by this source. Defaults to node name.
+# The source (tag) to set for the metrics collected by this source. Defaults to
+# node name.
 source: <string>
 ```
 
