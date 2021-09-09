@@ -61,6 +61,10 @@ sources:
   # Optional source for collecting metrics from cluster level Kubernetes resources.
   kubernetes_state_source:
     # see kubernetes_state_source for details
+  
+  # Optional source for collecting cAdvisor metrics
+  kubernetes_cadvisor_source:
+    # see kubernetes_cadvisor_source for details
 
   # Optional source for emitting internal collector stats.
   internal_stats_source:
@@ -156,13 +160,8 @@ prefix: <string>
 ### kubernetes_cadvisor_source
 
 ```yaml
-# Optional HTTP configuration
-httpConfig:
-  [ <ClientConfig> ]
-
-# The source (tag) to set for the metrics collected by this source. Defaults to
-# node name.
-source: <string>
+# We recommend using `kubernetes.cadvisor.` Defaults to empty string.
+prefix: <string>
 ```
 
 ### telegraf_source

@@ -206,13 +206,4 @@ These are internal metrics about the health and configuration of the Wavefront C
 
 ## cAdvisor Metrics
 
-cAdvisor exposes a prometheus endpoint which the collector can consume. Add the
-following to `prometheus_sources` . Notice the `{{.NodeName}}` in the URL and
-the `perNode: true` key. See the [cAdvisor docs](https://github.com/google/cadvisor/blob/master/docs/storage/prometheus.md)
-for details on what metrics are available.
-
-```yaml
-  - url: 'https://kubernetes.default.svc.cluster.local:443/api/v1/nodes/{{.NodeName}}/proxy/metrics/cadvisor'
-    perNode: true
-    prefix: 'kube.cadvisor.'
-```
+cAdvisor exposes a prometheus endpoint which the collector can consume. See the [cAdvisor docs](https://github.com/google/cadvisor/blob/master/docs/storage/prometheus.md) for details on what metrics are available.

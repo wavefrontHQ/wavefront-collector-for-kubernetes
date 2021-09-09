@@ -43,20 +43,19 @@ func (c *cadvisorSourceProvider) Name() string {
 
 func generatePrometheusSource(cfg configuration.CadvisorSourceConfig, promURL string, restConfig *rest.Config) (metrics.MetricsSource, error) {
 	filters := filter.FromConfig(cfg.Filters)
-	httpCfg := generateHttpCfg(cfg, restConfig)
-	return prometheus.NewPrometheusMetricsSource(promURL, cfg.Prefix, cfg.Source, "", cfg.Tags, filters, httpCfg)
+	return prometheus.NewPrometheusMetricsSource(promURL, cfg.Prefix, cfg.Source, "", cfg.Tags, filters, generateHttpCfg(restConfig))
 }
 
-func generateHttpCfg(cfg configuration.CadvisorSourceConfig, restConfig *rest.Config) httputil.ClientConfig {
-	httpCfg := cfg.HTTPClientConfig
-	httpCfg.BearerTokenFile = restConfig.BearerTokenFile
-	httpCfg.BearerToken = restConfig.BearerToken
-	httpCfg.TLSConfig = httputil.TLSConfig{
-		CAFile:             restConfig.CAFile,
-		CertFile:           restConfig.CertFile,
-		KeyFile:            restConfig.KeyFile,
-		ServerName:         restConfig.ServerName,
-		InsecureSkipVerify: restConfig.Insecure,
+func generateHttpCfg(restConfig *rest.Config) httputil.ClientConfig {
+	return httputil.ClientConfig{
+		BearerTokenFile: restConfig.BearerTokenFile,
+		BearerToken:     restConfig.BearerToken,
+		TLSConfig: httputil.TLSConfig{
+			CAFile:             restConfig.CAFile,
+			CertFile:           restConfig.CertFile,
+			KeyFile:            restConfig.KeyFile,
+			ServerName:         restConfig.ServerName,
+			InsecureSkipVerify: restConfig.Insecure,
+		},
 	}
-	return httpCfg
 }

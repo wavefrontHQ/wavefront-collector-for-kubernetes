@@ -176,9 +176,6 @@ type CadvisorSourceConfig struct {
 	Transforms `yaml:",inline"`
 
 	Collection CollectionConfig `yaml:"collection"`
-
-	// Optional HTTP client configuration.
-	HTTPClientConfig httputil.ClientConfig `yaml:"httpConfig"`
 }
 
 // Configuration options for a Prometheus source
