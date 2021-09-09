@@ -208,7 +208,7 @@ github.com/prometheus/common/model
 # github.com/rcrowley/go-metrics v0.0.0-20190826022208-cac0b30c2563
 ## explicit
 github.com/rcrowley/go-metrics
-# github.com/shirou/gopsutil v2.20.6+incompatible
+# github.com/shirou/gopsutil v2.20.9+incompatible
 ## explicit
 github.com/shirou/gopsutil/cpu
 github.com/shirou/gopsutil/disk
