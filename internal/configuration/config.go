@@ -181,16 +181,6 @@ type CadvisorSourceConfig struct {
 	HTTPClientConfig httputil.ClientConfig `yaml:"httpConfig"`
 }
 
-func (cfg *CadvisorSourceConfig) ToPrometheusConfig() PrometheusSourceConfig {
-	return PrometheusSourceConfig{
-		Transforms:       cfg.Transforms,
-		URL:              "https://kubernetes.default.svc.cluster.local:443/api/v1/nodes/{{.NodeName}}/proxy/metrics/cadvisor",
-		HTTPClientConfig: cfg.HTTPClientConfig,
-		Collection:       cfg.Collection,
-		PerNode:          true,
-	}
-}
-
 // Configuration options for a Prometheus source
 type PrometheusSourceConfig struct {
 	Transforms `yaml:",inline"`

@@ -118,6 +118,10 @@ func GetDaemonMode() string {
 	return os.Getenv(DaemonModeEnvVar)
 }
 
+func IsDaemonMode() bool {
+	return GetDaemonMode() != ""
+}
+
 func GetNodeName() string {
 	return os.Getenv(NodeNameEnvVar)
 }

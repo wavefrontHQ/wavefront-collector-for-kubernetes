@@ -19,12 +19,12 @@ package sources
 
 import (
 	"fmt"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources/cadvisor"
 	"math/rand"
 	"sort"
 	"sync"
 	"time"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 	"k8s.io/client-go/kubernetes"
 
 	log "github.com/sirupsen/logrus"
@@ -278,6 +278,10 @@ func buildProviders(cfg configuration.SourceConfig, client *kubernetes.Clientset
 		provider, err := summary.NewSummaryProvider(*cfg.SummaryConfig)
 		result = appendProvider(result, provider, err, cfg.SummaryConfig.Collection)
 	}
+	if cfg.CadvisorConfig != nil {
+		provider, err := cadvisor.NewProvider(*cfg.CadvisorConfig, client)
+		result = appendProvider(result, provider, err, cfg.CadvisorConfig.Collection)
+	}
 	if cfg.SystemdConfig != nil {
 		provider, err := systemd.NewProvider(*cfg.SystemdConfig)
 		result = appendProvider(result, provider, err, cfg.SystemdConfig.Collection)
@@ -298,20 +302,6 @@ func buildProviders(cfg configuration.SourceConfig, client *kubernetes.Clientset
 		provider, err := prometheus.NewPrometheusProvider(*srcCfg)
 		result = appendProvider(result, provider, err, srcCfg.Collection)
 	}
-	if cfg.CadvisorConfig != nil {
-		promCfgs, err := prometheus.GenerateConfigs(
-			cfg.CadvisorConfig.ToPrometheusConfig(),
-			client.CoreV1().Nodes(),
-			util.GetNodeName,
-		)
-		if err != nil {
-			log.Fatalf("invalid cadvisor config %s", err.Error())
-		}
-		for _, promCfg := range promCfgs {
-			provider, err := prometheus.NewPrometheusProvider(promCfg)
-			result = appendProvider(result, provider, err, promCfg.Collection)
-		}
-	}
 
 	if len(result) == 0 {
 		log.Fatal("No available source to use")
@@ -319,8 +309,12 @@ func buildProviders(cfg configuration.SourceConfig, client *kubernetes.Clientset
 	return result
 }
 
-func appendProvider(slice []metrics.MetricsSourceProvider, provider metrics.MetricsSourceProvider, err error,
-	cfg configuration.CollectionConfig) []metrics.MetricsSourceProvider {
+func appendProvider(
+	slice []metrics.MetricsSourceProvider,
+	provider metrics.MetricsSourceProvider,
+	err error,
+	cfg configuration.CollectionConfig,
+) []metrics.MetricsSourceProvider {
 
 	if err != nil {
 		log.Errorf("Failed to create source: %v", err)
