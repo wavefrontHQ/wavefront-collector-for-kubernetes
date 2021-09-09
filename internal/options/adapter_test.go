@@ -106,6 +106,24 @@ func TestAddPrometheusSource(t *testing.T) {
 	assert.Equal(t, 2, len(pcfg.Tags))
 }
 
+func TestAddCadvisorSource(t *testing.T) {
+	values := url.Values{}
+	values["prefix"] = []string{"kubernetes.cadvisor."}
+
+	uri, err := buildUri("kubernetes.cadvisor", "", values.Encode())
+	assert.NoError(t, err)
+
+	cfg := &configuration.Config{Sources: &configuration.SourceConfig{}}
+	addCadvisorSource(cfg, uri)
+
+	assert.True(t, len(cfg.Sources.PrometheusConfigs) == 1)
+
+	pcfg := cfg.Sources.PrometheusConfigs[0]
+
+	assert.Equal(t, "https://kubernetes.default.svc.cluster.local:443/api/v1/nodes/{{.NodeName}}/proxy/metrics/cadvisor", pcfg.URL)
+	assert.Equal(t, "kubernetes.cadvisor.", pcfg.Prefix)
+}
+
 func buildSummarySource() (flags.Uri, error) {
 	values := url.Values{}
 	addVal(values, "kubeletPort", "10250")

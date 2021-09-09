@@ -295,13 +295,21 @@ func buildProviders(cfg configuration.SourceConfig, client *kubernetes.Clientset
 		result = appendProvider(result, provider, err, srcCfg.Collection)
 	}
 	for _, srcCfg := range cfg.PrometheusConfigs {
-		srcCfgs, err := prometheus.GenerateConfigs(*srcCfg, client.CoreV1().Nodes(), util.GetNodeName)
+		provider, err := prometheus.NewPrometheusProvider(*srcCfg)
+		result = appendProvider(result, provider, err, srcCfg.Collection)
+	}
+	if cfg.CadvisorConfig != nil {
+		promCfgs, err := prometheus.GenerateConfigs(
+			cfg.CadvisorConfig.ToPrometheusConfig(),
+			client.CoreV1().Nodes(),
+			util.GetNodeName,
+		)
 		if err != nil {
-			log.Fatalf("invalid prometheus config: %s", err.Error())
+			log.Fatalf("invalid cadvisor config %s", err.Error())
 		}
-		for _, cfg := range srcCfgs {
-			provider, err := prometheus.NewPrometheusProvider(cfg)
-			result = appendProvider(result, provider, err, cfg.Collection)
+		for _, promCfg := range promCfgs {
+			provider, err := prometheus.NewPrometheusProvider(promCfg)
+			result = appendProvider(result, provider, err, promCfg.Collection)
 		}
 	}
 

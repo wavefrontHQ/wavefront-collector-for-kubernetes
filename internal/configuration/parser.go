@@ -5,20 +5,13 @@ package configuration
 
 import (
 	"fmt"
-	"io/ioutil"
-	"os"
-
 	"gopkg.in/yaml.v2"
+	"io/ioutil"
 )
 
 // FromFile loads the configuration from a given file
 func FromFile(filename string) (*Config, error) {
-	file, err := os.Open(filename)
-	defer file.Close()
-	if err != nil {
-		return nil, fmt.Errorf("unable to load configuration file: %v", err)
-	}
-	contents, err := ioutil.ReadAll(file)
+	contents, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, fmt.Errorf("unable to load configuration file: %v", err)
 	}
