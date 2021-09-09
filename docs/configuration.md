@@ -153,29 +153,12 @@ Collects metrics on the state of deployments, daemonsets, statefulsets, hpas, jo
 prefix: <string>
 ```
 
-### prometheus_source
+### kubernetes_cadvisor_source
 
 ```yaml
-# The URL for a prometheus metrics endpoint. Kubernetes service URLs work across 
-# namespaces.
-#
-# {{.NodeName}}:
-#   If your endpoint needs the node name in it, you can use {{.NodeName}}. When
-#   {{.NodeName}} is present, the collector will run one prometheus scrape
-#   process for each node. If `perNode` is true, then it will run each of the
-#   scrape processes on the collector for that node. See the cAdvisor Metrics
-#   section in docs/metrics.md for a usage example.
-url: <string>
-
 # Optional HTTP configuration
 httpConfig:
   [ <ClientConfig> ]
-
-# Whether or not to sample this source on every node. Defaults to false. When 
-# false, it runs one sampling process for this source for the whole cluster. 
-# `perNode` is useful for things like collecting cAdvisor metrics. See the
-# cAdvisor Metrics section in docs/metrics.md.
-perNode: <boolean>
 
 # The source (tag) to set for the metrics collected by this source. Defaults to
 # node name.

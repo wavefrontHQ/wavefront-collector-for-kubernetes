@@ -29,39 +29,41 @@ func TestGenerateURLs(t *testing.T) {
 
 	t.Run("when DaemonMode is true", func(t *testing.T) {
 		t.Run("successfully generates one URL", func(t *testing.T) {
-			configs, err := GenerateURLs(nodeLister, myNode, true)
+			configs, err := GenerateURLs(nodeLister, myNode, true, "")
 
 			assert.Nil(t, err)
 			assert.Equal(t, 1, len(configs))
 		})
 
 		t.Run("the url contains myNode", func(t *testing.T) {
-			urls, _ := GenerateURLs(nodeLister, myNode, true)
+			urls, _ := GenerateURLs(nodeLister, myNode, true, "myHost")
 
 			assert.Contains(t, urls[0], myNode)
+			assert.Contains(t, urls[0], "myHost")
 		})
 	})
 
 	t.Run("when DaemonMode is false", func(t *testing.T) {
 		t.Run("successfully produces URLs foreach node", func(t *testing.T) {
 			// This is the case when the leader wants to query all nodes instead of having each node's collector do it
-			configs, err := GenerateURLs(nodeLister, myNode, false)
+			configs, err := GenerateURLs(nodeLister, myNode, false, "")
 
 			assert.Nil(t, err)
 			assert.Equal(t, len(nodeLister.Items), len(configs))
 		})
 
 		t.Run("interpolates each node name into a URL", func(t *testing.T) {
-			urls, _ := GenerateURLs(nodeLister, myNode, false)
+			urls, _ := GenerateURLs(nodeLister, myNode, false, "myHost")
 
 			for i, node := range nodeLister.Items {
 				assert.Contains(t, urls[i], node.Name)
+				assert.Contains(t, urls[i], "myHost")
 			}
 		})
 
 		t.Run("returns an error when it cannot list nodes", func(t *testing.T) {
 			expectedErrorStr := "something went wrong"
-			_, err := GenerateURLs(ErrorNodeLister(expectedErrorStr), myNode, false)
+			_, err := GenerateURLs(ErrorNodeLister(expectedErrorStr), myNode, false, "")
 
 			assert.Equal(t, expectedErrorStr, err.Error())
 		})

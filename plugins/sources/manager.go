@@ -20,6 +20,7 @@ package sources
 import (
 	"fmt"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources/cadvisor"
+	"k8s.io/client-go/rest"
 	"math/rand"
 	"sort"
 	"sync"
@@ -72,7 +73,7 @@ type SourceManager interface {
 	StopProviders()
 	GetPendingMetrics() []*metrics.DataBatch
 	SetDefaultCollectionInterval(time.Duration)
-	BuildProviders(config configuration.SourceConfig, client *kubernetes.Clientset) error
+	BuildProviders(config configuration.SourceConfig, client *kubernetes.Clientset, restConfig *rest.Config) error
 }
 
 type sourceManagerImpl struct {
@@ -105,8 +106,8 @@ func Manager() SourceManager {
 }
 
 // BuildProviders creates a new source manager with the configured MetricsSourceProviders
-func (sm *sourceManagerImpl) BuildProviders(cfg configuration.SourceConfig, client *kubernetes.Clientset) error {
-	sources := buildProviders(cfg, client)
+func (sm *sourceManagerImpl) BuildProviders(cfg configuration.SourceConfig, client *kubernetes.Clientset, restConfig *rest.Config) error {
+	sources := buildProviders(cfg, client, restConfig)
 	for _, runtime := range sources {
 		sm.AddProvider(runtime)
 	}
@@ -271,7 +272,7 @@ func (sm *sourceManagerImpl) GetPendingMetrics() []*metrics.DataBatch {
 	return response
 }
 
-func buildProviders(cfg configuration.SourceConfig, client *kubernetes.Clientset) []metrics.MetricsSourceProvider {
+func buildProviders(cfg configuration.SourceConfig, client *kubernetes.Clientset, restConfig *rest.Config) []metrics.MetricsSourceProvider {
 	result := make([]metrics.MetricsSourceProvider, 0)
 
 	if cfg.SummaryConfig != nil {
@@ -279,7 +280,7 @@ func buildProviders(cfg configuration.SourceConfig, client *kubernetes.Clientset
 		result = appendProvider(result, provider, err, cfg.SummaryConfig.Collection)
 	}
 	if cfg.CadvisorConfig != nil {
-		provider, err := cadvisor.NewProvider(*cfg.CadvisorConfig, client)
+		provider, err := cadvisor.NewProvider(*cfg.CadvisorConfig, client, restConfig)
 		result = appendProvider(result, provider, err, cfg.CadvisorConfig.Collection)
 	}
 	if cfg.SystemdConfig != nil {
