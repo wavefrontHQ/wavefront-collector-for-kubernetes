@@ -5,7 +5,6 @@ package main
 
 import (
 	"fmt"
-	kube_rest "k8s.io/client-go/rest"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
@@ -14,6 +13,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	kube_rest "k8s.io/client-go/rest"
 
 	gm "github.com/rcrowley/go-metrics"
 	log "github.com/sirupsen/logrus"

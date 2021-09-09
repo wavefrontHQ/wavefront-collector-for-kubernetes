@@ -5,8 +5,9 @@ package configuration
 
 import (
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
+
+	"gopkg.in/yaml.v2"
 )
 
 // FromFile loads the configuration from a given file

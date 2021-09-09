@@ -19,12 +19,13 @@ package sources
 
 import (
 	"fmt"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources/cadvisor"
-	"k8s.io/client-go/rest"
 	"math/rand"
 	"sort"
 	"sync"
 	"time"
+
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources/cadvisor"
+	"k8s.io/client-go/rest"
 
 	"k8s.io/client-go/kubernetes"
 
