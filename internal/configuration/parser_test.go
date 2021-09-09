@@ -55,7 +55,6 @@ sources:
 
   kubernetes_cadvisor_source:
     prefix: 'kubernetes.cadvisor.'
-    perNode: true
     filters:
       metricAllowList:
       - 'kubernetes.cadvisor.*'

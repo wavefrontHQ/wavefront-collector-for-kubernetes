@@ -116,12 +116,11 @@ func TestAddCadvisorSource(t *testing.T) {
 	cfg := &configuration.Config{Sources: &configuration.SourceConfig{}}
 	addCadvisorSource(cfg, uri)
 
-	assert.True(t, len(cfg.Sources.PrometheusConfigs) == 1)
+	assert.NotNil(t, cfg.Sources.CadvisorConfig)
 
-	pcfg := cfg.Sources.PrometheusConfigs[0]
+	cadvisorCfg := cfg.Sources.CadvisorConfig
 
-	assert.Equal(t, "https://kubernetes.default.svc.cluster.local:443/api/v1/nodes/{{.NodeName}}/proxy/metrics/cadvisor", pcfg.URL)
-	assert.Equal(t, "kubernetes.cadvisor.", pcfg.Prefix)
+	assert.Equal(t, "kubernetes.cadvisor.", cadvisorCfg.Prefix)
 }
 
 func buildSummarySource() (flags.Uri, error) {

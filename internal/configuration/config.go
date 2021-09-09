@@ -74,7 +74,7 @@ type EventsFilter struct {
 // SourceConfig contains configuration for various sources
 type SourceConfig struct {
 	SummaryConfig     *SummarySourceConfig         `yaml:"kubernetes_source"`
-	CadvisorConfig    *CadvisorSourceConfig      `yaml:"kubernetes_cadvisor_source"`
+	CadvisorConfig    *CadvisorSourceConfig        `yaml:"kubernetes_cadvisor_source"`
 	PrometheusConfigs []*PrometheusSourceConfig    `yaml:"prometheus_sources"`
 	TelegrafConfigs   []*TelegrafSourceConfig      `yaml:"telegraf_sources"`
 	SystemdConfig     *SystemdSourceConfig         `yaml:"systemd_source"`
@@ -190,11 +190,8 @@ type PrometheusSourceConfig struct {
 	// Optional HTTP client configuration.
 	HTTPClientConfig httputil.ClientConfig `yaml:"httpConfig"`
 
-	// PerNode runs a scrape process per node. If it is false, it runs only one scrape process for the whole cluster.
-	// Defaults to false.
-	PerNode bool `yaml:"perNode"`
-
 	// internal use only
+	PerNode    bool   `yaml:"-"`
 	Discovered string `yaml:"-"`
 	Name       string `yaml:"-"`
 }
