@@ -43,6 +43,7 @@ rules:
   - nodes/stats
   - services
   - serviceaccounts
+  - replicationcontrollers
   - configmaps
   - secrets
   verbs:
@@ -51,7 +52,10 @@ rules:
   - extensions
   resources:
   - deployments
+  - configmaps
   verbs:
+  - create
+  - update
   - get
   - list
   - watch
@@ -59,8 +63,28 @@ rules:
   - apps
   resources:
   - deployments
+  - daemonsets
+  - statefulsets
+  - replicasets
   verbs:
   - "*"
+- apiGroups:
+  - batch
+  resources:
+  - jobs
+  - cronjobs
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - autoscaling
+  resources:
+  - horizontalpodautoscalers
+  verbs:
+  - get
+  - watch
+  - list
 - apiGroups:
   - rbac.authorization.k8s.io
   resources:
@@ -68,6 +92,9 @@ rules:
   - clusterroles
   verbs:
   - "*"
+- nonResourceURLs: ["/metrics"]
+  verbs:
+  - get
 
 ---
 apiVersion: apps/v1
@@ -89,7 +116,7 @@ spec:
       containers:
         - name: wavefront-collector-operator
           # Replace this with the built image name
-          image: wavefronthq/wavefront-kubernetes-collector-operator:v0.1.0
+          image: wavefronthq/wavefront-kubernetes-collector-operator:v0.2.0
           imagePullPolicy: IfNotPresent
           env:
             - name: WATCH_NAMESPACE
