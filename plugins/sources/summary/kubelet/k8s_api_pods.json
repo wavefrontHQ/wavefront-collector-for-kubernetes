@@ -1,0 +1,1811 @@
+{
+  "kind": "PodList",
+  "apiVersion": "v1",
+  "metadata": {},
+  "items": [
+    {
+      "metadata": {
+        "name": "mult-job-success-8cpzn",
+        "generateName": "mult-job-success-",
+        "namespace": "jobs",
+        "uid": "49863652-12fe-48e8-8a20-7b4f45f50812",
+        "resourceVersion": "8937",
+        "creationTimestamp": "2021-06-11T20:02:29Z",
+        "labels": {
+          "controller-uid": "026b50a2-09b5-46e1-a4eb-813455d56c75",
+          "job-name": "mult-job-success"
+        },
+        "annotations": {
+          "kubernetes.io/config.seen": "2021-06-11T20:02:29.546030800Z",
+          "kubernetes.io/config.source": "api"
+        },
+        "ownerReferences": [
+          {
+            "apiVersion": "batch/v1",
+            "kind": "Job",
+            "name": "mult-job-success",
+            "uid": "026b50a2-09b5-46e1-a4eb-813455d56c75",
+            "controller": true,
+            "blockOwnerDeletion": true
+          }
+        ],
+        "managedFields": [
+          {
+            "manager": "kube-controller-manager",
+            "operation": "Update",
+            "apiVersion": "v1",
+            "time": "2021-06-11T20:02:29Z",
+            "fieldsType": "FieldsV1",
+            "fieldsV1": {
+              "f:metadata": {
+                "f:generateName": {},
+                "f:labels": {
+                  ".": {},
+                  "f:controller-uid": {},
+                  "f:job-name": {}
+                },
+                "f:ownerReferences": {
+                  ".": {},
+                  "k:{\"uid\":\"026b50a2-09b5-46e1-a4eb-813455d56c75\"}": {
+                    ".": {},
+                    "f:apiVersion": {},
+                    "f:blockOwnerDeletion": {},
+                    "f:controller": {},
+                    "f:kind": {},
+                    "f:name": {},
+                    "f:uid": {}
+                  }
+                }
+              },
+              "f:spec": {
+                "f:containers": {
+                  "k:{\"name\":\"consumer\"}": {
+                    ".": {},
+                    "f:args": {},
+                    "f:command": {},
+                    "f:image": {},
+                    "f:imagePullPolicy": {},
+                    "f:name": {},
+                    "f:resources": {},
+                    "f:terminationMessagePath": {},
+                    "f:terminationMessagePolicy": {}
+                  }
+                },
+                "f:dnsPolicy": {},
+                "f:enableServiceLinks": {},
+                "f:restartPolicy": {},
+                "f:schedulerName": {},
+                "f:securityContext": {},
+                "f:terminationGracePeriodSeconds": {}
+              }
+            }
+          }
+        ]
+      },
+      "spec": {
+        "volumes": [
+          {
+            "name": "default-token-l97jk",
+            "secret": {
+              "secretName": "default-token-l97jk",
+              "defaultMode": 420
+            }
+          }
+        ],
+        "containers": [
+          {
+            "name": "consumer",
+            "image": "busybox",
+            "command": [
+              "/bin/sh",
+              "-c"
+            ],
+            "args": [
+              "echo 'consuming a message'; sleep $(shuf -i 5-10 -n 1)"
+            ],
+            "resources": {},
+            "volumeMounts": [
+              {
+                "name": "default-token-l97jk",
+                "readOnly": true,
+                "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount"
+              }
+            ],
+            "terminationMessagePath": "/dev/termination-log",
+            "terminationMessagePolicy": "File",
+            "imagePullPolicy": "Always"
+          }
+        ],
+        "restartPolicy": "OnFailure",
+        "terminationGracePeriodSeconds": 30,
+        "dnsPolicy": "ClusterFirst",
+        "serviceAccountName": "default",
+        "serviceAccount": "default",
+        "nodeName": "kind-control-plane",
+        "securityContext": {},
+        "schedulerName": "default-scheduler",
+        "tolerations": [
+          {
+            "key": "node.kubernetes.io/not-ready",
+            "operator": "Exists",
+            "effect": "NoExecute",
+            "tolerationSeconds": 300
+          },
+          {
+            "key": "node.kubernetes.io/unreachable",
+            "operator": "Exists",
+            "effect": "NoExecute",
+            "tolerationSeconds": 300
+          }
+        ],
+        "priority": 0,
+        "enableServiceLinks": true,
+        "preemptionPolicy": "PreemptLowerPriority"
+      },
+      "status": {
+        "phase": "Succeeded",
+        "conditions": [
+          {
+            "type": "Initialized",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2021-06-11T20:02:29Z",
+            "reason": "PodCompleted"
+          },
+          {
+            "type": "Ready",
+            "status": "False",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2021-06-11T20:02:43Z",
+            "reason": "PodCompleted"
+          },
+          {
+            "type": "ContainersReady",
+            "status": "False",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2021-06-11T20:02:43Z",
+            "reason": "PodCompleted"
+          },
+          {
+            "type": "PodScheduled",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2021-06-11T20:02:29Z"
+          }
+        ],
+        "hostIP": "172.20.0.2",
+        "podIP": "10.244.0.21",
+        "podIPs": [
+          {
+            "ip": "10.244.0.21"
+          }
+        ],
+        "startTime": "2021-06-11T20:02:29Z",
+        "containerStatuses": [
+          {
+            "name": "consumer",
+            "state": {
+              "terminated": {
+                "exitCode": 0,
+                "reason": "Completed",
+                "startedAt": "2021-06-11T20:02:35Z",
+                "finishedAt": "2021-06-11T20:02:42Z",
+                "containerID": "containerd://7b38882ba4d560f18f7ad9d639c10938c7344db8accade7f1ca052d461c92d66"
+              }
+            },
+            "lastState": {},
+            "ready": false,
+            "restartCount": 0,
+            "image": "docker.io/library/busybox:latest",
+            "imageID": "docker.io/library/busybox@sha256:930490f97e5b921535c153e0e7110d251134cc4b72bbb8133c6a5065cc68580d",
+            "containerID": "containerd://7b38882ba4d560f18f7ad9d639c10938c7344db8accade7f1ca052d461c92d66",
+            "started": false
+          }
+        ],
+        "qosClass": "BestEffort"
+      }
+    },
+    {
+      "metadata": {
+        "name": "mult-job-success-m8dc7",
+        "generateName": "mult-job-success-",
+        "namespace": "jobs",
+        "uid": "26f40a86-8c13-438d-8372-03673755142b",
+        "resourceVersion": "8942",
+        "creationTimestamp": "2021-06-11T20:02:29Z",
+        "labels": {
+          "controller-uid": "026b50a2-09b5-46e1-a4eb-813455d56c75",
+          "job-name": "mult-job-success"
+        },
+        "annotations": {
+          "kubernetes.io/config.seen": "2021-06-11T20:02:29.584119600Z",
+          "kubernetes.io/config.source": "api"
+        },
+        "ownerReferences": [
+          {
+            "apiVersion": "batch/v1",
+            "kind": "Job",
+            "name": "mult-job-success",
+            "uid": "026b50a2-09b5-46e1-a4eb-813455d56c75",
+            "controller": true,
+            "blockOwnerDeletion": true
+          }
+        ],
+        "managedFields": [
+          {
+            "manager": "kube-controller-manager",
+            "operation": "Update",
+            "apiVersion": "v1",
+            "time": "2021-06-11T20:02:29Z",
+            "fieldsType": "FieldsV1",
+            "fieldsV1": {
+              "f:metadata": {
+                "f:generateName": {},
+                "f:labels": {
+                  ".": {},
+                  "f:controller-uid": {},
+                  "f:job-name": {}
+                },
+                "f:ownerReferences": {
+                  ".": {},
+                  "k:{\"uid\":\"026b50a2-09b5-46e1-a4eb-813455d56c75\"}": {
+                    ".": {},
+                    "f:apiVersion": {},
+                    "f:blockOwnerDeletion": {},
+                    "f:controller": {},
+                    "f:kind": {},
+                    "f:name": {},
+                    "f:uid": {}
+                  }
+                }
+              },
+              "f:spec": {
+                "f:containers": {
+                  "k:{\"name\":\"consumer\"}": {
+                    ".": {},
+                    "f:args": {},
+                    "f:command": {},
+                    "f:image": {},
+                    "f:imagePullPolicy": {},
+                    "f:name": {},
+                    "f:resources": {},
+                    "f:terminationMessagePath": {},
+                    "f:terminationMessagePolicy": {}
+                  }
+                },
+                "f:dnsPolicy": {},
+                "f:enableServiceLinks": {},
+                "f:restartPolicy": {},
+                "f:schedulerName": {},
+                "f:securityContext": {},
+                "f:terminationGracePeriodSeconds": {}
+              }
+            }
+          }
+        ]
+      },
+      "spec": {
+        "volumes": [
+          {
+            "name": "default-token-l97jk",
+            "secret": {
+              "secretName": "default-token-l97jk",
+              "defaultMode": 420
+            }
+          }
+        ],
+        "containers": [
+          {
+            "name": "consumer",
+            "image": "busybox",
+            "command": [
+              "/bin/sh",
+              "-c"
+            ],
+            "args": [
+              "echo 'consuming a message'; sleep $(shuf -i 5-10 -n 1)"
+            ],
+            "resources": {},
+            "volumeMounts": [
+              {
+                "name": "default-token-l97jk",
+                "readOnly": true,
+                "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount"
+              }
+            ],
+            "terminationMessagePath": "/dev/termination-log",
+            "terminationMessagePolicy": "File",
+            "imagePullPolicy": "Always"
+          }
+        ],
+        "restartPolicy": "OnFailure",
+        "terminationGracePeriodSeconds": 30,
+        "dnsPolicy": "ClusterFirst",
+        "serviceAccountName": "default",
+        "serviceAccount": "default",
+        "nodeName": "kind-control-plane",
+        "securityContext": {},
+        "schedulerName": "default-scheduler",
+        "tolerations": [
+          {
+            "key": "node.kubernetes.io/not-ready",
+            "operator": "Exists",
+            "effect": "NoExecute",
+            "tolerationSeconds": 300
+          },
+          {
+            "key": "node.kubernetes.io/unreachable",
+            "operator": "Exists",
+            "effect": "NoExecute",
+            "tolerationSeconds": 300
+          }
+        ],
+        "priority": 0,
+        "enableServiceLinks": true,
+        "preemptionPolicy": "PreemptLowerPriority"
+      },
+      "status": {
+        "phase": "Succeeded",
+        "conditions": [
+          {
+            "type": "Initialized",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2021-06-11T20:02:29Z",
+            "reason": "PodCompleted"
+          },
+          {
+            "type": "Ready",
+            "status": "False",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2021-06-11T20:02:43Z",
+            "reason": "PodCompleted"
+          },
+          {
+            "type": "ContainersReady",
+            "status": "False",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2021-06-11T20:02:43Z",
+            "reason": "PodCompleted"
+          },
+          {
+            "type": "PodScheduled",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2021-06-11T20:02:29Z"
+          }
+        ],
+        "hostIP": "172.20.0.2",
+        "podIP": "10.244.0.23",
+        "podIPs": [
+          {
+            "ip": "10.244.0.23"
+          }
+        ],
+        "startTime": "2021-06-11T20:02:29Z",
+        "containerStatuses": [
+          {
+            "name": "consumer",
+            "state": {
+              "terminated": {
+                "exitCode": 0,
+                "reason": "Completed",
+                "startedAt": "2021-06-11T20:02:37Z",
+                "finishedAt": "2021-06-11T20:02:42Z",
+                "containerID": "containerd://ef9c69648d4dd1a931629e0f99a7848214b3c0f2853814612a67ed202756f0d0"
+              }
+            },
+            "lastState": {},
+            "ready": false,
+            "restartCount": 0,
+            "image": "docker.io/library/busybox:latest",
+            "imageID": "docker.io/library/busybox@sha256:930490f97e5b921535c153e0e7110d251134cc4b72bbb8133c6a5065cc68580d",
+            "containerID": "containerd://ef9c69648d4dd1a931629e0f99a7848214b3c0f2853814612a67ed202756f0d0",
+            "started": false
+          }
+        ],
+        "qosClass": "BestEffort"
+      }
+    },
+    {
+      "metadata": {
+        "name": "mult-job-success-bp6wn",
+        "generateName": "mult-job-success-",
+        "namespace": "jobs",
+        "uid": "a5ba8786-9660-4402-9238-ec1737511640",
+        "resourceVersion": "8948",
+        "creationTimestamp": "2021-06-11T20:02:29Z",
+        "labels": {
+          "controller-uid": "026b50a2-09b5-46e1-a4eb-813455d56c75",
+          "job-name": "mult-job-success"
+        },
+        "annotations": {
+          "kubernetes.io/config.seen": "2021-06-11T20:02:29.622004200Z",
+          "kubernetes.io/config.source": "api"
+        },
+        "ownerReferences": [
+          {
+            "apiVersion": "batch/v1",
+            "kind": "Job",
+            "name": "mult-job-success",
+            "uid": "026b50a2-09b5-46e1-a4eb-813455d56c75",
+            "controller": true,
+            "blockOwnerDeletion": true
+          }
+        ],
+        "managedFields": [
+          {
+            "manager": "kube-controller-manager",
+            "operation": "Update",
+            "apiVersion": "v1",
+            "time": "2021-06-11T20:02:29Z",
+            "fieldsType": "FieldsV1",
+            "fieldsV1": {
+              "f:metadata": {
+                "f:generateName": {},
+                "f:labels": {
+                  ".": {},
+                  "f:controller-uid": {},
+                  "f:job-name": {}
+                },
+                "f:ownerReferences": {
+                  ".": {},
+                  "k:{\"uid\":\"026b50a2-09b5-46e1-a4eb-813455d56c75\"}": {
+                    ".": {},
+                    "f:apiVersion": {},
+                    "f:blockOwnerDeletion": {},
+                    "f:controller": {},
+                    "f:kind": {},
+                    "f:name": {},
+                    "f:uid": {}
+                  }
+                }
+              },
+              "f:spec": {
+                "f:containers": {
+                  "k:{\"name\":\"consumer\"}": {
+                    ".": {},
+                    "f:args": {},
+                    "f:command": {},
+                    "f:image": {},
+                    "f:imagePullPolicy": {},
+                    "f:name": {},
+                    "f:resources": {},
+                    "f:terminationMessagePath": {},
+                    "f:terminationMessagePolicy": {}
+                  }
+                },
+                "f:dnsPolicy": {},
+                "f:enableServiceLinks": {},
+                "f:restartPolicy": {},
+                "f:schedulerName": {},
+                "f:securityContext": {},
+                "f:terminationGracePeriodSeconds": {}
+              }
+            }
+          }
+        ]
+      },
+      "spec": {
+        "volumes": [
+          {
+            "name": "default-token-l97jk",
+            "secret": {
+              "secretName": "default-token-l97jk",
+              "defaultMode": 420
+            }
+          }
+        ],
+        "containers": [
+          {
+            "name": "consumer",
+            "image": "busybox",
+            "command": [
+              "/bin/sh",
+              "-c"
+            ],
+            "args": [
+              "echo 'consuming a message'; sleep $(shuf -i 5-10 -n 1)"
+            ],
+            "resources": {},
+            "volumeMounts": [
+              {
+                "name": "default-token-l97jk",
+                "readOnly": true,
+                "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount"
+              }
+            ],
+            "terminationMessagePath": "/dev/termination-log",
+            "terminationMessagePolicy": "File",
+            "imagePullPolicy": "Always"
+          }
+        ],
+        "restartPolicy": "OnFailure",
+        "terminationGracePeriodSeconds": 30,
+        "dnsPolicy": "ClusterFirst",
+        "serviceAccountName": "default",
+        "serviceAccount": "default",
+        "nodeName": "kind-control-plane",
+        "securityContext": {},
+        "schedulerName": "default-scheduler",
+        "tolerations": [
+          {
+            "key": "node.kubernetes.io/not-ready",
+            "operator": "Exists",
+            "effect": "NoExecute",
+            "tolerationSeconds": 300
+          },
+          {
+            "key": "node.kubernetes.io/unreachable",
+            "operator": "Exists",
+            "effect": "NoExecute",
+            "tolerationSeconds": 300
+          }
+        ],
+        "priority": 0,
+        "enableServiceLinks": true,
+        "preemptionPolicy": "PreemptLowerPriority"
+      },
+      "status": {
+        "phase": "Succeeded",
+        "conditions": [
+          {
+            "type": "Initialized",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2021-06-11T20:02:29Z",
+            "reason": "PodCompleted"
+          },
+          {
+            "type": "Ready",
+            "status": "False",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2021-06-11T20:02:44Z",
+            "reason": "PodCompleted"
+          },
+          {
+            "type": "ContainersReady",
+            "status": "False",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2021-06-11T20:02:44Z",
+            "reason": "PodCompleted"
+          },
+          {
+            "type": "PodScheduled",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2021-06-11T20:02:29Z"
+          }
+        ],
+        "hostIP": "172.20.0.2",
+        "podIP": "10.244.0.25",
+        "podIPs": [
+          {
+            "ip": "10.244.0.25"
+          }
+        ],
+        "startTime": "2021-06-11T20:02:29Z",
+        "containerStatuses": [
+          {
+            "name": "consumer",
+            "state": {
+              "terminated": {
+                "exitCode": 0,
+                "reason": "Completed",
+                "startedAt": "2021-06-11T20:02:38Z",
+                "finishedAt": "2021-06-11T20:02:43Z",
+                "containerID": "containerd://85ef74088785462ae1e5d5779e8cd417c6597685dbc5760d622a937635ce935a"
+              }
+            },
+            "lastState": {},
+            "ready": false,
+            "restartCount": 0,
+            "image": "docker.io/library/busybox:latest",
+            "imageID": "docker.io/library/busybox@sha256:930490f97e5b921535c153e0e7110d251134cc4b72bbb8133c6a5065cc68580d",
+            "containerID": "containerd://85ef74088785462ae1e5d5779e8cd417c6597685dbc5760d622a937635ce935a",
+            "started": false
+          }
+        ],
+        "qosClass": "BestEffort"
+      }
+    },
+    {
+      "metadata": {
+        "name": "mysql-release-0",
+        "generateName": "mysql-release-",
+        "namespace": "collector-targets",
+        "uid": "ff63491d-f4f4-47ff-a581-6e16d7fe589a",
+        "resourceVersion": "865",
+        "creationTimestamp": "2021-06-11T17:53:21Z",
+        "labels": {
+          "app.kubernetes.io/component": "primary",
+          "app.kubernetes.io/instance": "mysql-release",
+          "app.kubernetes.io/managed-by": "Helm",
+          "app.kubernetes.io/name": "mysql",
+          "controller-revision-hash": "mysql-release-669d5cd5b9",
+          "helm.sh/chart": "mysql-8.5.8",
+          "statefulset.kubernetes.io/pod-name": "mysql-release-0"
+        },
+        "annotations": {
+          "checksum/configuration": "ef6711636f0dde05bba5559f2634c890e8851303419a66d1a2b700b94e191d49",
+          "kubernetes.io/config.seen": "2021-06-11T17:53:31.749381730Z",
+          "kubernetes.io/config.source": "api"
+        },
+        "ownerReferences": [
+          {
+            "apiVersion": "apps/v1",
+            "kind": "StatefulSet",
+            "name": "mysql-release",
+            "uid": "dc64d748-49e4-4dde-8f24-fb878e5eba18",
+            "controller": true,
+            "blockOwnerDeletion": true
+          }
+        ],
+        "managedFields": [
+          {
+            "manager": "kube-controller-manager",
+            "operation": "Update",
+            "apiVersion": "v1",
+            "time": "2021-06-11T17:53:21Z",
+            "fieldsType": "FieldsV1",
+            "fieldsV1": {
+              "f:metadata": {
+                "f:annotations": {
+                  ".": {},
+                  "f:checksum/configuration": {}
+                },
+                "f:generateName": {},
+                "f:labels": {
+                  ".": {},
+                  "f:app.kubernetes.io/component": {},
+                  "f:app.kubernetes.io/instance": {},
+                  "f:app.kubernetes.io/managed-by": {},
+                  "f:app.kubernetes.io/name": {},
+                  "f:controller-revision-hash": {},
+                  "f:helm.sh/chart": {},
+                  "f:statefulset.kubernetes.io/pod-name": {}
+                },
+                "f:ownerReferences": {
+                  ".": {},
+                  "k:{\"uid\":\"dc64d748-49e4-4dde-8f24-fb878e5eba18\"}": {
+                    ".": {},
+                    "f:apiVersion": {},
+                    "f:blockOwnerDeletion": {},
+                    "f:controller": {},
+                    "f:kind": {},
+                    "f:name": {},
+                    "f:uid": {}
+                  }
+                }
+              },
+              "f:spec": {
+                "f:affinity": {
+                  ".": {},
+                  "f:podAntiAffinity": {
+                    ".": {},
+                    "f:preferredDuringSchedulingIgnoredDuringExecution": {}
+                  }
+                },
+                "f:containers": {
+                  "k:{\"name\":\"mysql\"}": {
+                    ".": {},
+                    "f:env": {
+                      ".": {},
+                      "k:{\"name\":\"BITNAMI_DEBUG\"}": {
+                        ".": {},
+                        "f:name": {},
+                        "f:value": {}
+                      },
+                      "k:{\"name\":\"MYSQL_DATABASE\"}": {
+                        ".": {},
+                        "f:name": {},
+                        "f:value": {}
+                      },
+                      "k:{\"name\":\"MYSQL_ROOT_PASSWORD\"}": {
+                        ".": {},
+                        "f:name": {},
+                        "f:valueFrom": {
+                          ".": {},
+                          "f:secretKeyRef": {
+                            ".": {},
+                            "f:key": {},
+                            "f:name": {}
+                          }
+                        }
+                      }
+                    },
+                    "f:image": {},
+                    "f:imagePullPolicy": {},
+                    "f:livenessProbe": {
+                      ".": {},
+                      "f:exec": {
+                        ".": {},
+                        "f:command": {}
+                      },
+                      "f:failureThreshold": {},
+                      "f:initialDelaySeconds": {},
+                      "f:periodSeconds": {},
+                      "f:successThreshold": {},
+                      "f:timeoutSeconds": {}
+                    },
+                    "f:name": {},
+                    "f:ports": {
+                      ".": {},
+                      "k:{\"containerPort\":3306,\"protocol\":\"TCP\"}": {
+                        ".": {},
+                        "f:containerPort": {},
+                        "f:name": {},
+                        "f:protocol": {}
+                      }
+                    },
+                    "f:readinessProbe": {
+                      ".": {},
+                      "f:exec": {
+                        ".": {},
+                        "f:command": {}
+                      },
+                      "f:failureThreshold": {},
+                      "f:initialDelaySeconds": {},
+                      "f:periodSeconds": {},
+                      "f:successThreshold": {},
+                      "f:timeoutSeconds": {}
+                    },
+                    "f:resources": {},
+                    "f:securityContext": {
+                      ".": {},
+                      "f:runAsUser": {}
+                    },
+                    "f:terminationMessagePath": {},
+                    "f:terminationMessagePolicy": {},
+                    "f:volumeMounts": {
+                      ".": {},
+                      "k:{\"mountPath\":\"/bitnami/mysql\"}": {
+                        ".": {},
+                        "f:mountPath": {},
+                        "f:name": {}
+                      },
+                      "k:{\"mountPath\":\"/opt/bitnami/mysql/conf/my.cnf\"}": {
+                        ".": {},
+                        "f:mountPath": {},
+                        "f:name": {},
+                        "f:subPath": {}
+                      }
+                    }
+                  }
+                },
+                "f:dnsPolicy": {},
+                "f:enableServiceLinks": {},
+                "f:hostname": {},
+                "f:restartPolicy": {},
+                "f:schedulerName": {},
+                "f:securityContext": {
+                  ".": {},
+                  "f:fsGroup": {}
+                },
+                "f:serviceAccount": {},
+                "f:serviceAccountName": {},
+                "f:subdomain": {},
+                "f:terminationGracePeriodSeconds": {},
+                "f:volumes": {
+                  ".": {},
+                  "k:{\"name\":\"config\"}": {
+                    ".": {},
+                    "f:configMap": {
+                      ".": {},
+                      "f:defaultMode": {},
+                      "f:name": {}
+                    },
+                    "f:name": {}
+                  },
+                  "k:{\"name\":\"data\"}": {
+                    ".": {},
+                    "f:name": {},
+                    "f:persistentVolumeClaim": {
+                      ".": {},
+                      "f:claimName": {}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "spec": {
+        "volumes": [
+          {
+            "name": "data",
+            "persistentVolumeClaim": {
+              "claimName": "data-mysql-release-0"
+            }
+          },
+          {
+            "name": "config",
+            "configMap": {
+              "name": "mysql-release",
+              "defaultMode": 420
+            }
+          },
+          {
+            "name": "mysql-release-token-fhhr6",
+            "secret": {
+              "secretName": "mysql-release-token-fhhr6",
+              "defaultMode": 420
+            }
+          }
+        ],
+        "containers": [
+          {
+            "name": "mysql",
+            "image": "docker.io/bitnami/mysql:8.0.25-debian-10-r0",
+            "ports": [
+              {
+                "name": "mysql",
+                "containerPort": 3306,
+                "protocol": "TCP"
+              }
+            ],
+            "env": [
+              {
+                "name": "BITNAMI_DEBUG",
+                "value": "false"
+              },
+              {
+                "name": "MYSQL_ROOT_PASSWORD",
+                "valueFrom": {
+                  "secretKeyRef": {
+                    "name": "mysql-release",
+                    "key": "mysql-root-password"
+                  }
+                }
+              },
+              {
+                "name": "MYSQL_DATABASE",
+                "value": "my_database"
+              }
+            ],
+            "resources": {},
+            "volumeMounts": [
+              {
+                "name": "data",
+                "mountPath": "/bitnami/mysql"
+              },
+              {
+                "name": "config",
+                "mountPath": "/opt/bitnami/mysql/conf/my.cnf",
+                "subPath": "my.cnf"
+              },
+              {
+                "name": "mysql-release-token-fhhr6",
+                "readOnly": true,
+                "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount"
+              }
+            ],
+            "livenessProbe": {
+              "exec": {
+                "command": [
+                  "/bin/bash",
+                  "-ec",
+                  "password_aux=\"${MYSQL_ROOT_PASSWORD:-}\"\nif [[ -f \"${MYSQL_ROOT_PASSWORD_FILE:-}\" ]]; then\n    password_aux=$(cat \"$MYSQL_ROOT_PASSWORD_FILE\")\nfi\nmysqladmin status -uroot -p\"${password_aux}\"\n"
+                ]
+              },
+              "initialDelaySeconds": 120,
+              "timeoutSeconds": 1,
+              "periodSeconds": 10,
+              "successThreshold": 1,
+              "failureThreshold": 3
+            },
+            "readinessProbe": {
+              "exec": {
+                "command": [
+                  "/bin/bash",
+                  "-ec",
+                  "password_aux=\"${MYSQL_ROOT_PASSWORD:-}\"\nif [[ -f \"${MYSQL_ROOT_PASSWORD_FILE:-}\" ]]; then\n    password_aux=$(cat \"$MYSQL_ROOT_PASSWORD_FILE\")\nfi\nmysqladmin status -uroot -p\"${password_aux}\"\n"
+                ]
+              },
+              "initialDelaySeconds": 30,
+              "timeoutSeconds": 1,
+              "periodSeconds": 10,
+              "successThreshold": 1,
+              "failureThreshold": 3
+            },
+            "terminationMessagePath": "/dev/termination-log",
+            "terminationMessagePolicy": "File",
+            "imagePullPolicy": "IfNotPresent",
+            "securityContext": {
+              "runAsUser": 1001
+            }
+          }
+        ],
+        "restartPolicy": "Always",
+        "terminationGracePeriodSeconds": 30,
+        "dnsPolicy": "ClusterFirst",
+        "serviceAccountName": "mysql-release",
+        "serviceAccount": "mysql-release",
+        "nodeName": "kind-control-plane",
+        "securityContext": {
+          "fsGroup": 1001
+        },
+        "hostname": "mysql-release-0",
+        "subdomain": "mysql-release",
+        "affinity": {
+          "podAntiAffinity": {
+            "preferredDuringSchedulingIgnoredDuringExecution": [
+              {
+                "weight": 1,
+                "podAffinityTerm": {
+                  "labelSelector": {
+                    "matchLabels": {
+                      "app.kubernetes.io/component": "primary",
+                      "app.kubernetes.io/instance": "mysql-release",
+                      "app.kubernetes.io/name": "mysql"
+                    }
+                  },
+                  "namespaces": [
+                    "collector-targets"
+                  ],
+                  "topologyKey": "kubernetes.io/hostname"
+                }
+              }
+            ]
+          }
+        },
+        "schedulerName": "default-scheduler",
+        "tolerations": [
+          {
+            "key": "node.kubernetes.io/not-ready",
+            "operator": "Exists",
+            "effect": "NoExecute",
+            "tolerationSeconds": 300
+          },
+          {
+            "key": "node.kubernetes.io/unreachable",
+            "operator": "Exists",
+            "effect": "NoExecute",
+            "tolerationSeconds": 300
+          }
+        ],
+        "priority": 0,
+        "enableServiceLinks": true,
+        "preemptionPolicy": "PreemptLowerPriority"
+      },
+      "status": {
+        "phase": "Running",
+        "conditions": [
+          {
+            "type": "Initialized",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2021-06-11T17:53:31Z"
+          },
+          {
+            "type": "Ready",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2021-06-11T20:00:38Z"
+          },
+          {
+            "type": "ContainersReady",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2021-06-11T20:00:38Z"
+          },
+          {
+            "type": "PodScheduled",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2021-06-11T17:53:31Z"
+          }
+        ],
+        "hostIP": "172.20.0.2",
+        "podIP": "10.244.0.8",
+        "podIPs": [
+          {
+            "ip": "10.244.0.8"
+          }
+        ],
+        "startTime": "2021-06-11T17:53:31Z",
+        "containerStatuses": [
+          {
+            "name": "mysql",
+            "state": {
+              "running": {
+                "startedAt": "2021-06-11T18:00:36Z"
+              }
+            },
+            "lastState": {
+              "terminated": {
+                "exitCode": 137,
+                "reason": "Error",
+                "startedAt": "2021-06-11T17:57:38Z",
+                "finishedAt": "2021-06-11T18:00:34Z",
+                "containerID": "containerd://2f126d0f37bdd30e6b90001444a608f4f103df1d45e906c079f66830b005dd45"
+              }
+            },
+            "ready": true,
+            "restartCount": 1,
+            "image": "docker.io/bitnami/mysql:8.0.25-debian-10-r0",
+            "imageID": "docker.io/bitnami/mysql@sha256:ae8c4c719352a58abc99c866986ee11578bc43e90d794c6705f7b1eb12c7289e",
+            "containerID": "containerd://2baf2542380cc255b06feb9e494c65e91021667be3023458f269c9d720c9623d",
+            "started": true
+          }
+        ],
+        "qosClass": "BestEffort"
+      }
+    },
+    {
+      "metadata": {
+        "name": "wavefront-collector-b4rnf",
+        "generateName": "wavefront-collector-",
+        "namespace": "wavefront-collector",
+        "uid": "87dee78f-2334-4a94-8292-dd2e5aa4fc8c",
+        "resourceVersion": "7714",
+        "creationTimestamp": "2021-06-11T19:50:52Z",
+        "labels": {
+          "controller-revision-hash": "675f8f78b9",
+          "k8s-app": "wavefront-collector",
+          "pod-template-generation": "1"
+        },
+        "annotations": {
+          "kubernetes.io/config.seen": "2021-06-11T19:50:52.897616100Z",
+          "kubernetes.io/config.source": "api"
+        },
+        "ownerReferences": [
+          {
+            "apiVersion": "apps/v1",
+            "kind": "DaemonSet",
+            "name": "wavefront-collector",
+            "uid": "48e5f5f2-6b52-4f80-9ecc-9bae7aa461b0",
+            "controller": true,
+            "blockOwnerDeletion": true
+          }
+        ],
+        "managedFields": [
+          {
+            "manager": "kube-controller-manager",
+            "operation": "Update",
+            "apiVersion": "v1",
+            "time": "2021-06-11T19:50:52Z",
+            "fieldsType": "FieldsV1",
+            "fieldsV1": {
+              "f:metadata": {
+                "f:generateName": {},
+                "f:labels": {
+                  ".": {},
+                  "f:controller-revision-hash": {},
+                  "f:k8s-app": {},
+                  "f:pod-template-generation": {}
+                },
+                "f:ownerReferences": {
+                  ".": {},
+                  "k:{\"uid\":\"48e5f5f2-6b52-4f80-9ecc-9bae7aa461b0\"}": {
+                    ".": {},
+                    "f:apiVersion": {},
+                    "f:blockOwnerDeletion": {},
+                    "f:controller": {},
+                    "f:kind": {},
+                    "f:name": {},
+                    "f:uid": {}
+                  }
+                }
+              },
+              "f:spec": {
+                "f:affinity": {
+                  ".": {},
+                  "f:nodeAffinity": {
+                    ".": {},
+                    "f:requiredDuringSchedulingIgnoredDuringExecution": {
+                      ".": {},
+                      "f:nodeSelectorTerms": {}
+                    }
+                  }
+                },
+                "f:containers": {
+                  "k:{\"name\":\"wavefront-collector\"}": {
+                    ".": {},
+                    "f:command": {},
+                    "f:env": {
+                      ".": {},
+                      "k:{\"name\":\"HOST_PROC\"}": {
+                        ".": {},
+                        "f:name": {},
+                        "f:value": {}
+                      },
+                      "k:{\"name\":\"POD_NAMESPACE_NAME\"}": {
+                        ".": {},
+                        "f:name": {},
+                        "f:valueFrom": {
+                          ".": {},
+                          "f:fieldRef": {
+                            ".": {},
+                            "f:apiVersion": {},
+                            "f:fieldPath": {}
+                          }
+                        }
+                      },
+                      "k:{\"name\":\"POD_NODE_NAME\"}": {
+                        ".": {},
+                        "f:name": {},
+                        "f:valueFrom": {
+                          ".": {},
+                          "f:fieldRef": {
+                            ".": {},
+                            "f:apiVersion": {},
+                            "f:fieldPath": {}
+                          }
+                        }
+                      }
+                    },
+                    "f:image": {},
+                    "f:imagePullPolicy": {},
+                    "f:name": {},
+                    "f:resources": {},
+                    "f:terminationMessagePath": {},
+                    "f:terminationMessagePolicy": {},
+                    "f:volumeMounts": {
+                      ".": {},
+                      "k:{\"mountPath\":\"/etc/collector/\"}": {
+                        ".": {},
+                        "f:mountPath": {},
+                        "f:name": {},
+                        "f:readOnly": {}
+                      },
+                      "k:{\"mountPath\":\"/host/proc\"}": {
+                        ".": {},
+                        "f:mountPath": {},
+                        "f:name": {},
+                        "f:readOnly": {}
+                      }
+                    }
+                  }
+                },
+                "f:dnsPolicy": {},
+                "f:enableServiceLinks": {},
+                "f:restartPolicy": {},
+                "f:schedulerName": {},
+                "f:securityContext": {},
+                "f:serviceAccount": {},
+                "f:serviceAccountName": {},
+                "f:terminationGracePeriodSeconds": {},
+                "f:tolerations": {},
+                "f:volumes": {
+                  ".": {},
+                  "k:{\"name\":\"collector-config\"}": {
+                    ".": {},
+                    "f:configMap": {
+                      ".": {},
+                      "f:defaultMode": {},
+                      "f:name": {}
+                    },
+                    "f:name": {}
+                  },
+                  "k:{\"name\":\"procfs\"}": {
+                    ".": {},
+                    "f:hostPath": {
+                      ".": {},
+                      "f:path": {},
+                      "f:type": {}
+                    },
+                    "f:name": {}
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "spec": {
+        "volumes": [
+          {
+            "name": "procfs",
+            "hostPath": {
+              "path": "/proc",
+              "type": ""
+            }
+          },
+          {
+            "name": "collector-config",
+            "configMap": {
+              "name": "collector-config",
+              "defaultMode": 420
+            }
+          },
+          {
+            "name": "wavefront-collector-token-nsfgx",
+            "secret": {
+              "secretName": "wavefront-collector-token-nsfgx",
+              "defaultMode": 420
+            }
+          }
+        ],
+        "containers": [
+          {
+            "name": "wavefront-collector",
+            "image": "wavefronthq/wavefront-kubernetes-collector:1.4.1-pods2",
+            "command": [
+              "/wavefront-collector",
+              "--daemon=true",
+              "--config-file=/etc/collector/collector.yaml"
+            ],
+            "env": [
+              {
+                "name": "HOST_PROC",
+                "value": "/host/proc"
+              },
+              {
+                "name": "POD_NODE_NAME",
+                "valueFrom": {
+                  "fieldRef": {
+                    "apiVersion": "v1",
+                    "fieldPath": "spec.nodeName"
+                  }
+                }
+              },
+              {
+                "name": "POD_NAMESPACE_NAME",
+                "valueFrom": {
+                  "fieldRef": {
+                    "apiVersion": "v1",
+                    "fieldPath": "metadata.namespace"
+                  }
+                }
+              }
+            ],
+            "resources": {},
+            "volumeMounts": [
+              {
+                "name": "procfs",
+                "readOnly": true,
+                "mountPath": "/host/proc"
+              },
+              {
+                "name": "collector-config",
+                "readOnly": true,
+                "mountPath": "/etc/collector/"
+              },
+              {
+                "name": "wavefront-collector-token-nsfgx",
+                "readOnly": true,
+                "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount"
+              }
+            ],
+            "terminationMessagePath": "/dev/termination-log",
+            "terminationMessagePolicy": "File",
+            "imagePullPolicy": "IfNotPresent"
+          }
+        ],
+        "restartPolicy": "Always",
+        "terminationGracePeriodSeconds": 30,
+        "dnsPolicy": "ClusterFirst",
+        "serviceAccountName": "wavefront-collector",
+        "serviceAccount": "wavefront-collector",
+        "nodeName": "kind-control-plane",
+        "securityContext": {},
+        "affinity": {
+          "nodeAffinity": {
+            "requiredDuringSchedulingIgnoredDuringExecution": {
+              "nodeSelectorTerms": [
+                {
+                  "matchFields": [
+                    {
+                      "key": "metadata.name",
+                      "operator": "In",
+                      "values": [
+                        "kind-control-plane"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        "schedulerName": "default-scheduler",
+        "tolerations": [
+          {
+            "key": "node.alpha.kubernetes.io/role",
+            "operator": "Exists",
+            "effect": "NoSchedule"
+          },
+          {
+            "key": "node-role.kubernetes.io/master",
+            "operator": "Exists",
+            "effect": "NoSchedule"
+          },
+          {
+            "key": "node.kubernetes.io/not-ready",
+            "operator": "Exists",
+            "effect": "NoExecute"
+          },
+          {
+            "key": "node.kubernetes.io/unreachable",
+            "operator": "Exists",
+            "effect": "NoExecute"
+          },
+          {
+            "key": "node.kubernetes.io/disk-pressure",
+            "operator": "Exists",
+            "effect": "NoSchedule"
+          },
+          {
+            "key": "node.kubernetes.io/memory-pressure",
+            "operator": "Exists",
+            "effect": "NoSchedule"
+          },
+          {
+            "key": "node.kubernetes.io/pid-pressure",
+            "operator": "Exists",
+            "effect": "NoSchedule"
+          },
+          {
+            "key": "node.kubernetes.io/unschedulable",
+            "operator": "Exists",
+            "effect": "NoSchedule"
+          }
+        ],
+        "priority": 0,
+        "enableServiceLinks": true,
+        "preemptionPolicy": "PreemptLowerPriority"
+      },
+      "status": {
+        "phase": "Running",
+        "conditions": [
+          {
+            "type": "Initialized",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2021-06-11T19:50:52Z"
+          },
+          {
+            "type": "Ready",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2021-06-11T19:50:53Z"
+          },
+          {
+            "type": "ContainersReady",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2021-06-11T19:50:53Z"
+          },
+          {
+            "type": "PodScheduled",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2021-06-11T19:50:52Z"
+          }
+        ],
+        "hostIP": "172.20.0.2",
+        "podIP": "10.244.0.16",
+        "podIPs": [
+          {
+            "ip": "10.244.0.16"
+          }
+        ],
+        "startTime": "2021-06-11T19:50:52Z",
+        "containerStatuses": [
+          {
+            "name": "wavefront-collector",
+            "state": {
+              "running": {
+                "startedAt": "2021-06-11T19:50:53Z"
+              }
+            },
+            "lastState": {},
+            "ready": true,
+            "restartCount": 0,
+            "image": "docker.io/wavefronthq/wavefront-kubernetes-collector:1.4.1-pods2",
+            "imageID": "sha256:c1173fbe19a869e8b9378de7a5dff501fabe8cfc32f779e18df73cc8315c7157",
+            "containerID": "containerd://96367c1f3c9afa0585f32483251d4314afe26d708e6358fbbe46d20972d9c3ff",
+            "started": true
+          }
+        ],
+        "qosClass": "BestEffort"
+      }
+    },
+    {
+      "metadata": {
+        "name": "job-failure-fxw4d",
+        "generateName": "job-failure-",
+        "namespace": "jobs",
+        "uid": "ff924ec3-a96b-4d27-b8e3-62ba451597c3",
+        "resourceVersion": "9067",
+        "creationTimestamp": "2021-06-11T20:02:53Z",
+        "labels": {
+          "controller-uid": "75c0ac4a-99e7-440f-aa22-08859b595d7e",
+          "job-name": "job-failure"
+        },
+        "annotations": {
+          "kubernetes.io/config.seen": "2021-06-11T20:02:53.241106200Z",
+          "kubernetes.io/config.source": "api"
+        },
+        "ownerReferences": [
+          {
+            "apiVersion": "batch/v1",
+            "kind": "Job",
+            "name": "job-failure",
+            "uid": "75c0ac4a-99e7-440f-aa22-08859b595d7e",
+            "controller": true,
+            "blockOwnerDeletion": true
+          }
+        ],
+        "managedFields": [
+          {
+            "manager": "kube-controller-manager",
+            "operation": "Update",
+            "apiVersion": "v1",
+            "time": "2021-06-11T20:02:53Z",
+            "fieldsType": "FieldsV1",
+            "fieldsV1": {
+              "f:metadata": {
+                "f:generateName": {},
+                "f:labels": {
+                  ".": {},
+                  "f:controller-uid": {},
+                  "f:job-name": {}
+                },
+                "f:ownerReferences": {
+                  ".": {},
+                  "k:{\"uid\":\"75c0ac4a-99e7-440f-aa22-08859b595d7e\"}": {
+                    ".": {},
+                    "f:apiVersion": {},
+                    "f:blockOwnerDeletion": {},
+                    "f:controller": {},
+                    "f:kind": {},
+                    "f:name": {},
+                    "f:uid": {}
+                  }
+                }
+              },
+              "f:spec": {
+                "f:containers": {
+                  "k:{\"name\":\"hello\"}": {
+                    ".": {},
+                    "f:args": {},
+                    "f:image": {},
+                    "f:imagePullPolicy": {},
+                    "f:name": {},
+                    "f:resources": {},
+                    "f:terminationMessagePath": {},
+                    "f:terminationMessagePolicy": {}
+                  }
+                },
+                "f:dnsPolicy": {},
+                "f:enableServiceLinks": {},
+                "f:hostNetwork": {},
+                "f:restartPolicy": {},
+                "f:schedulerName": {},
+                "f:securityContext": {},
+                "f:terminationGracePeriodSeconds": {}
+              }
+            }
+          }
+        ]
+      },
+      "spec": {
+        "volumes": [
+          {
+            "name": "default-token-l97jk",
+            "secret": {
+              "secretName": "default-token-l97jk",
+              "defaultMode": 420
+            }
+          }
+        ],
+        "containers": [
+          {
+            "name": "hello",
+            "image": "busybox",
+            "args": [
+              "/bin/sh",
+              "-c",
+              "date; echo I am down; sleep 20; exit 1"
+            ],
+            "resources": {},
+            "volumeMounts": [
+              {
+                "name": "default-token-l97jk",
+                "readOnly": true,
+                "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount"
+              }
+            ],
+            "terminationMessagePath": "/dev/termination-log",
+            "terminationMessagePolicy": "File",
+            "imagePullPolicy": "Always"
+          }
+        ],
+        "restartPolicy": "Never",
+        "terminationGracePeriodSeconds": 30,
+        "dnsPolicy": "ClusterFirst",
+        "serviceAccountName": "default",
+        "serviceAccount": "default",
+        "nodeName": "kind-control-plane",
+        "hostNetwork": true,
+        "securityContext": {},
+        "schedulerName": "default-scheduler",
+        "tolerations": [
+          {
+            "key": "node.kubernetes.io/not-ready",
+            "operator": "Exists",
+            "effect": "NoExecute",
+            "tolerationSeconds": 300
+          },
+          {
+            "key": "node.kubernetes.io/unreachable",
+            "operator": "Exists",
+            "effect": "NoExecute",
+            "tolerationSeconds": 300
+          }
+        ],
+        "priority": 0,
+        "enableServiceLinks": true,
+        "preemptionPolicy": "PreemptLowerPriority"
+      },
+      "status": {
+        "phase": "Failed",
+        "conditions": [
+          {
+            "type": "Initialized",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2021-06-11T20:02:53Z"
+          },
+          {
+            "type": "Ready",
+            "status": "False",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2021-06-11T20:03:15Z",
+            "reason": "ContainersNotReady",
+            "message": "containers with unready status: [hello]"
+          },
+          {
+            "type": "ContainersReady",
+            "status": "False",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2021-06-11T20:03:15Z",
+            "reason": "ContainersNotReady",
+            "message": "containers with unready status: [hello]"
+          },
+          {
+            "type": "PodScheduled",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2021-06-11T20:02:53Z"
+          }
+        ],
+        "hostIP": "172.20.0.2",
+        "podIP": "172.20.0.2",
+        "podIPs": [
+          {
+            "ip": "172.20.0.2"
+          }
+        ],
+        "startTime": "2021-06-11T20:02:53Z",
+        "containerStatuses": [
+          {
+            "name": "hello",
+            "state": {
+              "terminated": {
+                "exitCode": 1,
+                "reason": "Error",
+                "startedAt": "2021-06-11T20:02:54Z",
+                "finishedAt": "2021-06-11T20:03:14Z",
+                "containerID": "containerd://d47826496e6cfdd2f97e7058e88816d13988dda4669431dee5bb897b94a591a0"
+              }
+            },
+            "lastState": {},
+            "ready": false,
+            "restartCount": 0,
+            "image": "docker.io/library/busybox:latest",
+            "imageID": "docker.io/library/busybox@sha256:930490f97e5b921535c153e0e7110d251134cc4b72bbb8133c6a5065cc68580d",
+            "containerID": "containerd://d47826496e6cfdd2f97e7058e88816d13988dda4669431dee5bb897b94a591a0",
+            "started": false
+          }
+        ],
+        "qosClass": "BestEffort"
+      }
+    },
+    {
+      "metadata": {
+        "name": "job-failure-mstt9",
+        "generateName": "job-failure-",
+        "namespace": "jobs",
+        "uid": "dd25a141-d974-4729-bd30-ecbe6d562295",
+        "resourceVersion": "9145",
+        "creationTimestamp": "2021-06-11T20:03:25Z",
+        "labels": {
+          "controller-uid": "75c0ac4a-99e7-440f-aa22-08859b595d7e",
+          "job-name": "job-failure"
+        },
+        "annotations": {
+          "kubernetes.io/config.seen": "2021-06-11T20:03:25.353898500Z",
+          "kubernetes.io/config.source": "api"
+        },
+        "ownerReferences": [
+          {
+            "apiVersion": "batch/v1",
+            "kind": "Job",
+            "name": "job-failure",
+            "uid": "75c0ac4a-99e7-440f-aa22-08859b595d7e",
+            "controller": true,
+            "blockOwnerDeletion": true
+          }
+        ],
+        "managedFields": [
+          {
+            "manager": "kube-controller-manager",
+            "operation": "Update",
+            "apiVersion": "v1",
+            "time": "2021-06-11T20:03:25Z",
+            "fieldsType": "FieldsV1",
+            "fieldsV1": {
+              "f:metadata": {
+                "f:generateName": {},
+                "f:labels": {
+                  ".": {},
+                  "f:controller-uid": {},
+                  "f:job-name": {}
+                },
+                "f:ownerReferences": {
+                  ".": {},
+                  "k:{\"uid\":\"75c0ac4a-99e7-440f-aa22-08859b595d7e\"}": {
+                    ".": {},
+                    "f:apiVersion": {},
+                    "f:blockOwnerDeletion": {},
+                    "f:controller": {},
+                    "f:kind": {},
+                    "f:name": {},
+                    "f:uid": {}
+                  }
+                }
+              },
+              "f:spec": {
+                "f:containers": {
+                  "k:{\"name\":\"hello\"}": {
+                    ".": {},
+                    "f:args": {},
+                    "f:image": {},
+                    "f:imagePullPolicy": {},
+                    "f:name": {},
+                    "f:resources": {},
+                    "f:terminationMessagePath": {},
+                    "f:terminationMessagePolicy": {}
+                  }
+                },
+                "f:dnsPolicy": {},
+                "f:enableServiceLinks": {},
+                "f:hostNetwork": {},
+                "f:restartPolicy": {},
+                "f:schedulerName": {},
+                "f:securityContext": {},
+                "f:terminationGracePeriodSeconds": {}
+              }
+            }
+          }
+        ]
+      },
+      "spec": {
+        "volumes": [
+          {
+            "name": "default-token-l97jk",
+            "secret": {
+              "secretName": "default-token-l97jk",
+              "defaultMode": 420
+            }
+          }
+        ],
+        "containers": [
+          {
+            "name": "hello",
+            "image": "busybox",
+            "args": [
+              "/bin/sh",
+              "-c",
+              "date; echo I am down; sleep 20; exit 1"
+            ],
+            "resources": {},
+            "volumeMounts": [
+              {
+                "name": "default-token-l97jk",
+                "readOnly": true,
+                "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount"
+              }
+            ],
+            "terminationMessagePath": "/dev/termination-log",
+            "terminationMessagePolicy": "File",
+            "imagePullPolicy": "Always"
+          }
+        ],
+        "restartPolicy": "Never",
+        "terminationGracePeriodSeconds": 30,
+        "dnsPolicy": "ClusterFirst",
+        "serviceAccountName": "default",
+        "serviceAccount": "default",
+        "nodeName": "kind-control-plane",
+        "hostNetwork": true,
+        "securityContext": {},
+        "schedulerName": "default-scheduler",
+        "tolerations": [
+          {
+            "key": "node.kubernetes.io/not-ready",
+            "operator": "Exists",
+            "effect": "NoExecute",
+            "tolerationSeconds": 300
+          },
+          {
+            "key": "node.kubernetes.io/unreachable",
+            "operator": "Exists",
+            "effect": "NoExecute",
+            "tolerationSeconds": 300
+          }
+        ],
+        "priority": 0,
+        "enableServiceLinks": true,
+        "preemptionPolicy": "PreemptLowerPriority"
+      },
+      "status": {
+        "phase": "Failed",
+        "conditions": [
+          {
+            "type": "Initialized",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2021-06-11T20:03:25Z"
+          },
+          {
+            "type": "Ready",
+            "status": "False",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2021-06-11T20:03:47Z",
+            "reason": "ContainersNotReady",
+            "message": "containers with unready status: [hello]"
+          },
+          {
+            "type": "ContainersReady",
+            "status": "False",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2021-06-11T20:03:47Z",
+            "reason": "ContainersNotReady",
+            "message": "containers with unready status: [hello]"
+          },
+          {
+            "type": "PodScheduled",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2021-06-11T20:03:25Z"
+          }
+        ],
+        "hostIP": "172.20.0.2",
+        "podIP": "172.20.0.2",
+        "podIPs": [
+          {
+            "ip": "172.20.0.2"
+          }
+        ],
+        "startTime": "2021-06-11T20:03:25Z",
+        "containerStatuses": [
+          {
+            "name": "hello",
+            "state": {
+              "terminated": {
+                "exitCode": 1,
+                "reason": "Error",
+                "startedAt": "2021-06-11T20:03:26Z",
+                "finishedAt": "2021-06-11T20:03:46Z",
+                "containerID": "containerd://61946f8d3caa6683655f1ff456244cd3d3dc15f0d9379b60c6ee99c02c6e3439"
+              }
+            },
+            "lastState": {},
+            "ready": false,
+            "restartCount": 0,
+            "image": "docker.io/library/busybox:latest",
+            "imageID": "docker.io/library/busybox@sha256:930490f97e5b921535c153e0e7110d251134cc4b72bbb8133c6a5065cc68580d",
+            "containerID": "containerd://61946f8d3caa6683655f1ff456244cd3d3dc15f0d9379b60c6ee99c02c6e3439",
+            "started": false
+          }
+        ],
+        "qosClass": "BestEffort"
+      }
+    }
+  ]
+}

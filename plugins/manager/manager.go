@@ -42,18 +42,15 @@ type flushManagerImpl struct {
 	flushInterval time.Duration
 	ticker        *time.Ticker
 	stopChan      chan struct{}
-
-	pushOnce bool
 }
 
 // NewFlushManager crates a new PushManager
 func NewFlushManager(processors []metrics.DataProcessor,
-	sink wavefront.WavefrontSink, flushInterval time.Duration, runOnce bool) (FlushManager, error) {
+	sink wavefront.WavefrontSink, flushInterval time.Duration) (FlushManager, error) {
 	manager := flushManagerImpl{
 		processors:    processors,
 		sink:          sink,
 		flushInterval: flushInterval,
-		pushOnce:      runOnce,
 		stopChan:      make(chan struct{}),
 	}
 
@@ -66,20 +63,10 @@ func (rm *flushManagerImpl) Start() {
 }
 
 func (rm *flushManagerImpl) run() {
-	nullExporter := func(batch *metrics.DataBatch) {
-		return
-	}
-
-	firstPush := true
 	for {
 		select {
 		case <-rm.ticker.C:
-			if rm.shouldPush(firstPush) {
-				go rm.push(rm.sink.ExportData)
-			} else {
-				go rm.push(nullExporter)
-			}
-			firstPush = false
+			go rm.push()
 		case <-rm.stopChan:
 			rm.ticker.Stop()
 			rm.sink.Stop()
@@ -92,14 +79,7 @@ func (rm *flushManagerImpl) Stop() {
 	rm.stopChan <- struct{}{}
 }
 
-func (rm *flushManagerImpl) shouldPush(firstPush bool) bool {
-	if rm.pushOnce && !firstPush {
-		return false
-	}
-	return true
-}
-
-func (rm *flushManagerImpl) push(export func(*metrics.DataBatch)) {
+func (rm *flushManagerImpl) push() {
 	dataBatches := sources.Manager().GetPendingMetrics()
 	combinedBatch := &metrics.DataBatch{}
 
@@ -114,7 +94,7 @@ func (rm *flushManagerImpl) push(export func(*metrics.DataBatch)) {
 
 		// export is either sink.ExportData or a null exporter for testing
 		// hopefully we can simplify threading and simplify this up in the future
-		export(data)
+		rm.sink.ExportData(data)
 	}
 
 	// process the combined metric sets
@@ -129,7 +109,7 @@ func (rm *flushManagerImpl) push(export func(*metrics.DataBatch)) {
 			}
 		}
 
-		export(combinedBatch)
+		rm.sink.ExportData(combinedBatch)
 	}
 }
 

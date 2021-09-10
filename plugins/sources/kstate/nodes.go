@@ -12,7 +12,7 @@ import (
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 )
 
 func pointsForNode(item interface{}, transforms configuration.Transforms) []*metrics.MetricPoint {

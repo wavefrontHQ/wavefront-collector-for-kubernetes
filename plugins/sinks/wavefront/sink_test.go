@@ -37,6 +37,7 @@ func TestCreateWavefrontSinkWithNoEmptyInputs(t *testing.T) {
 	cfg := configuration.WavefrontSinkConfig{
 		ProxyAddress: "wavefront-proxy:2878",
 		ClusterName:  "testCluster",
+		TestMode:     true,
 		Transforms: configuration.Transforms{
 			Prefix: "testPrefix",
 		},
@@ -53,8 +54,8 @@ func TestCreateWavefrontSinkWithNoEmptyInputs(t *testing.T) {
 
 func TestPrefix(t *testing.T) {
 	cfg := configuration.WavefrontSinkConfig{
-		ProxyAddress:  "wavefront-proxy:2878",
-		RedirectToLog: true,
+		ProxyAddress: "wavefront-proxy:2878",
+		TestMode:     true,
 		Transforms: configuration.Transforms{
 			Prefix: "test.",
 		},
@@ -74,10 +75,11 @@ func TestPrefix(t *testing.T) {
 	sink.ExportData(&db)
 	assert.True(t, strings.Contains(getMetrics(sink), "test.cpu.idle"))
 }
+
 func TestNilPointDataBatch(t *testing.T) {
 	cfg := configuration.WavefrontSinkConfig{
-		ProxyAddress:  "wavefront-proxy:2878",
-		RedirectToLog: true,
+		ProxyAddress: "wavefront-proxy:2878",
+		TestMode:     true,
 		Transforms: configuration.Transforms{
 			Prefix: "test.",
 		},
@@ -99,6 +101,31 @@ func TestNilPointDataBatch(t *testing.T) {
 	assert.True(t, strings.Contains(getMetrics(sink), "test.cpu.idle"))
 }
 
+func TestCleansTagsBeforeSending(t *testing.T) {
+	cfg := configuration.WavefrontSinkConfig{
+		ProxyAddress: "wavefront-proxy:2878",
+		TestMode:     true,
+		Transforms: configuration.Transforms{
+			Prefix: "test.",
+		},
+	}
+	sink, err := NewWavefrontSink(cfg)
+	assert.NoError(t, err)
+
+	db := metrics.DataBatch{
+		MetricPoints: []*metrics.MetricPoint{
+			{
+				Metric: "cpu.idle",
+				Value:  1.0,
+				Source: "fakeSource",
+				Tags:   map[string]string{"emptyTag": ""},
+			},
+		},
+	}
+	sink.ExportData(&db)
+	assert.NotContains(t, getMetrics(sink), "emptyTag")
+}
+
 func getMetrics(sink WavefrontSink) string {
-	return sink.(*wavefrontSink).WavefrontClient.(*TestSender).GetReceivedLines()
+	return strings.TrimSpace(sink.(*wavefrontSink).WavefrontClient.(*TestSender).GetReceivedLines())
 }

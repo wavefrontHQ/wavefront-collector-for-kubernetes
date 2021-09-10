@@ -21,10 +21,11 @@ import (
 )
 
 const (
-	NodeNameEnvVar      = "POD_NODE_NAME"
-	NamespaceNameEnvVar = "POD_NAMESPACE_NAME"
-	DaemonModeEnvVar    = "DAEMON_MODE"
-	ForceGC             = "FORCE_GC"
+	NodeNameEnvVar           = "POD_NODE_NAME"
+	NamespaceNameEnvVar      = "POD_NAMESPACE_NAME"
+	DaemonModeEnvVar         = "DAEMON_MODE"
+	InstallationMethodEnvVar = "INSTALLATION_METHOD"
+	ForceGC                  = "FORCE_GC"
 )
 
 var (
@@ -123,6 +124,15 @@ func GetNodeName() string {
 
 func GetNamespaceName() string {
 	return os.Getenv(NamespaceNameEnvVar)
+}
+
+func GetInstallationMethod() string {
+
+	installationMethod := os.Getenv(InstallationMethodEnvVar)
+	if len(installationMethod) == 0 {
+		return "unknown"
+	}
+	return installationMethod
 }
 
 func GetNodeHostnameAndIP(node *kube_api.Node) (string, net.IP, error) {

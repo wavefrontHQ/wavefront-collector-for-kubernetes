@@ -4,9 +4,10 @@
 package kstate
 
 import (
-	log "github.com/sirupsen/logrus"
 	"reflect"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"

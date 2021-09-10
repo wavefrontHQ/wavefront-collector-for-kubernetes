@@ -16,7 +16,7 @@ import (
 	gometrics "github.com/rcrowley/go-metrics"
 	log "github.com/sirupsen/logrus"
 
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 

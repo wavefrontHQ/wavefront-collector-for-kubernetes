@@ -96,7 +96,6 @@ func (converter *pointConverter) Process(batch *metrics.DataBatch) (*metrics.Dat
 					source = hostname
 				}
 			}
-			processTags(tags)
 
 			// convert to a point and add it to the data batch
 			point := converter.metricPoint(converter.cleanMetricName(metricType, metricName), value, ts, source, tags)
@@ -125,7 +124,6 @@ func (converter *pointConverter) Process(batch *metrics.DataBatch) (*metrics.Dat
 			for k, v := range tags {
 				labels[k] = v
 			}
-			processTags(labels)
 
 			// convert to a point and add it to the data batch
 			point := converter.metricPoint(converter.cleanMetricName(metricType, metric.Name), value, ts, source, labels)

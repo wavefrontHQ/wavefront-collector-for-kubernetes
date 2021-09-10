@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: wavefront-proxy
+    name: wavefront-proxy
+  name: wavefront-proxy
+  namespace: wavefront-collector
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wavefront-proxy
+  template:
+    metadata:
+      labels:
+        app: wavefront-proxy
+    spec:
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              preference:
+                matchExpressions:
+                  - key: kubernetes.io/arch
+                    operator: In
+                    values:
+                      - amd64
+      containers:
+      - name: wavefront-proxy
+        image: DOCKER_HOST/test-proxy:YOUR_IMAGE_TAG
+        imagePullPolicy: Always #this needs to be changed to IfNotPresent if you're running on kind
+        command: [ "/test-proxy", "-proxy", ":2878" ]
+        ports:
+        - name: proxy
+          containerPort: 2878
+          protocol: TCP
+        - name: control
+          containerPort: 8888
+          protocol: TCP
+        securityContext:
+          privileged: false
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wavefront-proxy
+  labels:
+    app: wavefront-proxy
+  namespace: wavefront-collector
+spec:
+  ports:
+  - name: wavefront
+    port: 2878
+    protocol: TCP
+  selector:
+    app: wavefront-proxy

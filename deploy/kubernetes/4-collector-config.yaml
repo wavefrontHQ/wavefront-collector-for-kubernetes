@@ -50,23 +50,24 @@ data:
         - 'annotation_kubectl_kubernetes_io_last_applied_configuration'
 
     sources:
+      # The Wavefront Kubernetes dashboards rely on the "kubernetes." prefix by default. See https://docs.wavefront.com/wf_kubernetes_troubleshooting.html for more details.
       kubernetes_source:
         url: 'https://kubernetes.default.svc'
         kubeletPort: 10250
         kubeletHttps: true
         useServiceAccount: true
         insecure: true
-        prefix: 'kubernetes.'
+        prefix: 'kubernetes.' # Default prefix
 
         filters:
           metricDenyList:
           - 'kubernetes.sys_container.*'
 
       internal_stats_source:
-        prefix: 'kubernetes.'
+        prefix: 'kubernetes.' # Default prefix
 
       kubernetes_state_source:
-        prefix: 'kubernetes.'
+        prefix: 'kubernetes.' # Default prefix
 
 
       ##########################################################################
@@ -89,8 +90,6 @@ data:
 
     # discovery rules for auto-discovery of pods and services
     discovery:
-      annotation_prefix: 'wavefront.com'
-
       enable_runtime_plugins: true
 
       plugins:

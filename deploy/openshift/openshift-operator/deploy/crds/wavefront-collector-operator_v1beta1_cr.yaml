@@ -9,8 +9,8 @@ spec:
   ## All metrics will receive a `cluster` tag with this value
   ## Required
   clusterName: OPENSHIFT_CLUSTER_NAME
-  
-  
+
+
   ## Wavefront URL (cluster) and API Token
   ## Required
   wavefront:

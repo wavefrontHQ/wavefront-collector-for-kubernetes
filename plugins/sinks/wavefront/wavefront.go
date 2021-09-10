@@ -31,15 +31,18 @@ const (
 	testClient   = 3
 )
 
+const maxWavefrontTags = 20 // the maximum numbers of tags allowed in a wavefront point
+
 var (
-	excludeTagList = [...]string{"namespace_id", "host_id", "pod_id", "hostname"}
-	sentPoints     gm.Counter
-	errPoints      gm.Counter
-	filteredPoints gm.Counter
-	sentEvents     gm.Counter
-	errEvents      gm.Counter
-	clientType     gm.Gauge
-	sanitizedChars = strings.NewReplacer("+", "-")
+	excludeTagList     = [...]string{"namespace_id", "host_id", "pod_id", "hostname"}
+	excludeTagPrefixes = [...]string{"label.beta.", "label.alpha."}
+	sentPoints         gm.Counter
+	errPoints          gm.Counter
+	filteredPoints     gm.Counter
+	sentEvents         gm.Counter
+	errEvents          gm.Counter
+	clientType         gm.Gauge
+	sanitizedChars     = strings.NewReplacer("+", "-")
 )
 
 func init() {
@@ -75,7 +78,7 @@ func NewWavefrontSink(cfg configuration.WavefrontSinkConfig) (WavefrontSink, err
 		logPercent:  0.01,
 	}
 
-	if cfg.RedirectToLog {
+	if cfg.TestMode {
 		storage.WavefrontClient = NewTestSender()
 		clientType.Update(testClient)
 	} else if cfg.ProxyAddress != "" {
@@ -158,6 +161,8 @@ func (sink *wavefrontSink) sendPoint(metricName string, value float64, ts int64,
 	}
 
 	tags = combineGlobalTags(tags, sink.globalTags)
+
+	logTagCleaningReasons(metricName, cleanTags(tags, maxWavefrontTags))
 
 	err := sink.WavefrontClient.SendMetric(metricName, value, ts, source, tags)
 	if err != nil {
@@ -266,8 +271,9 @@ func (sink *wavefrontSink) emitHeartbeat(sender senders.Sender, cfg configuratio
 	sink.stopHeartbeat = make(chan struct{})
 	source := getDefault(util.GetNodeName(), "wavefront-collector-for-kubernetes")
 	tags := map[string]string{
-		"cluster":      cfg.ClusterName,
-		"stats_prefix": configuration.GetStringValue(cfg.Prefix, "kubernetes."),
+		"cluster":             cfg.ClusterName,
+		"stats_prefix":        configuration.GetStringValue(cfg.Prefix, "kubernetes."),
+		"installation_method": util.GetInstallationMethod(),
 	}
 
 	eventsEnabled := 0.0

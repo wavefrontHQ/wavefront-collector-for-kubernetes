@@ -30,6 +30,7 @@ import (
 	"github.com/stretchr/testify/require"
 	core "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources/summary/kubelet"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	util "k8s.io/client-go/util/testing"
 	stats "k8s.io/kubernetes/pkg/kubelet/apis/stats/v1alpha1"
@@ -121,7 +122,212 @@ type fakeSource struct {
 	scraped bool
 }
 
+func TestScrapeSummaryMetrics(t *testing.T) {
+	summary := stats.Summary{
+		Node: stats.NodeStats{
+			NodeName:  nodeInfo.NodeName,
+			StartTime: metav1.NewTime(startTime),
+		},
+	}
+	data, err := json.Marshal(&summary)
+	require.NoError(t, err)
+
+	server := httptest.NewServer(&util.FakeHandler{
+		StatusCode:   200,
+		ResponseBody: string(data),
+		T:            t,
+	})
+	defer server.Close()
+
+	ms := testingSummaryMetricsSource()
+	split := strings.SplitN(strings.Replace(server.URL, "http://", "", 1), ":", 2)
+	ms.node.IP = net.ParseIP(split[0])
+	ms.node.Port, err = strconv.Atoi(split[1])
+	require.NoError(t, err)
+
+	res, err := ms.ScrapeMetrics()
+	assert.Nil(t, err, "scrape error")
+	assert.Equal(t, res.MetricSets["node:test"].Labels[core.LabelMetricSetType.Key], core.MetricSetTypeNode)
+}
+
+func TestAddSummaryMetrics(t *testing.T) {
+
+	ms := testingSummaryMetricsSource()
+	summary := getTestStatsSummary()
+
+	expectations := getTestSummaryExpectations()
+	dataBatch := &core.DataBatch{
+		Timestamp:  time.Now(),
+		MetricSets: map[string]*core.MetricSet{},
+	}
+
+	ms.addSummaryMetricSets(dataBatch, &summary)
+	metrics := dataBatch.MetricSets
+	for _, e := range expectations {
+		m, ok := metrics[e.key]
+		if !assert.True(t, ok, "missing metric %q", e.key) {
+			continue
+		}
+		assert.Equal(t, m.Labels[core.LabelMetricSetType.Key], e.setType, e.key)
+		assert.Equal(t, m.CollectionStartTime, startTime, e.key)
+		assert.Equal(t, m.ScrapeTime, scrapeTime, e.key)
+		if e.cpu {
+			checkIntMetric(t, m, e.key, core.MetricCpuUsage, e.seed+offsetCPUUsageCoreSeconds)
+		}
+		if e.memory {
+			checkIntMetric(t, m, e.key, core.MetricMemoryUsage, e.seed+offsetMemUsageBytes)
+			checkIntMetric(t, m, e.key, core.MetricMemoryWorkingSet, e.seed+offsetMemWorkingSetBytes)
+			checkIntMetric(t, m, e.key, core.MetricMemoryRSS, e.seed+offsetMemRSSBytes)
+			checkIntMetric(t, m, e.key, core.MetricMemoryPageFaults, e.seed+offsetMemPageFaults)
+			checkIntMetric(t, m, e.key, core.MetricMemoryMajorPageFaults, e.seed+offsetMemMajorPageFaults)
+		}
+		if e.network {
+			checkIntMetric(t, m, e.key, core.MetricNetworkRx, e.seed+offsetNetRxBytes)
+			checkIntMetric(t, m, e.key, core.MetricNetworkRxErrors, e.seed+offsetNetRxErrors)
+			checkIntMetric(t, m, e.key, core.MetricNetworkTx, e.seed+offsetNetTxBytes)
+			checkIntMetric(t, m, e.key, core.MetricNetworkTxErrors, e.seed+offsetNetTxErrors)
+		}
+		if e.accelerators {
+			checkAcceleratorMetric(t, m, e.key, core.MetricAcceleratorMemoryTotal, e.seed+offsetAcceleratorMemoryTotal)
+			checkAcceleratorMetric(t, m, e.key, core.MetricAcceleratorMemoryUsed, e.seed+offsetAcceleratorMemoryUsed)
+			checkAcceleratorMetric(t, m, e.key, core.MetricAcceleratorDutyCycle, e.seed+offsetAcceleratorDutyCycle)
+		}
+		if e.ephemeralstorage {
+			checkIntMetric(t, m, e.key, core.MetricEphemeralStorageUsage, e.seed+offsetFsUsed)
+		}
+		if e.containerEphemeralstorage {
+			checkIntMetric(t, m, e.key, core.MetricEphemeralStorageUsage, 2*(e.seed+offsetFsUsed))
+		}
+		for _, label := range e.fs {
+			checkFsMetric(t, m, e.key, label, core.MetricFilesystemAvailable, e.seed+offsetFsAvailable)
+			checkFsMetric(t, m, e.key, label, core.MetricFilesystemLimit, e.seed+offsetFsCapacity)
+			checkFsMetric(t, m, e.key, label, core.MetricFilesystemUsage, e.seed+offsetFsUsed)
+		}
+		delete(metrics, e.key)
+	}
+
+	// Verify volume information labeled metrics
+	var volumeInformationMetricsKey = core.PodKey(namespace0, pName3)
+	var mappedVolumeStats = map[string]int64{}
+	for _, labeledMetric := range metrics[volumeInformationMetricsKey].LabeledMetrics {
+		assert.True(t, strings.HasPrefix("Volume:C", labeledMetric.Labels["resource_id"]))
+		mappedVolumeStats[labeledMetric.Name] = labeledMetric.IntValue
+	}
+
+	assert.True(t, mappedVolumeStats["filesystem/available"] == int64(availableFsBytes))
+	assert.True(t, mappedVolumeStats["filesystem/usage"] == int64(usedFsBytes))
+	assert.True(t, mappedVolumeStats["filesystem/limit"] == int64(totalFsBytes))
+
+	delete(metrics, volumeInformationMetricsKey)
+
+	for k, v := range metrics {
+		assert.Fail(t, "unexpected metric", "%q: %+v", k, v)
+	}
+}
+
+func TestAddCompletedPodMetricSets(t *testing.T) {
+	statusStartTime := metav1.NewTime(startTime)
+	podList := v1.PodList{
+		Items: []v1.Pod{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "failed-pod",
+					Namespace: namespace0,
+				},
+				Status: v1.PodStatus{
+					Phase:     v1.PodFailed,
+					StartTime: &statusStartTime,
+				},
+			},
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "completed-pod",
+					Namespace: namespace0,
+				},
+				Status: v1.PodStatus{
+					Phase:     v1.PodSucceeded,
+					StartTime: &statusStartTime,
+				},
+			},
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "just-completed-pod",
+					Namespace: namespace0,
+				},
+				Status: v1.PodStatus{
+					Phase:     v1.PodSucceeded,
+					StartTime: &statusStartTime,
+				},
+			},
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "running-pod",
+					Namespace: namespace0,
+				},
+				Status: v1.PodStatus{
+					Phase:     v1.PodRunning,
+					StartTime: &statusStartTime,
+				},
+			},
+		},
+	}
+
+	ms := testingSummaryMetricsSource()
+	dataBatch := &core.DataBatch{
+		Timestamp:  time.Now(),
+		MetricSets: map[string]*core.MetricSet{},
+	}
+
+	t.Run("handles empty pod list", func(t *testing.T) {
+		emptyPodList := v1.PodList{
+			Items: []v1.Pod{},
+		}
+		ms.addCompletedPodMetricSets(dataBatch, &emptyPodList)
+		assert.Equal(t, 0, len(dataBatch.MetricSets))
+	})
+
+	t.Run("adds failed or succeeded pods", func(t *testing.T) {
+		ms.addCompletedPodMetricSets(dataBatch, &podList)
+		assert.Equal(t, 3, len(dataBatch.MetricSets))
+	})
+
+	t.Run("only adds missing failed or succeeded pods", func(t *testing.T) {
+		addFakePodMetric(dataBatch, ms, podList.Items[3])
+		addFakePodMetric(dataBatch, ms, podList.Items[2])
+		ms.addCompletedPodMetricSets(dataBatch, &podList)
+		assert.Equal(t, 4, len(dataBatch.MetricSets))
+
+		podMetrics := dataBatch.MetricSets[core.PodKey(namespace0, "just-completed-pod")]
+		assert.NotNil(t, podMetrics.MetricValues[core.MetricUptime.Name], "expected to not override uptime metric")
+		assert.NotNil(t, podMetrics.MetricValues[core.MetricCpuUsage.Name], "expected to not override cpu usage metric")
+	})
+
+	t.Run("pod metrics values", func(t *testing.T) {
+		ms.addCompletedPodMetricSets(dataBatch, &podList)
+		podMetrics := dataBatch.MetricSets[core.PodKey(namespace0, "failed-pod")]
+		pod := podList.Items[0]
+
+		assert.Equal(t, core.MetricSetTypePod, podMetrics.Labels[core.LabelMetricSetType.Key])
+		assert.Equal(t, pod.Status.StartTime.Time, podMetrics.CollectionStartTime)
+		assert.Equal(t, dataBatch.Timestamp, podMetrics.ScrapeTime)
+		assert.Equal(t, pod.Name, podMetrics.Labels[core.LabelPodName.Key])
+		assert.Equal(t, pod.Namespace, podMetrics.Labels[core.LabelNamespaceName.Key])
+		assert.Equal(t, ms.node.NodeName, podMetrics.Labels[core.LabelNodename.Key])
+		assert.Equal(t, ms.node.HostName, podMetrics.Labels[core.LabelHostname.Key])
+		assert.Equal(t, ms.node.HostID, podMetrics.Labels[core.LabelHostID.Key])
+	})
+}
+
+func TestDecodeEphemeralStorageStatsForContainer(t *testing.T) {
+	ms := testingSummaryMetricsSource()
+	rootFs := &stats.FsStats{}
+	logs := &stats.FsStats{}
+	assert.NotPanics(t, func() { ms.decodeEphemeralStorageStatsForContainer(nil, rootFs, logs) })
+}
+
+// test support functions
 func (f *fakeSource) Name() string { return "fake" }
+
 func (f *fakeSource) ScrapeMetrics() (*core.DataBatch, error) {
 	f.scraped = true
 	return nil, nil
@@ -134,111 +340,18 @@ func testingSummaryMetricsSource() *summaryMetricsSource {
 	}
 }
 
-func TestDecodeSummaryMetrics(t *testing.T) {
-
-	ms := testingSummaryMetricsSource()
-	summary := stats.Summary{
-		Node: stats.NodeStats{
-			NodeName:  nodeInfo.NodeName,
-			StartTime: metav1.NewTime(startTime),
-			CPU:       genTestSummaryCPU(seedNode),
-			Memory:    genTestSummaryMemory(seedNode),
-			Network:   genTestSummaryNetwork(seedNode),
-			SystemContainers: []stats.ContainerStats{
-				genTestSummaryContainer(stats.SystemContainerKubelet, seedKubelet),
-				genTestSummaryContainer(stats.SystemContainerRuntime, seedRuntime),
-				genTestSummaryContainer(stats.SystemContainerMisc, seedMisc),
-			},
-			Fs: genTestSummaryFsStats(seedNode),
-		},
-		Pods: []stats.PodStats{{
-			PodRef: stats.PodReference{
-				Name:      pName0,
-				Namespace: namespace0,
-			},
-			StartTime:        metav1.NewTime(startTime),
-			Network:          genTestSummaryNetwork(seedPod0),
-			EphemeralStorage: genTestSummaryFsStats(seedPod0),
-			CPU:              genTestSummaryCPU(seedPod0),
-			Memory:           genTestSummaryMemory(seedPod0),
-			Containers: []stats.ContainerStats{
-				genTestSummaryContainer(cName00, seedPod0Container0),
-				genTestSummaryContainer(cName01, seedPod0Container1),
-				genTestSummaryTerminatedContainer(cName00, seedPod0Container0),
-			},
-		}, {
-			PodRef: stats.PodReference{
-				Name:      pName1,
-				Namespace: namespace0,
-			},
-			StartTime: metav1.NewTime(startTime),
-			Network:   genTestSummaryNetwork(seedPod1),
-			Containers: []stats.ContainerStats{
-				genTestSummaryContainer(cName10, seedPod1Container),
-			},
-			VolumeStats: []stats.VolumeStats{{
-				Name:    "A",
-				FsStats: *genTestSummaryFsStats(seedPod1),
-			}, {
-				Name:    "B",
-				FsStats: *genTestSummaryFsStats(seedPod1),
-			}},
-		}, {
-			PodRef: stats.PodReference{
-				Name:      pName2,
-				Namespace: namespace1,
-			},
-			StartTime: metav1.NewTime(startTime),
-			Network:   genTestSummaryNetwork(seedPod2),
-			Containers: []stats.ContainerStats{
-				genTestSummaryContainer(cName20, seedPod2Container0),
-				genTestSummaryContainer(cName21, seedPod2Container1),
-			},
-		}, {
-			PodRef: stats.PodReference{
-				Name:      pName3,
-				Namespace: namespace0,
-			},
-			Containers: []stats.ContainerStats{
-				genTestSummaryContainer(cName30, seedPod3Container0),
-			},
-			VolumeStats: []stats.VolumeStats{{
-				Name: "C",
-				FsStats: stats.FsStats{
-					AvailableBytes: &availableFsBytes,
-					UsedBytes:      &usedFsBytes,
-					CapacityBytes:  &totalFsBytes,
-					InodesFree:     &freeInode,
-					InodesUsed:     &usedInode,
-					Inodes:         &totalInode,
-				},
-			},
-			},
-		}, {
-			PodRef: stats.PodReference{
-				Name:      pName4,
-				Namespace: namespace0,
-			},
-			StartTime: metav1.NewTime(startTime),
-			Network:   genTestSummaryNetwork(seedPod4),
-			Containers: []stats.ContainerStats{
-				genTestSummaryContainer(cName40, seedPod4Container0),
-				genTestSummaryTerminatedContainerNoStats(cName41),
-				genTestSummaryTerminatedContainerBlankStats(cName42),
-			},
-		}, {
-			PodRef: stats.PodReference{
-				Name:      pName5,
-				Namespace: namespace0,
-			},
-			Network:   genTestSummaryNetwork(seedPod5),
-			StartTime: metav1.NewTime(startTime),
-			Containers: []stats.ContainerStats{
-				genTestSummaryContainerWithAccelerator(cName50, seedPod5Container0),
-			},
-		}},
-	}
-
+func getTestSummaryExpectations() []struct {
+	key                       string
+	setType                   string
+	seed                      int64
+	cpu                       bool
+	memory                    bool
+	network                   bool
+	accelerators              bool
+	ephemeralstorage          bool
+	containerEphemeralstorage bool
+	fs                        []string
+} {
 	containerFs := []string{"/", "logs"}
 	expectations := []struct {
 		key                       string
@@ -364,68 +477,112 @@ func TestDecodeSummaryMetrics(t *testing.T) {
 		cpu:          true,
 		accelerators: true,
 	}}
+	return expectations
+}
 
-	metrics := ms.decodeSummary(&summary)
-	for _, e := range expectations {
-		m, ok := metrics[e.key]
-		if !assert.True(t, ok, "missing metric %q", e.key) {
-			continue
-		}
-		assert.Equal(t, m.Labels[core.LabelMetricSetType.Key], e.setType, e.key)
-		assert.Equal(t, m.CollectionStartTime, startTime, e.key)
-		assert.Equal(t, m.ScrapeTime, scrapeTime, e.key)
-		if e.cpu {
-			checkIntMetric(t, m, e.key, core.MetricCpuUsage, e.seed+offsetCPUUsageCoreSeconds)
-		}
-		if e.memory {
-			checkIntMetric(t, m, e.key, core.MetricMemoryUsage, e.seed+offsetMemUsageBytes)
-			checkIntMetric(t, m, e.key, core.MetricMemoryWorkingSet, e.seed+offsetMemWorkingSetBytes)
-			checkIntMetric(t, m, e.key, core.MetricMemoryRSS, e.seed+offsetMemRSSBytes)
-			checkIntMetric(t, m, e.key, core.MetricMemoryPageFaults, e.seed+offsetMemPageFaults)
-			checkIntMetric(t, m, e.key, core.MetricMemoryMajorPageFaults, e.seed+offsetMemMajorPageFaults)
-		}
-		if e.network {
-			checkIntMetric(t, m, e.key, core.MetricNetworkRx, e.seed+offsetNetRxBytes)
-			checkIntMetric(t, m, e.key, core.MetricNetworkRxErrors, e.seed+offsetNetRxErrors)
-			checkIntMetric(t, m, e.key, core.MetricNetworkTx, e.seed+offsetNetTxBytes)
-			checkIntMetric(t, m, e.key, core.MetricNetworkTxErrors, e.seed+offsetNetTxErrors)
-		}
-		if e.accelerators {
-			checkAcceleratorMetric(t, m, e.key, core.MetricAcceleratorMemoryTotal, e.seed+offsetAcceleratorMemoryTotal)
-			checkAcceleratorMetric(t, m, e.key, core.MetricAcceleratorMemoryUsed, e.seed+offsetAcceleratorMemoryUsed)
-			checkAcceleratorMetric(t, m, e.key, core.MetricAcceleratorDutyCycle, e.seed+offsetAcceleratorDutyCycle)
-		}
-		if e.ephemeralstorage {
-			checkIntMetric(t, m, e.key, core.MetricEphemeralStorageUsage, e.seed+offsetFsUsed)
-		}
-		if e.containerEphemeralstorage {
-			checkIntMetric(t, m, e.key, core.MetricEphemeralStorageUsage, 2*(e.seed+offsetFsUsed))
-		}
-		for _, label := range e.fs {
-			checkFsMetric(t, m, e.key, label, core.MetricFilesystemAvailable, e.seed+offsetFsAvailable)
-			checkFsMetric(t, m, e.key, label, core.MetricFilesystemLimit, e.seed+offsetFsCapacity)
-			checkFsMetric(t, m, e.key, label, core.MetricFilesystemUsage, e.seed+offsetFsUsed)
-		}
-		delete(metrics, e.key)
+func getTestStatsSummary() stats.Summary {
+	summary := stats.Summary{
+		Node: stats.NodeStats{
+			NodeName:  nodeInfo.NodeName,
+			StartTime: metav1.NewTime(startTime),
+			CPU:       genTestSummaryCPU(seedNode),
+			Memory:    genTestSummaryMemory(seedNode),
+			Network:   genTestSummaryNetwork(seedNode),
+			SystemContainers: []stats.ContainerStats{
+				genTestSummaryContainer(stats.SystemContainerKubelet, seedKubelet),
+				genTestSummaryContainer(stats.SystemContainerRuntime, seedRuntime),
+				genTestSummaryContainer(stats.SystemContainerMisc, seedMisc),
+			},
+			Fs: genTestSummaryFsStats(seedNode),
+		},
+		Pods: []stats.PodStats{{
+			PodRef: stats.PodReference{
+				Name:      pName0,
+				Namespace: namespace0,
+			},
+			StartTime:        metav1.NewTime(startTime),
+			Network:          genTestSummaryNetwork(seedPod0),
+			EphemeralStorage: genTestSummaryFsStats(seedPod0),
+			CPU:              genTestSummaryCPU(seedPod0),
+			Memory:           genTestSummaryMemory(seedPod0),
+			Containers: []stats.ContainerStats{
+				genTestSummaryContainer(cName00, seedPod0Container0),
+				genTestSummaryContainer(cName01, seedPod0Container1),
+				genTestSummaryTerminatedContainer(cName00, seedPod0Container0),
+			},
+		}, {
+			PodRef: stats.PodReference{
+				Name:      pName1,
+				Namespace: namespace0,
+			},
+			StartTime: metav1.NewTime(startTime),
+			Network:   genTestSummaryNetwork(seedPod1),
+			Containers: []stats.ContainerStats{
+				genTestSummaryContainer(cName10, seedPod1Container),
+			},
+			VolumeStats: []stats.VolumeStats{{
+				Name:    "A",
+				FsStats: *genTestSummaryFsStats(seedPod1),
+			}, {
+				Name:    "B",
+				FsStats: *genTestSummaryFsStats(seedPod1),
+			}},
+		}, {
+			PodRef: stats.PodReference{
+				Name:      pName2,
+				Namespace: namespace1,
+			},
+			StartTime: metav1.NewTime(startTime),
+			Network:   genTestSummaryNetwork(seedPod2),
+			Containers: []stats.ContainerStats{
+				genTestSummaryContainer(cName20, seedPod2Container0),
+				genTestSummaryContainer(cName21, seedPod2Container1),
+			},
+		}, {
+			PodRef: stats.PodReference{
+				Name:      pName3,
+				Namespace: namespace0,
+			},
+			Containers: []stats.ContainerStats{
+				genTestSummaryContainer(cName30, seedPod3Container0),
+			},
+			VolumeStats: []stats.VolumeStats{{
+				Name: "C",
+				FsStats: stats.FsStats{
+					AvailableBytes: &availableFsBytes,
+					UsedBytes:      &usedFsBytes,
+					CapacityBytes:  &totalFsBytes,
+					InodesFree:     &freeInode,
+					InodesUsed:     &usedInode,
+					Inodes:         &totalInode,
+				},
+			},
+			},
+		}, {
+			PodRef: stats.PodReference{
+				Name:      pName4,
+				Namespace: namespace0,
+			},
+			StartTime: metav1.NewTime(startTime),
+			Network:   genTestSummaryNetwork(seedPod4),
+			Containers: []stats.ContainerStats{
+				genTestSummaryContainer(cName40, seedPod4Container0),
+				genTestSummaryTerminatedContainerNoStats(cName41),
+				genTestSummaryTerminatedContainerBlankStats(cName42),
+			},
+		}, {
+			PodRef: stats.PodReference{
+				Name:      pName5,
+				Namespace: namespace0,
+			},
+			Network:   genTestSummaryNetwork(seedPod5),
+			StartTime: metav1.NewTime(startTime),
+			Containers: []stats.ContainerStats{
+				genTestSummaryContainerWithAccelerator(cName50, seedPod5Container0),
+			},
+		}},
 	}
-
-	// Verify volume information labeled metrics
-	var volumeInformationMetricsKey = core.PodKey(namespace0, pName3)
-	var mappedVolumeStats = map[string]int64{}
-	for _, labeledMetric := range metrics[volumeInformationMetricsKey].LabeledMetrics {
-		assert.True(t, strings.HasPrefix("Volume:C", labeledMetric.Labels["resource_id"]))
-		mappedVolumeStats[labeledMetric.Name] = labeledMetric.IntValue
-	}
-
-	assert.True(t, mappedVolumeStats["filesystem/available"] == int64(availableFsBytes))
-	assert.True(t, mappedVolumeStats["filesystem/usage"] == int64(usedFsBytes))
-	assert.True(t, mappedVolumeStats["filesystem/limit"] == int64(totalFsBytes))
-
-	delete(metrics, volumeInformationMetricsKey)
-
-	for k, v := range metrics {
-		assert.Fail(t, "unexpected metric", "%q: %+v", k, v)
-	}
+	return summary
 }
 
 func genTestSummaryTerminatedContainer(name string, seed int) stats.ContainerStats {
@@ -596,37 +753,23 @@ func checkAcceleratorMetric(t *testing.T, metrics *core.MetricSet, key string, m
 	assert.Fail(t, "missing accelerator metric", "%q:[%q]", key, metric.Name)
 }
 
-func TestScrapeSummaryMetrics(t *testing.T) {
-	summary := stats.Summary{
-		Node: stats.NodeStats{
-			NodeName:  nodeInfo.NodeName,
-			StartTime: metav1.NewTime(startTime),
-		},
+func addFakePodMetric(dataBatch *core.DataBatch, ms *summaryMetricsSource, pod v1.Pod) {
+	podMetrics := &core.MetricSet{
+		Labels:              map[string]string{},
+		MetricValues:        map[string]core.MetricValue{},
+		LabeledMetrics:      []core.LabeledMetric{},
+		CollectionStartTime: pod.Status.StartTime.Time,
+		ScrapeTime:          dataBatch.Timestamp,
 	}
-	data, err := json.Marshal(&summary)
-	require.NoError(t, err)
 
-	server := httptest.NewServer(&util.FakeHandler{
-		StatusCode:   200,
-		ResponseBody: string(data),
-		T:            t,
-	})
-	defer server.Close()
+	podMetrics.Labels[core.LabelMetricSetType.Key] = core.MetricSetTypePod
+	podMetrics.Labels[core.LabelPodId.Key] = string(pod.UID)
+	podMetrics.Labels[core.LabelPodName.Key] = pod.Name
+	podMetrics.Labels[core.LabelNamespaceName.Key] = pod.Namespace
 
-	ms := testingSummaryMetricsSource()
-	split := strings.SplitN(strings.Replace(server.URL, "http://", "", 1), ":", 2)
-	ms.node.IP = net.ParseIP(split[0])
-	ms.node.Port, err = strconv.Atoi(split[1])
-	require.NoError(t, err)
-
-	res, err := ms.ScrapeMetrics()
-	assert.Nil(t, err, "scrape error")
-	assert.Equal(t, res.MetricSets["node:test"].Labels[core.LabelMetricSetType.Key], core.MetricSetTypeNode)
-}
-
-func TestDecodeEphemeralStorageStatsForContainer(t *testing.T) {
-	ms := testingSummaryMetricsSource()
-	rootFs := &stats.FsStats{}
-	logs := &stats.FsStats{}
-	ms.decodeEphemeralStorageStatsForContainer(nil, rootFs, logs)
+	dataBatch.MetricSets[core.PodKey(pod.Namespace, pod.Name)] = podMetrics
+	uptime := uint64(time.Since(startTime).Nanoseconds() / time.Millisecond.Nanoseconds())
+	cpu := uint64(1000)
+	ms.addIntMetric(podMetrics, &core.MetricUptime, &uptime)
+	ms.addIntMetric(podMetrics, &core.MetricCpuUsage, &cpu)
 }

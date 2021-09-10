@@ -73,7 +73,7 @@ collector:
 
   ## If set to true Kubernetes API Server will also be scraped for metrics (default false)
   # apiServerMetrics: false
-  
+
   ## This is the Kubelet summary api endpoint and options.
   ## If using Openshift (see below to enable) use the following for kubernetesSource
   # kubernetesSource: kubernetes.summary_api:${MASTER_URL}?useServiceAccount=true&kubeletHttps=true&kubeletPort=10250
@@ -355,7 +355,7 @@ projectPacific:
 ## summary api endpoint within your Openshift environment.
 openshift:
   enabled: true
-  
+
   ## Wavefront proxy requires a persistent volume claim for its metrics buffers in Openshift
   ## If `proxy.enabled` is true, this must be set to the name of a persistent volume claim
   ## that the proxy can use for its buffers.
@@ -365,4 +365,4 @@ openshift:
 tkgi:
   psp:
     ## If enabled, a role binding to handle pod security policy will be installed within the TKGI cluster.
-    enabled: false  
+    enabled: false

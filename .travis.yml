@@ -1,6 +1,5 @@
 language: go
 
-# safelist
 branches:
   only:
     - master
@@ -8,27 +7,27 @@ branches:
 # workaround for case sensitive build issues with wavefrontHQ
 go_import_path: github.com/wavefronthq/wavefront-collector-for-kubernetes
 
+notifications:
+  slack:
+    if: branch = master
+    rooms:
+    - 'vmware:yjnIAVzbtdV7vm5Rv5E4J9Tw'
+    on_success: change
+    on_failure: always
+
 go:
   - "1.15.x"
   - "1.16.x"
-  - master 
-
-matrix:
-  # It's ok if our code fails on unstable development versions of Go.
+script:
+  - make checkfmt vet tests
+jobs:
   allow_failures:
     - go: "1.16.x"
-    - go: master
-
-  # Don't wait for tip tests to finish. Mark the test run green if the
-  # tests pass on the stable versions of Go.
   fast_finish: true
-
-# Don't email me the results of the test runs.
-notifications:
-  email: false
-
-# script always run to completion (set +e).
-script:
-  - diff -u <(echo -n) <(gofmt -d $(find . -type f -name '*.go' -not -path "./vendor/*"))
-  - go test -v -race ./...                   # Run all the tests with the race detector enabled
-  - go vet -composites=false ./...           # go vet is the official Go static analyzer
+  include:
+    - stage: integration tests
+      go: "1.15.x"
+      script:
+        - ./hack/travis/setup-for-integration-test.sh
+        - GKE_CLUSTER_NAME=k8s-saas-travis-ci make gke-connect-to-cluster
+        - VERSION_POSTFIX="$([[ $TRAVIS_PULL_REQUEST -ne "false" ]]; echo -n "-pr${TRAVIS_PULL_REQUEST}" || echo -n "")" make integration-test

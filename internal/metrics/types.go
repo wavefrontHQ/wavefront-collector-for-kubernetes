@@ -215,7 +215,7 @@ type ProviderFactory interface {
 	Build(cfg interface{}) (MetricsSourceProvider, error)
 }
 
-type ConfigurabeMetricsSourceProvider interface {
+type ConfigurableMetricsSourceProvider interface {
 	Configure(interval, timeout time.Duration)
 }
 

@@ -2,10 +2,54 @@
 #with the RHEL container for Openshift.
     clusterName: openshift-cluster
     enableDiscovery: true
+    enableEvents: true
+    flushInterval: 30s
+
     sinks:
-    - proxyAddress: default-wavefrontproxy.wavefront.svc.cluster.local:2878
+    - proxyAddress: default-wavefront-proxy.wavefront.svc.cluster.local:2878
       tags:
-        version: 1.0.4
+        version: 1.5.0
+
+      filters:
+        # Filter out infrequently used kube-state-metrics.
+        metricDenyList:
+        - 'kube.configmap.annotations.gauge'
+        - 'kube.configmap.metadata.resource.version.gauge'
+        - 'kube.endpoint.*'
+        - 'kube.job.owner.gauge'
+        - 'kube.job.labels.gauge'
+        - 'kube.job.spec.completions.gauge'
+        - 'kube.job.spec.parallelism.gauge'
+        - 'kube.job.status.start.time.gauge'
+        - 'kube.limitrange.*'
+        - 'kube.namespace.annotations.gauge'
+        - 'kube.persistentvolume.*'
+        - 'kube.persistentvolumeclaim.*'
+        - 'kube.pod.container.resource.limits.*'
+        - 'kube.pod.container.*.reason.gauge'
+        - 'kube.pod.owner.gauge'
+        - 'kube.pod.start.time.gauge'
+        - 'kube.pod.status.scheduled.gauge'
+        - 'kube.pod.status.scheduled.time.gauge'
+        - 'kube.replicationcontroller.created.gauge'
+        - 'kube.replicationcontroller.metadata.generation.gauge'
+        - 'kube.replicationcontroller.spec.replicas.gauge'
+        - 'kube.resourcequota.*'
+        - 'kube.secret.*'
+        - 'kube.statefulset.*'
+        - 'kube.storageclass.*'
+        # Filter out generated labels
+        tagExclude:
+        - 'label?controller?revision*'
+        - 'label?pod?template*'
+        - 'annotation_kubectl_kubernetes_io_last_applied_configuration'
+
+    events:
+      filters:
+        tagWhitelist:
+          namespace:
+          - "default"
+
     sources:
       prometheus_sources:
       # collect metrics from the Kubernetes API server
@@ -34,12 +78,19 @@
         useServiceAccount: true
         insecure: true
         prefix: 'kubernetes.'
+        filters:
+          metricDenyList:
+          - 'kubernetes.sys_container.*'
       internal_stats_source:
+        prefix: 'kubernetes.'
+      kubernetes_state_source:
         prefix: 'kubernetes.'
       telegraf_sources:
       - plugins: []
     discovery:
+      enable_runtime_plugins: true
       discovery_interval: 1m
+      disable_annotation_discovery: true
       plugins:
       - name: redis
         type: telegraf/redis
@@ -71,6 +122,8 @@
       - name: kube-dns-discovery
         type: prometheus
         selectors:
+          images:
+          - '*kube-dns/sidecar*'
           labels:
             k8s-app:
             - kube-dns
@@ -78,4 +131,35 @@
         path: /metrics
         scheme: http
         prefix: kube.dns.
+        filters:
+          metricAllowList:
+          - 'kube.dns.http.request.duration.microseconds'
+          - 'kube.dns.http.request.size.bytes'
+          - 'kube.dns.http.requests.total.counter'
+          - 'kube.dns.http.response.size.bytes'
+          - 'kube.dns.kubedns.dnsmasq.*'
+          - 'kube.dns.process.*'
 
+      # auto-discover coredns
+      - name: coredns-discovery
+        type: prometheus
+        selectors:
+          images:
+          - '*coredns:*'
+          labels:
+            k8s-app:
+            - kube-dns
+        port: 9153
+        path: /metrics
+        scheme: http
+        prefix: kube.coredns.
+        filters:
+          metricAllowList:
+          - 'kube.coredns.coredns.cache.*'
+          - 'kube.coredns.coredns.dns.request.count.total.counter'
+          - 'kube.coredns.coredns.dns.request.duration.seconds'
+          - 'kube.coredns.coredns.dns.request.size.bytes'
+          - 'kube.coredns.coredns.dns.request.type.count.total.counter'
+          - 'kube.coredns.coredns.dns.response.rcode.count.total.counter'
+          - 'kube.coredns.coredns.dns.response.size.bytes'
+          - 'kube.coredns.process.*'

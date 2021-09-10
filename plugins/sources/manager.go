@@ -47,6 +47,7 @@ var (
 	providerCount  gometrics.Gauge
 	scrapeErrors   gometrics.Counter
 	scrapeTimeouts gometrics.Counter
+	scrapesMissed  gometrics.Counter
 	scrapeLatency  gometrics.Histogram
 	singleton      *sourceManagerImpl
 	once           sync.Once
@@ -56,6 +57,7 @@ func init() {
 	providerCount = gometrics.GetOrRegisterGauge("source.manager.providers", gometrics.DefaultRegistry)
 	scrapeErrors = gometrics.GetOrRegisterCounter("source.manager.scrape.errors", gometrics.DefaultRegistry)
 	scrapeTimeouts = gometrics.GetOrRegisterCounter("source.manager.scrape.timeouts", gometrics.DefaultRegistry)
+	scrapesMissed = gometrics.GetOrRegisterCounter("source.manager.scrape.missed", gometrics.DefaultRegistry)
 	scrapeLatency = reporting.NewHistogram()
 	_ = gometrics.Register("source.manager.scrape.latency", scrapeLatency)
 }
@@ -76,7 +78,7 @@ type sourceManagerImpl struct {
 
 	metricsSourcesMtx      sync.Mutex
 	metricsSourceProviders map[string]metrics.MetricsSourceProvider
-	metricsSourceTickers   map[string]*time.Ticker
+	metricsSourceTimers    map[string]*IntervalTimer
 	metricsSourceQuits     map[string]chan struct{}
 
 	responseMtx sync.Mutex
@@ -89,7 +91,7 @@ func Manager() SourceManager {
 		singleton = &sourceManagerImpl{
 			responseChannel:           make(chan *metrics.DataBatch),
 			metricsSourceProviders:    make(map[string]metrics.MetricsSourceProvider),
-			metricsSourceTickers:      make(map[string]*time.Ticker),
+			metricsSourceTimers:       make(map[string]*IntervalTimer),
 			metricsSourceQuits:        make(map[string]chan struct{}),
 			defaultCollectionInterval: time.Minute,
 		}
@@ -133,22 +135,23 @@ func (sm *sourceManagerImpl) AddProvider(provider metrics.MetricsSourceProvider)
 	sm.metricsSourcesMtx.Lock()
 	defer sm.metricsSourcesMtx.Unlock()
 
-	var ticker *time.Ticker
+	var interval time.Duration
 	if provider.CollectionInterval() > 0 {
-		ticker = time.NewTicker(provider.CollectionInterval())
+		interval = provider.CollectionInterval()
 	} else {
-		ticker = time.NewTicker(sm.defaultCollectionInterval)
+		interval = sm.defaultCollectionInterval
 
 		log.WithFields(log.Fields{
 			"provider":            name,
 			"collection_interval": sm.defaultCollectionInterval,
 		}).Info("Using default collection interval")
 	}
+	intervalTimer := NewIntervalTimer(interval)
 
 	quit := make(chan struct{})
 
 	sm.metricsSourceProviders[name] = provider
-	sm.metricsSourceTickers[name] = ticker
+	sm.metricsSourceTimers[name] = intervalTimer
 	sm.metricsSourceQuits[name] = quit
 
 	providerCount.Update(int64(len(sm.metricsSourceProviders)))
@@ -156,8 +159,9 @@ func (sm *sourceManagerImpl) AddProvider(provider metrics.MetricsSourceProvider)
 	go func() {
 		for {
 			select {
-			case <-ticker.C:
+			case <-intervalTimer.C:
 				scrape(provider, sm.responseChannel)
+				scrapesMissed.Inc(intervalTimer.Reset())
 			case <-quit:
 				return
 			}
@@ -176,9 +180,9 @@ func (sm *sourceManagerImpl) DeleteProvider(name string) {
 	defer sm.metricsSourcesMtx.Unlock()
 
 	delete(sm.metricsSourceProviders, name)
-	if ticker, ok := sm.metricsSourceTickers[name]; ok {
+	if ticker, ok := sm.metricsSourceTimers[name]; ok {
 		ticker.Stop()
-		delete(sm.metricsSourceTickers, name)
+		delete(sm.metricsSourceTimers, name)
 	}
 	if quit, ok := sm.metricsSourceQuits[name]; ok {
 		close(quit)
@@ -306,7 +310,7 @@ func appendProvider(slice []metrics.MetricsSourceProvider, provider metrics.Metr
 		return slice
 	}
 	slice = append(slice, provider)
-	if i, ok := provider.(metrics.ConfigurabeMetricsSourceProvider); ok {
+	if i, ok := provider.(metrics.ConfigurableMetricsSourceProvider); ok {
 		i.Configure(cfg.Interval, cfg.Timeout)
 	}
 	return slice

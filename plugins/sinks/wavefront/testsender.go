@@ -5,12 +5,13 @@ package wavefront
 
 import (
 	"fmt"
+	"sort"
+	"sync"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/wavefronthq/wavefront-sdk-go/event"
 	"github.com/wavefronthq/wavefront-sdk-go/histogram"
 	"github.com/wavefronthq/wavefront-sdk-go/senders"
-	"sort"
-	"sync"
 )
 
 type TestSender struct {
@@ -27,20 +28,15 @@ func NewTestSender() senders.Sender {
 
 func (t *TestSender) SendMetric(name string, value float64, _ int64, _ string, tags map[string]string) error {
 	line := fmt.Sprintf("Metric: %s %f %s\n", name, value, orderedTagString(tags))
-
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
-
 	t.testReceivedLines += line
-	log.Infoln(line)
-
 	return nil
 }
 
 func (t *TestSender) GetReceivedLines() string {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
-
 	return t.testReceivedLines
 }
 
@@ -51,8 +47,9 @@ func (t *TestSender) SendEvent(name string, startMillis, endMillis int64, source
 		setter(annotations)
 	}
 	line := fmt.Sprintf("%s %s source=\"%s\" %s\n", name, "event", source, orderedTagString(tags))
-	log.Infoln(line)
-
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
+	t.testReceivedLines += line
 	return nil
 }
 

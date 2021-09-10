@@ -5,8 +5,9 @@ package telegraf
 
 import (
 	"fmt"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
 	"strings"
+
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery/utils"

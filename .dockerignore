@@ -1,0 +1,11 @@
+# files that aren't necessary to build a binary
+adr
+deploy
+docs
+hack
+*.md
+*.yml
+
+# files that change frequently and invalidate the cache unnecessarily
+_output
+callgrind.out* # output by remake --profile

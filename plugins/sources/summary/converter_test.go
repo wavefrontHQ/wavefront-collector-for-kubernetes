@@ -4,9 +4,10 @@
 package summary
 
 import (
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
 	"testing"
 	"time"
+
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
 
 	"github.com/stretchr/testify/assert"
 

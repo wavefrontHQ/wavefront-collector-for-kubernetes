@@ -14,6 +14,8 @@ spec:
     metadata:
       labels:
         k8s-app: wavefront-collector
+      annotations:
+        installation-method: manual
     spec:
       tolerations:
       - effect: NoSchedule
@@ -27,7 +29,7 @@ spec:
 
       containers:
       - name: wavefront-collector
-        image: wavefronthq/wavefront-kubernetes-collector:1.3.4
+        image: projects.registry.vmware.com/tanzu_observability/kubernetes-collector:1.6.1
         imagePullPolicy: IfNotPresent
         command:
         - /wavefront-collector
@@ -53,6 +55,11 @@ spec:
             fieldRef:
               apiVersion: v1
               fieldPath: metadata.namespace
+        - name: INSTALLATION_METHOD
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.annotations['installation-method']
       volumes:
       - name: procfs
         hostPath:

@@ -5,6 +5,7 @@ metadata:
     app: wavefront-proxy
     name: wavefront-proxy
   name: wavefront-proxy
+  namespace: wavefront-collector
 spec:
   replicas: 1
   selector:
@@ -15,15 +16,25 @@ spec:
       labels:
         app: wavefront-proxy
     spec:
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              preference:
+                matchExpressions:
+                  - key: kubernetes.io/arch
+                    operator: In
+                    values:
+                      - amd64
       containers:
       - name: wavefront-proxy
-        image: wavefronthq/proxy:9.1
+        image: projects.registry.vmware.com/tanzu_observability/proxy:10.7
         imagePullPolicy: IfNotPresent
         env:
-        - name: WAVEFRONT_URL
-          value: https://YOUR_CLUSTER.wavefront.com/api/
-        - name: WAVEFRONT_TOKEN
-          value: YOUR_API_TOKEN
+          - name: WAVEFRONT_URL
+            value: https://YOUR_CLUSTER.wavefront.com/api/
+          - name: WAVEFRONT_TOKEN
+            value: YOUR_API_TOKEN
         ports:
         - containerPort: 2878
           protocol: TCP
@@ -36,6 +47,7 @@ metadata:
   name: wavefront-proxy
   labels:
     app: wavefront-proxy
+  namespace: wavefront-collector
 spec:
   ports:
   - name: wavefront

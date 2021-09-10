@@ -3,123 +3,80 @@ source ../deploy/k8s-utils.sh
 
 # This script automates the functional testing of the collector
 
-function green {
-    echo -e $'\e[32m'$1$'\e[0m'
-}
-
-function red {
-    echo -e $'\e[31m'$1$'\e[0m'
-}
-
-function print_msg_and_exit() {
-    echo -e "$1"
-    exit 1
-}
-
-# dumps metrics from a pod into a log file for a given prefix
-function dump_metrics() {
-    POD=$1
-    PREFIX=$2
-    OUT=$3
-    NAMESPACE=$4
-
-    echo "capturing ${PREFIX} metrics from ${NS}:${POD} into ${OUT}"
-    kubectl logs ${POD} -n ${NAMESPACE} | grep "Metric: ${PREFIX}" | jq -r '.msg' >> ${OUT}
-}
-
-# validates metrics against a golden copy
-function validate_metrics() {
-    TYPE=$1
-    DUMP=$2
-    BASELINE=$3
-
-    sort ${DUMP} > ${SORTED_FILE}
-
-    echo "validating ${TYPE} metrics"
-
-    diff -q ${SORTED_FILE} ${BASELINE}
-    if [[ $? -eq 0 ]] ; then
-       green "${TYPE} validation succeeded"
-    else
-       red "${TYPE} validation failed"
-    fi
-}
-
-function cleanup() {
-    rm -f ${PROM_DUMP}
-    #TODO: cleanup other files here
-}
-
-DEFAULT_VERSION="1.3.3"
-DEFAULT_IMAGE_NAME="wavefronthq\/wavefront-kubernetes-collector"
+DEFAULT_VERSION=$(semver-cli inc patch "$(cat ../../release/VERSION)")
+DEFAULT_DOCKER_HOST="wavefronthq"
 
 WAVEFRONT_CLUSTER=$1
 API_TOKEN=$2
 VERSION=$3
-IMAGE_NAME=$4
+DOCKER_HOST=$4
 
-
-OUT_DIR=/tmp
-PROM_DUMP=${OUT_DIR}/prom.txt
-SORTED_FILE=${OUT_DIR}/sorted.txt
-METRIC_NAMES_FILE=${OUT_DIR}/metric-names.txt
-UNIQUE_METRIC_NAMES_FILE=${OUT_DIR}/unique-metric-names.txt
+K8S_ENV=$(../deploy/get-k8s-cluster-env.sh | awk '{print tolower($0)}' )
 
 if [[ -z ${VERSION} ]] ; then
     VERSION=${DEFAULT_VERSION}
 fi
 
-if [[ -z ${IMAGE_NAME} ]] ; then
-    IMAGE_NAME=${DEFAULT_IMAGE_NAME}
+if [[ -z ${DOCKER_HOST} ]] ; then
+    DOCKER_HOST=${DEFAULT_DOCKER_HOST}
 fi
 
-echo "deploying collector ${IMAGE_NAME} ${VERSION}"
 
-env FLUSH_ONCE=true \
-./deploy.sh -c ${WAVEFRONT_CLUSTER} -t ${API_TOKEN} -v ${VERSION} -i ${IMAGE_NAME}
-
-NAMESPACE_VERSION=$(echo "${VERSION}" | tr . -)
-NS=${NAMESPACE_VERSION}-wavefront-collector
+NS=wavefront-collector
 
 echo "deploying configuration for additional targets"
 
-kubectl config set-context --current --namespace=${NS}
+kubectl create namespace $NS
+kubectl config set-context --current --namespace="$NS"
 kubectl apply -f ../deploy/mysql-config.yaml
 kubectl apply -f ../deploy/memcached-config.yaml
 kubectl config set-context --current --namespace=default
 
-echo "waiting for logs..."
-sleep 30
+echo "deploying collector $IMAGE_NAME $VERSION"
 
-PODS=`kubectl -n ${NS} get pod -l k8s-app=wavefront-collector | awk '{print $1}' | tail +2`
-if [[ -z ${PODS} ]] ; then
-    print_msg_and_exit "no collector pods found"
-fi
-
-# cleanup existing dumps
-cleanup
-
-# TODO: relies on the prefix from the sample app to isolate prom metrics
-PROM_PREFIX="prom-example."
+env USE_TEST_PROXY=true ./deploy.sh -c "$WAVEFRONT_CLUSTER" -t "$API_TOKEN" -v $VERSION -d $DOCKER_HOST -k $K8S_ENV
 
 wait_for_cluster_ready
 
-rm -f ${METRIC_NAMES_FILE} ${UNIQUE_METRIC_NAMES_FILE}
+kubectl --namespace "$NS" port-forward deploy/wavefront-proxy 8888 &
+trap 'kill $(jobs -p)' EXIT
 
-for pod in ${PODS} ; do
-    dump_metrics ${pod} ${PROM_PREFIX} ${PROM_DUMP} ${NS}
-    #TODO: dump_metrics for other prefixes for diff metric sources
-    kubectl logs ${pod} -n ${NS} | awk '/Metric/ {print $2}' >>  ${METRIC_NAMES_FILE}
+echo "waiting for logs..."
+sleep 45
+
+DIR=$(dirname "$0")
+RES=$(mktemp)
+
+cat files/metrics.jsonl  overlays/test-$K8S_ENV/metrics/additional.jsonl  > files/combined-metrics.jsonl
+
+while true ; do # wait until we get a good connection
+  RES_CODE=$(curl --silent --output "$RES" --write-out "%{http_code}" --data-binary "@$DIR/files/combined-metrics.jsonl" "http://localhost:8888/metrics/diff")
+  [[ $RES_CODE -eq 0 ]] || break
 done
 
-sort -u <${METRIC_NAMES_FILE} >${UNIQUE_METRIC_NAMES_FILE}
-sed -i '' '/~wavefront/d' ${UNIQUE_METRIC_NAMES_FILE}
-sed -i '' '/~pod.network/d' ${UNIQUE_METRIC_NAMES_FILE}
+if [[ $RES_CODE -gt 399 ]] ; then
+  red "INVALID METRICS"
+  jq -r '.[]' "${RES}"
+  exit 1
+fi
 
-rm -f ${METRIC_NAMES_FILE}
+DIFF_COUNT=$(jq "(.Missing | length)" "$RES")
+EXIT_CODE=0
+if [[ $DIFF_COUNT -gt 0 ]] ; then
+  red "MISSING: $(jq "(.Missing | length)" "$RES")"
+  jq -c '.Missing[]' "$RES" | sort > missing.jsonl
+  red "Extra: $(jq "(.Extra | length)" "$RES")"
+  jq -c '.Extra[]' "$RES" | sort > extra.jsonl
+  red "FAILED: METRICS OUTPUT DID NOT MATCH EXACTLY"
+  echo "$RES"
+  if which pbcopy > /dev/null; then
+    echo "$RES" | pbcopy
+  fi
+  EXIT_CODE=1
+else
+  green "SUCCEEDED"
+fi
 
-validate_metrics prometheus ${PROM_DUMP} files/prometheus-baseline.txt
-validate_metrics metric-names ${UNIQUE_METRIC_NAMES_FILE} files/metric-names-baseline.txt
-#TODO: add validation for other metric sources
+env USE_TEST_PROXY=false ./deploy.sh -c "$WAVEFRONT_CLUSTER" -t "$API_TOKEN" -v $VERSION -d $DOCKER_HOST -k $K8S_ENV
 
-FLUSH_ONCE=false ./deploy.sh -c ${WAVEFRONT_CLUSTER} -t ${API_TOKEN} -v ${VERSION} -i ${IMAGE_NAME}
+exit "$EXIT_CODE"

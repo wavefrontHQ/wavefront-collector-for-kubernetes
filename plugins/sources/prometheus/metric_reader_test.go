@@ -5,9 +5,10 @@ package prometheus_test
 
 import (
 	"bytes"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources/prometheus"
-	"testing"
 )
 
 func TestMetricEmptyFile(t *testing.T) {
