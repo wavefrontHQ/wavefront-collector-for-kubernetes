@@ -1,6 +1,7 @@
 package cadvisor
 
 import (
+	log "github.com/sirupsen/logrus"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/httputil"
@@ -29,7 +30,6 @@ func NewProvider(cfg configuration.CadvisorSourceConfig, client *kubernetes.Clie
 
 type cadvisorSourceProvider struct {
 	metrics.DefaultMetricsSourceProvider
-	cfg     configuration.PrometheusSourceConfig
 	sources []metrics.MetricsSource
 }
 
@@ -43,7 +43,9 @@ func (c *cadvisorSourceProvider) Name() string {
 
 func generatePrometheusSource(cfg configuration.CadvisorSourceConfig, promURL string, restConfig *rest.Config) (metrics.MetricsSource, error) {
 	filters := filter.FromConfig(cfg.Filters)
-	return prometheus.NewPrometheusMetricsSource(promURL, cfg.Prefix, cfg.Source, "", cfg.Tags, filters, generateHttpCfg(restConfig))
+	httpCfg := generateHttpCfg(restConfig)
+	log.Printf("httpCfg %#v", httpCfg)
+	return prometheus.NewPrometheusMetricsSource(promURL, cfg.Prefix, cfg.Source, "", cfg.Tags, filters, httpCfg)
 }
 
 func generateHttpCfg(restConfig *rest.Config) httputil.ClientConfig {

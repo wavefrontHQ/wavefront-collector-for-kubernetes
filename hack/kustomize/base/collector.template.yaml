@@ -38,6 +38,13 @@ sources:
   kubernetes_state_source:
     prefix: 'kubernetes.'
 
+  kubernetes_cadvisor_source:
+    prefix: 'kubernetes.cadvisor.'
+    filters:
+      metricAllowList:
+        - "kubernetes.cadvisor.container.cpu.cfs.throttled.seconds.total.counter"
+        - "kubernetes.cadvisor.container.cpu.cfs.throttled.periods.total.counter"
+
   telegraf_sources:
   # enable all telegraf plugins
   - plugins: [ ]
