@@ -18,7 +18,9 @@ CURRENT_VERSION= #set if you want to test something other than version in the 5-
 VERSION=$(cat ./VERSION) #version you want to test
 
 WF_CLUSTER=nimba
-K8S_CLUSTER=$VERSION-release-test
+K8S_CLUSTER=$(whoami)-${VERSION}-release-test
+
+echo "Using cluster name '$K8S_CLUSTER' in '$WF_CLUSTER'"
 
 if [[ -z ${WAVEFRONT_TOKEN} ]] ; then
     #TODO: source these from environment variables if not provided
