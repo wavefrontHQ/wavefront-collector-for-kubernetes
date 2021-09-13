@@ -169,7 +169,7 @@ github.com/jackc/pgx/pgio
 github.com/jackc/pgx/pgproto3
 github.com/jackc/pgx/pgtype
 github.com/jackc/pgx/stdlib
-# github.com/json-iterator/go v1.1.11
+# github.com/json-iterator/go v1.1.12
 ## explicit
 github.com/json-iterator/go
 # github.com/konsorten/go-windows-terminal-sequences v1.0.2
@@ -189,7 +189,7 @@ github.com/mitchellh/go-homedir
 github.com/mitchellh/mapstructure
 # github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd
 github.com/modern-go/concurrent
-# github.com/modern-go/reflect2 v1.0.1
+# github.com/modern-go/reflect2 v1.0.2
 github.com/modern-go/reflect2
 # github.com/naoina/go-stringutil v0.1.0
 github.com/naoina/go-stringutil
@@ -205,7 +205,7 @@ github.com/prometheus/client_model/go
 github.com/prometheus/common/expfmt
 github.com/prometheus/common/internal/bitbucket.org/ww/goautoneg
 github.com/prometheus/common/model
-# github.com/rcrowley/go-metrics v0.0.0-20190826022208-cac0b30c2563
+# github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475
 ## explicit
 github.com/rcrowley/go-metrics
 # github.com/shirou/gopsutil v2.20.6+incompatible
@@ -240,7 +240,7 @@ github.com/tidwall/gjson
 github.com/tidwall/match
 # github.com/tidwall/pretty v1.1.0
 github.com/tidwall/pretty
-# github.com/wavefronthq/go-metrics-wavefront v1.0.2
+# github.com/wavefronthq/go-metrics-wavefront v1.0.3
 ## explicit
 github.com/wavefronthq/go-metrics-wavefront/reporting
 # github.com/wavefronthq/wavefront-sdk-go v0.9.9
