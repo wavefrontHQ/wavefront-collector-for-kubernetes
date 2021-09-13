@@ -16,6 +16,7 @@ rules:
   - nodes
   - nodes/proxy
   - nodes/stats
+  - nodes/metrics
   - pods
   - replicationcontrollers
   - secrets

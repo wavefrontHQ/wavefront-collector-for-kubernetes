@@ -146,7 +146,7 @@ func (src *prometheusMetricsSource) ScrapeMetrics() (*metrics.DataBatch, error) 
 	if resp.StatusCode != http.StatusOK {
 		collectErrors.Inc(1)
 		src.eps.Inc(1)
-		return nil, fmt.Errorf("error retrieving prometheus metrics from %s", src.metricsURL)
+		return nil, fmt.Errorf("error retrieving prometheus metrics from %s (http status %s)", src.metricsURL, resp.Status)
 	}
 
 	points, err := src.parseMetrics(resp.Body)

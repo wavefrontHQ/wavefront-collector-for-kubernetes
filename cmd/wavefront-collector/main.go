@@ -14,8 +14,6 @@ import (
 	"sync"
 	"time"
 
-	kube_rest "k8s.io/client-go/rest"
-
 	gm "github.com/rcrowley/go-metrics"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
@@ -113,7 +111,7 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 
 	clusterName := cfg.ClusterName
 
-	kubeClient, restConfig := createKubeClientOrDie(*cfg.Sources.SummaryConfig)
+	kubeClient := createKubeClientOrDie(*cfg.Sources.SummaryConfig)
 	if cfg.Sources.StateConfig != nil {
 		cfg.Sources.StateConfig.KubeClient = kubeClient
 	}
@@ -121,7 +119,7 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 	// create sources manager
 	sourceManager := sources.Manager()
 	sourceManager.SetDefaultCollectionInterval(cfg.DefaultCollectionInterval)
-	err := sourceManager.BuildProviders(*cfg.Sources, kubeClient, restConfig)
+	err := sourceManager.BuildProviders(*cfg.Sources, kubeClient)
 	if err != nil {
 		log.Fatalf("Failed to create source manager: %v", err)
 	}
@@ -301,12 +299,12 @@ func getPodListerOrDie(kubeClient *kube_client.Clientset) v1listers.PodLister {
 	return podLister
 }
 
-func createKubeClientOrDie(cfg configuration.SummarySourceConfig) (*kube_client.Clientset, *kube_rest.Config) {
+func createKubeClientOrDie(cfg configuration.SummarySourceConfig) *kube_client.Clientset {
 	kubeConfig, err := kube_config.GetKubeClientConfig(cfg)
 	if err != nil {
 		log.Fatalf("Failed to get client config: %v", err)
 	}
-	return kube_client.NewForConfigOrDie(kubeConfig), kubeConfig
+	return kube_client.NewForConfigOrDie(kubeConfig)
 }
 
 func createDataProcessorsOrDie(kubeClient *kube_client.Clientset, cluster string, podLister v1listers.PodLister, cfg *configuration.Config) []metrics.DataProcessor {

@@ -1,10 +1,10 @@
 package cadvisor
 
 import (
-	"fmt"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
-	"log"
+	"net"
+	"net/url"
 
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -13,16 +13,17 @@ type NodeLister interface {
 	List(opts metav1.ListOptions) (*v1.NodeList, error)
 }
 
+const cAdvisorEndpoint = "/metrics/cadvisor"
+
 // GenerateURLs generates cAdvisor prometheus urls to be queried by THIS collector instance
-func GenerateURLs(lister NodeLister, myNode string, daemonMode bool, baseURL string) ([]string, error) {
+func GenerateURLs(lister NodeLister, myNode string, daemonMode bool, kubeletURL func(ip net.IP, path string) *url.URL) ([]*url.URL, error) {
 	nodeList, err := lister.List(metav1.ListOptions{})
-	var urls []string
+	var urls []*url.URL
 	if daemonMode {
 		for _, node := range nodeList.Items {
 			if node.Name == myNode {
-				hostname, ip, _ := util.GetNodeHostnameAndIP(&node)
-				log.Printf("mynode hostname=%s ip=%s", hostname, ip)
-				urls = append(urls, generateCadvisorURL(node.Name, fmt.Sprintf("https://%s:10250", ip)))
+				_, ip, _ := util.GetNodeHostnameAndIP(&node)
+				urls = append(urls, kubeletURL(ip, cAdvisorEndpoint))
 				break
 			}
 		}
@@ -31,14 +32,9 @@ func GenerateURLs(lister NodeLister, myNode string, daemonMode bool, baseURL str
 			return nil, err
 		}
 		for _, node := range nodeList.Items {
-			urls = append(urls, generateCadvisorURL(node.Name, baseURL))
+			_, ip, _ := util.GetNodeHostnameAndIP(&node)
+			urls = append(urls, kubeletURL(ip, cAdvisorEndpoint))
 		}
 	}
 	return urls, nil
-}
-
-const cadvisorURLPattern = "%s/metrics/cadvisor"
-
-func generateCadvisorURL(nodeName string, baseURL string) string {
-	return fmt.Sprintf(cadvisorURLPattern, baseURL)
 }

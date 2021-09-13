@@ -22,6 +22,7 @@ package summary
 
 import (
 	"fmt"
+	"net"
 	"time"
 
 	gm "github.com/rcrowley/go-metrics"
@@ -53,11 +54,11 @@ func init() {
 }
 
 type NodeInfo struct {
-	kubelet.Host
 	NodeName       string
 	HostName       string
 	HostID         string
 	KubeletVersion string
+	IP             net.IP
 }
 
 // Kubelet-provided metrics for pod and system container.
@@ -80,7 +81,7 @@ func (src *summaryMetricsSource) Name() string {
 func (src *summaryMetricsSource) Cleanup() {}
 
 func (src *summaryMetricsSource) String() string {
-	return fmt.Sprintf("kubelet_summary:%s:%d", src.node.IP, src.node.Port)
+	return fmt.Sprintf("kubelet_summary:%s:%d", src.node.IP, src.kubeletClient.GetPort())
 }
 
 func (src *summaryMetricsSource) ScrapeMetrics() (*DataBatch, error) {
@@ -90,7 +91,7 @@ func (src *summaryMetricsSource) ScrapeMetrics() (*DataBatch, error) {
 	}
 
 	summary, err := func() (*stats.Summary, error) {
-		return src.kubeletClient.GetSummary(src.node.Host)
+		return src.kubeletClient.GetSummary(src.node.IP)
 	}()
 
 	if err != nil {
@@ -101,7 +102,7 @@ func (src *summaryMetricsSource) ScrapeMetrics() (*DataBatch, error) {
 	src.addSummaryMetricSets(result, summary)
 
 	podList, err := func() (*kube_api.PodList, error) {
-		return src.kubeletClient.GetPods(src.node.Host)
+		return src.kubeletClient.GetPods(src.node.IP)
 	}()
 
 	if err != nil {
@@ -469,7 +470,7 @@ type summaryProvider struct {
 }
 
 func (sp *summaryProvider) GetMetricsSources() []MetricsSource {
-	sources := []MetricsSource{}
+	var sources []MetricsSource
 	nodes, err := sp.nodeLister.List(labels.Everything())
 	if err != nil {
 		log.Errorf("error while listing nodes: %v", err)
@@ -496,22 +497,15 @@ func (sp *summaryProvider) getNodeInfo(node *kube_api.Node) (NodeInfo, error) {
 	if err != nil {
 		return NodeInfo{}, err
 	}
-
-	if hostname == "" {
-		hostname = node.Name
-	}
 	hostID := ""
 	if sp.hostIDAnnotation != "" {
 		hostID = node.Annotations[sp.hostIDAnnotation]
 	}
 	info := NodeInfo{
-		NodeName: node.Name,
-		HostName: hostname,
-		HostID:   hostID,
-		Host: kubelet.Host{
-			IP:   ip,
-			Port: sp.kubeletClient.GetPort(),
-		},
+		NodeName:       node.Name,
+		HostName:       hostname,
+		HostID:         hostID,
+		IP:             ip,
 		KubeletVersion: node.Status.NodeInfo.KubeletVersion,
 	}
 
