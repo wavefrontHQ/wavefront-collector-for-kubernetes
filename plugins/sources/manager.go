@@ -285,8 +285,8 @@ func buildProviders(cfg configuration.SourceConfig, client *kubernetes.Clientset
 		if err != nil {
 			log.Errorf("Failed to create source: %v", err)
 		} else {
-			provider, err := cadvisor.NewProvider(*cfg.CadvisorConfig, client, clientConfig, kubeletConfig)
-			result = appendProvider(result, provider, err, cfg.CadvisorConfig.Collection)
+			provider := cadvisor.NewProvider(*cfg.CadvisorConfig, client, clientConfig, kubeletConfig)
+			result = appendProvider(result, provider, nil, cfg.CadvisorConfig.Collection)
 		}
 	}
 	if cfg.SystemdConfig != nil {

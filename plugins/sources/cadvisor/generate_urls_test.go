@@ -2,6 +2,9 @@ package cadvisor
 
 import (
 	"errors"
+	"github.com/stretchr/testify/assert"
+	"net"
+	"net/url"
 	"testing"
 
 	v1 "k8s.io/api/core/v1"
@@ -21,52 +24,57 @@ func (s ErrorNodeLister) List(_ metav1.ListOptions) (*v1.NodeList, error) {
 }
 
 func TestGenerateURLs(t *testing.T) {
-	t.Fatal("TODO: Re-implement tests")
-	// nodeLister := &StubNodeLister{Items: []v1.Node{
-	// 	{ObjectMeta: metav1.ObjectMeta{Name: "node-1"}},
-	// 	{ObjectMeta: metav1.ObjectMeta{Name: "node-2"}},
-	// }}
-	// myNode := "node-1"
-	//
-	// t.Run("when DaemonMode is true", func(t *testing.T) {
-	// 	t.Run("successfully generates one URL", func(t *testing.T) {
-	// 		configs, err := GenerateURLs(nodeLister, myNode, true, "")
-	//
-	// 		assert.Nil(t, err)
-	// 		assert.Equal(t, 1, len(configs))
-	// 	})
-	//
-	// 	t.Run("the url contains myNode", func(t *testing.T) {
-	// 		urls, _ := GenerateURLs(nodeLister, myNode, true, "myHost")
-	//
-	// 		assert.Contains(t, urls[0], myNode)
-	// 		assert.Contains(t, urls[0], "myHost")
-	// 	})
-	// })
-	//
-	// t.Run("when DaemonMode is false", func(t *testing.T) {
-	// 	t.Run("successfully produces URLs foreach node", func(t *testing.T) {
-	// 		// This is the case when the leader wants to query all nodes instead of having each node's collector do it
-	// 		configs, err := GenerateURLs(nodeLister, myNode, false, "")
-	//
-	// 		assert.Nil(t, err)
-	// 		assert.Equal(t, len(nodeLister.Items), len(configs))
-	// 	})
-	//
-	// 	t.Run("interpolates each node name into a URL", func(t *testing.T) {
-	// 		urls, _ := GenerateURLs(nodeLister, myNode, false, "myHost")
-	//
-	// 		for i, node := range nodeLister.Items {
-	// 			assert.Contains(t, urls[i], node.Name)
-	// 			assert.Contains(t, urls[i], "myHost")
-	// 		}
-	// 	})
-	//
-	// 	t.Run("returns an error when it cannot list nodes", func(t *testing.T) {
-	// 		expectedErrorStr := "something went wrong"
-	// 		_, err := GenerateURLs(ErrorNodeLister(expectedErrorStr), myNode, false, "")
-	//
-	// 		assert.Equal(t, expectedErrorStr, err.Error())
-	// 	})
-	// })
+	nodeLister := &StubNodeLister{Items: []v1.Node{
+		{
+			ObjectMeta: metav1.ObjectMeta{Name: "node-1"},
+			Status: v1.NodeStatus{
+				Addresses: []v1.NodeAddress{{Type: v1.NodeInternalIP, Address: "127.0.0.1"}},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{Name: "node-2"},
+			Status: v1.NodeStatus{
+				Addresses: []v1.NodeAddress{{Type: v1.NodeInternalIP, Address: "127.0.0.1"}},
+			},
+		},
+	}}
+	myNode := "node-1"
+	kubeletURL := func(ip net.IP, path string) *url.URL {
+		return &url.URL{
+			Scheme: "",
+			Host:   "",
+		}
+	}
+
+	t.Run("returns an error when it cannot list nodes", func(t *testing.T) {
+		expectedErrorStr := "something went wrong"
+		_, err := GenerateURLs(ErrorNodeLister(expectedErrorStr), myNode, false, kubeletURL)
+
+		assert.Equal(t, expectedErrorStr, err.Error())
+	})
+
+	t.Run("returns an error when a node does not have an IP", func(t *testing.T) {
+		_, err := GenerateURLs(
+			&StubNodeLister{Items: []v1.Node{{ObjectMeta: metav1.ObjectMeta{Name: "node-1"}}}},
+			myNode,
+			false,
+			kubeletURL,
+		)
+
+		assert.Contains(t, err.Error(), "has no valid hostname and/or IP address")
+	})
+
+	t.Run("successfully generates one URL when DaemonMode is true", func(t *testing.T) {
+		urls, err := GenerateURLs(nodeLister, myNode, true, kubeletURL)
+
+		assert.Nil(t, err)
+		assert.Equal(t, 1, len(urls))
+	})
+
+	t.Run("successfully generates URLs for each node when DaemonMode is false", func(t *testing.T) {
+		urls, err := GenerateURLs(nodeLister, myNode, false, kubeletURL)
+
+		assert.Nil(t, err)
+		assert.Equal(t, len(nodeLister.Items), len(urls))
+	})
 }

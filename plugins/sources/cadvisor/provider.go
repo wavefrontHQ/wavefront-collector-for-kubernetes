@@ -1,6 +1,7 @@
 package cadvisor
 
 import (
+	log "github.com/sirupsen/logrus"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/httputil"
@@ -12,29 +13,44 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-func NewProvider(cfg configuration.CadvisorSourceConfig, client *kubernetes.Clientset, restConfig *rest.Config, kubeletConfig *kubelet.KubeletClientConfig) (metrics.MetricsSourceProvider, error) {
-	promURLs, err := GenerateURLs(client.CoreV1().Nodes(), util.GetNodeName(), util.IsDaemonMode(), kubeletConfig.BaseURL)
-	if err != nil {
-		return nil, err
-	}
-	provider := &cadvisorSourceProvider{}
-	for _, promURL := range promURLs {
-		promSource, err := generatePrometheusSource(cfg, promURL.String(), restConfig)
-		if err != nil {
-			return nil, err
-		}
-		provider.sources = append(provider.sources, promSource)
-	}
-	return provider, nil
-}
-
 type cadvisorSourceProvider struct {
 	metrics.DefaultMetricsSourceProvider
-	sources []metrics.MetricsSource
+	config        configuration.CadvisorSourceConfig
+	k8sClient     *kubernetes.Clientset
+	k8sConfig     *rest.Config
+	kubeletConfig *kubelet.KubeletClientConfig
+}
+
+func NewProvider(
+	cfg configuration.CadvisorSourceConfig,
+	client *kubernetes.Clientset,
+	restConfig *rest.Config,
+	kubeletConfig *kubelet.KubeletClientConfig,
+) metrics.MetricsSourceProvider {
+	return &cadvisorSourceProvider{
+		config:        cfg,
+		k8sClient:     client,
+		k8sConfig:     restConfig,
+		kubeletConfig: kubeletConfig,
+	}
 }
 
 func (c *cadvisorSourceProvider) GetMetricsSources() []metrics.MetricsSource {
-	return c.sources
+	promURLs, err := GenerateURLs(c.k8sClient.CoreV1().Nodes(), util.GetNodeName(), util.IsDaemonMode(), c.kubeletConfig.BaseURL)
+	if err != nil {
+		log.Errorf("error getting sources for cAdvisor: %s", err.Error())
+		return nil
+	}
+	var sources []metrics.MetricsSource
+	for _, promURL := range promURLs {
+		promSource, err := generatePrometheusSource(c.config, promURL.String(), c.k8sConfig)
+		if err != nil {
+			log.Errorf("error generating sources for cAdvisor: %s", err.Error())
+			return nil
+		}
+		sources = append(sources, promSource)
+	}
+	return sources
 }
 
 func (c *cadvisorSourceProvider) Name() string {
