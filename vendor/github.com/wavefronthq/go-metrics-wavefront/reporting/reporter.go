@@ -129,11 +129,17 @@ func RuntimeMetric(enable bool) Option {
 	}
 }
 
-// NewReporter create a WavefrontMetricsReporter
-func NewReporter(sender wf.Sender, application application.Tags, setters ...Option) WavefrontMetricsReporter {
+// Application tag for the metrics
+func ApplicationTag(application application.Tags) Option {
+	return func(args *reporter) {
+		args.application = application
+	}
+}
+
+// NewMetricsReporter create a WavefrontMetricsReporter
+func NewMetricsReporter(sender wf.Sender, setters ...Option) WavefrontMetricsReporter {
 	r := &reporter{
 		sender:        sender,
-		application:   application,
 		source:        hostname(),
 		interval:      time.Second * 5,
 		percentiles:   []float64{0.5, 0.75, 0.95, 0.99, 0.999},
@@ -193,6 +199,11 @@ func NewReporter(sender wf.Sender, application application.Tags, setters ...Opti
 	return r
 }
 
+// Deprecated: use NewMetricsReporter
+func NewReporter(sender wf.Sender, application application.Tags, setters ...Option) WavefrontMetricsReporter {
+	return NewMetricsReporter(sender, append(setters, ApplicationTag(application))...)
+}
+
 func (r *reporter) ErrorsCount() int64 {
 	return atomic.LoadInt64(&r.errorsCount)
 }
@@ -211,7 +222,7 @@ func (r *reporter) Report() {
 		name, tags := DecodeKey(key)
 
 		for t, v := range r.application.Map() {
-			if _, ok := tags[t]; !ok {
+			if _, ok := tags[t]; !ok && len(v) > 0 {
 				tags[t] = v
 			}
 		}
