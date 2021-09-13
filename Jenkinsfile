@@ -10,7 +10,7 @@ pipeline {
 
     stages {
         if(env.BRANCH_NAME == 'add-jenkinsfile'){
-            stage("Doing something") {
+            stage("Doing something and wanting to see Jenkins") {
                 steps {
                     sh 'make container'
                 }
