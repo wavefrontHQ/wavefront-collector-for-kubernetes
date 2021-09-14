@@ -15,7 +15,7 @@ import (
 
 type cadvisorSourceProvider struct {
 	metrics.DefaultMetricsSourceProvider
-	config     configuration.CadvisorSourceConfig
+	config        configuration.CadvisorSourceConfig
 	kubeClient    *kubernetes.Clientset
 	kubeConfig    *rest.Config
 	kubeletConfig *kubelet.KubeletClientConfig
