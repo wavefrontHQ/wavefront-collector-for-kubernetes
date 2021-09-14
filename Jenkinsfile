@@ -7,11 +7,10 @@ pipeline {
 
     stages {
       stage("Release") {
-          when { branch 'move-to-butler' }
-          steps {
-            make container
-            }
-          }
+        when { branch 'move-to-butler' }
+        steps {
+          make container
+        }
       }
     }
 }
