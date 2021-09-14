@@ -12,7 +12,6 @@ pipeline {
 
     stages {
       stage("Release") {
-        when { branch 'origin/move-to-butler' }
         steps {
           sh 'HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') echo \'${HARBOR_CREDS_PSW}\' | make harbor-docker-login'
 //           sh 'VERSION=1.6.2 make container'
