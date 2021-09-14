@@ -164,6 +164,20 @@ prefix: <string>
 prefix: <string>
 ```
 
+### prometheus_source
+
+```yaml
+# The URL for a prometheus metrics endpoint. Kubernetes service URLs work across namespaces.
+url: <string>
+
+# Optional HTTP configuration
+httpConfig:
+  [ <ClientConfig> ]
+
+# The source (tag) to set for the metrics collected by this source. Defaults to node name.
+source: <string>
+```
+
 ### telegraf_source
 
 ```yaml
