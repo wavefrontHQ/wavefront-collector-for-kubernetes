@@ -15,35 +15,41 @@ import (
 
 type cadvisorSourceProvider struct {
 	metrics.DefaultMetricsSourceProvider
-	config        configuration.CadvisorSourceConfig
-	k8sClient     *kubernetes.Clientset
-	k8sConfig     *rest.Config
+	config     configuration.CadvisorSourceConfig
+	kubeClient    *kubernetes.Clientset
+	kubeConfig    *rest.Config
 	kubeletConfig *kubelet.KubeletClientConfig
 }
 
 func NewProvider(
-	cfg configuration.CadvisorSourceConfig,
-	client *kubernetes.Clientset,
-	restConfig *rest.Config,
-	kubeletConfig *kubelet.KubeletClientConfig,
-) metrics.MetricsSourceProvider {
-	return &cadvisorSourceProvider{
-		config:        cfg,
-		k8sClient:     client,
-		k8sConfig:     restConfig,
-		kubeletConfig: kubeletConfig,
+	config configuration.CadvisorSourceConfig,
+	summaryConfig configuration.SummarySourceConfig,
+) (metrics.MetricsSourceProvider, error) {
+	kubeConfig, kubeletConfig, err := kubelet.GetKubeConfigs(summaryConfig)
+	if err != nil {
+		return nil, err
 	}
+	kubeClient, err := kubernetes.NewForConfig(kubeConfig)
+	if err != nil {
+		return nil, err
+	}
+	return &cadvisorSourceProvider{
+		config:        config,
+		kubeClient:    kubeClient,
+		kubeConfig:    kubeConfig,
+		kubeletConfig: kubeletConfig,
+	}, nil
 }
 
 func (c *cadvisorSourceProvider) GetMetricsSources() []metrics.MetricsSource {
-	promURLs, err := GenerateURLs(c.k8sClient.CoreV1().Nodes(), util.GetNodeName(), util.IsDaemonMode(), c.kubeletConfig.BaseURL)
+	promURLs, err := GenerateURLs(c.kubeClient.CoreV1().Nodes(), util.GetNodeName(), util.IsDaemonMode(), c.kubeletConfig.BaseURL)
 	if err != nil {
 		log.Errorf("error getting sources for cAdvisor: %s", err.Error())
 		return nil
 	}
 	var sources []metrics.MetricsSource
 	for _, promURL := range promURLs {
-		promSource, err := generatePrometheusSource(c.config, promURL.String(), c.k8sConfig)
+		promSource, err := generatePrometheusSource(c.config, promURL.String(), c.kubeConfig)
 		if err != nil {
 			log.Errorf("error generating sources for cAdvisor: %s", err.Error())
 			return nil

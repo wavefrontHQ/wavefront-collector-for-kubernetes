@@ -24,12 +24,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources/summary/kubelet"
-
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources/cadvisor"
-	"k8s.io/client-go/kubernetes"
-
 	log "github.com/sirupsen/logrus"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources/cadvisor"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
@@ -74,7 +70,7 @@ type SourceManager interface {
 	StopProviders()
 	GetPendingMetrics() []*metrics.DataBatch
 	SetDefaultCollectionInterval(time.Duration)
-	BuildProviders(config configuration.SourceConfig, client *kubernetes.Clientset) error
+	BuildProviders(config configuration.SourceConfig) error
 }
 
 type sourceManagerImpl struct {
@@ -107,8 +103,8 @@ func Manager() SourceManager {
 }
 
 // BuildProviders creates a new source manager with the configured MetricsSourceProviders
-func (sm *sourceManagerImpl) BuildProviders(cfg configuration.SourceConfig, client *kubernetes.Clientset) error {
-	sources := buildProviders(cfg, client)
+func (sm *sourceManagerImpl) BuildProviders(cfg configuration.SourceConfig) error {
+	sources := buildProviders(cfg)
 	for _, runtime := range sources {
 		sm.AddProvider(runtime)
 	}
@@ -273,7 +269,7 @@ func (sm *sourceManagerImpl) GetPendingMetrics() []*metrics.DataBatch {
 	return response
 }
 
-func buildProviders(cfg configuration.SourceConfig, client *kubernetes.Clientset) []metrics.MetricsSourceProvider {
+func buildProviders(cfg configuration.SourceConfig) []metrics.MetricsSourceProvider {
 	result := make([]metrics.MetricsSourceProvider, 0)
 
 	if cfg.SummaryConfig != nil {
@@ -281,13 +277,8 @@ func buildProviders(cfg configuration.SourceConfig, client *kubernetes.Clientset
 		result = appendProvider(result, provider, err, cfg.SummaryConfig.Collection)
 	}
 	if cfg.CadvisorConfig != nil {
-		clientConfig, kubeletConfig, err := kubelet.GetKubeConfigs(*cfg.SummaryConfig)
-		if err != nil {
-			log.Errorf("Failed to create source: %v", err)
-		} else {
-			provider := cadvisor.NewProvider(*cfg.CadvisorConfig, client, clientConfig, kubeletConfig)
-			result = appendProvider(result, provider, nil, cfg.CadvisorConfig.Collection)
-		}
+		provider, err := cadvisor.NewProvider(*cfg.CadvisorConfig, *cfg.SummaryConfig)
+		result = appendProvider(result, provider, err, cfg.CadvisorConfig.Collection)
 	}
 	if cfg.SystemdConfig != nil {
 		provider, err := systemd.NewProvider(*cfg.SystemdConfig)
