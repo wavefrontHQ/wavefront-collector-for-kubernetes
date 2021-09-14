@@ -35,15 +35,16 @@ func TestGenerateURLs(t *testing.T) {
 		{
 			ObjectMeta: metav1.ObjectMeta{Name: "node-2"},
 			Status: v1.NodeStatus{
-				Addresses: []v1.NodeAddress{{Type: v1.NodeInternalIP, Address: "127.0.0.1"}},
+				Addresses: []v1.NodeAddress{{Type: v1.NodeInternalIP, Address: "127.0.0.2"}},
 			},
 		},
 	}}
 	myNode := "node-1"
 	kubeletURL := func(ip net.IP, path string) *url.URL {
 		return &url.URL{
-			Scheme: "",
-			Host:   "",
+			Scheme: "https",
+			Host:   ip.String() + ":10250",
+			Path:   path,
 		}
 	}
 
@@ -70,6 +71,12 @@ func TestGenerateURLs(t *testing.T) {
 
 		assert.Nil(t, err)
 		assert.Equal(t, 1, len(urls))
+	})
+
+	t.Run("generates urls using the kubeleteURL func", func(t *testing.T) {
+		urls, _ := GenerateURLs(nodeLister, myNode, true, kubeletURL)
+
+		assert.Equal(t, urls[0].String(), "https://127.0.0.1:10250/metrics/cadvisor")
 	})
 
 	t.Run("successfully generates URLs for each node when DaemonMode is false", func(t *testing.T) {
