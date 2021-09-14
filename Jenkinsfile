@@ -7,7 +7,7 @@ pipeline {
 
     stages {
       stage("Release") {
-        when { branch 'move-to-butler' }
+        when { branch 'origin/move-to-butler' }
         steps {
           sh 'VERSION=1.6.2 make container'
           echo "${params.RELEASE_TYPE}"
