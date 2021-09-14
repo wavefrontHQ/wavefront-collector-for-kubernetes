@@ -1,8 +1,6 @@
 package cadvisor
 
 import (
-	"errors"
-	"fmt"
 	log "github.com/sirupsen/logrus"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
@@ -78,15 +76,7 @@ func generatePrometheusSource(cfg configuration.CadvisorSourceConfig, promURL st
 	if err != nil {
 		return nil, err
 	}
-	return metrics.NewErrorTransformSource(prom, TransformMetricsPermissionError), nil
-}
-
-func TransformMetricsPermissionError(err error) error {
-	var httpErr *prometheus.HTTPError
-	if errors.As(err, &httpErr) && (httpErr.StatusCode == 401 || httpErr.StatusCode == 403) {
-		return fmt.Errorf("missing nodes/metrics permission in the collector's cluster role: %s", err.Error())
-	}
-	return err
+	return metrics.NewErrorTransformSource(prom, TransformPermissionError), nil
 }
 
 func generateHTTPCfg(restConfig *rest.Config) httputil.ClientConfig {
