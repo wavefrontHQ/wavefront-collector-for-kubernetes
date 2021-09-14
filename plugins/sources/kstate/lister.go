@@ -53,7 +53,7 @@ func newLister(kubeClient kubernetes.Interface) *lister {
 			kubeClient: kubeClient,
 			informers:  buildInformers(kubeClient),
 		}
-		if util.GetDaemonMode() == "" {
+		if !util.IsDaemonMode() {
 			singleton.Resume()
 		} else {
 			// start the informers only for the leader
