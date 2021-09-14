@@ -76,7 +76,7 @@ func generatePrometheusSource(cfg configuration.CadvisorSourceConfig, promURL st
 	if err != nil {
 		return nil, err
 	}
-	return metrics.NewErrorTransformSource(prom, TransformPermissionError), nil
+	return metrics.NewErrorDecorator(prom, TransformPermissionError), nil
 }
 
 func generateHTTPCfg(restConfig *rest.Config) httputil.ClientConfig {

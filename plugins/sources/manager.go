@@ -19,14 +19,13 @@ package sources
 
 import (
 	"fmt"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources/cadvisor"
 	"math/rand"
 	"sort"
 	"sync"
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources/cadvisor"
-
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources/kstate"
@@ -275,10 +274,11 @@ func buildProviders(cfg configuration.SourceConfig) []metrics.MetricsSourceProvi
 	if cfg.SummaryConfig != nil {
 		provider, err := summary.NewSummaryProvider(*cfg.SummaryConfig)
 		result = appendProvider(result, provider, err, cfg.SummaryConfig.Collection)
-	}
-	if cfg.CadvisorConfig != nil {
-		provider, err := cadvisor.NewProvider(*cfg.CadvisorConfig, *cfg.SummaryConfig)
-		result = appendProvider(result, provider, err, cfg.CadvisorConfig.Collection)
+
+		if cfg.CadvisorConfig != nil {
+			provider, err = cadvisor.NewProvider(*cfg.CadvisorConfig, *cfg.SummaryConfig)
+			result = appendProvider(result, provider, err, cfg.CadvisorConfig.Collection)
+		}
 	}
 	if cfg.SystemdConfig != nil {
 		provider, err := systemd.NewProvider(*cfg.SystemdConfig)
