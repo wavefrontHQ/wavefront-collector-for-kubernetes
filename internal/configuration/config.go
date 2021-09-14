@@ -191,9 +191,9 @@ type PrometheusSourceConfig struct {
 	HTTPClientConfig httputil.ClientConfig `yaml:"httpConfig"`
 
 	// internal use only
-	PerNode    bool   `yaml:"-"`
-	Discovered string `yaml:"-"`
-	Name       string `yaml:"-"`
+	Discovered        string `yaml:"-"`
+	Name              string `yaml:"-"`
+	UseLeaderElection bool   `yaml:"-"`
 }
 
 // Configuration options for a Telegraf source
