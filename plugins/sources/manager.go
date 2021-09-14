@@ -19,11 +19,12 @@ package sources
 
 import (
 	"fmt"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources/cadvisor"
 	"math/rand"
 	"sort"
 	"sync"
 	"time"
+
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources/cadvisor"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
