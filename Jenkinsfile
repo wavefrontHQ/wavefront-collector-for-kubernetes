@@ -5,17 +5,16 @@ pipeline {
         go 'Go 1.15'
     }
 
-    environment {
-    }
-
     stages {
-        if(env.BRANCH_NAME == 'add-jenkinsfile'){
-            stage("Doing something and wanting to see Jenkins") {
-                steps {
-                    sh 'make container'
-                }
+      stage("Doing something and wanting to see Jenkins") {
+          steps {
+            script {
+              if(env.BRANCH_NAME == 'add-jenkinsfile'){
+                  make container
+              }
             }
-        }
+          }
+      }
     }
 }
 
