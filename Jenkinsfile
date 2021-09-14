@@ -9,9 +9,10 @@ pipeline {
       stage("Release") {
           steps {
             script {
-              if(env.BRANCH_NAME == 'move-to-butler'){
-                  make container
-              }
+                echo "you did it"
+//               if(env.BRANCH_NAME == 'move-to-butler'){
+//                   make container
+//               }
             }
           }
       }
