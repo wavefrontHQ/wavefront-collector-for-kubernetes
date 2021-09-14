@@ -6,10 +6,10 @@ pipeline {
     }
 
     stages {
-      stage("Doing something and wanting to see Jenkins") {
+      stage("Release") {
           steps {
             script {
-              if(env.BRANCH_NAME == 'add-jenkinsfile'){
+              if(env.BRANCH_NAME == 'move-to-butler'){
                   make container
               }
             }
