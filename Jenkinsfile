@@ -9,7 +9,7 @@ pipeline {
       stage("Release") {
         when { branch 'move-to-butler' }
         steps {
-          make container
+          sh 'make container'
         }
       }
     }
