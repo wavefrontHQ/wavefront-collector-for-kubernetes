@@ -36,11 +36,11 @@ import (
 func TestGetPods(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
-		host, close := setupTestServer(t, http.StatusOK)
+		ip, port, close := setupTestServer(t, http.StatusOK)
 		defer close()
 
-		kubeletClient := KubeletClient{}
-		pods, err := kubeletClient.GetPods(host)
+		kubeletClient := KubeletClient{config: &KubeletClientConfig{Port: port}}
+		pods, err := kubeletClient.GetPods(ip)
 
 		require.NoError(t, err)
 		require.Len(t, pods.Items, 7)
@@ -51,22 +51,20 @@ func TestGetPods(t *testing.T) {
 
 	t.Run("forbidden", func(t *testing.T) {
 		kubernetes.UseTerminateTestMode()
-
-		host, close := setupTestServer(t, http.StatusForbidden)
+		ip, port, close := setupTestServer(t, http.StatusForbidden)
 		defer close()
 
-		kubeletClient := KubeletClient{}
-		kubeletClient.GetPods(host)
+		kubeletClient := KubeletClient{config: &KubeletClientConfig{Port: port}}
+		kubeletClient.GetPods(ip)
 
 		assert.Equal(t, "Missing ClusterRole resource nodes/stats or nodes/proxy, see https://docs.wavefront.com/kubernetes.html#kubernetes-manual-install", kubernetes.TerminationMessage)
 	})
 
 }
 
-func setupTestServer(t *testing.T, status int) (Host, func()) {
+func setupTestServer(t *testing.T, status int) (net.IP, uint, func()) {
 	content, err := ioutil.ReadFile("k8s_api_pods.json")
 	require.NoError(t, err)
-
 	handler := util.FakeHandler{
 		StatusCode:   status,
 		RequestBody:  "",
@@ -76,11 +74,6 @@ func setupTestServer(t *testing.T, status int) (Host, func()) {
 	server := httptest.NewServer(&handler)
 	mockServerUrl, _ := url.Parse(server.URL)
 	_, port, _ := net.SplitHostPort(mockServerUrl.Host)
-
-	mockPort, _ := strconv.Atoi(port)
-	return Host{
-		IP:       net.ParseIP("127.0.0.1"),
-		Port:     mockPort,
-		Resource: "",
-	}, server.Close
+	mockPort, _ := strconv.ParseUint(port, 10, 64)
+	return net.ParseIP("127.0.0.1"), uint(mockPort), server.Close
 }

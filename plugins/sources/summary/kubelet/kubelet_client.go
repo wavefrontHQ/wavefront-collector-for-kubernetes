@@ -28,7 +28,6 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
-	"strconv"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/kubernetes"
 
@@ -38,16 +37,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 	stats "k8s.io/kubernetes/pkg/kubelet/apis/stats/v1alpha1"
 )
-
-type Host struct {
-	IP       net.IP
-	Port     int
-	Resource string
-}
-
-func (h Host) String() string {
-	return net.JoinHostPort(h.IP.String(), strconv.Itoa(h.Port))
-}
 
 type KubeletClient struct {
 	config *KubeletClientConfig

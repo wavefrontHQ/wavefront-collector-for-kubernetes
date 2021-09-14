@@ -2,10 +2,11 @@ package cadvisor
 
 import (
 	"errors"
-	"github.com/stretchr/testify/assert"
 	"net"
 	"net/url"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
