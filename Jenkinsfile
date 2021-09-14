@@ -7,12 +7,9 @@ pipeline {
 
     stages {
       stage("Release") {
+          when { branch 'move-to-butler' }
           steps {
-            script {
-                echo "you did it"
-//               if(env.BRANCH_NAME == 'move-to-butler'){
-//                   make container
-//               }
+            make container
             }
           }
       }
