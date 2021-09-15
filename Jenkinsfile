@@ -24,6 +24,7 @@ pipeline {
           # 2. make the binary executable
           chmod a+x docker-buildx
           # 3. create a dir (if it does not exist) to keep the binary
+          rm -rf ~/.docker/cli-plugins
           [[ ! -d "~/.docker/cli-plugins" ]] && mkdir -p ~/.docker/cli-plugins
           # 4. move the binary to the dir
           mv docker-buildx ~/.docker/cli-plugins
