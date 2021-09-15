@@ -24,11 +24,11 @@ pipeline {
           # 2. make the binary executable
           chmod a+x docker-buildx
           # 3. create a dir (if it does not exist) to keep the binary
-          [[ ! -d "~/.docker/cli-plugins" ]] && sudo mkdir -p ~/.docker/cli-plugins
+          [[ ! -d "~/.docker/cli-plugins" ]] && mkdir -p ~/.docker/cli-plugins
           # 4. move the binary to the dir
-          sudo mv docker-buildx ~/.docker/cli-plugins
+          mv docker-buildx ~/.docker/cli-plugins
           # 5. final step - run docker buildx --help
-          sudo docker buildx --help
+          docker buildx --help
           '''
           sh 'DOCKER_CREDS_USR=$(echo $DOCKER_CREDS_USR | sed \'s/\\$/\\$\\$/\') make publish'  //harbor
 //           sh 'DOCKER_CREDS_USR=$(echo $DOCKER_CREDS_USR | sed \'s/\\$/\\$\\$/\') make publish'  dockerhub
