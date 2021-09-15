@@ -31,7 +31,7 @@ pipeline {
           # 5. final step - run docker buildx --help
           docker buildx --help
 
-          export GOPATH=$WORKSPACE
+          docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
           '''
           sh 'DOCKER_CREDS_USR=$(echo $DOCKER_CREDS_USR | sed \'s/\\$/\\$\\$/\') make publish'  //harbor
 //           sh 'DOCKER_CREDS_USR=$(echo $DOCKER_CREDS_USR | sed \'s/\\$/\\$\\$/\') make publish'  dockerhub
