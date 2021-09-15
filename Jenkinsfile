@@ -30,6 +30,9 @@ pipeline {
           mv docker-buildx ~/.docker/cli-plugins
           # 5. final step - run docker buildx --help
           docker buildx --help
+
+          export GOPATH=$WORKSPACE
+          cd "$WORKSPACE"/src/github.com/wavefronthq/wavefront-collector-for-kubernetes
           '''
           sh 'DOCKER_CREDS_USR=$(echo $DOCKER_CREDS_USR | sed \'s/\\$/\\$\\$/\') make publish'  //harbor
 //           sh 'DOCKER_CREDS_USR=$(echo $DOCKER_CREDS_USR | sed \'s/\\$/\\$\\$/\') make publish'  dockerhub

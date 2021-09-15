@@ -1,4 +1,4 @@
-FROM golang:1.15 as builder
+FROM harbor-repo.vmware.com/dockerhub-proxy-cache/bitnami/golang:1.15 as builder
 # Base Setup
 ARG BINARY_NAME
 ARG LDFLAGS
