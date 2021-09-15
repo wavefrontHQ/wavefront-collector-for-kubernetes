@@ -8,7 +8,7 @@ pipeline {
     environment {
         PREFIX = "harbor-repo.vmware.com/tobs_keights_saas"
         DOCKER_CREDS = credentials("jenkins-wf-test")
-        RELEASE_TYPE = params.RELEASE_TYPE
+        RELEASE_TYPE = "${params.RELEASE_TYPE}"
     }
 
     stages {
