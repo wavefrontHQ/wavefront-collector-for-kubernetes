@@ -79,7 +79,8 @@ docker-login:
 publish: docker-login release
 
 release:
-	docker run --rm --privileged harbor-repo.vmware.com/dockerhub-proxy-cache/multiarch/qemu-user-static@sha256:c772ee1965aa0be9915ee1b018a0dd92ea361b4fa1bcab5bbc033517749b2af4 --reset
+	docker run --privileged --rm tonistiigi/binfmt --install all
+	#docker run --rm --privileged harbor-repo.vmware.com/dockerhub-proxy-cache/multiarch/qemu-user-static@sha256:c772ee1965aa0be9915ee1b018a0dd92ea361b4fa1bcab5bbc033517749b2af4 --reset
 	docker buildx create --use --node wavefront_collector_builder
 ifeq ($(RELEASE_TYPE), release)
 	docker buildx build --platform linux/amd64,linux/arm64 --push \
