@@ -83,7 +83,7 @@ release:
 	docker run --rm --privileged harbor-repo.vmware.com/dockerhub-proxy-cache/multiarch/qemu-user-static@sha256:c772ee1965aa0be9915ee1b018a0dd92ea361b4fa1bcab5bbc033517749b2af4 --reset
 	docker buildx create --use --node wavefront_collector_builder
 ifeq ($(RELEASE_TYPE), release)
-	docker buildx build --platform linux/arm64 --push \
+	docker buildx build --platform linux/amd64 --push \
 	--build-arg BINARY_NAME=$(BINARY_NAME) --build-arg LDFLAGS="$(LDFLAGS)" \
 	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(RELEASE_VERSION) -t $(PREFIX)/$(DOCKER_IMAGE):latest .
 else
