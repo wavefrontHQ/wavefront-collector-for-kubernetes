@@ -79,7 +79,7 @@ docker-login:
 publish: docker-login release
 
 release:
-	echo $(LDFLAGS)
+	docker run --rm --privileged harbor-repo.vmware.com/dockerhub-proxy-cache/multiarch/qemu-user-static --reset -p yes
 	docker buildx create --use --node wavefront_collector_builder
 ifeq ($(RELEASE_TYPE), release)
 	docker buildx build --platform linux/amd64,linux/arm64 --push \
