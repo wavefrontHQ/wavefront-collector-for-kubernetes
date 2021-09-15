@@ -73,8 +73,10 @@ github-release:
 	curl -X POST -H "Content-Type:application/json" -H "Authorization: token $(GITHUB_TOKEN)" \
 		-d '{"tag_name":"v$(RELEASE_VERSION)", "target_commitish":"$(GIT_BRANCH)", "name":"Release v$(RELEASE_VERSION)", "body": "Description for v$(RELEASE_VERSION)", "draft": true, "prerelease": false}' "https://api.github.com/repos/$(GIT_HUB_REPO)/releases"
 
-harbor-docker-login:
-	@echo '$(HARBOR_CREDS_PSW)' | docker login --username '$(HARBOR_CREDS_USR)' --password-stdin $(PREFIX)
+docker-login:
+	echo '$(DOCKER_CREDS_PSW)' | docker login --username '$(DOCKER_CREDS_USR)' --password-stdin $(PREFIX)
+
+publish: docker-login release
 
 release:
 	echo $(LDFLAGS)
