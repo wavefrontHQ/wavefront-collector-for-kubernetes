@@ -20,7 +20,7 @@ pipeline {
           echo "**************publish******************************"
           sh '''
           # 1. get buildx binary from hosted location. We're getting amd64 because our EC2s are ubuntu on amd64
-          wget -O docker-buildx https://github.com/docker/buildx/releases/download/v0.5.1/buildx-v0.5.1.linux-amd64
+          wget -O docker-buildx https://github.com/docker/buildx/releases/download/v0.6.3/buildx-v0.6.3.linux-amd64
           # 2. make the binary executable
           chmod a+x docker-buildx
           # 3. create a dir (if it does not exist) to keep the binary
