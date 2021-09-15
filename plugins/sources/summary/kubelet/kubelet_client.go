@@ -28,8 +28,6 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
-	"net/url"
-	"strconv"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/kubernetes"
 
@@ -39,16 +37,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 	stats "k8s.io/kubernetes/pkg/kubelet/apis/stats/v1alpha1"
 )
-
-type Host struct {
-	IP       net.IP
-	Port     int
-	Resource string
-}
-
-func (h Host) String() string {
-	return net.JoinHostPort(h.IP.String(), strconv.Itoa(h.Port))
-}
 
 type KubeletClient struct {
 	config *KubeletClientConfig
@@ -116,24 +104,8 @@ func (kc *KubeletClient) parseStat(containerInfo *cadvisor.ContainerInfo) *cadvi
 	return containerInfo
 }
 
-func (kc *KubeletClient) getScheme() string {
-	if kc.config != nil && kc.config.EnableHttps {
-		return "https"
-	}
-	return "http"
-}
-
-func (kc *KubeletClient) getUrl(host Host, path string) string {
-	u := url.URL{
-		Scheme: kc.getScheme(),
-		Host:   host.String(),
-		Path:   path,
-	}
-	return u.String()
-}
-
-func (kc *KubeletClient) GetSummary(host Host) (*stats.Summary, error) {
-	u := kc.getUrl(host, "/stats/summary/")
+func (kc *KubeletClient) GetSummary(ip net.IP) (*stats.Summary, error) {
+	u := kc.config.BaseURL(ip, "/stats/summary/").String()
 
 	req, err := http.NewRequest("GET", u, nil)
 	if err != nil {
@@ -148,8 +120,8 @@ func (kc *KubeletClient) GetSummary(host Host) (*stats.Summary, error) {
 	return summary, err
 }
 
-func (kc *KubeletClient) GetPods(host Host) (*v1.PodList, error) {
-	u := kc.getUrl(host, "/pods/")
+func (kc *KubeletClient) GetPods(ip net.IP) (*v1.PodList, error) {
+	u := kc.config.BaseURL(ip, "/pods/").String()
 
 	req, err := http.NewRequest("GET", u, nil)
 	if err != nil {
@@ -165,8 +137,8 @@ func (kc *KubeletClient) GetPods(host Host) (*v1.PodList, error) {
 	return pods, err
 }
 
-func (kc *KubeletClient) GetPort() int {
-	return int(kc.config.Port)
+func (kc *KubeletClient) GetPort() uint {
+	return kc.config.Port
 }
 
 func NewKubeletClient(kubeletConfig *KubeletClientConfig) (*KubeletClient, error) {

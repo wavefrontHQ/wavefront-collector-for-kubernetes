@@ -29,13 +29,8 @@ import (
 )
 
 const (
-	APIVersion = "v1"
-
-	defaultKubeletPort        = 10255
-	defaultKubeletHttps       = false
-	defaultUseServiceAccount  = false
-	defaultServiceAccountFile = "/var/run/secrets/kubernetes.io/serviceaccount/token"
-	defaultInClusterConfig    = true
+	defaultKubeletPort  = 10255
+	defaultKubeletHttps = false
 )
 
 func GetKubeConfigs(cfg configuration.SummarySourceConfig) (*kube_client.Config, *KubeletClientConfig, error) {

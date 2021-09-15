@@ -18,7 +18,10 @@
 package kubelet
 
 import (
+	"fmt"
+	"net"
 	"net/http"
+	"net/url"
 	"time"
 
 	utilnet "k8s.io/apimachinery/pkg/util/net"
@@ -46,6 +49,28 @@ type KubeletClientConfig struct {
 
 	// Dial is a custom dialer used for the client
 	Dial utilnet.DialFunc
+}
+
+func (c *KubeletClientConfig) HTTPSEnabled() bool {
+	if c == nil {
+		return true
+	}
+	return c.EnableHttps
+}
+
+func (c *KubeletClientConfig) Scheme() string {
+	if c.HTTPSEnabled() {
+		return "https"
+	}
+	return "http"
+}
+
+func (c *KubeletClientConfig) BaseURL(ip net.IP, path string) *url.URL {
+	return &url.URL{
+		Scheme: c.Scheme(),
+		Host:   fmt.Sprintf("%s:%d", ip, c.Port),
+		Path:   path,
+	}
 }
 
 func MakeTransport(config *KubeletClientConfig) (http.RoundTripper, error) {

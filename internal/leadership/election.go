@@ -163,5 +163,5 @@ func Leader() string {
 func Leading() bool {
 	lock.RLock()
 	defer lock.RUnlock()
-	return util.GetDaemonMode() == "" || isLeader
+	return !util.IsDaemonMode() || isLeader
 }

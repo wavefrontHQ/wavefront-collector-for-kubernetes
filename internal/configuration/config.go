@@ -74,6 +74,7 @@ type EventsFilter struct {
 // SourceConfig contains configuration for various sources
 type SourceConfig struct {
 	SummaryConfig     *SummarySourceConfig         `yaml:"kubernetes_source"`
+	CadvisorConfig    *CadvisorSourceConfig        `yaml:"kubernetes_cadvisor_source"`
 	PrometheusConfigs []*PrometheusSourceConfig    `yaml:"prometheus_sources"`
 	TelegrafConfigs   []*TelegrafSourceConfig      `yaml:"telegraf_sources"`
 	SystemdConfig     *SystemdSourceConfig         `yaml:"systemd_source"`
@@ -168,6 +169,13 @@ type SummarySourceConfig struct {
 
 	// If not using inClusterConfig, this can be set to a valid kubeConfig file provided using a config map.
 	Auth string `yaml:"auth"`
+}
+
+// Configuration options for a cAdvisor source
+type CadvisorSourceConfig struct {
+	Transforms `yaml:",inline"`
+
+	Collection CollectionConfig `yaml:"collection"`
 }
 
 // Configuration options for a Prometheus source

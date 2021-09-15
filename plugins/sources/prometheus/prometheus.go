@@ -127,6 +127,16 @@ func (src *prometheusMetricsSource) Cleanup() {
 	}
 }
 
+type HTTPError struct {
+	MetricsURL string
+	Status     string
+	StatusCode int
+}
+
+func (e *HTTPError) Error() string {
+	return fmt.Sprintf("error retrieving prometheus metrics from %s (http status %s)", e.MetricsURL, e.Status)
+}
+
 func (src *prometheusMetricsSource) ScrapeMetrics() (*metrics.DataBatch, error) {
 	result := &metrics.DataBatch{
 		Timestamp: time.Now(),
@@ -146,7 +156,7 @@ func (src *prometheusMetricsSource) ScrapeMetrics() (*metrics.DataBatch, error) 
 	if resp.StatusCode != http.StatusOK {
 		collectErrors.Inc(1)
 		src.eps.Inc(1)
-		return nil, fmt.Errorf("error retrieving prometheus metrics from %s", src.metricsURL)
+		return nil, &HTTPError{MetricsURL: src.metricsURL, Status: resp.Status, StatusCode: resp.StatusCode}
 	}
 
 	points, err := src.parseMetrics(resp.Body)
@@ -245,11 +255,9 @@ func NewPrometheusProvider(cfg configuration.PrometheusSourceConfig) (metrics.Me
 		return nil, fmt.Errorf("error creating source: %v", err)
 	}
 
-	useLeaderElection := cfg.UseLeaderElection || discovered == ""
-
 	return &prometheusProvider{
 		name:              name,
-		useLeaderElection: useLeaderElection,
+		useLeaderElection: cfg.UseLeaderElection || discovered == "",
 		sources:           sources,
 	}, nil
 }

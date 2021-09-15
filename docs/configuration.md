@@ -5,6 +5,7 @@ The Wavefront Collector for Kubernetes is configured via command-line flags and 
 Starting with version 1.0, most command line flags have been deprecated in favor of a top-level configuration file.
 
 ## Flags
+
 ```
 Usage of ./wavefront-collector:
       --config-file string             required configuration file
@@ -60,6 +61,10 @@ sources:
   # Optional source for collecting metrics from cluster level Kubernetes resources.
   kubernetes_state_source:
     # see kubernetes_state_source for details
+  
+  # Optional source for collecting cAdvisor metrics
+  kubernetes_cadvisor_source:
+    # see kubernetes_cadvisor_source for details
 
   # Optional source for emitting internal collector stats.
   internal_stats_source:
@@ -117,7 +122,6 @@ server: https://<instance>.wavefront.com
 token: <string>
 ```
 
-
 ### kubernetes_source
 
 ```yaml
@@ -146,9 +150,17 @@ auth: <string>
 See [configs.go](https://github.com/wavefronthq/wavefront-kubernetes-collector/tree/master/internal/kubernetes/configs.go) for how these properties are used.
 
 ### kubernetes_state_source
+
 Collects metrics on the state of deployments, daemonsets, statefulsets, hpas, jobs, cronjobs and replicasets.
 
 ```yaml
+prefix: <string>
+```
+
+### kubernetes_cadvisor_source
+
+```yaml
+# We recommend using `kubernetes.cadvisor.` Defaults to empty string.
 prefix: <string>
 ```
 
@@ -167,6 +179,7 @@ source: <string>
 ```
 
 ### telegraf_source
+
 ```yaml
 # The list of plugins to be enabled. Empty list defaults to enabling all host plugins.
 # Supported host plugins are: mem, net, netstat, linux_sysctl_fs, swap, cpu, disk, diskio, system, kernel, processes
@@ -178,9 +191,11 @@ plugins: []
 conf: |
   [ <Telegraf Plugin Config> ]
 ```
+
 See a reference [example](https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes/blob/master/deploy/examples/conf.example.yaml#L78) for details.
 
 ### systemd_source
+
 ```yaml
 # Whether to include systemd task metrics. Defaults to true.
 taskMetrics: <true|false>
@@ -203,8 +218,11 @@ unitDenyList:
 ```
 
 ### Common properties
+
 #### Prefix, tags and filters
+
 All sources and sinks support the following common properties:
+
 ```yaml
 # An optional dot suffixed prefix for metrics emitted by the sink or source.
 prefix: <string>
@@ -248,8 +266,11 @@ filters:
   - handler
   - image
 ```
+
 #### Custom collection intervals
+
 All sources support using a custom collection interval:
+
 ```yaml
 collection:
   # Duration type specified as [0-9]+(ms|[smhdwy])

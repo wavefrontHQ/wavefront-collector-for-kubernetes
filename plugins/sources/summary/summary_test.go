@@ -139,11 +139,12 @@ func TestScrapeSummaryMetrics(t *testing.T) {
 	})
 	defer server.Close()
 
-	ms := testingSummaryMetricsSource()
 	split := strings.SplitN(strings.Replace(server.URL, "http://", "", 1), ":", 2)
-	ms.node.IP = net.ParseIP(split[0])
-	ms.node.Port, err = strconv.Atoi(split[1])
+	ip := net.ParseIP(split[0])
+	port, err := strconv.ParseUint(split[1], 10, 64)
 	require.NoError(t, err)
+	ms := testingSummaryMetricsSource(uint(port))
+	ms.node.IP = ip
 
 	res, err := ms.ScrapeMetrics()
 	assert.Nil(t, err, "scrape error")
@@ -152,7 +153,7 @@ func TestScrapeSummaryMetrics(t *testing.T) {
 
 func TestAddSummaryMetrics(t *testing.T) {
 
-	ms := testingSummaryMetricsSource()
+	ms := testingSummaryMetricsSource(1234)
 	summary := getTestStatsSummary()
 
 	expectations := getTestSummaryExpectations()
@@ -272,7 +273,7 @@ func TestAddCompletedPodMetricSets(t *testing.T) {
 		},
 	}
 
-	ms := testingSummaryMetricsSource()
+	ms := testingSummaryMetricsSource(1234)
 	dataBatch := &core.DataBatch{
 		Timestamp:  time.Now(),
 		MetricSets: map[string]*core.MetricSet{},
@@ -319,7 +320,7 @@ func TestAddCompletedPodMetricSets(t *testing.T) {
 }
 
 func TestDecodeEphemeralStorageStatsForContainer(t *testing.T) {
-	ms := testingSummaryMetricsSource()
+	ms := testingSummaryMetricsSource(1234)
 	rootFs := &stats.FsStats{}
 	logs := &stats.FsStats{}
 	assert.NotPanics(t, func() { ms.decodeEphemeralStorageStatsForContainer(nil, rootFs, logs) })
@@ -333,10 +334,11 @@ func (f *fakeSource) ScrapeMetrics() (*core.DataBatch, error) {
 	return nil, nil
 }
 
-func testingSummaryMetricsSource() *summaryMetricsSource {
+func testingSummaryMetricsSource(port uint) *summaryMetricsSource {
+	client, _ := kubelet.NewKubeletClient(&kubelet.KubeletClientConfig{Port: port})
 	return &summaryMetricsSource{
 		node:          nodeInfo,
-		kubeletClient: &kubelet.KubeletClient{},
+		kubeletClient: client,
 	}
 }
 

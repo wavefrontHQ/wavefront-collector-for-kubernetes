@@ -69,11 +69,19 @@ data:
       kubernetes_state_source:
         prefix: 'kubernetes.' # Default prefix
 
+      # kubernetes_cadvsior_source:
+      #  prefix: 'kubernetes.cadvisor.'
+      #  filters:
+      #    metricAllowList:
+      #    - "kubernetes.cadvisor.container.cpu.cfs.throttled.seconds.total.counter"
+      #    - "kubernetes.cadvisor.container.cpu.cfs.throttled.periods.total.counter"
+
+
+      # prometheus_sources:
 
       ##########################################################################
       # Static source to collect control plane metrics from the API Server
       ##########################################################################
-      # prometheus_sources:
       # - url: 'https://kubernetes.default.svc.cluster.local:443/metrics'
       #   httpConfig:
       #     bearer_token_file: '/var/run/secrets/kubernetes.io/serviceaccount/token'

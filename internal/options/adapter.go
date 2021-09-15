@@ -89,6 +89,8 @@ func addSources(cfg *configuration.Config, sources flags.Uris) {
 			addStateSource(cfg, src)
 		case "prometheus":
 			addPrometheusSource(cfg, src)
+		case "kubernetes.cadvisor":
+			addCadvisorSource(cfg, src)
 		case "telegraf":
 			addTelegrafSource(cfg, src)
 		case "systemd":
@@ -133,6 +135,14 @@ func addPrometheusSource(cfg *configuration.Config, uri flags.Uri) {
 		Transforms: getTransforms(vals),
 	}
 	cfg.Sources.PrometheusConfigs = append(cfg.Sources.PrometheusConfigs, prom)
+}
+
+func addCadvisorSource(cfg *configuration.Config, uri flags.Uri) {
+	vals := uri.Val.Query()
+	cadvisor := &configuration.CadvisorSourceConfig{
+		Transforms: getTransforms(vals),
+	}
+	cfg.Sources.CadvisorConfig = cadvisor
 }
 
 func addTelegrafSource(cfg *configuration.Config, uri flags.Uri) {

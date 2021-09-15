@@ -24,8 +24,9 @@ import (
 	"sync"
 	"time"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources/cadvisor"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources/kstate"
@@ -274,6 +275,11 @@ func buildProviders(cfg configuration.SourceConfig) []metrics.MetricsSourceProvi
 	if cfg.SummaryConfig != nil {
 		provider, err := summary.NewSummaryProvider(*cfg.SummaryConfig)
 		result = appendProvider(result, provider, err, cfg.SummaryConfig.Collection)
+
+		if cfg.CadvisorConfig != nil {
+			provider, err = cadvisor.NewProvider(*cfg.CadvisorConfig, *cfg.SummaryConfig)
+			result = appendProvider(result, provider, err, cfg.CadvisorConfig.Collection)
+		}
 	}
 	if cfg.SystemdConfig != nil {
 		provider, err := systemd.NewProvider(*cfg.SystemdConfig)
@@ -302,8 +308,12 @@ func buildProviders(cfg configuration.SourceConfig) []metrics.MetricsSourceProvi
 	return result
 }
 
-func appendProvider(slice []metrics.MetricsSourceProvider, provider metrics.MetricsSourceProvider, err error,
-	cfg configuration.CollectionConfig) []metrics.MetricsSourceProvider {
+func appendProvider(
+	slice []metrics.MetricsSourceProvider,
+	provider metrics.MetricsSourceProvider,
+	err error,
+	cfg configuration.CollectionConfig,
+) []metrics.MetricsSourceProvider {
 
 	if err != nil {
 		log.Errorf("Failed to create source: %v", err)

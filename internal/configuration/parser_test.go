@@ -53,6 +53,12 @@ sources:
   kubernetes_source:
     prefix: kubernetes.
 
+  kubernetes_cadvisor_source:
+    prefix: 'kubernetes.cadvisor.'
+    filters:
+      metricAllowList:
+      - 'kubernetes.cadvisor.*'
+
   prometheus_sources:
   - url: 'https://kubernetes.default.svc.cluster.local:443'
     httpConfig:
@@ -102,4 +108,5 @@ func TestFromYAML(t *testing.T) {
 	assert.True(t, len(cfg.Sources.PrometheusConfigs) > 0)
 	assert.Equal(t, "kubernetes.", cfg.Sources.SummaryConfig.Prefix)
 	assert.Equal(t, "kube.apiserver.", cfg.Sources.PrometheusConfigs[0].Prefix)
+	assert.Equal(t, "kubernetes.cadvisor.", cfg.Sources.CadvisorConfig.Prefix)
 }
