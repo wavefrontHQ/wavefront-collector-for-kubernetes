@@ -33,7 +33,7 @@ require (
 	github.com/influxdata/toml v0.0.0-20190415235208-270119a8ce65
 	github.com/jackc/fake v0.0.0-20150926172116-812a484cc733 // indirect
 	github.com/jackc/pgx v3.6.0+incompatible // indirect
-	github.com/json-iterator/go v1.1.11
+	github.com/json-iterator/go v1.1.12
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/lib/pq v1.3.0 // indirect
@@ -59,7 +59,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.22.1
 	k8s.io/apimachinery v0.17.1
-	k8s.io/apiserver v0.15.7
+	k8s.io/apiserver v0.22.1
 	k8s.io/client-go v8.0.0+incompatible
 	k8s.io/kubernetes v1.16.15
 	k8s.io/utils v0.0.0-20191114200735-6ca3b61696b6 // indirect
