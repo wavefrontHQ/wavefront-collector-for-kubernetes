@@ -1,5 +1,5 @@
 pipeline {
-    agent any
+    agent {label 'linux-4'}
 
     tools {
         go 'Go 1.15'
