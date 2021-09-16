@@ -9,31 +9,14 @@ pipeline {
         PREFIX = "harbor-repo.vmware.com/tobs_keights_saas"
         DOCKER_CREDS = credentials("jenkins-wf-test")
         RELEASE_TYPE = "${params.RELEASE_TYPE}"
+        RC_NUMBER = "${params.RC_SUFFIX}"
     }
 
     stages {
-      stage("PUBLISH") {
-//      when {params.PUBLISH == true}
+      stage("Release collector") {
         steps {
-          echo "${params.RELEASE_TYPE}"
-          echo "${DOCKER_CREDS_USR}"
-          echo "**************publish******************************"
-          sh '''
-          # 1. get buildx binary from hosted location. We're getting amd64 because our EC2s are ubuntu on amd64
-          wget -O docker-buildx https://github.com/docker/buildx/releases/download/v0.6.3/buildx-v0.6.3.linux-amd64
-          # 2. make the binary executable
-          chmod a+x docker-buildx
-          # 3. create a dir (if it does not exist) to keep the binary
-          sudo rm -rf ~/.docker/cli-plugins
-          [[ ! -d "~/.docker/cli-plugins" ]] && mkdir -p ~/.docker/cli-plugins
-          # 4. move the binary to the dir
-          mv docker-buildx ~/.docker/cli-plugins
-          # 5. final step - run docker buildx --help
-          docker buildx --help
-          '''
-          sh 'DOCKER_CREDS_USR=$(echo $DOCKER_CREDS_USR | sed \'s/\\$/\\$\\$/\') make publish'  //harbor
-//           sh 'DOCKER_CREDS_USR=$(echo $DOCKER_CREDS_USR | sed \'s/\\$/\\$\\$/\') make publish'  dockerhub
-//        github release
+          sh './hack/butler/install_docker_buildx.sh'
+          sh 'DOCKER_CREDS_USR=$(echo $DOCKER_CREDS_USR | sed \'s/\\$/\\$\\$/\') make publish' // TODO: github release
         }
       }
     }
