@@ -69,7 +69,7 @@ data:
       kubernetes_state_source:
         prefix: 'kubernetes.' # Default prefix
 
-      # kubernetes_cadvsior_source:
+      # kubernetes_cadvisor_source:
       #  prefix: 'kubernetes.cadvisor.'
       #  filters:
       #    metricAllowList:
