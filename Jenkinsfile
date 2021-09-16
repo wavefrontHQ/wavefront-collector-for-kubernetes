@@ -16,7 +16,7 @@ pipeline {
       stage("Release collector") {
         steps {
           sh './hack/butler/install_docker_buildx.sh'
-          sh 'DOCKER_CREDS_USR=$(echo $DOCKER_CREDS_USR | sed \'s/\\$/\\$\\$/\') make publish' // TODO: github release
+          sh 'DOCKER_CREDS_USR=$(echo $DOCKER_CREDS_USR | sed \'s/\\$/\\$\\$/\') make publish github-release' // TODO: github release
         }
       }
     }

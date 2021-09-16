@@ -23,6 +23,11 @@ endif
 
 GO_IMPORTS_BIN:=$(if $(which goimports),$(which goimports),$(GOPATH)/bin/goimports)
 SEMVER_CLI_BIN:=$(if $(which semver-cli),$(which semver-cli),$(GOPATH)/bin/semver-cli)
+ifeq ($(RELEASE_TYPE),rc)
+	PRERELEASE_TOGGLE:=true
+else
+	PRERELEASE_TOGGLE:=false
+endif
 
 VERSION_POSTFIX?=""
 RELEASE_VERSION?=$(shell cat ./release/VERSION)
@@ -71,7 +76,7 @@ container: #$(SEMVER_CLI_BIN)
 
 github-release:
 	curl -X POST -H "Content-Type:application/json" -H "Authorization: token $(GITHUB_TOKEN)" \
-		-d '{"tag_name":"v$(RELEASE_VERSION)", "target_commitish":"$(GIT_BRANCH)", "name":"Release v$(RELEASE_VERSION)", "body": "Description for v$(RELEASE_VERSION)", "draft": true, "prerelease": false}' "https://api.github.com/repos/$(GIT_HUB_REPO)/releases"
+		-d '{"tag_name":"v$(RELEASE_VERSION)", "target_commitish":"$(GIT_BRANCH)", "name":"Release v$(RELEASE_VERSION)", "body": "Description for v$(RELEASE_VERSION)", "draft": true, "prerelease": $(PRERELEASE_TOGGLE)}' "https://api.github.com/repos/$(GIT_HUB_REPO)/releases"
 
 docker-login:
 	echo '$(DOCKER_CREDS_PSW)' | docker login --username '$(DOCKER_CREDS_USR)' --password-stdin $(PREFIX)
