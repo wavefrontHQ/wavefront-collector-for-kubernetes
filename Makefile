@@ -32,7 +32,7 @@ GIT_COMMIT:=$(shell git rev-parse --short HEAD)
 # for testing, the built image will also be tagged with this name provided via an environment variable
 OVERRIDE_IMAGE_NAME?=${COLLECTOR_TEST_IMAGE}
 
-LDFLAGS=-w -X main.version=$(VERSION) -X main.commit=$(GIT_COMMIT)
+LDFLAGS=-w -X main.version=$(RELEASE_VERSION) -X main.commit=$(GIT_COMMIT)
 
 include make/k8s-envs/*.mk
 
@@ -78,6 +78,7 @@ github-release:
 		-d '{"tag_name":"v$(RELEASE_VERSION)", "target_commitish":"$(GIT_BRANCH)", "name":"Release v$(RELEASE_VERSION)", "body": "Description for v$(RELEASE_VERSION)", "draft": true, "prerelease": false}' "https://api.github.com/repos/$(GIT_HUB_REPO)/releases"
 
 release:
+	echo $(LDFLAGS)
 	docker buildx create --use --node wavefront_collector_builder
 ifeq ($(RELEASE_TYPE), release)
 	docker buildx build --platform linux/amd64,linux/arm64 --push \
