@@ -11,7 +11,6 @@ pipeline {
         RELEASE_TYPE = "${params.RELEASE_TYPE}"
         RC_NUMBER = "${params.RC_SUFFIX}"
         GITHUB_CREDS = credentials("mamichael-test-github")
-        GITHUB_TOKEN=GITHUB_CREDS_PWS
     }
 
     stages {
