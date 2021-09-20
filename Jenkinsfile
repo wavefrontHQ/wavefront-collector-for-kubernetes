@@ -10,7 +10,8 @@ pipeline {
         DOCKER_CREDS = credentials("jenkins-wf-test")
         RELEASE_TYPE = "${params.RELEASE_TYPE}"
         RC_NUMBER = "${params.RC_SUFFIX}"
-        GITHUB_TOKEN = credentials("github-token-for-jenkins-priya")
+        GITHUB_CREDS = credentials("mamichael-test-github")
+        GITHUB_TOKEN=GITHUB_CREDS_PWS
     }
 
     stages {
@@ -18,7 +19,7 @@ pipeline {
         steps {
           sh './hack/butler/install_docker_buildx.sh'
           sh 'DOCKER_CREDS_USR=$(echo $DOCKER_CREDS_USR | sed \'s/\\$/\\$\\$/\') make publish'
-//           sh 'echo Github token: ${GITHUB_TOKEN}'
+          echo 'Github token: $(GITHUB_CREDS_USR)'
           sh 'make github-release'
         }
       }
