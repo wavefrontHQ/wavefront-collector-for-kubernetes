@@ -19,7 +19,7 @@ pipeline {
 //           sh './hack/butler/install_docker_buildx.sh'
 //           sh 'DOCKER_CREDS_USR=$(echo $DOCKER_CREDS_USR | sed \'s/\\$/\\$\\$/\') make publish'
 //           sh 'echo "Github user: $(echo $GITHUB_CREDS_USR)"'
-             sh 'GITHUB_TOKEN=$GITHUB_CREDS_PSW make github-release'
+             sh './hack/butler/generate_github_release.sh'
         }
       }
     }
