@@ -19,7 +19,7 @@ pipeline {
           sh './hack/butler/install_docker_buildx.sh'
           sh 'DOCKER_CREDS_USR=$(echo $DOCKER_CREDS_USR | sed \'s/\\$/\\$\\$/\') make publish'
 //           sh 'echo Github token: ${GITHUB_TOKEN}'
-          sh 'export GITHUB_TOKEN=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'
+          sh 'export GITHUB_TOKEN=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'
           sh 'make github-release'
         }
       }
