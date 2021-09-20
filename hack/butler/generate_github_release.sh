@@ -5,7 +5,7 @@ cd "$(dirname "$-1")"
 
 VERSION=$(cat ./release/VERSION)
 GIT_HUB_REPO=wavefrontHQ/wavefront-collector-for-kubernetes
-GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+GIT_BRANCH=master
 
 
 curl -X POST -H "Content-Type:application/json" \
