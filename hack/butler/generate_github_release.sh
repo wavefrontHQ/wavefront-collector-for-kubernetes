@@ -7,7 +7,7 @@ VERSION=$(cat ./release/VERSION)
 GIT_HUB_REPO=wavefrontHQ/wavefront-collector-for-kubernetes
 GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
-echo git rev-parse --abbrev-ref HEAD
+echo $GIT_BRANCH
 
 curl -X POST -H "Content-Type:application/json" \
 -H "Authorization: token $GITHUB_CREDS_PSW" \
