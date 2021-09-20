@@ -5,7 +5,7 @@ cd "$(dirname "$-1")"
 
 VERSION=$(cat ./release/VERSION)
 GIT_HUB_REPO=wavefrontHQ/wavefront-collector-for-kubernetes
-GIT_BRANCH=$(git name-rev --name-only HEAD)
+GIT_BRANCH=master #update when we get the #RELEASE_BRANCH working
 
 echo "GIT_BRANCH: $GIT_BRANCH"
 
