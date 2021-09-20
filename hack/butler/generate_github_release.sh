@@ -5,9 +5,8 @@ cd "$(dirname "$-1")"
 
 VERSION=$(cat ./release/VERSION)
 GIT_HUB_REPO=wavefrontHQ/wavefront-collector-for-kubernetes
-GIT_BRANCH=master #update when we get the #RELEASE_BRANCH working
+GIT_BRANCH=master #update when we get choosing a specific branch working
 
-echo "GIT_BRANCH: $GIT_BRANCH"
 
 curl -X POST -H "Content-Type:application/json" \
 -H "Authorization: token $GITHUB_CREDS_PSW" \
