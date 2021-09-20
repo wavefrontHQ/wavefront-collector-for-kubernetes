@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
 set -e
 
-GIT_BRANCH=move-to-butler
-VERSION=test
-GIT_REPO_NAME=wavefronthq/wavefront-collector-for-kubernetes
+cd "$(dirname "$-1")"
+
+VERSION=$(cat ./release/VERSION)
+GIT_HUB_REPO=wavefrontHQ/wavefront-collector-for-kubernetes
+GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
 
 curl -X POST -H "Content-Type:application/json" \
--H "Authorization: token ${GITHUB_CREDS_PSW}" \
+-H "Authorization: token $GITHUB_CREDS_PSW" \
 -d "{
       \"tag_name\": \"v$VERSION\",
       \"target_commitish\": \"$GIT_BRANCH\",
@@ -14,4 +17,4 @@ curl -X POST -H "Content-Type:application/json" \
       \"body\": \"Description for v$VERSION\",
       \"draft\": true,
       \"prerelease\": false}" \
-"https://api.github.com/repos/$GIT_REPO_NAME/releases"
+"https://api.github.com/repos/$GIT_HUB_REPO/releases"
