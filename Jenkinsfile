@@ -13,7 +13,6 @@ pipeline {
         GITHUB_CREDS = credentials("mamichael-test-github")
         GIT_BRANCH = getCurrentBranchName()
         DOCKERHUB_CREDENTIALS=credentials('dockerhub-credential-shaoh')
-        PREFIX = "personal-dockerhub"
         DOCKER_IMAGE = "wavefront-collector-for-kubernetes"
     }
 
