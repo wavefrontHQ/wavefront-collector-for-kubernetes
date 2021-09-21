@@ -53,6 +53,10 @@
 {"Name":"kernel.entropy.avail","Tags":{"cluster":"","source":""}}
 {"Name":"kernel.interrupts","Tags":{"cluster":"","source":""}}
 {"Name":"kernel.processes.forked","Tags":{"cluster":"","source":""}}
+{"Name":"kubernetes.cadvisor.container.cpu.cfs.throttled.periods.total.counter","Tags":{"cluster":"","container":"","id":"","image":"","name":"","namespace":"","pod":"","source":""}}
+{"Name":"kubernetes.cadvisor.container.cpu.cfs.throttled.periods.total.counter","Tags":{"cluster":"","id":"","namespace":"","pod":"","source":""}}
+{"Name":"kubernetes.cadvisor.container.cpu.cfs.throttled.seconds.total.counter","Tags":{"cluster":"","container":"","id":"","image":"","name":"","namespace":"","pod":"","source":""}}
+{"Name":"kubernetes.cadvisor.container.cpu.cfs.throttled.seconds.total.counter","Tags":{"cluster":"","id":"","namespace":"","pod":"","source":""}}
 {"Name":"kubernetes.cluster.cpu.limit","Tags":{"cluster":"","source":"","type":"cluster"}}
 {"Name":"kubernetes.cluster.cpu.request","Tags":{"cluster":"","source":"","type":"cluster"}}
 {"Name":"kubernetes.cluster.memory.limit","Tags":{"cluster":"","source":"","type":"cluster"}}
