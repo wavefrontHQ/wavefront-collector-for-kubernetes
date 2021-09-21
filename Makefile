@@ -23,11 +23,6 @@ endif
 
 GO_IMPORTS_BIN:=$(if $(which goimports),$(which goimports),$(GOPATH)/bin/goimports)
 SEMVER_CLI_BIN:=$(if $(which semver-cli),$(which semver-cli),$(GOPATH)/bin/semver-cli)
-ifeq ($(RELEASE_TYPE),rc)
-	PRERELEASE_TOGGLE:=true
-else
-	PRERELEASE_TOGGLE:=false
-endif
 
 VERSION_POSTFIX?=""
 RELEASE_VERSION?=$(shell cat ./release/VERSION)
@@ -69,13 +64,10 @@ driver: clean fmt
 
 containers: container test-proxy-container
 
-container: #$(SEMVER_CLI_BIN)
+container: $(SEMVER_CLI_BIN)
 	# Run build in a container in order to have reproducible builds
 	docker build \
 	--build-arg BINARY_NAME=$(BINARY_NAME) --build-arg LDFLAGS="$(LDFLAGS)" .
-
-github-release:
-	curl --fail -X POST -H "Content-Type:application/json" -H "Authorization: token $(GITHUB_TOKEN)" -d "{"tag_name":"v$(RELEASE_VERSION)", "target_commitish":"$(GIT_BRANCH)", "name":"Release v$(RELEASE_VERSION)", "body": "Description for v$(RELEASE_VERSION)", "draft": true}" "https://api.github.com/repos/$(GIT_HUB_REPO)/releases"
 
 release:
 	docker buildx create --use --node wavefront_collector_builder
