@@ -135,11 +135,11 @@ token-check:
 
 proxy-test: token-check $(SEMVER_CLI_BIN)
 ifeq ($(K8S_ENV), GKE)
-	@(cd $(KUSTOMIZE_DIR) && ./test.sh nimba $(WAVEFRONT_TOKEN) $(VERSION) "us.gcr.io\/$(GCP_PROJECT)")
+	@(cd $(KUSTOMIZE_DIR) && ./test-integration.sh nimba $(WAVEFRONT_TOKEN) $(VERSION) "us.gcr.io\/$(GCP_PROJECT)")
 else ifeq ($(K8S_ENV), EKS)
-	@(cd $(KUSTOMIZE_DIR) && ./test.sh nimba $(WAVEFRONT_TOKEN) $(VERSION) "$(ECR_ENDPOINT)\/tobs\/k8s\/saas")
+	@(cd $(KUSTOMIZE_DIR) && ./test-integration.sh nimba $(WAVEFRONT_TOKEN) $(VERSION) "$(ECR_ENDPOINT)\/tobs\/k8s\/saas")
 else
-	@(cd $(KUSTOMIZE_DIR) && ./test.sh nimba $(WAVEFRONT_TOKEN) $(VERSION))
+	@(cd $(KUSTOMIZE_DIR) && ./test-integration.sh nimba $(WAVEFRONT_TOKEN) $(VERSION))
 endif
 
 #Testing deployment and configuration changes, no code changes

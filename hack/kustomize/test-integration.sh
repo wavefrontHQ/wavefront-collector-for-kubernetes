@@ -60,13 +60,6 @@ if [[ $RES_CODE -gt 399 ]] ; then
   exit 1
 fi
 
-echo '-@-@-@-@-@-BEGIN checking wavefront dashboard stuff-@-@-@-@-@-'
-curl -X GET --header "Accept: application/json" \
- --header "Authorization: Bearer $API_TOKEN" \
- "https://$WAVEFRONT_CLUSTER.wavefront.com/api/v2/chart/api?q=kubernetes.collector.version&queryType=HYBRID&s=1631807804000&g=h&view=METRIC&sorted=false&cached=true&useRawQK=false" \
- | jq
-echo '-@-@-@-@-@-END checking wavefront dashboard stuff-@-@-@-@-@-'
-
 DIFF_COUNT=$(jq "(.Missing | length)" "$RES")
 EXIT_CODE=0
 
