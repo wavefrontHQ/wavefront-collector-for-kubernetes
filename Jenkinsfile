@@ -12,6 +12,9 @@ pipeline {
         RC_NUMBER = "${params.RC_SUFFIX}"
         GITHUB_CREDS = credentials("mamichael-test-github")
         GIT_BRANCH = getCurrentBranchName()
+        DOCKERHUB_CREDENTIALS=credentials('dockerhub-credential-shaoh')
+        PREFIX = "personal-dockerhub"
+        DOCKER_IMAGE = "wavefront-collector-for-kubernetes"
     }
 
     stages {
@@ -28,6 +31,13 @@ pipeline {
           sh './hack/butler/generate_github_release.sh'
         }
       }
+
+      stage('Publish to Docker Hub') {
+        steps {
+          sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
+// 		  sh 'make release'
+		}
+	  }
     }
 }
 
