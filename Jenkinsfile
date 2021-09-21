@@ -32,6 +32,5 @@ pipeline {
 }
 
 def getCurrentBranchName() {
-      scmInfo = checkout scm
-      return scmInfo.GIT_BRANCH.replace("origin/", "")
+      return scm.branches[0].name.replace("*/", "")
 }
