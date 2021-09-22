@@ -71,9 +71,7 @@ github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/timestamp
-# github.com/google/btree v1.0.0
-## explicit
-# github.com/google/cadvisor v0.34.0
+# github.com/google/cadvisor v0.35.0
 ## explicit
 github.com/google/cadvisor/info/v1
 # github.com/google/go-cmp v0.3.0
@@ -552,8 +550,9 @@ k8s.io/client-go/util/testing
 # k8s.io/klog v1.0.0
 k8s.io/klog
 # k8s.io/kube-openapi v0.0.0-20200410163147-594e756bea31
+## explicit
 k8s.io/kube-openapi/pkg/util/proto
-# k8s.io/kubernetes v1.16.15
+# k8s.io/kubernetes v1.17.17
 ## explicit
 k8s.io/kubernetes/pkg/kubelet/apis/stats/v1alpha1
 # k8s.io/utils v0.0.0-20191114200735-6ca3b61696b6
