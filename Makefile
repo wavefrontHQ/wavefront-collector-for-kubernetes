@@ -69,7 +69,7 @@ container: $(SEMVER_CLI_BIN)
 	docker build \
 	--build-arg BINARY_NAME=$(BINARY_NAME) --build-arg LDFLAGS="$(LDFLAGS)" .
 
-release:
+publish:
 	docker buildx create --use --node wavefront_collector_builder
 ifeq ($(RELEASE_TYPE), release)
 	docker buildx build --platform linux/amd64,linux/arm64 --push \
