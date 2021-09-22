@@ -15,7 +15,6 @@ require (
 	github.com/go-sql-driver/mysql v1.4.1 // indirect
 	github.com/gobwas/glob v0.2.3
 	github.com/gofrs/uuid v3.3.0+incompatible // indirect
-	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
 	github.com/google/cadvisor v0.35.0
 	github.com/googleapis/gnostic v0.3.1 // indirect
@@ -60,8 +59,7 @@ require (
 	k8s.io/apiserver v0.15.7
 	k8s.io/client-go v8.0.0+incompatible
 	k8s.io/kube-openapi v0.0.0-20200410163147-594e756bea31 // indirect
-	k8s.io/kubernetes v1.17.17
-	k8s.io/utils v0.0.0-20191114200735-6ca3b61696b6 // indirect
+	k8s.io/kubernetes v1.18.15
 )
 
 exclude (
