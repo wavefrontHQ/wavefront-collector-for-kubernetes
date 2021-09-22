@@ -148,4 +148,7 @@ deploy-test: token-check k8s-env clean-deployment deploy-targets push-images pro
 #Testing code, configuration and deployment changes
 integration-test: token-check k8s-env clean-deployment deploy-targets containers delete-images push-images proxy-test
 
+#Testing that fresh, properly labeled metrics make it to Wavefront
+e2e-test: token-check k8s-env clean-deployment deploy-targets containers delete-images push-images # TODO: something-test
+
 .PHONY: all fmt container clean release semver-cli

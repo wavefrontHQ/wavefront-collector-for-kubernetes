@@ -63,6 +63,8 @@ function waitForQuery() {
   done
 }
 
+# TODO: At this point it is an endless loop of querying. Need to add the actual checking and quitting the loop.
 waitForQuery "ts(kubernetes.collector.version%2C%20cluster%3D%22$CLUSTER_NAME%22%20AND%20installation_method%3D%22manual%22)"
+waitForQuery "ts(kubernetes.cluster.pod.count%2C%20cluster%3D%22$CLUSTER_NAME%22)"
 
 exit "$EXIT_CODE"
