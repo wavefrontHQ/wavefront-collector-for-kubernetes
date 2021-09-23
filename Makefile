@@ -67,7 +67,7 @@ containers: container test-proxy-container
 container: $(SEMVER_CLI_BIN)
 	# Run build in a container in order to have reproducible builds
 	docker build \
-	--build-arg BINARY_NAME=$(BINARY_NAME) --build-arg LDFLAGS="$(LDFLAGS)" .
+	--platform linux/amd64 --build-arg BINARY_NAME=$(BINARY_NAME) --build-arg LDFLAGS="$(LDFLAGS)" .
 
 publish:
 	docker buildx create --use --node wavefront_collector_builder
