@@ -17,6 +17,7 @@ notifications:
 
 go:
   - "1.15.x"
+  - "1.16.x"
 script:
   - make checkfmt vet tests
 jobs:
@@ -29,5 +30,4 @@ jobs:
       script:
         - ./hack/travis/setup-for-integration-test.sh
         - GKE_CLUSTER_NAME=k8s-saas-travis-ci make gke-connect-to-cluster
-        - VERSION_POSTFIX="pr238" || echo -n "")" make integration-test
-
+        - VERSION_POSTFIX="$([[ $TRAVIS_PULL_REQUEST -ne "false" ]]; echo -n "-pr${TRAVIS_PULL_REQUEST}" || echo -n "")" make integration-test
