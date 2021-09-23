@@ -13,7 +13,9 @@ pipeline {
 
     stages {
       stage("Publish") {
-        sh './hack/butler/install_docker_buildx.sh'
+        steps {
+          sh './hack/butler/install_docker_buildx.sh'
+        }
         parallel {
           stage("Publish to Harbor") {
             environment {
