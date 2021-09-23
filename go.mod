@@ -47,6 +47,7 @@ require (
 	github.com/tidwall/gjson v1.7.4 // indirect
 	github.com/wavefronthq/go-metrics-wavefront v1.0.3
 	github.com/wavefronthq/wavefront-sdk-go v0.9.9
+	golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83 // indirect
 	golang.org/x/exp v0.0.0-20200224162631-6cc2880d07d6 // indirect
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d // indirect
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect
