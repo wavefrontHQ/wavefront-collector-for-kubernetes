@@ -75,7 +75,7 @@ ifneq ($(OVERRIDE_IMAGE_NAME),)
 endif
 
 publish:
-	docker buildx create --use --node wavefront_collector_builder
+	docker buildx create --use --node $(PREFIX)_wavefront_collector_builder
 ifeq ($(RELEASE_TYPE), release)
 	docker buildx build --platform linux/amd64,linux/arm64 --push \
 	--build-arg BINARY_NAME=$(BINARY_NAME) --build-arg LDFLAGS="$(LDFLAGS)" \
