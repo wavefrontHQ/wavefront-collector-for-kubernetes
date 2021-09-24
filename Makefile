@@ -74,7 +74,7 @@ ifneq ($(OVERRIDE_IMAGE_NAME),)
 	docker tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OVERRIDE_IMAGE_NAME)
 endif
 
-BUILDER_PREFIX=$(shell echo $PREFIX | cut -d '/' -f1)
+BUILDER_PREFIX=$(shell echo $(PREFIX) | cut -d '/' -f1)
 
 publish:
 	docker buildx create --use --node $(BUILDER_PREFIX)_wavefront_collector_builder
