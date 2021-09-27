@@ -42,7 +42,7 @@ pipeline {
 
       stage("Github Release") {
         environment {
-          GITHUB_CREDS = credentials("GITHUB_TOKEN")
+          GITHUB_CREDS_PSW = credentials("GITHUB_TOKEN")
         }
 //         when{ environment name: 'RELEASE_TYPE', value: 'release' }
         steps {
