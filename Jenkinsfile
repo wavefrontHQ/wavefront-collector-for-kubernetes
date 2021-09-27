@@ -21,34 +21,34 @@ pipeline {
         parallel {
           stage("Publish to Harbor") {
             environment {
-              HARBOR_CREDS = credentials("jenkins-wf-test")
+              HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability-robot")
             }
             steps {
-              sh 'echo $HARBOR_CREDS_PSW | docker login "harbor-repo.vmware.com/tobs_keights_saas" -u $HARBOR_CREDS_USR --password-stdin'
-              sh 'PREFIX="harbor-repo.vmware.com/tobs_keights_saas" HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') make publish'
+              sh 'echo $HARBOR_CREDS_PSW | docker login "projects.registry.vmware.com/tanzu_observability" -u $HARBOR_CREDS_USR --password-stdin'
+//               sh 'PREFIX="projects.registry.vmware.com/tanzu_observability" HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') DOCKER_IMAGE="kubernetes-collector" make publish'
             }
           }
-          stage("Publish to Docker Hub") {
-            environment {
-              DOCKERHUB_CREDS=credentials('dockerhub-credential-shaoh')
-            }
-            steps {
-              sh 'echo $DOCKERHUB_CREDS_PSW | docker login -u $DOCKERHUB_CREDS_USR --password-stdin'
-              sh 'PREFIX="helenshao" make publish' // change PREFIX to dockerhub registry
-            }
-          }
+//           stage("Publish to Docker Hub") {
+//             environment {
+//               DOCKERHUB_CREDS=credentials('dockerhub-credential-shaoh')
+//             }
+//             steps {
+//               sh 'echo $DOCKERHUB_CREDS_PSW | docker login -u $DOCKERHUB_CREDS_USR --password-stdin'
+//               sh 'PREFIX="helenshao" make publish' // change PREFIX to dockerhub registry
+//             }
+//           }
         }
       }
 
-      stage("Github Release") {
-        environment {
-          GITHUB_CREDS = credentials("mamichael-test-github")
-        }
-        when{ environment name: 'RELEASE_TYPE', value: 'release' }
-        steps {
-          sh './hack/butler/generate_github_release.sh'
-        }
-      }
+//       stage("Github Release") {
+//         environment {
+//           GITHUB_CREDS = credentials("mamichael-test-github")
+//         }
+//         when{ environment name: 'RELEASE_TYPE', value: 'release' }
+//         steps {
+//           sh './hack/butler/generate_github_release.sh'
+//         }
+//       }
     }
 }
 
