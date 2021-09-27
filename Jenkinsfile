@@ -45,6 +45,8 @@ pipeline {
           GITHUB_CREDS_PSW = credentials("GITHUB_TOKEN")
           CHANNEL_ID = credentials("k8s-assist-slack-ID")
           SLACK_WEBHOOK_URL = credentials("slack_hook_URL")
+          BUILD_USER_ID = getBuildUserID()
+          BUILD_USER = getBuildUser()
         }
         when{ environment name: 'RELEASE_TYPE', value: 'release' }
         steps {
@@ -57,4 +59,12 @@ pipeline {
 
 def getCurrentBranchName() {
       return env.BRANCH_NAME.split("/")[1]
+}
+
+def getBuildUser() {
+      return "${currentBuild.getBuildCauses()[0].userName}"
+}
+
+def getBuildUserID() {
+      return "${currentBuild.getBuildCauses()[0].userId}"
 }
