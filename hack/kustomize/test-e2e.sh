@@ -52,7 +52,10 @@ function waitForQueryMatchExact() {
   local query=$1
   local expected=$2
   local actual
-  while [[ $actual != $expected ]]; do
+  local loop_count=0
+  while [ $actual != $expected ] && [ $loop_count -lt 10 ]; do
+    loop_count=$((loop_count+1))
+    echo $loop_count
     echo "-@-@-@-@-@-BEGIN checking wavefront dashboard stuff for $query-@-@-@-@-@-"
     actual=$(curl -X GET --header "Accept: application/json" \
      --header "Authorization: Bearer $API_TOKEN" \
@@ -67,11 +70,12 @@ function waitForQueryMatchExact() {
   done
 }
 
-# TODO: Yet to be verified for implementation
+# TODO: Yet to be query matched
 function waitForQueryExists() {
   local query=$1
   local actual
-  while [[ $actual != 0 ]]; do
+#  while [[ $actual != "" ]]; do
+  while [[ $actual != *"Nothing matching"* ]]; do
     echo "-@-@-@-@-@-BEGIN checking wavefront dashboard stuff for $query-@-@-@-@-@-"
     actual=$(curl -X GET --header "Accept: application/json" \
      --header "Authorization: Bearer $API_TOKEN" \
