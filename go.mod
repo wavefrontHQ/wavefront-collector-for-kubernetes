@@ -64,7 +64,7 @@ require (
 	k8s.io/api v0.17.17
 	k8s.io/apimachinery v0.17.17
 	k8s.io/apiserver v0.22.2
-	k8s.io/client-go v0.17.17
+	k8s.io/client-go v0.22.2
 	k8s.io/kube-openapi v0.0.0-20200410163147-594e756bea31 // indirect
 	k8s.io/kubernetes v1.15.0-alpha.0
 	k8s.io/utils v0.0.0-20200324210504-a9aa75ae1b89 // indirect
