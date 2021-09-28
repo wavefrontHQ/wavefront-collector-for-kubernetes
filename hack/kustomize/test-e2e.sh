@@ -13,7 +13,9 @@ API_TOKEN=$2
 VERSION=$3
 DOCKER_HOST=$4
 
+MAX_QUERY_TIMES=10
 CURL_WAIT=10
+EXIT_CODE=0
 
 K8S_ENV=$(../deploy/get-k8s-cluster-env.sh | awk '{print tolower($0)}' )
 
@@ -30,7 +32,7 @@ NS=wavefront-collector
 
 echo "deploying configuration for additional targets"
 
-kubectl create namespace $NS
+#kubectl create namespace $NS
 kubectl config set-context --current --namespace="$NS"
 kubectl apply -f ../deploy/mysql-config.yaml
 kubectl apply -f ../deploy/memcached-config.yaml
@@ -48,56 +50,65 @@ CLUSTER_NAME=$(whoami)-${K8S_ENV}-${VERSION}
 # TODO: generate a unique cluster name or label upon each iteration to ensure entirely new metrics
 # example installation_method="e2e-manual-run-<random-string>"
 
+function curlQueryToWFDashboard() {
+  actual=$(curl -X GET --header "Accept: application/json" \
+   --header "Authorization: Bearer $API_TOKEN" \
+    "https://$WAVEFRONT_CLUSTER.wavefront.com/api/v2/chart/api?q=${query}&queryType=WQL&s=$AFTER_UNIX_TS&g=s&view=METRIC&sorted=false&cached=true&useRawQK=false" \
+    | jq '.timeseries[0].data[0][1]')
+}
+
 function waitForQueryMatchExact() {
   local query=$1
   local expected=$2
   local actual
   local loop_count=0
-  while [ $actual != $expected ] && [ $loop_count -lt 10 ]; do
+  while [[ $actual != $expected ]] && [[ $loop_count -lt $MAX_QUERY_TIMES ]]; do
     loop_count=$((loop_count+1))
-    echo $loop_count
-    echo "-@-@-@-@-@-BEGIN checking wavefront dashboard stuff for $query-@-@-@-@-@-"
-    actual=$(curl -X GET --header "Accept: application/json" \
-     --header "Authorization: Bearer $API_TOKEN" \
-     "https://$WAVEFRONT_CLUSTER.wavefront.com/api/v2/chart/api?q=${query}&queryType=WQL&s=$AFTER_UNIX_TS&g=s&view=METRIC&sorted=false&cached=true&useRawQK=false" \
-     | jq '.timeseries[0].data[0][1]')
-
+    echo "===============BEGIN checking wavefront dashboard stuff for $query"
+    echo "Trying query for $loop_count/$MAX_QUERY_TIMES times"
+    curlQueryToWFDashboard
     echo "Actual is: '$actual'"
     echo "Expected is '$expected'"
-    echo "-@-@-@-@-@-END checking wavefront dashboard stuff for $query-@-@-@-@-@-"
+    echo "===============END checking wavefront dashboard stuff for $query"
 
     sleep $CURL_WAIT
   done
+
+  if [[ $actual != $expected ]] ; then
+    EXIT_CODE=1
+  fi
 }
 
-# TODO: Yet to be query matched
-function waitForQueryExists() {
+function waitForQueryNonZero() {
   local query=$1
-  local actual
-#  while [[ $actual != "" ]]; do
-  while [[ $actual != *"Nothing matching"* ]]; do
-    echo "-@-@-@-@-@-BEGIN checking wavefront dashboard stuff for $query-@-@-@-@-@-"
-    actual=$(curl -X GET --header "Accept: application/json" \
-     --header "Authorization: Bearer $API_TOKEN" \
-     "https://$WAVEFRONT_CLUSTER.wavefront.com/api/v2/chart/api?q=${query}&queryType=WQL&s=$AFTER_UNIX_TS&g=s&view=METRIC&sorted=false&cached=true&useRawQK=false" \
-     | jq '.warnings')
+  local actual=0
+  local loop_count=0
+  while [[ $actual == null || $actual == 0 ]] && [[ $loop_count -lt $MAX_QUERY_TIMES ]]; do
+    loop_count=$((loop_count+1))
 
+    echo "===============BEGIN checking wavefront dashboard stuff for $query"
+    echo "Trying query for $loop_count/$MAX_QUERY_TIMES times"
+    curlQueryToWFDashboard
     echo "Actual is: '$actual'"
-    echo "-@-@-@-@-@-END checking wavefront dashboard stuff for $query-@-@-@-@-@-"
+    echo "Expected non zero"
+    echo "===============END checking wavefront dashboard stuff for $query"
 
     sleep $CURL_WAIT
   done
+
+  if [[ $actual == null || $actual == 0 ]] ; then
+    EXIT_CODE=1
+  fi
 }
 
 VERSION_IN_DECIMAL="${VERSION_FROM_FILE%.*}"
 VERSION_IN_DECIMAL+="$(echo ${VERSION_FROM_FILE} | cut -d '.' -f3)"
 PROM_EXAMPLE_EXPECTED_COUNT="3"
 
-# TODO: At this point it is an endless loop of querying. Need to add the actual checking and quitting the loop.
 waitForQueryMatchExact "ts(kubernetes.collector.version%2C%20cluster%3D%22$CLUSTER_NAME%22%20AND%20installation_method%3D%22manual%22)" "${VERSION_IN_DECIMAL}"
-#waitForQueryExists "ts(kubernetes.cluster.pod.count%2C%20cluster%3D%22$CLUSTER_NAME%22)" # TODO: Yet to be query matched
-#waitForQueryExists "ts(mysql.connections%2C%20cluster%3D%22$CLUSTER_NAME%22)" # TODO: Yet to be query matched
-#waitForQueryExists "ts(mysql.connectionstest%2C%20cluster%3D%22$CLUSTER_NAME%22)" # TODO: Using this to test a failure scenario error message.
+waitForQueryNonZero "ts(kubernetes.cluster.pod.count%2C%20cluster%3D%22$CLUSTER_NAME%22)"
+waitForQueryNonZero "ts(mysql.connections%2C%20cluster%3D%22$CLUSTER_NAME%22)"
 waitForQueryMatchExact "ts(prom-example.schedule.activity.decision.counter%2C%20cluster%3D%22$CLUSTER_NAME%22)" "${PROM_EXAMPLE_EXPECTED_COUNT}"
 
-#exit "$EXIT_CODE" # TODO: Not sure if we need any manipulation with $EXIT_CODE variable here, similar to test-integration.sh
+echo "Exit with code '$EXIT_CODE'"
+exit "$EXIT_CODE"
