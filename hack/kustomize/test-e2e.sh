@@ -32,7 +32,7 @@ NS=wavefront-collector
 
 echo "deploying configuration for additional targets"
 
-#kubectl create namespace $NS
+kubectl create namespace $NS
 kubectl config set-context --current --namespace="$NS"
 kubectl apply -f ../deploy/mysql-config.yaml
 kubectl apply -f ../deploy/memcached-config.yaml
@@ -105,6 +105,7 @@ VERSION_IN_DECIMAL="${VERSION_FROM_FILE%.*}"
 VERSION_IN_DECIMAL+="$(echo ${VERSION_FROM_FILE} | cut -d '.' -f3)"
 PROM_EXAMPLE_EXPECTED_COUNT="3"
 
+# TODO: make queries parallel?
 waitForQueryMatchExact "ts(kubernetes.collector.version%2C%20cluster%3D%22$CLUSTER_NAME%22%20AND%20installation_method%3D%22manual%22)" "${VERSION_IN_DECIMAL}"
 waitForQueryNonZero "ts(kubernetes.cluster.pod.count%2C%20cluster%3D%22$CLUSTER_NAME%22)"
 waitForQueryNonZero "ts(mysql.connections%2C%20cluster%3D%22$CLUSTER_NAME%22)"
