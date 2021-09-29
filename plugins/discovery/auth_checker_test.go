@@ -1,6 +1,7 @@
 package discovery_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -107,6 +108,10 @@ func TestAuthChecker(t *testing.T) {
 type AccessSpy struct {
 	callCount int
 	allowed   bool
+}
+
+func (spy *AccessSpy) CreateContext(ctx context.Context, sar *v1.SelfSubjectAccessReview) (result *v1.SelfSubjectAccessReview, err error) {
+	panic("implement me")
 }
 
 func (spy *AccessSpy) Create(sar *v1.SelfSubjectAccessReview) (result *v1.SelfSubjectAccessReview, err error) {

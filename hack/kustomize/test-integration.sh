@@ -51,7 +51,7 @@ cat files/metrics.jsonl  overlays/test-$K8S_ENV/metrics/additional.jsonl  > file
 
 while true ; do # wait until we get a good connection
   RES_CODE=$(curl --silent --output "$RES" --write-out "%{http_code}" --data-binary "@$DIR/files/combined-metrics.jsonl" "http://localhost:8888/metrics/diff")
-  [[ $RES_CODE -eq 0 ]] || break
+  [[ $RES_CODE -lt 200 ]] || break
 done
 
 if [[ $RES_CODE -gt 399 ]] ; then
