@@ -63,7 +63,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.17.17
 	k8s.io/apimachinery v0.17.17
-	k8s.io/apiserver v0.22.2
+	k8s.io/apiserver v0.0.0-20190116210010-30d6a91f580b
 	k8s.io/client-go v0.17.17
 	k8s.io/kube-openapi v0.0.0-20200410163147-594e756bea31 // indirect
 	k8s.io/kubernetes v1.15.0-alpha.0
@@ -89,11 +89,4 @@ exclude (
 	k8s.io/legacy-cloud-providers v0.0.0
 	k8s.io/metrics v0.0.0
 	k8s.io/sample-apiserver v0.0.0
-)
-
-replace (
-	k8s.io/api => k8s.io/api v0.17.17
-	k8s.io/apimachinery => k8s.io/apimachinery v0.17.17
-	k8s.io/apiserver => k8s.io/apiserver v0.0.0-20190116210010-30d6a91f580b
-	k8s.io/client-go => k8s.io/client-go v0.17.17
 )
