@@ -72,6 +72,20 @@ func TestPodEnricher(t *testing.T) {
 	}
 }
 
+func TestMissingPod(t *testing.T) {
+	tc := setup()
+	tc.pod = nil
+
+	podBasedEnricher := createEnricher(t, tc)
+
+	batch, err := podBasedEnricher.Process(tc.batch)
+	assert.NoError(t, err)
+
+	_, found := batch.MetricSets[metrics.PodContainerKey("ns1", "pod1", "c1")]
+	assert.False(t, found)
+
+}
+
 func TestStatusRunning(t *testing.T) {
 	tc := setup()
 	tc.pod.Status = kube_api.PodStatus{
@@ -226,8 +240,11 @@ func processBatch(t assert.TestingT, podBasedEnricher *PodBasedEnricher, batch *
 func createEnricher(t *testing.T, tc *enricherTestContext) *PodBasedEnricher {
 	store := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc})
 	podLister := v1listers.NewPodLister(store)
-	err := store.Add(tc.pod)
-	assert.NoError(t, err)
+	if (tc.pod != nil) {
+		err := store.Add(tc.pod)
+		assert.NoError(t, err)
+
+	}
 
 	labelCopier, err := util.NewLabelCopier(",", []string{}, []string{})
 	assert.NoError(t, err)

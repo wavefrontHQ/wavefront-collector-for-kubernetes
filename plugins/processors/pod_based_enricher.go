@@ -58,6 +58,7 @@ func (pbe *PodBasedEnricher) Process(batch *metrics.DataBatch) (*metrics.DataBat
 			podName := v.Labels[metrics.LabelPodName.Key]
 			pod, err := pbe.getPod(namespace, podName)
 			if err != nil {
+				delete(batch.MetricSets, k)
 				log.Debugf("Failed to get pod %s from cache: %v", metrics.PodKey(namespace, podName), err)
 				continue
 			}
