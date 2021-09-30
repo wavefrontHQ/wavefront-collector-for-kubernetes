@@ -13,11 +13,11 @@ pipeline {
     }
 
     stages {
-      stage("buildx") {
-        steps {
-          sh './hack/butler/install_docker_buildx.sh'
-        }
-      }
+//       stage("buildx") {
+//         steps {
+//           sh './hack/butler/install_docker_buildx.sh'
+//         }
+//       }
       stage("Publish") {
 //       check build status
 // bump version by creating branch and PR (default to patch but have a dropdown on our build with parameters)

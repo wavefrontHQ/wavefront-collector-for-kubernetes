@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -e
+set -ex
 
 cd "$(dirname "$0")" # cd to directory that bump-version.sh is in
 
