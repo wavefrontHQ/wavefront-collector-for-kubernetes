@@ -25,17 +25,16 @@ pipeline {
 //         stage("check build status") {
 //             sh 'curl github.com/...'
 //         }
-
          steps {
            sh './release/bump-version.sh "${BUMP_COMPONENT}"'
-           def GIT_BUMP_BRANCH_NAME = readFile(file: './GIT_BUMP_BRANCH_NAME')
-           sh 'echo "${GIT_BUMP_BRANCH_NAME}"'
+           sh 'cat ./release/GIT_BUMP_BRANCH_NAME'
          }
 
 //         parallel {
 //           stage("Publish to Harbor") {
 //             environment {
 //               HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability-robot")
+// GIT_BUMP_BRANCH_NAME = readFile(file: './release/GIT_BUMP_BRANCH_NAME')
 //             }
 //             steps {
 //               sh 'echo $HARBOR_CREDS_PSW | docker login "projects.registry.vmware.com/tanzu_observability" -u $HARBOR_CREDS_USR --password-stdin'
