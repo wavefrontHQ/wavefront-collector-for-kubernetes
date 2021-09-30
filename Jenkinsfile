@@ -26,17 +26,15 @@ pipeline {
 //             sh 'curl github.com/...'
 //         }
 
-        stage("Bump version") {
-            steps {
-        //         https://newbedev.com/passing-variable-from-shell-script-to-jenkins
-                sh './release/bump-version.sh "${BUMP_COMPONENT}"'
-                GIT_BUMP_BRANCH_NAME = sh(
-                  returnStdout: true,
-                  script: 'cat ./GIT_BUMP_BRANCH_NAME"'
-                )
-                sh 'echo "${GIT_BUMP_BRANCH_NAME}"'
-            }
-        }
+         steps {
+           sh './release/bump-version.sh "${BUMP_COMPONENT}"'
+           GIT_BUMP_BRANCH_NAME = sh(
+             returnStdout: true,
+             script: 'cat ./GIT_BUMP_BRANCH_NAME"'
+           )
+           sh 'echo "${GIT_BUMP_BRANCH_NAME}"'
+         }
+
 //         parallel {
 //           stage("Publish to Harbor") {
 //             environment {
