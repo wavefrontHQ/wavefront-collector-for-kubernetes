@@ -25,9 +25,17 @@ pipeline {
 //         stage("check build status") {
 //             sh 'curl github.com/...'
 //         }
+         withEnv(["PATH+EXTRA=${HOME}/go/bin"]){
+           steps {
+             sh './hack/butler/create-next-version.sh "${BUMP_COMPONENT}"'
+             sh 'cat ./hack/butler/GIT_BUMP_BRANCH_NAME'
+             sh 'cat ./hack/butler/NEXT_VERSION'
+           }
+         }
          steps {
-           sh './release/bump-version.sh "${BUMP_COMPONENT}"'
-           sh 'cat ./release/GIT_BUMP_BRANCH_NAME'
+           GIT_BUMP_BRANCH_NAME = readFile(file: './hack/butler/GIT_BUMP_BRANCH_NAME')
+           NEXT_VERSION = readFile(file: './hack/butler/NEXT_VERSION')
+           sh './hack/butler/bump-to-next-version.sh "${NEXT_VERSION}"'
          }
 
 //         parallel {
