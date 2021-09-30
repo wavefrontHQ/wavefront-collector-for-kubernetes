@@ -32,11 +32,11 @@ pipeline {
              sh 'cat ./hack/butler/NEXT_VERSION'
            }
            script {
-             env.GIT_BUMP_BRANCH_NAME = readFile './hack/butler/GIT_BUMP_BRANCH_NAME'
-             env.NEXT_VERSION = readFile './hack/butler/NEXT_VERSION'
+             GIT_BUMP_BRANCH_NAME = readFile './hack/butler/GIT_BUMP_BRANCH_NAME'
+             NEXT_VERSION = readFile './hack/butler/NEXT_VERSION'
            }
-           sh 'echo "${env.GIT_BUMP_BRANCH_NAME} &&&&&&&& ${env.NEXT_VERSION}"'
-           sh './hack/butler/bump-to-next-version.sh "${env.NEXT_VERSION}"'
+           sh './hack/butler/bump-to-next-version.sh "${NEXT_VERSION}"'
+           sh 'echo $GIT_BUMP_BRANCH_NAME &&&&&&&& $NEXT_VERSION"'
          }
 
 //         parallel {
