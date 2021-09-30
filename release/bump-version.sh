@@ -21,6 +21,7 @@ NEXT_VERSION=$(semver-cli inc "$BUMP_COMPONENT" "$OLD_VERSION")
 
 GIT_BRANCH="bump-${NEXT_VERSION}"
 git checkout -b "$GIT_BRANCH"
+echo "${GIT_BRANCH}" > ./GIT_BUMP_BRANCH_NAME
 
 ## Bump to next version
 sed -i "" "s/${OLD_VERSION}/${NEXT_VERSION}/g" "$DEPLOY_DIR/kubernetes/5-collector-daemonset.yaml"
