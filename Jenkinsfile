@@ -37,7 +37,7 @@ pipeline {
              OLD_VERSION = readFile './hack/butler/OLD_VERSION'
              NEXT_VERSION = readFile './hack/butler/NEXT_VERSION'
            }
-           sh 'echo $GIT_BUMP_BRANCH_NAME &&&&&&&& $NEXT_VERSION" &&&&&&&& $OLD_VERSION"'
+           sh 'echo GIT_BUMP_BRANCH_NAME=$GIT_BUMP_BRANCH_NAME NEXT_VERSION=$NEXT_VERSION" OLD_VERSION=$OLD_VERSION"'
            sh './hack/butler/bump-to-next-version.sh "${NEXT_VERSION}" "${OLD_VERSION}"'
          }
 
