@@ -31,9 +31,9 @@ pipeline {
              sh 'cat ./hack/butler/GIT_BUMP_BRANCH_NAME'
              sh 'cat ./hack/butler/NEXT_VERSION'
            }
-//            GIT_BUMP_BRANCH_NAME = readFile(file: './hack/butler/GIT_BUMP_BRANCH_NAME')
-//            NEXT_VERSION = readFile(file: './hack/butler/NEXT_VERSION')
-//            sh './hack/butler/bump-to-next-version.sh "${NEXT_VERSION}"'
+           def GIT_BUMP_BRANCH_NAME = readFile('./hack/butler/GIT_BUMP_BRANCH_NAME').trim()
+           def NEXT_VERSION = readFile('./hack/butler/NEXT_VERSION').trim()
+           sh './hack/butler/bump-to-next-version.sh "${NEXT_VERSION}"'
          }
 
 //         parallel {
