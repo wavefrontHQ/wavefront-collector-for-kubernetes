@@ -20,5 +20,6 @@ NEXT_VERSION=$(semver-cli inc "$BUMP_COMPONENT" "$OLD_VERSION")
 echo "${NEXT_VERSION}" > ./NEXT_VERSION
 
 GIT_BRANCH="bump-${NEXT_VERSION}"
+git branch -D "$GIT_BRANCH"
 git checkout -b "$GIT_BRANCH"
 echo "${GIT_BRANCH}" > ./GIT_BUMP_BRANCH_NAME
