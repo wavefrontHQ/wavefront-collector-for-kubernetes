@@ -28,10 +28,7 @@ pipeline {
 
          steps {
            sh './release/bump-version.sh "${BUMP_COMPONENT}"'
-           GIT_BUMP_BRANCH_NAME = sh(
-             returnStdout: true,
-             script: 'cat ./GIT_BUMP_BRANCH_NAME"'
-           )
+           def GIT_BUMP_BRANCH_NAME = readFile(file: './GIT_BUMP_BRANCH_NAME')
            sh 'echo "${GIT_BUMP_BRANCH_NAME}"'
          }
 
