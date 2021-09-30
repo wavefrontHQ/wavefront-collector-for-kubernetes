@@ -5,6 +5,7 @@ cd "$(dirname "$0")" # cd to directory that bump-version.sh is in
 
 pushd ../
   make semver-cli
+  export PATH=$PATH:$GOPATH/bin
 popd
 
 BUMP_COMPONENT=$1
