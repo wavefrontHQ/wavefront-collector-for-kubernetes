@@ -29,14 +29,16 @@ pipeline {
            withEnv(["PATH+EXTRA=${HOME}/go/bin"]){
              sh './hack/butler/create-next-version.sh "${BUMP_COMPONENT}"'
              sh 'cat ./hack/butler/GIT_BUMP_BRANCH_NAME'
+             sh 'cat ./hack/butler/OLD_VERSION'
              sh 'cat ./hack/butler/NEXT_VERSION'
            }
            script {
              GIT_BUMP_BRANCH_NAME = readFile './hack/butler/GIT_BUMP_BRANCH_NAME'
+             OLD_VERSION = readFile './hack/butler/OLD_VERSION'
              NEXT_VERSION = readFile './hack/butler/NEXT_VERSION'
            }
-           sh './hack/butler/bump-to-next-version.sh "${NEXT_VERSION}"'
-           sh 'echo $GIT_BUMP_BRANCH_NAME &&&&&&&& $NEXT_VERSION"'
+           sh 'echo $GIT_BUMP_BRANCH_NAME &&&&&&&& $NEXT_VERSION" &&&&&&&& $OLD_VERSION"'
+           sh './hack/butler/bump-to-next-version.sh "${NEXT_VERSION}" "${OLD_VERSION}"'
          }
 
 //         parallel {

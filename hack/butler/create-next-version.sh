@@ -16,6 +16,7 @@ fi
 
 
 OLD_VERSION=$(cat ../../release/VERSION)
+echo "${OLD_VERSION}" > ./OLD_VERSION
 NEXT_VERSION=$(semver-cli inc "$BUMP_COMPONENT" "$OLD_VERSION")
 echo "${NEXT_VERSION}" > ./NEXT_VERSION
 
