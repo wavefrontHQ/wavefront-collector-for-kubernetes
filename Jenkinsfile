@@ -41,7 +41,7 @@ pipeline {
            sh './hack/butler/bump-to-next-version.sh "${NEXT_VERSION}" "${OLD_VERSION}"'
 
          }
-         cleanWs()
+
 //         parallel {
 //           stage("Publish to Harbor") {
 //             environment {
@@ -82,6 +82,11 @@ pipeline {
 //           sh './hack/butler/generate_slack_notification.sh'
 //         }
 //       }
+    }
+    post {
+        always {
+            cleanWs()
+        }
     }
 }
 
