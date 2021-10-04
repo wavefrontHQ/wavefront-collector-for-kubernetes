@@ -38,8 +38,8 @@ pipeline {
              env.NEXT_VERSION = readFile('./hack/butler/NEXT_VERSION').trim()
            }
            sh 'echo "${GIT_BUMP_BRANCH_NAME}"'
-           sh 'git config --global user.email "pselvaganesa@vmware.com"' // TODO: get this from Jenkins--whoever clicks the build
-           sh 'git config --global user.name "Priyadharshini Selvaganesan"' // TODO: ^^
+           sh 'git config --global user.email "svc.wf-jenkins@vmware.com"' // TODO: get this from Jenkins--whoever clicks the build
+           sh 'git config --global user.name "svc.wf-jenkins"' // TODO: ^^
            sh './hack/butler/bump-to-next-version.sh "${NEXT_VERSION}" "${OLD_VERSION}"'
 
          }
