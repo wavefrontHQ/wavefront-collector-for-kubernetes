@@ -36,9 +36,10 @@ pipeline {
              env.GIT_BUMP_BRANCH_NAME = readFile('./hack/butler/GIT_BUMP_BRANCH_NAME').trim()
              env.OLD_VERSION = readFile('./hack/butler/OLD_VERSION').trim()
              env.NEXT_VERSION = readFile('./hack/butler/NEXT_VERSION').trim()
-             sh 'echo "${GIT_BUMP_BRANCH_NAME}"'
-             sh './hack/butler/bump-to-next-version.sh "${NEXT_VERSION}" "${OLD_VERSION}"'
            }
+           sh 'echo "${GIT_BUMP_BRANCH_NAME}"'
+           sh './hack/butler/bump-to-next-version.sh "${NEXT_VERSION}" "${OLD_VERSION}"'
+
          }
 
 //         parallel {
