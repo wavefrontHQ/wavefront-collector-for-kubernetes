@@ -38,11 +38,10 @@ pipeline {
              env.NEXT_VERSION = readFile('./hack/butler/NEXT_VERSION').trim()
            }
            sh 'echo "${GIT_BUMP_BRANCH_NAME}"'
-           withCredentials([usernamePassword(credentialsId: 'GITHUB_TOKEN',
-                            usernameVariable: 'username',
-                            passwordVariable: 'password')]){
-             sh './hack/butler/bump-to-next-version.sh "${NEXT_VERSION}" "${OLD_VERSION}"'
-           }
+           sh 'git config --global user.email "pselvaganesa@vmware.com"'
+           sh 'git config --global user.name "Priya Selvaganesan"'
+           sh './hack/butler/bump-to-next-version.sh "${NEXT_VERSION}" "${OLD_VERSION}"'
+
          }
 
 //         parallel {
