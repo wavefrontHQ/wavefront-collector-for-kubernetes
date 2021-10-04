@@ -1,5 +1,7 @@
 #!/bin/bash -e
 
+git config --global http.sslVerify true
+
 #
 # gcloud
 #
