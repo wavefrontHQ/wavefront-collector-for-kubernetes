@@ -1,7 +1,5 @@
 #!/bin/bash -e
 
-
-
 #
 # gcloud
 #
@@ -49,3 +47,4 @@ sudo mv ./kustomize /usr/local/bin
 #
 git config --global http.sslVerify false
 make semver-cli
+git config --global http.sslVerify true
