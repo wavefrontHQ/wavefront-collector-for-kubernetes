@@ -45,6 +45,4 @@ sudo mv ./kustomize /usr/local/bin
 #
 # semver cli
 #
-git config --global http.sslVerify false
 make semver-cli
-git config --global http.sslVerify true
