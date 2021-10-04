@@ -8,11 +8,8 @@ sed -i "s/${OLD_VERSION}/${NEXT_VERSION}/g" "deploy/kubernetes/5-collector-daemo
 sed -i "s/${OLD_VERSION}/${NEXT_VERSION}/g" "deploy/openshift/collector/3-collector-deployment.yaml"
 echo "$NEXT_VERSION" > ./VERSION
 
-echo "What is in yaml"
-cat deploy/kubernetes/5-collector-daemonset.yaml
-
-git diff
 git commit -am "bump version to ${NEXT_VERSION}"
+
 git push --set-upstream origin "$GIT_BRANCH"
 
 gh pr create --base master --fill --head "$GIT_BRANCH" --web

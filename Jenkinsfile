@@ -39,17 +39,10 @@ pipeline {
              env.NEXT_VERSION = readFile('./hack/butler/NEXT_VERSION').trim()
            }
            sh 'echo "${GIT_BUMP_BRANCH_NAME}"'
-//            sh 'git config --global user.email "svc.wf-jenkins@vmware.com"' // TODO: get this from Jenkins--whoever clicks the build
-//            sh 'git config --global user.name "svc.wf-jenkins"' // TODO: ^^
-           withCredentials([usernamePassword(credentialsId: env.GIT_CREDENTIAL_ID, usernameVariable: 'USER', passwordVariable: 'PASS')]) {
-               script {
-                   env.encodedPass=URLEncoder.encode(PASS, "UTF-8")
-                   env.justUsername=USER.split('@')[0]
-               }
-               sh 'git remote set-url origin https://${justUsername}:${encodedPass}@github.com/wavefronthq/wavefront-collector-for-kubernetes'
+           sshagent(credentials: ['shaoh-github-jenkins']) {
+             sh 'git remote set-url origin git@github.com:helen-shao/wavefronthq/wavefront-collector-for-kubernetes.git'
+             sh './hack/butler/bump-to-next-version.sh "${NEXT_VERSION}" "${OLD_VERSION}"'
            }
-           sh './hack/butler/bump-to-next-version.sh "${NEXT_VERSION}" "${OLD_VERSION}"'
-
          }
 
 //         parallel {
