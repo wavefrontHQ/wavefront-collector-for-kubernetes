@@ -72,6 +72,52 @@ func TestPodEnricher(t *testing.T) {
 	}
 }
 
+func TestDropsContainerMetricWhenPodMissing(t *testing.T) {
+	tc := setup()
+	tc.pod = nil
+
+	podBasedEnricher := createEnricher(t, tc)
+
+	batch, err := podBasedEnricher.Process(tc.batch)
+	assert.NoError(t, err)
+
+	assert.Equal(t, 0, len(batch.MetricSets))
+	_, found := batch.MetricSets[metrics.PodContainerKey("ns1", "pod1", "c1")]
+	assert.False(t, found)
+}
+
+func TestDropsPodMetricWhenPodMissing(t *testing.T) {
+	tc := setup()
+	tc.pod = nil
+	//tc.batch = createPodBatch()
+
+	podBasedEnricher := createEnricher(t, tc)
+
+	batch, err := podBasedEnricher.Process(tc.batch)
+	assert.NoError(t, err)
+
+	assert.Equal(t, 0, len(batch.MetricSets))
+	_, found := batch.MetricSets[metrics.PodKey("ns1", "pod1")]
+	assert.False(t, found)
+}
+
+func TestMultiplePodsWithOneMissing(t *testing.T) {
+	tc := setup() // only returns pod1
+	tc.batch = createPodBatch("pod1", "MissingPod")
+	podBasedEnricher := createEnricher(t, tc)
+
+	batch, err := podBasedEnricher.Process(tc.batch)
+	assert.NoError(t, err)
+
+	assert.Equal(t, 3, len(batch.MetricSets))
+
+	_, found := batch.MetricSets[metrics.PodKey("ns1", "MissingPod")]
+	assert.False(t, found)
+
+	_, found = batch.MetricSets[metrics.PodKey("ns1", "pod1")]
+	assert.True(t, found)
+}
+
 func TestStatusRunning(t *testing.T) {
 	tc := setup()
 	tc.pod.Status = kube_api.PodStatus{
@@ -226,8 +272,11 @@ func processBatch(t assert.TestingT, podBasedEnricher *PodBasedEnricher, batch *
 func createEnricher(t *testing.T, tc *enricherTestContext) *PodBasedEnricher {
 	store := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc})
 	podLister := v1listers.NewPodLister(store)
-	err := store.Add(tc.pod)
-	assert.NoError(t, err)
+	if tc.pod != nil {
+		err := store.Add(tc.pod)
+		assert.NoError(t, err)
+
+	}
 
 	labelCopier, err := util.NewLabelCopier(",", []string{}, []string{})
 	assert.NoError(t, err)
@@ -253,20 +302,6 @@ func checkRequests(t *testing.T, ms *metrics.MetricSet, cpu, mem, storage, other
 		assert.True(t, found)
 		assert.Equal(t, other, val.IntValue)
 	}
-}
-
-func checkLimits(t *testing.T, ms *metrics.MetricSet, cpu, mem int64, storage int64) {
-	cpuVal, found := ms.MetricValues[metrics.MetricCpuLimit.Name]
-	assert.True(t, found)
-	assert.Equal(t, cpu, cpuVal.IntValue)
-
-	memVal, found := ms.MetricValues[metrics.MetricMemoryLimit.Name]
-	assert.True(t, found)
-	assert.Equal(t, mem, memVal.IntValue)
-
-	storageVal, found := ms.MetricValues[metrics.MetricEphemeralStorageLimit.Name]
-	assert.True(t, found)
-	assert.Equal(t, storage, storageVal.IntValue)
 }
 
 func setup() *enricherTestContext {
@@ -316,6 +351,20 @@ func setup() *enricherTestContext {
 	}
 }
 
+func checkLimits(t *testing.T, ms *metrics.MetricSet, cpu, mem int64, storage int64) {
+	cpuVal, found := ms.MetricValues[metrics.MetricCpuLimit.Name]
+	assert.True(t, found)
+	assert.Equal(t, cpu, cpuVal.IntValue)
+
+	memVal, found := ms.MetricValues[metrics.MetricMemoryLimit.Name]
+	assert.True(t, found)
+	assert.Equal(t, mem, memVal.IntValue)
+
+	storageVal, found := ms.MetricValues[metrics.MetricEphemeralStorageLimit.Name]
+	assert.True(t, found)
+	assert.Equal(t, storage, storageVal.IntValue)
+}
+
 func createContainerBatch() *metrics.DataBatch {
 	return &metrics.DataBatch{
 		Timestamp: time.Now(),
@@ -333,20 +382,25 @@ func createContainerBatch() *metrics.DataBatch {
 	}
 }
 
-func createPodBatch() *metrics.DataBatch {
-	return &metrics.DataBatch{
-		Timestamp: time.Now(),
-		MetricSets: map[string]*metrics.MetricSet{
-			metrics.PodKey("ns1", "pod1"): {
-				Labels: map[string]string{
-					metrics.LabelMetricSetType.Key: metrics.MetricSetTypePod,
-					metrics.LabelPodName.Key:       "pod1",
-					metrics.LabelNamespaceName.Key: "ns1",
-				},
-				MetricValues: map[string]metrics.MetricValue{},
-			},
-		},
+func createPodBatch(podNames ...string) *metrics.DataBatch {
+	if len(podNames) == 0 {
+		podNames = append(podNames, "pod1")
 	}
+	dataBatch := metrics.DataBatch{
+		Timestamp:  time.Now(),
+		MetricSets: map[string]*metrics.MetricSet{},
+	}
+	for _, podName := range podNames {
+		dataBatch.MetricSets[metrics.PodKey("ns1", podName)] = &metrics.MetricSet{
+			Labels: map[string]string{
+				metrics.LabelMetricSetType.Key: metrics.MetricSetTypePod,
+				metrics.LabelPodName.Key:       podName,
+				metrics.LabelNamespaceName.Key: "ns1",
+			},
+			MetricValues: map[string]metrics.MetricValue{},
+		}
+	}
+	return &dataBatch
 }
 
 func createCrashState(startTime time.Time, crashTime time.Time) kube_api.ContainerState {
