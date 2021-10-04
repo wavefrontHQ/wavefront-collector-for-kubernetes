@@ -44,8 +44,9 @@ pipeline {
            withCredentials([usernamePassword(credentialsId: env.GIT_CREDENTIAL_ID, usernameVariable: 'USER', passwordVariable: 'PASS')]) {
                script {
                    env.encodedPass=URLEncoder.encode(PASS, "UTF-8")
+                   env.justUsername=USER.split('@')[0]
                }
-               sh 'git remote set-url origin https://${USER}:${encodedPass}@github.com/wavefronthq/wavefront-collector-for-kubernetes'
+               sh 'git remote set-url origin https://${justUsername}:${encodedPass}@github.com/wavefronthq/wavefront-collector-for-kubernetes'
            }
            sh './hack/butler/bump-to-next-version.sh "${NEXT_VERSION}" "${OLD_VERSION}"'
 
