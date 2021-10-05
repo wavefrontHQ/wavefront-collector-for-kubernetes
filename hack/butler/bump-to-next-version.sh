@@ -12,4 +12,10 @@ git commit -am "bump version to ${NEXT_VERSION}"
 
 git push --set-upstream origin "$GIT_BRANCH"
 
-gh pr create --base master --fill --head "$GIT_BRANCH" --web
+#gh pr create --base master --fill --head "$GIT_BRANCH" --web
+
+curl -v \
+  -X POST \
+  -H "Accept: application/vnd.github.v3+json" \
+  https://api.github.com/repos/wavefrontHQ/wavefront-collector-for-kubernetes/pulls \
+  -d '{"head":"$GIT_BRANCH","base":"master"}'
