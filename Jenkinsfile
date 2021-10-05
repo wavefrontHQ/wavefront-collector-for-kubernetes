@@ -39,8 +39,11 @@ pipeline {
              env.NEXT_VERSION = readFile('./hack/butler/NEXT_VERSION').trim()
            }
            sh 'echo "${GIT_BUMP_BRANCH_NAME}"'
-           sshagent(credentials: ['shaoh-github-jenkins']) {
-             sh 'git remote set-url origin git@github.com:helen-shao/wavefronthq/wavefront-collector-for-kubernetes.git'
+           withCredentials([string(credentialsId: 'GITHUB_TOKEN', variable: 'TOKEN')]) {
+             sh 'git remote set-url origin https://${TOKEN}@github.com/wavefronthq/wavefront-collector-for-kubernetes.git'
+             sh 'git config --global user.email "svc.wf-jenkins@vmware.com"'
+             sh 'git config --global user.name "svc.wf-jenkins"'
+             sh 'git checkout -b ${GIT_BRANCH}'
              sh './hack/butler/bump-to-next-version.sh "${NEXT_VERSION}" "${OLD_VERSION}"'
            }
          }
