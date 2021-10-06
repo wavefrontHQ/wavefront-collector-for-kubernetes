@@ -14,7 +14,7 @@ git push --set-upstream origin "$GIT_BRANCH"
 
 #gh pr create --base master --fill --head "$GIT_BRANCH" --web
 
-curl -v \
+curl \
   -X POST \
   -H "Authorization: token ${TOKEN}" \
   -d "{\"head\":\"${GIT_BRANCH}\",\"base\":\"master\",\"title\":\"Bump version to ${NEXT_VERSION}\"}" \
