@@ -44,7 +44,7 @@ pipeline {
              sh 'git config --global user.email "svc.wf-jenkins@vmware.com"'
              sh 'git config --global user.name "svc.wf-jenkins"'
              sh 'git checkout -b ${GIT_BRANCH}'
-             sh './hack/butler/bump-to-next-version.sh "${NEXT_VERSION}" "${OLD_VERSION}"'
+             sh './hack/butler/bump-to-next-version.sh'
            }
          }
 
