@@ -12,7 +12,7 @@ git commit -am "bump version to ${NEXT_VERSION}"
 
 git push --set-upstream origin "$GIT_BRANCH"
 
-#gh pr create --base master --fill --head "$GIT_BRANCH" --web
+gh pr create --base master --fill --head "$GIT_BRANCH" --web
 
 curl -v \
   -X POST \
