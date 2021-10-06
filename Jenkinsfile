@@ -19,7 +19,7 @@ pipeline {
 //           sh './hack/butler/install_docker_buildx.sh'
 //         }
 //       }
-      stage("Publish") {
+      stage("Bump with PR") {
 //       check build status
 // bump version by creating branch and PR (default to patch but have a dropdown on our build with parameters)
 // use branch in below publish step
@@ -47,6 +47,16 @@ pipeline {
              sh './hack/butler/bump-to-next-version.sh'
            }
          }
+      }
+
+//         deploy to GKE and EKS and run manual tests
+// now we have confidence in the validity of our RC release
+      stage("Deploy and Test") {
+        steps {
+          sh 'GKE_CLUSTER_NAME=jenkins-testing-rc make create-gke-cluster'
+          sh 'make e2e-test'
+        }
+      }
 
 //         parallel {
 //           stage("Publish to Harbor") {
@@ -69,10 +79,8 @@ pipeline {
 //             }
 //           }
 //         }
-//         deploy to GKE and EKS and run manual tests
-// now we have confidence in the validity of our RC release
-      }
 
+// TODO: when / how do we want to trigger this?
 //       stage("Github Release And Slack Notification") {
 //         environment {
 //           GITHUB_CREDS_PSW = credentials("GITHUB_TOKEN")
