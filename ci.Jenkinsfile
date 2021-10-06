@@ -7,7 +7,7 @@ pipeline {
 
     environment {
         RELEASE_TYPE = "alpha"
-        VERSION_POSTFIX = "-alpha-${GIT_COMMIT}"
+        VERSION_POSTFIX = "alpha-${GIT_COMMIT}"
 
         PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
         DOCKER_IMAGE = "collector-snapshot"
