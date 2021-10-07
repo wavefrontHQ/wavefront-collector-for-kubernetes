@@ -10,7 +10,7 @@ cat ./release/VERSION
 
 git commit -am "bump version to ${NEXT_VERSION}"
 
-git push --set-upstream origin "$GIT_BRANCH"
+git push --set-upstream origin "${GIT_BUMP_BRANCH_NAME}"
 
 curl \
   -X POST \
