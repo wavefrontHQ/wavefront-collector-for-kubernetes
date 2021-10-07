@@ -14,14 +14,13 @@ pipeline {
     }
 
     stages {
-//       stage("buildx") {
-//         steps {
-//           sh './hack/butler/install_docker_buildx.sh'
-//         }
-//       }
+      stage("buildx") {
+        steps {
+          sh './hack/butler/install_docker_buildx.sh'
+        }
+      }
       stage("Bump with PR") {
 //       check build status
-// bump version by creating branch and PR (default to patch but have a dropdown on our build with parameters)
 // use branch in below publish step
 //         stage("check build status") {
 //             sh 'curl github.com/...'
@@ -49,53 +48,55 @@ pipeline {
          }
       }
 
-//         deploy to GKE and EKS and run manual tests
-// now we have confidence in the validity of our RC release
-      stage("Deploy and Test") {
+        parallel {
+          stage("Publish to Harbor") {
+            environment {
+              HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability-robot")
+//               GIT_BUMP_BRANCH_NAME = readFile(file: './release/GIT_BUMP_BRANCH_NAME')
+            }
+            steps {
+              sh 'echo $HARBOR_CREDS_PSW | docker login "projects.registry.vmware.com/tanzu_observability" -u $HARBOR_CREDS_USR --password-stdin'
+              sh 'PREFIX="projects.registry.vmware.com/tanzu_observability" HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') DOCKER_IMAGE="kubernetes-collector" make publish'
+              sh 'git rev-parse --abbrev-ref HEAD'
+            }
+          }
+          stage("Publish to Docker Hub") {
+            environment {
+              DOCKERHUB_CREDS=credentials('Dockerhub_svcwfjenkins')
+            }
+            steps {
+              sh 'echo $DOCKERHUB_CREDS_PSW | docker login -u $DOCKERHUB_CREDS_USR --password-stdin'
+              sh 'PREFIX="wavefronthq" make publish'
+              sh 'git rev-parse --abbrev-ref HEAD'
+            }
+          }
+        }
+
+        // //         deploy to GKE and EKS and run manual tests
+        // // now we have confidence in the validity of our RC release
+        //       stage("Deploy and Test") {
+        //         steps {
+        //           sh 'GKE_CLUSTER_NAME=jenkins-testing-rc make create-gke-cluster'
+        //           // Use deploy-local.sh to deploy collector to the cluster.
+        //           sh 'make e2e-test' // Should not deploy, but run the test.
+        //         }
+        //       }
+
+
+      stage("Github Release And Slack Notification") {
+        environment {
+          GITHUB_CREDS_PSW = credentials("GITHUB_TOKEN")
+          CHANNEL_ID = credentials("k8s-assist-slack-ID")
+          SLACK_WEBHOOK_URL = credentials("slack_hook_URL")
+          BUILD_USER_ID = getBuildUserID()
+          BUILD_USER = getBuildUser()
+        }
+        when{ environment name: 'RELEASE_TYPE', value: 'release' }
         steps {
-          sh 'GKE_CLUSTER_NAME=jenkins-testing-rc make create-gke-cluster'
-          sh 'make e2e-test'
+          sh './hack/butler/generate_github_release.sh'
+          sh './hack/butler/generate_slack_notification.sh'
         }
       }
-
-//         parallel {
-//           stage("Publish to Harbor") {
-//             environment {
-//               HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability-robot")
-// GIT_BUMP_BRANCH_NAME = readFile(file: './release/GIT_BUMP_BRANCH_NAME')
-//             }
-//             steps {
-//               sh 'echo $HARBOR_CREDS_PSW | docker login "projects.registry.vmware.com/tanzu_observability" -u $HARBOR_CREDS_USR --password-stdin'
-//               sh 'PREFIX="projects.registry.vmware.com/tanzu_observability" HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') DOCKER_IMAGE="kubernetes-collector" make publish'
-//             }
-//           }
-//           stage("Publish to Docker Hub") {
-//             environment {
-//               DOCKERHUB_CREDS=credentials('Dockerhub_svcwfjenkins')
-//             }
-//             steps {
-//               sh 'echo $DOCKERHUB_CREDS_PSW | docker login -u $DOCKERHUB_CREDS_USR --password-stdin'
-//               sh 'PREFIX="wavefronthq" make publish'
-//             }
-//           }
-//         }
-
-// TODO: when / how do we want to trigger this?
-//       stage("Github Release And Slack Notification") {
-//         environment {
-//           GITHUB_CREDS_PSW = credentials("GITHUB_TOKEN")
-//           CHANNEL_ID = credentials("k8s-assist-slack-ID")
-//           SLACK_WEBHOOK_URL = credentials("slack_hook_URL")
-//           BUILD_USER_ID = getBuildUserID()
-//           BUILD_USER = getBuildUser()
-//         }
-//         when{ environment name: 'RELEASE_TYPE', value: 'release' }
-//         steps {
-// //         approve and merge PR into master using gh API
-//           sh './hack/butler/generate_github_release.sh'
-//           sh './hack/butler/generate_slack_notification.sh'
-//         }
-//       }
     }
     post {
         always {
