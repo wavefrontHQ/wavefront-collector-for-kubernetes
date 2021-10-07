@@ -1,15 +1,13 @@
 #!/usr/bin/env bash
 set -e
 
-make clean-deployment
-make deploy-targets
-
 cd "$(dirname "$0")" # cd to deploy-local.sh is in
 
-function print_msg_and_exit() {
-    echo -e "$1"
-    exit 1
-}
+source "../hack/deploy/k8s-utils.sh"
+
+if [[ -z ${WAVEFRONT_TOKEN} ]] ; then
+    print_msg_and_exit "WAVEFRONT_TOKEN required"
+fi
 
 NAMESPACE=wavefront-collector
 ROOT_DIR=$(git rev-parse --show-toplevel)
@@ -22,11 +20,12 @@ CURRENT_COLLECTOR_REPO=${CURRENT_COLLECTOR_REPO:-$COLLECTOR_REPO}
 WF_CLUSTER=nimba
 K8S_CLUSTER=$(whoami)-${CURRENT_VERSION}-release-test
 
-echo "Using cluster name '$K8S_CLUSTER' in '$WF_CLUSTER'"
+pushd ../
+  make clean-deployment
+  make deploy-targets
+popd
 
-if [[ -z ${WAVEFRONT_TOKEN} ]] ; then
-    print_msg_and_exit "wavefront token required"
-fi
+echo "Using cluster name '$K8S_CLUSTER' in '$WF_CLUSTER'"
 
 echo "Temp dir: $TEMP_DIR"
 
