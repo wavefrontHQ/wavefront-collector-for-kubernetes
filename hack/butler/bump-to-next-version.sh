@@ -14,5 +14,5 @@ git push --set-upstream origin "$GIT_BRANCH"
 curl \
   -X POST \
   -H "Authorization: token ${TOKEN}" \
-  -d "{\"head\":\"${GIT_BRANCH}\",\"base\":\"master\",\"title\":\"Bump version to ${NEXT_VERSION}\"}" \
+  -d "{\"head\":\"${GIT_BUMP_BRANCH_NAME}\",\"base\":\"master\",\"title\":\"Bump version to ${NEXT_VERSION}\"}" \
   https://api.github.com/repos/wavefrontHQ/wavefront-collector-for-kubernetes/pulls

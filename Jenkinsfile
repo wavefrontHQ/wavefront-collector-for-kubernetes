@@ -43,7 +43,7 @@ pipeline {
              sh 'git remote set-url origin https://${TOKEN}@github.com/wavefronthq/wavefront-collector-for-kubernetes.git'
              sh 'git config --global user.email "svc.wf-jenkins@vmware.com"'
              sh 'git config --global user.name "svc.wf-jenkins"'
-             sh 'git checkout -b ${GIT_BRANCH}'
+//              sh 'git checkout -b ${GIT_BUMP_BRANCH_NAME}'
              sh './hack/butler/bump-to-next-version.sh'
            }
          }
