@@ -14,21 +14,21 @@ function print_msg_and_exit() {
 NAMESPACE=wavefront-collector
 ROOT_DIR=$(git rev-parse --show-toplevel)
 TEMP_DIR=$(mktemp -d)
-CURRENT_VERSION= #set if you want to test something other than version in the 5-collector-daemonset.yaml
 VERSION=$(cat ./VERSION) #version you want to test
+CURRENT_VERSION=${CURRENT_VERSION:-$VERSION}
+COLLECTOR_REPO=projects.registry.vmware.com/tanzu_observability/kubernetes-collector
+CURRENT_COLLECTOR_REPO=${CURRENT_COLLECTOR_REPO:-$COLLECTOR_REPO}
 
 WF_CLUSTER=nimba
-K8S_CLUSTER=$(whoami)-${VERSION}-release-test
+K8S_CLUSTER=$(whoami)-${CURRENT_VERSION}-release-test
 
 echo "Using cluster name '$K8S_CLUSTER' in '$WF_CLUSTER'"
 
 if [[ -z ${WAVEFRONT_TOKEN} ]] ; then
-    #TODO: source these from environment variables if not provided
     print_msg_and_exit "wavefront token required"
 fi
 
 echo "Temp dir: $TEMP_DIR"
-
 
 cp "$ROOT_DIR"/deploy/kubernetes/*  "$TEMP_DIR/."
 rm "$TEMP_DIR"/kustomization.yaml
@@ -42,10 +42,9 @@ pushd "$TEMP_DIR"
   sed -i '' "s/k8s-cluster/${K8S_CLUSTER}/g" "$TEMP_DIR/4-collector-config.yaml"
   sed -i '' "s/wavefront-proxy.default/wavefront-proxy.${NAMESPACE}/g" "$TEMP_DIR/4-collector-config.yaml"
 
-if [[ -n ${CURRENT_VERSION} ]] ; then
-    echo "has current version"
-    sed -i '' "s/$CURRENT_VERSION/$VERSION/g" "$TEMP_DIR/5-collector-daemonset.yaml"
-fi
+  echo "using version ${CURRENT_VERSION}"
+  sed -i '' "s/$VERSION/$CURRENT_VERSION/g" "$TEMP_DIR/5-collector-daemonset.yaml"
+  sed -i '' "s/$COLLECTOR_REPO/$CURRENT_COLLECTOR_REPO/g" "$TEMP_DIR/5-collector-daemonset.yaml"
 
   kubectl config set-context --current --namespace="$NAMESPACE"
   kubectl apply -f "$TEMP_DIR/."
