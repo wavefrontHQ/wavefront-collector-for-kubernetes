@@ -10,7 +10,7 @@ pipeline {
         VERSION_POSTFIX = "-alpha-${GIT_COMMIT.substring(0, 8)}"
 
         PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
-        DOCKER_IMAGE = "collector-snapshot"
+        DOCKER_IMAGE = "kubernetes-collector-snapshot"
 
         HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability_keights_saas-robot")
     }
