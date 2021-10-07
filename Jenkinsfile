@@ -20,11 +20,11 @@ pipeline {
         }
       }
       stage("Bump with PR") {
-//       check build status
-// use branch in below publish step
-//         stage("check build status") {
-//             sh 'curl github.com/...'
-//         }
+            //       check build status
+            // use branch in below publish step
+            //         stage("check build status") {
+            //             sh 'curl github.com/...'
+            //         }
          steps {
            withEnv(["PATH+EXTRA=${HOME}/go/bin"]){
              sh './hack/butler/create-next-version.sh "${BUMP_COMPONENT}"'
@@ -42,17 +42,17 @@ pipeline {
              sh 'git remote set-url origin https://${TOKEN}@github.com/wavefronthq/wavefront-collector-for-kubernetes.git'
              sh 'git config --global user.email "svc.wf-jenkins@vmware.com"'
              sh 'git config --global user.name "svc.wf-jenkins"'
-//              sh 'git checkout -b ${GIT_BUMP_BRANCH_NAME}'
+              //sh 'git checkout -b ${GIT_BUMP_BRANCH_NAME}'
              sh './hack/butler/bump-to-next-version.sh'
            }
          }
       }
-
+      stage(Publish) {
         parallel {
           stage("Publish to Harbor") {
             environment {
               HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability-robot")
-//               GIT_BUMP_BRANCH_NAME = readFile(file: './release/GIT_BUMP_BRANCH_NAME')
+              // GIT_BUMP_BRANCH_NAME = readFile(file: './release/GIT_BUMP_BRANCH_NAME')
             }
             steps {
               sh 'echo $HARBOR_CREDS_PSW | docker login "projects.registry.vmware.com/tanzu_observability" -u $HARBOR_CREDS_USR --password-stdin'
@@ -71,6 +71,7 @@ pipeline {
             }
           }
         }
+      }
 
         // //         deploy to GKE and EKS and run manual tests
         // // now we have confidence in the validity of our RC release
