@@ -44,7 +44,7 @@ pushd "$TEMP_DIR"
 
   echo "using version ${CURRENT_VERSION}"
   sed -i '' "s/$VERSION/$CURRENT_VERSION/g" "$TEMP_DIR/5-collector-daemonset.yaml"
-  sed -i '' "s/$COLLECTOR_REPO/$CURRENT_COLLECTOR_REPO/g" "$TEMP_DIR/5-collector-daemonset.yaml"
+  sed -i '' "s%${COLLECTOR_REPO}%${CURRENT_COLLECTOR_REPO}%g" "$TEMP_DIR/5-collector-daemonset.yaml"
 
   kubectl config set-context --current --namespace="$NAMESPACE"
   kubectl apply -f "$TEMP_DIR/."
