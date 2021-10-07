@@ -20,29 +20,19 @@ pipeline {
         }
       }
       stage("Bump with PR") {
-            //       check build status
-            // use branch in below publish step
-            //         stage("check build status") {
-            //             sh 'curl github.com/...'
-            //         }
          steps {
            withEnv(["PATH+EXTRA=${HOME}/go/bin"]){
              sh './hack/butler/create-next-version.sh "${BUMP_COMPONENT}"'
-             sh 'cat ./hack/butler/GIT_BUMP_BRANCH_NAME'
-             sh 'cat ./hack/butler/OLD_VERSION'
-             sh 'cat ./hack/butler/NEXT_VERSION'
            }
            script {
              env.GIT_BUMP_BRANCH_NAME = readFile('./hack/butler/GIT_BUMP_BRANCH_NAME').trim()
              env.OLD_VERSION = readFile('./hack/butler/OLD_VERSION').trim()
              env.NEXT_VERSION = readFile('./hack/butler/NEXT_VERSION').trim()
            }
-           sh 'echo "${GIT_BUMP_BRANCH_NAME}"'
            withCredentials([string(credentialsId: 'GITHUB_TOKEN', variable: 'TOKEN')]) {
              sh 'git remote set-url origin https://${TOKEN}@github.com/wavefronthq/wavefront-collector-for-kubernetes.git'
              sh 'git config --global user.email "svc.wf-jenkins@vmware.com"'
              sh 'git config --global user.name "svc.wf-jenkins"'
-              //sh 'git checkout -b ${GIT_BUMP_BRANCH_NAME}'
              sh './hack/butler/bump-to-next-version.sh'
            }
          }
@@ -52,12 +42,10 @@ pipeline {
           stage("Publish to Harbor") {
             environment {
               HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability-robot")
-              // GIT_BUMP_BRANCH_NAME = readFile(file: './release/GIT_BUMP_BRANCH_NAME')
             }
             steps {
               sh 'echo $HARBOR_CREDS_PSW | docker login "projects.registry.vmware.com/tanzu_observability" -u $HARBOR_CREDS_USR --password-stdin'
               sh 'PREFIX="projects.registry.vmware.com/tanzu_observability" HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') DOCKER_IMAGE="kubernetes-collector" make publish'
-              sh 'git rev-parse --abbrev-ref HEAD'
             }
           }
           stage("Publish to Docker Hub") {
@@ -67,21 +55,20 @@ pipeline {
             steps {
               sh 'echo $DOCKERHUB_CREDS_PSW | docker login -u $DOCKERHUB_CREDS_USR --password-stdin'
               sh 'PREFIX="wavefronthq" make publish'
-              sh 'git rev-parse --abbrev-ref HEAD'
             }
           }
         }
       }
 
-        // //         deploy to GKE and EKS and run manual tests
-        // // now we have confidence in the validity of our RC release
-        //       stage("Deploy and Test") {
-        //         steps {
-        //           sh 'GKE_CLUSTER_NAME=jenkins-testing-rc make create-gke-cluster'
-        //           // Use deploy-local.sh to deploy collector to the cluster.
-        //           sh 'make e2e-test' // Should not deploy, but run the test.
-        //         }
-        //       }
+      // deploy to GKE and EKS and run manual tests
+      // now we have confidence in the validity of our RC release
+      // stage("Deploy and Test") {
+      //   steps {
+      //     sh 'GKE_CLUSTER_NAME=jenkins-testing-rc make create-gke-cluster'
+      //     // Use deploy-local.sh to deploy collector to the cluster.
+      //     sh 'make e2e-test' // Should not deploy, but run the test.
+      //   }
+      // }
 
 
       stage("Github Release And Slack Notification") {
