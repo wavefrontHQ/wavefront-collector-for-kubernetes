@@ -17,16 +17,20 @@ CURRENT_VERSION=${CURRENT_VERSION:-$VERSION}
 COLLECTOR_REPO=projects.registry.vmware.com/tanzu_observability/kubernetes-collector
 CURRENT_COLLECTOR_REPO=${CURRENT_COLLECTOR_REPO:-$COLLECTOR_REPO}
 
-WF_CLUSTER=nimba
-K8S_CLUSTER=$(whoami)-${CURRENT_VERSION}-release-test
-
 pushd ../
   make clean-deployment
   make deploy-targets
 popd
 
-echo "Using cluster name '$K8S_CLUSTER' in '$WF_CLUSTER'"
+if [[ -z ${WF_CLUSTER} ]] ; then
+    WF_CLUSTER=nimba
+fi
 
+if [[ -z ${CONFIG_CLUSTER_NAME} ]] ; then
+    CONFIG_CLUSTER_NAME=$(whoami)-${CURRENT_VERSION}-release-test
+fi
+
+echo "Using cluster name '$CONFIG_CLUSTER_NAME' in '$WF_CLUSTER'"
 echo "Temp dir: $TEMP_DIR"
 
 cp "$ROOT_DIR"/deploy/kubernetes/*  "$TEMP_DIR/."
@@ -38,7 +42,7 @@ cp "$ROOT_DIR/hack/deploy/prom-example.yaml" "$TEMP_DIR/."
 
 pushd "$TEMP_DIR"
   sed -i '' "s/YOUR_CLUSTER/${WF_CLUSTER}/g; s/YOUR_API_TOKEN/${WAVEFRONT_TOKEN}/g" "$TEMP_DIR/6-wavefront-proxy.yaml"
-  sed -i '' "s/k8s-cluster/${K8S_CLUSTER}/g" "$TEMP_DIR/4-collector-config.yaml"
+  sed -i '' "s/k8s-cluster/${CONFIG_CLUSTER_NAME}/g" "$TEMP_DIR/4-collector-config.yaml"
   sed -i '' "s/wavefront-proxy.default/wavefront-proxy.${NAMESPACE}/g" "$TEMP_DIR/4-collector-config.yaml"
 
   echo "using version ${CURRENT_VERSION}"

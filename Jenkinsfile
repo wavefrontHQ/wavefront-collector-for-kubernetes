@@ -37,6 +37,7 @@ pipeline {
            }
          }
       }
+
       stage("Publish") {
         parallel {
           stage("Publish to Harbor") {
@@ -64,13 +65,15 @@ pipeline {
 
       // deploy to GKE and EKS and run manual tests
       // now we have confidence in the validity of our RC release
-      // stage("Deploy and Test") {
-      //   steps {
-      //     sh 'GKE_CLUSTER_NAME=jenkins-testing-rc make create-gke-cluster'
-      //     // Use deploy-local.sh to deploy collector to the cluster.
-      //     sh 'make e2e-test' // Should not deploy, but run the test.
-      //   }
-      // }
+      stage("Deploy and Test") {
+        when{ environment name: 'RELEASE_TYPE', value: 'rc' }
+        withCredentials([string(credentialsId: 'WAVEFRONT_TOKEN', variable: 'WAVEFRONT_TOKEN')]) {
+          sh 'GKE_CLUSTER_NAME=jenkins-${NEXT_VERSION}-rc-test make create-gke-cluster'
+          // Use deploy-local.sh to deploy collector to the cluster.
+          sh 'WF_CLUSTER=nimba CONFIG_CLUSTER_NAME=jenkins-${NEXT_VERSION}-rc-test ./release/deploy-local.sh'
+          sh 'WF_CLUSTER=nimba CONFIG_CLUSTER_NAME=jenkins-${NEXT_VERSION}-rc-test ./hack/kustomize/test-e2e.sh'
+        }
+      }
 
 
       stage("Github Release And Slack Notification") {
