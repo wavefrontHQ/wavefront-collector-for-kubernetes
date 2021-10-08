@@ -67,10 +67,10 @@ pipeline {
       // now we have confidence in the validity of our RC release
       stage("Deploy and Test") {
         when{ environment name: 'RELEASE_TYPE', value: 'rc' }
-        script {
-          env.VERSION = readFile('./release/VERSION')
-        }
         steps {
+          script {
+            env.VERSION = readFile('./release/VERSION')
+          }
 //         withCredentials([string(credentialsId: 'WAVEFRONT_TOKEN', variable: 'WAVEFRONT_TOKEN')]) {
           sh 'export CONFIG_CLUSTER_NAME = jenkins-${VERSION}-rc-test-$(date +"%s")'
           sh 'echo ${CONFIG_CLUSTER_NAME}'
