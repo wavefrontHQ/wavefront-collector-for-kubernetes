@@ -57,9 +57,9 @@ pipeline {
                 GKE_CLUSTER_NAME = "k8s-saas-travis-ci"
             }
             steps {
-                withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
+                withEnv(["PATH+GO=${HOME}/go/bin", "PATH+GCLOUD=/tmp/google-cloud-sdk/bin"]) {
                     lock("collector-integration-test") {
-                        sh './hack/travis/setup-for-integration-test.sh'
+                        sh 'PREFIX=/tmp ./hack/travis/setup-for-integration-test.sh'
                         sh 'make gke-connect-to-cluster'
                         sh 'make ci-integration-test'
                     }
