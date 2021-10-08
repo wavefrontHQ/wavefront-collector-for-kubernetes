@@ -70,7 +70,8 @@ pipeline {
         script {
           env.VERSION = readFile('./release/VERSION')
         }
-        withCredentials([string(credentialsId: 'WAVEFRONT_TOKEN', variable: 'WAVEFRONT_TOKEN')]) {
+        steps {
+//         withCredentials([string(credentialsId: 'WAVEFRONT_TOKEN', variable: 'WAVEFRONT_TOKEN')]) {
           sh 'export CONFIG_CLUSTER_NAME = jenkins-${VERSION}-rc-test-$(date +"%s")'
           sh 'echo ${CONFIG_CLUSTER_NAME}'
 //           sh 'GKE_CLUSTER_NAME=jenkins-rc-testing make gke-connect-to-cluster'
