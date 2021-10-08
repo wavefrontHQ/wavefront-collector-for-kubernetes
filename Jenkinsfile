@@ -67,11 +67,15 @@ pipeline {
       // now we have confidence in the validity of our RC release
       stage("Deploy and Test") {
         when{ environment name: 'RELEASE_TYPE', value: 'rc' }
+        script {
+          env.VERSION = readFile('./release/VERSION')
+        }
         withCredentials([string(credentialsId: 'WAVEFRONT_TOKEN', variable: 'WAVEFRONT_TOKEN')]) {
-          sh 'GKE_CLUSTER_NAME=jenkins-${NEXT_VERSION}-rc-test make create-gke-cluster'
-          // Use deploy-local.sh to deploy collector to the cluster.
-          sh 'WF_CLUSTER=nimba CONFIG_CLUSTER_NAME=jenkins-${NEXT_VERSION}-rc-test ./release/deploy-local.sh'
-          sh 'WF_CLUSTER=nimba CONFIG_CLUSTER_NAME=jenkins-${NEXT_VERSION}-rc-test ./hack/kustomize/test-e2e.sh'
+          sh 'export CONFIG_CLUSTER_NAME = jenkins-${VERSION}-rc-test-$(date +"%s")'
+          sh 'echo ${CONFIG_CLUSTER_NAME}'
+//           sh 'GKE_CLUSTER_NAME=jenkins-rc-testing make gke-connect-to-cluster'
+//           sh 'WF_CLUSTER=nimba CONFIG_CLUSTER_NAME=${CONFIG_CLUSTER_NAME} ./release/deploy-local.sh'
+//           sh 'WF_CLUSTER=nimba CONFIG_CLUSTER_NAME=${CONFIG_CLUSTER_NAME} ./hack/kustomize/test-e2e.sh'
         }
       }
 

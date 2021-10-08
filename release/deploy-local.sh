@@ -43,7 +43,6 @@ cp "$ROOT_DIR/hack/deploy/prom-example.yaml" "$TEMP_DIR/."
 pushd "$TEMP_DIR"
   sed -i '' "s/YOUR_CLUSTER/${WF_CLUSTER}/g; s/YOUR_API_TOKEN/${WAVEFRONT_TOKEN}/g" "$TEMP_DIR/6-wavefront-proxy.yaml"
   sed -i '' "s/k8s-cluster/${CONFIG_CLUSTER_NAME}/g" "$TEMP_DIR/4-collector-config.yaml"
-  sed -i '' "s/wavefront-proxy.default/wavefront-proxy.${NAMESPACE}/g" "$TEMP_DIR/4-collector-config.yaml"
 
   echo "using version ${CURRENT_VERSION}"
   sed -i '' "s/$VERSION/$CURRENT_VERSION/g" "$TEMP_DIR/5-collector-daemonset.yaml"

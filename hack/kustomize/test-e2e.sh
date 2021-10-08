@@ -26,6 +26,8 @@ fi
 
 AFTER_UNIX_TS="$(date '+%s')000"
 
+wait_for_cluster_ready
+
 function curl_query_to_wf_dashboard() {
   local query=$1
   actual=$(curl -X GET --header "Accept: application/json" \
