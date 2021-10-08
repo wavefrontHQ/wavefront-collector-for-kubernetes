@@ -1,10 +1,6 @@
 pipeline {
     agent any
 
-    tools {
-        go 'Go 1.15'
-    }
-
     environment {
         RELEASE_TYPE = "alpha"
         VERSION_POSTFIX = "-alpha-${GIT_COMMIT.substring(0, 8)}"
@@ -16,16 +12,41 @@ pipeline {
     }
 
     stages {
-      stage("Publish") {
-        steps {
-            withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
-              sh './hack/butler/install_docker_buildx.sh'
-
-              sh 'make semver-cli'
-              sh 'echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
-              sh 'HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') make publish'
+      stage("Test") {
+        parallel {
+            stage("Test with Go 1.15") {
+                tools {
+                    go 'Go 1.15'
+                }
+                steps {
+                    withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
+                      sh 'make checkfmt vet tests'
+                    }
+                }
+            }
+            stage("Test with Go 1.16") {
+                tools {
+                    go 'Go 1.16'
+                }
+                steps {
+                    withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
+                      sh 'make checkfmt vet tests'
+                    }
+                }
             }
         }
       }
+
+//       stage("Publish") {
+//         steps {
+//             withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
+//               sh './hack/butler/install_docker_buildx.sh'
+//
+//               sh 'make semver-cli'
+//               sh 'echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
+//               sh 'HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') make publish'
+//             }
+//         }
+//       }
     }
 }
