@@ -3,7 +3,8 @@ pipeline {
 
     environment {
         RELEASE_TYPE = "alpha"
-        VERSION_POSTFIX = "-alpha-${GIT_COMMIT.substring(0, 8)}"
+//         VERSION_POSTFIX = "-alpha-${GIT_COMMIT.substring(0, 8)}"
+        VERSION_POSTFIX = "-alpha-e0fe165d"
 
         PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
         DOCKER_IMAGE = "kubernetes-collector-snapshot"
@@ -33,20 +34,20 @@ pipeline {
 //             }
 //         }
 
-        stage("Publish") {
-            tools {
-                go 'Go 1.15'
-            }
-            steps {
-                withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
-                    sh './hack/butler/install_docker_buildx.sh'
-
-                    sh 'make semver-cli'
-                    sh 'echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
-                    sh 'HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') make publish'
-                }
-            }
-        }
+//         stage("Publish") {
+//             tools {
+//                 go 'Go 1.15'
+//             }
+//             steps {
+//                 withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
+//                     sh './hack/butler/install_docker_buildx.sh'
+//
+//                     sh 'make semver-cli'
+//                     sh 'echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
+//                     sh 'HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') make publish'
+//                 }
+//             }
+//         }
 
         stage("Integration Test") {
             tools {
@@ -55,6 +56,7 @@ pipeline {
             environment {
                 GCP_CREDS = credentials("GCP_CREDS")
                 GKE_CLUSTER_NAME = "k8s-saas-travis-ci"
+                WAVEFRONT_TOKEN = credentials("WAVEFRONT_TOKEN_NIMBA")
             }
             steps {
                 withEnv(["PATH+GO=${HOME}/go/bin", "PATH+GCLOUD=/tmp/google-cloud-sdk/bin"]) {
