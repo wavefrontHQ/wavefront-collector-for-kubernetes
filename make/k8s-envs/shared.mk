@@ -28,6 +28,14 @@ else
 	make push-to-kind
 endif
 
+push-test-proxy-image:
+ifeq ($(K8S_ENV), GKE)
+	make push-test-proxy-to-gcr
+else
+	echo "Not implemented"
+	exit 1
+endif
+
 delete-images:
 ifeq ($(K8S_ENV), GKE)
 	make delete-images-gcr
