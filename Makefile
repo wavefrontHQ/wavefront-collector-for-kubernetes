@@ -146,14 +146,4 @@ deploy-test: token-check k8s-env clean-deployment deploy-targets push-images pro
 #Testing code, configuration and deployment changes
 integration-test: token-check k8s-env clean-deployment deploy-targets containers delete-images push-images proxy-test
 
-#End-to-end testing that verifies fresh, properly labeled metrics make it to Wavefront
-e2e-test: token-check $(SEMVER_CLI_BIN) k8s-env clean-deployment deploy-targets containers delete-images push-images
-ifeq ($(K8S_ENV), GKE)
-	@(cd $(KUSTOMIZE_DIR) && ./test-e2e.sh nimba $(WAVEFRONT_TOKEN) $(VERSION) "us.gcr.io\/$(GCP_PROJECT)")
-else ifeq ($(K8S_ENV), EKS)
-	@(cd $(KUSTOMIZE_DIR) && ./test-e2e.sh nimba $(WAVEFRONT_TOKEN) $(VERSION) "$(ECR_ENDPOINT)\/tobs\/k8s\/saas")
-else
-	@(cd $(KUSTOMIZE_DIR) && ./test-e2e.sh nimba $(WAVEFRONT_TOKEN) $(VERSION))
-endif
-
 .PHONY: all fmt container clean release semver-cli
