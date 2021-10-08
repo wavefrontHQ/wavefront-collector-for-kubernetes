@@ -70,16 +70,16 @@ pipeline {
         steps {
           script {
             env.VERSION = readFile('./release/VERSION')
+            env.CONFIG_CLUSTER_NAME = "jenkins-${env.VERSION}-rc-${env.RC_NUMBER}-test"
           }
-//         withCredentials([string(credentialsId: 'WAVEFRONT_TOKEN', variable: 'WAVEFRONT_TOKEN')]) {
-          sh 'export CONFIG_CLUSTER_NAME = jenkins-${VERSION}-rc-test-$(date +"%s")'
-          sh 'echo ${CONFIG_CLUSTER_NAME}'
-//           sh 'GKE_CLUSTER_NAME=jenkins-rc-testing make gke-connect-to-cluster'
-//           sh 'WF_CLUSTER=nimba CONFIG_CLUSTER_NAME=${CONFIG_CLUSTER_NAME} ./release/deploy-local.sh'
-//           sh 'WF_CLUSTER=nimba CONFIG_CLUSTER_NAME=${CONFIG_CLUSTER_NAME} ./hack/kustomize/test-e2e.sh'
+
+          withCredentials([string(credentialsId: 'nimba-wavefront-token', variable: 'WAVEFRONT_TOKEN')]) {
+            sh 'GKE_CLUSTER_NAME=jenkins-rc-testing make gke-connect-to-cluster'
+            sh 'WF_CLUSTER=nimba CONFIG_CLUSTER_NAME=${CONFIG_CLUSTER_NAME} ./release/deploy-local.sh'
+            sh 'WF_CLUSTER=nimba CONFIG_CLUSTER_NAME=${CONFIG_CLUSTER_NAME} ./hack/kustomize/test-e2e.sh'
+          }
         }
       }
-
 
       stage("Github Release And Slack Notification") {
         environment {
