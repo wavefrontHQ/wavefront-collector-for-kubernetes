@@ -3,9 +3,11 @@
 #
 # gcloud
 #
-curl https://sdk.cloud.google.com > install.sh
-chmod +x ./install.sh
-./install.sh --disable-prompts >/dev/null;
+if [[ ! -d /tmp/google-cloud-sdk ]]; then
+  curl https://sdk.cloud.google.com > install.sh
+  chmod +x ./install.sh
+  ./install.sh --disable-prompts >/dev/null;
+fi
 
 gcloud auth activate-service-account --key-file "$GCP_CREDS"
 gcloud config set project wavefront-gcp-dev
