@@ -8,7 +8,9 @@ pipeline {
     environment {
         RELEASE_TYPE = "${params.RELEASE_TYPE}"
         RC_NUMBER = "${params.RC_SUFFIX}"
+        BUMP_COMPONENT = "${params.BUMP_COMPONENT}"
         GIT_BRANCH = getCurrentBranchName()
+        GIT_CREDENTIAL_ID = 'wf-jenkins-github'
     }
 
     stages {
@@ -16,6 +18,24 @@ pipeline {
         steps {
           sh './hack/butler/install_docker_buildx.sh'
         }
+      }
+      stage("Bump with PR") {
+         steps {
+           withEnv(["PATH+EXTRA=${HOME}/go/bin"]){
+             sh './hack/butler/create-next-version.sh "${BUMP_COMPONENT}"'
+           }
+           script {
+             env.GIT_BUMP_BRANCH_NAME = readFile('./hack/butler/GIT_BUMP_BRANCH_NAME').trim()
+             env.OLD_VERSION = readFile('./hack/butler/OLD_VERSION').trim()
+             env.NEXT_VERSION = readFile('./hack/butler/NEXT_VERSION').trim()
+           }
+           withCredentials([string(credentialsId: 'GITHUB_TOKEN', variable: 'TOKEN')]) {
+             sh 'git remote set-url origin https://${TOKEN}@github.com/wavefronthq/wavefront-collector-for-kubernetes.git'
+             sh 'git config --global user.email "svc.wf-jenkins@vmware.com"'
+             sh 'git config --global user.name "svc.wf-jenkins"'
+             sh './hack/butler/bump-to-next-version.sh'
+           }
+         }
       }
       stage("Publish") {
         parallel {
@@ -28,10 +48,12 @@ pipeline {
               sh 'PREFIX="projects.registry.vmware.com/tanzu_observability" HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') DOCKER_IMAGE="kubernetes-collector" make publish'
             }
           }
+
           stage("Publish to Docker Hub") {
             environment {
               DOCKERHUB_CREDS=credentials('Dockerhub_svcwfjenkins')
             }
+            when{ environment name: 'RELEASE_TYPE', value: 'release' }
             steps {
               sh 'echo $DOCKERHUB_CREDS_PSW | docker login -u $DOCKERHUB_CREDS_USR --password-stdin'
               sh 'PREFIX="wavefronthq" make publish'
@@ -39,6 +61,17 @@ pipeline {
           }
         }
       }
+
+      // deploy to GKE and EKS and run manual tests
+      // now we have confidence in the validity of our RC release
+      // stage("Deploy and Test") {
+      //   steps {
+      //     sh 'GKE_CLUSTER_NAME=jenkins-testing-rc make create-gke-cluster'
+      //     // Use deploy-local.sh to deploy collector to the cluster.
+      //     sh 'make e2e-test' // Should not deploy, but run the test.
+      //   }
+      // }
+
 
       stage("Github Release And Slack Notification") {
         environment {
@@ -54,6 +87,11 @@ pipeline {
           sh './hack/butler/generate_slack_notification.sh'
         }
       }
+    }
+    post {
+        always {
+            cleanWs()
+        }
     }
 }
 
