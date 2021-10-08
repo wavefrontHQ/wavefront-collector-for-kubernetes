@@ -12,28 +12,31 @@ pipeline {
     }
 
     stages {
-        stage("Test with Go 1.15") {
+//         stage("Test with Go 1.15") {
+//             tools {
+//                 go 'Go 1.15'
+//             }
+//             steps {
+//                 withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
+//                   sh 'make checkfmt vet tests'
+//                 }
+//             }
+//         }
+//         stage("Test with Go 1.16") {
+//             tools {
+//                 go 'Go 1.16'
+//             }
+//             steps {
+//                 withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
+//                   sh 'make checkfmt vet tests'
+//                 }
+//             }
+//         }
+
+        stage("Publish") {
             tools {
                 go 'Go 1.15'
             }
-            steps {
-                withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
-                  sh 'make checkfmt vet tests'
-                }
-            }
-        }
-        stage("Test with Go 1.16") {
-            tools {
-                go 'Go 1.16'
-            }
-            steps {
-                withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
-                  sh 'make checkfmt vet tests'
-                }
-            }
-        }
-
-        stage("Publish") {
             steps {
                 withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
                     sh './hack/butler/install_docker_buildx.sh'
@@ -46,6 +49,9 @@ pipeline {
         }
 
         stage("Integration Test") {
+            tools {
+                go 'Go 1.15'
+            }
             environment {
                 GCP_CREDS = credentials("GCP_CREDS")
                 GKE_CLUSTER_NAME = "k8s-saas-travis-ci"
