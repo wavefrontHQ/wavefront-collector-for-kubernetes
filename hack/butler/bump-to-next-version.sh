@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 set -ex
 
-echo "Bumping ${OLD_VERSION} to ${NEXT_VERSION} in deploy/kubernetes/5-collector-daemonset.yaml"
-sed -i "s/${OLD_VERSION}/${NEXT_VERSION}/g" "deploy/kubernetes/5-collector-daemonset.yaml"
-echo "$NEXT_VERSION" >./release/VERSION
+cd "$(dirname "$0")" # cd to directory that bump-to-next-version.sh is in
+
+echo "Bumping ${OLD_VERSION} to ${NEXT_VERSION} in ../../deploy/kubernetes/5-collector-daemonset.yaml"
+sed -i "s/${OLD_VERSION}/${NEXT_VERSION}/g" "../../deploy/kubernetes/5-collector-daemonset.yaml"
+echo "$NEXT_VERSION" >../../release/VERSION
 
 git commit -am "bump version to ${NEXT_VERSION}"
 
