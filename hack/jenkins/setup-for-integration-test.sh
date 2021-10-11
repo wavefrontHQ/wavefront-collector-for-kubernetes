@@ -55,6 +55,6 @@ git config --global http.sslVerify true
 #
 if ! [ -x "$(command -v jq)" ]; then
   mkdir -p "$HOME/bin"
-  curl https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 --output "$HOME/bin/jq"
+  curl -L https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 --output "$HOME/bin/jq"
   chmod +x "$HOME/bin/jq"
 fi
