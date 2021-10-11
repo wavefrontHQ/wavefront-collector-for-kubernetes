@@ -55,7 +55,7 @@ pipeline {
             }
             environment {
                 GCP_CREDS = credentials("GCP_CREDS")
-                GKE_CLUSTER_NAME = "k8s-saas-travis-ci"
+                GKE_CLUSTER_NAME = "k8po-jenkins-ci"
                 WAVEFRONT_TOKEN = credentials("WAVEFRONT_TOKEN_NIMBA")
             }
             steps {
