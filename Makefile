@@ -150,9 +150,6 @@ deploy-test: token-check k8s-env clean-deployment deploy-targets push-images pro
 #Testing code, configuration and deployment changes
 integration-test: token-check k8s-env clean-deployment deploy-targets containers delete-images push-images proxy-test
 
-#Testing code with an already built image
-ci-integration-test: token-check k8s-env clean-deployment deploy-targets test-proxy-container push-test-proxy-image proxy-test
-
 #End-to-end testing that verifies fresh, properly labeled metrics make it to Wavefront
 e2e-test: token-check $(SEMVER_CLI_BIN) k8s-env clean-deployment deploy-targets containers delete-images push-images
 ifeq ($(K8S_ENV), GKE)

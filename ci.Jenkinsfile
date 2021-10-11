@@ -63,7 +63,7 @@ pipeline {
                     lock("collector-integration-test") {
                         sh 'PREFIX=/tmp ./hack/travis/setup-for-integration-test.sh'
                         sh 'make gke-connect-to-cluster'
-                        sh 'make ci-integration-test'
+                        sh 'make integration-test'
                     }
                 }
             }
