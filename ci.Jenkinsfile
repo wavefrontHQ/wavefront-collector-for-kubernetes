@@ -57,6 +57,8 @@ pipeline {
                 GCP_CREDS = credentials("GCP_CREDS")
                 GKE_CLUSTER_NAME = "k8po-jenkins-ci"
                 WAVEFRONT_TOKEN = credentials("WAVEFRONT_TOKEN_NIMBA")
+                PREFIX = null
+                DOCKER_IMAGE = null
             }
             steps {
                 withEnv(["PATH+GO=${HOME}/go/bin", "PATH+GCLOUD=${HOME}/google-cloud-sdk/bin"]) {
