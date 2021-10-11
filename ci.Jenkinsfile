@@ -59,9 +59,9 @@ pipeline {
                 WAVEFRONT_TOKEN = credentials("WAVEFRONT_TOKEN_NIMBA")
             }
             steps {
-                withEnv(["PATH+GO=${HOME}/go/bin", "PATH+GCLOUD=/tmp/google-cloud-sdk/bin"]) {
+                withEnv(["PATH+GO=${HOME}/go/bin"]) {
                     lock("collector-integration-test") {
-                        sh 'PREFIX=/tmp ./hack/travis/setup-for-integration-test.sh'
+                        sh './hack/jenkins/setup-for-integration-test.sh'
                         sh 'make gke-connect-to-cluster'
                         sh 'make integration-test'
                     }
