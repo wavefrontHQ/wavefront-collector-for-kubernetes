@@ -1,17 +1,6 @@
 pipeline {
     agent any
 
-    environment {
-        RELEASE_TYPE = "alpha"
-//         VERSION_POSTFIX = "-alpha-${GIT_COMMIT.substring(0, 8)}"
-        VERSION_POSTFIX = "-alpha-e0fe165d"
-
-        PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
-        DOCKER_IMAGE = "kubernetes-collector-snapshot"
-
-        HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability_keights_saas-robot")
-    }
-
     stages {
 //         stage("Test with Go 1.15") {
 //             tools {
@@ -38,6 +27,16 @@ pipeline {
 //             tools {
 //                 go 'Go 1.15'
 //             }
+//             environment {
+//                 RELEASE_TYPE = "alpha"
+//         //         VERSION_POSTFIX = "-alpha-${GIT_COMMIT.substring(0, 8)}"
+//                 VERSION_POSTFIX = "-alpha-e0fe165d"
+//
+//                 HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability_keights_saas-robot")
+//
+//                 PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
+//                 DOCKER_IMAGE = "kubernetes-collector-snapshot"
+//             }
 //             steps {
 //                 withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
 //                     sh './hack/butler/install_docker_buildx.sh'
@@ -57,8 +56,6 @@ pipeline {
                 GCP_CREDS = credentials("GCP_CREDS")
                 GKE_CLUSTER_NAME = "k8po-jenkins-ci"
                 WAVEFRONT_TOKEN = credentials("WAVEFRONT_TOKEN_NIMBA")
-                PREFIX = null
-                DOCKER_IMAGE = null
             }
             steps {
                 withEnv(["PATH+GO=${HOME}/go/bin", "PATH+GCLOUD=${HOME}/google-cloud-sdk/bin"]) {
