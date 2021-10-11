@@ -3,10 +3,10 @@
 #
 # gcloud
 #
-if [[ ! -d /tmp/google-cloud-sdk ]]; then
+if ! [ -x "$(command -v gcloud)" ]; then
   curl https://sdk.cloud.google.com > install.sh
   chmod +x ./install.sh
-  sudo PREFIX=/tmp ./install.sh --disable-prompts >/dev/null;
+  sudo PREFIX=$HOME ./install.sh --disable-prompts >/dev/null;
 fi
 
 gcloud auth activate-service-account --key-file "$GCP_CREDS"
