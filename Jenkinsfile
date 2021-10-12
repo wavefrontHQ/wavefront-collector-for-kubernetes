@@ -66,14 +66,14 @@ pipeline {
       // deploy to GKE and EKS and run manual tests
       // now we have confidence in the validity of our RC release
       stage("Deploy and Test") {
+        environment {
+          GCP_CREDS = credentials("GCP_CREDS")
+          GKE_CLUSTER_NAME = "k8po-jenkins-ci"
+          WAVEFRONT_TOKEN = credentials("WAVEFRONT_TOKEN_NIMBA")
+          WF_CLUSTER = 'nimba'
+        }
         when{ environment name: 'RELEASE_TYPE', value: 'rc' }
         steps {
-          environment {
-            GCP_CREDS = credentials("GCP_CREDS")
-            GKE_CLUSTER_NAME = "k8po-jenkins-ci"
-            WAVEFRONT_TOKEN = credentials("WAVEFRONT_TOKEN_NIMBA")
-            WF_CLUSTER = 'nimba'
-          }
           script {
             env.VERSION = readFile('./release/VERSION').trim()
             env.CONFIG_CLUSTER_NAME = "jenkins-${env.VERSION}-rc-${env.RC_NUMBER}-test"
