@@ -23,9 +23,9 @@ spec:
           imagePullPolicy: IfNotPresent
           env:
             - name: WAVEFRONT_URL
-              value: https://YOUR_CLUSTER.wavefront.com/api/
+              value: https://nimba.wavefront.com/api/
             - name: WAVEFRONT_TOKEN
-              value: YOUR_API_TOKEN
+              value: f248d728-6603-42a7-9475-d5667f359646
           # Uncomment the below lines to consume Zipkin/Istio traces
           #- name: WAVEFRONT_PROXY_ARGS
           #  value: --traceZipkinListenerPorts 9411
@@ -44,7 +44,6 @@ metadata:
   name: wavefront-proxy
   labels:
     app: wavefront-proxy
-  namespace: wavefront-collector
 spec:
   ports:
     - name: wavefront
