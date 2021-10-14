@@ -2,27 +2,23 @@ pipeline {
     agent any
 
     stages {
-        stage("Test") {
-            parallel {
-                stage("Test with Go 1.15") {
-                    tools {
-                        go 'Go 1.15'
-                    }
-                    steps {
-                        withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
-                          sh 'make checkfmt vet tests'
-                        }
-                    }
+        stage("Test with Go 1.15") {
+            tools {
+                go 'Go 1.15'
+            }
+            steps {
+                withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
+                  sh 'make checkfmt vet tests'
                 }
-                stage("Test with Go 1.16") {
-                    tools {
-                        go 'Go 1.16'
-                    }
-                    steps {
-                        withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
-                          sh 'make checkfmt vet tests'
-                        }
-                    }
+            }
+        }
+        stage("Test with Go 1.16") {
+            tools {
+                go 'Go 1.16'
+            }
+            steps {
+                withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
+                  sh 'make checkfmt vet tests'
                 }
             }
         }
@@ -34,6 +30,7 @@ pipeline {
             environment {
                 RELEASE_TYPE = "alpha"
                 VERSION_POSTFIX = "-alpha-${GIT_COMMIT.substring(0, 8)}"
+//                 VERSION_POSTFIX = "-alpha-e0fe165d"
 
                 HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability_keights_saas-robot")
 
