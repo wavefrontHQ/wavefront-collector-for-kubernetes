@@ -4,12 +4,12 @@ Help() {
   # Display Help
   echo "Notify slack channel with a message."
   echo
-  echo "Syntax: $0 [-c|m|h]"
+  echo "Syntax: $0 [-c|m|w|h]"
   echo "options:"
-  echo "c     Slack channel to notify."
-  echo "m     Use this message for slack notification."
-  echo "w     Slack webhook URL to send message to."
-  echo "h     Print this Help."
+  printf "\t-c     Slack channel to notify.\n"
+  printf "\t-m     Use this message for slack notification (use - to read from stdin).\n"
+  printf "\t-w     Slack webhook URL to send message to.\n"
+  printf "\t-h     Print this help.\n"
   echo
 }
 
@@ -44,6 +44,11 @@ main() {
     echo "Need to specify all options: channel ID (-c), message (-m) and slack webhook URL (-w). Use -h to see valid options."
     exit 1
   fi
+
+  if [ "$MESSAGE" = "-" ]; then
+    MESSAGE=$(cat /dev/stdin)
+  fi
+
 
   curl -X POST --data-urlencode "payload={\"channel\": \"${CHANNEL_ID}\", \"username\": \"jenkins\", \"text\": \"${MESSAGE}\"}" "${SLACK_WEBHOOK_URL}"
 
