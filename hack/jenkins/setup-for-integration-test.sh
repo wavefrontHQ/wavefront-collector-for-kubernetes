@@ -31,6 +31,13 @@ chmod +x ./kubectl
 sudo mv ./kubectl /usr/local/bin/kubectl
 
 #
+# jq
+#
+curl -LO "https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64"
+chmod +x ./jq-linux64
+sudo mv ./jq-linux64 /usr/local/bin/jq
+
+#
 # helm
 #
 curl https://get.helm.sh/helm-v3.6.3-linux-amd64.tar.gz | tar xz --to-stdout linux-amd64/helm | sudo tee /usr/local/bin/helm >/dev/null
