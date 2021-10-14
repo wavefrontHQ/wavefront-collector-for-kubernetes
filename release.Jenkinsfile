@@ -68,7 +68,7 @@ pipeline {
       stage("Deploy and Test") {
         environment {
           GCP_CREDS = credentials("GCP_CREDS")
-          GKE_CLUSTER_NAME = "k8po-jenkins-ci"
+          GKE_CLUSTER_NAME = "k8po-jenkins-rc-testing"
           WAVEFRONT_TOKEN = credentials("WAVEFRONT_TOKEN_NIMBA")
           WF_CLUSTER = 'nimba'
         }
@@ -80,10 +80,10 @@ pipeline {
           }
 
           withCredentials([string(credentialsId: 'nimba-wavefront-token', variable: 'WAVEFRONT_TOKEN')]) {
-            withEnv(["PATH+GCLOUD=/tmp/google-cloud-sdk/bin"]) {
-              sh './hack/travis/setup-for-integration-test.sh'
-              sh 'GKE_CLUSTER_NAME=k8po-jenkins-rc-testing make gke-connect-to-cluster'
-              sh './release/deploy-local.sh'
+            withEnv(["PATH+GCLOUD=${HOME}/google-cloud-sdk/bin"]) {
+              sh './hack/jenkins/setup-for-integration-test.sh'
+              sh 'make gke-connect-to-cluster'
+              sh './release/deploy-local-linux.sh'
               sh './hack/kustomize/test-e2e.sh -c ${WF_CLUSTER} -t ${WAVEFRONT_TOKEN} -n ${CONFIG_CLUSTER_NAME} -v ${VERSION}'
             }
           }
