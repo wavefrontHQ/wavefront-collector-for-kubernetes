@@ -68,8 +68,10 @@ pipeline {
 //             }
 //         }
         stage("Test remove later") {
-//             error 'fail'
-            echo 'success'
+            steps {
+//                error 'fail'
+                sh 'echo success'
+            }
         }
     }
     post {
