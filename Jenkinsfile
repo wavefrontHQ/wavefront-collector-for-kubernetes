@@ -84,7 +84,7 @@ pipeline {
               sh './hack/travis/setup-for-integration-test.sh'
               sh 'GKE_CLUSTER_NAME=k8po-jenkins-rc-testing make gke-connect-to-cluster'
               sh './release/deploy-local.sh'
-              sh './hack/kustomize/test-e2e.sh'
+              sh './hack/kustomize/test-e2e.sh -c ${WF_CLUSTER} -t ${WAVEFRONT_TOKEN} -n ${CONFIG_CLUSTER_NAME} -v ${VERSION}'
             }
           }
         }
