@@ -69,14 +69,13 @@ pipeline {
 //         }
         stage("Test remove later") {
             steps {
-//                error 'fail'
-                sh 'echo success'
+               error 'fail'
+//                 sh 'echo success'
             }
         }
     }
     post {
         regression {
-            echo 'Got into a fail first time.'
         }
     }
 }
