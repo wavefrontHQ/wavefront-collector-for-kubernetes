@@ -472,6 +472,7 @@ type summaryProvider struct {
 func (sp *summaryProvider) GetMetricsSources() []MetricsSource {
 	var sources []MetricsSource
 	nodes, err := sp.nodeLister.List(labels.Nothing())
+	log.Info("Test: labels.Nothing() List size :: %+v ", len(nodes))
 	//log.Info("Test: List of Nodes :: %+v", nodes )
 	if err != nil {
 		log.Errorf("error while listing nodes: %v", err)
@@ -491,6 +492,7 @@ func (sp *summaryProvider) GetMetricsSources() []MetricsSource {
 
 	validatedSelector := labels.SelectorFromValidatedSet(map[string]string{"node-role.kubernetes.io/control-plane=": ""})
 	nodes1, err := sp.nodeLister.List(validatedSelector)
+	log.Info("Test: validatedSelector size :: %+v ", len(nodes1))
 	for _, node := range nodes1 {
 		log.Info("Test: validatedSelector for control plane node :: %+v", node)
 	}
