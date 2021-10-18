@@ -478,6 +478,7 @@ func (sp *summaryProvider) GetMetricsSources() []MetricsSource {
 	}
 
 	for _, node := range nodes {
+		log.Info("Test: List of Node :: %+v", node )
 		info, err := sp.getNodeInfo(node)
 		if err != nil {
 			log.Errorf("%v", err)
