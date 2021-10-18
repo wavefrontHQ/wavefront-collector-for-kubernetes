@@ -535,7 +535,7 @@ func NewSummaryProvider(cfg configuration.SummarySourceConfig) (MetricsSourcePro
 	}
 	// watch nodes
 	nodeLister, reflector, _ := util.GetNodeLister(kubeClient)
-
+	log.Infof("Test: nodeLister :: %+v", nodeLister)
 	return &summaryProvider{
 		nodeLister:       nodeLister,
 		reflector:        reflector,
