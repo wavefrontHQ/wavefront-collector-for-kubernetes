@@ -471,7 +471,7 @@ type summaryProvider struct {
 
 func (sp *summaryProvider) GetMetricsSources() []MetricsSource {
 	var sources []MetricsSource
-	nodes, err := sp.nodeLister.List(labels.Everything())
+	nodes, err := sp.nodeLister.List(labels.NewSelector())
 	if err != nil {
 		log.Errorf("error while listing nodes: %v", err)
 		return sources
