@@ -471,20 +471,28 @@ type summaryProvider struct {
 
 func (sp *summaryProvider) GetMetricsSources() []MetricsSource {
 	var sources []MetricsSource
-	nodes, err := sp.nodeLister.List(labels.NewSelector())
+	nodes, err := sp.nodeLister.List(labels.Nothing())
+	//log.Info("Test: List of Nodes :: %+v", nodes )
 	if err != nil {
 		log.Errorf("error while listing nodes: %v", err)
 		return sources
 	}
 
 	for _, node := range nodes {
-		log.Info("Test: List of Node :: %+v", node )
+		log.Info("Test: labels.Nothing() List of Node :: %+v", node )
 		info, err := sp.getNodeInfo(node)
 		if err != nil {
 			log.Errorf("%v", err)
 			continue
 		}
 		sources = append(sources, NewSummaryMetricsSource(info, sp.kubeletClient))
+	}
+
+
+	validatedSelector := labels.SelectorFromValidatedSet(map[string]string{"node-role.kubernetes.io/control-plane=": ""})
+	nodes1, err := sp.nodeLister.List(validatedSelector)
+	for _, node := range nodes1 {
+		log.Info("Test: validatedSelector for control plane node :: %+v", node)
 	}
 	return sources
 }
@@ -535,7 +543,7 @@ func NewSummaryProvider(cfg configuration.SummarySourceConfig) (MetricsSourcePro
 	}
 	// watch nodes
 	nodeLister, reflector, _ := util.GetNodeLister(kubeClient)
-	log.Infof("Test: nodeLister :: %+v", nodeLister)
+
 	return &summaryProvider{
 		nodeLister:       nodeLister,
 		reflector:        reflector,
