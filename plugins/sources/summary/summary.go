@@ -22,6 +22,7 @@ package summary
 
 import (
 	"fmt"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net"
 	"time"
 
@@ -471,8 +472,8 @@ type summaryProvider struct {
 
 func (sp *summaryProvider) GetMetricsSources() []MetricsSource {
 	var sources []MetricsSource
-	nodes, err := sp.nodeLister.List(labels.Nothing())
-	log.Info("Test: labels.Nothing() List size :: %+v ", len(nodes))
+	nodes, err := sp.nodeLister.List(labels.Everything{})
+	log.Info("Test: labels.Everything() List size :: %+v ", len(nodes))
 	//log.Info("Test: List of Nodes :: %+v", nodes )
 	if err != nil {
 		log.Errorf("error while listing nodes: %v", err)
@@ -480,7 +481,7 @@ func (sp *summaryProvider) GetMetricsSources() []MetricsSource {
 	}
 
 	for _, node := range nodes {
-		log.Info("Test: labels.Nothing() List of Node :: %+v", node )
+		log.Info("Test: labels.Everything() List of Node :: %+v", node )
 		info, err := sp.getNodeInfo(node)
 		if err != nil {
 			log.Errorf("%v", err)
@@ -490,12 +491,12 @@ func (sp *summaryProvider) GetMetricsSources() []MetricsSource {
 	}
 
 
-	validatedSelector := labels.SelectorFromValidatedSet(map[string]string{"node-role.kubernetes.io/control-plane=": ""})
-	nodes1, err := sp.nodeLister.List(validatedSelector)
-	log.Info("Test: validatedSelector size :: %+v ", len(nodes1))
-	for _, node := range nodes1 {
-		log.Info("Test: validatedSelector for control plane node :: %+v", node)
-	}
+	//validatedSelector := labels.SelectorFromValidatedSet(map[string]string{"node-role.kubernetes.io/control-plane=": ""})
+	//nodes1, err := sp.nodeLister.List(validatedSelector)
+	//log.Info("Test: validatedSelector size :: %+v ", len(nodes1))
+	//for _, node := range nodes1 {
+	//	log.Info("Test: validatedSelector for control plane node :: %+v", node)
+	//}
 	return sources
 }
 
@@ -545,6 +546,8 @@ func NewSummaryProvider(cfg configuration.SummarySourceConfig) (MetricsSourcePro
 	}
 	// watch nodes
 	nodeLister, reflector, _ := util.GetNodeLister(kubeClient)
+	n, _ := kubeClient.CoreV1().Nodes().List(v1.ListOptions{})
+	//log.Infof("Test: kubeClient.Nodes.List :: %+v", n)
 
 	return &summaryProvider{
 		nodeLister:       nodeLister,
