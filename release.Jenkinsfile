@@ -38,7 +38,8 @@ pipeline {
          }
       }
 
-      stage("Publish") {
+      stage("Publish RC Release") {
+        when { environment name: 'RELEASE_TYPE', value: 'rc' }
         parallel {
           stage("Publish to Harbor") {
             environment {
@@ -47,17 +48,6 @@ pipeline {
             steps {
               sh 'echo $HARBOR_CREDS_PSW | docker login "projects.registry.vmware.com/tanzu_observability" -u $HARBOR_CREDS_USR --password-stdin'
               sh 'PREFIX="projects.registry.vmware.com/tanzu_observability" HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') DOCKER_IMAGE="kubernetes-collector" make publish'
-            }
-          }
-
-          stage("Publish to Docker Hub") {
-            environment {
-              DOCKERHUB_CREDS=credentials('Dockerhub_svcwfjenkins')
-            }
-            when{ environment name: 'RELEASE_TYPE', value: 'release' }
-            steps {
-              sh 'echo $DOCKERHUB_CREDS_PSW | docker login -u $DOCKERHUB_CREDS_USR --password-stdin'
-              sh 'PREFIX="wavefronthq" make publish'
             }
           }
         }
@@ -85,6 +75,38 @@ pipeline {
               sh 'make gke-connect-to-cluster'
               sh './release/deploy-local-linux.sh'
               sh './hack/kustomize/test-e2e.sh -c ${WF_CLUSTER} -t ${WAVEFRONT_TOKEN} -n ${CONFIG_CLUSTER_NAME} -v ${VERSION}'
+            }
+          }
+        }
+        // TODO: on failure, send slack notification
+      }
+
+      stage("Publish GA Release") {
+        parallel {
+          stage("Re-tag Harbor Image") {
+            environment {
+              HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability-robot")
+              PREFIX = 'projects.registry.vmware.com/tanzu_observability'
+              DOCKER_IMAGE = 'kubernetes-collector'
+            }
+            steps {
+              sh 'echo $HARBOR_CREDS_PSW | docker login "projects.registry.vmware.com/tanzu_observability" -u $HARBOR_CREDS_USR --password-stdin'
+              sh 'docker pull $(PREFIX)/$(DOCKER_IMAGE):$(VERSION)-rc-$(RC_NUMBER)'
+              sh 'docker image tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION)-rc-$(RC_NUMBER) $(PREFIX)/$(DOCKER_IMAGE):$(VERSION)'
+              sh 'docker image tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION)-rc-$(RC_NUMBER) $(PREFIX)/$(DOCKER_IMAGE):latest'
+              sh 'docker push $(PREFIX)/$(DOCKER_IMAGE):$(VERSION)'
+              sh 'docker push $(PREFIX)/$(DOCKER_IMAGE):latest'
+            }
+          }
+
+          stage("Publish to Docker Hub") {
+            environment {
+              DOCKERHUB_CREDS=credentials('Dockerhub_svcwfjenkins')
+              RELEASE_TYPE = 'release'
+            }
+            steps {
+              sh 'echo $DOCKERHUB_CREDS_PSW | docker login -u $DOCKERHUB_CREDS_USR --password-stdin'
+              sh 'PREFIX="wavefronthq" make publish'
             }
           }
         }
