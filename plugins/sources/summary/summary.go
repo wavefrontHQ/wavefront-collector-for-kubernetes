@@ -472,7 +472,7 @@ type summaryProvider struct {
 
 func (sp *summaryProvider) GetMetricsSources() []MetricsSource {
 	var sources []MetricsSource
-	nodes, err := sp.nodeLister.List(labels.Everything{})
+	nodes, err := sp.nodeLister.List(labels.Everything())
 	log.Info("Test: labels.Everything() List size :: %+v ", len(nodes))
 	//log.Info("Test: List of Nodes :: %+v", nodes )
 	if err != nil {
@@ -547,7 +547,7 @@ func NewSummaryProvider(cfg configuration.SummarySourceConfig) (MetricsSourcePro
 	// watch nodes
 	nodeLister, reflector, _ := util.GetNodeLister(kubeClient)
 	n, _ := kubeClient.CoreV1().Nodes().List(v1.ListOptions{})
-	//log.Infof("Test: kubeClient.Nodes.List :: %+v", n)
+	log.Infof("Test: kubeClient.Nodes.List :: %+v", n)
 
 	return &summaryProvider{
 		nodeLister:       nodeLister,
