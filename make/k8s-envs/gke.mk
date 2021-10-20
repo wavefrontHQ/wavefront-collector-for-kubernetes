@@ -36,3 +36,7 @@ push-to-gcr:
 
 	docker tag $(PREFIX)/wavefront-kubernetes-collector:$(VERSION) $(GCR_ENDPOINT)/$(GCR_PREFIX)/wavefront-kubernetes-collector:$(VERSION)
 	docker push $(GCR_ENDPOINT)/$(GCR_PREFIX)/wavefront-kubernetes-collector:$(VERSION)
+
+push-test-proxy-to-gcr:
+	docker tag $(PREFIX)/test-proxy:$(VERSION) $(GCR_ENDPOINT)/$(GCR_PREFIX)/test-proxy:$(VERSION)
+    docker push $(GCR_ENDPOINT)/$(GCR_PREFIX)/test-proxy:$(VERSION)
