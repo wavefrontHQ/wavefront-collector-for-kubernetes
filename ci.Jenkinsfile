@@ -56,6 +56,7 @@ pipeline {
 //                 GCP_CREDS = credentials("GCP_CREDS")
 //                 GKE_CLUSTER_NAME = "k8po-jenkins-ci"
 //                 WAVEFRONT_TOKEN = credentials("WAVEFRONT_TOKEN_NIMBA")
+
 //             }
 //             steps {
 //                 withEnv(["PATH+GO=${HOME}/go/bin", "PATH+GCLOUD=${HOME}/google-cloud-sdk/bin"]) {
@@ -68,20 +69,16 @@ pipeline {
 //             }
 //         }
         stage("Test remove later") {
-            environment {
-              CHANNEL_ID = 'G01AZ1WP8UE'
-              SLACK_WEBHOOK_URL = credentials("slack_hook_URL")
-            }
-
             steps {
-                sh 'curl -X POST --data-urlencode "payload={\"channel\": \"${CHANNEL_ID}\", \"username\": \"jenkins\", \"text\": \"Success!! released by ${BUILD_USER}(${BUILD_USER_ID})!\"}" ${SLACK_WEBHOOK_URL}'
-//                error 'fail'
+               error 'fail'
 //                 sh 'echo success'
             }
         }
     }
-//     post {
-//         regression {
-//         }
-//     }
+    post {
+        failure {
+            slackSend channel: '#tobs-k8po-team',
+                      message: 'Build fails! '$JENKINS_URL''
+        }
+    }
 }
