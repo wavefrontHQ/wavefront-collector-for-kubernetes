@@ -63,7 +63,7 @@ pipeline {
 //                     lock("collector-integration-test") {
 //                         sh './hack/jenkins/setup-for-integration-test.sh'
 //                         sh 'make gke-connect-to-cluster'
-//                         sh 'make integration-test'
+//                         sh 'VERSION_POSTFIX=$VERSION_POSTFIX make integration-test'
 //                     }
 //                 }
 //             }
@@ -78,7 +78,7 @@ pipeline {
     post {
         failure {
             slackSend channel: '#tobs-k8po-team',
-                      message: 'Build fails! '$JENKINS_URL''
+                      message: "Build [${env.BUILD_DISPLAY_NAME}](${env.JENKINS_URL}) of wavefrontHQ/wavefront-collector-for-kubernetes@master in PR #269 by ${env.GIT_AUTHOR_NAME} errored"
         }
     }
 }
