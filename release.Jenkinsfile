@@ -66,7 +66,8 @@ pipeline {
         steps {
           script {
             env.VERSION = readFile('./release/VERSION').trim()
-            env.CONFIG_CLUSTER_NAME = "jenkins-${env.VERSION}-rc-${env.RC_NUMBER}-test"
+            env.CURRENT_VERSION = "${env.NEXT_VERSION}-rc-${env.RC_NUMBER}"
+            env.CONFIG_CLUSTER_NAME = "jenkins-${env.CURRENT_VERSION}-test"
           }
 
           withCredentials([string(credentialsId: 'nimba-wavefront-token', variable: 'WAVEFRONT_TOKEN')]) {

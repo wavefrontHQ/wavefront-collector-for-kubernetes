@@ -42,11 +42,11 @@ function wait_for_query_non_zero() {
   while [[ $actual == null || $actual == 0 ]] && [[ $loop_count -lt $MAX_QUERY_TIMES ]]; do
     loop_count=$((loop_count + 1))
 
-    echo "===============BEGIN checking wavefront dashboard stuff for $query_non_zero - attempt $loop_count/$MAX_QUERY_TIMES"
+    echo "===============BEGIN checking wavefront dashboard metrics for $query_non_zero - attempt $loop_count/$MAX_QUERY_TIMES"
     actual=$(curl_query_to_wf_dashboard "${query_non_zero}")
     echo "Actual is: '$actual'"
     echo "Expected non zero"
-    echo "===============END checking wavefront dashboard stuff for $query_non_zero"
+    echo "===============END checking wavefront dashboard metrics for $query_non_zero"
 
     sleep $CURL_WAIT
   done
@@ -79,8 +79,8 @@ function main() {
   cd "$(dirname "$0")" # hack/kustomize
 
   local AFTER_UNIX_TS="$(date '+%s')000"
-  local MAX_QUERY_TIMES=10
-  local CURL_WAIT=10
+  local MAX_QUERY_TIMES=20
+  local CURL_WAIT=15
 
   # REQUIRED
   local WAVEFRONT_TOKEN=
