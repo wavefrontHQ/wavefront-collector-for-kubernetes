@@ -68,8 +68,14 @@ pipeline {
 //             }
 //         }
         stage("Test remove later") {
+            environment {
+              CHANNEL_ID = 'G01AZ1WP8UE'
+              SLACK_WEBHOOK_URL = credentials("slack_hook_URL")
+            }
+
             steps {
-               error 'fail'
+                sh 'curl -X POST --data-urlencode "payload={\"channel\": \"${CHANNEL_ID}\", \"username\": \"jenkins\", \"text\": \"Success!! released by ${BUILD_USER}(${BUILD_USER_ID})!\"}" ${SLACK_WEBHOOK_URL}'
+//                error 'fail'
 //                 sh 'echo success'
             }
         }
