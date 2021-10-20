@@ -1,5 +1,7 @@
 pipeline {
+
     agent any
+
     environment {
         GITHUB_CREDS_PSW = credentials("GITHUB_TOKEN")
     }
@@ -15,6 +17,7 @@ pipeline {
                 }
             }
         }
+
         stage("Test with Go 1.16") {
             tools {
                 go 'Go 1.16'
@@ -33,15 +36,13 @@ pipeline {
             environment {
                 RELEASE_TYPE = "alpha"
                 VERSION_POSTFIX = "-alpha-${GIT_COMMIT.substring(0, 8)}"
-
                 HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability_keights_saas-robot")
-
                 PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
                 DOCKER_IMAGE = "kubernetes-collector-snapshot"
             }
             steps {
                 withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
-                    sh './hack/butler/install_docker_buildx.sh'
+                    sh './hack/jenkins/install_docker_buildx.sh'
                     sh 'make semver-cli'
                     sh 'echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
                     sh 'HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') make publish'
@@ -73,6 +74,7 @@ pipeline {
             }
         }
     }
+
     post {
         failure {
             slackSend (channel: '#tobs-k8po-team', color: '#FF0000', message: "BUILD FAILED: '<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>")
@@ -86,7 +88,7 @@ pipeline {
         success {
             script {
                 if (env.BRANCH_NAME == 'master') {
-                    sh './hack/butler/update_github_status.sh'
+                    sh './hack/jenkins/update_github_status.sh'
                 }
             }
         }
