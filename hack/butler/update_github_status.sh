@@ -11,5 +11,5 @@ curl --fail -X POST -H "Content-Type:application/json" \
       \"state\": \"success\",
       \"context\": \"/jenkins/ci-integration\",
       \"description\": \"Jenkins\",
-      \"target_url\": \"$JOB_URL" \
+      \"target_url\": \"$JOB_URL\"}" \
 "https://api.github.com/repos/$GIT_HUB_REPO/statuses/$GIT_COMMIT"
