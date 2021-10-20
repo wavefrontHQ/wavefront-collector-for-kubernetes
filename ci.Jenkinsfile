@@ -88,5 +88,11 @@ pipeline {
         fixed {
             slackSend (channel: '#tobs-k8po-team', color: '#008000', message: "BUILD FIXED: '<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>")
         }
+        success {
+            environment {
+                GITHUB_CREDS_PSW = credentials("GITHUB_TOKEN")
+            }
+            sh '.hack/butler/update_github_status.sh'
+        }
     }
 }
