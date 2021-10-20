@@ -30,7 +30,6 @@ pipeline {
             environment {
                 RELEASE_TYPE = "alpha"
                 VERSION_POSTFIX = "-alpha-${GIT_COMMIT.substring(0, 8)}"
-//                 VERSION_POSTFIX = "-alpha-e0fe165d"
 
                 HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability_keights_saas-robot")
 
@@ -71,12 +70,6 @@ pipeline {
                 }
             }
         }
-//         stage("Test remove later") {
-//             steps {
-//                error 'fail'
-// //                 sh 'echo success'
-//             }
-//         }
     }
     post {
         failure {
