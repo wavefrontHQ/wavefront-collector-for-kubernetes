@@ -49,6 +49,9 @@ pipeline {
         }
 
         stage("Integration Test") {
+            options {
+                timeout(time: 10, unit: 'MINUTES')
+            }
             tools {
                 go 'Go 1.15'
             }
@@ -78,6 +81,9 @@ pipeline {
     post {
         failure {
             slackSend (channel: '#tobs-k8po-team', color: '#FF0000', message: "BUILD FAILED: '<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>")
+        }
+        aborted {
+            slackSend (channel: '#tobs-k8po-team', color: '#FF0000', message: "BUILD TIMEOUT: '<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>")
         }
         fixed {
             slackSend (channel: '#tobs-k8po-team', color: '#008000', message: "BUILD FIXED: '<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>")
