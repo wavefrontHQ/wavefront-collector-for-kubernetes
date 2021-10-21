@@ -11,28 +11,21 @@ pipeline {
         BUMP_COMPONENT = "${params.BUMP_COMPONENT}"
         GIT_BRANCH = getCurrentBranchName()
         GIT_CREDENTIAL_ID = 'wf-jenkins-github'
+        TOKEN = credentials('GITHUB_TOKEN')
     }
 
     stages {
-      stage("Github Merge Bumped Version PR to Master") {
+      stage("Create Bump Version Branch") {
         steps {
           withEnv(["PATH+EXTRA=${HOME}/go/bin"]){
-            sh './hack/butler/create-next-version.sh "${BUMP_COMPONENT}"'
-          }
-          script {
-            env.GIT_BUMP_BRANCH_NAME = readFile('./hack/butler/GIT_BUMP_BRANCH_NAME').trim()
-            env.OLD_VERSION = readFile('./hack/butler/OLD_VERSION').trim()
-            env.NEXT_VERSION = readFile('./hack/butler/NEXT_VERSION').trim()
-          }
-          withCredentials([string(credentialsId: 'GITHUB_TOKEN', variable: 'TOKEN')]) {
-            sh 'git remote set-url origin https://${TOKEN}@github.com/wavefronthq/wavefront-collector-for-kubernetes.git'
             sh 'git config --global user.email "svc.wf-jenkins@vmware.com"'
             sh 'git config --global user.name "svc.wf-jenkins"'
-            sh './hack/butler/bump-version-and-raise-pull-request.sh'
+            sh 'git remote set-url origin https://${TOKEN}@github.com/wavefronthq/wavefront-collector-for-kubernetes.git'
+
+            sh './hack/butler/create-bump-version-branch.sh "${BUMP_COMPONENT}"'
           }
         }
       }
-
     }
     post {
         always {

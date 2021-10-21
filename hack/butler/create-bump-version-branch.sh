@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -ex
 
-cd "$(dirname "$0")" # cd to directory that bump-version.sh is in
+cd "$(dirname "$0")" # cd to directory that create-bump-version-branch.sh is in
 
 pushd ../../
   make semver-cli
@@ -23,7 +23,7 @@ GIT_BUMP_BRANCH_NAME="bump-${NEW_VERSION}"
 git checkout -b "$GIT_BUMP_BRANCH_NAME"
 
 echo "Bumping ${OLD_VERSION} to ${NEW_VERSION} in ../../deploy/kubernetes/5-collector-daemonset.yaml"
-sed -i '' "s/${OLD_VERSION}/${NEW_VERSION}/g" "../../deploy/kubernetes/5-collector-daemonset.yaml"
+sed -i "s/${OLD_VERSION}/${NEW_VERSION}/g" "../../deploy/kubernetes/5-collector-daemonset.yaml"
 git commit -am "bump version to ${NEW_VERSION}"
 
 git push --set-upstream origin "${GIT_BUMP_BRANCH_NAME}"
