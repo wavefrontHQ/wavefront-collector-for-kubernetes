@@ -95,7 +95,7 @@ pipeline {
 //           sh 'HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') docker image tag ${PREFIX}/${DOCKER_IMAGE}:${VERSION}-rc-${RC_NUMBER} ${PREFIX}/${DOCKER_IMAGE}:latest'
 //           sh 'HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') docker push ${PREFIX}/${DOCKER_IMAGE}:${VERSION}'
 //           sh 'HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') docker push ${PREFIX}/${DOCKER_IMAGE}:latest'
-          sh './hack/butler/retag_harbor_image.sh'
+          sh 'HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') ./hack/butler/retag_harbor_image.sh'
         }
       }
 
