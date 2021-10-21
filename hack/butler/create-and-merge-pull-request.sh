@@ -15,7 +15,7 @@ PR_URL=$(curl \
 
 echo "PR URL: ${PR_URL}"
 
-curl \
+echo curl \
   -X PUT \
   -H "Authorization: token ${TOKEN}" \
   -H "Accept: application/vnd.github.v3+json" \

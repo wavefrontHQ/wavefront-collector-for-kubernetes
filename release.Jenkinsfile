@@ -26,6 +26,12 @@ pipeline {
           }
         }
       }
+
+      stage("Create and Merge Bump Version Pull Request") {
+        steps {
+          sh './hack/butler/create-and-merge-pull-request.sh'
+        }
+      }
     }
     post {
         always {
