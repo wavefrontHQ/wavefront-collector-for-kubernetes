@@ -92,11 +92,11 @@ pipeline {
             }
             steps {
               sh 'echo $HARBOR_CREDS_PSW | docker login "projects.registry.vmware.com/tanzu_observability" -u $HARBOR_CREDS_USR --password-stdin'
-              sh 'docker pull $(PREFIX)/$(DOCKER_IMAGE):$(VERSION)-rc-$(RC_NUMBER)'
-              sh 'docker image tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION)-rc-$(RC_NUMBER) $(PREFIX)/$(DOCKER_IMAGE):$(VERSION)'
-              sh 'docker image tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION)-rc-$(RC_NUMBER) $(PREFIX)/$(DOCKER_IMAGE):latest'
-              sh 'docker push $(PREFIX)/$(DOCKER_IMAGE):$(VERSION)'
-              sh 'docker push $(PREFIX)/$(DOCKER_IMAGE):latest'
+              sh 'docker pull ${PREFIX}/${DOCKER_IMAGE}:${VERSION}-rc-${RC_NUMBER}'
+              sh 'docker image tag ${PREFIX}/${DOCKER_IMAGE}:${VERSION}-rc-${RC_NUMBER} ${PREFIX}/${DOCKER_IMAGE}:${VERSION}'
+              sh 'docker image tag ${PREFIX}/${DOCKER_IMAGE}:${VERSION}-rc-${RC_NUMBER} ${PREFIX}/${DOCKER_IMAGE}:latest'
+              sh 'docker push ${PREFIX}/${DOCKER_IMAGE}:${VERSION}'
+              sh 'docker push ${PREFIX}/${DOCKER_IMAGE}:latest'
             }
           }
 
