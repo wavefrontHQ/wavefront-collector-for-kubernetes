@@ -38,7 +38,7 @@ pipeline {
           sh 'HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') make publish'
         }
       }
-      // deploy to GKE and EKS and run manual tests
+      // deploy to GKE and run manual tests
       // now we have confidence in the validity of our RC release
       stage("Deploy and Test") {
         environment {
@@ -47,6 +47,8 @@ pipeline {
           WAVEFRONT_TOKEN = credentials("WAVEFRONT_TOKEN_NIMBA")
           WF_CLUSTER = 'nimba'
           RELEASE_TYPE = 'rc'
+          // TODO: set this back to the correct repo for actual release; this is for testing
+          COLLECTOR_REPO = 'projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-collector-automation-test'
         }
         steps {
           script {

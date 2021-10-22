@@ -14,7 +14,7 @@ ROOT_DIR=$(git rev-parse --show-toplevel)
 TEMP_DIR=$(mktemp -d)
 VERSION=$(cat ./VERSION) #version you want to test
 CURRENT_VERSION=${CURRENT_VERSION:-$VERSION}
-COLLECTOR_REPO=projects.registry.vmware.com/tanzu_observability/kubernetes-collector
+COLLECTOR_REPO=${COLLECTOR_REPO:-projects.registry.vmware.com/tanzu_observability/kubernetes-collector}
 CURRENT_COLLECTOR_REPO=${CURRENT_COLLECTOR_REPO:-$COLLECTOR_REPO}
 
 pushd ../
