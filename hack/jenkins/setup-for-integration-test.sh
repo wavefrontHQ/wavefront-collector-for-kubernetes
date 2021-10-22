@@ -1,6 +1,5 @@
 #!/bin/bash -e
 
-
 #
 # gcloud
 #
@@ -34,9 +33,11 @@ sudo mv ./kubectl /usr/local/bin/kubectl
 #
 # jq
 #
-curl -LO "https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64"
-chmod +x ./jq-linux64
-sudo mv ./jq-linux64 /usr/local/bin/jq
+if ! [ -x "$(command -v jq)" ]; then
+  mkdir -p "$HOME/bin"
+  curl -L https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 --output "$HOME/bin/jq"
+  chmod +x "$HOME/bin/jq"
+fi
 
 #
 # helm
@@ -57,12 +58,3 @@ sudo mv ./kustomize /usr/local/bin
 git config --global http.sslVerify false
 make semver-cli
 git config --global http.sslVerify true
-
-#
-# jq
-#
-if ! [ -x "$(command -v jq)" ]; then
-  mkdir -p "$HOME/bin"
-  curl -L https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 --output "$HOME/bin/jq"
-  chmod +x "$HOME/bin/jq"
-fi
