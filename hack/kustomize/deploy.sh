@@ -23,7 +23,7 @@ VERSION=
 DOCKER_HOST=
 K8S_ENV=
 
-while getopts "c:t:v:d:k:" opt; do
+while getopts ":c:t:v:d:k:" opt; do
   case $opt in
     c)
       WF_CLUSTER="$OPTARG"

@@ -44,7 +44,7 @@ metadata:
   name: wavefront-proxy
   labels:
     app: wavefront-proxy
-  namespace: wavefront-collector
+  namespace: default
 spec:
   ports:
     - name: wavefront

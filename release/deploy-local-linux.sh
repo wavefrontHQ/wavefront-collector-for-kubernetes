@@ -41,12 +41,12 @@ cp "$ROOT_DIR/hack/deploy/mysql-config.yaml" "$TEMP_DIR/."
 cp "$ROOT_DIR/hack/deploy/prom-example.yaml" "$TEMP_DIR/."
 
 pushd "$TEMP_DIR"
-  sed -i '' "s/YOUR_CLUSTER/${WF_CLUSTER}/g; s/YOUR_API_TOKEN/${WAVEFRONT_TOKEN}/g" "$TEMP_DIR/6-wavefront-proxy.yaml"
-  sed -i '' "s/k8s-cluster/${CONFIG_CLUSTER_NAME}/g" "$TEMP_DIR/4-collector-config.yaml"
+  sed -i "s/YOUR_CLUSTER/${WF_CLUSTER}/g; s/YOUR_API_TOKEN/${WAVEFRONT_TOKEN}/g" "$TEMP_DIR/6-wavefront-proxy.yaml"
+  sed -i "s/k8s-cluster/${CONFIG_CLUSTER_NAME}/g" "$TEMP_DIR/4-collector-config.yaml"
 
   echo "using version ${CURRENT_VERSION}"
-  sed -i '' "s/$VERSION/$CURRENT_VERSION/g" "$TEMP_DIR/5-collector-daemonset.yaml"
-  sed -i '' "s%${COLLECTOR_REPO}%${CURRENT_COLLECTOR_REPO}%g" "$TEMP_DIR/5-collector-daemonset.yaml"
+  sed -i "s/$VERSION/$CURRENT_VERSION/g" "$TEMP_DIR/5-collector-daemonset.yaml"
+  sed -i "s%${COLLECTOR_REPO}%${CURRENT_COLLECTOR_REPO}%g" "$TEMP_DIR/5-collector-daemonset.yaml"
 
   kubectl config set-context --current --namespace="$NAMESPACE"
   kubectl apply -f "$TEMP_DIR/."
