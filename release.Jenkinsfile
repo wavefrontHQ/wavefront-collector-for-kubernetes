@@ -58,7 +58,7 @@ pipeline {
           WF_CLUSTER = 'nimba'
           RELEASE_TYPE = 'rc'
           // TODO: set this back to the correct repo for actual release; this is for testing
-          COLLECTOR_REPO = 'projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-collector-automation-test'
+          CURRENT_COLLECTOR_REPO = 'projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-collector-automation-test'
         }
         steps {
           script {
