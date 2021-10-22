@@ -15,6 +15,15 @@ pipeline {
     }
 
     stages {
+      stage("Setup tools") {
+        steps {
+          withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
+            sh './hack/jenkins/install_docker_buildx.sh'
+            sh 'make semver-cli'
+          }
+        }
+      }
+
       stage("Create Bump Version Branch") {
         steps {
           withEnv(["PATH+EXTRA=${HOME}/go/bin"]){
@@ -26,6 +35,7 @@ pipeline {
           }
         }
       }
+
       stage("Publish RC Release") {
         environment {
           HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability_keights_saas-robot")
@@ -53,7 +63,7 @@ pipeline {
         steps {
           script {
             env.VERSION = readFile('./release/VERSION').trim()
-            env.CURRENT_VERSION = "${env.NEXT_VERSION}-rc-${env.RC_NUMBER}"
+            env.CURRENT_VERSION = "${env.VERSION}-rc-${env.RC_NUMBER}"
             env.CONFIG_CLUSTER_NAME = "jenkins-${env.CURRENT_VERSION}-test"
           }
 
