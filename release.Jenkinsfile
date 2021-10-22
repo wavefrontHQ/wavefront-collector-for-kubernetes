@@ -22,7 +22,7 @@ pipeline {
             sh 'git config --global user.name "svc.wf-jenkins"'
             sh 'git remote set-url origin https://${TOKEN}@github.com/wavefronthq/wavefront-collector-for-kubernetes.git'
 
-            sh './hack/butler/create-bump-version-branch.sh "${BUMP_COMPONENT}"'
+            sh './hack/jenkins/create-bump-version-branch.sh "${BUMP_COMPONENT}"'
           }
         }
       }
@@ -93,7 +93,7 @@ pipeline {
       }
       stage("Create and Merge Bump Version Pull Request") {
         steps {
-          sh './hack/butler/create-and-merge-pull-request.sh'
+          sh './hack/jenkins/create-and-merge-pull-request.sh'
         }
       }
     }
