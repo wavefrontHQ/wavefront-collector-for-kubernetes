@@ -26,7 +26,71 @@ pipeline {
           }
         }
       }
+      stage("Publish RC Release") {
+        environment {
+          HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability_keights_saas-robot")
+          PREFIX = 'projects.registry.vmware.com/tanzu_observability_keights_saas'
+          DOCKER_IMAGE = 'kubernetes-collector-automation-test'
+          RELEASE_TYPE = 'rc'
+        }
+        steps {
+          sh 'echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
+          sh 'HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') make publish'
+        }
+      }
+      // deploy to GKE and EKS and run manual tests
+      // now we have confidence in the validity of our RC release
+      stage("Deploy and Test") {
+        environment {
+          GCP_CREDS = credentials("GCP_CREDS")
+          GKE_CLUSTER_NAME = "k8po-jenkins-rc-testing"
+          WAVEFRONT_TOKEN = credentials("WAVEFRONT_TOKEN_NIMBA")
+          WF_CLUSTER = 'nimba'
+          RELEASE_TYPE = 'rc'
+        }
+        steps {
+          script {
+            env.VERSION = readFile('./release/VERSION').trim()
+            env.CURRENT_VERSION = "${env.NEXT_VERSION}-rc-${env.RC_NUMBER}"
+            env.CONFIG_CLUSTER_NAME = "jenkins-${env.CURRENT_VERSION}-test"
+          }
 
+          withCredentials([string(credentialsId: 'nimba-wavefront-token', variable: 'WAVEFRONT_TOKEN')]) {
+            withEnv(["PATH+GCLOUD=${HOME}/google-cloud-sdk/bin"]) {
+              sh './hack/jenkins/setup-for-integration-test.sh'
+              sh 'make gke-connect-to-cluster'
+              sh './release/deploy-local-linux.sh'
+              sh './hack/kustomize/test-e2e.sh -c ${WF_CLUSTER} -t ${WAVEFRONT_TOKEN} -n ${CONFIG_CLUSTER_NAME} -v ${VERSION}'
+            }
+          }
+        }
+      }
+      stage("Publish GA Harbor Image") {
+        when{ environment name: 'RELEASE_TYPE', value: 'release' }
+        environment {
+          HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability_keights_saas-robot")
+          RELEASE_TYPE = 'release'
+          PREFIX = 'projects.registry.vmware.com/tanzu_observability_keights_saas'
+          DOCKER_IMAGE = 'kubernetes-collector-automation-test'
+        }
+        steps {
+          sh 'echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
+          sh 'HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') make publish'
+        }
+      }
+      stage("Publish GA Docker Hub") {
+        when{ environment name: 'RELEASE_TYPE', value: 'release' }
+        environment {
+          DOCKERHUB_CREDS=credentials('dockerhub-credential-shaoh')
+          RELEASE_TYPE = 'release'
+          PREFIX = 'helenshao'
+          DOCKER_IMAGE = 'wavefront-kubernetes-collector-automation-test'
+        }
+        steps {
+          sh 'echo $DOCKERHUB_CREDS_PSW | docker login -u $DOCKERHUB_CREDS_USR --password-stdin'
+          sh 'make publish'
+        }
+      }
       stage("Create and Merge Bump Version Pull Request") {
         steps {
           sh './hack/butler/create-and-merge-pull-request.sh'

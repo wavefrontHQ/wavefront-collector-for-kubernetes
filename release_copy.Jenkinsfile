@@ -11,33 +11,21 @@ pipeline {
         BUMP_COMPONENT = "${params.BUMP_COMPONENT}"
         GIT_BRANCH = getCurrentBranchName()
         GIT_CREDENTIAL_ID = 'wf-jenkins-github'
+        TOKEN = credentials('GITHUB_TOKEN')
     }
 
     stages {
-      stage("buildx") {
+      stage("Create Bump Version Branch") {
         steps {
-          sh './hack/butler/install_docker_buildx.sh'
+          withEnv(["PATH+EXTRA=${HOME}/go/bin"]){
+            sh 'git config --global user.email "svc.wf-jenkins@vmware.com"'
+            sh 'git config --global user.name "svc.wf-jenkins"'
+            sh 'git remote set-url origin https://${TOKEN}@github.com/wavefronthq/wavefront-collector-for-kubernetes.git'
+
+            sh './hack/butler/create-bump-version-branch.sh "${BUMP_COMPONENT}"'
+          }
         }
       }
-      stage("Bump with PR") {
-         steps {
-           withEnv(["PATH+EXTRA=${HOME}/go/bin"]){
-             sh './hack/butler/create-next-version.sh "${BUMP_COMPONENT}"'
-           }
-           script {
-             env.GIT_BUMP_BRANCH_NAME = readFile('./hack/butler/GIT_BUMP_BRANCH_NAME').trim()
-             env.OLD_VERSION = readFile('./hack/butler/OLD_VERSION').trim()
-             env.NEXT_VERSION = readFile('./hack/butler/NEXT_VERSION').trim()
-           }
-           withCredentials([string(credentialsId: 'GITHUB_TOKEN', variable: 'TOKEN')]) {
-             sh 'git remote set-url origin https://${TOKEN}@github.com/wavefronthq/wavefront-collector-for-kubernetes.git'
-             sh 'git config --global user.email "svc.wf-jenkins@vmware.com"'
-             sh 'git config --global user.name "svc.wf-jenkins"'
-             sh './hack/butler/bump-version-and-raise-pull-request.sh'
-
-         }
-      }
-
       stage("Publish RC Release") {
         stage("Publish to Harbor") {
           environment {
@@ -52,7 +40,6 @@ pipeline {
           }
         }
       }
-
       // deploy to GKE and EKS and run manual tests
       // now we have confidence in the validity of our RC release
       stage("Deploy and Test") {
@@ -79,9 +66,7 @@ pipeline {
             }
           }
         }
-        // TODO: on failure, send slack notification
       }
-
       stage("Publish GA Harbor Image") {
         when{ environment name: 'RELEASE_TYPE', value: 'release' }
         environment {
@@ -95,7 +80,6 @@ pipeline {
           sh 'HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') make publish'
         }
       }
-
       stage("Publish GA Docker Hub") {
         when{ environment name: 'RELEASE_TYPE', value: 'release' }
         environment {
@@ -109,25 +93,9 @@ pipeline {
           sh 'make publish'
         }
       }
-
-//       stage("Github Merge Bumped Version PR to Master") {
-//         steps{
-//
-//         }
-//       }
-
-      stage("Github Release And Slack Notification") {
-        environment {
-          GITHUB_CREDS_PSW = credentials("GITHUB_TOKEN")
-          CHANNEL_ID = credentials("k8s-assist-slack-ID")
-          SLACK_WEBHOOK_URL = credentials("slack_hook_URL")
-          BUILD_USER_ID = getBuildUserID()
-          BUILD_USER = getBuildUser()
-        }
-        when{ environment name: 'RELEASE_TYPE', value: 'release' }
+      stage("Create and Merge Bump Version Pull Request") {
         steps {
-          sh './hack/butler/generate_github_release.sh'
-          sh './hack/butler/generate_slack_notification.sh'
+          sh './hack/butler/create-and-merge-pull-request.sh'
         }
       }
     }
