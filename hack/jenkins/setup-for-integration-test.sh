@@ -1,5 +1,6 @@
 #!/bin/bash -e
 
+
 #
 # gcloud
 #
@@ -56,3 +57,12 @@ sudo mv ./kustomize /usr/local/bin
 git config --global http.sslVerify false
 make semver-cli
 git config --global http.sslVerify true
+
+#
+# jq
+#
+if ! [ -x "$(command -v jq)" ]; then
+  mkdir -p "$HOME/bin"
+  curl -L https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 --output "$HOME/bin/jq"
+  chmod +x "$HOME/bin/jq"
+fi
