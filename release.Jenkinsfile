@@ -117,8 +117,8 @@ pipeline {
         }
         when{ environment name: 'RELEASE_TYPE', value: 'release' }
         steps {
-          sh './hack/butler/generate_github_release.sh'
-          sh './hack/butler/generate_slack_notification.sh'
+          sh './hack/jenkins/generate_github_release.sh'
+          sh './hack/jenkins/generate_slack_notification.sh'
         }
       }
     }
