@@ -106,6 +106,21 @@ pipeline {
           sh './hack/jenkins/create-and-merge-pull-request.sh'
         }
       }
+
+      stage("Github Release And Slack Notification") {
+        environment {
+          GITHUB_CREDS_PSW = credentials("GITHUB_TOKEN")
+          CHANNEL_ID = credentials("k8s-assist-slack-ID")
+          SLACK_WEBHOOK_URL = credentials("slack_hook_URL")
+          BUILD_USER_ID = getBuildUserID()
+          BUILD_USER = getBuildUser()
+        }
+        when{ environment name: 'RELEASE_TYPE', value: 'release' }
+        steps {
+          sh './hack/butler/generate_github_release.sh'
+          sh './hack/butler/generate_slack_notification.sh'
+        }
+      }
     }
     post {
         always {
