@@ -38,9 +38,9 @@ pipeline {
 
       stage("Publish RC Release") {
         environment {
-          HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability_keights_saas-robot")
-          PREFIX = 'projects.registry.vmware.com/tanzu_observability_keights_saas'
-          DOCKER_IMAGE = 'kubernetes-collector-automation-test'
+          HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability-robot")
+          PREFIX = 'projects.registry.vmware.com/tanzu_observability'
+          DOCKER_IMAGE = 'kubernetes-collector'
           RELEASE_TYPE = 'rc'
         }
         steps {
@@ -57,8 +57,6 @@ pipeline {
           WAVEFRONT_TOKEN = credentials("WAVEFRONT_TOKEN_NIMBA")
           WF_CLUSTER = 'nimba'
           RELEASE_TYPE = 'rc'
-          // TODO: set this back to the correct repo for actual release; this is for testing
-          CURRENT_COLLECTOR_REPO = 'projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-collector-automation-test'
         }
         steps {
           script {
@@ -80,10 +78,10 @@ pipeline {
       stage("Publish GA Harbor Image") {
         when{ environment name: 'RELEASE_TYPE', value: 'release' }
         environment {
-          HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability_keights_saas-robot")
+          HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability-robot")
           RELEASE_TYPE = 'release'
-          PREFIX = 'projects.registry.vmware.com/tanzu_observability_keights_saas'
-          DOCKER_IMAGE = 'kubernetes-collector-automation-test'
+          PREFIX = 'projects.registry.vmware.com/tanzu_observability'
+          DOCKER_IMAGE = 'kubernetes-collector'
         }
         steps {
           sh 'echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
@@ -93,10 +91,10 @@ pipeline {
       stage("Publish GA Docker Hub") {
         when{ environment name: 'RELEASE_TYPE', value: 'release' }
         environment {
-          DOCKERHUB_CREDS=credentials('dockerhub-credential-shaoh')
+          DOCKERHUB_CREDS=credentials('Dockerhub_svcwfjenkins')
           RELEASE_TYPE = 'release'
-          PREFIX = 'helenshao'
-          DOCKER_IMAGE = 'wavefront-kubernetes-collector-automation-test'
+          PREFIX = 'wavefronthq'
+          DOCKER_IMAGE = 'wavefront-kubernetes-collector'
         }
         steps {
           sh 'echo $DOCKERHUB_CREDS_PSW | docker login -u $DOCKERHUB_CREDS_USR --password-stdin'
