@@ -34,9 +34,9 @@ sudo mv ./kubectl /usr/local/bin/kubectl
 # jq
 #
 if ! [ -x "$(command -v jq)" ]; then
-  mkdir -p "$HOME/bin"
-  curl -H "Authorization: token ${GITHUB_CREDS_PSW}" -L https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 --output "$HOME/bin/jq"
-  chmod +x "$HOME/bin/jq"
+  curl -H "Authorization: token ${GITHUB_CREDS_PSW}" -L "https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64"
+  chmod +x ./jq
+  sudo mv ./jq /usr/local/bin
 fi
 
 #
