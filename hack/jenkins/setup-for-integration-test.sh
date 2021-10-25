@@ -35,7 +35,7 @@ sudo mv ./kubectl /usr/local/bin/kubectl
 #
 if ! [ -x "$(command -v jq)" ]; then
   mkdir -p "$HOME/bin"
-  curl -L https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 --output "$HOME/bin/jq"
+  curl -H "Authorization: token ${GITHUB_CREDS_PSW}" -L https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 --output "$HOME/bin/jq"
   chmod +x "$HOME/bin/jq"
 fi
 
@@ -48,9 +48,11 @@ sudo chmod +x /usr/local/bin/helm
 #
 # kustomize
 #
-curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"  | bash
-chmod +x ./kustomize
-sudo mv ./kustomize /usr/local/bin
+if ! [ -x "$(command -v kustomize)" ]; then
+  curl -H "Authorization: token ${GITHUB_CREDS_PSW}" -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"  | bash
+  chmod +x ./kustomize
+  sudo mv ./kustomize /usr/local/bin
+fi
 
 #
 # semver cli
