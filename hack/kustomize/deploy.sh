@@ -58,7 +58,5 @@ fi
 
 env USE_TEST_PROXY="$USE_TEST_PROXY" ./generate.sh -c "$WF_CLUSTER" -t "$WAVEFRONT_TOKEN" -v $VERSION -d $DOCKER_HOST -k $K8S_ENV
 
-echo $(kustomize build overlays/test-$K8S_ENV)
-
 kustomize build overlays/test-$K8S_ENV | kubectl apply -f -
 
