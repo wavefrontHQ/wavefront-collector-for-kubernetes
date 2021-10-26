@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -ex
+set -e
 
 DEFAULT_DOCKER_HOST="wavefronthq"
 

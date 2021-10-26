@@ -74,10 +74,10 @@ ifneq ($(OVERRIDE_IMAGE_NAME),)
 	docker tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OVERRIDE_IMAGE_NAME)
 endif
 
-BUILDER_PREFIX=$(shell echo $(PREFIX) | cut -d '/' -f1)
+BUILDER_SUFFIX=$(shell echo $(PREFIX) | cut -d '/' -f1)
 
 publish:
-	docker buildx create --use --node $(BUILDER_PREFIX)_wavefront_collector_builder
+	docker buildx create --use --node wavefront_collector_builder_$(BUILDER_SUFFIX)
 ifeq ($(RELEASE_TYPE), release)
 	docker buildx build --platform linux/amd64,linux/arm64 --push \
 	--build-arg BINARY_NAME=$(BINARY_NAME) --build-arg LDFLAGS="$(LDFLAGS)" \
