@@ -1,4 +1,4 @@
-#! /bin/bash -e
+#! /bin/bash -ex
 
 # This script automates the deployment of the collector to a specific k8s cluster
 DEFAULT_DOCKER_HOST="wavefronthq"
@@ -59,3 +59,4 @@ fi
 env USE_TEST_PROXY="$USE_TEST_PROXY" ./generate.sh -c "$WF_CLUSTER" -t "$WAVEFRONT_TOKEN" -v $VERSION -d $DOCKER_HOST -k $K8S_ENV
 
 kustomize build overlays/test-$K8S_ENV | kubectl apply -f -
+

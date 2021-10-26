@@ -3,7 +3,6 @@ module github.com/wavefronthq/wavefront-collector-for-kubernetes
 go 1.15
 
 require (
-	github.com/StackExchange/wmi v0.0.0-20180116203802-5d049714c4a6 // indirect
 	github.com/alecthomas/units v0.0.0-20190924025748-f65c72e2690d // indirect
 	github.com/armon/go-metrics v0.3.0 // indirect
 	github.com/cockroachdb/apd v1.1.0 // indirect
@@ -38,7 +37,6 @@ require (
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/lib/pq v1.3.0 // indirect
 	github.com/miekg/dns v1.1.26 // indirect
-	github.com/naoina/go-stringutil v0.1.0 // indirect
 	github.com/onsi/ginkgo v1.11.0 // indirect
 	github.com/prometheus/client_model v0.2.0
 	github.com/prometheus/common v0.9.1
@@ -47,7 +45,6 @@ require (
 	github.com/shopspring/decimal v0.0.0-20200105231215-408a2507e114 // indirect
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/pflag v1.0.5
-	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/stretchr/testify v1.7.0
 	github.com/tidwall/gjson v1.7.4 // indirect
 	github.com/wavefronthq/go-metrics-wavefront v1.0.3
@@ -63,10 +60,10 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.17.17
 	k8s.io/apimachinery v0.17.17
-	k8s.io/apiserver v0.0.0-20190116210010-30d6a91f580b
+	k8s.io/apiserver v0.0.0
 	k8s.io/client-go v0.17.17
 	k8s.io/kube-openapi v0.0.0-20200410163147-594e756bea31 // indirect
-	k8s.io/kubernetes v1.15.0-alpha.0
+	k8s.io/kubernetes v1.17.9
 	k8s.io/utils v0.0.0-20200324210504-a9aa75ae1b89 // indirect
 	sigs.k8s.io/yaml v1.2.0 // indirect
 )
@@ -89,4 +86,11 @@ exclude (
 	k8s.io/legacy-cloud-providers v0.0.0
 	k8s.io/metrics v0.0.0
 	k8s.io/sample-apiserver v0.0.0
+)
+
+replace (
+	k8s.io/api => k8s.io/api v0.17.17
+	k8s.io/apimachinery => k8s.io/apimachinery v0.17.17
+	k8s.io/apiserver => k8s.io/apiserver v0.0.0-20190116210010-30d6a91f580b
+	k8s.io/client-go => k8s.io/client-go v0.17.17
 )
