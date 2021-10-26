@@ -34,7 +34,7 @@ sudo mv ./kubectl /usr/local/bin/kubectl
 # jq
 #
 if ! [ -x "$(command -v jq)" ]; then
-  curl -H "Authorization: token ${GITHUB_CREDS_PSW}" -L "https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64"
+  curl -H "Authorization: token ${GITHUB_CREDS_PSW}" -L "https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64" > ./jq
   chmod +x ./jq
   sudo mv ./jq /usr/local/bin
 fi
@@ -49,9 +49,10 @@ sudo chmod +x /usr/local/bin/helm
 # kustomize
 #
 if ! [ -x "$(command -v kustomize)" ]; then
-  curl -H "Authorization: token ${GITHUB_CREDS_PSW}" -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"  | bash
-  chmod +x ./kustomize
-  sudo mv ./kustomize /usr/local/bin
+  curl -H "Authorization: token ${GITHUB_CREDS_PSW}" -L -s "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv4.4.0/kustomize_v4.4.0_linux_amd64.tar.gz" \
+    | tar xz --to-stdout ./docker-credential-gcr \
+    | sudo tee /usr/local/bin/kustomize >/dev/null
+  chmod +x /usr/local/bin/kustomize
 fi
 
 #
