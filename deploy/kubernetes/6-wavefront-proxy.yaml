@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: wavefront-proxy
-          image: projects.registry.vmware.com/tanzu_observability/proxy:10.7
+          image: projects.registry.vmware.com/tanzu_observability/proxy:10.9
           imagePullPolicy: IfNotPresent
           env:
             - name: WAVEFRONT_URL
