@@ -76,12 +76,12 @@ pipeline {
     }
 
     post {
-//         failure {
-//             slackSend (channel: '#tobs-k8po-team', color: '#FF0000', message: "BUILD FAILED: '<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>")
-//         }
-//         fixed {
-//             slackSend (channel: '#tobs-k8po-team', color: '#008000', message: "BUILD FIXED: '<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>")
-//         }
+        failure {
+            slackSend (channel: '#tobs-k8po-team', color: '#FF0000', message: "BUILD FAILED: '<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>")
+        }
+        fixed {
+            slackSend (channel: '#tobs-k8po-team', color: '#008000', message: "BUILD FIXED: '<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>")
+        }
         success {
             script {
                 if (env.BRANCH_NAME == 'master') {

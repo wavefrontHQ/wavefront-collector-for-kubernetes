@@ -1,4 +1,4 @@
-#!/bin/bash -ex
+#!/bin/bash -e
 
 #
 # gcloud
@@ -54,8 +54,6 @@ if ! [ -x "$(command -v kustomize)" ]; then
     | sudo tee /usr/local/bin/kustomize >/dev/null
   sudo chmod +x /usr/local/bin/kustomize
 fi
-
-kustomize --help
 
 #
 # semver cli
