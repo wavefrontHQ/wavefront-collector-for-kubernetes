@@ -50,7 +50,7 @@ sudo chmod +x /usr/local/bin/helm
 #
 if ! [ -x "$(command -v kustomize)" ]; then
   curl -H "Authorization: token ${GITHUB_CREDS_PSW}" -L -s "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv4.4.0/kustomize_v4.4.0_linux_amd64.tar.gz" \
-    | tar xz --to-stdout ./docker-credential-gcr \
+    | tar xz --to-stdout ./usr/local/bin/kustomize \
     | sudo tee /usr/local/bin/kustomize >/dev/null
   sudo chmod +x /usr/local/bin/kustomize
 fi
