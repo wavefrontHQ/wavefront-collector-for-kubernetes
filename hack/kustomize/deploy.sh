@@ -1,4 +1,4 @@
-#! /bin/bash -ex
+#! /bin/bash -e
 
 # This script automates the deployment of the collector to a specific k8s cluster
 DEFAULT_DOCKER_HOST="wavefronthq"

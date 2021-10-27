@@ -22,7 +22,7 @@ push-to-ecr: docker-login-eks
 	@aws --no-cli-pager ecr describe-images --region $(AWS_REGION) --repository-name $(COLLECTOR_ECR_REPO) --image-ids imageTag=$(VERSION) > /dev/null;\
 	EXIT_CODE=$$?;\
 	if [ $$EXIT_CODE -ne 0 ]; then\
-	    make release RELEASE_VERSION=$(VERSION) PREFIX=$(ECR_ENDPOINT) DOCKER_IMAGE=$(COLLECTOR_ECR_REPO);\
+	    make publish RELEASE_VERSION=$(VERSION) PREFIX=$(ECR_ENDPOINT) DOCKER_IMAGE=$(COLLECTOR_ECR_REPO);\
 	fi
 
 delete-images-ecr:
