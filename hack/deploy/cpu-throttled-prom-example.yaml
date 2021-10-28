@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    k8s-app: cpu-throttled-prom-example
+    name: cpu-throttled-prom-example
+  annotations:
+    prometheus.io/scrape: 'true'
+    prometheus.io/scheme: 'http'
+    prometheus.io/port: '8443'
+    prometheus.io/prefix: 'cpu-throttled-prom-example.'
+  name: cpu-throttled-prom-example
+  namespace: collector-targets
+spec:
+  containers:
+  - name: cpu-throttled-prom-example
+    image: vikramraman/prom-example-app:metrics
+    resources:
+      requests:
+        memory: "64Mi"
+        cpu: "10m"
+      limits:
+        memory: "128Mi"
+        cpu: "10m"
+#    image: jgeeatvmware/crash-loop:1
+    imagePullPolicy: Always
+    command:
+    - /bin/prometheus-example-app
+    - --num=10
+    ports:
+    - containerPort: 8443
+      protocol: TCP
