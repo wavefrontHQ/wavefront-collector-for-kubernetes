@@ -1,5 +1,5 @@
-PREFIX?=wavefronthq
-DOCKER_IMAGE?=wavefront-kubernetes-collector
+PREFIX?=projects.registry.vmware.com/tanzu_observability_keights_saas
+DOCKER_IMAGE?=kubernetes-collector-dev-snapshot
 ARCH?=amd64
 
 REPO_DIR=$(shell git rev-parse --show-toplevel)
@@ -10,7 +10,7 @@ OUT_DIR?=$(REPO_DIR)/_output
 GOLANG_VERSION?=1.15
 BINARY_NAME=wavefront-collector
 
-RELEASE_TYPE?=release
+RELEASE_TYPE?=dev
 RC_NUMBER?=1
 GIT_BRANCH=$(shell git rev-parse --abbrev-ref HEAD)
 GIT_HUB_REPO=wavefrontHQ/wavefront-collector-for-kubernetes
@@ -24,7 +24,7 @@ endif
 GO_IMPORTS_BIN:=$(if $(which goimports),$(which goimports),$(GOPATH)/bin/goimports)
 SEMVER_CLI_BIN:=$(if $(which semver-cli),$(which semver-cli),$(GOPATH)/bin/semver-cli)
 
-VERSION_POSTFIX?=""
+VERSION_POSTFIX?=-dev-$(shell whoami)-$(shell git rev-parse --short HEAD)
 RELEASE_VERSION?=$(shell cat ./release/VERSION)
 VERSION?=$(shell semver-cli inc patch $(RELEASE_VERSION))$(VERSION_POSTFIX)
 GIT_COMMIT:=$(shell git rev-parse --short HEAD)
@@ -89,14 +89,17 @@ else ifeq ($(RELEASE_TYPE), rc)
 else
 	docker buildx build --platform linux/amd64,linux/arm64 --push \
 	--build-arg BINARY_NAME=$(BINARY_NAME) --build-arg LDFLAGS="$(LDFLAGS)" \
-	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) -t $(PREFIX)/$(DOCKER_IMAGE):latest .
+	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) .
 endif
 
 test-proxy-container: $(SEMVER_CLI_BIN)
 	docker build \
 	--build-arg BINARY_NAME=test-proxy --build-arg LDFLAGS="$(LDFLAGS)" \
 	--pull -f $(REPO_DIR)/Dockerfile.test-proxy \
-	-t $(PREFIX)/test-proxy:$(VERSION) .
+	-t $(PREFIX)/test-proxy:$(VERSION) -t $(PREFIX)/test-proxy:latest .
+
+publish-test-proxy:  test-proxy-container
+	docker push $(PREFIX)/test-proxy:latest
 
 test-proxy: peg $(REPO_DIR)/cmd/test-proxy/metric_grammar.peg.go clean fmt vet
 	GOARCH=$(ARCH) CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o $(OUT_DIR)/$(ARCH)/test-proxy ./cmd/test-proxy/...
@@ -136,16 +139,11 @@ token-check:
 	@if [ -z ${WAVEFRONT_TOKEN} ]; then echo "Need to set WAVEFRONT_TOKEN" && exit 1; fi
 
 proxy-test: token-check $(SEMVER_CLI_BIN)
-ifeq ($(K8S_ENV), GKE)
-	@(cd $(KUSTOMIZE_DIR) && ./test-integration.sh nimba $(WAVEFRONT_TOKEN) $(VERSION) "us.gcr.io\/$(GCP_PROJECT)")
-else ifeq ($(K8S_ENV), EKS)
-	@(cd $(KUSTOMIZE_DIR) && ./test-integration.sh nimba $(WAVEFRONT_TOKEN) $(VERSION) "$(ECR_ENDPOINT)\/tobs\/k8s\/saas")
-else
-	@(cd $(KUSTOMIZE_DIR) && ./test-integration.sh nimba $(WAVEFRONT_TOKEN) $(VERSION))
-endif
+	(cd $(KUSTOMIZE_DIR) && ./test-integration.sh nimba $(WAVEFRONT_TOKEN) $(VERSION) "$(shell  sed 's:/:\\/:g'  <<<"${PREFIX}")")
+
 
 #Testing deployment and configuration changes, no code changes
-deploy-test: token-check k8s-env clean-deployment deploy-targets push-images proxy-test
+deploy-test: token-check k8s-env clean-deployment deploy-targets proxy-test
 
 #Testing code, configuration and deployment changes
 integration-test: token-check k8s-env clean-deployment deploy-targets containers delete-images push-images proxy-test

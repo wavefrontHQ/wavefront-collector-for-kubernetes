@@ -25,18 +25,3 @@ create-gke-cluster: gke-cluster-name-check connect-to-gke
 	kubectl create clusterrolebinding --clusterrole cluster-admin \
 		--user $$(gcloud auth list --filter=status:ACTIVE --format="value(account)") \
 		clusterrolebinding
-
-delete-images-gcr:
-	@gcloud container images delete us.gcr.io/$(GCP_PROJECT)/test-proxy:$(VERSION) --quiet || true
-	@gcloud container images delete us.gcr.io/$(GCP_PROJECT)/wavefront-kubernetes-collector:$(VERSION) --quiet || true
-
-push-to-gcr:
-	docker tag $(PREFIX)/test-proxy:$(VERSION) $(GCR_ENDPOINT)/$(GCR_PREFIX)/test-proxy:$(VERSION)
-	docker push $(GCR_ENDPOINT)/$(GCR_PREFIX)/test-proxy:$(VERSION)
-
-	docker tag $(PREFIX)/wavefront-kubernetes-collector:$(VERSION) $(GCR_ENDPOINT)/$(GCR_PREFIX)/wavefront-kubernetes-collector:$(VERSION)
-	docker push $(GCR_ENDPOINT)/$(GCR_PREFIX)/wavefront-kubernetes-collector:$(VERSION)
-
-push-test-proxy-to-gcr:
-	docker tag $(PREFIX)/test-proxy:$(VERSION) $(GCR_ENDPOINT)/$(GCR_PREFIX)/test-proxy:$(VERSION)
-    docker push $(GCR_ENDPOINT)/$(GCR_PREFIX)/test-proxy:$(VERSION)

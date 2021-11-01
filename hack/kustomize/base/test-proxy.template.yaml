@@ -28,7 +28,7 @@ spec:
                       - amd64
       containers:
       - name: wavefront-proxy
-        image: DOCKER_HOST/test-proxy:YOUR_IMAGE_TAG
+        image: DOCKER_HOST/test-proxy:latest
         imagePullPolicy: Always #this needs to be changed to IfNotPresent if you're running on kind
         command: [ "/test-proxy", "-proxy", ":2878" ]
         ports:

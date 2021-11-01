@@ -6,7 +6,7 @@ resources:
 
 images:
 - name: projects.registry.vmware.com/tanzu_observability/kubernetes-collector
-  newName: DOCKER_HOST/wavefront-kubernetes-collector
+  newName: DOCKER_HOST/kubernetes-collector-dev-snapshot
   newTag: YOUR_IMAGE_TAG
 
 generatorOptions:
