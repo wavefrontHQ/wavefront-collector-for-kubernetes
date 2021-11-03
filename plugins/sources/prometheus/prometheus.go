@@ -106,9 +106,6 @@ func httpClient(metricsURL string, cfg httputil.ClientConfig) (*http.Client, err
 			cfg.TLSConfig.CAFile = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
 			cfg.TLSConfig.InsecureSkipVerify = true
 		}
-		if cfg.BearerToken == "" && cfg.BearerTokenFile == "" {
-			cfg.BearerTokenFile = "/var/run/secrets/kubernetes.io/serviceaccount/token"
-		}
 	}
 	client, err := httputil.NewClient(cfg)
 	if err == nil {

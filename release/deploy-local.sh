@@ -9,7 +9,7 @@ if [[ -z ${WAVEFRONT_TOKEN} ]] ; then
     print_msg_and_exit "WAVEFRONT_TOKEN required"
 fi
 
-NAMESPACE=wavefront-collector
+NS=wavefront-collector
 ROOT_DIR=$(git rev-parse --show-toplevel)
 TEMP_DIR=$(mktemp -d)
 VERSION=$(cat ./VERSION) #version you want to test
@@ -48,7 +48,7 @@ pushd "$TEMP_DIR"
   sed -i '' "s/$VERSION/$CURRENT_VERSION/g" "$TEMP_DIR/5-collector-daemonset.yaml"
   sed -i '' "s%${COLLECTOR_REPO}%${CURRENT_COLLECTOR_REPO}%g" "$TEMP_DIR/5-collector-daemonset.yaml"
 
-  kubectl config set-context --current --namespace="$NAMESPACE"
+  kubectl config set-context --current --namespace="$NS"
   kubectl apply -f "$TEMP_DIR/."
   kubectl config set-context --current --namespace=default
 popd
