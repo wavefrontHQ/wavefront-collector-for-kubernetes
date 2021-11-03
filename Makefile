@@ -1,5 +1,5 @@
 PREFIX?=projects.registry.vmware.com/tanzu_observability_keights_saas
-DOCKER_IMAGE?=kubernetes-collector-dev-snapshot
+DOCKER_IMAGE?=kubernetes-collector-snapshot
 ARCH?=amd64
 
 REPO_DIR=$(shell git rev-parse --show-toplevel)
@@ -140,7 +140,6 @@ token-check:
 
 proxy-test: token-check $(SEMVER_CLI_BIN)
 	(cd $(KUSTOMIZE_DIR) && ./test-integration.sh nimba $(WAVEFRONT_TOKEN) $(VERSION) "$(shell  sed 's:/:\\/:g'  <<<"${PREFIX}")")
-
 
 #Testing deployment and configuration changes, no code changes
 deploy-test: token-check k8s-env clean-deployment deploy-targets proxy-test
