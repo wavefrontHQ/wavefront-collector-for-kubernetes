@@ -68,6 +68,7 @@ jq -c '.Extra[]' "$RES" | sort > extra.jsonl
 
 if [[ $DIFF_COUNT -gt 0 ]] ; then
   red "MISSING: $(jq "(.Missing | length)" "$RES")"
+  cat missing.jsonl
   red "Extra: $(jq "(.Extra | length)" "$RES")"
   red "FAILED: METRICS OUTPUT DID NOT MATCH EXACTLY"
   echo "$RES"
