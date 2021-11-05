@@ -29,7 +29,7 @@ spec:
       containers:
       - name: wavefront-proxy
         image: projects.registry.vmware.com/tanzu_observability_keights_saas/test-proxy:latest
-        imagePullPolicy: Always #this needs to be changed to IfNotPresent if you're running on kind
+        imagePullPolicy: IfNotPresent
         command: [ "/test-proxy", "-proxy", ":2878" ]
         ports:
         - name: proxy
