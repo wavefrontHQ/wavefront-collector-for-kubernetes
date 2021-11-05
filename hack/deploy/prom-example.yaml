@@ -14,7 +14,7 @@ metadata:
 spec:
   containers:
   - name: prom-example
-    image: vikramraman/prom-example-app:metrics
+    image: projects.registry.vmware.com/tanzu_observability_keights_saas/prometheus-example-app:latest
 #    image: jgeeatvmware/crash-loop:1
     imagePullPolicy: Always
     command:
