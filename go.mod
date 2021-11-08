@@ -15,9 +15,7 @@ require (
 	github.com/go-sql-driver/mysql v1.4.1 // indirect
 	github.com/gobwas/glob v0.2.3
 	github.com/gofrs/uuid v3.3.0+incompatible // indirect
-	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
-	github.com/google/cadvisor v0.35.0
+	github.com/google/cadvisor v0.42.0
 	github.com/google/gofuzz v1.1.0 // indirect
 	github.com/googleapis/gnostic v0.3.1 // indirect
 	github.com/hashicorp/consul/api v1.3.0 // indirect
@@ -39,7 +37,7 @@ require (
 	github.com/miekg/dns v1.1.26 // indirect
 	github.com/onsi/ginkgo v1.11.0 // indirect
 	github.com/prometheus/client_model v0.2.0
-	github.com/prometheus/common v0.9.1
+	github.com/prometheus/common v0.10.0
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475
 	github.com/shirou/gopsutil v2.20.6+incompatible
 	github.com/shopspring/decimal v0.0.0-20200105231215-408a2507e114 // indirect
@@ -50,10 +48,6 @@ require (
 	github.com/wavefronthq/go-metrics-wavefront v1.0.3
 	github.com/wavefronthq/wavefront-sdk-go v0.9.9
 	golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83 // indirect
-	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d // indirect
-	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect
-	google.golang.org/appengine v1.6.5 // indirect
-	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22 // indirect
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.17.17
@@ -62,7 +56,6 @@ require (
 	k8s.io/client-go v0.17.17
 	k8s.io/kube-openapi v0.0.0-20200410163147-594e756bea31 // indirect
 	k8s.io/kubernetes v1.17.9
-	k8s.io/utils v0.0.0-20200324210504-a9aa75ae1b89 // indirect
 	sigs.k8s.io/yaml v1.2.0 // indirect
 )
 
