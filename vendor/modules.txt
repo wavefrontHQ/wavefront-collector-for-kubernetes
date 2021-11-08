@@ -253,8 +253,6 @@ github.com/wavefronthq/wavefront-sdk-go/version
 ## explicit
 golang.org/x/crypto/pbkdf2
 golang.org/x/crypto/ssh/terminal
-# golang.org/x/exp v0.0.0-20200224162631-6cc2880d07d6
-## explicit
 # golang.org/x/net v0.0.0-20201021035429-f5854403a974
 golang.org/x/net/context
 golang.org/x/net/context/ctxhttp
@@ -290,8 +288,6 @@ golang.org/x/text/width
 # golang.org/x/time v0.0.0-20191024005414-555d28b269f0
 ## explicit
 golang.org/x/time/rate
-# gonum.org/v1/netlib v0.0.0-20190331212654-76723241ea4e
-## explicit
 # google.golang.org/appengine v1.6.5
 ## explicit
 google.golang.org/appengine/cloudsql
