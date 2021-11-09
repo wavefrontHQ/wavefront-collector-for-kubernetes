@@ -7,7 +7,6 @@ KUSTOMIZE_DIR=$(REPO_DIR)/hack/kustomize
 DEPLOY_DIR=$(REPO_DIR)/hack/deploy
 OUT_DIR?=$(REPO_DIR)/_output
 
-GOLANG_VERSION?=1.16
 BINARY_NAME=wavefront-collector
 
 RELEASE_TYPE?=release
