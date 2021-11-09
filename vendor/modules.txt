@@ -1,17 +1,19 @@
 # github.com/StackExchange/wmi v0.0.0-20180116203802-5d049714c4a6
+## explicit
 github.com/StackExchange/wmi
 # github.com/alecthomas/units v0.0.0-20190924025748-f65c72e2690d
 ## explicit
 github.com/alecthomas/units
 # github.com/armon/go-metrics v0.3.0
-## explicit
+## explicit; go 1.12
 github.com/armon/go-metrics
 # github.com/caio/go-tdigest v3.1.0+incompatible
+## explicit
 github.com/caio/go-tdigest
 # github.com/cockroachdb/apd v1.1.0
 ## explicit
 # github.com/coreos/go-systemd/v22 v22.3.2
-## explicit
+## explicit; go 1.12
 github.com/coreos/go-systemd/v22/dbus
 # github.com/couchbase/go-couchbase v0.0.0-20191115001346-d9e5b3bd1ebc
 ## explicit
@@ -25,9 +27,10 @@ github.com/couchbase/gomemcached/client
 github.com/couchbase/goutils/logging
 github.com/couchbase/goutils/scramsha
 # github.com/davecgh/go-spew v1.1.1
+## explicit
 github.com/davecgh/go-spew/spew
 # github.com/go-ole/go-ole v1.2.4
-## explicit
+## explicit; go 1.12
 github.com/go-ole/go-ole
 github.com/go-ole/go-ole/oleutil
 # github.com/go-redis/redis v6.15.6+incompatible
@@ -53,19 +56,22 @@ github.com/gobwas/glob/syntax/lexer
 github.com/gobwas/glob/util/runes
 github.com/gobwas/glob/util/strings
 # github.com/godbus/dbus/v5 v5.0.4
+## explicit; go 1.12
 github.com/godbus/dbus/v5
 # github.com/gofrs/uuid v3.3.0+incompatible
 ## explicit
 # github.com/gogo/protobuf v1.3.2
-## explicit
+## explicit; go 1.15
 github.com/gogo/protobuf/proto
 github.com/gogo/protobuf/sortkeys
 # github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
+## explicit
 github.com/golang/glog
 # github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e
 ## explicit
 github.com/golang/groupcache/lru
 # github.com/golang/protobuf v1.3.2
+## explicit
 github.com/golang/protobuf/proto
 github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/any
@@ -75,23 +81,25 @@ github.com/golang/protobuf/ptypes/timestamp
 ## explicit
 github.com/google/cadvisor/info/v1
 # github.com/google/go-cmp v0.3.0
+## explicit; go 1.8
 github.com/google/go-cmp/cmp
 github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
 github.com/google/go-cmp/cmp/internal/function
 github.com/google/go-cmp/cmp/internal/value
 # github.com/google/gofuzz v1.1.0
-## explicit
+## explicit; go 1.12
 github.com/google/gofuzz
 # github.com/googleapis/gnostic v0.3.1
-## explicit
+## explicit; go 1.12
 github.com/googleapis/gnostic/OpenAPIv2
 github.com/googleapis/gnostic/compiler
 github.com/googleapis/gnostic/extensions
 # github.com/hashicorp/consul/api v1.3.0
-## explicit
+## explicit; go 1.12
 github.com/hashicorp/consul/api
 # github.com/hashicorp/go-cleanhttp v0.5.1
+## explicit
 github.com/hashicorp/go-cleanhttp
 # github.com/hashicorp/go-immutable-radix v1.1.0
 ## explicit
@@ -99,12 +107,12 @@ github.com/hashicorp/go-immutable-radix
 # github.com/hashicorp/go-msgpack v0.5.5
 ## explicit
 # github.com/hashicorp/go-rootcerts v1.0.1
-## explicit
+## explicit; go 1.12
 github.com/hashicorp/go-rootcerts
 # github.com/hashicorp/go-sockaddr v1.0.2
 ## explicit
 # github.com/hashicorp/golang-lru v0.5.3
-## explicit
+## explicit; go 1.12
 github.com/hashicorp/golang-lru
 github.com/hashicorp/golang-lru/simplelru
 # github.com/hashicorp/memberlist v0.1.5
@@ -169,44 +177,52 @@ github.com/jackc/pgx/pgproto3
 github.com/jackc/pgx/pgtype
 github.com/jackc/pgx/stdlib
 # github.com/json-iterator/go v1.1.12
-## explicit
+## explicit; go 1.12
 github.com/json-iterator/go
 # github.com/kylelemons/godebug v1.1.0
-## explicit
+## explicit; go 1.11
 # github.com/lib/pq v1.3.0
 ## explicit
 # github.com/matttproud/golang_protobuf_extensions v1.0.1
+## explicit
 github.com/matttproud/golang_protobuf_extensions/pbutil
 # github.com/miekg/dns v1.1.26
-## explicit
+## explicit; go 1.12
 # github.com/mitchellh/go-homedir v1.1.0
+## explicit
 github.com/mitchellh/go-homedir
 # github.com/mitchellh/mapstructure v1.1.2
+## explicit
 github.com/mitchellh/mapstructure
 # github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd
+## explicit
 github.com/modern-go/concurrent
 # github.com/modern-go/reflect2 v1.0.2
+## explicit; go 1.12
 github.com/modern-go/reflect2
 # github.com/naoina/go-stringutil v0.1.0
+## explicit
 github.com/naoina/go-stringutil
 # github.com/onsi/ginkgo v1.11.0
 ## explicit
 # github.com/pkg/errors v0.8.1
+## explicit
 github.com/pkg/errors
 # github.com/pmezard/go-difflib v1.0.0
+## explicit
 github.com/pmezard/go-difflib/difflib
 # github.com/prometheus/client_model v0.2.0
-## explicit
+## explicit; go 1.9
 github.com/prometheus/client_model/go
 # github.com/prometheus/common v0.9.1
-## explicit
+## explicit; go 1.11
 github.com/prometheus/common/expfmt
 github.com/prometheus/common/internal/bitbucket.org/ww/goautoneg
 github.com/prometheus/common/model
 # github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475
 ## explicit
 github.com/rcrowley/go-metrics
-# github.com/shirou/gopsutil v2.20.6+incompatible
+# github.com/shirou/gopsutil v3.21.10+incompatible
 ## explicit
 github.com/shirou/gopsutil/cpu
 github.com/shirou/gopsutil/disk
@@ -217,32 +233,41 @@ github.com/shirou/gopsutil/mem
 github.com/shirou/gopsutil/net
 github.com/shirou/gopsutil/process
 # github.com/shopspring/decimal v0.0.0-20200105231215-408a2507e114
-## explicit
+## explicit; go 1.13
 # github.com/sirupsen/logrus v1.8.1
-## explicit
+## explicit; go 1.13
 github.com/sirupsen/logrus
 # github.com/spf13/pflag v1.0.5
-## explicit
+## explicit; go 1.12
 github.com/spf13/pflag
 # github.com/stretchr/objx v0.2.0
+## explicit; go 1.12
 github.com/stretchr/objx
 # github.com/stretchr/testify v1.7.0
-## explicit
+## explicit; go 1.13
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/mock
 github.com/stretchr/testify/require
 # github.com/tidwall/gjson v1.7.4
-## explicit
+## explicit; go 1.12
 github.com/tidwall/gjson
 # github.com/tidwall/match v1.0.3
+## explicit; go 1.15
 github.com/tidwall/match
 # github.com/tidwall/pretty v1.1.0
-github.com/tidwall/pretty
-# github.com/wavefronthq/go-metrics-wavefront v1.0.3
 ## explicit
+github.com/tidwall/pretty
+# github.com/tklauser/go-sysconf v0.3.9
+## explicit; go 1.13
+github.com/tklauser/go-sysconf
+# github.com/tklauser/numcpus v0.3.0
+## explicit; go 1.11
+github.com/tklauser/numcpus
+# github.com/wavefronthq/go-metrics-wavefront v1.0.3
+## explicit; go 1.13
 github.com/wavefronthq/go-metrics-wavefront/reporting
 # github.com/wavefronthq/wavefront-sdk-go v0.9.9
-## explicit
+## explicit; go 1.13
 github.com/wavefronthq/wavefront-sdk-go/application
 github.com/wavefronthq/wavefront-sdk-go/event
 github.com/wavefronthq/wavefront-sdk-go/histogram
@@ -250,10 +275,11 @@ github.com/wavefronthq/wavefront-sdk-go/internal
 github.com/wavefronthq/wavefront-sdk-go/senders
 github.com/wavefronthq/wavefront-sdk-go/version
 # golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83
-## explicit
+## explicit; go 1.11
 golang.org/x/crypto/pbkdf2
 golang.org/x/crypto/ssh/terminal
 # golang.org/x/net v0.0.0-20201021035429-f5854403a974
+## explicit; go 1.11
 golang.org/x/net/context
 golang.org/x/net/context/ctxhttp
 golang.org/x/net/http/httpguts
@@ -261,17 +287,20 @@ golang.org/x/net/http2
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
 # golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
-## explicit
+## explicit; go 1.11
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
-# golang.org/x/sys v0.0.0-20200930185726-fdedc70b468f
+# golang.org/x/sys v0.0.0-20211109065445-02f5c0300f6e
+## explicit; go 1.17
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 # golang.org/x/term v0.0.0-20201117132131-f5c789dd3221
+## explicit; go 1.11
 golang.org/x/term
 # golang.org/x/text v0.3.3
+## explicit; go 1.11
 golang.org/x/text/cases
 golang.org/x/text/internal
 golang.org/x/text/internal/language
@@ -289,7 +318,7 @@ golang.org/x/text/width
 ## explicit
 golang.org/x/time/rate
 # google.golang.org/appengine v1.6.5
-## explicit
+## explicit; go 1.11
 google.golang.org/appengine/cloudsql
 google.golang.org/appengine/internal
 google.golang.org/appengine/internal/base
@@ -301,6 +330,7 @@ google.golang.org/appengine/urlfetch
 # gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15
 ## explicit
 # gopkg.in/inf.v0 v0.9.1
+## explicit
 gopkg.in/inf.v0
 # gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22
 ## explicit
@@ -310,12 +340,13 @@ gopkg.in/mgo.v2/internal/json
 gopkg.in/mgo.v2/internal/sasl
 gopkg.in/mgo.v2/internal/scram
 # gopkg.in/yaml.v2 v2.4.0
-## explicit
+## explicit; go 1.15
 gopkg.in/yaml.v2
 # gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c
+## explicit
 gopkg.in/yaml.v3
 # k8s.io/api v0.17.17 => k8s.io/api v0.17.17
-## explicit
+## explicit; go 1.12
 k8s.io/api/admissionregistration/v1
 k8s.io/api/admissionregistration/v1beta1
 k8s.io/api/apps/v1
@@ -357,7 +388,7 @@ k8s.io/api/storage/v1
 k8s.io/api/storage/v1alpha1
 k8s.io/api/storage/v1beta1
 # k8s.io/apimachinery v0.17.17 => k8s.io/apimachinery v0.17.17
-## explicit
+## explicit; go 1.12
 k8s.io/apimachinery/pkg/api/errors
 k8s.io/apimachinery/pkg/api/meta
 k8s.io/apimachinery/pkg/api/resource
@@ -405,7 +436,7 @@ k8s.io/apimachinery/third_party/forked/golang/reflect
 k8s.io/apiserver/pkg/util/flag
 k8s.io/apiserver/pkg/util/logs
 # k8s.io/client-go v0.17.17 => k8s.io/client-go v0.17.17
-## explicit
+## explicit; go 1.12
 k8s.io/client-go/discovery
 k8s.io/client-go/informers
 k8s.io/client-go/informers/admissionregistration
@@ -571,20 +602,21 @@ k8s.io/client-go/util/keyutil
 k8s.io/client-go/util/retry
 k8s.io/client-go/util/testing
 # k8s.io/klog v1.0.0
+## explicit; go 1.12
 k8s.io/klog
 # k8s.io/kube-openapi v0.0.0-20200410163147-594e756bea31
-## explicit
+## explicit; go 1.12
 k8s.io/kube-openapi/pkg/util/proto
 # k8s.io/kubernetes v1.17.9
-## explicit
+## explicit; go 1.12
 k8s.io/kubernetes/pkg/kubelet/apis/stats/v1alpha1
 # k8s.io/utils v0.0.0-20200324210504-a9aa75ae1b89
-## explicit
+## explicit; go 1.12
 k8s.io/utils/buffer
 k8s.io/utils/integer
 k8s.io/utils/trace
 # sigs.k8s.io/yaml v1.2.0
-## explicit
+## explicit; go 1.12
 sigs.k8s.io/yaml
 # k8s.io/api => k8s.io/api v0.17.17
 # k8s.io/apimachinery => k8s.io/apimachinery v0.17.17

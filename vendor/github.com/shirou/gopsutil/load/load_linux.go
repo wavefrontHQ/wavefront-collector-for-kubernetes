@@ -26,16 +26,15 @@ func AvgWithContext(ctx context.Context) (*AvgStat, error) {
 
 func sysinfoAvgWithContext(ctx context.Context) (*AvgStat, error) {
 	var info syscall.Sysinfo_t
-	err := syscall.Sysinfo(&info)
-	if err != nil {
+	if err := syscall.Sysinfo(&info); err != nil {
 		return nil, err
 	}
 
-	const si_load_shift = 16
+	const siLoadShift = 16
 	return &AvgStat{
-		Load1:  float64(info.Loads[0]) / float64(1<<si_load_shift),
-		Load5:  float64(info.Loads[1]) / float64(1<<si_load_shift),
-		Load15: float64(info.Loads[2]) / float64(1<<si_load_shift),
+		Load1:  float64(info.Loads[0]) / float64(1<<siLoadShift),
+		Load5:  float64(info.Loads[1]) / float64(1<<siLoadShift),
+		Load15: float64(info.Loads[2]) / float64(1<<siLoadShift),
 	}, nil
 }
 
@@ -92,6 +91,8 @@ func MiscWithContext(ctx context.Context) (*MiscStat, error) {
 			continue
 		}
 		switch fields[0] {
+		case "processes":
+			ret.ProcsCreated = int(v)
 		case "procs_running":
 			ret.ProcsRunning = int(v)
 		case "procs_blocked":
@@ -101,7 +102,6 @@ func MiscWithContext(ctx context.Context) (*MiscStat, error) {
 		default:
 			continue
 		}
-
 	}
 
 	procsTotal, err := getProcsTotal()
