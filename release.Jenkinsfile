@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     tools {
-        go 'Go 1.16'
+        go 'Go 1.17'
     }
 
     environment {

@@ -31,7 +31,7 @@ pipeline {
 
         stage("Publish") {
             tools {
-                go 'Go 1.16'
+                go 'Go 1.17'
             }
             environment {
                 RELEASE_TYPE = "alpha"
@@ -55,7 +55,7 @@ pipeline {
                 timeout(time: 10, unit: 'MINUTES')
             }
             tools {
-                go 'Go 1.16'
+                go 'Go 1.17'
             }
             environment {
                 GCP_CREDS = credentials("GCP_CREDS")
