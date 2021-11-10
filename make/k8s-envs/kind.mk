@@ -3,6 +3,10 @@ nuke-kind:
 	kind delete cluster
 	kind create cluster
 
+nuke-kind-ha:
+	kind delete cluster
+	kind create cluster --config "make/k8s-envs/kind-ha.yml"
+
 kind-connect-to-cluster:
 	kubectl config use kind-kind
 
