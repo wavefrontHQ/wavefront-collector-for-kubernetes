@@ -4,21 +4,15 @@ source ../deploy/k8s-utils.sh
 # This script automates the functional testing of the collector
 
 DEFAULT_VERSION=$(semver-cli inc patch "$(cat ../../release/VERSION)")
-DEFAULT_DOCKER_HOST="wavefronthq"
 
 WAVEFRONT_CLUSTER=$1
 API_TOKEN=$2
 VERSION=$3
-DOCKER_HOST=$4
 
 K8S_ENV=$(../deploy/get-k8s-cluster-env.sh | awk '{print tolower($0)}' )
 
 if [[ -z ${VERSION} ]] ; then
     VERSION=${DEFAULT_VERSION}
-fi
-
-if [[ -z ${DOCKER_HOST} ]] ; then
-    DOCKER_HOST=${DEFAULT_DOCKER_HOST}
 fi
 
 
@@ -34,7 +28,7 @@ kubectl config set-context --current --namespace=default
 
 echo "deploying collector $IMAGE_NAME $VERSION"
 
-env USE_TEST_PROXY=true ./deploy.sh -c "$WAVEFRONT_CLUSTER" -t "$API_TOKEN" -v $VERSION -d $DOCKER_HOST -k $K8S_ENV
+env USE_TEST_PROXY=true ./deploy.sh -c "$WAVEFRONT_CLUSTER" -t "$API_TOKEN" -v $VERSION  -k $K8S_ENV
 
 wait_for_cluster_ready
 
@@ -80,6 +74,6 @@ else
   green "SUCCEEDED"
 fi
 
-env USE_TEST_PROXY=false ./deploy.sh -c "$WAVEFRONT_CLUSTER" -t "$API_TOKEN" -v $VERSION -d $DOCKER_HOST -k $K8S_ENV
+env USE_TEST_PROXY=false ./deploy.sh -c "$WAVEFRONT_CLUSTER" -t "$API_TOKEN" -v $VERSION  -k $K8S_ENV
 
 exit "$EXIT_CODE"

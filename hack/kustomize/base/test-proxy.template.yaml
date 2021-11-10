@@ -28,8 +28,8 @@ spec:
                       - amd64
       containers:
       - name: wavefront-proxy
-        image: DOCKER_HOST/test-proxy:YOUR_IMAGE_TAG
-        imagePullPolicy: Always #this needs to be changed to IfNotPresent if you're running on kind
+        image: projects.registry.vmware.com/tanzu_observability_keights_saas/test-proxy:latest
+        imagePullPolicy: IfNotPresent
         command: [ "/test-proxy", "-proxy", ":2878" ]
         ports:
         - name: proxy

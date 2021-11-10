@@ -1,9 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-DEFAULT_DOCKER_HOST="wavefronthq"
-
-DEFAULT_VERSION="1.3.7"
+DEFAULT_VERSION="1.7.4"
 USE_TEST_PROXY="${USE_TEST_PROXY:-false}"
 
 if [ "$USE_TEST_PROXY" = true ] ;
@@ -19,7 +17,6 @@ function print_usage_and_exit() {
     echo "Failure: $1"
     echo "Usage: $0 [flags] [options]"
     echo -e "\t-c wavefront instance name (required)"
-    echo -e "\t-d docker host (required)"
     echo -e "\t-t wavefront token (required)"
     echo -e "\t-v collector docker image version"
     echo -e "\t-k K8s ENV (required)"
@@ -29,7 +26,6 @@ function print_usage_and_exit() {
 WF_CLUSTER=
 WAVEFRONT_TOKEN=
 VERSION=
-DOCKER_HOST=
 K8S_ENV=gke
 
 while getopts "c:t:v:d:k:" opt; do
@@ -42,9 +38,6 @@ while getopts "c:t:v:d:k:" opt; do
       ;;
     v)
       VERSION="$OPTARG"
-      ;;
-    d)
-      DOCKER_HOST="$OPTARG"
       ;;
     k)
       K8S_ENV="$OPTARG"
@@ -69,18 +62,14 @@ fi
 
 NAMESPACE_NAME=wavefront-collector
 
-if [[ -z ${DOCKER_HOST} ]] ; then
-    DOCKER_HOST=${DEFAULT_DOCKER_HOST}
-fi
-
 
 if $USE_TEST_PROXY ; then
-  sed "s/DOCKER_HOST/${DOCKER_HOST}/g" base/test-proxy.template.yaml  |  sed "s/YOUR_IMAGE_TAG/${VERSION}/g"> base/proxy.yaml
+  sed "s/YOUR_IMAGE_TAG/${VERSION}/g" base/test-proxy.template.yaml  > base/proxy.yaml
 else
   sed "s/YOUR_CLUSTER/${WF_CLUSTER}/g; s/YOUR_API_TOKEN/${WAVEFRONT_TOKEN}/g" base/proxy.template.yaml > base/proxy.yaml
 fi
 
- sed "s/DOCKER_HOST/${DOCKER_HOST}/g" base/kustomization.template.yaml | sed "s/YOUR_IMAGE_TAG/${VERSION}/g"  > base/kustomization.yaml
+ sed "s/YOUR_IMAGE_TAG/${VERSION}/g" base/kustomization.template.yaml  > base/kustomization.yaml
 
 sed "s/YOUR_CLUSTER_NAME/$(whoami)-${K8S_ENV}-${VERSION}/g"  base/collector.template.yaml  |
   sed "s/NAMESPACE/${NAMESPACE_NAME}/g" |
