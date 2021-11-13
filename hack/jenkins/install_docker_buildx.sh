@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 set -e
+
+# NOTE: this is used in CI/CD, generally not locally
+
 if [[ ! -f "$HOME/.docker/cli-plugins/docker-buildx" ]]; then
   echo "installing docker buildx..."
   wget -q -O docker-buildx https://github.com/docker/buildx/releases/download/v0.6.3/buildx-v0.6.3.linux-amd64

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-cd "$(dirname "$0")" # cd to deploy-local.sh is in
+cd "$(dirname "$0")" # cd to deploy-local-linux.sh is in
 
 source "../hack/deploy/k8s-utils.sh"
 

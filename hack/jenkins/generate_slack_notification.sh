@@ -1,4 +1,8 @@
-#!/bin/bash -xe
+#!/usr/bin/env bash
+set -ex
+
+REPO_ROOT=$(git rev-parse --show-toplevel)
+cd $REPO_ROOT
 
 BUILD_VERSION=$(cat ./release/VERSION)
 MESSAGE="wavefront-collector-for-kubernetes:v${BUILD_VERSION}"

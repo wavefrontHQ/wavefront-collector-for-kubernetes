@@ -1,4 +1,7 @@
-#!/bin/bash -e
+#!/usr/bin/env bash
+set -e
+
+# NOTE: this is used in CI/CD, generally not locally
 
 #
 # gcloud

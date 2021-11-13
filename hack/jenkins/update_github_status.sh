@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -e
 
-cd "$(dirname "$-1")"
+REPO_ROOT=$(git rev-parse --show-toplevel)
+cd $REPO_ROOT
 
 GIT_HUB_REPO=wavefrontHQ/wavefront-collector-for-kubernetes
 
