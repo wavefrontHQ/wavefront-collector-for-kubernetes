@@ -90,7 +90,6 @@ func (rc *RateCalculator) Process(batch *metrics.DataBatch) (*metrics.DataBatch,
 								Labels: itemNew.Labels,
 								MetricValue: metrics.MetricValue{
 									ValueType:  metrics.ValueFloat,
-									MetricType: metrics.MetricGauge,
 									FloatValue: newVal,
 								},
 							})
@@ -109,9 +108,8 @@ func (rc *RateCalculator) Process(batch *metrics.DataBatch) (*metrics.DataBatch,
 						(newMs.ScrapeTime.UnixNano() - oldMs.ScrapeTime.UnixNano())
 
 					newMs.MetricValues[targetMetric.MetricDescriptor.Name] = metrics.MetricValue{
-						ValueType:  metrics.ValueInt64,
-						MetricType: metrics.MetricGauge,
-						IntValue:   newVal,
+						ValueType: metrics.ValueInt64,
+						IntValue:  newVal,
 					}
 
 				} else if foundNew && foundOld && targetMetric.MetricDescriptor.ValueType == metrics.ValueFloat {
@@ -120,7 +118,6 @@ func (rc *RateCalculator) Process(batch *metrics.DataBatch) (*metrics.DataBatch,
 
 					newMs.MetricValues[targetMetric.MetricDescriptor.Name] = metrics.MetricValue{
 						ValueType:  metrics.ValueFloat,
-						MetricType: metrics.MetricGauge,
 						FloatValue: newVal,
 					}
 				} else if foundNew && !foundOld || !foundNew && foundOld {

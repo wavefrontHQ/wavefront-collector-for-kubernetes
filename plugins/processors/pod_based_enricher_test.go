@@ -143,8 +143,7 @@ func TestStatusRunning(t *testing.T) {
 			"status": "running",
 		},
 		MetricValue: metrics.MetricValue{
-			IntValue:   1,
-			MetricType: metrics.MetricGauge,
+			IntValue: 1,
 		},
 	}
 	assert.Equal(t, expectedStatus, containerMs.LabeledMetrics[0])
@@ -177,8 +176,7 @@ func TestStatusTerminated(t *testing.T) {
 			"exit_code": "137",
 		},
 		MetricValue: metrics.MetricValue{
-			IntValue:   3,
-			MetricType: metrics.MetricGauge,
+			IntValue: 3,
 		},
 	}
 	assert.Equal(t, expectedStatus, containerMs.LabeledMetrics[0])
@@ -215,8 +213,7 @@ func TestStatusMissedTermination(t *testing.T) {
 			"exit_code": "137",
 		},
 		MetricValue: metrics.MetricValue{
-			IntValue:   3,
-			MetricType: metrics.MetricGauge,
+			IntValue: 3,
 		},
 	}
 	assert.Equal(t, expectedStatus, processBatch(t, podBasedEnricher, tc.batch))
@@ -250,8 +247,7 @@ func TestStatusPassedTermination(t *testing.T) {
 			"status": "running",
 		},
 		MetricValue: metrics.MetricValue{
-			IntValue:   1,
-			MetricType: metrics.MetricGauge,
+			IntValue: 1,
 		},
 	}
 	batch2 := createContainerBatch()

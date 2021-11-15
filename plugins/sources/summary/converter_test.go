@@ -116,9 +116,8 @@ func generateMetricSet(name string, metricType metrics.MetricType, value int64) 
 		Labels: fakeLabel,
 		MetricValues: map[string]metrics.MetricValue{
 			name: {
-				MetricType: metricType,
-				ValueType:  metrics.ValueInt64,
-				IntValue:   value,
+				ValueType: metrics.ValueInt64,
+				IntValue:  value,
 			},
 		},
 	}

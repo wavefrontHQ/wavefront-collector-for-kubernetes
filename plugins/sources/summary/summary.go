@@ -385,24 +385,10 @@ func (src *summaryMetricsSource) decodeFsStats(metrics *MetricSet, fsKey string,
 
 func (src *summaryMetricsSource) decodeUserDefinedMetrics(metrics *MetricSet, udm []stats.UserDefinedMetric) {
 	for _, metric := range udm {
-		mv := MetricValue{}
-		switch metric.Type {
-		case stats.MetricGauge:
-			mv.MetricType = MetricGauge
-		case stats.MetricCumulative:
-			mv.MetricType = MetricCumulative
-		case stats.MetricDelta:
-			mv.MetricType = MetricDelta
-		default:
-			log.Debugf("Skipping %s: unknown custom metric type: %v", metric.Name, metric.Type)
-			continue
+		metrics.MetricValues[CustomMetricPrefix+metric.Name] = MetricValue{
+			ValueType:  ValueFloat,
+			FloatValue: metric.Value,
 		}
-
-		// TODO: Handle double-precision values.
-		mv.ValueType = ValueFloat
-		mv.FloatValue = metric.Value
-
-		metrics.MetricValues[CustomMetricPrefix+metric.Name] = mv
 	}
 }
 
@@ -427,9 +413,8 @@ func (src *summaryMetricsSource) addIntMetric(metrics *MetricSet, metric *Metric
 		return
 	}
 	val := MetricValue{
-		ValueType:  ValueInt64,
-		MetricType: metric.Type,
-		IntValue:   int64(*value),
+		ValueType: ValueInt64,
+		IntValue:  int64(*value),
 	}
 	metrics.MetricValues[metric.Name] = val
 }
@@ -445,9 +430,8 @@ func (src *summaryMetricsSource) addLabeledIntMetric(metrics *MetricSet, metric 
 		Name:   metric.Name,
 		Labels: labels,
 		MetricValue: MetricValue{
-			ValueType:  ValueInt64,
-			MetricType: metric.Type,
-			IntValue:   int64(*value),
+			ValueType: ValueInt64,
+			IntValue:  int64(*value),
 		},
 	}
 	metrics.LabeledMetrics = append(metrics.LabeledMetrics, val)

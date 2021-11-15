@@ -96,7 +96,6 @@ func getInt(metricSet *metrics.MetricSet, metric *metrics.Metric) int64 {
 
 func setFloat(metricSet *metrics.MetricSet, metric *metrics.Metric, value float64) {
 	metricSet.MetricValues[metric.MetricDescriptor.Name] = metrics.MetricValue{
-		MetricType: metrics.MetricGauge,
 		ValueType:  metrics.ValueFloat,
 		FloatValue: value,
 	}

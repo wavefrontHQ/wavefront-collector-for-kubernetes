@@ -318,9 +318,8 @@ func addLabeledIntMetric(ms *metrics.MetricSet, metric *metrics.Metric, labels m
 		Name:   metric.Name,
 		Labels: labels,
 		MetricValue: metrics.MetricValue{
-			ValueType:  metrics.ValueInt64,
-			MetricType: metric.Type,
-			IntValue:   value,
+			ValueType: metrics.ValueInt64,
+			IntValue:  value,
 		},
 	}
 	ms.LabeledMetrics = append(ms.LabeledMetrics, val)
@@ -328,9 +327,8 @@ func addLabeledIntMetric(ms *metrics.MetricSet, metric *metrics.Metric, labels m
 
 func intValue(value int64) metrics.MetricValue {
 	return metrics.MetricValue{
-		IntValue:   value,
-		MetricType: metrics.MetricGauge,
-		ValueType:  metrics.ValueInt64,
+		IntValue:  value,
+		ValueType: metrics.ValueInt64,
 	}
 }
 
