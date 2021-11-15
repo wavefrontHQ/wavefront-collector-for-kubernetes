@@ -64,7 +64,7 @@ NAMESPACE_NAME=wavefront-collector
 
 
 if $USE_TEST_PROXY ; then
-  sed "s/YOUR_IMAGE_TAG/${VERSION}/g" base/test-proxy.template.yaml  > base/proxy.yaml
+  cp base/test-proxy.yaml base/proxy.yaml
 else
   sed "s/YOUR_CLUSTER/${WF_CLUSTER}/g; s/YOUR_API_TOKEN/${WAVEFRONT_TOKEN}/g" base/proxy.template.yaml > base/proxy.yaml
 fi
