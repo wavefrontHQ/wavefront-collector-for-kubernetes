@@ -22,7 +22,7 @@ timestamp <- <DIGIT DIGIT DIGIT DIGIT DIGIT DIGIT DIGIT DIGIT DIGIT DIGIT (DIGIT
 
 metricValue <- <'-'? DIGIT+ ( '.' DIGIT+ )?> { p.Value = text }
 
-metricName <- ( '"' <'∆'? '~'? ( ALNUM / [~\-_./,] )+> '"' /  <'∆'? '~'? ( ALNUM / [~\-_./,] )+> ) { p.Name = text }
+metricName <- ( '"' <'~'? ( ALNUM / [~\-_./,] )+> '"' /  <'~'? ( ALNUM / [~\-_./,] )+> ) { p.Name = text }
 
 ALNUM <- [a-zA-Z0-9]
 

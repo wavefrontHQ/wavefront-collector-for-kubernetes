@@ -99,7 +99,6 @@ test-proxy-container: $(SEMVER_CLI_BIN)
 
 publish-test-proxy:  test-proxy-container
 	docker push $(PREFIX)/test-proxy:latest
-	docker push $(PREFIX)/test-proxy:$(VERSION)
 
 test-proxy: peg $(REPO_DIR)/cmd/test-proxy/metric_grammar.peg.go clean fmt vet
 	GOARCH=$(ARCH) CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o $(OUT_DIR)/$(ARCH)/test-proxy ./cmd/test-proxy/...
