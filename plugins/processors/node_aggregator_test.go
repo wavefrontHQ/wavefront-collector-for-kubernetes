@@ -38,14 +38,12 @@ func TestNodeAggregate(t *testing.T) {
 				},
 				MetricValues: map[string]metrics.MetricValue{
 					"m1": {
-						ValueType:  metrics.ValueInt64,
-						MetricType: metrics.MetricGauge,
-						IntValue:   10,
+						ValueType: metrics.ValueInt64,
+						IntValue:  10,
 					},
 					"m2": {
-						ValueType:  metrics.ValueInt64,
-						MetricType: metrics.MetricGauge,
-						IntValue:   222,
+						ValueType: metrics.ValueInt64,
+						IntValue:  222,
 					},
 				},
 			},
@@ -58,14 +56,12 @@ func TestNodeAggregate(t *testing.T) {
 				},
 				MetricValues: map[string]metrics.MetricValue{
 					"m1": {
-						ValueType:  metrics.ValueInt64,
-						MetricType: metrics.MetricGauge,
-						IntValue:   100,
+						ValueType: metrics.ValueInt64,
+						IntValue:  100,
 					},
 					"m3": {
-						ValueType:  metrics.ValueInt64,
-						MetricType: metrics.MetricGauge,
-						IntValue:   30,
+						ValueType: metrics.ValueInt64,
+						IntValue:  30,
 					},
 				},
 			},

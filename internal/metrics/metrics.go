@@ -207,9 +207,8 @@ var MetricUptime = Metric{
 	},
 	GetValue: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) MetricValue {
 		return MetricValue{
-			ValueType:  ValueInt64,
-			MetricType: MetricCumulative,
-			IntValue:   time.Since(spec.CreationTime).Nanoseconds() / time.Millisecond.Nanoseconds()}
+			ValueType: ValueInt64,
+			IntValue:  time.Since(spec.CreationTime).Nanoseconds() / time.Millisecond.Nanoseconds()}
 	},
 }
 
@@ -236,9 +235,8 @@ var MetricCpuLoad = Metric{
 	},
 	GetValue: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) MetricValue {
 		return MetricValue{
-			ValueType:  ValueInt64,
-			MetricType: MetricGauge,
-			IntValue:   int64(stat.Cpu.LoadAverage)}
+			ValueType: ValueInt64,
+			IntValue:  int64(stat.Cpu.LoadAverage)}
 	},
 }
 
@@ -255,9 +253,8 @@ var MetricCpuUsage = Metric{
 	},
 	GetValue: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) MetricValue {
 		return MetricValue{
-			ValueType:  ValueInt64,
-			MetricType: MetricCumulative,
-			IntValue:   int64(stat.Cpu.Usage.Total)}
+			ValueType: ValueInt64,
+			IntValue:  int64(stat.Cpu.Usage.Total)}
 	},
 }
 
@@ -293,9 +290,8 @@ var MetricMemoryUsage = Metric{
 	},
 	GetValue: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) MetricValue {
 		return MetricValue{
-			ValueType:  ValueInt64,
-			MetricType: MetricGauge,
-			IntValue:   int64(stat.Memory.Usage)}
+			ValueType: ValueInt64,
+			IntValue:  int64(stat.Memory.Usage)}
 	},
 }
 
@@ -312,9 +308,8 @@ var MetricMemoryCache = Metric{
 	},
 	GetValue: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) MetricValue {
 		return MetricValue{
-			ValueType:  ValueInt64,
-			MetricType: MetricGauge,
-			IntValue:   int64(stat.Memory.Cache)}
+			ValueType: ValueInt64,
+			IntValue:  int64(stat.Memory.Cache)}
 	},
 }
 
@@ -331,9 +326,8 @@ var MetricMemoryRSS = Metric{
 	},
 	GetValue: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) MetricValue {
 		return MetricValue{
-			ValueType:  ValueInt64,
-			MetricType: MetricGauge,
-			IntValue:   int64(stat.Memory.RSS)}
+			ValueType: ValueInt64,
+			IntValue:  int64(stat.Memory.RSS)}
 	},
 }
 
@@ -350,9 +344,8 @@ var MetricMemoryWorkingSet = Metric{
 	},
 	GetValue: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) MetricValue {
 		return MetricValue{
-			ValueType:  ValueInt64,
-			MetricType: MetricGauge,
-			IntValue:   int64(stat.Memory.WorkingSet)}
+			ValueType: ValueInt64,
+			IntValue:  int64(stat.Memory.WorkingSet)}
 	},
 }
 
@@ -369,9 +362,8 @@ var MetricMemoryPageFaults = Metric{
 	},
 	GetValue: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) MetricValue {
 		return MetricValue{
-			ValueType:  ValueInt64,
-			MetricType: MetricCumulative,
-			IntValue:   int64(stat.Memory.ContainerData.Pgfault)}
+			ValueType: ValueInt64,
+			IntValue:  int64(stat.Memory.ContainerData.Pgfault)}
 	},
 }
 
@@ -388,9 +380,8 @@ var MetricMemoryMajorPageFaults = Metric{
 	},
 	GetValue: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) MetricValue {
 		return MetricValue{
-			ValueType:  ValueInt64,
-			MetricType: MetricCumulative,
-			IntValue:   int64(stat.Memory.ContainerData.Pgmajfault)}
+			ValueType: ValueInt64,
+			IntValue:  int64(stat.Memory.ContainerData.Pgmajfault)}
 	},
 }
 
@@ -411,9 +402,8 @@ var MetricNetworkRx = Metric{
 			rxBytes += interfaceStat.RxBytes
 		}
 		return MetricValue{
-			ValueType:  ValueInt64,
-			MetricType: MetricCumulative,
-			IntValue:   int64(rxBytes),
+			ValueType: ValueInt64,
+			IntValue:  int64(rxBytes),
 		}
 	},
 }
@@ -435,9 +425,8 @@ var MetricNetworkRxErrors = Metric{
 			rxErrors += interfaceStat.RxErrors
 		}
 		return MetricValue{
-			ValueType:  ValueInt64,
-			MetricType: MetricCumulative,
-			IntValue:   int64(rxErrors),
+			ValueType: ValueInt64,
+			IntValue:  int64(rxErrors),
 		}
 	},
 }
@@ -459,9 +448,8 @@ var MetricNetworkTx = Metric{
 			txBytes += interfaceStat.TxBytes
 		}
 		return MetricValue{
-			ValueType:  ValueInt64,
-			MetricType: MetricCumulative,
-			IntValue:   int64(txBytes),
+			ValueType: ValueInt64,
+			IntValue:  int64(txBytes),
 		}
 	},
 }
@@ -483,9 +471,8 @@ var MetricNetworkTxErrors = Metric{
 			txErrors += interfaceStat.TxErrors
 		}
 		return MetricValue{
-			ValueType:  ValueInt64,
-			MetricType: MetricCumulative,
-			IntValue:   int64(txErrors),
+			ValueType: ValueInt64,
+			IntValue:  int64(txErrors),
 		}
 	},
 }
@@ -816,9 +803,8 @@ var MetricFilesystemUsage = Metric{
 					LabelResourceID.Key: fs.Device,
 				},
 				MetricValue: MetricValue{
-					ValueType:  ValueInt64,
-					MetricType: MetricGauge,
-					IntValue:   int64(fs.Usage),
+					ValueType: ValueInt64,
+					IntValue:  int64(fs.Usage),
 				},
 			})
 		}
@@ -847,9 +833,8 @@ var MetricFilesystemLimit = Metric{
 					LabelResourceID.Key: fs.Device,
 				},
 				MetricValue: MetricValue{
-					ValueType:  ValueInt64,
-					MetricType: MetricGauge,
-					IntValue:   int64(fs.Limit),
+					ValueType: ValueInt64,
+					IntValue:  int64(fs.Limit),
 				},
 			})
 		}
@@ -878,9 +863,8 @@ var MetricFilesystemAvailable = Metric{
 					LabelResourceID.Key: fs.Device,
 				},
 				MetricValue: MetricValue{
-					ValueType:  ValueInt64,
-					MetricType: MetricGauge,
-					IntValue:   int64(fs.Available),
+					ValueType: ValueInt64,
+					IntValue:  int64(fs.Available),
 				},
 			})
 		}
@@ -910,9 +894,8 @@ var MetricFilesystemInodes = Metric{
 						LabelResourceID.Key: fs.Device,
 					},
 					MetricValue: MetricValue{
-						ValueType:  ValueInt64,
-						MetricType: MetricGauge,
-						IntValue:   int64(fs.Inodes),
+						ValueType: ValueInt64,
+						IntValue:  int64(fs.Inodes),
 					},
 				})
 			}
@@ -943,9 +926,8 @@ var MetricFilesystemInodesFree = Metric{
 						LabelResourceID.Key: fs.Device,
 					},
 					MetricValue: MetricValue{
-						ValueType:  ValueInt64,
-						MetricType: MetricGauge,
-						IntValue:   int64(fs.InodesFree),
+						ValueType: ValueInt64,
+						IntValue:  int64(fs.InodesFree),
 					},
 				})
 			}
@@ -981,9 +963,8 @@ var MetricAcceleratorMemoryTotal = Metric{
 					LabelAcceleratorID.Key:    ac.ID,
 				},
 				MetricValue: MetricValue{
-					ValueType:  ValueInt64,
-					MetricType: MetricGauge,
-					IntValue:   int64(ac.MemoryTotal),
+					ValueType: ValueInt64,
+					IntValue:  int64(ac.MemoryTotal),
 				},
 			})
 		}
@@ -1018,9 +999,8 @@ var MetricAcceleratorMemoryUsed = Metric{
 					LabelAcceleratorID.Key:    ac.ID,
 				},
 				MetricValue: MetricValue{
-					ValueType:  ValueInt64,
-					MetricType: MetricGauge,
-					IntValue:   int64(ac.MemoryUsed),
+					ValueType: ValueInt64,
+					IntValue:  int64(ac.MemoryUsed),
 				},
 			})
 		}
@@ -1055,9 +1035,8 @@ var MetricAcceleratorDutyCycle = Metric{
 					LabelAcceleratorID.Key:    ac.ID,
 				},
 				MetricValue: MetricValue{
-					ValueType:  ValueInt64,
-					MetricType: MetricGauge,
-					IntValue:   int64(ac.DutyCycle),
+					ValueType: ValueInt64,
+					IntValue:  int64(ac.DutyCycle),
 				},
 			})
 		}
@@ -1096,9 +1075,8 @@ var MetricDiskIORead = Metric{
 					LabelResourceID.Key: resourceIDKey,
 				},
 				MetricValue: MetricValue{
-					ValueType:  ValueInt64,
-					MetricType: MetricGauge,
-					IntValue:   int64(value),
+					ValueType: ValueInt64,
+					IntValue:  int64(value),
 				},
 			})
 		}
@@ -1137,9 +1115,8 @@ var MetricDiskIOWrite = Metric{
 					LabelResourceID.Key: resourceIDKey,
 				},
 				MetricValue: MetricValue{
-					ValueType:  ValueInt64,
-					MetricType: MetricGauge,
-					IntValue:   int64(value),
+					ValueType: ValueInt64,
+					IntValue:  int64(value),
 				},
 			})
 		}

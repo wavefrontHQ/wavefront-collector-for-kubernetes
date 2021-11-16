@@ -42,14 +42,12 @@ func TestRateCalculator(t *testing.T) {
 				},
 				MetricValues: map[string]metrics.MetricValue{
 					metrics.MetricCpuUsage.MetricDescriptor.Name: {
-						ValueType:  metrics.ValueInt64,
-						MetricType: metrics.MetricCumulative,
-						IntValue:   947130377781,
+						ValueType: metrics.ValueInt64,
+						IntValue:  947130377781,
 					},
 					metrics.MetricNetworkTxErrors.MetricDescriptor.Name: {
-						ValueType:  metrics.ValueInt64,
-						MetricType: metrics.MetricCumulative,
-						IntValue:   0,
+						ValueType: metrics.ValueInt64,
+						IntValue:  0,
 					},
 				},
 			},
@@ -69,14 +67,12 @@ func TestRateCalculator(t *testing.T) {
 				},
 				MetricValues: map[string]metrics.MetricValue{
 					metrics.MetricCpuUsage.MetricDescriptor.Name: {
-						ValueType:  metrics.ValueInt64,
-						MetricType: metrics.MetricCumulative,
-						IntValue:   948071062732,
+						ValueType: metrics.ValueInt64,
+						IntValue:  948071062732,
 					},
 					metrics.MetricNetworkTxErrors.MetricDescriptor.Name: {
-						ValueType:  metrics.ValueInt64,
-						MetricType: metrics.MetricCumulative,
-						IntValue:   120,
+						ValueType: metrics.ValueInt64,
+						IntValue:  120,
 					},
 				},
 			},
