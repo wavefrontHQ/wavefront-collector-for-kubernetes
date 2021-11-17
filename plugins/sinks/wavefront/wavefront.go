@@ -147,7 +147,7 @@ func (sink *wavefrontSink) Stop() {
 	sink.WavefrontClient.Close()
 }
 
-func (sink *wavefrontSink) sendPoint(metricName string, value float64, ts int64, source string, tags map[string]string) {
+func (sink *wavefrontSink) sendPoint(metricName string, value float64, timestamp int64, source string, tags map[string]string) {
 	metricName = sanitizedChars.Replace(metricName)
 	if len(sink.Prefix) > 0 {
 		metricName = sink.Prefix + "." + metricName
@@ -164,7 +164,7 @@ func (sink *wavefrontSink) sendPoint(metricName string, value float64, ts int64,
 
 	logTagCleaningReasons(metricName, cleanTags(tags, maxWavefrontTags))
 
-	err := sink.WavefrontClient.SendMetric(metricName, value, ts, source, tags)
+	err := sink.WavefrontClient.SendMetric(metricName, value, timestamp, source, tags)
 	if err != nil {
 		errPoints.Inc(1)
 		sink.logVerboseError(log.Fields{
