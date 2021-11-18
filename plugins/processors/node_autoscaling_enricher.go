@@ -56,7 +56,7 @@ func (nae *NodeAutoscalingEnricher) Process(batch *metrics.DataBatch) (*metrics.
 			cpuRequested := getInt(metricSet, &metrics.MetricCpuRequest)
 			cpuUsed := getInt(metricSet, &metrics.MetricCpuUsageRate)
 			memRequested := getInt(metricSet, &metrics.MetricMemoryRequest)
-			memUsed := getInt(metricSet, &metrics.MetricMemoryUsage)
+			memWorkingSet := getInt(metricSet, &metrics.MetricMemoryWorkingSet)
 			epheRequested := getInt(metricSet, &metrics.MetricEphemeralStorageRequest)
 			epheUsed := getInt(metricSet, &metrics.MetricEphemeralStorageUsage)
 
@@ -68,7 +68,7 @@ func (nae *NodeAutoscalingEnricher) Process(batch *metrics.DataBatch) (*metrics.
 			setFloat(metricSet, &metrics.MetricNodeCpuAllocatable, float64(allocatableCpu.MilliValue()))
 
 			if allocatableMem.Value() != 0 {
-				setFloat(metricSet, &metrics.MetricNodeMemoryUtilization, float64(memUsed)/float64(allocatableMem.Value()))
+				setFloat(metricSet, &metrics.MetricNodeMemoryUtilization, float64(memWorkingSet)/float64(allocatableMem.Value()))
 				setFloat(metricSet, &metrics.MetricNodeMemoryReservation, float64(memRequested)/float64(allocatableMem.Value()))
 			}
 			setFloat(metricSet, &metrics.MetricNodeMemoryCapacity, float64(capacityMem.Value()))
