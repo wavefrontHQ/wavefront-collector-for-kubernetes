@@ -45,7 +45,7 @@ Metrics collected per type:
 | memory.node_capacity | Memory capacity of a node. |
 | memory.node_allocatable | Memory allocatable of a node. |
 | memory.node_reservation | Share of memory that is reserved on the node allocatable. |
-| memory.node_utilization | Memory utilization as a share of memory allocatable. |
+| memory.node_utilization | Memory utilization as a share of memory allocatable based on memory.working_set. |
 | memory.page_faults | Number of page faults. |
 | memory.page_faults_rate | Number of page faults per second. |
 | memory.request | Memory request (the guaranteed amount of resources) in bytes. |
