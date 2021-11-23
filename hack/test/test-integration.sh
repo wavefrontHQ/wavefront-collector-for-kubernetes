@@ -1,5 +1,5 @@
 #!/bin/bash -e
-source ../deploy/k8s-utils.sh
+source ./deploy/k8s-utils.sh
 
 # This script automates the functional testing of the collector
 
@@ -9,7 +9,7 @@ WAVEFRONT_CLUSTER=$1
 API_TOKEN=$2
 VERSION=$3
 
-K8S_ENV=$(../deploy/get-k8s-cluster-env.sh | awk '{print tolower($0)}' )
+K8S_ENV=$(./deploy/get-k8s-cluster-env.sh | awk '{print tolower($0)}' )
 
 if [[ -z ${VERSION} ]] ; then
     VERSION=${DEFAULT_VERSION}
@@ -22,8 +22,8 @@ echo "deploying configuration for additional targets"
 
 kubectl create namespace $NS
 kubectl config set-context --current --namespace="$NS"
-kubectl apply -f ../deploy/mysql-config.yaml
-kubectl apply -f ../deploy/memcached-config.yaml
+kubectl apply -f ./deploy/mysql-config.yaml
+kubectl apply -f ./deploy/memcached-config.yaml
 kubectl config set-context --current --namespace=default
 
 echo "deploying collector $IMAGE_NAME $VERSION"

@@ -1,7 +1,7 @@
 #!/bin/bash -e
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
-source ${REPO_ROOT}/hack/deploy/k8s-utils.sh
+source ${REPO_ROOT}/hack/test/deploy/k8s-utils.sh
 
 function curl_query_to_wf_dashboard() {
   local query=$1
@@ -76,7 +76,7 @@ function exit_on_fail() {
 }
 
 function main() {
-  cd "$(dirname "$0")" # hack/kustomize
+  cd "$(dirname "$0")" # hack/test
 
   local AFTER_UNIX_TS="$(date '+%s')000"
   local MAX_QUERY_TIMES=20

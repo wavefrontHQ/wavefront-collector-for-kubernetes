@@ -9,7 +9,7 @@ k9s:
 
 clean-deployment:
 	@(cd $(DEPLOY_DIR) && ./uninstall-wavefront-helm-release.sh)
-	@(cd $(KUSTOMIZE_DIR) && ./clean-deploy.sh)
+	@(cd $(TEST_DIR) && ./clean-deploy.sh)
 
 k8s-env:
 	@echo "\033[92mK8s Environment: $(shell kubectl config current-context)\033[0m"

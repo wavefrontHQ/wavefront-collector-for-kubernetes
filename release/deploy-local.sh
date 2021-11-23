@@ -3,7 +3,7 @@ set -e
 
 cd "$(dirname "$0")" # cd to deploy-local.sh is in
 
-source "../hack/deploy/k8s-utils.sh"
+source "../hack/test/deploy/k8s-utils.sh"
 
 if [[ -z ${WAVEFRONT_TOKEN} ]] ; then
     print_msg_and_exit "WAVEFRONT_TOKEN required"
@@ -36,9 +36,9 @@ echo "Temp dir: $TEMP_DIR"
 cp "$ROOT_DIR"/deploy/kubernetes/*  "$TEMP_DIR/."
 rm "$TEMP_DIR"/kustomization.yaml
 
-cp "$ROOT_DIR/hack/deploy/memcached-config.yaml" "$TEMP_DIR/."
-cp "$ROOT_DIR/hack/deploy/mysql-config.yaml" "$TEMP_DIR/."
-cp "$ROOT_DIR/hack/deploy/prom-example.yaml" "$TEMP_DIR/."
+cp "$ROOT_DIR/hack/test/deploy/memcached-config.yaml" "$TEMP_DIR/."
+cp "$ROOT_DIR/hack/test/deploy/mysql-config.yaml" "$TEMP_DIR/."
+cp "$ROOT_DIR/hack/test/deploy/prom-example.yaml" "$TEMP_DIR/."
 
 pushd "$TEMP_DIR"
   sed -i '' "s/YOUR_CLUSTER/${WF_CLUSTER}/g; s/YOUR_API_TOKEN/${WAVEFRONT_TOKEN}/g" "$TEMP_DIR/6-wavefront-proxy.yaml"
