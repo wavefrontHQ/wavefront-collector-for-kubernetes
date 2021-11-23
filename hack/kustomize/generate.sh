@@ -60,7 +60,7 @@ if [[ -z ${VERSION} ]] ; then
     VERSION=${DEFAULT_VERSION}
 fi
 
-NAMESPACE_NAME=wavefront-collector
+NS=wavefront-collector
 
 
 if $USE_TEST_PROXY ; then
@@ -72,7 +72,7 @@ fi
  sed "s/YOUR_IMAGE_TAG/${VERSION}/g" base/kustomization.template.yaml  > base/kustomization.yaml
 
 sed "s/YOUR_CLUSTER_NAME/$(whoami)-${K8S_ENV}-${VERSION}/g"  base/collector.template.yaml  |
-  sed "s/NAMESPACE/${NAMESPACE_NAME}/g" |
+  sed "s/NAMESPACE/${NS}/g" |
   sed "s/FLUSH_INTERVAL/${FLUSH_INTERVAL}/g" |
   sed  "s/COLLECTION_INTERVAL/${COLLECTION_INTERVAL}/g" > base/collector.yaml
 

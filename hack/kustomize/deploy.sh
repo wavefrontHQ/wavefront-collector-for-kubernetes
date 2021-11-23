@@ -44,7 +44,7 @@ if [[ -z ${VERSION} ]] ; then
     VERSION=${DEFAULT_VERSION}
 fi
 
-NAMESPACE_NAME=wavefront-collector
+NS=wavefront-collector
 echo  "deploy:48"
 
 env USE_TEST_PROXY="$USE_TEST_PROXY" ./generate.sh -c "$WF_CLUSTER" -t "$WAVEFRONT_TOKEN" -v $VERSION  -k $K8S_ENV
