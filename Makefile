@@ -3,8 +3,8 @@ DOCKER_IMAGE?=kubernetes-collector-snapshot
 ARCH?=amd64
 
 REPO_DIR=$(shell git rev-parse --show-toplevel)
-KUSTOMIZE_DIR=$(REPO_DIR)/hack/kustomize
-DEPLOY_DIR=$(REPO_DIR)/hack/deploy
+TEST_DIR=$(REPO_DIR)/hack/test
+DEPLOY_DIR=$(REPO_DIR)/hack/test/deploy
 OUT_DIR?=$(REPO_DIR)/_output
 
 BINARY_NAME=wavefront-collector
@@ -139,7 +139,7 @@ token-check:
 	@if [ -z ${WAVEFRONT_TOKEN} ]; then echo "Need to set WAVEFRONT_TOKEN" && exit 1; fi
 
 proxy-test: token-check $(SEMVER_CLI_BIN)
-	(cd $(KUSTOMIZE_DIR) && ./test-integration.sh nimba $(WAVEFRONT_TOKEN) $(VERSION) "$(shell  sed 's:/:\\/:g'  <<<"${PREFIX}")")
+	(cd $(TEST_DIR) && ./test-integration.sh nimba $(WAVEFRONT_TOKEN) $(VERSION) "$(shell  sed 's:/:\\/:g'  <<<"${PREFIX}")")
 
 #Testing deployment and configuration changes, no code changes
 deploy-test: token-check k8s-env clean-deployment deploy-targets proxy-test
