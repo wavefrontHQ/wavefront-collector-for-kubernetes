@@ -52,7 +52,7 @@ tests:
 	go test -timeout 30s -race ./...
 
 build: clean fmt vet
-	GOARCH=$(ARCH) CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o $(OUT_DIR)/$(ARCH)/$(BINARY_NAME) ./cmd/wavefront-collector/
+	GOARCH=$(ARCH) CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o $(OUT_DMIR)/$(ARCH)/$(BINARY_NAME) ./cmd/wavefront-collector/
 
 vet:
 	go vet -composites=false ./...
@@ -120,12 +120,11 @@ $(SEMVER_CLI_BIN):
 	peg -switch -inline $<
 
 #This rule need to be run on RHEL with podman installed.
-container_rhel: build $(SEMVER_CLI_BIN)
-	cp $(OUT_DIR)/$(ARCH)/$(BINARY_NAME) $(TEMP_DIR)
-	cp LICENSE $(TEMP_DIR)/license.txt
-	cp deploy/docker/Dockerfile-rhel $(TEMP_DIR)/Dockerfile
-	cp deploy/examples/openshift-config.yaml $(TEMP_DIR)/collector.yaml
-	podman build --pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(TEMP_DIR)
+container_rhel: $(SEMVER_CLI_BIN)
+	docker build \
+		--build-arg COLLECTOR_VERSION=$(VERSION) --build-arg LDFLAGS="$(LDFLAGS)" \
+		-f $(REPO_DIR)/deploy/docker/Dockerfile-rhel \
+		-t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) .
 ifneq ($(OVERRIDE_IMAGE_NAME),)
 	sudo docker tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OVERRIDE_IMAGE_NAME)
 endif
@@ -145,6 +144,7 @@ proxy-test: token-check $(SEMVER_CLI_BIN)
 deploy-test: token-check k8s-env clean-deployment deploy-targets proxy-test
 
 #Testing code, configuration and deployment changes
-integration-test: token-check k8s-env clean-deployment deploy-targets containers delete-images push-images proxy-test
+#integration-test: token-check k8s-env clean-deployment deploy-targets containers delete-images push-images proxy-test
+integration-test: token-check k8s-env clean-deployment deploy-targets test-proxy-container delete-images push-images proxy-test
 
 .PHONY: all fmt container clean release semver-cli

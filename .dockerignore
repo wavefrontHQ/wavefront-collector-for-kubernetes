@@ -1,6 +1,7 @@
 # files that aren't necessary to build a binary
 adr
 deploy
+!deploy/examples/openshift-config.yaml
 docs
 hack
 *.md
