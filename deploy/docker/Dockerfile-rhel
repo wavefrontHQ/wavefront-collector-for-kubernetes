@@ -19,10 +19,10 @@ ARG COLLECTOR_VERSION
 MAINTAINER wavefront@vmware.com
 
 LABEL name="Wavefront Collector" \
+      maintainer="wavefront@vmware.com" \
       vendor="Wavefront by VMware" \
-      version="$COLLECTOR_VERSION" \
-      release="1" \
-      run='' \
+      version="v1.7.4" \
+      release="v1.7.4" \
       summary="The Wavefront Collector for Kubernetes enables monitoring Kubernetes clusters and sending metrics to Wavefront." \
       description="The Wavefront Collector collects real-time metrics from all layers of a Kubernetes environment and Auto discovery of pods and services based on annotation and configuration."
 
