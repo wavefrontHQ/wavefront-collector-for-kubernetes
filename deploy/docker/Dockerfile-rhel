@@ -8,7 +8,7 @@ WORKDIR /workspace
 
 COPY . .
 
-RUN CGO_ENABLED=0 go build -ldflags "$LDFLAGS" -o ./wavefront-collector ./cmd/wavefront-collector/
+RUN CGO_ENABLED=0 go build -o ./wavefront-collector ./cmd/wavefront-collector/
 
 #Using ubi7 minimal image
 FROM registry.access.redhat.com/ubi7/ubi-minimal:latest
