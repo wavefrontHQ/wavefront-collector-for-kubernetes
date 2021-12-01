@@ -120,12 +120,11 @@ $(SEMVER_CLI_BIN):
 	peg -switch -inline $<
 
 #This rule need to be run on RHEL with podman installed.
-container_rhel: build $(SEMVER_CLI_BIN)
-	cp $(OUT_DIR)/$(ARCH)/$(BINARY_NAME) $(TEMP_DIR)
-	cp LICENSE $(TEMP_DIR)/license.txt
-	cp deploy/docker/Dockerfile-rhel $(TEMP_DIR)/Dockerfile
-	cp deploy/examples/openshift-config.yaml $(TEMP_DIR)/collector.yaml
-	podman build --pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(TEMP_DIR)
+container_rhel: $(SEMVER_CLI_BIN)
+	docker build \
+		--build-arg COLLECTOR_VERSION=$(VERSION) --build-arg LDFLAGS="$(LDFLAGS)" \
+		-f $(REPO_DIR)/deploy/docker/Dockerfile-rhel \
+		-t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) .
 ifneq ($(OVERRIDE_IMAGE_NAME),)
 	sudo docker tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OVERRIDE_IMAGE_NAME)
 endif

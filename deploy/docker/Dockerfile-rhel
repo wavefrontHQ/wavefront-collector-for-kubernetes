@@ -1,28 +1,40 @@
-## Wavefront Collector container 
-## Note: Pulling container will require logging into Red Hat's registry using `docker login registry.redhat.io` .
+FROM registry.access.redhat.com/ubi7/go-toolset:1.16.7-3 as builder
+USER root
+
+ARG LDFLAGS
+
+SHELL ["/bin/bash", "-c"]
+
+WORKDIR /workspace
+
+COPY . .
+
+RUN CGO_ENABLED=0 go build -o ./wavefront-collector ./cmd/wavefront-collector/
 
 #Using ubi7 minimal image
 FROM registry.access.redhat.com/ubi7/ubi-minimal:latest
 
-MAINTAINER wavefront@vmware.com 
+ARG COLLECTOR_VERSION
+
+MAINTAINER wavefront@vmware.com
 
 LABEL name="Wavefront Collector" \
+      maintainer="wavefront@vmware.com" \
       vendor="Wavefront by VMware" \
-      version="1.5.0" \
-      release="1" \
-      run='' \
+      version="v1.7.4" \
+      release="v1.7.4" \
       summary="The Wavefront Collector for Kubernetes enables monitoring Kubernetes clusters and sending metrics to Wavefront." \
-      description="The Wavefront Collector collects real-time metrics from all layers of a Kubernetes environment and Auto discovery of pods and services based on annotation and configuration." 
+      description="The Wavefront Collector collects real-time metrics from all layers of a Kubernetes environment and Auto discovery of pods and services based on annotation and configuration."
 
 RUN mkdir /licenses
 
-COPY license.txt /licenses
+COPY LICENSE /licenses/license.txt
 
 RUN mkdir -p /etc/collector
 
-COPY collector.yaml /etc/collector
+#COPY deploy/examples/openshift-config.yaml /etc/collector/collector.yaml
 
-COPY wavefront-collector /
+COPY --from=builder /workspace/wavefront-collector /
 
 #   nobody:nobody
 USER 65534:65534
