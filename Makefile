@@ -52,7 +52,7 @@ tests:
 	go test -timeout 30s -race ./...
 
 build: clean fmt vet
-	GOARCH=$(ARCH) CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o $(OUT_DMIR)/$(ARCH)/$(BINARY_NAME) ./cmd/wavefront-collector/
+	GOARCH=$(ARCH) CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o $(OUT_DIR)/$(ARCH)/$(BINARY_NAME) ./cmd/wavefront-collector/
 
 vet:
 	go vet -composites=false ./...
@@ -144,7 +144,6 @@ proxy-test: token-check $(SEMVER_CLI_BIN)
 deploy-test: token-check k8s-env clean-deployment deploy-targets proxy-test
 
 #Testing code, configuration and deployment changes
-#integration-test: token-check k8s-env clean-deployment deploy-targets containers delete-images push-images proxy-test
-integration-test: token-check k8s-env clean-deployment deploy-targets test-proxy-container delete-images push-images proxy-test
+integration-test: token-check k8s-env clean-deployment deploy-targets containers delete-images push-images proxy-test
 
 .PHONY: all fmt container clean release semver-cli
