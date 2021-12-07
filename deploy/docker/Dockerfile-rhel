@@ -5,7 +5,7 @@ WORKDIR /workspace
 
 COPY . .
 
-RUN /bin/bash -c "CGO_ENABLED=0 go build -ldflags -w -X main.version=1.7.4 -o ./wavefront-collector ./cmd/wavefront-collector/"
+RUN /bin/bash -c "CGO_ENABLED=0 go build -ldflags '-w -X main.version=1.7.4' -o ./wavefront-collector ./cmd/wavefront-collector/"
 
 #Using ubi7 minimal image
 FROM registry.access.redhat.com/ubi7/ubi-minimal:latest
