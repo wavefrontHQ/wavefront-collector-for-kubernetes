@@ -7,18 +7,24 @@ COPY . .
 
 RUN /bin/bash -c "go version"
 
-RUN /bin/bash -c "CGO_ENABLED=0 go build -ldflags '-w -X main.version=1.7.5' -o ./wavefront-collector ./cmd/wavefront-collector/"
+RUN /bin/bash -c "CGO_ENABLED=0 go build -ldflags '-w -X main.version=1.7.4' -o ./wavefront-collector ./cmd/wavefront-collector/"
 
 #Using ubi7 minimal image
 FROM registry.access.redhat.com/ubi7/ubi-minimal:latest
+
+RUN microdnf install yum
+RUN yum -y update-minimal --security --sec-severity=Important --sec-severity=Critical
+RUN yum clean all
+RUN microdnf remove yum
+RUN microdnf clean all
 
 MAINTAINER wavefront@vmware.com
 
 LABEL name="Wavefront Collector" \
       maintainer="wavefront@vmware.com" \
       vendor="Wavefront by VMware" \
-      version="v1.7.5" \
-      release="v1.7.5" \
+      version="v1.7.4" \
+      release="v1.7.4" \
       summary="The Wavefront Collector for Kubernetes enables monitoring Kubernetes clusters and sending metrics to Wavefront." \
       description="The Wavefront Collector collects real-time metrics from all layers of a Kubernetes environment and Auto discovery of pods and services based on annotation and configuration."
 

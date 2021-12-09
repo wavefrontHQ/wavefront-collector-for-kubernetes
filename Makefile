@@ -149,7 +149,7 @@ integration-test: token-check k8s-env clean-deployment deploy-targets containers
 # creating this as separate and distinct for now,
 # but would like to recombine as a flag on integration-test
 integration-test-rhel: token-check k8s-env clean-deployment deploy-targets
-	VERSION=$(VERSION)-rhel make container_rhel test-proxy-container delete-images push-images proxy-test
+	VERSION=$(RELEASE_VERSION)-rhel make container_rhel test-proxy-container delete-images push-images proxy-test
 
 
 .PHONY: all fmt container clean release semver-cli
