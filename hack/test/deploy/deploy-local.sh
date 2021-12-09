@@ -12,10 +12,17 @@ fi
 NS=wavefront-collector
 ROOT_DIR=$(git rev-parse --show-toplevel)
 TEMP_DIR=$(mktemp -d)
-VERSION=$(cat ./VERSION) #version you want to test
-CURRENT_VERSION=${CURRENT_VERSION:-$VERSION}
-COLLECTOR_REPO=projects.registry.vmware.com/tanzu_observability/kubernetes-collector
-CURRENT_COLLECTOR_REPO=${CURRENT_COLLECTOR_REPO:-$COLLECTOR_REPO}
+
+# TODO: this rename breaks Jenkins so if we go with it we have updating to do
+DEFAULT_COLLECTOR_VERSION=$(cat ${ROOT_DIR}/release/VERSION) #version you want to test
+CURRENT_COLLECTOR_VERSION=${CURRENT_COLLECTOR_VERSION:-$DEFAULT_COLLECTOR_VERSION}
+DEFAULT_COLLECTOR_REPO=projects.registry.vmware.com/tanzu_observability/kubernetes-collector
+CURRENT_COLLECTOR_REPO=${CURRENT_COLLECTOR_REPO:-$DEFAULT_COLLECTOR_REPO}
+
+DEFAULT_PROXY_VERSION=10.9
+CURRENT_PROXY_VERSION=${CURRENT_PROXY_VERSION:-$DEFAULT_PROXY_VERSION}
+DEFAULT_PROXY_REPO=projects.registry.vmware.com/tanzu_observability/proxy
+CURRENT_PROXY_REPO=${CURRENT_PROXY_REPO:-$DEFAULT_PROXY_REPO}
 
 pushd "$ROOT_DIR"
   make clean-deployment
@@ -27,7 +34,7 @@ if [[ -z ${WF_CLUSTER} ]] ; then
 fi
 
 if [[ -z ${CONFIG_CLUSTER_NAME} ]] ; then
-    CONFIG_CLUSTER_NAME=$(whoami)-${CURRENT_VERSION}-release-test
+    CONFIG_CLUSTER_NAME=$(whoami)-${CURRENT_COLLECTOR_VERSION}-release-test
 fi
 
 echo "Using cluster name '$CONFIG_CLUSTER_NAME' in '$WF_CLUSTER'"
@@ -44,9 +51,13 @@ pushd "$TEMP_DIR"
   sed -i '' "s/YOUR_CLUSTER/${WF_CLUSTER}/g; s/YOUR_API_TOKEN/${WAVEFRONT_TOKEN}/g" "$TEMP_DIR/6-wavefront-proxy.yaml"
   sed -i '' "s/k8s-cluster/${CONFIG_CLUSTER_NAME}/g" "$TEMP_DIR/4-collector-config.yaml"
 
-  echo "using version ${CURRENT_VERSION}"
-  sed -i '' "s/$VERSION/$CURRENT_VERSION/g" "$TEMP_DIR/5-collector-daemonset.yaml"
-  sed -i '' "s%${COLLECTOR_REPO}%${CURRENT_COLLECTOR_REPO}%g" "$TEMP_DIR/5-collector-daemonset.yaml"
+  echo "using collector version ${CURRENT_COLLECTOR_VERSION}"
+  sed -i '' "s/$DEFAULT_COLLECTOR_VERSION/$CURRENT_COLLECTOR_VERSION/g" "$TEMP_DIR/5-collector-daemonset.yaml"
+  sed -i '' "s%${DEFAULT_COLLECTOR_REPO}%${CURRENT_COLLECTOR_REPO}%g" "$TEMP_DIR/5-collector-daemonset.yaml"
+
+  echo "using proxy version ${CURRENT_PROXY_VERSION}"
+  sed -i '' "s/$DEFAULT_PROXY_VERSION/$CURRENT_PROXY_VERSION/g" "$TEMP_DIR/6-wavefront-proxy.yaml"
+  sed -i '' "s%${DEFAULT_PROXY_REPO}%${CURRENT_PROXY_REPO}%g" "$TEMP_DIR/6-wavefront-proxy.yaml"
 
   kubectl config set-context --current --namespace="$NS"
   kubectl apply -f "$TEMP_DIR/."

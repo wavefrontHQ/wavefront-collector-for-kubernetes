@@ -122,8 +122,8 @@ $(SEMVER_CLI_BIN):
 #This rule need to be run on RHEL with podman installed.
 container_rhel: $(SEMVER_CLI_BIN)
 	docker build \
-		--build-arg COLLECTOR_VERSION=$(VERSION) --build-arg LDFLAGS="$(LDFLAGS)" \
 		-f $(REPO_DIR)/deploy/docker/Dockerfile-rhel \
+		--build-arg COLLECTOR_VERSION=$(VERSION) --build-arg LDFLAGS="$(LDFLAGS)" \
 		-t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) .
 ifneq ($(OVERRIDE_IMAGE_NAME),)
 	sudo docker tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OVERRIDE_IMAGE_NAME)
@@ -145,5 +145,11 @@ deploy-test: token-check k8s-env clean-deployment deploy-targets proxy-test
 
 #Testing code, configuration and deployment changes
 integration-test: token-check k8s-env clean-deployment deploy-targets containers delete-images push-images proxy-test
+
+# creating this as separate and distinct for now,
+# but would like to recombine as a flag on integration-test
+integration-test-rhel: token-check k8s-env clean-deployment deploy-targets
+	VERSION=$(VERSION)-rhel make container_rhel test-proxy-container delete-images push-images proxy-test
+
 
 .PHONY: all fmt container clean release semver-cli
