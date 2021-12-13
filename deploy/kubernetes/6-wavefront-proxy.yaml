@@ -26,6 +26,8 @@ spec:
               value: https://YOUR_CLUSTER.wavefront.com/api/
             - name: WAVEFRONT_TOKEN
               value: YOUR_API_TOKEN
+            - name: JAVA_ARGS
+              value: "-Dlog4j2.formatMsgNoLookups=true"
           # Uncomment the below lines to consume Zipkin/Istio traces
           #- name: WAVEFRONT_PROXY_ARGS
           #  value: --traceZipkinListenerPorts 9411
