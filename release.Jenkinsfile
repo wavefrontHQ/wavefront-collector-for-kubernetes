@@ -69,7 +69,7 @@ pipeline {
             withEnv(["PATH+GCLOUD=${HOME}/google-cloud-sdk/bin"]) {
               sh './hack/jenkins/setup-for-integration-test.sh'
               sh 'make gke-connect-to-cluster'
-              sh './release/deploy-local-linux.sh'
+              sh './hack/test/deploy/deploy-local-linux.sh'
               sh './hack/test/test-e2e.sh -c ${WF_CLUSTER} -t ${WAVEFRONT_TOKEN} -n ${CONFIG_CLUSTER_NAME} -v ${VERSION}'
             }
           }
