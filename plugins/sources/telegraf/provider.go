@@ -87,6 +87,10 @@ func (t *telegrafPluginSource) Cleanup() {
 	gm.Unregister(reporting.EncodeKey("target.collect.errors", t.targetTags))
 }
 
+func (src *telegrafPluginSource) AutoDiscovered() bool {
+	return true
+}
+
 func (t *telegrafPluginSource) Name() string {
 	return "telegraf_" + t.name + "_source"
 }

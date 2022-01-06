@@ -18,6 +18,7 @@
 package util
 
 import (
+	"errors"
 	"strings"
 	"sync"
 	"time"
@@ -81,6 +82,12 @@ type DummyMetricsSource struct {
 	latency   time.Duration
 	metricSet metrics.MetricSet
 	name      string
+	autoDiscovered bool
+	raiseScrapeError bool
+}
+
+func (dummy *DummyMetricsSource) AutoDiscovered() bool {
+	return dummy.autoDiscovered
 }
 
 func (dummy *DummyMetricsSource) Name() string {
@@ -91,6 +98,10 @@ func (src *DummyMetricsSource) Cleanup() {}
 
 func (dummy *DummyMetricsSource) ScrapeMetrics() (*metrics.DataBatch, error) {
 	time.Sleep(dummy.latency)
+
+	if dummy.raiseScrapeError {
+		return nil, errors.New("scrape error")
+	}
 
 	point := &metrics.MetricPoint{
 		Metric:    strings.Replace(dummy.Name(), " ", ".", -1),
@@ -121,6 +132,18 @@ func NewDummyMetricsSource(name string, latency time.Duration) *DummyMetricsSour
 		latency:   latency,
 		metricSet: newDummyMetricSet(name),
 		name:      name,
+		autoDiscovered: false,
+		raiseScrapeError: false,
+	}
+}
+
+func NewDummyMetricsSourceWithError(name string, latency time.Duration, autoDiscovered bool) *DummyMetricsSource {
+	return &DummyMetricsSource{
+		latency:   latency,
+		metricSet: newDummyMetricSet(name),
+		name:      name,
+		autoDiscovered: autoDiscovered,
+		raiseScrapeError: true,
 	}
 }
 

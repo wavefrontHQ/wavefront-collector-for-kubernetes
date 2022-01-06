@@ -53,6 +53,59 @@ func TestNoTimeout(t *testing.T) {
 	assert.True(t, present["nto_2"], "nto_2 not found - present:%v", present)
 }
 
+func TestScrapeMetrics(t *testing.T) {
+
+	t.Run("Test Scrape Errors with Non AutoDiscovered Source", func(t *testing.T) {
+		initialErrCnt := scrapeErrors.Count()
+
+		metricsSourceProvider := util.NewDummyMetricsSourceProvider(
+			"dummy", 10*time.Millisecond, 75*time.Millisecond,
+			util.NewDummyMetricsSourceWithError("s1", 0, false),
+			util.NewDummyMetricsSource("s2", 0))
+
+		testDataBatch := make(chan *metrics.DataBatch)
+		var dbatch *metrics.DataBatch
+
+		go func() {
+			scrape(metricsSourceProvider, testDataBatch)
+			dbatch = <-testDataBatch
+
+			present := make(map[string]bool)
+			for _, point := range dbatch.MetricPoints {
+				present[point.Metric] = true
+			}
+			assert.Empty(t, present)
+			assert.Equal(t, initialErrCnt+1, scrapeErrors.Count())
+		}()
+	})
+
+	t.Run("Test Scrape Errors with AutoDiscovered Source", func(t *testing.T) {
+		initialErrCnt := scrapeErrors.Count()
+		initialWarningCnt := scrapeWarnings.Count()
+
+		metricsSourceProvider := util.NewDummyMetricsSourceProvider(
+			"dummy", 0, 75*time.Millisecond,
+			util.NewDummyMetricsSourceWithError("s1", 0, true),
+			util.NewDummyMetricsSource("s2", 0))
+
+		testDataBatch := make(chan *metrics.DataBatch)
+		var dbatch *metrics.DataBatch
+
+		go func() {
+			scrape(metricsSourceProvider, testDataBatch)
+			dbatch = <-testDataBatch
+
+			present := make(map[string]bool)
+			for _, point := range dbatch.MetricPoints {
+				present[point.Metric] = true
+			}
+			assert.Empty(t, present)
+			assert.Equal(t, initialErrCnt+1, scrapeErrors.Count())
+			assert.Equal(t, initialWarningCnt+1, scrapeWarnings.Count())
+		}()
+	})
+}
+
 func TestTimeout(t *testing.T) {
 	metricsSourceProvider := util.NewDummyMetricsSourceProvider(
 		"dummy", 100*time.Millisecond, 75*time.Millisecond,

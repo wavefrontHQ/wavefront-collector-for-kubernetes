@@ -74,6 +74,10 @@ func NewSummaryMetricsSource(node NodeInfo, client *kubelet.KubeletClient) Metri
 	}
 }
 
+func (src *summaryMetricsSource) AutoDiscovered() bool {
+	return false
+}
+
 func (src *summaryMetricsSource) Name() string {
 	return src.String()
 }

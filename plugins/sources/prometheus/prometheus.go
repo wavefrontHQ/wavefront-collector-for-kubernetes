@@ -114,6 +114,10 @@ func httpClient(metricsURL string, cfg httputil.ClientConfig) (*http.Client, err
 	return client, err
 }
 
+func (src *prometheusMetricsSource) AutoDiscovered() bool {
+	return true
+}
+
 func (src *prometheusMetricsSource) Name() string {
 	return fmt.Sprintf("prometheus_source: %s", src.metricsURL)
 }

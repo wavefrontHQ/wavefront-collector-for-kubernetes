@@ -9,6 +9,10 @@ func (c *errorSourceDecorator) Name() string {
 	return c.src.Name()
 }
 
+func (c *errorSourceDecorator) AutoDiscovered() bool {
+	return false
+}
+
 func (c *errorSourceDecorator) ScrapeMetrics() (*DataBatch, error) {
 	dataBatch, err := c.src.ScrapeMetrics()
 	return dataBatch, c.errFunc(err)

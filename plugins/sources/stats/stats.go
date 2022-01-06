@@ -65,6 +65,10 @@ func getDefault(val, defaultVal string) string {
 	return val
 }
 
+func (src *internalMetricsSource) AutoDiscovered() bool {
+	return false
+}
+
 func (src *internalMetricsSource) Name() string {
 	return "internal_stats_source"
 }
