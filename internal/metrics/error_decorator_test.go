@@ -9,9 +9,14 @@ import (
 )
 
 type dummyMetricsSource struct {
-	name          string
-	cleanupCalled bool
-	dataBatch     *DataBatch
+	autoDiscovered bool
+	name           string
+	cleanupCalled  bool
+	dataBatch      *DataBatch
+}
+
+func (d *dummyMetricsSource) AutoDiscovered() bool {
+	return d.autoDiscovered
 }
 
 func (d *dummyMetricsSource) Name() string {

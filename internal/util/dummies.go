@@ -79,10 +79,10 @@ func NewDummySink(name string, latency time.Duration) *DummySink {
 }
 
 type DummyMetricsSource struct {
-	latency   time.Duration
-	metricSet metrics.MetricSet
-	name      string
-	autoDiscovered bool
+	latency          time.Duration
+	metricSet        metrics.MetricSet
+	name             string
+	autoDiscovered   bool
 	raiseScrapeError bool
 }
 
@@ -129,20 +129,20 @@ func newDummyMetricSet(name string) metrics.MetricSet {
 
 func NewDummyMetricsSource(name string, latency time.Duration) *DummyMetricsSource {
 	return &DummyMetricsSource{
-		latency:   latency,
-		metricSet: newDummyMetricSet(name),
-		name:      name,
-		autoDiscovered: false,
+		latency:          latency,
+		metricSet:        newDummyMetricSet(name),
+		name:             name,
+		autoDiscovered:   false,
 		raiseScrapeError: false,
 	}
 }
 
 func NewDummyMetricsSourceWithError(name string, latency time.Duration, autoDiscovered bool) *DummyMetricsSource {
 	return &DummyMetricsSource{
-		latency:   latency,
-		metricSet: newDummyMetricSet(name),
-		name:      name,
-		autoDiscovered: autoDiscovered,
+		latency:          latency,
+		metricSet:        newDummyMetricSet(name),
+		name:             name,
+		autoDiscovered:   autoDiscovered,
 		raiseScrapeError: true,
 	}
 }

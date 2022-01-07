@@ -5,8 +5,9 @@ package prometheus
 
 import (
 	"bytes"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/httputil"
 	"testing"
+
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/httputil"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
