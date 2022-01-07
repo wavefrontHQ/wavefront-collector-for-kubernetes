@@ -30,6 +30,7 @@ type telegrafPluginSource struct {
 	plugin       telegraf.Input
 	pluginPrefix string
 	filters      filter.Filter
+	autoDiscovered bool
 
 	pointsCollected gm.Counter
 	pointsFiltered  gm.Counter
@@ -54,6 +55,7 @@ func newTelegrafPluginSource(name string, plugin telegraf.Input, prefix string, 
 		prefix:          prefix,
 		tags:            tags,
 		filters:         filters,
+		autoDiscovered: len(discovered) > 0,
 		pointsCollected: gm.GetOrRegisterCounter(collected, gm.DefaultRegistry),
 		pointsFiltered:  gm.GetOrRegisterCounter(filtered, gm.DefaultRegistry),
 		errors:          gm.GetOrRegisterCounter(errors, gm.DefaultRegistry),
@@ -87,8 +89,8 @@ func (t *telegrafPluginSource) Cleanup() {
 	gm.Unregister(reporting.EncodeKey("target.collect.errors", t.targetTags))
 }
 
-func (src *telegrafPluginSource) AutoDiscovered() bool {
-	return true
+func (t *telegrafPluginSource) AutoDiscovered() bool {
+	return t.autoDiscovered
 }
 
 func (t *telegrafPluginSource) Name() string {
