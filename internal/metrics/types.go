@@ -145,6 +145,7 @@ type DataBatch struct {
 
 // A place from where the metrics should be scraped.
 type MetricsSource interface {
+	AutoDiscovered() bool
 	Name() string
 	ScrapeMetrics() (*DataBatch, error)
 	Cleanup()

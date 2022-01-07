@@ -47,6 +47,7 @@ const (
 var (
 	providerCount  gometrics.Gauge
 	scrapeErrors   gometrics.Counter
+	scrapeWarnings gometrics.Counter
 	scrapeTimeouts gometrics.Counter
 	scrapesMissed  gometrics.Counter
 	scrapeLatency  gometrics.Histogram
@@ -57,6 +58,7 @@ var (
 func init() {
 	providerCount = gometrics.GetOrRegisterGauge("source.manager.providers", gometrics.DefaultRegistry)
 	scrapeErrors = gometrics.GetOrRegisterCounter("source.manager.scrape.errors", gometrics.DefaultRegistry)
+	scrapeWarnings = gometrics.GetOrRegisterCounter("source.manager.scrape.warnings", gometrics.DefaultRegistry)
 	scrapeTimeouts = gometrics.GetOrRegisterCounter("source.manager.scrape.timeouts", gometrics.DefaultRegistry)
 	scrapesMissed = gometrics.GetOrRegisterCounter("source.manager.scrape.missed", gometrics.DefaultRegistry)
 	scrapeLatency = reporting.NewHistogram()
@@ -238,8 +240,13 @@ func scrape(provider metrics.MetricsSourceProvider, channel chan *metrics.DataBa
 
 		dataBatch, err := source.ScrapeMetrics()
 		if err != nil {
-			scrapeErrors.Inc(1)
-			log.Errorf("Error in scraping containers from '%s': %v", source.Name(), err)
+			if source.AutoDiscovered() {
+				log.Warningf("Could not scrape conainers, skipping source '%s': %v", source.Name(), err)
+				scrapeWarnings.Inc(1)
+			} else {
+				log.Errorf("Error in scraping containers from '%s': %v", source.Name(), err)
+				scrapeErrors.Inc(1)
+			}
 			return
 		}
 

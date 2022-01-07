@@ -51,6 +51,7 @@ type prometheusMetricsSource struct {
 	pps                  gometrics.Counter
 	eps                  gometrics.Counter
 	internalMetricsNames []string
+	autoDiscovered       bool
 
 	omitBucketSuffix bool
 }
@@ -79,6 +80,7 @@ func NewPrometheusMetricsSource(metricsURL, prefix, source, discovered string, t
 		eps:                  gometrics.GetOrRegisterCounter(epsKey, gometrics.DefaultRegistry),
 		internalMetricsNames: []string{ppsKey, epsKey},
 		omitBucketSuffix:     omitBucketSuffix,
+		autoDiscovered:       len(discovered) > 0,
 	}, nil
 }
 
@@ -112,6 +114,10 @@ func httpClient(metricsURL string, cfg httputil.ClientConfig) (*http.Client, err
 		client.Timeout = time.Second * 30
 	}
 	return client, err
+}
+
+func (src *prometheusMetricsSource) AutoDiscovered() bool {
+	return src.autoDiscovered
 }
 
 func (src *prometheusMetricsSource) Name() string {

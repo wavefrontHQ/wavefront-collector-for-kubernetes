@@ -56,6 +56,10 @@ type systemdMetricsSource struct {
 	eps gm.Counter
 }
 
+func (src *systemdMetricsSource) AutoDiscovered() bool {
+	return false
+}
+
 func (src *systemdMetricsSource) Name() string {
 	return "systemd_metrics_source"
 }

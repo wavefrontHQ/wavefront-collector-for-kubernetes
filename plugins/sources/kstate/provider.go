@@ -72,6 +72,10 @@ func getDefault(val, defaultVal string) string {
 	return val
 }
 
+func (src *stateMetricsSource) AutoDiscovered() bool {
+	return false
+}
+
 func (src *stateMetricsSource) Name() string {
 	return "kstate_source"
 }
