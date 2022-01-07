@@ -1,0 +1,467 @@
+{
+  "name": "API Server Details",
+  "url": "API-Server-Details",
+  "eventFilterType": "BYCHART",
+  "displayDescription": false,
+  "displaySectionTableOfContents": true,
+  "displayQueryParameters": true,
+  "sections": [
+    {
+      "name": "API Server Details",
+      "id": "untitled-dashboard-section-1",
+      "rows": [
+        {
+          "charts": [
+            {
+              "anomalySeverity": "medium",
+              "anomalyDetectionOn": false,
+              "chartSettings": {
+                "y1ScaleSIBy1024": false,
+                "fixedLegendEnabled": false,
+                "fixedLegendFilterField": "CURRENT",
+                "y0ScaleSIBy1024": false,
+                "fixedLegendFilterLimit": 5,
+                "fixedLegendShowSourceName": true,
+                "fixedLegendPosition": "BOTTOM",
+                "customTags": [],
+                "lineType": "linear",
+                "windowing": "full",
+                "invertDynamicLegendHoverControl": false,
+                "fixedLegendFilterSort": "TOP",
+                "y1Units": "",
+                "fixedLegendShowMetricName": false,
+                "type": "line",
+                "y1UnitAutoscaling": false,
+                "tagMode": "all",
+                "fixedLegendUseRawStats": false,
+                "y0UnitAutoscaling": false,
+                "fixedLegendDisplayStats": [
+                  "CURRENT"
+                ],
+                "autoColumnTags": false,
+                "numTags": 4,
+                "defaultSortColumn": null,
+                "sparklineDisplayColor": null,
+                "sparklineLineColor": null,
+                "sparklineFillColor": null
+              },
+              "displayConfidenceBounds": false,
+              "includeObsoleteMetrics": false,
+              "filterOutNonAnomalies": false,
+              "name": "apiserver request rate",
+              "anomalySampleSize": "8",
+              "units": "req/s",
+              "summarization": "MEAN",
+              "base": 0,
+              "chartAttributes": {
+                "lineFill": 1,
+                "dashboardLayout": {
+                  "x": 0,
+                  "y": 0,
+                  "w": 4,
+                  "h": 7
+                }
+              },
+              "sources": [
+                {
+                  "name": "request_rate",
+                  "query": "sum(rate(ts(kube.apiserver.apiserver.request.total.counter)), verb)",
+                  "disabled": false,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
+                }
+              ],
+              "noDefaultEvents": false,
+              "anomalyType": "both"
+            },
+            {
+              "chartSettings": {
+                "y1ScaleSIBy1024": false,
+                "fixedLegendEnabled": false,
+                "fixedLegendFilterField": "CURRENT",
+                "y0ScaleSIBy1024": false,
+                "fixedLegendFilterLimit": 5,
+                "fixedLegendShowSourceName": true,
+                "fixedLegendPosition": "RIGHT",
+                "customTags": [],
+                "lineType": "linear",
+                "windowing": "full",
+                "fixedLegendFilterSort": "TOP",
+                "y1Units": "",
+                "fixedLegendShowMetricName": false,
+                "type": "line",
+                "y1UnitAutoscaling": false,
+                "tagMode": "all",
+                "fixedLegendUseRawStats": false,
+                "y0UnitAutoscaling": false,
+                "fixedLegendDisplayStats": [
+                  "CURRENT"
+                ],
+                "autoColumnTags": false,
+                "numTags": 4,
+                "defaultSortColumn": null,
+                "sparklineDisplayColor": null,
+                "sparklineLineColor": null,
+                "sparklineFillColor": null
+              },
+              "includeObsoleteMetrics": false,
+              "name": "apiserver workqueue adds rate",
+              "units": "Units",
+              "base": 0,
+              "chartAttributes": {
+                "lineFill": 1,
+                "dashboardLayout": {
+                  "x": 4,
+                  "y": 0,
+                  "w": 4,
+                  "h": 7
+                }
+              },
+              "sources": [
+                {
+                  "name": "adds_total",
+                  "query": "ts(kube.apiserver.workqueue.adds.total.counter)",
+                  "disabled": true,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false
+                },
+                {
+                  "name": "adds_rate",
+                  "query": "rate(ts(kube.apiserver.workqueue.adds.total.counter))",
+                  "disabled": false,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false
+                }
+              ],
+              "noDefaultEvents": false
+            },
+            {
+              "chartSettings": {
+                "y1ScaleSIBy1024": false,
+                "fixedLegendEnabled": false,
+                "fixedLegendFilterField": "CURRENT",
+                "y0ScaleSIBy1024": false,
+                "fixedLegendFilterLimit": 5,
+                "fixedLegendShowSourceName": true,
+                "fixedLegendPosition": "RIGHT",
+                "customTags": [],
+                "lineType": "linear",
+                "windowing": "full",
+                "fixedLegendFilterSort": "TOP",
+                "y1Units": "",
+                "fixedLegendShowMetricName": false,
+                "type": "line",
+                "y1UnitAutoscaling": false,
+                "tagMode": "all",
+                "fixedLegendUseRawStats": false,
+                "y0UnitAutoscaling": false,
+                "fixedLegendDisplayStats": [
+                  "CURRENT"
+                ],
+                "autoColumnTags": false,
+                "numTags": 4,
+                "defaultSortColumn": null,
+                "sparklineDisplayColor": null,
+                "sparklineLineColor": null,
+                "sparklineFillColor": null
+              },
+              "includeObsoleteMetrics": false,
+              "name": "apiserver workqueue depth",
+              "units": "Units",
+              "base": 0,
+              "chartAttributes": {
+                "lineFill": 1,
+                "dashboardLayout": {
+                  "x": 8,
+                  "y": 0,
+                  "w": 4,
+                  "h": 7
+                }
+              },
+              "sources": [
+                {
+                  "name": "workqueue_depth",
+                  "query": "ts(kube.apiserver.workqueue.depth.gauge)",
+                  "disabled": false,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false
+                }
+              ],
+              "noDefaultEvents": false
+            }
+          ],
+          "heightFactor": 140
+        },
+        {
+          "charts": [
+            {
+              "anomalySeverity": "medium",
+              "anomalyDetectionOn": false,
+              "chartSettings": {
+                "y1ScaleSIBy1024": false,
+                "fixedLegendEnabled": false,
+                "fixedLegendFilterField": "CURRENT",
+                "y0ScaleSIBy1024": false,
+                "fixedLegendFilterLimit": 5,
+                "fixedLegendShowSourceName": true,
+                "fixedLegendPosition": "RIGHT",
+                "customTags": [],
+                "lineType": "linear",
+                "windowing": "full",
+                "fixedLegendFilterSort": "TOP",
+                "y1Units": "",
+                "fixedLegendShowMetricName": false,
+                "type": "line",
+                "y1UnitAutoscaling": false,
+                "tagMode": "all",
+                "fixedLegendUseRawStats": false,
+                "y0UnitAutoscaling": true,
+                "fixedLegendDisplayStats": [
+                  "CURRENT"
+                ],
+                "autoColumnTags": false,
+                "numTags": 4,
+                "defaultSortColumn": null,
+                "sparklineDisplayColor": null,
+                "sparklineLineColor": null,
+                "sparklineFillColor": null
+              },
+              "displayConfidenceBounds": false,
+              "includeObsoleteMetrics": false,
+              "filterOutNonAnomalies": false,
+              "name": "apiserver request latency (P50/P95/P99)",
+              "anomalySampleSize": "8",
+              "units": "ms",
+              "summarization": "MEAN",
+              "base": 0,
+              "chartAttributes": {
+                "lineFill": 1,
+                "dashboardLayout": {
+                  "x": 0,
+                  "y": 7,
+                  "w": 4,
+                  "h": 7
+                }
+              },
+              "sources": [
+                {
+                  "name": "histo",
+                  "query": "cumulativeHisto(sum(align(1m, rate(ts(kube.apiserver.apiserver.request.duration.seconds.bucket))), le))",
+                  "disabled": true,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false
+                },
+                {
+                  "name": "p95_request_latency",
+                  "query": "percentile(95, ${histo})",
+                  "disabled": false,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false
+                },
+                {
+                  "name": "p90_request_latency",
+                  "query": "percentile(90, ${histo})",
+                  "disabled": false,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false
+                },
+                {
+                  "name": "p50_request_latency",
+                  "query": "percentile(50, ${histo})",
+                  "disabled": false,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false
+                }
+              ],
+              "noDefaultEvents": true,
+              "anomalyType": "both"
+            },
+            {
+              "anomalySeverity": "medium",
+              "anomalyDetectionOn": false,
+              "chartSettings": {
+                "y1ScaleSIBy1024": false,
+                "fixedLegendEnabled": false,
+                "fixedLegendFilterField": "CURRENT",
+                "y0ScaleSIBy1024": false,
+                "fixedLegendFilterLimit": 5,
+                "fixedLegendShowSourceName": true,
+                "fixedLegendPosition": "RIGHT",
+                "customTags": [],
+                "lineType": "linear",
+                "windowing": "full",
+                "fixedLegendFilterSort": "TOP",
+                "y1Units": "",
+                "fixedLegendShowMetricName": false,
+                "type": "line",
+                "y1UnitAutoscaling": false,
+                "tagMode": "all",
+                "fixedLegendUseRawStats": false,
+                "y0UnitAutoscaling": true,
+                "fixedLegendDisplayStats": [
+                  "CURRENT"
+                ],
+                "autoColumnTags": false,
+                "numTags": 4,
+                "defaultSortColumn": null,
+                "sparklineDisplayColor": null,
+                "sparklineLineColor": null,
+                "sparklineFillColor": null
+              },
+              "displayConfidenceBounds": false,
+              "includeObsoleteMetrics": false,
+              "filterOutNonAnomalies": false,
+              "name": "apiserver  workqueue latency (P50/P95/P99)",
+              "anomalySampleSize": "8",
+              "units": "ms",
+              "summarization": "MEAN",
+              "base": 0,
+              "chartAttributes": {
+                "lineFill": 1,
+                "dashboardLayout": {
+                  "x": 4,
+                  "y": 7,
+                  "w": 4,
+                  "h": 7
+                }
+              },
+              "sources": [
+                {
+                  "name": "histo",
+                  "query": "cumulativeHisto(sum(align(1m, rate(ts(kube.apiserver.workqueue.queue.duration.seconds.bucket))), le))",
+                  "disabled": true,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false
+                },
+                {
+                  "name": "p95_request_latency",
+                  "query": "percentile(95, ${histo})",
+                  "disabled": false,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false
+                },
+                {
+                  "name": "p90_request_latency",
+                  "query": "percentile(90, ${histo})",
+                  "disabled": false,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false
+                },
+                {
+                  "name": "p50_request_latency",
+                  "query": "percentile(50, ${histo})",
+                  "disabled": false,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false
+                }
+              ],
+              "noDefaultEvents": true,
+              "anomalyType": "both"
+            },
+            {
+              "anomalySeverity": "medium",
+              "anomalyDetectionOn": false,
+              "chartSettings": {
+                "y1ScaleSIBy1024": false,
+                "fixedLegendEnabled": false,
+                "fixedLegendFilterField": "CURRENT",
+                "y0ScaleSIBy1024": false,
+                "fixedLegendFilterLimit": 5,
+                "fixedLegendShowSourceName": true,
+                "fixedLegendPosition": "RIGHT",
+                "customTags": [],
+                "lineType": "linear",
+                "windowing": "full",
+                "fixedLegendFilterSort": "TOP",
+                "y1Units": "",
+                "fixedLegendShowMetricName": false,
+                "type": "line",
+                "y1UnitAutoscaling": false,
+                "tagMode": "all",
+                "fixedLegendUseRawStats": false,
+                "y0UnitAutoscaling": true,
+                "fixedLegendDisplayStats": [
+                  "CURRENT"
+                ],
+                "autoColumnTags": false,
+                "numTags": 4,
+                "defaultSortColumn": null,
+                "sparklineDisplayColor": null,
+                "sparklineLineColor": null,
+                "sparklineFillColor": null
+              },
+              "displayConfidenceBounds": false,
+              "includeObsoleteMetrics": false,
+              "filterOutNonAnomalies": false,
+              "name": "apiserver  etcd latency (P50/P95/P99)",
+              "anomalySampleSize": "8",
+              "units": "ms",
+              "summarization": "MEAN",
+              "base": 0,
+              "chartAttributes": {
+                "lineFill": 1,
+                "dashboardLayout": {
+                  "x": 8,
+                  "y": 7,
+                  "w": 4,
+                  "h": 7
+                }
+              },
+              "sources": [
+                {
+                  "name": "histo",
+                  "query": "cumulativeHisto(sum(align(1m, rate(ts(kube.apiserver.etcd.request.duration.seconds.bucket))), le))",
+                  "disabled": true,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false
+                },
+                {
+                  "name": "p95_request_latency",
+                  "query": "percentile(95, ${histo})",
+                  "disabled": false,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false
+                },
+                {
+                  "name": "p90_request_latency",
+                  "query": "percentile(90, ${histo})",
+                  "disabled": false,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false
+                },
+                {
+                  "name": "p50_request_latency",
+                  "query": "percentile(50, ${histo})",
+                  "disabled": false,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false
+                }
+              ],
+              "noDefaultEvents": true,
+              "anomalyType": "both"
+            }
+          ],
+          "heightFactor": 140
+        }
+      ]
+    }
+  ],
+  "parameterDetails": {}
+}
