@@ -5,6 +5,7 @@ package prometheus
 
 import (
 	"bytes"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/httputil"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -102,4 +103,20 @@ http_request_duration_seconds_sum{label="bad"} 6
 http_request_duration_seconds_count{label="good"} 3
 `
 	return bytes.NewReader([]byte(metricsStr))
+}
+
+func TestDiscoveredPrometheusMetricSource(t *testing.T) {
+	t.Run("static source", func(t *testing.T) {
+		ms, err := NewPrometheusMetricsSource("", "", "", "", map[string]string{}, nil, httputil.ClientConfig{})
+
+		assert.Nil(t, err)
+		assert.False(t, ms.AutoDiscovered(), "prometheus auto-discovery")
+	})
+
+	t.Run("discovered source", func(t *testing.T) {
+		ms, err := NewPrometheusMetricsSource("", "", "", "some-discovery-method", map[string]string{}, nil, httputil.ClientConfig{})
+
+		assert.Nil(t, err)
+		assert.True(t, ms.AutoDiscovered(), "prometheus auto-discovery")
+	})
 }
