@@ -58,7 +58,7 @@ type prometheusMetricsSource struct {
 	omitBucketSuffix bool
 }
 
-func NewPrometheusMetricsSource(metricsURL, prefix, source, discovered string, tags map[string]string, filters filter.Filter, httpCfg httputil.ClientConfig) (metrics.MetricsSource, error) {
+func NewPrometheusMetricsSource(metricsURL, prefix, source, discovered string, tags map[string]string, filters filter.Filter, httpCfg httputil.ClientConfig) (metrics.Source, error) {
 	client, err := httpClient(metricsURL, httpCfg)
 	if err != nil {
 		log.Errorf("error creating http client: %q", err)
@@ -142,8 +142,8 @@ func (e *HTTPError) Error() string {
 	return fmt.Sprintf("error retrieving prometheus metrics from %s (http status %s)", e.MetricsURL, e.Status)
 }
 
-func (src *prometheusMetricsSource) ScrapeMetrics() (*metrics.DataBatch, error) {
-	result := &metrics.DataBatch{
+func (src *prometheusMetricsSource) Scrape() (*metrics.Batch, error) {
+	result := &metrics.Batch{
 		Timestamp: time.Now(),
 	}
 
@@ -198,13 +198,13 @@ func (src *prometheusMetricsSource) parseMetrics(reader io.Reader) ([]*wf.Point,
 }
 
 type prometheusProvider struct {
-	metrics.DefaultMetricsSourceProvider
+	metrics.DefaultSourceProvider
 	name              string
 	useLeaderElection bool
-	sources           []metrics.MetricsSource
+	sources           []metrics.Source
 }
 
-func (p *prometheusProvider) GetMetricsSources() []metrics.MetricsSource {
+func (p *prometheusProvider) GetMetricsSources() []metrics.Source {
 	if p.useLeaderElection && !leadership.Leading() {
 		log.Infof("not scraping sources from: %s. current leader: %s", p.name, leadership.Leader())
 		return nil
@@ -218,7 +218,7 @@ func (p *prometheusProvider) Name() string {
 
 const providerName = "prometheus_metrics_provider"
 
-func NewPrometheusProvider(cfg configuration.PrometheusSourceConfig) (metrics.MetricsSourceProvider, error) {
+func NewPrometheusProvider(cfg configuration.PrometheusSourceConfig) (metrics.SourceProvider, error) {
 	if len(cfg.URL) == 0 {
 		return nil, fmt.Errorf("missing prometheus url")
 	}
@@ -242,7 +242,7 @@ func NewPrometheusProvider(cfg configuration.PrometheusSourceConfig) (metrics.Me
 	tags := cfg.Tags
 	filters := filter.FromConfig(cfg.Filters)
 
-	var sources []metrics.MetricsSource
+	var sources []metrics.Source
 	metricsSource, err := NewPrometheusMetricsSource(cfg.URL, prefix, source, discovered, tags, filters, httpCfg)
 	if err == nil {
 		sources = append(sources, metricsSource)

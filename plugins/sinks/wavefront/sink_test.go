@@ -24,8 +24,8 @@ func NewTestWavefrontSink() *wavefrontSink {
 
 func TestStoreTimeseriesEmptyInput(t *testing.T) {
 	fakeSink := NewTestWavefrontSink()
-	db := metrics.DataBatch{}
-	fakeSink.ExportData(&db)
+	db := metrics.Batch{}
+	fakeSink.Export(&db)
 	assert.Equal(t, 0, len(getMetrics(fakeSink)))
 }
 
@@ -65,12 +65,12 @@ func TestPrefix(t *testing.T) {
 	sink, err := NewWavefrontSink(cfg)
 	assert.NoError(t, err)
 
-	db := metrics.DataBatch{
+	db := metrics.Batch{
 		Points: []*wf.Point{
 			wf.NewPoint("cpu.idle", 1.0, 0, "fakeSource", nil),
 		},
 	}
-	sink.ExportData(&db)
+	sink.Export(&db)
 	assert.True(t, strings.Contains(getMetrics(sink), "test.cpu.idle"))
 }
 
@@ -85,13 +85,13 @@ func TestNilPointDataBatch(t *testing.T) {
 	sink, err := NewWavefrontSink(cfg)
 	assert.NoError(t, err)
 
-	db := metrics.DataBatch{
+	db := metrics.Batch{
 		Points: []*wf.Point{
 			wf.NewPoint("cpu.idle", 1.0, 0, "fakeSource", nil),
 			nil,
 		},
 	}
-	sink.ExportData(&db)
+	sink.Export(&db)
 	assert.True(t, strings.Contains(getMetrics(sink), "test.cpu.idle"))
 }
 
@@ -106,7 +106,7 @@ func TestCleansTagsBeforeSending(t *testing.T) {
 	sink, err := NewWavefrontSink(cfg)
 	assert.NoError(t, err)
 
-	db := metrics.DataBatch{
+	db := metrics.Batch{
 		Points: []*wf.Point{
 			wf.NewPoint(
 				"cpu.idle",
@@ -117,7 +117,7 @@ func TestCleansTagsBeforeSending(t *testing.T) {
 			),
 		},
 	}
-	sink.ExportData(&db)
+	sink.Export(&db)
 	assert.NotContains(t, getMetrics(sink), "emptyTag")
 }
 

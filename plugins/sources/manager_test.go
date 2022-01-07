@@ -63,8 +63,8 @@ func TestScrapeMetrics(t *testing.T) {
 			util.NewDummyMetricsSourceWithError("s1", 0, false),
 			util.NewDummyMetricsSource("s2", 0))
 
-		testDataBatch := make(chan *metrics.DataBatch)
-		var dbatch *metrics.DataBatch
+		testDataBatch := make(chan *metrics.Batch)
+		var dbatch *metrics.Batch
 
 		go func() {
 			scrape(metricsSourceProvider, testDataBatch)
@@ -88,8 +88,8 @@ func TestScrapeMetrics(t *testing.T) {
 			util.NewDummyMetricsSourceWithError("s1", 0, true),
 			util.NewDummyMetricsSource("s2", 0))
 
-		testDataBatch := make(chan *metrics.DataBatch)
-		var dbatch *metrics.DataBatch
+		testDataBatch := make(chan *metrics.Batch)
+		var dbatch *metrics.Batch
 
 		go func() {
 			scrape(metricsSourceProvider, testDataBatch)
@@ -174,11 +174,11 @@ func TestMultipleMetrics(t *testing.T) {
 }
 
 func TestConfig(t *testing.T) {
-	var provider metrics.MetricsSourceProvider
+	var provider metrics.SourceProvider
 
 	provider = &testProvider{}
 
-	if i, ok := provider.(metrics.ConfigurableMetricsSourceProvider); ok {
+	if i, ok := provider.(metrics.ConfigurableSourceProvider); ok {
 		i.Configure(time.Hour*1, time.Minute*1)
 		log.Infof("Name: %s - CollectionInterval: %v", provider.Name(), provider.CollectionInterval())
 	}
@@ -187,11 +187,11 @@ func TestConfig(t *testing.T) {
 }
 
 type testProvider struct {
-	metrics.DefaultMetricsSourceProvider
+	metrics.DefaultSourceProvider
 }
 
-func (p *testProvider) GetMetricsSources() []metrics.MetricsSource {
-	return make([]metrics.MetricsSource, 0)
+func (p *testProvider) GetMetricsSources() []metrics.Source {
+	return make([]metrics.Source, 0)
 }
 
 func (p *testProvider) Name() string {

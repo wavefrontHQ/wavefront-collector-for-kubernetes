@@ -23,13 +23,13 @@ import (
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 )
 
-func aggregate(src, dst *metrics.MetricSet, metricsToAggregate []string) error {
+func aggregate(src, dst *metrics.Set, metricsToAggregate []string) error {
 	for _, metricName := range metricsToAggregate {
-		metricValue, found := src.MetricValues[metricName]
+		metricValue, found := src.Values[metricName]
 		if !found {
 			continue
 		}
-		aggregatedValue, found := dst.MetricValues[metricName]
+		aggregatedValue, found := dst.Values[metricName]
 		if found {
 			if aggregatedValue.ValueType != metricValue.ValueType {
 				return fmt.Errorf("aggregator: type not supported in %s", metricName)
@@ -45,7 +45,7 @@ func aggregate(src, dst *metrics.MetricSet, metricsToAggregate []string) error {
 		} else {
 			aggregatedValue = metricValue
 		}
-		dst.MetricValues[metricName] = aggregatedValue
+		dst.Values[metricName] = aggregatedValue
 	}
 	return nil
 }
@@ -53,21 +53,21 @@ func aggregate(src, dst *metrics.MetricSet, metricsToAggregate []string) error {
 // aggregates the count of pods or containers by node, namespace and cluster.
 // If the source already has aggregated counts (by namespace for example), they are used to get the counts per cluster.
 // If the source does not have any counts, we increment the dest count by 1 assuming this method is invoked once per pod/container.
-func aggregateCount(src, dst *metrics.MetricSet, metricName string) {
+func aggregateCount(src, dst *metrics.Set, metricName string) {
 	srcCount := int64(0)
-	if count, found := src.MetricValues[metricName]; found {
+	if count, found := src.Values[metricName]; found {
 		srcCount += count.IntValue
 	} else {
 		srcCount = 1
 	}
 
-	dstCount, found := dst.MetricValues[metricName]
+	dstCount, found := dst.Values[metricName]
 	if found {
 		dstCount.IntValue += srcCount
 	} else {
-		dstCount = metrics.MetricValue{
+		dstCount = metrics.Value{
 			IntValue: srcCount,
 		}
 	}
-	dst.MetricValues[metricName] = dstCount
+	dst.Values[metricName] = dstCount
 }

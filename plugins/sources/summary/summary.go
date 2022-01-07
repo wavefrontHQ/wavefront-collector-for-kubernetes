@@ -68,7 +68,7 @@ type summaryMetricsSource struct {
 	kubeletClient *kubelet.KubeletClient
 }
 
-func NewSummaryMetricsSource(node NodeInfo, client *kubelet.KubeletClient) MetricsSource {
+func NewSummaryMetricsSource(node NodeInfo, client *kubelet.KubeletClient) Source {
 	return &summaryMetricsSource{
 		node:          node,
 		kubeletClient: client,
@@ -89,10 +89,10 @@ func (src *summaryMetricsSource) String() string {
 	return fmt.Sprintf("kubelet_summary:%s:%d", src.node.IP, src.kubeletClient.GetPort())
 }
 
-func (src *summaryMetricsSource) ScrapeMetrics() (*DataBatch, error) {
-	result := &DataBatch{
-		Timestamp:  time.Now(),
-		MetricSets: map[string]*MetricSet{},
+func (src *summaryMetricsSource) Scrape() (*Batch, error) {
+	result := &Batch{
+		Timestamp: time.Now(),
+		Sets:      map[metrics.ResourceKey]*Set{},
 	}
 
 	summary, err := func() (*stats.Summary, error) {
@@ -132,7 +132,7 @@ var systemNameMap = map[string]string{
 	stats.SystemContainerMisc:    "system",
 }
 
-func (src *summaryMetricsSource) addCompletedPodMetricSets(dataBatch *DataBatch, podList *kube_api.PodList) {
+func (src *summaryMetricsSource) addCompletedPodMetricSets(dataBatch *Batch, podList *kube_api.PodList) {
 	nodeLabels := map[string]string{
 		LabelNodename.Key: src.node.NodeName,
 		LabelHostname.Key: src.node.HostName,
@@ -144,14 +144,14 @@ func (src *summaryMetricsSource) addCompletedPodMetricSets(dataBatch *DataBatch,
 		}
 
 		podKey := PodKey(pod.Namespace, pod.Name)
-		if dataBatch.MetricSets[podKey] != nil {
+		if dataBatch.Sets[podKey] != nil {
 			continue
 		}
 
-		podMetrics := &MetricSet{
+		podMetrics := &Set{
 			Labels:              src.cloneLabels(nodeLabels),
-			MetricValues:        map[string]MetricValue{},
-			LabeledMetrics:      []LabeledMetric{},
+			Values:              map[string]Value{},
+			LabeledValues:       []LabeledValue{},
 			CollectionStartTime: pod.Status.StartTime.Time,
 			ScrapeTime:          dataBatch.Timestamp,
 		}
@@ -161,13 +161,13 @@ func (src *summaryMetricsSource) addCompletedPodMetricSets(dataBatch *DataBatch,
 		podMetrics.Labels[LabelPodName.Key] = pod.Name
 		podMetrics.Labels[LabelNamespaceName.Key] = pod.Namespace
 
-		dataBatch.MetricSets[podKey] = podMetrics
-		log.Debugf("Added MetricSet for key: %s, status: %s", podKey, pod.Status.Phase)
+		dataBatch.Sets[podKey] = podMetrics
+		log.Debugf("Added Set for key: %s, status: %s", podKey, pod.Status.Phase)
 	}
 }
 
-// decodeSummary translates the kubelet statsSummary API into the flattened MetricSet API.
-func (src *summaryMetricsSource) addSummaryMetricSets(dataBatch *DataBatch, summary *stats.Summary) {
+// decodeSummary translates the kubelet statsSummary API into the flattened Set API.
+func (src *summaryMetricsSource) addSummaryMetricSets(dataBatch *Batch, summary *stats.Summary) {
 
 	labels := map[string]string{
 		LabelNodename.Key: src.node.NodeName,
@@ -175,10 +175,10 @@ func (src *summaryMetricsSource) addSummaryMetricSets(dataBatch *DataBatch, summ
 		LabelHostID.Key:   src.node.HostID,
 	}
 
-	src.decodeNodeStats(dataBatch.MetricSets, labels, &summary.Node)
+	src.decodeNodeStats(dataBatch.Sets, labels, &summary.Node)
 	for _, pod := range summary.Pods {
 
-		src.decodePodStats(dataBatch.MetricSets, labels, &pod)
+		src.decodePodStats(dataBatch.Sets, labels, &pod)
 	}
 	log.Debugf("End summary decode")
 }
@@ -192,12 +192,12 @@ func (src *summaryMetricsSource) cloneLabels(labels map[string]string) map[strin
 	return clone
 }
 
-func (src *summaryMetricsSource) decodeNodeStats(metrics map[string]*MetricSet, labels map[string]string, node *stats.NodeStats) {
+func (src *summaryMetricsSource) decodeNodeStats(metrics map[ResourceKey]*Set, labels map[string]string, node *stats.NodeStats) {
 	log.Tracef("Decoding node stats for node %s...", node.NodeName)
-	nodeMetrics := &MetricSet{
+	nodeMetrics := &Set{
 		Labels:              src.cloneLabels(labels),
-		MetricValues:        map[string]MetricValue{},
-		LabeledMetrics:      []LabeledMetric{},
+		Values:              map[string]Value{},
+		LabeledValues:       []LabeledValue{},
 		CollectionStartTime: node.StartTime.Time,
 		ScrapeTime:          src.getScrapeTime(node.CPU, node.Memory, node.Network),
 	}
@@ -220,12 +220,12 @@ func (src *summaryMetricsSource) decodeNodeStats(metrics map[string]*MetricSet, 
 	}
 }
 
-func (src *summaryMetricsSource) decodePodStats(metrics map[string]*MetricSet, nodeLabels map[string]string, pod *stats.PodStats) {
+func (src *summaryMetricsSource) decodePodStats(metrics map[ResourceKey]*Set, nodeLabels map[string]string, pod *stats.PodStats) {
 	log.Tracef("Decoding pod stats for pod %s/%s (%s)...", pod.PodRef.Namespace, pod.PodRef.Name, pod.PodRef.UID)
-	podMetrics := &MetricSet{
+	podMetrics := &Set{
 		Labels:              src.cloneLabels(nodeLabels),
-		MetricValues:        map[string]MetricValue{},
-		LabeledMetrics:      []LabeledMetric{},
+		Values:              map[string]Value{},
+		LabeledValues:       []LabeledValue{},
 		CollectionStartTime: pod.StartTime.Time,
 		ScrapeTime:          src.getScrapeTime(nil, nil, pod.Network),
 	}
@@ -261,12 +261,12 @@ func (src *summaryMetricsSource) decodePodStats(metrics map[string]*MetricSet, n
 	}
 }
 
-func (src *summaryMetricsSource) decodeContainerStats(podLabels map[string]string, container *stats.ContainerStats, isSystemContainer bool) *MetricSet {
+func (src *summaryMetricsSource) decodeContainerStats(podLabels map[string]string, container *stats.ContainerStats, isSystemContainer bool) *Set {
 	log.Tracef("Decoding container stats stats for container %s...", container.Name)
-	containerMetrics := &MetricSet{
+	containerMetrics := &Set{
 		Labels:              src.cloneLabels(podLabels),
-		MetricValues:        map[string]MetricValue{},
-		LabeledMetrics:      []LabeledMetric{},
+		Values:              map[string]Value{},
+		LabeledValues:       []LabeledValue{},
 		CollectionStartTime: container.StartTime.Time,
 		ScrapeTime:          src.getScrapeTime(container.CPU, container.Memory, nil),
 	}
@@ -289,7 +289,7 @@ func (src *summaryMetricsSource) decodeContainerStats(podLabels map[string]strin
 	return containerMetrics
 }
 
-func (src *summaryMetricsSource) decodeUptime(metrics *MetricSet, startTime time.Time) {
+func (src *summaryMetricsSource) decodeUptime(metrics *Set, startTime time.Time) {
 	if startTime.IsZero() {
 		log.Trace("missing start time!")
 		return
@@ -299,7 +299,7 @@ func (src *summaryMetricsSource) decodeUptime(metrics *MetricSet, startTime time
 	src.addIntMetric(metrics, &MetricUptime, &uptime)
 }
 
-func (src *summaryMetricsSource) decodeCPUStats(metrics *MetricSet, cpu *stats.CPUStats) {
+func (src *summaryMetricsSource) decodeCPUStats(metrics *Set, cpu *stats.CPUStats) {
 	if cpu == nil {
 		log.Trace("missing cpu usage metric!")
 		return
@@ -312,7 +312,7 @@ func (src *summaryMetricsSource) decodeCPUStats(metrics *MetricSet, cpu *stats.C
 	}
 }
 
-func (src *summaryMetricsSource) decodeEphemeralStorageStats(metrics *MetricSet, storage *stats.FsStats) {
+func (src *summaryMetricsSource) decodeEphemeralStorageStats(metrics *Set, storage *stats.FsStats) {
 	if storage == nil {
 		log.Trace("missing storage usage metric!")
 		return
@@ -320,7 +320,7 @@ func (src *summaryMetricsSource) decodeEphemeralStorageStats(metrics *MetricSet,
 	src.addIntMetric(metrics, &MetricEphemeralStorageUsage, storage.UsedBytes)
 }
 
-func (src *summaryMetricsSource) decodeEphemeralStorageStatsForContainer(metrics *MetricSet, rootfs *stats.FsStats, logs *stats.FsStats) {
+func (src *summaryMetricsSource) decodeEphemeralStorageStatsForContainer(metrics *Set, rootfs *stats.FsStats, logs *stats.FsStats) {
 	if rootfs == nil || logs == nil || rootfs.UsedBytes == nil || logs.UsedBytes == nil {
 		log.Trace("missing storage usage metric!")
 		return
@@ -329,7 +329,7 @@ func (src *summaryMetricsSource) decodeEphemeralStorageStatsForContainer(metrics
 	src.addIntMetric(metrics, &MetricEphemeralStorageUsage, &usage)
 }
 
-func (src *summaryMetricsSource) decodeMemoryStats(metrics *MetricSet, memory *stats.MemoryStats) {
+func (src *summaryMetricsSource) decodeMemoryStats(metrics *Set, memory *stats.MemoryStats) {
 	if memory == nil {
 		log.Trace("missing memory metrics!")
 		return
@@ -342,7 +342,7 @@ func (src *summaryMetricsSource) decodeMemoryStats(metrics *MetricSet, memory *s
 	src.addIntMetric(metrics, &MetricMemoryMajorPageFaults, memory.MajorPageFaults)
 }
 
-func (src *summaryMetricsSource) decodeAcceleratorStats(metrics *MetricSet, accelerators []stats.AcceleratorStats) {
+func (src *summaryMetricsSource) decodeAcceleratorStats(metrics *Set, accelerators []stats.AcceleratorStats) {
 	for _, accelerator := range accelerators {
 		acceleratorLabels := map[string]string{
 			LabelAcceleratorMake.Key:  accelerator.Make,
@@ -355,7 +355,7 @@ func (src *summaryMetricsSource) decodeAcceleratorStats(metrics *MetricSet, acce
 	}
 }
 
-func (src *summaryMetricsSource) decodeNetworkStats(metrics *MetricSet, network *stats.NetworkStats) {
+func (src *summaryMetricsSource) decodeNetworkStats(metrics *Set, network *stats.NetworkStats) {
 	if network == nil {
 		log.Trace("missing network metrics!")
 		return
@@ -375,7 +375,7 @@ func (src *summaryMetricsSource) decodeNetworkStats(metrics *MetricSet, network 
 	src.addIntMetric(metrics, &MetricNetworkTxErrors, network.TxErrors)
 }
 
-func (src *summaryMetricsSource) decodeFsStats(metrics *MetricSet, fsKey string, fs *stats.FsStats) {
+func (src *summaryMetricsSource) decodeFsStats(metrics *Set, fsKey string, fs *stats.FsStats) {
 	if fs == nil {
 		log.Trace("missing fs metrics!")
 		return
@@ -389,9 +389,9 @@ func (src *summaryMetricsSource) decodeFsStats(metrics *MetricSet, fsKey string,
 	src.addLabeledIntMetric(metrics, &MetricFilesystemInodesFree, fsLabels, fs.InodesFree)
 }
 
-func (src *summaryMetricsSource) decodeUserDefinedMetrics(metrics *MetricSet, udm []stats.UserDefinedMetric) {
+func (src *summaryMetricsSource) decodeUserDefinedMetrics(metrics *Set, udm []stats.UserDefinedMetric) {
 	for _, metric := range udm {
-		metrics.MetricValues[CustomMetricPrefix+metric.Name] = MetricValue{
+		metrics.Values[CustomMetricPrefix+metric.Name] = Value{
 			ValueType:  ValueFloat,
 			FloatValue: metric.Value,
 		}
@@ -413,34 +413,34 @@ func (src *summaryMetricsSource) getScrapeTime(cpu *stats.CPUStats, memory *stat
 }
 
 // addIntMetric is a convenience method for adding the metric and value to the metric set.
-func (src *summaryMetricsSource) addIntMetric(metrics *MetricSet, metric *Metric, value *uint64) {
+func (src *summaryMetricsSource) addIntMetric(metrics *Set, metric *Metric, value *uint64) {
 	if value == nil {
 		log.Debugf("skipping metric %s because the value was nil", metric.Name)
 		return
 	}
-	val := MetricValue{
+	val := Value{
 		ValueType: ValueInt64,
 		IntValue:  int64(*value),
 	}
-	metrics.MetricValues[metric.Name] = val
+	metrics.Values[metric.Name] = val
 }
 
 // addLabeledIntMetric is a convenience method for adding the labeled metric and value to the metric set.
-func (src *summaryMetricsSource) addLabeledIntMetric(metrics *MetricSet, metric *Metric, labels map[string]string, value *uint64) {
+func (src *summaryMetricsSource) addLabeledIntMetric(metrics *Set, metric *Metric, labels map[string]string, value *uint64) {
 	if value == nil {
 		log.Debugf("skipping labeled metric %s (%v) because the value was nil", metric.Name, labels)
 		return
 	}
 
-	val := LabeledMetric{
+	val := LabeledValue{
 		Name:   metric.Name,
 		Labels: labels,
-		MetricValue: MetricValue{
+		Value: Value{
 			ValueType: ValueInt64,
 			IntValue:  int64(*value),
 		},
 	}
-	metrics.LabeledMetrics = append(metrics.LabeledMetrics, val)
+	metrics.LabeledValues = append(metrics.LabeledValues, val)
 }
 
 // Translate system container names to the legacy names for backwards compatibility.
@@ -452,15 +452,15 @@ func (src *summaryMetricsSource) getSystemContainerName(c *stats.ContainerStats)
 }
 
 type summaryProvider struct {
-	metrics.DefaultMetricsSourceProvider
+	metrics.DefaultSourceProvider
 	nodeLister       v1listers.NodeLister
 	reflector        *cache.Reflector
 	kubeletClient    *kubelet.KubeletClient
 	hostIDAnnotation string
 }
 
-func (sp *summaryProvider) GetMetricsSources() []MetricsSource {
-	var sources []MetricsSource
+func (sp *summaryProvider) GetMetricsSources() []Source {
+	var sources []Source
 	nodes, err := sp.nodeLister.List(labels.Everything())
 	if err != nil {
 		log.Errorf("error while listing nodes: %v", err)
@@ -510,7 +510,7 @@ func (sp *summaryProvider) getNodeInfo(node *kube_api.Node) (NodeInfo, error) {
 	return info, nil
 }
 
-func NewSummaryProvider(cfg configuration.SummarySourceConfig) (MetricsSourceProvider, error) {
+func NewSummaryProvider(cfg configuration.SummarySourceConfig) (SourceProvider, error) {
 	hostIDAnnotation := ""
 
 	// create clients

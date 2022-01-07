@@ -17,7 +17,7 @@
 
 package metrics
 
-// Definition of labels supported in MetricSet.
+// Definition of labels supported in Set.
 
 var (
 	LabelMetricSetType = LabelDescriptor{

@@ -19,7 +19,7 @@ import (
 
 // Implements the telegraf Accumulator interface
 type telegrafDataBatch struct {
-	metrics.DataBatch
+	metrics.Batch
 	source *telegrafPluginSource
 }
 

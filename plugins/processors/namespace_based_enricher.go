@@ -35,15 +35,15 @@ func (nbe *NamespaceBasedEnricher) Name() string {
 	return "namespace_based_enricher"
 }
 
-func (nbe *NamespaceBasedEnricher) Process(batch *metrics.DataBatch) (*metrics.DataBatch, error) {
-	for _, ms := range batch.MetricSets {
+func (nbe *NamespaceBasedEnricher) Process(batch *metrics.Batch) (*metrics.Batch, error) {
+	for _, ms := range batch.Sets {
 		nbe.addNamespaceInfo(ms)
 	}
 	return batch, nil
 }
 
 // Adds UID to all namespaced elements.
-func (nbe *NamespaceBasedEnricher) addNamespaceInfo(metricSet *metrics.MetricSet) {
+func (nbe *NamespaceBasedEnricher) addNamespaceInfo(metricSet *metrics.Set) {
 	metricSetType, found := metricSet.Labels[metrics.LabelMetricSetType.Key]
 	if !found {
 		return

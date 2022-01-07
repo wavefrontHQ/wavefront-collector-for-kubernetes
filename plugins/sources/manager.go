@@ -70,30 +70,30 @@ type SourceManager interface {
 	metrics.ProviderHandler
 
 	StopProviders()
-	GetPendingMetrics() []*metrics.DataBatch
+	GetPendingMetrics() []*metrics.Batch
 	SetDefaultCollectionInterval(time.Duration)
 	BuildProviders(config configuration.SourceConfig) error
 }
 
 type sourceManagerImpl struct {
-	responseChannel           chan *metrics.DataBatch
+	responseChannel           chan *metrics.Batch
 	defaultCollectionInterval time.Duration
 
 	metricsSourcesMtx      sync.Mutex
-	metricsSourceProviders map[string]metrics.MetricsSourceProvider
+	metricsSourceProviders map[string]metrics.SourceProvider
 	metricsSourceTimers    map[string]*IntervalTimer
 	metricsSourceQuits     map[string]chan struct{}
 
 	responseMtx sync.Mutex
-	response    []*metrics.DataBatch
+	response    []*metrics.Batch
 }
 
 // Manager return the SourceManager
 func Manager() SourceManager {
 	once.Do(func() {
 		singleton = &sourceManagerImpl{
-			responseChannel:           make(chan *metrics.DataBatch),
-			metricsSourceProviders:    make(map[string]metrics.MetricsSourceProvider),
+			responseChannel:           make(chan *metrics.Batch),
+			metricsSourceProviders:    make(map[string]metrics.SourceProvider),
 			metricsSourceTimers:       make(map[string]*IntervalTimer),
 			metricsSourceQuits:        make(map[string]chan struct{}),
 			defaultCollectionInterval: time.Minute,
@@ -120,8 +120,8 @@ func (sm *sourceManagerImpl) SetDefaultCollectionInterval(defaultCollectionInter
 	sm.defaultCollectionInterval = defaultCollectionInterval
 }
 
-// AddProvider register and start a new MetricsSourceProvider
-func (sm *sourceManagerImpl) AddProvider(provider metrics.MetricsSourceProvider) {
+// AddProvider register and start a new SourceProvider
+func (sm *sourceManagerImpl) AddProvider(provider metrics.SourceProvider) {
 	name := provider.Name()
 
 	log.WithFields(log.Fields{
@@ -216,15 +216,15 @@ func (sm *sourceManagerImpl) run() {
 	}
 }
 
-func (sm *sourceManagerImpl) rotateResponse() []*metrics.DataBatch {
+func (sm *sourceManagerImpl) rotateResponse() []*metrics.Batch {
 	sm.responseMtx.Lock()
 	defer sm.responseMtx.Unlock()
 	response := sm.response
-	sm.response = make([]*metrics.DataBatch, 0)
+	sm.response = make([]*metrics.Batch, 0)
 	return response
 }
 
-func scrape(provider metrics.MetricsSourceProvider, channel chan *metrics.DataBatch) {
+func scrape(provider metrics.SourceProvider, channel chan *metrics.Batch) {
 	for _, source := range provider.GetMetricsSources() {
 		// Prevents network congestion.
 		jitter := time.Duration(rand.Intn(jitterMs)) * time.Millisecond
@@ -238,7 +238,7 @@ func scrape(provider metrics.MetricsSourceProvider, channel chan *metrics.DataBa
 
 		log.WithField("name", source.Name()).Info("Querying source")
 
-		dataBatch, err := source.ScrapeMetrics()
+		dataBatch, err := source.Scrape()
 		if err != nil {
 			if source.AutoDiscovered() {
 				log.Warningf("Could not scrape containers, skipping source '%s': %v", source.Name(), err)
@@ -264,20 +264,20 @@ func scrape(provider metrics.MetricsSourceProvider, channel chan *metrics.DataBa
 
 		log.WithFields(log.Fields{
 			"name":          source.Name(),
-			"total_metrics": len(dataBatch.Points) + len(dataBatch.MetricSets),
+			"total_metrics": len(dataBatch.Points) + len(dataBatch.Sets),
 			"latency":       latency,
 		}).Infof("Finished querying source")
 	}
 }
 
-func (sm *sourceManagerImpl) GetPendingMetrics() []*metrics.DataBatch {
+func (sm *sourceManagerImpl) GetPendingMetrics() []*metrics.Batch {
 	response := sm.rotateResponse()
 	sort.Slice(response, func(i, j int) bool { return response[i].Timestamp.Before(response[j].Timestamp) })
 	return response
 }
 
-func buildProviders(cfg configuration.SourceConfig) []metrics.MetricsSourceProvider {
-	result := make([]metrics.MetricsSourceProvider, 0)
+func buildProviders(cfg configuration.SourceConfig) []metrics.SourceProvider {
+	result := make([]metrics.SourceProvider, 0)
 
 	if cfg.SummaryConfig != nil {
 		provider, err := summary.NewSummaryProvider(*cfg.SummaryConfig)
@@ -316,18 +316,18 @@ func buildProviders(cfg configuration.SourceConfig) []metrics.MetricsSourceProvi
 }
 
 func appendProvider(
-	slice []metrics.MetricsSourceProvider,
-	provider metrics.MetricsSourceProvider,
+	slice []metrics.SourceProvider,
+	provider metrics.SourceProvider,
 	err error,
 	cfg configuration.CollectionConfig,
-) []metrics.MetricsSourceProvider {
+) []metrics.SourceProvider {
 
 	if err != nil {
 		log.Errorf("Failed to create source: %v", err)
 		return slice
 	}
 	slice = append(slice, provider)
-	if i, ok := provider.(metrics.ConfigurableMetricsSourceProvider); ok {
+	if i, ok := provider.(metrics.ConfigurableSourceProvider); ok {
 		i.Configure(cfg.Interval, cfg.Timeout)
 	}
 	return slice

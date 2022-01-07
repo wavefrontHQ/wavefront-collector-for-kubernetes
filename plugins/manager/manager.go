@@ -37,7 +37,7 @@ type FlushManager interface {
 }
 
 type flushManagerImpl struct {
-	processors    []metrics.DataProcessor
+	processors    []metrics.Processor
 	sink          wavefront.WavefrontSink
 	flushInterval time.Duration
 	ticker        *time.Ticker
@@ -45,7 +45,7 @@ type flushManagerImpl struct {
 }
 
 // NewFlushManager crates a new PushManager
-func NewFlushManager(processors []metrics.DataProcessor,
+func NewFlushManager(processors []metrics.Processor,
 	sink wavefront.WavefrontSink, flushInterval time.Duration) (FlushManager, error) {
 	manager := flushManagerImpl{
 		processors:    processors,
@@ -81,10 +81,10 @@ func (rm *flushManagerImpl) Stop() {
 
 func (rm *flushManagerImpl) push() {
 	dataBatches := sources.Manager().GetPendingMetrics()
-	combinedBatch := &metrics.DataBatch{}
+	combinedBatch := &metrics.Batch{}
 
 	for _, data := range dataBatches {
-		if len(data.MetricSets) > 0 {
+		if len(data.Sets) > 0 {
 			// In deployment mode, the metric sets are spread across different data batches
 			// as data is collected independently from each node in the cluster
 			// combine all the metric sets and process them together below
@@ -92,13 +92,13 @@ func (rm *flushManagerImpl) push() {
 			continue
 		}
 
-		// export is either sink.ExportData or a null exporter for testing
+		// export is either sink.Export or a null exporter for testing
 		// hopefully we can simplify threading and simplify this up in the future
-		rm.sink.ExportData(data)
+		rm.sink.Export(data)
 	}
 
 	// process the combined metric sets
-	if len(combinedBatch.MetricSets) > 0 {
+	if len(combinedBatch.Sets) > 0 {
 		for _, p := range rm.processors {
 			processedBatch, err := p.Process(combinedBatch)
 			if err == nil {
@@ -109,17 +109,17 @@ func (rm *flushManagerImpl) push() {
 			}
 		}
 
-		rm.sink.ExportData(combinedBatch)
+		rm.sink.Export(combinedBatch)
 	}
 }
 
-func combineMetricSets(src, dst *metrics.DataBatch) {
+func combineMetricSets(src, dst *metrics.Batch) {
 	// use the most recent timestamp for the shared batch
 	dst.Timestamp = src.Timestamp
-	if dst.MetricSets == nil {
-		dst.MetricSets = make(map[string]*metrics.MetricSet)
+	if dst.Sets == nil {
+		dst.Sets = make(map[metrics.ResourceKey]*metrics.Set)
 	}
-	for k, v := range src.MetricSets {
-		dst.MetricSets[k] = v
+	for k, v := range src.Sets {
+		dst.Sets[k] = v
 	}
 }

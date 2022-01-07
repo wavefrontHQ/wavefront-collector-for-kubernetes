@@ -37,7 +37,7 @@ const otherResource = "example.com/resource1"
 
 type enricherTestContext struct {
 	pod                *kube_api.Pod
-	batch              *metrics.DataBatch
+	batch              *metrics.Batch
 	collectionInterval time.Duration
 }
 
@@ -45,7 +45,7 @@ func TestPodEnricher(t *testing.T) {
 	tc := setup()
 	podBasedEnricher := createEnricher(t, tc)
 
-	var batches = []*metrics.DataBatch{
+	var batches = []*metrics.Batch{
 		createContainerBatch(),
 		createContainerBatch(),
 		createPodBatch(),
@@ -60,12 +60,12 @@ func TestPodEnricher(t *testing.T) {
 		batch, err = podAggregator.Process(batch)
 		assert.NoError(t, err)
 
-		podMs, found := batch.MetricSets[metrics.PodKey("ns1", "pod1")]
+		podMs, found := batch.Sets[metrics.PodKey("ns1", "pod1")]
 		assert.True(t, found)
 		checkRequests(t, podMs, 433, 1555, 3000, 2)
 		checkLimits(t, podMs, 2222, 3333, 5000)
 
-		containerMs, found := batch.MetricSets[metrics.PodContainerKey("ns1", "pod1", "c1")]
+		containerMs, found := batch.Sets[metrics.PodContainerKey("ns1", "pod1", "c1")]
 		assert.True(t, found)
 		checkRequests(t, containerMs, 100, 555, 1000, -1)
 		checkLimits(t, containerMs, 0, 0, 0)
@@ -81,8 +81,8 @@ func TestDropsContainerMetricWhenPodMissing(t *testing.T) {
 	batch, err := podBasedEnricher.Process(tc.batch)
 	assert.NoError(t, err)
 
-	assert.Equal(t, 0, len(batch.MetricSets))
-	_, found := batch.MetricSets[metrics.PodContainerKey("ns1", "pod1", "c1")]
+	assert.Equal(t, 0, len(batch.Sets))
+	_, found := batch.Sets[metrics.PodContainerKey("ns1", "pod1", "c1")]
 	assert.False(t, found)
 }
 
@@ -96,8 +96,8 @@ func TestDropsPodMetricWhenPodMissing(t *testing.T) {
 	batch, err := podBasedEnricher.Process(tc.batch)
 	assert.NoError(t, err)
 
-	assert.Equal(t, 0, len(batch.MetricSets))
-	_, found := batch.MetricSets[metrics.PodKey("ns1", "pod1")]
+	assert.Equal(t, 0, len(batch.Sets))
+	_, found := batch.Sets[metrics.PodKey("ns1", "pod1")]
 	assert.False(t, found)
 }
 
@@ -109,12 +109,12 @@ func TestMultiplePodsWithOneMissing(t *testing.T) {
 	batch, err := podBasedEnricher.Process(tc.batch)
 	assert.NoError(t, err)
 
-	assert.Equal(t, 3, len(batch.MetricSets))
+	assert.Equal(t, 3, len(batch.Sets))
 
-	_, found := batch.MetricSets[metrics.PodKey("ns1", "MissingPod")]
+	_, found := batch.Sets[metrics.PodKey("ns1", "MissingPod")]
 	assert.False(t, found)
 
-	_, found = batch.MetricSets[metrics.PodKey("ns1", "pod1")]
+	_, found = batch.Sets[metrics.PodKey("ns1", "pod1")]
 	assert.True(t, found)
 }
 
@@ -134,19 +134,19 @@ func TestStatusRunning(t *testing.T) {
 	batch, err := podBasedEnricher.Process(tc.batch)
 	assert.NoError(t, err)
 
-	containerMs, found := batch.MetricSets[metrics.PodContainerKey("ns1", "pod1", "c1")]
+	containerMs, found := batch.Sets[metrics.PodContainerKey("ns1", "pod1", "c1")]
 	assert.True(t, found)
 
-	expectedStatus := metrics.LabeledMetric{
+	expectedStatus := metrics.LabeledValue{
 		Name: "status",
 		Labels: map[string]string{
 			"status": "running",
 		},
-		MetricValue: metrics.MetricValue{
+		Value: metrics.Value{
 			IntValue: 1,
 		},
 	}
-	assert.Equal(t, expectedStatus, containerMs.LabeledMetrics[0])
+	assert.Equal(t, expectedStatus, containerMs.LabeledValues[0])
 }
 
 func TestStatusTerminated(t *testing.T) {
@@ -165,21 +165,21 @@ func TestStatusTerminated(t *testing.T) {
 	batch, err := podBasedEnricher.Process(tc.batch)
 	assert.NoError(t, err)
 
-	containerMs, found := batch.MetricSets[metrics.PodContainerKey("ns1", "pod1", "c1")]
+	containerMs, found := batch.Sets[metrics.PodContainerKey("ns1", "pod1", "c1")]
 	assert.True(t, found)
 
-	expectedStatus := metrics.LabeledMetric{
+	expectedStatus := metrics.LabeledValue{
 		Name: "status",
 		Labels: map[string]string{
 			"status":    "terminated",
 			"reason":    "bad juju",
 			"exit_code": "137",
 		},
-		MetricValue: metrics.MetricValue{
+		Value: metrics.Value{
 			IntValue: 3,
 		},
 	}
-	assert.Equal(t, expectedStatus, containerMs.LabeledMetrics[0])
+	assert.Equal(t, expectedStatus, containerMs.LabeledValues[0])
 }
 
 func TestStatusMissedTermination(t *testing.T) {
@@ -205,14 +205,14 @@ func TestStatusMissedTermination(t *testing.T) {
 	podBasedEnricher := createEnricher(t, tc)
 
 	tc.batch.Timestamp = missedCollectionTime
-	expectedStatus := metrics.LabeledMetric{
+	expectedStatus := metrics.LabeledValue{
 		Name: "status",
 		Labels: map[string]string{
 			"status":    "terminated",
 			"reason":    "bad juju",
 			"exit_code": "137",
 		},
-		MetricValue: metrics.MetricValue{
+		Value: metrics.Value{
 			IntValue: 3,
 		},
 	}
@@ -241,12 +241,12 @@ func TestStatusPassedTermination(t *testing.T) {
 
 	podBasedEnricher := createEnricher(t, tc)
 
-	expectedStatus := metrics.LabeledMetric{
+	expectedStatus := metrics.LabeledValue{
 		Name: "status",
 		Labels: map[string]string{
 			"status": "running",
 		},
-		MetricValue: metrics.MetricValue{
+		Value: metrics.Value{
 			IntValue: 1,
 		},
 	}
@@ -255,14 +255,14 @@ func TestStatusPassedTermination(t *testing.T) {
 	assert.Equal(t, expectedStatus, processBatch(t, podBasedEnricher, batch2))
 }
 
-func processBatch(t assert.TestingT, podBasedEnricher *PodBasedEnricher, batch *metrics.DataBatch) metrics.LabeledMetric {
+func processBatch(t assert.TestingT, podBasedEnricher *PodBasedEnricher, batch *metrics.Batch) metrics.LabeledValue {
 	var err error
 	batch, err = podBasedEnricher.Process(batch)
 	assert.NoError(t, err)
 
-	containerMs, found := batch.MetricSets[metrics.PodContainerKey("ns1", "pod1", "c1")]
+	containerMs, found := batch.Sets[metrics.PodContainerKey("ns1", "pod1", "c1")]
 	assert.True(t, found)
-	return containerMs.LabeledMetrics[0]
+	return containerMs.LabeledValues[0]
 }
 
 func createEnricher(t *testing.T, tc *enricherTestContext) *PodBasedEnricher {
@@ -280,21 +280,21 @@ func createEnricher(t *testing.T, tc *enricherTestContext) *PodBasedEnricher {
 	return NewPodBasedEnricher(podLister, labelCopier, tc.collectionInterval)
 }
 
-func checkRequests(t *testing.T, ms *metrics.MetricSet, cpu, mem, storage, other int64) {
-	cpuVal, found := ms.MetricValues[metrics.MetricCpuRequest.Name]
+func checkRequests(t *testing.T, ms *metrics.Set, cpu, mem, storage, other int64) {
+	cpuVal, found := ms.Values[metrics.MetricCpuRequest.Name]
 	assert.True(t, found)
 	assert.Equal(t, cpu, cpuVal.IntValue)
 
-	memVal, found := ms.MetricValues[metrics.MetricMemoryRequest.Name]
+	memVal, found := ms.Values[metrics.MetricMemoryRequest.Name]
 	assert.True(t, found)
 	assert.Equal(t, mem, memVal.IntValue)
 
-	storageVal, found := ms.MetricValues[metrics.MetricEphemeralStorageRequest.Name]
+	storageVal, found := ms.Values[metrics.MetricEphemeralStorageRequest.Name]
 	assert.True(t, found)
 	assert.Equal(t, storage, storageVal.IntValue)
 
 	if other > 0 {
-		val, found := ms.MetricValues[otherResource+"/request"]
+		val, found := ms.Values[otherResource+"/request"]
 		assert.True(t, found)
 		assert.Equal(t, other, val.IntValue)
 	}
@@ -347,24 +347,24 @@ func setup() *enricherTestContext {
 	}
 }
 
-func checkLimits(t *testing.T, ms *metrics.MetricSet, cpu, mem int64, storage int64) {
-	cpuVal, found := ms.MetricValues[metrics.MetricCpuLimit.Name]
+func checkLimits(t *testing.T, ms *metrics.Set, cpu, mem int64, storage int64) {
+	cpuVal, found := ms.Values[metrics.MetricCpuLimit.Name]
 	assert.True(t, found)
 	assert.Equal(t, cpu, cpuVal.IntValue)
 
-	memVal, found := ms.MetricValues[metrics.MetricMemoryLimit.Name]
+	memVal, found := ms.Values[metrics.MetricMemoryLimit.Name]
 	assert.True(t, found)
 	assert.Equal(t, mem, memVal.IntValue)
 
-	storageVal, found := ms.MetricValues[metrics.MetricEphemeralStorageLimit.Name]
+	storageVal, found := ms.Values[metrics.MetricEphemeralStorageLimit.Name]
 	assert.True(t, found)
 	assert.Equal(t, storage, storageVal.IntValue)
 }
 
-func createContainerBatch() *metrics.DataBatch {
-	return &metrics.DataBatch{
+func createContainerBatch() *metrics.Batch {
+	return &metrics.Batch{
 		Timestamp: time.Now(),
-		MetricSets: map[string]*metrics.MetricSet{
+		Sets: map[metrics.ResourceKey]*metrics.Set{
 			metrics.PodContainerKey("ns1", "pod1", "c1"): {
 				Labels: map[string]string{
 					metrics.LabelMetricSetType.Key: metrics.MetricSetTypePodContainer,
@@ -372,28 +372,28 @@ func createContainerBatch() *metrics.DataBatch {
 					metrics.LabelNamespaceName.Key: "ns1",
 					metrics.LabelContainerName.Key: "c1",
 				},
-				MetricValues: map[string]metrics.MetricValue{},
+				Values: map[string]metrics.Value{},
 			},
 		},
 	}
 }
 
-func createPodBatch(podNames ...string) *metrics.DataBatch {
+func createPodBatch(podNames ...string) *metrics.Batch {
 	if len(podNames) == 0 {
 		podNames = append(podNames, "pod1")
 	}
-	dataBatch := metrics.DataBatch{
-		Timestamp:  time.Now(),
-		MetricSets: map[string]*metrics.MetricSet{},
+	dataBatch := metrics.Batch{
+		Timestamp: time.Now(),
+		Sets:      map[metrics.ResourceKey]*metrics.Set{},
 	}
 	for _, podName := range podNames {
-		dataBatch.MetricSets[metrics.PodKey("ns1", podName)] = &metrics.MetricSet{
+		dataBatch.Sets[metrics.PodKey("ns1", podName)] = &metrics.Set{
 			Labels: map[string]string{
 				metrics.LabelMetricSetType.Key: metrics.MetricSetTypePod,
 				metrics.LabelPodName.Key:       podName,
 				metrics.LabelNamespaceName.Key: "ns1",
 			},
-			MetricValues: map[string]metrics.MetricValue{},
+			Values: map[string]metrics.Value{},
 		}
 	}
 	return &dataBatch

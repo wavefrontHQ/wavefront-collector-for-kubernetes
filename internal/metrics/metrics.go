@@ -198,15 +198,15 @@ var MetricUptime = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "uptime",
 		Description: "Number of milliseconds since the container was started",
-		Type:        MetricCumulative,
+		Type:        Cumulative,
 		ValueType:   ValueInt64,
-		Units:       UnitsMilliseconds,
+		Units:       Milliseconds,
 	},
 	HasValue: func(spec *cadvisor.ContainerSpec) bool {
 		return !spec.CreationTime.IsZero()
 	},
-	GetValue: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) MetricValue {
-		return MetricValue{
+	GetValue: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) Value {
+		return Value{
 			ValueType: ValueInt64,
 			IntValue:  time.Since(spec.CreationTime).Nanoseconds() / time.Millisecond.Nanoseconds()}
 	},
@@ -216,9 +216,9 @@ var MetricRestartCount = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "restart_count",
 		Description: "Number of container restarts",
-		Type:        MetricCumulative,
+		Type:        Cumulative,
 		ValueType:   ValueInt64,
-		Units:       UnitsCount,
+		Units:       Count,
 	},
 }
 
@@ -226,15 +226,15 @@ var MetricCpuLoad = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "cpu/load",
 		Description: "CPU load",
-		Type:        MetricGauge,
+		Type:        Gauge,
 		ValueType:   ValueInt64,
-		Units:       UnitsCount,
+		Units:       Count,
 	},
 	HasValue: func(spec *cadvisor.ContainerSpec) bool {
 		return spec.HasCpu
 	},
-	GetValue: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) MetricValue {
-		return MetricValue{
+	GetValue: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) Value {
+		return Value{
 			ValueType: ValueInt64,
 			IntValue:  int64(stat.Cpu.LoadAverage)}
 	},
@@ -244,15 +244,15 @@ var MetricCpuUsage = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "cpu/usage",
 		Description: "Cumulative CPU usage on all cores",
-		Type:        MetricCumulative,
+		Type:        Cumulative,
 		ValueType:   ValueInt64,
-		Units:       UnitsNanoseconds,
+		Units:       Nanoseconds,
 	},
 	HasValue: func(spec *cadvisor.ContainerSpec) bool {
 		return spec.HasCpu
 	},
-	GetValue: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) MetricValue {
-		return MetricValue{
+	GetValue: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) Value {
+		return Value{
 			ValueType: ValueInt64,
 			IntValue:  int64(stat.Cpu.Usage.Total)}
 	},
@@ -262,9 +262,9 @@ var MetricCpuUsageCores = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "cpu/usage_millicores",
 		Description: "Cumulative CPU usage on all cores averaged over time window",
-		Type:        MetricCumulative,
+		Type:        Cumulative,
 		ValueType:   ValueInt64,
-		Units:       UnitsMillicores,
+		Units:       Millicores,
 	},
 }
 
@@ -272,24 +272,24 @@ var MetricEphemeralStorageUsage = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "ephemeral_storage/usage",
 		Description: "Ephemeral storage usage",
-		Type:        MetricGauge,
+		Type:        Gauge,
 		ValueType:   ValueInt64,
-		Units:       UnitsBytes,
+		Units:       Bytes,
 	},
 }
 var MetricMemoryUsage = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "memory/usage",
 		Description: "Total memory usage",
-		Type:        MetricGauge,
+		Type:        Gauge,
 		ValueType:   ValueInt64,
-		Units:       UnitsBytes,
+		Units:       Bytes,
 	},
 	HasValue: func(spec *cadvisor.ContainerSpec) bool {
 		return spec.HasMemory
 	},
-	GetValue: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) MetricValue {
-		return MetricValue{
+	GetValue: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) Value {
+		return Value{
 			ValueType: ValueInt64,
 			IntValue:  int64(stat.Memory.Usage)}
 	},
@@ -299,15 +299,15 @@ var MetricMemoryCache = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "memory/cache",
 		Description: "Cache memory",
-		Type:        MetricGauge,
+		Type:        Gauge,
 		ValueType:   ValueInt64,
-		Units:       UnitsBytes,
+		Units:       Bytes,
 	},
 	HasValue: func(spec *cadvisor.ContainerSpec) bool {
 		return spec.HasMemory
 	},
-	GetValue: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) MetricValue {
-		return MetricValue{
+	GetValue: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) Value {
+		return Value{
 			ValueType: ValueInt64,
 			IntValue:  int64(stat.Memory.Cache)}
 	},
@@ -317,15 +317,15 @@ var MetricMemoryRSS = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "memory/rss",
 		Description: "RSS memory",
-		Type:        MetricGauge,
+		Type:        Gauge,
 		ValueType:   ValueInt64,
-		Units:       UnitsBytes,
+		Units:       Bytes,
 	},
 	HasValue: func(spec *cadvisor.ContainerSpec) bool {
 		return spec.HasMemory
 	},
-	GetValue: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) MetricValue {
-		return MetricValue{
+	GetValue: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) Value {
+		return Value{
 			ValueType: ValueInt64,
 			IntValue:  int64(stat.Memory.RSS)}
 	},
@@ -335,15 +335,15 @@ var MetricMemoryWorkingSet = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "memory/working_set",
 		Description: "Total working set usage. Working set is the memory being used and not easily dropped by the kernel",
-		Type:        MetricGauge,
+		Type:        Gauge,
 		ValueType:   ValueInt64,
-		Units:       UnitsBytes,
+		Units:       Bytes,
 	},
 	HasValue: func(spec *cadvisor.ContainerSpec) bool {
 		return spec.HasMemory
 	},
-	GetValue: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) MetricValue {
-		return MetricValue{
+	GetValue: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) Value {
+		return Value{
 			ValueType: ValueInt64,
 			IntValue:  int64(stat.Memory.WorkingSet)}
 	},
@@ -353,15 +353,15 @@ var MetricMemoryPageFaults = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "memory/page_faults",
 		Description: "Number of page faults",
-		Type:        MetricCumulative,
+		Type:        Cumulative,
 		ValueType:   ValueInt64,
-		Units:       UnitsCount,
+		Units:       Count,
 	},
 	HasValue: func(spec *cadvisor.ContainerSpec) bool {
 		return spec.HasMemory
 	},
-	GetValue: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) MetricValue {
-		return MetricValue{
+	GetValue: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) Value {
+		return Value{
 			ValueType: ValueInt64,
 			IntValue:  int64(stat.Memory.ContainerData.Pgfault)}
 	},
@@ -371,15 +371,15 @@ var MetricMemoryMajorPageFaults = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "memory/major_page_faults",
 		Description: "Number of major page faults",
-		Type:        MetricCumulative,
+		Type:        Cumulative,
 		ValueType:   ValueInt64,
-		Units:       UnitsCount,
+		Units:       Count,
 	},
 	HasValue: func(spec *cadvisor.ContainerSpec) bool {
 		return spec.HasMemory
 	},
-	GetValue: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) MetricValue {
-		return MetricValue{
+	GetValue: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) Value {
+		return Value{
 			ValueType: ValueInt64,
 			IntValue:  int64(stat.Memory.ContainerData.Pgmajfault)}
 	},
@@ -389,19 +389,19 @@ var MetricNetworkRx = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "network/rx",
 		Description: "Cumulative number of bytes received over the network",
-		Type:        MetricCumulative,
+		Type:        Cumulative,
 		ValueType:   ValueInt64,
-		Units:       UnitsBytes,
+		Units:       Bytes,
 	},
 	HasValue: func(spec *cadvisor.ContainerSpec) bool {
 		return spec.HasNetwork
 	},
-	GetValue: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) MetricValue {
+	GetValue: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) Value {
 		var rxBytes uint64 = 0
 		for _, interfaceStat := range stat.Network.Interfaces {
 			rxBytes += interfaceStat.RxBytes
 		}
-		return MetricValue{
+		return Value{
 			ValueType: ValueInt64,
 			IntValue:  int64(rxBytes),
 		}
@@ -412,19 +412,19 @@ var MetricNetworkRxErrors = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "network/rx_errors",
 		Description: "Cumulative number of errors while receiving over the network",
-		Type:        MetricCumulative,
+		Type:        Cumulative,
 		ValueType:   ValueInt64,
-		Units:       UnitsCount,
+		Units:       Count,
 	},
 	HasValue: func(spec *cadvisor.ContainerSpec) bool {
 		return spec.HasNetwork
 	},
-	GetValue: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) MetricValue {
+	GetValue: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) Value {
 		var rxErrors uint64 = 0
 		for _, interfaceStat := range stat.Network.Interfaces {
 			rxErrors += interfaceStat.RxErrors
 		}
-		return MetricValue{
+		return Value{
 			ValueType: ValueInt64,
 			IntValue:  int64(rxErrors),
 		}
@@ -435,19 +435,19 @@ var MetricNetworkTx = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "network/tx",
 		Description: "Cumulative number of bytes sent over the network",
-		Type:        MetricCumulative,
+		Type:        Cumulative,
 		ValueType:   ValueInt64,
-		Units:       UnitsBytes,
+		Units:       Bytes,
 	},
 	HasValue: func(spec *cadvisor.ContainerSpec) bool {
 		return spec.HasNetwork
 	},
-	GetValue: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) MetricValue {
+	GetValue: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) Value {
 		var txBytes uint64 = 0
 		for _, interfaceStat := range stat.Network.Interfaces {
 			txBytes += interfaceStat.TxBytes
 		}
-		return MetricValue{
+		return Value{
 			ValueType: ValueInt64,
 			IntValue:  int64(txBytes),
 		}
@@ -458,19 +458,19 @@ var MetricNetworkTxErrors = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "network/tx_errors",
 		Description: "Cumulative number of errors while sending over the network",
-		Type:        MetricCumulative,
+		Type:        Cumulative,
 		ValueType:   ValueInt64,
-		Units:       UnitsCount,
+		Units:       Count,
 	},
 	HasValue: func(spec *cadvisor.ContainerSpec) bool {
 		return spec.HasNetwork
 	},
-	GetValue: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) MetricValue {
+	GetValue: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) Value {
 		var txErrors uint64 = 0
 		for _, interfaceStat := range stat.Network.Interfaces {
 			txErrors += interfaceStat.TxErrors
 		}
-		return MetricValue{
+		return Value{
 			ValueType: ValueInt64,
 			IntValue:  int64(txErrors),
 		}
@@ -482,9 +482,9 @@ var MetricCpuRequest = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "cpu/request",
 		Description: "CPU request (the guaranteed amount of resources) in millicores. This metric is Kubernetes specific.",
-		Type:        MetricGauge,
+		Type:        Gauge,
 		ValueType:   ValueInt64,
-		Units:       UnitsCount,
+		Units:       Count,
 	},
 }
 
@@ -492,9 +492,9 @@ var MetricCpuLimit = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "cpu/limit",
 		Description: "CPU hard limit in millicores.",
-		Type:        MetricGauge,
+		Type:        Gauge,
 		ValueType:   ValueInt64,
-		Units:       UnitsCount,
+		Units:       Count,
 	},
 }
 
@@ -502,9 +502,9 @@ var MetricMemoryRequest = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "memory/request",
 		Description: "Memory request (the guaranteed amount of resources) in bytes. This metric is Kubernetes specific.",
-		Type:        MetricGauge,
+		Type:        Gauge,
 		ValueType:   ValueInt64,
-		Units:       UnitsBytes,
+		Units:       Bytes,
 	},
 }
 
@@ -512,9 +512,9 @@ var MetricMemoryLimit = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "memory/limit",
 		Description: "Memory hard limit in bytes.",
-		Type:        MetricGauge,
+		Type:        Gauge,
 		ValueType:   ValueInt64,
-		Units:       UnitsBytes,
+		Units:       Bytes,
 	},
 }
 
@@ -522,9 +522,9 @@ var MetricEphemeralStorageRequest = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "ephemeral_storage/request",
 		Description: "ephemeral storage request (the guaranteed amount of resources) in bytes. This metric is Kubernetes specific.",
-		Type:        MetricGauge,
+		Type:        Gauge,
 		ValueType:   ValueInt64,
-		Units:       UnitsBytes,
+		Units:       Bytes,
 	},
 }
 
@@ -532,9 +532,9 @@ var MetricEphemeralStorageLimit = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "ephemeral_storage/limit",
 		Description: "ephemeral storage hard limit in bytes.",
-		Type:        MetricGauge,
+		Type:        Gauge,
 		ValueType:   ValueInt64,
-		Units:       UnitsBytes,
+		Units:       Bytes,
 	},
 }
 
@@ -543,9 +543,9 @@ var MetricCpuUsageRate = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "cpu/usage_rate",
 		Description: "CPU usage on all cores in millicores",
-		Type:        MetricGauge,
+		Type:        Gauge,
 		ValueType:   ValueInt64,
-		Units:       UnitsCount,
+		Units:       Count,
 	},
 }
 
@@ -553,9 +553,9 @@ var MetricMemoryPageFaultsRate = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "memory/page_faults_rate",
 		Description: "Rate of page faults in counts per second",
-		Type:        MetricGauge,
+		Type:        Gauge,
 		ValueType:   ValueFloat,
-		Units:       UnitsCount,
+		Units:       Count,
 	},
 }
 
@@ -563,9 +563,9 @@ var MetricMemoryMajorPageFaultsRate = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "memory/major_page_faults_rate",
 		Description: "Rate of major page faults in counts per second",
-		Type:        MetricGauge,
+		Type:        Gauge,
 		ValueType:   ValueFloat,
-		Units:       UnitsCount,
+		Units:       Count,
 	},
 }
 
@@ -573,9 +573,9 @@ var MetricNetworkRxRate = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "network/rx_rate",
 		Description: "Rate of bytes received over the network in bytes per second",
-		Type:        MetricGauge,
+		Type:        Gauge,
 		ValueType:   ValueFloat,
-		Units:       UnitsCount,
+		Units:       Count,
 	},
 }
 
@@ -583,9 +583,9 @@ var MetricNetworkRxErrorsRate = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "network/rx_errors_rate",
 		Description: "Rate of errors sending over the network in errors per second",
-		Type:        MetricGauge,
+		Type:        Gauge,
 		ValueType:   ValueFloat,
-		Units:       UnitsCount,
+		Units:       Count,
 	},
 }
 
@@ -593,9 +593,9 @@ var MetricNetworkTxRate = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "network/tx_rate",
 		Description: "Rate of bytes transmitted over the network in bytes per second",
-		Type:        MetricGauge,
+		Type:        Gauge,
 		ValueType:   ValueFloat,
-		Units:       UnitsCount,
+		Units:       Count,
 	},
 }
 
@@ -603,9 +603,9 @@ var MetricNetworkTxErrorsRate = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "network/tx_errors_rate",
 		Description: "Rate of errors transmitting over the network in errors per second",
-		Type:        MetricGauge,
+		Type:        Gauge,
 		ValueType:   ValueFloat,
-		Units:       UnitsCount,
+		Units:       Count,
 	},
 }
 
@@ -613,9 +613,9 @@ var MetricNodeCpuCapacity = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "cpu/node_capacity",
 		Description: "Cpu capacity of a node",
-		Type:        MetricGauge,
+		Type:        Gauge,
 		ValueType:   ValueFloat,
-		Units:       UnitsCount,
+		Units:       Count,
 	},
 }
 
@@ -623,9 +623,9 @@ var MetricNodeMemoryCapacity = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "memory/node_capacity",
 		Description: "Memory capacity of a node",
-		Type:        MetricGauge,
+		Type:        Gauge,
 		ValueType:   ValueFloat,
-		Units:       UnitsCount,
+		Units:       Count,
 	},
 }
 
@@ -633,9 +633,9 @@ var MetricNodeEphemeralStorageCapacity = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "ephemeral_storage/node_capacity",
 		Description: "Ephemeral storage capacity of a node",
-		Type:        MetricGauge,
+		Type:        Gauge,
 		ValueType:   ValueFloat,
-		Units:       UnitsCount,
+		Units:       Count,
 	},
 }
 
@@ -643,9 +643,9 @@ var MetricNodeCpuAllocatable = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "cpu/node_allocatable",
 		Description: "Cpu allocatable of a node",
-		Type:        MetricGauge,
+		Type:        Gauge,
 		ValueType:   ValueFloat,
-		Units:       UnitsCount,
+		Units:       Count,
 	},
 }
 
@@ -653,9 +653,9 @@ var MetricNodeMemoryAllocatable = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "memory/node_allocatable",
 		Description: "Memory allocatable of a node",
-		Type:        MetricGauge,
+		Type:        Gauge,
 		ValueType:   ValueFloat,
-		Units:       UnitsCount,
+		Units:       Count,
 	},
 }
 
@@ -663,9 +663,9 @@ var MetricNodeEphemeralStorageAllocatable = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "ephemeral_storage/node_allocatable",
 		Description: "Ephemeral storage allocatable of a node",
-		Type:        MetricGauge,
+		Type:        Gauge,
 		ValueType:   ValueFloat,
-		Units:       UnitsCount,
+		Units:       Count,
 	},
 }
 
@@ -673,9 +673,9 @@ var MetricNodeCpuUtilization = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "cpu/node_utilization",
 		Description: "Cpu utilization as a share of node capacity",
-		Type:        MetricGauge,
+		Type:        Gauge,
 		ValueType:   ValueFloat,
-		Units:       UnitsCount,
+		Units:       Count,
 	},
 }
 
@@ -683,9 +683,9 @@ var MetricNodeMemoryUtilization = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "memory/node_utilization",
 		Description: "Memory utilization as a share of memory capacity",
-		Type:        MetricGauge,
+		Type:        Gauge,
 		ValueType:   ValueFloat,
-		Units:       UnitsCount,
+		Units:       Count,
 	},
 }
 
@@ -693,9 +693,9 @@ var MetricNodeEphemeralStorageUtilization = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "ephemeral_storage/node_utilization",
 		Description: "Ephemeral storage utilization as a share of storage capacity",
-		Type:        MetricGauge,
+		Type:        Gauge,
 		ValueType:   ValueFloat,
-		Units:       UnitsCount,
+		Units:       Count,
 	},
 }
 
@@ -703,9 +703,9 @@ var MetricNodeCpuReservation = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "cpu/node_reservation",
 		Description: "Share of cpu that is reserved on the node",
-		Type:        MetricGauge,
+		Type:        Gauge,
 		ValueType:   ValueFloat,
-		Units:       UnitsCount,
+		Units:       Count,
 	},
 }
 
@@ -713,9 +713,9 @@ var MetricNodeMemoryReservation = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "memory/node_reservation",
 		Description: "Share of memory that is reserved on the node",
-		Type:        MetricGauge,
+		Type:        Gauge,
 		ValueType:   ValueFloat,
-		Units:       UnitsCount,
+		Units:       Count,
 	},
 }
 
@@ -723,9 +723,9 @@ var MetricNodeEphemeralStorageReservation = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "ephemeral_storage/node_reservation",
 		Description: "Share of ephemeral storage that is reserved on the node",
-		Type:        MetricGauge,
+		Type:        Gauge,
 		ValueType:   ValueFloat,
-		Units:       UnitsCount,
+		Units:       Count,
 	},
 }
 
@@ -733,9 +733,9 @@ var MetricNodeCondition = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "status/condition",
 		Description: "Node conditions",
-		Type:        MetricGauge,
+		Type:        Gauge,
 		ValueType:   ValueInt64,
-		Units:       UnitsCount,
+		Units:       Count,
 	},
 }
 
@@ -743,9 +743,9 @@ var MetricPodPhase = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "status/phase",
 		Description: "Phase of pods",
-		Type:        MetricGauge,
+		Type:        Gauge,
 		ValueType:   ValueInt64,
-		Units:       UnitsCount,
+		Units:       Count,
 	},
 }
 
@@ -753,9 +753,9 @@ var MetricContainerStatus = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "status",
 		Description: "Container status",
-		Type:        MetricGauge,
+		Type:        Gauge,
 		ValueType:   ValueInt64,
-		Units:       UnitsCount,
+		Units:       Count,
 	},
 }
 
@@ -764,9 +764,9 @@ var MetricPodCount = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "pod/count",
 		Description: "Count of pods",
-		Type:        MetricGauge,
+		Type:        Gauge,
 		ValueType:   ValueInt64,
-		Units:       UnitsCount,
+		Units:       Count,
 	},
 }
 
@@ -774,35 +774,35 @@ var MetricPodContainerCount = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "pod_container/count",
 		Description: "Count of pod containers",
-		Type:        MetricGauge,
+		Type:        Gauge,
 		ValueType:   ValueInt64,
-		Units:       UnitsCount,
+		Units:       Count,
 	},
 }
 
-// Labeled metrics
+// LabeledValue metrics
 
 var MetricFilesystemUsage = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "filesystem/usage",
 		Description: "Total number of bytes consumed on a filesystem",
-		Type:        MetricGauge,
+		Type:        Gauge,
 		ValueType:   ValueInt64,
-		Units:       UnitsBytes,
+		Units:       Bytes,
 		Labels:      metricLabels,
 	},
 	HasLabeledMetric: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) bool {
 		return spec.HasFilesystem
 	},
-	GetLabeledMetric: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) []LabeledMetric {
-		result := make([]LabeledMetric, 0, len(stat.Filesystem))
+	GetLabeledMetric: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) []LabeledValue {
+		result := make([]LabeledValue, 0, len(stat.Filesystem))
 		for _, fs := range stat.Filesystem {
-			result = append(result, LabeledMetric{
+			result = append(result, LabeledValue{
 				Name: "filesystem/usage",
 				Labels: map[string]string{
 					LabelResourceID.Key: fs.Device,
 				},
-				MetricValue: MetricValue{
+				Value: Value{
 					ValueType: ValueInt64,
 					IntValue:  int64(fs.Usage),
 				},
@@ -816,23 +816,23 @@ var MetricFilesystemLimit = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "filesystem/limit",
 		Description: "The total size of filesystem in bytes",
-		Type:        MetricGauge,
+		Type:        Gauge,
 		ValueType:   ValueInt64,
-		Units:       UnitsBytes,
+		Units:       Bytes,
 		Labels:      metricLabels,
 	},
 	HasLabeledMetric: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) bool {
 		return spec.HasFilesystem
 	},
-	GetLabeledMetric: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) []LabeledMetric {
-		result := make([]LabeledMetric, 0, len(stat.Filesystem))
+	GetLabeledMetric: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) []LabeledValue {
+		result := make([]LabeledValue, 0, len(stat.Filesystem))
 		for _, fs := range stat.Filesystem {
-			result = append(result, LabeledMetric{
+			result = append(result, LabeledValue{
 				Name: "filesystem/limit",
 				Labels: map[string]string{
 					LabelResourceID.Key: fs.Device,
 				},
-				MetricValue: MetricValue{
+				Value: Value{
 					ValueType: ValueInt64,
 					IntValue:  int64(fs.Limit),
 				},
@@ -846,23 +846,23 @@ var MetricFilesystemAvailable = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "filesystem/available",
 		Description: "The number of available bytes remaining in a the filesystem",
-		Type:        MetricGauge,
+		Type:        Gauge,
 		ValueType:   ValueInt64,
-		Units:       UnitsBytes,
+		Units:       Bytes,
 		Labels:      metricLabels,
 	},
 	HasLabeledMetric: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) bool {
 		return spec.HasFilesystem
 	},
-	GetLabeledMetric: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) []LabeledMetric {
-		result := make([]LabeledMetric, 0, len(stat.Filesystem))
+	GetLabeledMetric: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) []LabeledValue {
+		result := make([]LabeledValue, 0, len(stat.Filesystem))
 		for _, fs := range stat.Filesystem {
-			result = append(result, LabeledMetric{
+			result = append(result, LabeledValue{
 				Name: "filesystem/available",
 				Labels: map[string]string{
 					LabelResourceID.Key: fs.Device,
 				},
-				MetricValue: MetricValue{
+				Value: Value{
 					ValueType: ValueInt64,
 					IntValue:  int64(fs.Available),
 				},
@@ -876,24 +876,24 @@ var MetricFilesystemInodes = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "filesystem/inodes",
 		Description: "Total number of inodes on a filesystem",
-		Type:        MetricGauge,
+		Type:        Gauge,
 		ValueType:   ValueInt64,
-		Units:       UnitsBytes,
+		Units:       Bytes,
 		Labels:      metricLabels,
 	},
 	HasLabeledMetric: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) bool {
 		return spec.HasFilesystem
 	},
-	GetLabeledMetric: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) []LabeledMetric {
-		result := []LabeledMetric{}
+	GetLabeledMetric: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) []LabeledValue {
+		result := []LabeledValue{}
 		for _, fs := range stat.Filesystem {
 			if fs.HasInodes {
-				result = append(result, LabeledMetric{
+				result = append(result, LabeledValue{
 					Name: "filesystem/inodes",
 					Labels: map[string]string{
 						LabelResourceID.Key: fs.Device,
 					},
-					MetricValue: MetricValue{
+					Value: Value{
 						ValueType: ValueInt64,
 						IntValue:  int64(fs.Inodes),
 					},
@@ -908,24 +908,24 @@ var MetricFilesystemInodesFree = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "filesystem/inodes_free",
 		Description: "Free number of inodes on a filesystem",
-		Type:        MetricGauge,
+		Type:        Gauge,
 		ValueType:   ValueInt64,
-		Units:       UnitsBytes,
+		Units:       Bytes,
 		Labels:      metricLabels,
 	},
 	HasLabeledMetric: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) bool {
 		return spec.HasFilesystem
 	},
-	GetLabeledMetric: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) []LabeledMetric {
-		result := []LabeledMetric{}
+	GetLabeledMetric: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) []LabeledValue {
+		result := []LabeledValue{}
 		for _, fs := range stat.Filesystem {
 			if fs.HasInodes {
-				result = append(result, LabeledMetric{
+				result = append(result, LabeledValue{
 					Name: "filesystem/inodes_free",
 					Labels: map[string]string{
 						LabelResourceID.Key: fs.Device,
 					},
-					MetricValue: MetricValue{
+					Value: Value{
 						ValueType: ValueInt64,
 						IntValue:  int64(fs.InodesFree),
 					},
@@ -941,9 +941,9 @@ var MetricAcceleratorMemoryTotal = Metric{
 		Name:        "accelerator/memory_total",
 		Description: "Total accelerator memory (in bytes)",
 		Labels:      acceleratorLabels,
-		Type:        MetricGauge,
+		Type:        Gauge,
 		ValueType:   ValueInt64,
-		Units:       UnitsBytes,
+		Units:       Bytes,
 	},
 	HasLabeledMetric: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) bool {
 		if len(stat.Accelerators) == 0 {
@@ -952,17 +952,17 @@ var MetricAcceleratorMemoryTotal = Metric{
 
 		return true
 	},
-	GetLabeledMetric: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) []LabeledMetric {
-		result := make([]LabeledMetric, 0, len(stat.Accelerators))
+	GetLabeledMetric: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) []LabeledValue {
+		result := make([]LabeledValue, 0, len(stat.Accelerators))
 		for _, ac := range stat.Accelerators {
-			result = append(result, LabeledMetric{
+			result = append(result, LabeledValue{
 				Name: "accelerator/memory_total",
 				Labels: map[string]string{
 					LabelAcceleratorMake.Key:  ac.Make,
 					LabelAcceleratorModel.Key: ac.Model,
 					LabelAcceleratorID.Key:    ac.ID,
 				},
-				MetricValue: MetricValue{
+				Value: Value{
 					ValueType: ValueInt64,
 					IntValue:  int64(ac.MemoryTotal),
 				},
@@ -977,9 +977,9 @@ var MetricAcceleratorMemoryUsed = Metric{
 		Name:        "accelerator/memory_used",
 		Description: "Total accelerator memory allocated (in bytes)",
 		Labels:      acceleratorLabels,
-		Type:        MetricGauge,
+		Type:        Gauge,
 		ValueType:   ValueInt64,
-		Units:       UnitsBytes,
+		Units:       Bytes,
 	},
 	HasLabeledMetric: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) bool {
 		if len(stat.Accelerators) == 0 {
@@ -988,17 +988,17 @@ var MetricAcceleratorMemoryUsed = Metric{
 
 		return true
 	},
-	GetLabeledMetric: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) []LabeledMetric {
-		result := make([]LabeledMetric, 0, len(stat.Accelerators))
+	GetLabeledMetric: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) []LabeledValue {
+		result := make([]LabeledValue, 0, len(stat.Accelerators))
 		for _, ac := range stat.Accelerators {
-			result = append(result, LabeledMetric{
+			result = append(result, LabeledValue{
 				Name: "accelerator/memory_used",
 				Labels: map[string]string{
 					LabelAcceleratorMake.Key:  ac.Make,
 					LabelAcceleratorModel.Key: ac.Model,
 					LabelAcceleratorID.Key:    ac.ID,
 				},
-				MetricValue: MetricValue{
+				Value: Value{
 					ValueType: ValueInt64,
 					IntValue:  int64(ac.MemoryUsed),
 				},
@@ -1013,9 +1013,9 @@ var MetricAcceleratorDutyCycle = Metric{
 		Name:        "accelerator/duty_cycle",
 		Description: "Percent of time over the past sample period (10s) during which the accelerator was actively processing",
 		Labels:      acceleratorLabels,
-		Type:        MetricGauge,
+		Type:        Gauge,
 		ValueType:   ValueInt64,
-		Units:       UnitsCount,
+		Units:       Count,
 	},
 	HasLabeledMetric: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) bool {
 		if len(stat.Accelerators) == 0 {
@@ -1024,17 +1024,17 @@ var MetricAcceleratorDutyCycle = Metric{
 
 		return true
 	},
-	GetLabeledMetric: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) []LabeledMetric {
-		result := make([]LabeledMetric, 0, len(stat.Accelerators))
+	GetLabeledMetric: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) []LabeledValue {
+		result := make([]LabeledValue, 0, len(stat.Accelerators))
 		for _, ac := range stat.Accelerators {
-			result = append(result, LabeledMetric{
+			result = append(result, LabeledValue{
 				Name: "accelerator/duty_cycle",
 				Labels: map[string]string{
 					LabelAcceleratorMake.Key:  ac.Make,
 					LabelAcceleratorModel.Key: ac.Model,
 					LabelAcceleratorID.Key:    ac.ID,
 				},
-				MetricValue: MetricValue{
+				Value: Value{
 					ValueType: ValueInt64,
 					IntValue:  int64(ac.DutyCycle),
 				},
@@ -1048,16 +1048,16 @@ var MetricDiskIORead = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "disk/io_read_bytes",
 		Description: "Cumulative number of bytes read over disk",
-		Type:        MetricCumulative,
+		Type:        Cumulative,
 		ValueType:   ValueInt64,
-		Units:       UnitsBytes,
+		Units:       Bytes,
 		Labels:      metricLabels,
 	},
 	HasLabeledMetric: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) bool {
 		return spec.HasDiskIo
 	},
-	GetLabeledMetric: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) []LabeledMetric {
-		result := make([]LabeledMetric, 0, len(stat.DiskIo.IoServiceBytes))
+	GetLabeledMetric: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) []LabeledValue {
+		result := make([]LabeledValue, 0, len(stat.DiskIo.IoServiceBytes))
 		for _, ioServiceBytesPerPartition := range stat.DiskIo.IoServiceBytes {
 			resourceIDKey := ioServiceBytesPerPartition.Device
 			if resourceIDKey == "" {
@@ -1069,12 +1069,12 @@ var MetricDiskIORead = Metric{
 				value = v
 			}
 
-			result = append(result, LabeledMetric{
+			result = append(result, LabeledValue{
 				Name: "disk/io_read_bytes",
 				Labels: map[string]string{
 					LabelResourceID.Key: resourceIDKey,
 				},
-				MetricValue: MetricValue{
+				Value: Value{
 					ValueType: ValueInt64,
 					IntValue:  int64(value),
 				},
@@ -1088,16 +1088,16 @@ var MetricDiskIOWrite = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "disk/io_write_bytes",
 		Description: "Cumulative number of bytes write over disk",
-		Type:        MetricCumulative,
+		Type:        Cumulative,
 		ValueType:   ValueInt64,
-		Units:       UnitsBytes,
+		Units:       Bytes,
 		Labels:      metricLabels,
 	},
 	HasLabeledMetric: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) bool {
 		return spec.HasDiskIo
 	},
-	GetLabeledMetric: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) []LabeledMetric {
-		result := make([]LabeledMetric, 0, len(stat.DiskIo.IoServiceBytes))
+	GetLabeledMetric: func(spec *cadvisor.ContainerSpec, stat *cadvisor.ContainerStats) []LabeledValue {
+		result := make([]LabeledValue, 0, len(stat.DiskIo.IoServiceBytes))
 		for _, ioServiceBytesPerPartition := range stat.DiskIo.IoServiceBytes {
 			resourceIDKey := ioServiceBytesPerPartition.Device
 			if resourceIDKey == "" {
@@ -1109,12 +1109,12 @@ var MetricDiskIOWrite = Metric{
 				value = v
 			}
 
-			result = append(result, LabeledMetric{
+			result = append(result, LabeledValue{
 				Name: "disk/io_write_bytes",
 				Labels: map[string]string{
 					LabelResourceID.Key: resourceIDKey,
 				},
-				MetricValue: MetricValue{
+				Value: Value{
 					ValueType: ValueInt64,
 					IntValue:  int64(value),
 				},
@@ -1128,9 +1128,9 @@ var MetricDiskIOReadRate = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "disk/io_read_bytes_rate",
 		Description: "Rate of bytes read over disk in bytes per second",
-		Type:        MetricGauge,
+		Type:        Gauge,
 		ValueType:   ValueFloat,
-		Units:       UnitsCount,
+		Units:       Count,
 		Labels:      metricLabels,
 	},
 }
@@ -1139,9 +1139,9 @@ var MetricDiskIOWriteRate = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "disk/io_write_bytes_rate",
 		Description: "Rate of bytes written over disk in bytes per second",
-		Type:        MetricGauge,
+		Type:        Gauge,
 		ValueType:   ValueFloat,
-		Units:       UnitsCount,
+		Units:       Count,
 		Labels:      metricLabels,
 	},
 }
@@ -1166,9 +1166,9 @@ type MetricDescriptor struct {
 	Labels []LabelDescriptor `json:"labels,omitempty"`
 
 	// Type and value of metric data.
-	Type      MetricType `json:"type,omitempty"`
-	ValueType ValueType  `json:"value_type,omitempty"`
-	Units     UnitsType  `json:"units,omitempty"`
+	Type      Type      `json:"type,omitempty"`
+	ValueType ValueType `json:"value_type,omitempty"`
+	Units     Unit      `json:"units,omitempty"`
 }
 
 // Metric represents a resource usage stat metric.
@@ -1179,11 +1179,11 @@ type Metric struct {
 	HasValue func(*cadvisor.ContainerSpec) bool
 
 	// Returns a slice of internal point objects that contain metric values and associated labels.
-	GetValue func(*cadvisor.ContainerSpec, *cadvisor.ContainerStats) MetricValue
+	GetValue func(*cadvisor.ContainerSpec, *cadvisor.ContainerStats) Value
 
 	// Returns whether this metric is present.
 	HasLabeledMetric func(*cadvisor.ContainerSpec, *cadvisor.ContainerStats) bool
 
 	// Returns a slice of internal point objects that contain metric values and associated labels.
-	GetLabeledMetric func(*cadvisor.ContainerSpec, *cadvisor.ContainerStats) []LabeledMetric
+	GetLabeledMetric func(*cadvisor.ContainerSpec, *cadvisor.ContainerStats) []LabeledValue
 }

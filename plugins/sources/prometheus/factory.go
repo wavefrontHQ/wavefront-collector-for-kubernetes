@@ -15,11 +15,11 @@ func NewFactory() metrics.ProviderFactory {
 	return factory{}
 }
 
-func (p factory) Build(cfg interface{}) (metrics.MetricsSourceProvider, error) {
+func (p factory) Build(cfg interface{}) (metrics.SourceProvider, error) {
 	c := cfg.(configuration.PrometheusSourceConfig)
 	provider, err := NewPrometheusProvider(c)
 	if err == nil {
-		if i, ok := provider.(metrics.ConfigurableMetricsSourceProvider); ok {
+		if i, ok := provider.(metrics.ConfigurableSourceProvider); ok {
 			i.Configure(c.Collection.Interval, c.Collection.Timeout)
 		}
 	}

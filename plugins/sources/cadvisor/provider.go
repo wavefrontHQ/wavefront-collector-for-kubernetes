@@ -14,7 +14,7 @@ import (
 )
 
 type cadvisorSourceProvider struct {
-	metrics.DefaultMetricsSourceProvider
+	metrics.DefaultSourceProvider
 	config        configuration.CadvisorSourceConfig
 	kubeClient    *kubernetes.Clientset
 	kubeConfig    *rest.Config
@@ -24,7 +24,7 @@ type cadvisorSourceProvider struct {
 func NewProvider(
 	config configuration.CadvisorSourceConfig,
 	summaryConfig configuration.SummarySourceConfig,
-) (metrics.MetricsSourceProvider, error) {
+) (metrics.SourceProvider, error) {
 	kubeConfig, kubeletConfig, err := kubelet.GetKubeConfigs(summaryConfig)
 	if err != nil {
 		return nil, err
@@ -41,13 +41,13 @@ func NewProvider(
 	}, nil
 }
 
-func (c *cadvisorSourceProvider) GetMetricsSources() []metrics.MetricsSource {
+func (c *cadvisorSourceProvider) GetMetricsSources() []metrics.Source {
 	promURLs, err := GenerateURLs(c.kubeClient.CoreV1().Nodes(), util.GetNodeName(), util.IsDaemonMode(), c.kubeletConfig.BaseURL)
 	if err != nil {
 		log.Errorf("error getting sources for cAdvisor: %s", err.Error())
 		return nil
 	}
-	var sources []metrics.MetricsSource
+	var sources []metrics.Source
 	for _, promURL := range promURLs {
 		promSource, err := generatePrometheusSource(c.config, promURL.String(), c.kubeConfig)
 		if err != nil {
@@ -63,7 +63,7 @@ func (c *cadvisorSourceProvider) Name() string {
 	return "cadvisor_metrics_provider"
 }
 
-func generatePrometheusSource(cfg configuration.CadvisorSourceConfig, promURL string, restConfig *rest.Config) (metrics.MetricsSource, error) {
+func generatePrometheusSource(cfg configuration.CadvisorSourceConfig, promURL string, restConfig *rest.Config) (metrics.Source, error) {
 	prom, err := prometheus.NewPrometheusMetricsSource(
 		promURL,
 		cfg.Prefix,

@@ -48,7 +48,7 @@ func init() {
 
 type sinkHolder struct {
 	sink              wavefront.WavefrontSink
-	dataBatchChannel  chan *metrics.DataBatch
+	dataBatchChannel  chan *metrics.Batch
 	eventBatchChannel chan *events.Event
 	stopChannel       chan bool
 }
@@ -67,7 +67,7 @@ func NewSinkManager(sinks []wavefront.WavefrontSink, exportDataTimeout, stopTime
 	for _, sink := range sinks {
 		sh := sinkHolder{
 			sink:              sink,
-			dataBatchChannel:  make(chan *metrics.DataBatch),
+			dataBatchChannel:  make(chan *metrics.Batch),
 			eventBatchChannel: make(chan *events.Event),
 			stopChannel:       make(chan bool),
 		}
@@ -76,7 +76,7 @@ func NewSinkManager(sinks []wavefront.WavefrontSink, exportDataTimeout, stopTime
 			for {
 				select {
 				case data := <-sh.dataBatchChannel:
-					sh.sink.ExportData(data)
+					sh.sink.Export(data)
 				case event := <-sh.eventBatchChannel:
 					sh.sink.ExportEvent(event)
 				case isStop := <-sh.stopChannel:
@@ -97,7 +97,7 @@ func NewSinkManager(sinks []wavefront.WavefrontSink, exportDataTimeout, stopTime
 }
 
 // Guarantees that the export will complete in sinkExportDataTimeout.
-func (sm *sinkManager) ExportData(data *metrics.DataBatch) {
+func (sm *sinkManager) Export(data *metrics.Batch) {
 	var wg sync.WaitGroup
 	for _, sh := range sm.sinkHolders {
 		wg.Add(1)

@@ -302,14 +302,14 @@ func createKubeClientOrDie(cfg configuration.SummarySourceConfig) *kube_client.C
 	return kube_client.NewForConfigOrDie(kubeConfig)
 }
 
-func createDataProcessorsOrDie(kubeClient *kube_client.Clientset, cluster string, podLister v1listers.PodLister, cfg *configuration.Config) []metrics.DataProcessor {
+func createDataProcessorsOrDie(kubeClient *kube_client.Clientset, cluster string, podLister v1listers.PodLister, cfg *configuration.Config) []metrics.Processor {
 
 	labelCopier, err := util.NewLabelCopier(",", []string{}, []string{})
 	if err != nil {
 		log.Fatalf("Failed to initialize label copier: %v", err)
 	}
 
-	dataProcessors := []metrics.DataProcessor{
+	dataProcessors := []metrics.Processor{
 		// Convert cumulative to rate
 		processors.NewRateCalculator(metrics.RateMetricsMapping),
 	}

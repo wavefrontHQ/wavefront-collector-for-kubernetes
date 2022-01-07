@@ -27,16 +27,16 @@ import (
 )
 
 func TestNodeAggregate(t *testing.T) {
-	batch := metrics.DataBatch{
+	batch := metrics.Batch{
 		Timestamp: time.Now(),
-		MetricSets: map[string]*metrics.MetricSet{
+		Sets: map[metrics.ResourceKey]*metrics.Set{
 			metrics.PodKey("ns1", "pod1"): {
 				Labels: map[string]string{
 					metrics.LabelMetricSetType.Key: metrics.MetricSetTypePod,
 					metrics.LabelNamespaceName.Key: "ns1",
 					metrics.LabelNodename.Key:      "h1",
 				},
-				MetricValues: map[string]metrics.MetricValue{
+				Values: map[string]metrics.Value{
 					"m1": {
 						ValueType: metrics.ValueInt64,
 						IntValue:  10,
@@ -54,7 +54,7 @@ func TestNodeAggregate(t *testing.T) {
 					metrics.LabelNamespaceName.Key: "ns1",
 					metrics.LabelNodename.Key:      "h1",
 				},
-				MetricValues: map[string]metrics.MetricValue{
+				Values: map[string]metrics.Value{
 					"m1": {
 						ValueType: metrics.ValueInt64,
 						IntValue:  100,
@@ -71,7 +71,7 @@ func TestNodeAggregate(t *testing.T) {
 					metrics.LabelMetricSetType.Key: metrics.MetricSetTypeNode,
 					metrics.LabelNodename.Key:      "h1",
 				},
-				MetricValues: map[string]metrics.MetricValue{},
+				Values: map[string]metrics.Value{},
 			},
 		},
 	}
@@ -80,14 +80,14 @@ func TestNodeAggregate(t *testing.T) {
 	}
 	result, err := processor.Process(&batch)
 	assert.NoError(t, err)
-	node, found := result.MetricSets[metrics.NodeKey("h1")]
+	node, found := result.Sets[metrics.NodeKey("h1")]
 	assert.True(t, found)
 
-	m1, found := node.MetricValues["m1"]
+	m1, found := node.Values["m1"]
 	assert.True(t, found)
 	assert.Equal(t, int64(110), m1.IntValue)
 
-	m3, found := node.MetricValues["m3"]
+	m3, found := node.Values["m3"]
 	assert.True(t, found)
 	assert.Equal(t, int64(30), m3.IntValue)
 }

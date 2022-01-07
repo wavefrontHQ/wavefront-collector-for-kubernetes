@@ -40,16 +40,16 @@ func (pbe *PodBasedEnricher) Name() string {
 	return "pod_based_enricher"
 }
 
-func (pbe *PodBasedEnricher) Process(batch *metrics.DataBatch) (*metrics.DataBatch, error) {
-	newMs := make(map[string]*metrics.MetricSet, len(batch.MetricSets))
-	for k, v := range batch.MetricSets {
+func (pbe *PodBasedEnricher) Process(batch *metrics.Batch) (*metrics.Batch, error) {
+	newMs := make(map[metrics.ResourceKey]*metrics.Set, len(batch.Sets))
+	for k, v := range batch.Sets {
 		switch v.Labels[metrics.LabelMetricSetType.Key] {
 		case metrics.MetricSetTypePod:
 			namespace := v.Labels[metrics.LabelNamespaceName.Key]
 			podName := v.Labels[metrics.LabelPodName.Key]
 			pod, err := pbe.getPod(namespace, podName)
 			if err != nil {
-				delete(batch.MetricSets, k)
+				delete(batch.Sets, k)
 				log.Debugf("Failed to get pod %s from cache: %v", metrics.PodKey(namespace, podName), err)
 				continue
 			}
@@ -59,7 +59,7 @@ func (pbe *PodBasedEnricher) Process(batch *metrics.DataBatch) (*metrics.DataBat
 			podName := v.Labels[metrics.LabelPodName.Key]
 			pod, err := pbe.getPod(namespace, podName)
 			if err != nil {
-				delete(batch.MetricSets, k)
+				delete(batch.Sets, k)
 				log.Debugf("Failed to get pod %s from cache: %v", metrics.PodKey(namespace, podName), err)
 				continue
 			}
@@ -67,7 +67,7 @@ func (pbe *PodBasedEnricher) Process(batch *metrics.DataBatch) (*metrics.DataBat
 		}
 	}
 	for k, v := range newMs {
-		batch.MetricSets[k] = v
+		batch.Sets[k] = v
 	}
 	return batch, nil
 }
@@ -83,7 +83,7 @@ func (pbe *PodBasedEnricher) getPod(namespace, name string) (*kube_api.Pod, erro
 	return pod, nil
 }
 
-func (pbe *PodBasedEnricher) addContainerInfo(key string, containerMs *metrics.MetricSet, pod *kube_api.Pod, batch *metrics.DataBatch, newMs map[string]*metrics.MetricSet) {
+func (pbe *PodBasedEnricher) addContainerInfo(key metrics.ResourceKey, containerMs *metrics.Set, pod *kube_api.Pod, batch *metrics.Batch, newMs map[metrics.ResourceKey]*metrics.Set) {
 	for _, container := range pod.Spec.Containers {
 		if key == metrics.PodContainerKey(pod.Namespace, pod.Name, container.Name) {
 			updateContainerResourcesAndLimits(containerMs, container)
@@ -96,7 +96,7 @@ func (pbe *PodBasedEnricher) addContainerInfo(key string, containerMs *metrics.M
 
 	for _, containerStatus := range pod.Status.ContainerStatuses {
 		if key == metrics.PodContainerKey(pod.Namespace, pod.Name, containerStatus.Name) {
-			containerMs.MetricValues[metrics.MetricRestartCount.Name] = intValue(int64(containerStatus.RestartCount))
+			containerMs.Values[metrics.MetricRestartCount.Name] = intValue(int64(containerStatus.RestartCount))
 			if !pod.Status.StartTime.IsZero() {
 				containerMs.EntityCreateTime = pod.Status.StartTime.Time
 			}
@@ -112,13 +112,13 @@ func (pbe *PodBasedEnricher) addContainerInfo(key string, containerMs *metrics.M
 	podName := containerMs.Labels[metrics.LabelPodName.Key]
 
 	podKey := metrics.PodKey(namespace, podName)
-	_, oldfound := batch.MetricSets[podKey]
+	_, oldfound := batch.Sets[podKey]
 	if !oldfound {
 		_, newfound := newMs[podKey]
 		if !newfound {
 			log.Debugf("Pod %s not found, creating a stub", podKey)
-			podMs := &metrics.MetricSet{
-				MetricValues: make(map[string]metrics.MetricValue),
+			podMs := &metrics.Set{
+				Values: make(map[string]metrics.Value),
 				Labels: map[string]string{
 					metrics.LabelMetricSetType.Key: metrics.MetricSetTypePod,
 					metrics.LabelNamespaceName.Key: namespace,
@@ -137,7 +137,7 @@ func (pbe *PodBasedEnricher) addContainerInfo(key string, containerMs *metrics.M
 	}
 }
 
-func (pbe *PodBasedEnricher) addPodInfo(podMs *metrics.MetricSet, pod *kube_api.Pod, batch *metrics.DataBatch, newMs map[string]*metrics.MetricSet) {
+func (pbe *PodBasedEnricher) addPodInfo(podMs *metrics.Set, pod *kube_api.Pod, batch *metrics.Batch, newMs map[metrics.ResourceKey]*metrics.Set) {
 	// Add UID and create time to pod
 	podMs.Labels[metrics.LabelPodId.Key] = string(pod.UID)
 	if !pod.Status.StartTime.IsZero() {
@@ -151,15 +151,15 @@ func (pbe *PodBasedEnricher) addPodInfo(podMs *metrics.MetricSet, pod *kube_api.
 	// Add cpu/mem requests and limits to containers
 	for _, container := range pod.Spec.Containers {
 		containerKey := metrics.PodContainerKey(pod.Namespace, pod.Name, container.Name)
-		if _, found := batch.MetricSets[containerKey]; found {
+		if _, found := batch.Sets[containerKey]; found {
 			continue
 		}
 		if _, found := newMs[containerKey]; found {
 			continue
 		}
 		log.Debugf("Container %s not found, creating a stub", containerKey)
-		containerMs := &metrics.MetricSet{
-			MetricValues: make(map[string]metrics.MetricValue),
+		containerMs := &metrics.Set{
+			Values: make(map[string]metrics.Value),
 			Labels: map[string]string{
 				metrics.LabelMetricSetType.Key:      metrics.MetricSetTypePodContainer,
 				metrics.LabelNamespaceName.Key:      pod.Namespace,
@@ -180,7 +180,7 @@ func (pbe *PodBasedEnricher) addPodInfo(podMs *metrics.MetricSet, pod *kube_api.
 	pbe.updateContainerStatus(newMs, pod, pod.Status.ContainerStatuses, batch.Timestamp)
 }
 
-func updateContainerResourcesAndLimits(metricSet *metrics.MetricSet, container kube_api.Container) {
+func updateContainerResourcesAndLimits(metricSet *metrics.Set, container kube_api.Container) {
 	requests := container.Resources.Requests
 
 	for key, val := range container.Resources.Requests {
@@ -194,51 +194,51 @@ func updateContainerResourcesAndLimits(metricSet *metrics.MetricSet, container k
 				MetricDescriptor: metrics.MetricDescriptor{
 					Name:        string(key) + "/request",
 					Description: string(key) + " resource request. This metric is Kubernetes specific.",
-					Type:        metrics.MetricGauge,
+					Type:        metrics.Gauge,
 					ValueType:   metrics.ValueInt64,
-					Units:       metrics.UnitsCount,
+					Units:       metrics.Count,
 				},
 			}
 			metrics.ResourceRequestMetrics[key] = metric
 		}
 		if key == kube_api.ResourceCPU {
-			metricSet.MetricValues[metric.Name] = intValue(val.MilliValue())
+			metricSet.Values[metric.Name] = intValue(val.MilliValue())
 		} else {
-			metricSet.MetricValues[metric.Name] = intValue(val.Value())
+			metricSet.Values[metric.Name] = intValue(val.Value())
 		}
 	}
 
 	// For primary resources like cpu and memory, explicitly sets their request resource
 	// metric to zero if they are not requested.
 	if _, found := requests[kube_api.ResourceCPU]; !found {
-		metricSet.MetricValues[metrics.MetricCpuRequest.Name] = intValue(0)
+		metricSet.Values[metrics.MetricCpuRequest.Name] = intValue(0)
 	}
 	if _, found := requests[kube_api.ResourceMemory]; !found {
-		metricSet.MetricValues[metrics.MetricMemoryRequest.Name] = intValue(0)
+		metricSet.Values[metrics.MetricMemoryRequest.Name] = intValue(0)
 	}
 	if _, found := requests[kube_api.ResourceEphemeralStorage]; !found {
-		metricSet.MetricValues[metrics.MetricEphemeralStorageRequest.Name] = intValue(0)
+		metricSet.Values[metrics.MetricEphemeralStorageRequest.Name] = intValue(0)
 	}
 
 	limits := container.Resources.Limits
 	if val, found := limits[kube_api.ResourceCPU]; found {
-		metricSet.MetricValues[metrics.MetricCpuLimit.Name] = intValue(val.MilliValue())
+		metricSet.Values[metrics.MetricCpuLimit.Name] = intValue(val.MilliValue())
 	} else {
-		metricSet.MetricValues[metrics.MetricCpuLimit.Name] = intValue(0)
+		metricSet.Values[metrics.MetricCpuLimit.Name] = intValue(0)
 	}
 	if val, found := limits[kube_api.ResourceMemory]; found {
-		metricSet.MetricValues[metrics.MetricMemoryLimit.Name] = intValue(val.Value())
+		metricSet.Values[metrics.MetricMemoryLimit.Name] = intValue(val.Value())
 	} else {
-		metricSet.MetricValues[metrics.MetricMemoryLimit.Name] = intValue(0)
+		metricSet.Values[metrics.MetricMemoryLimit.Name] = intValue(0)
 	}
 	if val, found := limits[kube_api.ResourceEphemeralStorage]; found {
-		metricSet.MetricValues[metrics.MetricEphemeralStorageLimit.Name] = intValue(val.Value())
+		metricSet.Values[metrics.MetricEphemeralStorageLimit.Name] = intValue(val.Value())
 	} else {
-		metricSet.MetricValues[metrics.MetricEphemeralStorageLimit.Name] = intValue(0)
+		metricSet.Values[metrics.MetricEphemeralStorageLimit.Name] = intValue(0)
 	}
 }
 
-func (pbe *PodBasedEnricher) addContainerStatus(collectionTime time.Time, containerMs *metrics.MetricSet, metric *metrics.Metric, status kube_api.ContainerStatus) {
+func (pbe *PodBasedEnricher) addContainerStatus(collectionTime time.Time, containerMs *metrics.Set, metric *metrics.Metric, status kube_api.ContainerStatus) {
 	labels := make(map[string]string, 2)
 
 	stateInt, state, reason, exitCode := pbe.findContainerState(collectionTime, status)
@@ -267,7 +267,7 @@ func (pbe *PodBasedEnricher) findContainerState(collectionTime time.Time, status
 	return convertContainerState(status.LastTerminationState)
 }
 
-func (pbe *PodBasedEnricher) updateContainerStatus(metricSets map[string]*metrics.MetricSet, pod *kube_api.Pod, statuses []kube_api.ContainerStatus, collectionTime time.Time) {
+func (pbe *PodBasedEnricher) updateContainerStatus(metricSets map[metrics.ResourceKey]*metrics.Set, pod *kube_api.Pod, statuses []kube_api.ContainerStatus, collectionTime time.Time) {
 	if len(statuses) == 0 {
 		return
 	}
@@ -313,20 +313,20 @@ func convertContainerState(state kube_api.ContainerState) (int64, string, string
 }
 
 // addLabeledIntMetric is a convenience method for adding the labeled metric and value to the metric set.
-func addLabeledIntMetric(ms *metrics.MetricSet, metric *metrics.Metric, labels map[string]string, value int64) {
-	val := metrics.LabeledMetric{
+func addLabeledIntMetric(ms *metrics.Set, metric *metrics.Metric, labels map[string]string, value int64) {
+	val := metrics.LabeledValue{
 		Name:   metric.Name,
 		Labels: labels,
-		MetricValue: metrics.MetricValue{
+		Value: metrics.Value{
 			ValueType: metrics.ValueInt64,
 			IntValue:  value,
 		},
 	}
-	ms.LabeledMetrics = append(ms.LabeledMetrics, val)
+	ms.LabeledValues = append(ms.LabeledValues, val)
 }
 
-func intValue(value int64) metrics.MetricValue {
-	return metrics.MetricValue{
+func intValue(value int64) metrics.Value {
+	return metrics.Value{
 		IntValue:  value,
 		ValueType: metrics.ValueInt64,
 	}
