@@ -10,7 +10,7 @@ data:
     enableDiscovery: true
     flushInterval: 30s
     
-    # Metric collection interval interval for wavefront collector, set to "60s" by default
+    # Metric collection interval for wavefront collector, set to "60s" by default
     # defaultCollectionInterval: 120s
 
     # sample configuration to filter events
