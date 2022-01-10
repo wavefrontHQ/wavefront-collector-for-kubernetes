@@ -19,7 +19,7 @@ spec:
       serviceAccountName: wavefront-collector
       containers:
       - name: wavefront-proxy
-        image: wavefronthq/proxy:10.13
+        image: wavefronthq/proxy:10.12
         imagePullPolicy: Always
         env:
         - name: WAVEFRONT_URL

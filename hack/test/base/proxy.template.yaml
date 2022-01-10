@@ -28,7 +28,7 @@ spec:
                       - amd64
       containers:
       - name: wavefront-proxy
-        image: projects.registry.vmware.com/tanzu_observability/proxy:10.13
+        image: projects.registry.vmware.com/tanzu_observability/proxy:10.12
         imagePullPolicy: IfNotPresent
         env:
           - name: WAVEFRONT_URL
