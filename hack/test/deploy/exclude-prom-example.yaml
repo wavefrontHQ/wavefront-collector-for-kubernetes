@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    k8s-app: exclude-prom-example
+    name: exclude-prom-example
+    please-exclude-from-discovery: "true"
+  annotations:
+    prometheus.io/scrape: 'true'
+    prometheus.io/scheme: 'http'
+    prometheus.io/port: '8443'
+    prometheus.io/prefix: 'prom-example.'
+  name: exclude-prom-example
+  namespace: collector-targets
+spec:
+  containers:
+  - name: exclude-prom-example
+    image: projects.registry.vmware.com/tanzu_observability_keights_saas/prometheus-example-app:latest
+    imagePullPolicy: Always
+    command:
+    - /bin/prometheus-example-app
+    - --num=10
+    ports:
+    - containerPort: 8443
+      protocol: TCP

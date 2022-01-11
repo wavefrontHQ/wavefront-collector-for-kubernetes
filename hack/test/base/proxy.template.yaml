@@ -29,7 +29,7 @@ spec:
       containers:
       - name: wavefront-proxy
         image: projects.registry.vmware.com/tanzu_observability/proxy:10.13
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         env:
           - name: WAVEFRONT_URL
             value: https://YOUR_CLUSTER.wavefront.com/api/

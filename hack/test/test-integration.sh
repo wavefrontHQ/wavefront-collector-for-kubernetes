@@ -54,18 +54,25 @@ if [[ $RES_CODE -gt 399 ]] ; then
   exit 1
 fi
 
-DIFF_COUNT=$(jq "(.Missing | length)" "$RES")
+DIFF_COUNT=$(jq "(.Missing | length) + (.Unwanted | length)" "$RES")
 EXIT_CODE=0
 
 jq -c '.Missing[]' "$RES" | sort > missing.jsonl
 jq -c '.Extra[]' "$RES" | sort > extra.jsonl
+jq -c '.Unwanted[]' "$RES" | sort > unwanted.jsonl
 
+echo "$RES"
 if [[ $DIFF_COUNT -gt 0 ]] ; then
-  red "MISSING: $(jq "(.Missing | length)" "$RES")"
-  cat missing.jsonl
+  red "Missing: $(jq "(.Missing | length)" "$RES")"
+  if [[ $(jq "(.Missing | length)" "$RES") -le 10 ]]; then
+    cat missing.jsonl
+  fi
+  red "Unwanted: $(jq "(.Unwanted | length)" "$RES")"
+  if [[ $(jq "(.Unwanted | length)" "$RES") -le 10 ]]; then
+    cat unwanted.jsonl
+  fi
   red "Extra: $(jq "(.Extra | length)" "$RES")"
-  red "FAILED: METRICS OUTPUT DID NOT MATCH EXACTLY"
-  echo "$RES"
+  red "FAILED: METRICS OUTPUT DID NOT MATCH"
   if which pbcopy > /dev/null; then
     echo "$RES" | pbcopy
   fi

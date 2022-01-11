@@ -19,6 +19,9 @@ type Config struct {
 	// if specified, this substitutes the default prefix such as "prometheus.io" etc that is used during discovery
 	AnnotationPrefix string `yaml:"annotation_prefix"`
 
+	// AnnotationExcludes represents Selector rules for excluding kubernetes resources from annotation based discovery
+	AnnotationExcludes []Selectors `yaml:"annotation_excludes"`
+
 	// enables support for sourcing plugin configurations dynamically from configmaps
 	// with the annotation "wavefront.com/discovery-config: 'true'". Defaults to false.
 	EnableRuntimePlugins bool `yaml:"enable_runtime_plugins"`

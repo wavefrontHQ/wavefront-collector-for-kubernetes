@@ -2,5 +2,6 @@ overlays/**/proxy.yaml
 base/**/proxy.yaml
 extra.jsonl
 missing.jsonl
+unwanted.jsonl
 base/collector.yaml
 files/combined-metrics.jsonl
