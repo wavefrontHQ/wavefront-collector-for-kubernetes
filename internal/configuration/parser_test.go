@@ -75,6 +75,10 @@ sources:
     - plugins: [mem]
 
 discovery:
+  annotation_excludes:
+  - images:
+    - 'not-redis:*'
+    - '*not-redis*'
   plugins:
   - type: telegraf/redis
     name: "redis"
@@ -109,4 +113,6 @@ func TestFromYAML(t *testing.T) {
 	assert.Equal(t, "kubernetes.", cfg.Sources.SummaryConfig.Prefix)
 	assert.Equal(t, "kube.apiserver.", cfg.Sources.PrometheusConfigs[0].Prefix)
 	assert.Equal(t, "kubernetes.cadvisor.", cfg.Sources.CadvisorConfig.Prefix)
+
+	assert.Equal(t, cfg.DiscoveryConfig.AnnotationExcludes[0].Images, []string{"not-redis:*", "*not-redis*"})
 }

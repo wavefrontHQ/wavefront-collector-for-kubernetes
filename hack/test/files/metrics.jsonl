@@ -4018,6 +4018,7 @@
 {"Name":"prom-example.workflow.cleanup.delete.counter","Value":"3","Tags":{"cluster":"","label.k8s-app":"prom-example","label.name":"prom-example","namespace":"","operation":"ProcessDeleteHistoryEvent","pod":"prom-example","source":"","type":"history"}}
 {"Name":"prom-example.workflow.context.cleared.counter","Value":"3","Tags":{"cluster":"","label.k8s-app":"prom-example","label.name":"prom-example","namespace":"","operation":"WorkflowContext","pod":"prom-example","source":"","type":"history"}}
 {"Name":"prom-example.workflow.cron.backoff.timer.counter","Value":"3","Tags":{"cluster":"","label.k8s-app":"prom-example","label.name":"prom-example","namespace":"","operation":"TimerActiveTaskWorkflowBackoffTimer","pod":"prom-example","source":"","type":"history"}}
+~{"Name":"prom-example.ack.level.update.counter","Value":"1599186","Tags":{"cluster":"","label.name":"exclude-prom-example","namespace":"collector-targets","operation":"TransferActiveQueueProcessor","pod":"exclude-prom-example","source":"","type":"history"}}
 {"Name":"swap.free","Tags":{"cluster":"","source":""}}
 {"Name":"swap.in","Tags":{"cluster":"","source":""}}
 {"Name":"swap.out","Tags":{"cluster":"","source":""}}

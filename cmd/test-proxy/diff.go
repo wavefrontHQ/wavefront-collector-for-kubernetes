@@ -7,18 +7,26 @@ import (
 )
 
 type Diff struct {
-	Missing []*Metric
-	Extra   []*Metric
+	Missing  []*Metric
+	Extra    []*Metric
+	Unwanted []*Metric
 }
 
-func DiffMetrics(expected, actual []*Metric) *Diff {
-	keyers := metricKeyers(expected)
-	expectedKeyMap := metricKeyMap(expected, keyers)
-	actualKeyMap := metricKeyMap(actual, keyers)
+func DiffMetrics(expected, excluded, actual []*Metric) *Diff {
+	expectedKeyers := metricKeyers(expected)
+	expectedKeyMap := metricKeyMap(expected, expectedKeyers)
+	actualKeyMap := metricKeyMap(actual, expectedKeyers)
 	missing, extra := disjunct(expectedKeyMap, actualKeyMap)
+
+	excludedKeyers := metricKeyers(excluded)
+	excludedKeyMap := metricKeyMap(excluded, excludedKeyers)
+	actualExcludedKeyMap := metricKeyMap(actual, excludedKeyers)
+	unwanted := intersect(excludedKeyMap, actualExcludedKeyMap)
+
 	return &Diff{
-		Missing: missing,
-		Extra:   extra,
+		Missing:  missing,
+		Extra:    extra,
+		Unwanted: unwanted,
 	}
 }
 
@@ -143,4 +151,14 @@ func disjunct(a, b map[string]*Metric) (onlyInA []*Metric, onlyInB []*Metric) {
 		}
 	}
 	return onlyInA, onlyInB
+}
+
+func intersect(a, b map[string]*Metric) (common []*Metric) {
+	common = []*Metric{}
+	for x := range a {
+		if v, exists := b[x]; exists {
+			common = append(common, v)
+		}
+	}
+	return common
 }

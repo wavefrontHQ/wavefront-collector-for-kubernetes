@@ -5,7 +5,6 @@ package discovery
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
@@ -20,28 +19,21 @@ type resourceFilter struct {
 	labels     map[string]glob.Glob
 }
 
-func newResourceFilter(conf discovery.PluginConfig) (*resourceFilter, error) {
+func newResourceFilter(selectors discovery.Selectors) (*resourceFilter, error) {
 	rf := &resourceFilter{
-		images:     filter.Compile(conf.Selectors.Images),
-		labels:     filter.MultiCompile(conf.Selectors.Labels),
-		namespaces: filter.Compile(conf.Selectors.Namespaces),
+		images:     filter.Compile(selectors.Images),
+		labels:     filter.MultiCompile(selectors.Labels),
+		namespaces: filter.Compile(selectors.Namespaces),
 	}
 
-	kind, err := resourceType(conf.Selectors.ResourceType)
+	kind, err := resourceType(selectors.ResourceType)
 	if err != nil {
 		return nil, err
 	}
-	rf.kind = kind
 
+	rf.kind = kind
 	if rf.kind != discovery.NodeType.String() && rf.images == nil && rf.labels == nil && rf.namespaces == nil {
 		return nil, fmt.Errorf("no selectors specified")
-	}
-
-	if conf.Port != "" {
-		_, err := strconv.ParseInt(conf.Port, 10, 32)
-		if err != nil {
-			return nil, err
-		}
 	}
 	return rf, nil
 }
@@ -59,6 +51,9 @@ func resourceType(kind string) (string, error) {
 }
 
 func (r *resourceFilter) matches(resource discovery.Resource) bool {
+	if r == nil {
+		return false
+	}
 	if r.kind != resource.Kind {
 		return false
 	}

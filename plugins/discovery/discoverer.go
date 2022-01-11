@@ -6,6 +6,7 @@ package discovery
 import (
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -45,6 +46,7 @@ type discoverer struct {
 func newDiscoverer(handler metrics.ProviderHandler, discoveryCfg discovery.Config, lister discovery.ResourceLister) discovery.Discoverer {
 	ec := endpointCreator{
 		delegates:                  makeDelegates(discoveryCfg),
+		annotationExcludes:         makeAnnotationExclusions(discoveryCfg.AnnotationExcludes),
 		providers:                  makeProviders(handler, discoveryCfg),
 		disableAnnotationDiscovery: discoveryCfg.DisableAnnotationDiscovery,
 	}
@@ -84,9 +86,15 @@ func makeDelegates(discoveryCfg discovery.Config) map[string]*delegate {
 }
 
 func makeDelegate(plugin discovery.PluginConfig) (*delegate, error) {
-	filter, err := newResourceFilter(plugin)
+	filter, err := newResourceFilter(plugin.Selectors)
 	if err != nil {
 		return nil, err
+	}
+	if plugin.Port != "" {
+		_, err := strconv.ParseInt(plugin.Port, 10, 32)
+		if err != nil {
+			return nil, err
+		}
 	}
 	if !(strings.Contains(plugin.Type, "prometheus") || strings.Contains(plugin.Type, "telegraf")) {
 		return nil, fmt.Errorf("invalid plugin type: %s", plugin.Type)
@@ -95,6 +103,19 @@ func makeDelegate(plugin discovery.PluginConfig) (*delegate, error) {
 		filter: filter,
 		plugin: plugin,
 	}, nil
+}
+
+func makeAnnotationExclusions(selectors []discovery.Selectors) []*resourceFilter {
+	var filters []*resourceFilter
+	for _, selector := range selectors {
+		filter, err := newResourceFilter(selector)
+		if err != nil {
+			log.Errorf("invalid annotation exclusion: %s", err.Error())
+			continue
+		}
+		filters = append(filters, filter)
+	}
+	return filters
 }
 
 func (d *discoverer) enqueue(resource discovery.Resource) {
