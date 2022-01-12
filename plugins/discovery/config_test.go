@@ -76,9 +76,9 @@ func TestLoad(t *testing.T) {
 
 func TestCombine(t *testing.T) {
 	cfg := &discovery.Config{
-		DiscoveryInterval: time.Duration(10 * time.Minute),
-		AnnotationPrefix:  "wavefront.com",
-		PluginConfigs:     makePlugins(3, "main"),
+		DiscoveryInterval:          time.Duration(10 * time.Minute),
+		AnnotationPrefix:           "wavefront.com",
+		PluginConfigs:              makePlugins(3, "main"),
 		DisableAnnotationDiscovery: true,
 	}
 
