@@ -234,10 +234,11 @@ func load(data map[string]string) (discovery.Config, error) {
 
 func combine(cfg discovery.Config, cfgs map[string]discovery.Config) discovery.Config {
 	runCfg := &discovery.Config{
-		DiscoveryInterval:  cfg.DiscoveryInterval,
-		AnnotationPrefix:   cfg.AnnotationPrefix,
-		AnnotationExcludes: cfg.AnnotationExcludes,
-		PluginConfigs:      cfg.PluginConfigs,
+		DiscoveryInterval:          cfg.DiscoveryInterval,
+		AnnotationPrefix:           cfg.AnnotationPrefix,
+		AnnotationExcludes:         cfg.AnnotationExcludes,
+		PluginConfigs:              cfg.PluginConfigs,
+		DisableAnnotationDiscovery: cfg.DisableAnnotationDiscovery,
 	}
 
 	// build a sorted slice of map keys for consistent iteration order

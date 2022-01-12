@@ -76,17 +76,20 @@ func TestLoad(t *testing.T) {
 
 func TestCombine(t *testing.T) {
 	cfg := &discovery.Config{
-		DiscoveryInterval: time.Duration(10 * time.Minute),
-		AnnotationPrefix:  "wavefront.com",
-		PluginConfigs:     makePlugins(3, "main"),
+		DiscoveryInterval:          time.Duration(10 * time.Minute),
+		AnnotationPrefix:           "wavefront.com",
+		PluginConfigs:              makePlugins(3, "main"),
+		DisableAnnotationDiscovery: true,
 	}
 
 	plugins := map[string]discovery.Config{
 		"memcached": {PluginConfigs: makePlugins(3, "memcached")},
 		"redis":     {PluginConfigs: makePlugins(2, "redis")},
 	}
+
 	result := combine(*cfg, plugins)
 	assert.Equal(t, 8, len(result.PluginConfigs))
+	assert.True(t, result.DisableAnnotationDiscovery)
 
 	result = combine(*cfg, nil)
 	assert.Equal(t, 3, len(result.PluginConfigs))
