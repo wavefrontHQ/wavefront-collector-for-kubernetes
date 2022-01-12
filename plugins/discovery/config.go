@@ -237,6 +237,7 @@ func combine(cfg discovery.Config, cfgs map[string]discovery.Config) discovery.C
 		DiscoveryInterval: cfg.DiscoveryInterval,
 		AnnotationPrefix:  cfg.AnnotationPrefix,
 		PluginConfigs:     cfg.PluginConfigs,
+		DisableAnnotationDiscovery: cfg.DisableAnnotationDiscovery,
 	}
 
 	// build a sorted slice of map keys for consistent iteration order
