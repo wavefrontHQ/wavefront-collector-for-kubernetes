@@ -4,7 +4,7 @@
 package discovery
 
 import (
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
 )
 
@@ -12,6 +12,7 @@ type endpointCreator struct {
 	delegates                  map[string]*delegate
 	providers                  map[string]discovery.ProviderInfo
 	disableAnnotationDiscovery bool
+	annotationExcludes         []*resourceFilter
 }
 
 func (e *endpointCreator) discoverEndpointsWithRules(resource discovery.Resource) []*discovery.Endpoint {
@@ -27,8 +28,12 @@ func (e *endpointCreator) discoverEndpointsWithRules(resource discovery.Resource
 }
 
 func (e *endpointCreator) discoverEndpointsWithAnnotations(resource discovery.Resource) []*discovery.Endpoint {
+	for _, exclude := range e.annotationExcludes {
+		if exclude.matches(resource) {
+			return nil
+		}
+	}
 	var eps []*discovery.Endpoint
-	// delegate to runtime handlers if no matching delegate
 	if ep := e.makeEndpoint(resource, discovery.PluginConfig{Type: "prometheus"}); ep != nil {
 		eps = append(eps, ep)
 	}
@@ -60,8 +65,8 @@ func (e *endpointCreator) Encode(resource discovery.Resource, rule discovery.Plu
 	ip := resource.IP
 	meta := resource.Meta
 
-	if logrus.IsLevelEnabled(logrus.DebugLevel) {
-		logrus.WithFields(logrus.Fields{
+	if log.IsLevelEnabled(log.DebugLevel) {
+		log.WithFields(log.Fields{
 			"kind":      kind,
 			"name":      meta.Name,
 			"namespace": meta.Namespace,

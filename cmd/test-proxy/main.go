@@ -70,7 +70,6 @@ func HandleIncomingMetrics(store *MetricStore, conn net.Conn) {
 			store.LogBadMetric(lines.Text())
 			continue
 		}
-		log.Infof("%#v", metric)
 		store.LogMetric(metric)
 	}
 	if err := lines.Err(); err != nil {
@@ -120,14 +119,23 @@ func DiffMetricsHandler(store *MetricStore) http.HandlerFunc {
 			return
 		}
 		var expectedMetrics []*Metric
+		var excludedMetrics []*Metric
 		lines := bufio.NewScanner(req.Body)
 		defer req.Body.Close()
 		for lines.Scan() {
 			if len(lines.Bytes()) == 0 {
 				continue
 			}
-			var expectedMetric *Metric
-			err := json.Unmarshal(lines.Bytes(), &expectedMetric)
+			var err error
+			if lines.Bytes()[0] == '~' {
+				var excludedMetric *Metric
+				excludedMetric, err = decodeMetric(lines.Bytes()[1:])
+				excludedMetrics = append(excludedMetrics, excludedMetric)
+			} else {
+				var expectedMetric *Metric
+				expectedMetric, err = decodeMetric(lines.Bytes())
+				expectedMetrics = append(expectedMetrics, expectedMetric)
+			}
 			if err != nil {
 				w.WriteHeader(http.StatusBadRequest)
 				err = json.NewEncoder(w).Encode(err.Error())
@@ -136,7 +144,6 @@ func DiffMetricsHandler(store *MetricStore) http.HandlerFunc {
 				}
 				return
 			}
-			expectedMetrics = append(expectedMetrics, expectedMetric)
 		}
 		linesErr := lines.Err()
 		if linesErr != nil {
@@ -148,9 +155,15 @@ func DiffMetricsHandler(store *MetricStore) http.HandlerFunc {
 			return
 		}
 		w.WriteHeader(http.StatusOK)
-		linesErr = json.NewEncoder(w).Encode(DiffMetrics(expectedMetrics, store.Metrics()))
+		linesErr = json.NewEncoder(w).Encode(DiffMetrics(expectedMetrics, excludedMetrics, store.Metrics()))
 		if linesErr != nil {
 			log.Error(linesErr.Error())
 		}
 	}
+}
+
+func decodeMetric(bytes []byte) (*Metric, error) {
+	var metric *Metric
+	err := json.Unmarshal(bytes, &metric)
+	return metric, err
 }

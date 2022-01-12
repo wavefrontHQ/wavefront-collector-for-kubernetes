@@ -236,6 +236,7 @@ func combine(cfg discovery.Config, cfgs map[string]discovery.Config) discovery.C
 	runCfg := &discovery.Config{
 		DiscoveryInterval: cfg.DiscoveryInterval,
 		AnnotationPrefix:  cfg.AnnotationPrefix,
+		AnnotationExcludes: cfg.AnnotationExcludes,
 		PluginConfigs:     cfg.PluginConfigs,
 		DisableAnnotationDiscovery: cfg.DisableAnnotationDiscovery,
 	}

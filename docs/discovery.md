@@ -38,6 +38,34 @@ discovery:
   disable_annotation_discovery: true
 ```
 
+### Excluding annotation discovered resources
+
+The collector can exclude resources from being detected by annotation-based discovery. It can have multiple exclusion 
+selectors. The collector will exclude a resource if any of the exclusion selectors match.
+
+```yaml
+discovery:
+  # Selectors for identifying kubernetes resources that should be excluded from annotation based discovery.
+  # One of images, labels or namespaces is required.
+  annotation_excludes:
+  - resourceType: pod # pod | service. Defaults to pod.
+
+    # The container images to match against. Provided as a list of glob pattern strings. Ex: 'redis*'
+    images:
+    - 'redis:*'
+    - '*redis*'
+
+    # map of labels to select resources by. Label values are provided as a list of glob pattern strings.
+    labels:
+      k8s-app:
+      - 'redis'
+      - '*cache*'
+
+    # namespaces to filter resources by. Provided as a list of glob pattern strings.
+    namespaces:
+    - default
+```
+
 ## Rule based discovery
 Discovery rules encompass a few distinct aspects:
 - *Selectors*: The criteria for identifying matching kubernetes resources using container images, resource labels and/or namespaces.

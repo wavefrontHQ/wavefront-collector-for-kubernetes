@@ -14,12 +14,8 @@ import (
 
 func TestImages(t *testing.T) {
 	// single image
-	rf, err := newResourceFilter(discovery.PluginConfig{
-		Type: "telegraf/redis",
-		Selectors: discovery.Selectors{
-			Images: []string{"redis:*"},
-		},
-		Port: "6379",
+	rf, err := newResourceFilter(discovery.Selectors{
+		Images: []string{"redis:*"},
 	})
 	if err != nil {
 		t.Error(err)
@@ -40,12 +36,8 @@ func TestImages(t *testing.T) {
 	}
 
 	// multiple container images
-	rf, err = newResourceFilter(discovery.PluginConfig{
-		Type: "telegraf/redis",
-		Selectors: discovery.Selectors{
-			Images: []string{"redis:*", "*redisslave:v2"},
-		},
-		Port: "6379",
+	rf, err = newResourceFilter(discovery.Selectors{
+		Images: []string{"redis:*", "*redisslave:v2"},
 	})
 	if err != nil {
 		t.Error(err)
@@ -66,11 +58,8 @@ func TestImages(t *testing.T) {
 	}
 
 	// image without port
-	rf, err = newResourceFilter(discovery.PluginConfig{
-		Type: "telegraf/rabbitmq",
-		Selectors: discovery.Selectors{
-			Images: []string{"rabbitmq:*"},
-		},
+	rf, err = newResourceFilter(discovery.Selectors{
+		Images: []string{"rabbitmq:*"},
 	})
 	if err != nil {
 		t.Error(err)
@@ -83,14 +72,10 @@ func TestImages(t *testing.T) {
 }
 
 func TestLabels(t *testing.T) {
-	rf, err := newResourceFilter(discovery.PluginConfig{
-		Type: "telegraf/redis",
-		Selectors: discovery.Selectors{
-			Labels: map[string][]string{
-				"k8s-app": {"app1-redis*", "*app2-redis"},
-			},
+	rf, err := newResourceFilter(discovery.Selectors{
+		Labels: map[string][]string{
+			"k8s-app": {"app1-redis*", "*app2-redis"},
 		},
-		Port: "6379",
 	})
 	if err != nil {
 		t.Error(err)
@@ -111,15 +96,11 @@ func TestLabels(t *testing.T) {
 	}
 
 	// multiple labels
-	rf, err = newResourceFilter(discovery.PluginConfig{
-		Type: "telegraf/redis",
-		Selectors: discovery.Selectors{
-			Labels: map[string][]string{
-				"k8s-app": {"app1-redis*", "*app2-redis"},
-				"env":     {"dev-1", "dev-2"},
-			},
+	rf, err = newResourceFilter(discovery.Selectors{
+		Labels: map[string][]string{
+			"k8s-app": {"app1-redis*", "*app2-redis"},
+			"env":     {"dev-1", "dev-2"},
 		},
-		Port: "6379",
 	})
 	if err != nil {
 		t.Error(err)
@@ -135,12 +116,8 @@ func TestLabels(t *testing.T) {
 }
 
 func TestNamespaces(t *testing.T) {
-	rf, err := newResourceFilter(discovery.PluginConfig{
-		Type: "telegraf/redis",
-		Selectors: discovery.Selectors{
-			Namespaces: []string{"default*", "collector"},
-		},
-		Port: "6379",
+	rf, err := newResourceFilter(discovery.Selectors{
+		Namespaces: []string{"default*", "collector"},
 	})
 	if err != nil {
 		t.Error(err)
@@ -163,16 +140,12 @@ func TestNamespaces(t *testing.T) {
 }
 
 func TestAll(t *testing.T) {
-	rf, err := newResourceFilter(discovery.PluginConfig{
-		Type: "telegraf/redis",
-		Selectors: discovery.Selectors{
-			Images:     []string{"redis:*", "*redisslave:v2"},
-			Namespaces: []string{"default*", "collector"},
-			Labels: map[string][]string{
-				"k8s-app": {"app1-redis*", "*app2-redis"},
-			},
+	rf, err := newResourceFilter(discovery.Selectors{
+		Images:     []string{"redis:*", "*redisslave:v2"},
+		Namespaces: []string{"default*", "collector"},
+		Labels: map[string][]string{
+			"k8s-app": {"app1-redis*", "*app2-redis"},
 		},
-		Port: "6379",
 	})
 	if err != nil {
 		t.Error(err)

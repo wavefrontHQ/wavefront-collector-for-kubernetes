@@ -6,6 +6,8 @@ package discovery
 import (
 	"testing"
 
+	"github.com/gobwas/glob"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
@@ -66,6 +68,41 @@ func Test_endpointCreator_discoverEndpoints_annotations_happen_when_not_disabled
 	assert.Equal(t, 1, len(got))
 }
 
+func Test_endpointCreator_discoverEndpoints_annotations(t *testing.T) {
+	t.Run("filters based on exclude", func(t *testing.T) {
+		e := &endpointCreator{
+			providers: makeDummyProviders(util.NewDummyProviderHandler(1)),
+			annotationExcludes: []*resourceFilter{
+				{
+					kind:   "pod",
+					images: glob.MustCompile("*istio*"),
+				},
+				{
+					kind: "pod",
+					labels: map[string]glob.Glob{
+						"foo": glob.MustCompile("bar"),
+					},
+				},
+			},
+		}
+
+		resource := makePromResource([]v1.Container{
+			makeContainer("some/istio/thing", []int32{80}),
+			makeContainer("another/thing", []int32{80}),
+		}, nil, "")
+
+		assert.Equal(t, 0, len(e.discoverEndpoints(resource)))
+
+		resource = makePromResource([]v1.Container{makeContainer("some/thing", []int32{80})}, nil, "")
+
+		assert.Equal(t, 1, len(e.discoverEndpoints(resource)))
+
+		resource = makePromResource([]v1.Container{makeContainer("some/thing", []int32{80})}, map[string]string{"foo": "bar"}, "")
+
+		assert.Equal(t, 0, len(e.discoverEndpoints(resource)))
+	})
+}
+
 func Test_endpointCreator_discoverEndpoints_annotations_happen_by_default(t *testing.T) {
 	e := &endpointCreator{
 		delegates: nil,
@@ -106,4 +143,16 @@ func Test_endpointCreator_doesnt_discover_endpoints_unless_annotated(t *testing.
 
 	got := e.discoverEndpoints(resource)
 	assert.Equal(t, 0, len(got))
+}
+
+func makePromResource(containers []v1.Container, labels map[string]string, ns string) discovery.Resource {
+	resource := makeResource(containers, labels, ns)
+	resource.IP = "0.0.0.0"
+	resource.Meta.Annotations = map[string]string{
+		"prom/scrape": "true",
+		"prom/scheme": "https",
+		"prom/port":   "8443",
+		"prom/path":   "/healthmetrics",
+	}
+	return resource
 }
