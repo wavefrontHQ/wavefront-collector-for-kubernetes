@@ -17,7 +17,7 @@
               "anomalyDetectionOn": false,
               "chartSettings": {
                 "y1ScaleSIBy1024": false,
-                "fixedLegendEnabled": false,
+                "fixedLegendEnabled": true,
                 "fixedLegendFilterField": "CURRENT",
                 "y0ScaleSIBy1024": false,
                 "fixedLegendFilterLimit": 5,
@@ -65,7 +65,7 @@
               "sources": [
                 {
                   "name": "request_rate",
-                  "query": "sum(rate(ts(kube.apiserver.apiserver.request.total.counter)), verb)",
+                  "query": "sum(rate(ts(kube.apiserver.apiserver.request.total.counter, cluster=${cluster_name})), verb)",
                   "disabled": false,
                   "secondaryAxis": false,
                   "queryType": "WQL",
@@ -77,6 +77,8 @@
               "anomalyType": "both"
             },
             {
+              "anomalySeverity": "medium",
+              "anomalyDetectionOn": false,
               "chartSettings": {
                 "y1ScaleSIBy1024": false,
                 "fixedLegendEnabled": false,
@@ -106,9 +108,13 @@
                 "sparklineLineColor": null,
                 "sparklineFillColor": null
               },
+              "displayConfidenceBounds": false,
               "includeObsoleteMetrics": false,
+              "filterOutNonAnomalies": false,
               "name": "apiserver workqueue adds rate",
+              "anomalySampleSize": "8",
               "units": "Units",
+              "summarization": "MEAN",
               "base": 0,
               "chartAttributes": {
                 "lineFill": 1,
@@ -121,25 +127,21 @@
               },
               "sources": [
                 {
-                  "name": "adds_total",
-                  "query": "ts(kube.apiserver.workqueue.adds.total.counter)",
-                  "disabled": true,
-                  "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false
-                },
-                {
                   "name": "adds_rate",
-                  "query": "rate(ts(kube.apiserver.workqueue.adds.total.counter))",
+                  "query": "rate(ts(kube.apiserver.workqueue.adds.total.counter, cluster=${cluster_name}))",
                   "disabled": false,
                   "secondaryAxis": false,
                   "queryType": "WQL",
-                  "querybuilderEnabled": false
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
                 }
               ],
-              "noDefaultEvents": false
+              "noDefaultEvents": false,
+              "anomalyType": "both"
             },
             {
+              "anomalySeverity": "medium",
+              "anomalyDetectionOn": false,
               "chartSettings": {
                 "y1ScaleSIBy1024": false,
                 "fixedLegendEnabled": false,
@@ -169,9 +171,13 @@
                 "sparklineLineColor": null,
                 "sparklineFillColor": null
               },
+              "displayConfidenceBounds": false,
               "includeObsoleteMetrics": false,
+              "filterOutNonAnomalies": false,
               "name": "apiserver workqueue depth",
+              "anomalySampleSize": "8",
               "units": "Units",
+              "summarization": "MEAN",
               "base": 0,
               "chartAttributes": {
                 "lineFill": 1,
@@ -185,14 +191,16 @@
               "sources": [
                 {
                   "name": "workqueue_depth",
-                  "query": "ts(kube.apiserver.workqueue.depth.gauge)",
+                  "query": "rate(ts(kube.apiserver.workqueue.depth.gauge, cluster=${cluster_name}))",
                   "disabled": false,
                   "secondaryAxis": false,
                   "queryType": "WQL",
-                  "querybuilderEnabled": false
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
                 }
               ],
-              "noDefaultEvents": false
+              "noDefaultEvents": false,
+              "anomalyType": "both"
             }
           ],
           "heightFactor": 140
@@ -251,11 +259,12 @@
               "sources": [
                 {
                   "name": "histo",
-                  "query": "cumulativeHisto(sum(align(1m, rate(ts(kube.apiserver.apiserver.request.duration.seconds.bucket))), le))",
+                  "query": "cumulativeHisto(sum(align(1m, rate(ts(kube.apiserver.apiserver.request.duration.seconds.bucket, cluster=${cluster_name}))), le))",
                   "disabled": true,
                   "secondaryAxis": false,
                   "queryType": "WQL",
-                  "querybuilderEnabled": false
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
                 },
                 {
                   "name": "p95_request_latency",
@@ -263,7 +272,8 @@
                   "disabled": false,
                   "secondaryAxis": false,
                   "queryType": "WQL",
-                  "querybuilderEnabled": false
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
                 },
                 {
                   "name": "p90_request_latency",
@@ -271,7 +281,8 @@
                   "disabled": false,
                   "secondaryAxis": false,
                   "queryType": "WQL",
-                  "querybuilderEnabled": false
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
                 },
                 {
                   "name": "p50_request_latency",
@@ -279,7 +290,8 @@
                   "disabled": false,
                   "secondaryAxis": false,
                   "queryType": "WQL",
-                  "querybuilderEnabled": false
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
                 }
               ],
               "noDefaultEvents": true,
@@ -320,7 +332,7 @@
               "displayConfidenceBounds": false,
               "includeObsoleteMetrics": false,
               "filterOutNonAnomalies": false,
-              "name": "apiserver  workqueue latency (P50/P95/P99)",
+              "name": "apiserver workqueue service latency (P50/P95/P99)",
               "anomalySampleSize": "8",
               "units": "ms",
               "summarization": "MEAN",
@@ -337,11 +349,12 @@
               "sources": [
                 {
                   "name": "histo",
-                  "query": "cumulativeHisto(sum(align(1m, rate(ts(kube.apiserver.workqueue.queue.duration.seconds.bucket))), le))",
+                  "query": "cumulativeHisto(sum(align(1m, rate(ts(kube.apiserver.workqueue.queue.duration.seconds.bucket, cluster=${cluster_name}))), le))",
                   "disabled": true,
                   "secondaryAxis": false,
                   "queryType": "WQL",
-                  "querybuilderEnabled": false
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
                 },
                 {
                   "name": "p95_request_latency",
@@ -349,7 +362,8 @@
                   "disabled": false,
                   "secondaryAxis": false,
                   "queryType": "WQL",
-                  "querybuilderEnabled": false
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
                 },
                 {
                   "name": "p90_request_latency",
@@ -357,7 +371,8 @@
                   "disabled": false,
                   "secondaryAxis": false,
                   "queryType": "WQL",
-                  "querybuilderEnabled": false
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
                 },
                 {
                   "name": "p50_request_latency",
@@ -365,7 +380,8 @@
                   "disabled": false,
                   "secondaryAxis": false,
                   "queryType": "WQL",
-                  "querybuilderEnabled": false
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
                 }
               ],
               "noDefaultEvents": true,
@@ -406,7 +422,7 @@
               "displayConfidenceBounds": false,
               "includeObsoleteMetrics": false,
               "filterOutNonAnomalies": false,
-              "name": "apiserver  etcd latency (P50/P95/P99)",
+              "name": "apiserver etcd request latency (P50/P95/P99)",
               "anomalySampleSize": "8",
               "units": "ms",
               "summarization": "MEAN",
@@ -423,11 +439,12 @@
               "sources": [
                 {
                   "name": "histo",
-                  "query": "cumulativeHisto(sum(align(1m, rate(ts(kube.apiserver.etcd.request.duration.seconds.bucket))), le))",
+                  "query": "cumulativeHisto(sum(align(1m, rate(ts(kube.apiserver.etcd.request.duration.seconds.bucket, cluster=${cluster_name}))), le))",
                   "disabled": true,
                   "secondaryAxis": false,
                   "queryType": "WQL",
-                  "querybuilderEnabled": false
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
                 },
                 {
                   "name": "p95_request_latency",
@@ -435,7 +452,8 @@
                   "disabled": false,
                   "secondaryAxis": false,
                   "queryType": "WQL",
-                  "querybuilderEnabled": false
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
                 },
                 {
                   "name": "p90_request_latency",
@@ -443,7 +461,8 @@
                   "disabled": false,
                   "secondaryAxis": false,
                   "queryType": "WQL",
-                  "querybuilderEnabled": false
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
                 },
                 {
                   "name": "p50_request_latency",
@@ -451,7 +470,8 @@
                   "disabled": false,
                   "secondaryAxis": false,
                   "queryType": "WQL",
-                  "querybuilderEnabled": false
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
                 }
               ],
               "noDefaultEvents": true,
@@ -463,5 +483,75 @@
       ]
     }
   ],
-  "parameterDetails": {}
+  "parameterDetails": {
+    "cluster_name": {
+      "tagsBlackListRegex": "",
+      "parameterType": "DYNAMIC",
+      "tagKey": "cluster",
+      "queryValue": "collect(max(ts(\"kubernetes.cluster.cpu.limit\"), cluster), taggify(1, cluster, \"*\"))",
+      "order": 1,
+      "defaultValue": "Label",
+      "hideFromView": false,
+      "value": "akodali-kind-1.7.6-dev-akodali-01a1d5f",
+      "label": "cluster",
+      "dynamicFieldType": "TAG_KEY",
+      "valuesToReadableStrings": {
+        "Label_50": "worker-gke-1.7.6-alpha-cdec1f34",
+        "Label_2": "KUBERNETES_CLUSTER_NAME",
+        "Label_40": "shaoh-kind-1.7.6-dev-shaoh-5f7f0121",
+        "Label_51": "worker-gke-1.7.6-alpha-ebec55ef",
+        "Label_3": "akodali-kind-1.7.6-dev-akodali-0112da1",
+        "Label_30": "shaoh-1.7.11-release-test-20220110140524",
+        "Label_41": "test-js2",
+        "Label_52": "worker-gke-1.7.6-alpha-f5c6aad5",
+        "Label_4": "akodali-kind-1.7.6-dev-akodali-01a1d5f",
+        "Label_20": "matthewco-gke-1.7.6-dev-matthewco-df02ff05",
+        "Label_31": "shaoh-1.7.11-release-test-20220110140848",
+        "Label_42": "travis-gke-1.7.3-pr274",
+        "Label_53": "worker-gke-1.7.6-alpha-f86e0af9",
+        "Label_5": "akodali-proxy1013",
+        "Label_10": "jcornish-kind-1.7.6-dev-jcornish-7000f12c",
+        "Label_21": "matthewco-kind-1.7.6-dev-matthewco-55cee159",
+        "Label_32": "shaoh-1.7.11-release-test-20220110143942",
+        "Label_43": "worker-gke-1.7.6-alpha-0112da14",
+        "Label_6": "cluster-1.6.1",
+        "Label_11": "jenkins-1.7.5-rc-1-test",
+        "Label_22": "pselvaganesa-1.7.3-release-test-downgrade-20211215151807",
+        "Label_33": "shaoh-1.7.11-release-test-20220110153048",
+        "Label_44": "worker-gke-1.7.6-alpha-01a1d5f4",
+        "Label_7": "demo-test",
+        "Label_12": "jenkins-1.8.0-rc-1-test",
+        "Label_23": "shaoh-1.7.10-release-test-downgrade-20220110141207",
+        "Label_34": "shaoh-1.7.11-release-test-20220110154202",
+        "Label_45": "worker-gke-1.7.6-alpha-24e53669",
+        "Label_8": "gke-matthewco-cluster-2.attached.attached.tmc",
+        "Label_13": "js-test",
+        "Label_24": "shaoh-1.7.10-release-test-downgrade-20220110144304",
+        "Label_35": "shaoh-gke-1.7.6-dev-shaoh-9e99c0f4",
+        "Label_46": "worker-gke-1.7.6-alpha-5f7f0121",
+        "Label_9": "jcmm-new-helm-install-testing",
+        "Label_14": "mamichael-kind-1.7.6-dev-mamichael-01296fb8",
+        "Label_25": "shaoh-1.7.10-release-test-downgrade-20220110153415",
+        "Label_36": "shaoh-gke-newnew.attached.attached.tmc",
+        "Label_47": "worker-gke-1.7.6-alpha-7000f12c",
+        "Label_15": "mamichael-kind-1.7.6-dev-mamichael-7000f12c",
+        "Label_26": "shaoh-1.7.10-release-test-upgrade-20220110141016",
+        "Label_37": "shaoh-helm-1.7.10",
+        "Label_48": "worker-gke-1.7.6-alpha-89c8c025",
+        "Label_16": "mamichael-proxy-10-12-eks",
+        "Label_27": "shaoh-1.7.10-release-test-upgrade-20220110144113",
+        "Label_38": "shaoh-helm-1.7.11",
+        "Label_49": "worker-gke-1.7.6-alpha-aaf21e8c",
+        "Label_17": "mamichael-test-tmc.attached.attached.tmc",
+        "Label_28": "shaoh-1.7.10-release-test-upgrade-20220110153214",
+        "Label_39": "shaoh-helm-cluster",
+        "Label_18": "matthewco-gke-1.7.6-dev-matthewco-26ac1551",
+        "Label_29": "shaoh-1.7.10-release-test-upgrade-20220110154329",
+        "Label_19": "matthewco-gke-1.7.6-dev-matthewco-55cee159",
+        "Label": "*"
+      },
+      "allowAll": false,
+      "selectedLabel": "Label_4"
+    }
+  }
 }
