@@ -66,6 +66,11 @@ sources:
         - 'kube.apiserver.apiserver.envelope.*'
         - 'kube.apiserver.etcd.*'
         - 'kube.apiserver.process.*'
+        - 'kube.apiserver.apiserver.request.duration.seconds.*'
+        - 'kube.apiserver.apiserver.request.total.counter'
+        - 'kube.apiserver.workqueue.adds.total.*'
+        - 'kube.apiserver.workqueue.depth.*'
+        - 'kube.apiserver.workqueue.queue.duration.seconds.*'
 
   telegraf_sources:
     # enable all telegraf plugins
