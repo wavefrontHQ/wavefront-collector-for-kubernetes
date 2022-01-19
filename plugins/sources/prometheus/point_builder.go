@@ -147,8 +147,6 @@ func (builder *pointBuilder) buildTags(m *dto.Metric) map[string]string {
 		for _, label := range m.Label {
 			if len(label.GetName()) > 0 && len(label.GetValue()) > 0 {
 				tags[label.GetName()] = label.GetValue()
-			} else if label.GetName() == "node-role.kubernetes.io/control-plane" || label.GetName() == "node-role.kubernetes.io/master" {
-				tags["role"] = "control-plane"
 			}
 		}
 	}
