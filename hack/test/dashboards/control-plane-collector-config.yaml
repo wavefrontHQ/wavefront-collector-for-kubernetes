@@ -1,0 +1,350 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: collector-config
+  namespace: wavefront-collector
+data:
+  collector.yaml: |
+    clusterName: k8s-cluster
+    enableEvents: false
+    enableDiscovery: true
+    flushInterval: 30s
+
+    # sample configuration to filter events
+    # events:
+    #   filters:
+    #     tagAllowListSets:
+    #     - kind:
+    #       - "Pod"
+    #       reason:
+    #       - "Scheduled"
+    #     - kind:
+    #       - "DaemonSet"
+    #       reason:
+    #       - "SuccessfulCreate"
+
+    sinks:
+    - proxyAddress: wavefront-proxy.default.svc.cluster.local:2878
+      filters:
+        # Optimized metrics collection to omit peripheral metrics.
+        metricDenyList:
+        - 'kubernetes.sys_container.*'
+        - 'kubernetes.collector.runtime.*'
+        - 'kubernetes.*.network.rx_rate'
+        - 'kubernetes.*.network.rx_errors_rate'
+        - 'kubernetes.*.network.tx_rate'
+        - 'kubernetes.*.network.tx_errors_rate'
+        - 'kubernetes.*.memory.page_faults'
+        - 'kubernetes.*.memory.page_faults_rate'
+        - 'kubernetes.*.memory.major_page_faults'
+        - 'kubernetes.*.memory.major_page_faults_rate'
+        - 'kubernetes.*.filesystem.inodes'
+        - 'kubernetes.*.filesystem.inodes_free'
+        - 'kubernetes.*.ephemeral_storage.request'
+        - 'kubernetes.*.ephemeral_storage.limit'
+
+        # Filter out generated labels
+        tagExclude:
+        - 'label?controller?revision*'
+        - 'label?pod?template*'
+        - 'annotation_kubectl_kubernetes_io_last_applied_configuration'
+
+    sources:
+      # The Wavefront Kubernetes dashboards rely on the "kubernetes." prefix by default. See https://docs.wavefront.com/wf_kubernetes_troubleshooting.html for more details.
+      kubernetes_source:
+        url: 'https://kubernetes.default.svc'
+        kubeletPort: 10250
+        kubeletHttps: true
+        useServiceAccount: true
+        insecure: true
+        prefix: 'kubernetes.' # Default prefix
+
+        filters:
+          metricDenyList:
+          - 'kubernetes.sys_container.*'
+
+      internal_stats_source:
+        prefix: 'kubernetes.' # Default prefix
+
+      kubernetes_state_source:
+        prefix: 'kubernetes.' # Default prefix
+
+      # kubernetes_cadvisor_source:
+      #  prefix: 'kubernetes.cadvisor.'
+      #  filters:
+      #    metricAllowList:
+      #    - "kubernetes.cadvisor.container.cpu.cfs.throttled.seconds.total.counter"
+      #    - "kubernetes.cadvisor.container.cpu.cfs.throttled.periods.total.counter"
+
+
+      prometheus_sources:
+
+      ##########################################################################
+      # Static source to collect control plane metrics from the API Server
+      ##########################################################################
+       - url: 'https://kubernetes.default.svc.cluster.local:443/metrics'
+         httpConfig:
+           bearer_token_file: '/var/run/secrets/kubernetes.io/serviceaccount/token'
+           tls_config:
+             ca_file: '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
+             insecure_skip_verify: true
+         prefix: 'kube.apiserver.'
+
+         filters:
+           metricAllowList:
+           - 'kube.apiserver.etcd.request.duration.seconds.bucket'
+           - 'kube.apiserver.etcd.object.counts.gauge'
+           - 'kube.apiserver.etcd.db.total.size.in.bytes.gauge'
+           - 'kube.apiserver.apiserver.request.duration.seconds.bucket'
+           - 'kube.apiserver.apiserver.request.total.counter'
+           - 'kube.apiserver.workqueue.adds.total.counter'
+           - 'kube.apiserver.workqueue.queue.duration.seconds.bucket'
+
+    # discovery rules for auto-discovery of pods and services
+    discovery:
+      enable_runtime_plugins: true
+      # annotation_excludes:
+      # - labels:
+      #     please-exclude-from-discovery: ['true']
+
+      plugins:
+
+      ##########################################################################
+      # Workload auto discovery
+      ##########################################################################
+
+      # # activemq
+      # - name: activemq
+      #   type: telegraf/activemq
+      #   selectors:
+      #     images:
+      #     - "*activemq*"
+      #   port: 8161
+      #   conf: |
+      #     server = "${host}"
+      #     port = ${port}
+      #     username = "admin"
+      #     password = "admin"
+      #     webadmin = "admin"
+      #
+      # # apache httpd
+      # - name: apache
+      #   type: telegraf/apache
+      #   selectors:
+      #     images:
+      #     - 'httpd*'
+      #     - '*httpd*'
+      #   port: 80
+      #   conf: |
+      #     urls = ["http://${host}:${port}/server-status?auto"]
+
+      # # consul
+      # - name: consul
+      #   type: telegraf/consul
+      #   selectors:
+      #     images:
+      #     - 'consul*'
+      #   port: 8500
+      #   conf: |
+      #     address = "${host}:${port}"
+      #     scheme = "http"
+      #
+      # # couchbase
+      # - name: couchbase
+      #   type: telegraf/couchbase
+      #   selectors:
+      #     images:
+      #     - 'couchbase/server:enterprise-6.0.1'
+      #   port: 8091
+      #   conf: |
+      #     servers = ["http://Administrator:password@${host}:${port}"]
+      #
+      # # couchdb
+      # - name: couchdb
+      #   type: telegraf/couchdb
+      #   selectors:
+      #     images:
+      #     - '*couchdb*'
+      #   port: 5984
+      #   conf: |
+      #     hosts = ["http://admin:password@${host}:${port}/_node/_local/_stats"]
+
+      # # elasticsearch
+      # - name: elasticsearch
+      #   type: telegraf/elasticsearch
+      #   selectors:
+      #     images:
+      #     - '*elastic*'
+      #   port: 9200
+      #   conf: |
+      #     servers = ["http://${host}:${port}"]
+      #     local = false
+      #     cluster_health = true
+      #     cluster_stats = true
+      #
+      # # HAProxy
+      # - name: haproxy
+      #   type: telegraf/haproxy
+      #   selectors:
+      #     images:
+      #     - "*haproxy*"
+      #   port: 8181
+      #   conf: |
+      #     servers = ["http://username:password@${host}:${port}/haproxy?stats"]
+
+      # # memcached
+      # - name: memcached
+      #   type: telegraf/memcached
+      #   selectors:
+      #     images:
+      #     - 'memcached:*'
+      #   port: 11211
+      #   conf: |
+      #     servers = ["${host}:${port}"]
+      #
+      # # mongodb
+      # - name: mongodb
+      #   type: telegraf/mongodb
+      #   selectors:
+      #     images:
+      #     - 'mongo*'
+      #   port: 27017
+      #   conf: |
+      #     servers = ["mongodb://main_admin:abc123@${host}:${port}"]
+      #
+      # # mysql
+      # - name: mysql
+      #   type: telegraf/mysql
+      #   selectors:
+      #     images:
+      #     - "mysql*"
+      #   collection:
+      #     interval: "180s"
+      #   port: 3306
+      #   conf: |
+      #     servers = ["root:password@tcp(${host}:${port})/?tls=false"]
+      #     perf_events_statements_digest_text_limit  = 120
+      #     perf_events_statements_limit              = 250
+      #     perf_events_statements_time_limit         = 86400
+      #     table_schema_databases                    = []
+      #     gather_process_list                       = true
+      #     gather_table_io_waits                     = true
+      #     gather_table_lock_waits                   = true
+      #     gather_index_io_waits                     = true
+      #     gather_event_waits                        = true
+      #     gather_file_events_stats                  = true
+      #     interval_slow                             = "30m"
+
+      # # nginx
+      # - name: nginx
+      #   type: telegraf/nginx
+      #   selectors:
+      #     images:
+      #     - 'nginx*'
+      #   port: 80
+      #   conf: |
+      #     urls = ["http://${host}:${port}/metrics"]
+      #
+      # # nginx_plus
+      # - name: nginx_plus
+      #   type: telegraf/nginx_plus
+      #   selectors:
+      #     images:
+      #     - 'nginxplus*'
+      #   conf: |
+      #     urls = ["http://${host}/api"]
+
+      # # rabbitmq
+      # - name: rabbitmq
+      #   type: telegraf/rabbitmq
+      #   selectors:
+      #     images:
+      #     - 'rabbitmq*'
+      #   port: 15672
+      #   conf: |
+      #     url = "http://${host}:${port}"
+      #     username = "guest"
+      #     password = "guest"
+      #
+      # # redis master and slaves
+      # - name: redis
+      #   type: telegraf/redis
+      #   selectors:
+      #     images:
+      #     - 'redis:*'
+      #     - '*redis*'
+      #   port: 6379
+      #   scheme: "tcp"
+      #   conf: |
+      #     servers = ["${server}"]
+      #
+      # # riak
+      # - name: riak
+      #   type: telegraf/riak
+      #   selectors:
+      #     images:
+      #     - 'riak-kv:*'
+      #     - '*riak-kv:*'
+      #   port: 8098
+      #   conf: |
+      #     servers = ["http://${host}:${port}"]
+      #
+      # # zookeeper
+      # - name: zookeeper
+      #   type: telegraf/zookeeper
+      #   selectors:
+      #     images:
+      #     - '*zookeeper'
+      #   port: 2181
+      #   conf: |
+      #     servers = ["${host}:${port}"]
+
+      ##########################################################################
+      # Kubernetes component auto discovery
+      ##########################################################################
+
+      # auto-discover kube DNS
+      - name: kube-dns-discovery
+        type: prometheus
+        selectors:
+          images:
+          - '*kube-dns/sidecar*'
+          labels:
+            k8s-app:
+            - kube-dns
+        port: 10054
+        path: /metrics
+        scheme: http
+        prefix: kube.dns.
+        filters:
+          metricAllowList:
+          - 'kube.dns.http.request.duration.microseconds'
+          - 'kube.dns.http.request.size.bytes'
+          - 'kube.dns.http.requests.total.counter'
+          - 'kube.dns.http.response.size.bytes'
+          - 'kube.dns.kubedns.dnsmasq.*'
+          - 'kube.dns.process.*'
+
+      # auto-discover coredns
+      - name: coredns-discovery
+        type: prometheus
+        selectors:
+          images:
+          - '*coredns:*'
+          labels:
+            k8s-app:
+            - kube-dns
+        port: 9153
+        path: /metrics
+        scheme: http
+        prefix: kube.coredns.
+        filters:
+          metricAllowList:
+          - 'kube.coredns.coredns.cache.*'
+          - 'kube.coredns.coredns.dns.request.count.total.counter'
+          - 'kube.coredns.coredns.dns.request.duration.seconds'
+          - 'kube.coredns.coredns.dns.request.size.bytes'
+          - 'kube.coredns.coredns.dns.request.type.count.total.counter'
+          - 'kube.coredns.coredns.dns.response.rcode.count.total.counter'
+          - 'kube.coredns.coredns.dns.response.size.bytes'
+          - 'kube.coredns.process.*'
