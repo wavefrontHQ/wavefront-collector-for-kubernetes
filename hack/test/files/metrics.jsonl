@@ -214,7 +214,6 @@
 {"Name":"kubernetes.node.filesystem.inodes_free","Tags":{"cluster":"","label.kubernetes.io/arch":"","label.kubernetes.io/hostname":"","label.kubernetes.io/os":"linux","nodename":"","resource_id":"/","source":"","type":"node"}}
 {"Name":"kubernetes.node.filesystem.limit","Tags":{"cluster":"","label.kubernetes.io/arch":"","label.kubernetes.io/hostname":"","label.kubernetes.io/os":"linux","nodename":"","resource_id":"/","source":"","type":"node"}}
 {"Name":"kubernetes.node.filesystem.usage","Tags":{"cluster":"","label.kubernetes.io/arch":"","label.kubernetes.io/hostname":"","label.kubernetes.io/os":"linux","nodename":"","resource_id":"/","source":"","type":"node"}}
-{"Name":"kubernetes.node.info","Tags":{"cluster":"","container_runtime_version":"","internal_ip":"","kernel_version":"","kubelet_version":"","label.kubernetes.io/arch":"","label.kubernetes.io/os":"linux","nodename":"","os_image":"","provider_id":"","source":""}}
 {"Name":"kubernetes.node.memory.limit","Tags":{"cluster":"","label.kubernetes.io/arch":"","label.kubernetes.io/hostname":"","label.kubernetes.io/os":"linux","nodename":"","source":"","type":"node"}}
 {"Name":"kubernetes.node.memory.major_page_faults","Tags":{"cluster":"","label.kubernetes.io/arch":"","label.kubernetes.io/hostname":"","label.kubernetes.io/os":"linux","nodename":"","source":"","type":"node"}}
 {"Name":"kubernetes.node.memory.node_allocatable","Tags":{"cluster":"","label.kubernetes.io/arch":"","label.kubernetes.io/hostname":"","label.kubernetes.io/os":"linux","nodename":"","source":"","type":"node"}}

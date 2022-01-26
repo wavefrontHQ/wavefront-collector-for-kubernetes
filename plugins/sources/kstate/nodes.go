@@ -66,6 +66,14 @@ func buildNodeInfo(node *v1.Node, transforms configuration.Transforms, ts int64)
 	tags["kubeproxy_version"] = node.Status.NodeInfo.KubeProxyVersion
 	tags["provider_id"] = node.Spec.ProviderID
 	tags["pod_cidr"] = node.Spec.PodCIDR
+	tags["node_role"] = "worker"
+	if _, ok := node.GetLabels()["node-role.kubernetes.io/control-plane"]; ok {
+		tags["node_role"] = "control-plane"
+	}
+	if _, ok := node.GetLabels()["node-role.kubernetes.io/master"]; ok {
+		tags["node_role"] = "control-plane"
+	}
+
 	for _, address := range node.Status.Addresses {
 		if address.Type == "InternalIP" {
 			tags["internal_ip"] = address.Address

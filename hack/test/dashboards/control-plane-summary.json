@@ -1,0 +1,930 @@
+{
+  "name": "Control Plane Summary v1",
+  "url": "Control-Plane-Summary-v1",
+  "eventFilterType": "BYCHART",
+  "displayDescription": false,
+  "displaySectionTableOfContents": true,
+  "displayQueryParameters": true,
+  "sections": [
+    {
+      "name": "API Server Details",
+      "id": "untitled-dashboard-section-1",
+      "rows": [
+        {
+          "charts": [
+            {
+              "anomalySeverity": "medium",
+              "anomalyDetectionOn": false,
+              "chartSettings": {
+                "y1ScaleSIBy1024": false,
+                "fixedLegendEnabled": false,
+                "fixedLegendFilterField": "CURRENT",
+                "y0ScaleSIBy1024": false,
+                "fixedLegendFilterLimit": 5,
+                "fixedLegendShowSourceName": true,
+                "fixedLegendPosition": "BOTTOM",
+                "customTags": [],
+                "lineType": "linear",
+                "windowing": "full",
+                "invertDynamicLegendHoverControl": false,
+                "fixedLegendFilterSort": "TOP",
+                "y1Units": "",
+                "fixedLegendShowMetricName": false,
+                "type": "line",
+                "y1UnitAutoscaling": false,
+                "tagMode": "all",
+                "fixedLegendUseRawStats": false,
+                "y0UnitAutoscaling": false,
+                "fixedLegendDisplayStats": [
+                  "CURRENT"
+                ],
+                "autoColumnTags": false,
+                "numTags": 4,
+                "defaultSortColumn": null,
+                "sparklineDisplayColor": null,
+                "sparklineLineColor": null,
+                "sparklineFillColor": null
+              },
+              "displayConfidenceBounds": false,
+              "includeObsoleteMetrics": false,
+              "filterOutNonAnomalies": false,
+              "name": "apiserver request rate",
+              "anomalySampleSize": "8",
+              "units": "req/s",
+              "summarization": "MEAN",
+              "base": 0,
+              "chartAttributes": {
+                "lineFill": 1,
+                "dashboardLayout": {
+                  "x": 0,
+                  "y": 0,
+                  "w": 4,
+                  "h": 7
+                }
+              },
+              "sources": [
+                {
+                  "name": "request_rate",
+                  "query": "sum(rate(ts(kube.apiserver.apiserver.request.total.counter, cluster=${cluster_name})), verb)",
+                  "disabled": false,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false
+                }
+              ],
+              "noDefaultEvents": false,
+              "anomalyType": "both"
+            },
+            {
+              "anomalySeverity": "medium",
+              "anomalyDetectionOn": false,
+              "chartSettings": {
+                "y1ScaleSIBy1024": false,
+                "fixedLegendEnabled": false,
+                "fixedLegendFilterField": "CURRENT",
+                "y0ScaleSIBy1024": false,
+                "stackType": "bars",
+                "fixedLegendFilterLimit": 5,
+                "max": 100,
+                "fixedLegendShowSourceName": true,
+                "fixedLegendPosition": "RIGHT",
+                "customTags": [],
+                "lineType": "linear",
+                "windowing": "full",
+                "min": 0,
+                "fixedLegendFilterSort": "TOP",
+                "y1Units": "",
+                "sortValuesDescending": true,
+                "fixedLegendShowMetricName": false,
+                "type": "line",
+                "y1UnitAutoscaling": false,
+                "tagMode": "all",
+                "fixedLegendUseRawStats": false,
+                "y0UnitAutoscaling": false,
+                "fixedLegendDisplayStats": [
+                  "CURRENT"
+                ],
+                "autoColumnTags": false,
+                "numTags": 4,
+                "defaultSortColumn": null,
+                "sparklineDisplayColor": null,
+                "sparklineLineColor": null,
+                "sparklineFillColor": null
+              },
+              "displayConfidenceBounds": false,
+              "includeObsoleteMetrics": false,
+              "filterOutNonAnomalies": false,
+              "name": "apiserver error rate (%)",
+              "anomalySampleSize": "8",
+              "units": "%",
+              "summarization": "MEAN",
+              "base": 0,
+              "chartAttributes": {
+                "lineFill": 1,
+                "dashboardLayout": {
+                  "x": 4,
+                  "y": 0,
+                  "w": 4,
+                  "h": 7
+                }
+              },
+              "sources": [
+                {
+                  "name": "Errors",
+                  "query": "rate(sum(ts(kube.apiserver.apiserver.request.total.counter, cluster=${cluster_name} and (code=\"4*\" OR code=\"5*\")), verb))",
+                  "disabled": true,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false
+                },
+                {
+                  "name": "Requests",
+                  "query": "rate(sum(ts(kube.apiserver.apiserver.request.total.counter, cluster=${cluster_name}), verb))",
+                  "disabled": true,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false
+                },
+                {
+                  "name": "Error %",
+                  "query": "${Errors}/${Requests} * 100",
+                  "disabled": false,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false
+                }
+              ],
+              "noDefaultEvents": true,
+              "description": "The API Server error rate",
+              "anomalyType": "both"
+            },
+            {
+              "anomalySeverity": "medium",
+              "anomalyDetectionOn": false,
+              "chartSettings": {
+                "y1ScaleSIBy1024": false,
+                "fixedLegendEnabled": false,
+                "fixedLegendFilterField": "CURRENT",
+                "y0ScaleSIBy1024": false,
+                "fixedLegendFilterLimit": 5,
+                "fixedLegendShowSourceName": true,
+                "fixedLegendPosition": "RIGHT",
+                "customTags": [],
+                "lineType": "linear",
+                "windowing": "full",
+                "fixedLegendFilterSort": "TOP",
+                "y1Units": "",
+                "fixedLegendShowMetricName": false,
+                "type": "line",
+                "y1UnitAutoscaling": false,
+                "tagMode": "all",
+                "fixedLegendUseRawStats": false,
+                "y0UnitAutoscaling": true,
+                "fixedLegendDisplayStats": [
+                  "CURRENT"
+                ],
+                "autoColumnTags": false,
+                "numTags": 4,
+                "defaultSortColumn": null,
+                "sparklineDisplayColor": null,
+                "sparklineLineColor": null,
+                "sparklineFillColor": null
+              },
+              "displayConfidenceBounds": false,
+              "includeObsoleteMetrics": false,
+              "filterOutNonAnomalies": false,
+              "name": "apiserver request latency (P50/P95/P99)",
+              "anomalySampleSize": "8",
+              "units": "ms",
+              "summarization": "MEAN",
+              "base": 0,
+              "chartAttributes": {
+                "lineFill": 1,
+                "dashboardLayout": {
+                  "x": 8,
+                  "y": 0,
+                  "w": 4,
+                  "h": 7
+                }
+              },
+              "sources": [
+                {
+                  "name": "histo",
+                  "query": "cumulativeHisto(sum(align(1m, rate(ts(kube.apiserver.apiserver.request.duration.seconds.bucket, cluster=${cluster_name}))), le))",
+                  "disabled": true,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
+                },
+                {
+                  "name": "p95_request_latency",
+                  "query": "percentile(95, ${histo})",
+                  "disabled": false,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
+                },
+                {
+                  "name": "p90_request_latency",
+                  "query": "percentile(90, ${histo})",
+                  "disabled": false,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
+                },
+                {
+                  "name": "p50_request_latency",
+                  "query": "percentile(50, ${histo})",
+                  "disabled": false,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
+                }
+              ],
+              "noDefaultEvents": true,
+              "anomalyType": "both"
+            }
+          ],
+          "heightFactor": 140
+        },
+        {
+          "charts": [
+            {
+              "anomalySeverity": "medium",
+              "anomalyDetectionOn": false,
+              "chartSettings": {
+                "y1ScaleSIBy1024": false,
+                "fixedLegendEnabled": false,
+                "fixedLegendFilterField": "CURRENT",
+                "y0ScaleSIBy1024": false,
+                "fixedLegendFilterLimit": 5,
+                "fixedLegendShowSourceName": true,
+                "fixedLegendPosition": "RIGHT",
+                "customTags": [],
+                "lineType": "linear",
+                "windowing": "full",
+                "fixedLegendFilterSort": "TOP",
+                "y1Units": "",
+                "fixedLegendShowMetricName": false,
+                "type": "line",
+                "y1UnitAutoscaling": false,
+                "tagMode": "all",
+                "fixedLegendUseRawStats": false,
+                "y0UnitAutoscaling": false,
+                "fixedLegendDisplayStats": [
+                  "CURRENT"
+                ],
+                "autoColumnTags": false,
+                "numTags": 4,
+                "defaultSortColumn": null,
+                "sparklineDisplayColor": null,
+                "sparklineLineColor": null,
+                "sparklineFillColor": null
+              },
+              "displayConfidenceBounds": false,
+              "includeObsoleteMetrics": false,
+              "filterOutNonAnomalies": false,
+              "name": "apiserver workqueue adds rate",
+              "anomalySampleSize": "8",
+              "units": "req/s",
+              "summarization": "MEAN",
+              "base": 0,
+              "chartAttributes": {
+                "lineFill": 1,
+                "dashboardLayout": {
+                  "x": 0,
+                  "y": 7,
+                  "w": 6,
+                  "h": 7
+                }
+              },
+              "sources": [
+                {
+                  "name": "adds_rate",
+                  "query": "rate(ts(kube.apiserver.workqueue.adds.total.counter, cluster=${cluster_name}))",
+                  "disabled": false,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
+                }
+              ],
+              "noDefaultEvents": false,
+              "anomalyType": "both"
+            },
+            {
+              "anomalySeverity": "medium",
+              "anomalyDetectionOn": false,
+              "chartSettings": {
+                "y1ScaleSIBy1024": false,
+                "fixedLegendEnabled": false,
+                "fixedLegendFilterField": "CURRENT",
+                "y0ScaleSIBy1024": false,
+                "fixedLegendFilterLimit": 5,
+                "fixedLegendShowSourceName": true,
+                "fixedLegendPosition": "RIGHT",
+                "customTags": [],
+                "lineType": "linear",
+                "windowing": "full",
+                "fixedLegendFilterSort": "TOP",
+                "y1Units": "",
+                "fixedLegendShowMetricName": false,
+                "type": "line",
+                "y1UnitAutoscaling": false,
+                "tagMode": "all",
+                "fixedLegendUseRawStats": false,
+                "y0UnitAutoscaling": true,
+                "fixedLegendDisplayStats": [
+                  "CURRENT"
+                ],
+                "autoColumnTags": false,
+                "numTags": 4,
+                "defaultSortColumn": null,
+                "sparklineDisplayColor": null,
+                "sparklineLineColor": null,
+                "sparklineFillColor": null
+              },
+              "displayConfidenceBounds": false,
+              "includeObsoleteMetrics": false,
+              "filterOutNonAnomalies": false,
+              "name": "apiserver workqueue service latency (P50/P95/P99)",
+              "anomalySampleSize": "8",
+              "units": "ms",
+              "summarization": "MEAN",
+              "base": 0,
+              "chartAttributes": {
+                "lineFill": 1,
+                "dashboardLayout": {
+                  "x": 6,
+                  "y": 7,
+                  "w": 6,
+                  "h": 7
+                }
+              },
+              "sources": [
+                {
+                  "name": "histo",
+                  "query": "cumulativeHisto(sum(align(1m, rate(ts(kube.apiserver.workqueue.queue.duration.seconds.bucket, cluster=${cluster_name}))), le))",
+                  "disabled": true,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
+                },
+                {
+                  "name": "p95_request_latency",
+                  "query": "percentile(95, ${histo})",
+                  "disabled": false,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
+                },
+                {
+                  "name": "p90_request_latency",
+                  "query": "percentile(90, ${histo})",
+                  "disabled": false,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
+                },
+                {
+                  "name": "p50_request_latency",
+                  "query": "percentile(50, ${histo})",
+                  "disabled": false,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
+                }
+              ],
+              "noDefaultEvents": true,
+              "anomalyType": "both"
+            }
+          ],
+          "heightFactor": 140
+        }
+      ]
+    },
+    {
+      "name": "Control Plane Summary",
+      "id": "z2Fog",
+      "rows": [
+        {
+          "charts": [
+            {
+              "anomalySeverity": "medium",
+              "anomalyDetectionOn": false,
+              "chartSettings": {
+                "y1ScaleSIBy1024": false,
+                "fixedLegendEnabled": false,
+                "fixedLegendFilterField": "CURRENT",
+                "y0ScaleSIBy1024": false,
+                "fixedLegendFilterLimit": 5,
+                "fixedLegendShowSourceName": true,
+                "showValueColumn": true,
+                "fixedLegendPosition": "RIGHT",
+                "customTags": [
+                  "cluster",
+                  "kubelet_version",
+                  "internal_ip",
+                  "provider_id",
+                  "os_image",
+                  "node_role",
+                  "status",
+                  "nodename"
+                ],
+                "showRawValues": false,
+                "lineType": "linear",
+                "showHosts": false,
+                "groupBySource": false,
+                "windowing": "full",
+                "defaultSortColumn": "tags[\"label.kubernetes.io/hostname\"]",
+                "fixedLegendFilterSort": "TOP",
+                "y1Units": "",
+                "sortValuesDescending": true,
+                "fixedLegendShowMetricName": false,
+                "type": "table",
+                "y1UnitAutoscaling": false,
+                "showLabels": false,
+                "tagMode": "all",
+                "fixedLegendUseRawStats": false,
+                "y0UnitAutoscaling": true,
+                "fixedLegendDisplayStats": [
+                  "CURRENT"
+                ],
+                "autoColumnTags": false,
+                "numTags": 8,
+                "sparklineDisplayColor": null,
+                "sparklineLineColor": null,
+                "sparklineFillColor": null
+              },
+              "displayConfidenceBounds": false,
+              "includeObsoleteMetrics": false,
+              "filterOutNonAnomalies": false,
+              "name": "Node Uptime Details",
+              "anomalySampleSize": "8",
+              "units": "min",
+              "summarization": "LAST",
+              "base": 0,
+              "chartAttributes": {
+                "dashboardLinks": {},
+                "lineFill": 1,
+                "dashboardLayout": {
+                  "x": 0,
+                  "y": 0,
+                  "w": 12,
+                  "h": 5
+                }
+              },
+              "sources": [
+                {
+                  "name": "uptime",
+                  "query": "join(\n  ts(\"kubernetes.node.uptime\", cluster=\"${cluster_name}\" ) AS ts1 \n  INNER JOIN \n  ts(\"kubernetes.node.info\", cluster=\"${cluster_name}\" and node_role=\"control-plane\") AS ts2\n  USING(nodename), metric='nodedetails', source=ts1.source, cluster=ts1.cluster, nodename=ts1.nodename, node_role=ts2.node_role, internal_ip=ts2.internal_ip, provider_id=ts2.provider_id, kubelet_version=ts2.kubelet_version, os_image=ts2.os_image,\n  ts1 / 60000\n  )",
+                  "disabled": true,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
+                },
+                {
+                  "name": "nodeCondition",
+                  "query": "limit(250, join(\n  ts(\"kubernetes.node.status.condition\", cluster=\"${cluster_name}\" and condition=\"Ready\") AS ts1 \n  INNER JOIN \n  ${uptime} AS ts2\n  USING(nodename), metric='nodedetails', source=ts1.source, cluster=ts1.cluster, nodename=ts1.nodename, node_role=ts2.node_role, internal_ip=ts2.internal_ip, provider_id=ts2.provider_id, kubelet_version=ts2.kubelet_version, os_image=ts2.os_image, ready=ts1.status, uptime=ts2.value, \n  ts2\n  ))",
+                  "disabled": false,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
+                }
+              ],
+              "noDefaultEvents": true,
+              "description": "status=true means node is in Ready state.",
+              "anomalyType": "both"
+            }
+          ],
+          "heightFactor": 100
+        },
+        {
+          "charts": [
+            {
+              "anomalySeverity": "medium",
+              "anomalyDetectionOn": false,
+              "chartSettings": {
+                "y1ScaleSIBy1024": false,
+                "fixedLegendEnabled": false,
+                "fixedLegendFilterField": "CURRENT",
+                "y0ScaleSIBy1024": false,
+                "fixedLegendFilterLimit": 5,
+                "fixedLegendShowSourceName": true,
+                "fixedLegendPosition": "RIGHT",
+                "customTags": [],
+                "lineType": "linear",
+                "windowing": "full",
+                "fixedLegendFilterSort": "TOP",
+                "y1Units": "",
+                "sortValuesDescending": true,
+                "fixedLegendShowMetricName": false,
+                "type": "line",
+                "y1UnitAutoscaling": false,
+                "tagMode": "all",
+                "fixedLegendUseRawStats": false,
+                "y0UnitAutoscaling": false,
+                "fixedLegendDisplayStats": [
+                  "CURRENT"
+                ],
+                "autoColumnTags": false,
+                "numTags": 4,
+                "defaultSortColumn": null,
+                "sparklineDisplayColor": null,
+                "sparklineLineColor": null,
+                "sparklineFillColor": null
+              },
+              "displayConfidenceBounds": false,
+              "includeObsoleteMetrics": false,
+              "filterOutNonAnomalies": false,
+              "name": "CPU Utilization by Node",
+              "anomalySampleSize": "8",
+              "units": "%",
+              "summarization": "MEAN",
+              "base": 0,
+              "chartAttributes": {
+                "topK": {
+                  "labelBy": [
+                    "nodename"
+                  ]
+                },
+                "lineFill": 1,
+                "dashboardLayout": {
+                  "x": 0,
+                  "y": 5,
+                  "w": 6,
+                  "h": 5
+                }
+              },
+              "sources": [
+                {
+                  "name": "cpu_util",
+                  "query": "limit(250, ts(\"kubernetes.node.cpu.node_utilization\", cluster=\"${cluster_name}\" and nodename=\"${node_name}\") * 100)",
+                  "disabled": false,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
+                }
+              ],
+              "noDefaultEvents": false,
+              "anomalyType": "both"
+            },
+            {
+              "anomalySeverity": "medium",
+              "anomalyDetectionOn": false,
+              "chartSettings": {
+                "y1ScaleSIBy1024": false,
+                "fixedLegendEnabled": false,
+                "fixedLegendFilterField": "CURRENT",
+                "y0ScaleSIBy1024": false,
+                "fixedLegendFilterLimit": 5,
+                "fixedLegendShowSourceName": true,
+                "fixedLegendPosition": "RIGHT",
+                "customTags": [],
+                "lineType": "linear",
+                "windowing": "full",
+                "fixedLegendFilterSort": "TOP",
+                "y1Units": "",
+                "fixedLegendShowMetricName": false,
+                "type": "line",
+                "y1UnitAutoscaling": false,
+                "tagMode": "all",
+                "fixedLegendUseRawStats": false,
+                "y0UnitAutoscaling": false,
+                "fixedLegendDisplayStats": [
+                  "CURRENT"
+                ],
+                "autoColumnTags": false,
+                "numTags": 4,
+                "defaultSortColumn": null,
+                "sparklineDisplayColor": null,
+                "sparklineLineColor": null,
+                "sparklineFillColor": null
+              },
+              "displayConfidenceBounds": false,
+              "includeObsoleteMetrics": false,
+              "filterOutNonAnomalies": false,
+              "name": "Memory Utilization by Node",
+              "anomalySampleSize": "8",
+              "units": "%",
+              "summarization": "MEAN",
+              "base": 0,
+              "chartAttributes": {
+                "lineFill": 1,
+                "dashboardLayout": {
+                  "x": 6,
+                  "y": 5,
+                  "w": 6,
+                  "h": 5
+                }
+              },
+              "sources": [
+                {
+                  "name": "memory_util",
+                  "query": "limit(250, ts(\"kubernetes.node.memory.working_set\", cluster=\"${cluster_name}\" and nodename=\"${node_name}\") / ts(\"kubernetes.node.memory.node_allocatable\", cluster=\"${cluster_name}\" and nodename=\"${node_name}\") * 100)",
+                  "disabled": false,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
+                }
+              ],
+              "noDefaultEvents": false,
+              "anomalyType": "both"
+            }
+          ],
+          "heightFactor": 100
+        }
+      ]
+    },
+    {
+      "name": "etcd",
+      "id": "untitled-dashboard-section-3",
+      "rows": [
+        {
+          "charts": [
+            {
+              "anomalySeverity": "medium",
+              "anomalyDetectionOn": false,
+              "chartSettings": {
+                "y1ScaleSIBy1024": false,
+                "fixedLegendEnabled": false,
+                "fixedLegendFilterField": "CURRENT",
+                "y0ScaleSIBy1024": false,
+                "fixedLegendFilterLimit": 5,
+                "fixedLegendShowSourceName": true,
+                "showValueColumn": true,
+                "fixedLegendPosition": "RIGHT",
+                "customTags": [],
+                "showRawValues": false,
+                "lineType": "linear",
+                "showHosts": true,
+                "groupBySource": false,
+                "windowing": "full",
+                "fixedLegendFilterSort": "TOP",
+                "y1Units": "",
+                "sortValuesDescending": true,
+                "fixedLegendShowMetricName": false,
+                "type": "line",
+                "y1UnitAutoscaling": false,
+                "showLabels": true,
+                "tagMode": "all",
+                "fixedLegendUseRawStats": false,
+                "y0UnitAutoscaling": true,
+                "fixedLegendDisplayStats": [
+                  "CURRENT"
+                ],
+                "autoColumnTags": false,
+                "numTags": 4,
+                "defaultSortColumn": null,
+                "sparklineDisplayColor": null,
+                "sparklineLineColor": null,
+                "sparklineFillColor": null
+              },
+              "displayConfidenceBounds": false,
+              "includeObsoleteMetrics": false,
+              "filterOutNonAnomalies": false,
+              "name": "etcd request latency (P50/P95/P99)",
+              "anomalySampleSize": "8",
+              "units": "s",
+              "summarization": "MEAN",
+              "base": 0,
+              "chartAttributes": {
+                "lineFill": 1,
+                "dashboardLayout": {
+                  "x": 0,
+                  "y": 0,
+                  "w": 4,
+                  "h": 5
+                }
+              },
+              "sources": [
+                {
+                  "name": "histo",
+                  "query": "cumulativeHisto(sum(align(1m, rate(ts(kube.apiserver.etcd.request.duration.seconds.bucket, cluster=${cluster_name}))), le))",
+                  "disabled": true,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false
+                },
+                {
+                  "name": "P95",
+                  "query": "percentile(95, ${histo})",
+                  "disabled": false,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false
+                },
+                {
+                  "name": "P90",
+                  "query": "percentile(90, ${histo})",
+                  "disabled": false,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false
+                },
+                {
+                  "name": "P50",
+                  "query": "percentile(50, ${histo})",
+                  "disabled": false,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false
+                },
+                {
+                  "name": "A",
+                  "query": "ts(kube.apiserver.etcd.request.duration.seconds.bucket, cluster=${cluster_name})",
+                  "disabled": true,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false
+                }
+              ],
+              "noDefaultEvents": false,
+              "anomalyType": "both"
+            },
+            {
+              "anomalySeverity": "medium",
+              "anomalyDetectionOn": false,
+              "chartSettings": {
+                "y1ScaleSIBy1024": false,
+                "fixedLegendEnabled": false,
+                "fixedLegendFilterField": "CURRENT",
+                "y0ScaleSIBy1024": false,
+                "fixedLegendFilterLimit": 5,
+                "fixedLegendShowSourceName": true,
+                "fixedLegendPosition": "RIGHT",
+                "customTags": [],
+                "lineType": "linear",
+                "windowing": "full",
+                "fixedLegendFilterSort": "TOP",
+                "y1Units": "",
+                "fixedLegendShowMetricName": false,
+                "type": "line",
+                "y1UnitAutoscaling": false,
+                "tagMode": "all",
+                "fixedLegendUseRawStats": false,
+                "y0UnitAutoscaling": true,
+                "fixedLegendDisplayStats": [
+                  "CURRENT"
+                ],
+                "autoColumnTags": false,
+                "numTags": 4,
+                "defaultSortColumn": null,
+                "sparklineDisplayColor": null,
+                "sparklineLineColor": null,
+                "sparklineFillColor": null
+              },
+              "displayConfidenceBounds": false,
+              "includeObsoleteMetrics": false,
+              "filterOutNonAnomalies": false,
+              "name": "etcd Object Counts",
+              "anomalySampleSize": "8",
+              "summarization": "MEAN",
+              "base": 0,
+              "chartAttributes": {
+                "lineFill": 1,
+                "dashboardLayout": {
+                  "x": 4,
+                  "y": 0,
+                  "w": 4,
+                  "h": 5
+                }
+              },
+              "sources": [
+                {
+                  "name": "A",
+                  "query": "sum(ts(kube.apiserver.etcd.object.counts.gauge, cluster=${cluster_name}))",
+                  "disabled": true,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false
+                },
+                {
+                  "name": "A Clone",
+                  "query": "ts(kube.apiserver.etcd.object.counts.gauge, cluster=${cluster_name})",
+                  "disabled": false,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false
+                }
+              ],
+              "noDefaultEvents": false,
+              "anomalyType": "both"
+            },
+            {
+              "anomalySeverity": "medium",
+              "anomalyDetectionOn": false,
+              "chartSettings": {
+                "y1ScaleSIBy1024": false,
+                "fixedLegendEnabled": false,
+                "fixedLegendFilterField": "CURRENT",
+                "y0ScaleSIBy1024": false,
+                "fixedLegendFilterLimit": 5,
+                "fixedLegendShowSourceName": true,
+                "fixedLegendPosition": "RIGHT",
+                "customTags": [],
+                "lineType": "linear",
+                "windowing": "full",
+                "fixedLegendFilterSort": "TOP",
+                "y1Units": "",
+                "fixedLegendShowMetricName": false,
+                "type": "line",
+                "y1UnitAutoscaling": false,
+                "tagMode": "all",
+                "fixedLegendUseRawStats": false,
+                "y0UnitAutoscaling": false,
+                "fixedLegendDisplayStats": [
+                  "CURRENT"
+                ],
+                "autoColumnTags": false,
+                "numTags": 4,
+                "defaultSortColumn": null,
+                "sparklineDisplayColor": null,
+                "sparklineLineColor": null,
+                "sparklineFillColor": null
+              },
+              "displayConfidenceBounds": false,
+              "includeObsoleteMetrics": false,
+              "filterOutNonAnomalies": false,
+              "name": "etcd DB Size",
+              "anomalySampleSize": "8",
+              "units": "bytes",
+              "summarization": "MEAN",
+              "base": 0,
+              "chartAttributes": {
+                "lineFill": 1,
+                "dashboardLayout": {
+                  "x": 8,
+                  "y": 0,
+                  "w": 4,
+                  "h": 5
+                }
+              },
+              "sources": [
+                {
+                  "name": "A",
+                  "query": "ts(kube.apiserver.etcd.db.total.size.in.bytes.gauge, cluster=${cluster_name})",
+                  "disabled": false,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false
+                }
+              ],
+              "noDefaultEvents": false,
+              "anomalyType": "both"
+            }
+          ],
+          "heightFactor": 100
+        }
+      ]
+    }
+  ],
+  "parameterDetails": {
+    "node_name": {
+      "tagsBlackListRegex": "",
+      "parameterType": "DYNAMIC",
+      "tagKey": "nodename",
+      "queryValue": "ts(kubernetes.node.info, node_role=\"control-plane\")",
+      "order": 2,
+      "defaultValue": "Label",
+      "hideFromView": false,
+      "value": "*",
+      "label": "node",
+      "dynamicFieldType": "TAG_KEY",
+      "valuesToReadableStrings": {
+        "Label": "*"
+      },
+      "allowAll": true,
+      "selectedLabel": "Label"
+    },
+    "cluster_name": {
+      "tagsBlackListRegex": "",
+      "parameterType": "DYNAMIC",
+      "tagKey": "cluster",
+      "queryValue": "collect(ts(\"kubernetes.collector.version\"), taggify(1, cluster, \"*\"))",
+      "order": 1,
+      "defaultValue": "Label",
+      "hideFromView": false,
+      "value": "*",
+      "label": "cluster",
+      "dynamicFieldType": "TAG_KEY",
+      "valuesToReadableStrings": {
+        "Label": "*"
+      },
+      "allowAll": false,
+      "selectedLabel": "Label"
+    }
+  }
+}
