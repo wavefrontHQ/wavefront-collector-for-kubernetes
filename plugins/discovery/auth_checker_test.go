@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/discovery"
 	v1 "k8s.io/api/authorization/v1"
@@ -114,7 +116,7 @@ func (spy *AccessSpy) CreateContext(ctx context.Context, sar *v1.SelfSubjectAcce
 	panic("implement me")
 }
 
-func (spy *AccessSpy) Create(sar *v1.SelfSubjectAccessReview) (result *v1.SelfSubjectAccessReview, err error) {
+func (spy *AccessSpy) Create(ctx context.Context, sar *v1.SelfSubjectAccessReview, options v12.CreateOptions) (result *v1.SelfSubjectAccessReview, err error) {
 	spy.callCount++
 	return &v1.SelfSubjectAccessReview{
 		Status: v1.SubjectAccessReviewStatus{

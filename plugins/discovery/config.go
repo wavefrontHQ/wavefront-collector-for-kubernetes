@@ -4,6 +4,7 @@
 package discovery
 
 import (
+	"context"
 	"io/ioutil"
 	"reflect"
 	"sort"
@@ -67,10 +68,10 @@ func newConfigMapInformer(kubeClient kubernetes.Interface, ns string, handler *c
 	s := kubeClient.CoreV1().ConfigMaps(ns)
 	lw := &cache.ListWatch{
 		ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
-			return s.List(options)
+			return s.List(context.Background(), options)
 		},
 		WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
-			return s.Watch(options)
+			return s.Watch(context.Background(), options)
 		},
 	}
 
@@ -121,13 +122,13 @@ func newSecretInformer(kubeClient kubernetes.Interface, ns string, handler *conf
 	lw := &cache.ListWatch{
 		ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
 			if authChecker.CanListSecrets() {
-				return s.List(options)
+				return s.List(context.Background(), options)
 			} else {
 				return emptySecretList(), nil
 			}
 		},
 		WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
-			return s.Watch(options)
+			return s.Watch(context.Background(), options)
 		},
 	}
 
