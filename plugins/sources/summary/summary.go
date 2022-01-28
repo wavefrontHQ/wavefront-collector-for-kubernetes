@@ -58,6 +58,7 @@ type NodeInfo struct {
 	HostName       string
 	HostID         string
 	KubeletVersion string
+	NodeRole       string
 	IP             net.IP
 }
 
@@ -201,6 +202,7 @@ func (src *summaryMetricsSource) decodeNodeStats(metrics map[string]*MetricSet, 
 		ScrapeTime:          src.getScrapeTime(node.CPU, node.Memory, node.Network),
 	}
 	nodeMetrics.Labels[LabelMetricSetType.Key] = MetricSetTypeNode
+	nodeMetrics.Labels[LabelNodeRole.Key] = src.node.NodeRole
 
 	src.decodeUptime(nodeMetrics, node.StartTime.Time)
 	src.decodeCPUStats(nodeMetrics, node.CPU)
@@ -495,6 +497,7 @@ func (sp *summaryProvider) getNodeInfo(node *kube_api.Node) (NodeInfo, error) {
 		HostID:         hostID,
 		IP:             ip,
 		KubeletVersion: node.Status.NodeInfo.KubeletVersion,
+		NodeRole:       util.GetNodeRole(node),
 	}
 
 	log.WithFields(log.Fields{

@@ -164,3 +164,13 @@ func GetNodeHostnameAndIP(node *kube_api.Node) (string, net.IP, error) {
 	}
 	return "", nil, fmt.Errorf("node %v has no valid hostname and/or IP address: %v %v", node.Name, hostname, ip)
 }
+
+func GetNodeRole(node *kube_api.Node) string {
+	if _, ok := node.GetLabels()["node-role.kubernetes.io/control-plane"]; ok {
+		return "control-plane"
+	}
+	if _, ok := node.GetLabels()["node-role.kubernetes.io/master"]; ok {
+		return "control-plane"
+	}
+	return "worker"
+}

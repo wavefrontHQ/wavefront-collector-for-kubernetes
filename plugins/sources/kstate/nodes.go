@@ -7,6 +7,8 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
+
 	log "github.com/sirupsen/logrus"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
@@ -35,6 +37,7 @@ func buildNodeConditions(node *v1.Node, transforms configuration.Transforms, ts 
 		copyLabels(node.GetLabels(), tags)
 		tags["status"] = string(condition.Status)
 		tags["condition"] = string(condition.Type)
+		tags[metrics.LabelNodeRole.Key] = util.GetNodeRole(node)
 
 		// add status and condition (condition.status and condition.type)
 		points[i] = metricPoint(transforms.Prefix, "node.status.condition",
@@ -66,13 +69,7 @@ func buildNodeInfo(node *v1.Node, transforms configuration.Transforms, ts int64)
 	tags["kubeproxy_version"] = node.Status.NodeInfo.KubeProxyVersion
 	tags["provider_id"] = node.Spec.ProviderID
 	tags["pod_cidr"] = node.Spec.PodCIDR
-	tags["node_role"] = "worker"
-	if _, ok := node.GetLabels()["node-role.kubernetes.io/control-plane"]; ok {
-		tags["node_role"] = "control-plane"
-	}
-	if _, ok := node.GetLabels()["node-role.kubernetes.io/master"]; ok {
-		tags["node_role"] = "control-plane"
-	}
+	tags["node_role"] = util.GetNodeRole(node)
 
 	for _, address := range node.Status.Addresses {
 		if address.Type == "InternalIP" {
