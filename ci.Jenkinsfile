@@ -7,17 +7,6 @@ pipeline {
     }
 
     stages {
-        stage("Test with Go 1.16") {
-            tools {
-                go 'Go 1.16'
-            }
-            steps {
-                withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
-                  sh 'make checkfmt vet tests'
-                }
-            }
-        }
-
         stage("Test with Go 1.17") {
             tools {
                 go 'Go 1.17'
