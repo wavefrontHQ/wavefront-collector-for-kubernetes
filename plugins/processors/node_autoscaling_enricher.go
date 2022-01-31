@@ -46,6 +46,7 @@ func (nae *NodeAutoscalingEnricher) Process(batch *metrics.DataBatch) (*metrics.
 	for _, node := range nodes {
 		if metricSet, found := batch.MetricSets[metrics.NodeKey(node.Name)]; found {
 			nae.labelCopier.Copy(node.Labels, metricSet.Labels)
+			metricSet.Labels[metrics.LabelNodeRole.Key] = util.GetNodeRole(node)
 			capacityCpu, _ := node.Status.Capacity[kube_api.ResourceCPU]
 			capacityMem, _ := node.Status.Capacity[kube_api.ResourceMemory]
 			capacityEphemeralStorage, storageExist := node.Status.Capacity[kube_api.ResourceEphemeralStorage]

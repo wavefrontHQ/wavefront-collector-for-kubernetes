@@ -59,6 +59,10 @@ var (
 		Key:         "nodename",
 		Description: "nodename where the container ran",
 	}
+	LabelNodeRole = LabelDescriptor{
+		Key:         "node_role",
+		Description: "Node role worker or control-plane",
+	}
 	LabelHostname = LabelDescriptor{
 		Key:         "hostname",
 		Description: "Hostname where the container ran",
