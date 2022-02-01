@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/coreos/go-systemd/v22 v22.3.2
 	github.com/gobwas/glob v0.2.3
-	github.com/google/cadvisor v0.35.0
+	github.com/google/cadvisor v0.43.0
 	github.com/influxdata/telegraf v0.10.2-0.20191023195903-9a4f08e94774
 	github.com/influxdata/toml v0.0.0-20190415235208-270119a8ce65
 	github.com/json-iterator/go v1.1.12
