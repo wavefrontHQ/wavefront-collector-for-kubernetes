@@ -80,7 +80,7 @@
               "sources": [
                 {
                   "name": "uptime",
-                  "query": "join(\n  ts(\"kubernetes.node.uptime\", cluster=\"${cluster_name}\" ) AS ts1 \n  INNER JOIN \n  ts(\"kubernetes.node.info\", cluster=\"${cluster_name}\" and node_role=\"control-plane\") AS ts2\n  USING(nodename, source), metric='nodedetails', source=ts1.source, cluster=ts1.cluster, nodename=ts1.nodename, node_role=ts2.node_role, internal_ip=ts2.internal_ip, provider_id=ts2.provider_id, kubelet_version=ts2.kubelet_version, os_image=ts2.os_image,\n  ts1 / 60000\n  )",
+                  "query": "join(\n  ts(\"kubernetes.node.uptime\", cluster=\"${cluster_name}\" and node_role=\"control-plane\" ) AS ts1 \n  INNER JOIN \n  ts(\"kubernetes.node.info\", cluster=\"${cluster_name}\" and node_role=\"control-plane\") AS ts2\n  USING(nodename), metric='nodedetails', source=ts1.source, cluster=ts1.cluster, nodename=ts1.nodename, node_role=ts2.node_role, internal_ip=ts2.internal_ip, provider_id=ts2.provider_id, kubelet_version=ts2.kubelet_version, os_image=ts2.os_image,\n  ts1 / 60000\n)",
                   "querybuilderEnabled": false,
                   "sourceDescription": "",
                   "disabled": true,
@@ -89,7 +89,7 @@
                 },
                 {
                   "name": "nodeCondition",
-                  "query": "limit(250, join(\n  ts(\"kubernetes.node.status.condition\", cluster=\"${cluster_name}\" and condition=\"Ready\") AS ts1 \n  INNER JOIN \n  ${uptime} AS ts2\n  USING(nodename, source), metric='nodedetails', source=ts1.source, cluster=ts1.cluster, nodename=ts1.nodename, node_role=ts2.node_role, internal_ip=ts2.internal_ip, provider_id=ts2.provider_id, kubelet_version=ts2.kubelet_version, os_image=ts2.os_image, ready=ts1.status, uptime=ts2.value, \n  ts2\n  ))",
+                  "query": "join(\n  ts(\"kubernetes.node.status.condition\"  and condition=\"Ready\" AND nodename=\"${node_name}\" AND node_role=\"control-plane\") AS ts1 \n  INNER JOIN \n  ${uptime} AS ts2\n  USING(nodename), metric='nodedetails', source=ts1.source, cluster=ts1.cluster, nodename=ts1.nodename, node_role=ts2.node_role, internal_ip=ts2.internal_ip, provider_id=ts2.provider_id, kubelet_version=ts2.kubelet_version, os_image=ts2.os_image, ready=ts1.status, uptime=ts2.value, \n  ts2\n  )",
                   "querybuilderEnabled": false,
                   "sourceDescription": "",
                   "disabled": false,
@@ -164,7 +164,7 @@
               "sources": [
                 {
                   "name": "cpu_util",
-                  "query": "limit(250, ts(\"kubernetes.node.cpu.node_utilization\", cluster=\"${cluster_name}\" and nodename=\"${node_name}\") * 100)",
+                  "query": "limit(250, ts(\"kubernetes.node.cpu.node_utilization\", cluster=\"${cluster_name}\" and nodename=\"${node_name}\" and node_role=\"control-plane\") * 100)",
                   "querybuilderEnabled": false,
                   "sourceDescription": "",
                   "disabled": false,
@@ -227,7 +227,7 @@
               "sources": [
                 {
                   "name": "memory_util",
-                  "query": "limit(250, ts(\"kubernetes.node.memory.working_set\", cluster=\"${cluster_name}\" and nodename=\"${node_name}\") / ts(\"kubernetes.node.memory.node_allocatable\", cluster=\"${cluster_name}\" and nodename=\"${node_name}\") * 100)",
+                  "query": "limit(250, ts(\"kubernetes.node.memory.working_set\", cluster=\"${cluster_name}\" and nodename=\"${node_name}\" and node_role=\"control-plane\") / ts(\"kubernetes.node.memory.node_allocatable\", cluster=\"${cluster_name}\" and nodename=\"${node_name}\" and node_role=\"control-plane\") * 100)",
                   "querybuilderEnabled": false,
                   "sourceDescription": "",
                   "disabled": false,
