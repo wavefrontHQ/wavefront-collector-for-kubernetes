@@ -40,7 +40,7 @@ import (
 	kube_client "k8s.io/client-go/kubernetes"
 	v1listers "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/tools/cache"
-	stats "k8s.io/kubernetes/pkg/kubelet/apis/stats/v1alpha1"
+	stats "k8s.io/kubelet/pkg/apis/stats/v1alpha1"
 )
 
 // Prefix used for the LabelResourceID for volume metrics.

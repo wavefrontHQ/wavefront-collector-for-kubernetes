@@ -1,7 +1,10 @@
 package discovery
 
 import (
+	"context"
 	"time"
+
+	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/authorization/v1"
@@ -79,7 +82,7 @@ func (checker *AuthChecker) canListSecretsAPI() bool {
 			},
 		},
 	}
-	review, err := checker.accessGetter.Create(sar)
+	review, err := checker.accessGetter.Create(context.Background(), sar, v12.CreateOptions{})
 	if err != nil {
 		log.Errorf("Unable to check api access: %v", err)
 		return false

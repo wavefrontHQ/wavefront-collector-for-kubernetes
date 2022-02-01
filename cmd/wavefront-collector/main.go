@@ -34,8 +34,6 @@ import (
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources/summary"
 
-	kubeFlag "k8s.io/apiserver/pkg/util/flag"
-	"k8s.io/apiserver/pkg/util/logs"
 	kube_client "k8s.io/client-go/kubernetes"
 	v1listers "k8s.io/client-go/listers/core/v1"
 )
@@ -53,15 +51,12 @@ func main() {
 
 	opt := options.NewCollectorRunOptions()
 	opt.AddFlags(pflag.CommandLine)
-	kubeFlag.InitFlags()
+	pflag.Parse()
 
 	if opt.Version {
 		fmt.Println(fmt.Sprintf("version: %s\ncommit: %s", version, commit))
 		os.Exit(0)
 	}
-
-	logs.InitLogs()
-	defer logs.FlushLogs()
 
 	switch opt.LogLevel {
 	case "trace":

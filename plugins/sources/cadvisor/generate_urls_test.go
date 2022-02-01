@@ -1,6 +1,7 @@
 package cadvisor
 
 import (
+	"context"
 	"errors"
 	"net"
 	"net/url"
@@ -14,13 +15,13 @@ import (
 
 type StubNodeLister v1.NodeList
 
-func (s *StubNodeLister) List(_ metav1.ListOptions) (*v1.NodeList, error) {
+func (s *StubNodeLister) List(ctx context.Context, _ metav1.ListOptions) (*v1.NodeList, error) {
 	return (*v1.NodeList)(s), nil
 }
 
 type ErrorNodeLister string
 
-func (s ErrorNodeLister) List(_ metav1.ListOptions) (*v1.NodeList, error) {
+func (s ErrorNodeLister) List(ctx context.Context, _ metav1.ListOptions) (*v1.NodeList, error) {
 	return nil, errors.New(string(s))
 }
 

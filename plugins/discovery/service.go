@@ -4,6 +4,7 @@
 package discovery
 
 import (
+	"context"
 	"time"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
@@ -25,10 +26,10 @@ func newServiceHandler(kubeClient kubernetes.Interface, discoverer discovery.Dis
 	s := kubeClient.CoreV1().Services(v1.NamespaceAll)
 	lw := &cache.ListWatch{
 		ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
-			return s.List(options)
+			return s.List(context.Background(), options)
 		},
 		WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
-			return s.Watch(options)
+			return s.Watch(context.Background(), options)
 		},
 	}
 	inf := cache.NewSharedInformer(lw, &v1.Service{}, 1*time.Hour)
