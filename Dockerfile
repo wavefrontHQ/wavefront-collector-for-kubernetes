@@ -23,6 +23,7 @@ ARG BINARY_NAME
 WORKDIR /
 COPY --from=builder /workspace/${BINARY_NAME} .
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=builder /workspace/open_source_licenses.txt .
 
 #   nobody:nobody
 USER 65534:65534
