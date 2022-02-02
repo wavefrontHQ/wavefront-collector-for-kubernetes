@@ -36,6 +36,8 @@ func NewPointBuilder(src *prometheusMetricsSource) *pointBuilder {
 
 }
 
+// build converts a map of prometheus metric families by metric name to a collection of wavefront points
+// build actually never returns an error
 func (builder *pointBuilder) build(metricFamilies map[string]*dto.MetricFamily) ([]*metrics.MetricPoint, error) {
 	now := time.Now().Unix()
 	var result []*metrics.MetricPoint
@@ -43,6 +45,7 @@ func (builder *pointBuilder) build(metricFamilies map[string]*dto.MetricFamily) 
 	for metricName, mf := range metricFamilies {
 		for _, m := range mf.Metric {
 			var points []*metrics.MetricPoint
+			// Prometheus metric family -> wavefront metric points
 			if mf.GetType() == dto.MetricType_SUMMARY {
 				points = builder.buildSummaryPoints(metricName, m, now, builder.buildTags(m))
 			} else if mf.GetType() == dto.MetricType_HISTOGRAM {

@@ -163,6 +163,7 @@ func (src *prometheusMetricsSource) ScrapeMetrics() (*metrics.DataBatch, error) 
 	}
 
 	points, err := src.parseMetrics(resp.Body)
+	// TODO: filter tags here
 
 	if err != nil {
 		collectErrors.Inc(1)
@@ -176,6 +177,8 @@ func (src *prometheusMetricsSource) ScrapeMetrics() (*metrics.DataBatch, error) 
 	return result, nil
 }
 
+// parseMetrics converts serialized prometheus metrics to wavefront points
+// parseMetrics returns an error when IO or parsing fails
 func (src *prometheusMetricsSource) parseMetrics(reader io.Reader) ([]*metrics.MetricPoint, error) {
 	metricReader := NewMetricReader(reader)
 	pointBuilder := NewPointBuilder(src)

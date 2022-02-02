@@ -91,6 +91,7 @@ func (gf *globFilter) Match(name string, tags map[string]string) bool {
 		return false
 	}
 
+	// TODO: Do not mutate the tags in this read-only method
 	if gf.tagInclude != nil {
 		deleteTags(gf.tagInclude, tags, true)
 	}
