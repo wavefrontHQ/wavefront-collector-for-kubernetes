@@ -83,6 +83,45 @@ func TestMetricTagDenyList(t *testing.T) {
 	assert.Equal(t, 7, len(points), "wrong number of points")
 }
 
+func TestTagInclude(t *testing.T) {
+	src := &prometheusMetricsSource{
+		filters: filter.FromConfig(filter.Config{
+			TagInclude: []string{"label"},
+		}),
+	}
+
+	points, err := src.parseMetrics(testMetricReader())
+	require.NoError(t, err, "parsing metrics")
+	assert.Equal(t, 8, len(points), "wrong number of points")
+
+	tagCounts := map[string]int{}
+	for _, point := range points {
+		tags := point.GetTags()
+		for tagName := range tags {
+			tagCounts[tagName] += 1
+		}
+	}
+	assert.Equal(t,1, len(tagCounts), "the only tags left are 'label'")
+	assert.Equal(t, 2, tagCounts["label"], "two metrics have a tag named 'label'")
+}
+
+func TestTagExclude(t *testing.T) {
+	src := &prometheusMetricsSource{
+		filters: filter.FromConfig(filter.Config{
+			TagExclude: []string{"label"},
+		}),
+	}
+
+	points, err := src.parseMetrics(testMetricReader())
+	require.NoError(t, err, "parsing metrics")
+	assert.Equal(t, 8, len(points), "wrong number of points")
+
+	for _, point := range points {
+		_, ok := point.GetTags()["label"]
+		assert.False(t, ok, point.GetTags())
+	}
+}
+
 func BenchmarkMetricPoint(b *testing.B) {
 	tempTags := map[string]string{"pod_name": "prometheus_pod_xyz", "namespace_name": "default"}
 	src := &prometheusMetricsSource{prefix: "prefix."}

@@ -364,7 +364,7 @@ func (src *systemdMetricsSource) filterUnits(units []unit) []unit {
 }
 
 func (src *systemdMetricsSource) filterAppend(slice []*MetricPoint, point *MetricPoint) []*MetricPoint {
-	if src.filters == nil || src.filters.Match(point.Metric, point.Tags) {
+	if src.filters == nil || src.filters.MatchMetricAndFilterTags(point.Metric, point.Tags) {
 		return append(slice, point)
 	}
 	src.fps.Inc(1)

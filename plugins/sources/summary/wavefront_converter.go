@@ -135,7 +135,7 @@ func (converter *pointConverter) Process(batch *metrics.DataBatch) (*metrics.Dat
 }
 
 func (converter *pointConverter) filterAppend(slice []*metrics.MetricPoint, point *metrics.MetricPoint) []*metrics.MetricPoint {
-	if converter.filters == nil || converter.filters.Match(point.Metric, point.Tags) {
+	if converter.filters == nil || converter.filters.MatchMetricAndFilterTags(point.Metric, point.Tags) {
 		return append(slice, point)
 	}
 	converter.filteredPoints.Inc(1)

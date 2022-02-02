@@ -10,8 +10,9 @@ import (
 )
 
 type Filter interface {
-	Match(name string, tags map[string]string) bool
+	MatchMetricAndFilterTags(name string, tags map[string]string) bool
 	UsesTags() bool
+	MatchTag(tagName string) bool
 }
 
 type globFilter struct {
@@ -76,7 +77,7 @@ func (gf *globFilter) UsesTags() bool {
 		gf.tagExclude != nil || gf.tagInclude != nil
 }
 
-func (gf *globFilter) Match(name string, tags map[string]string) bool {
+func (gf *globFilter) MatchMetricAndFilterTags(name string, tags map[string]string) bool {
 	if gf.metricAllowList != nil && !gf.metricAllowList.Match(name) {
 		return false
 	}
@@ -99,6 +100,17 @@ func (gf *globFilter) Match(name string, tags map[string]string) bool {
 		deleteTags(gf.tagExclude, tags, false)
 	}
 	return true
+}
+
+func (gf *globFilter) MatchTag(tagName string) bool {
+	matches := true
+	if gf.tagInclude != nil {
+		matches = matches && gf.tagInclude.Match(tagName)
+	}
+	if gf.tagExclude != nil {
+		matches = matches && !gf.tagExclude.Match(tagName)
+	}
+	return matches
 }
 
 func MatchesTags(matchers map[string]glob.Glob, tags map[string]string) bool {

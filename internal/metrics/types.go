@@ -204,6 +204,22 @@ func (m *MetricPoint) GetTags() map[string]string {
 	return tags
 }
 
+func (m *MetricPoint) FilterTags(pred func(string) bool) {
+	var nextLabelPairs []LabelPair
+	for _, labelPair := range m.labelPairs {
+		if pred(*labelPair.Name) {
+			nextLabelPairs = append(nextLabelPairs, labelPair)
+		}
+	}
+	m.labelPairs = nextLabelPairs
+
+	for name := range m.Tags {
+		if !pred(name) {
+			delete(m.Tags, name)
+		}
+	}
+}
+
 // ProviderHandler is an interface for dynamically adding and removing MetricSourceProviders
 type ProviderHandler interface {
 	AddProvider(provider MetricsSourceProvider)

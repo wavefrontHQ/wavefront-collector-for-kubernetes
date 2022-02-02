@@ -82,7 +82,7 @@ func (t *telegrafDataBatch) buildTags(pointTags map[string]string) map[string]st
 }
 
 func (t *telegrafDataBatch) filterAppend(slice []*metrics.MetricPoint, point *metrics.MetricPoint) []*metrics.MetricPoint {
-	if t.source.filters == nil || t.source.filters.Match(point.Metric, point.Tags) {
+	if t.source.filters == nil || t.source.filters.MatchMetricAndFilterTags(point.Metric, point.Tags) {
 		return append(slice, point)
 	}
 	t.source.pointsFiltered.Inc(1)

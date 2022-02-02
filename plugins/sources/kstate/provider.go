@@ -130,7 +130,7 @@ func (src *stateMetricsSource) pointsForResource(resType string) []*metrics.Metr
 }
 
 func (src *stateMetricsSource) keep(name string, tags map[string]string) bool {
-	if src.filters == nil || src.filters.Match(name, tags) {
+	if src.filters == nil || src.filters.MatchMetricAndFilterTags(name, tags) {
 		return true
 	}
 	src.fps.Inc(1)

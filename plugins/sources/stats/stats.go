@@ -182,7 +182,7 @@ func (src *internalMetricsSource) filterAppend(slice []*metrics.MetricPoint, poi
 	if point == nil {
 		return slice
 	}
-	if src.filters == nil || src.filters.Match(point.Metric, point.Tags) {
+	if src.filters == nil || src.filters.MatchMetricAndFilterTags(point.Metric, point.Tags) {
 		return append(slice, point)
 	}
 	src.fps.Inc(1)
