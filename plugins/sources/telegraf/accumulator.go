@@ -60,8 +60,8 @@ func (t *telegrafDataBatch) preparePoints(measurement string, fields map[string]
 			Value:     value,
 			Timestamp: ts.UnixNano() / 1000,
 			Source:    t.source.source,
-			Tags:      t.buildTags(tags),
 		}
+		point.SetTags(t.buildTags(tags))
 		t.MetricPoints = t.filterAppend(t.MetricPoints, point)
 	}
 }
@@ -82,7 +82,7 @@ func (t *telegrafDataBatch) buildTags(pointTags map[string]string) map[string]st
 }
 
 func (t *telegrafDataBatch) filterAppend(slice []*metrics.MetricPoint, point *metrics.MetricPoint) []*metrics.MetricPoint {
-	if t.source.filters == nil || t.source.filters.MatchMetricAndFilterTags(point.Metric, point.Tags) {
+	if t.source.filters == nil || t.source.filters.MatchMetric(point.Metric, point.GetTags()) {
 		return append(slice, point)
 	}
 	t.source.pointsFiltered.Inc(1)

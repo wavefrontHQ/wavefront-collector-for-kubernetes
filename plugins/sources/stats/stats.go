@@ -152,13 +152,14 @@ func (src *internalMetricsSource) point(name string, value float64, ts int64) *m
 		return nil
 	}
 
-	return &metrics.MetricPoint{
+	point := &metrics.MetricPoint{
 		Metric:    src.prefix + "collector." + strings.Replace(name, "_", ".", -1),
 		Value:     value,
 		Timestamp: ts,
 		Source:    src.source,
-		Tags:      src.buildTags(tags),
 	}
+	point.SetTags(src.buildTags(tags))
+	return point
 }
 
 func (src *internalMetricsSource) buildTags(tags map[string]string) map[string]string {
@@ -182,7 +183,7 @@ func (src *internalMetricsSource) filterAppend(slice []*metrics.MetricPoint, poi
 	if point == nil {
 		return slice
 	}
-	if src.filters == nil || src.filters.MatchMetricAndFilterTags(point.Metric, point.Tags) {
+	if src.filters == nil || src.filters.MatchMetric(point.Metric, point.GetTags()) {
 		return append(slice, point)
 	}
 	src.fps.Inc(1)

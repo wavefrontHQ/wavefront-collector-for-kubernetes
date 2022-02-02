@@ -182,13 +182,17 @@ type MetricPoint struct {
 	Value     float64
 	Timestamp int64
 	Source    string
-	Tags      map[string]string
 
+	tags      map[string]string
 	labelPairs []LabelPair
 }
 
 func (m *MetricPoint) SetLabelPairs(pairs []LabelPair) {
 	m.labelPairs = pairs
+}
+
+func (m *MetricPoint) SetTags(tags map[string]string) {
+	m.tags = tags
 }
 
 func (m *MetricPoint) GetTags() map[string]string {
@@ -197,7 +201,7 @@ func (m *MetricPoint) GetTags() map[string]string {
 		tags[*labelPair.Name] = *labelPair.Value
 	}
 
-	for k, v := range m.Tags {
+	for k, v := range m.tags {
 		tags[k] = v
 	}
 
@@ -213,9 +217,9 @@ func (m *MetricPoint) FilterTags(pred func(string) bool) {
 	}
 	m.labelPairs = nextLabelPairs
 
-	for name := range m.Tags {
+	for name := range m.tags {
 		if !pred(name) {
-			delete(m.Tags, name)
+			delete(m.tags, name)
 		}
 	}
 }

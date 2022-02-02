@@ -112,14 +112,16 @@ func TestCleansTagsBeforeSending(t *testing.T) {
 	sink, err := NewWavefrontSink(cfg)
 	assert.NoError(t, err)
 
+	point := &metrics.MetricPoint{
+		Metric: "cpu.idle",
+		Value:  1.0,
+		Source: "fakeSource",
+	}
+	point.SetTags(map[string]string{"emptyTag": ""})
+
 	db := metrics.DataBatch{
 		MetricPoints: []*metrics.MetricPoint{
-			{
-				Metric: "cpu.idle",
-				Value:  1.0,
-				Source: "fakeSource",
-				Tags:   map[string]string{"emptyTag": ""},
-			},
+			point,
 		},
 	}
 	sink.ExportData(&db)

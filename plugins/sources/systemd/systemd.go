@@ -364,7 +364,7 @@ func (src *systemdMetricsSource) filterUnits(units []unit) []unit {
 }
 
 func (src *systemdMetricsSource) filterAppend(slice []*MetricPoint, point *MetricPoint) []*MetricPoint {
-	if src.filters == nil || src.filters.MatchMetricAndFilterTags(point.Metric, point.Tags) {
+	if src.filters == nil || src.filters.MatchMetric(point.Metric, point.GetTags()) {
 		return append(slice, point)
 	}
 	src.fps.Inc(1)
@@ -396,13 +396,14 @@ func setTag(tags map[string]string, key, val string) {
 }
 
 func (src *systemdMetricsSource) metricPoint(name string, value float64, ts int64, tags map[string]string) *MetricPoint {
-	return &MetricPoint{
+	point := &MetricPoint{
 		Metric:    src.prefix + strings.Replace(name, "_", ".", -1),
 		Value:     value,
 		Timestamp: ts,
 		Source:    src.source,
-		Tags:      tags,
 	}
+	point.SetTags(tags)
+	return point
 }
 
 type systemdProvider struct {

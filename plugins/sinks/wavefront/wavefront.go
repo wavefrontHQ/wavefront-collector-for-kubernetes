@@ -152,7 +152,7 @@ func (sink *wavefrontSink) sendPoint(metricName string, value float64, timestamp
 	if len(sink.Prefix) > 0 {
 		metricName = sink.Prefix + "." + metricName
 	}
-	if sink.filters != nil && !sink.filters.MatchMetricAndFilterTags(metricName, tags) {
+	if sink.filters != nil && !sink.filters.MatchMetric(metricName, tags) {
 		filteredPoints.Inc(1)
 		if log.IsLevelEnabled(log.TraceLevel) {
 			log.WithField("name", metricName).Trace("Dropping metric")

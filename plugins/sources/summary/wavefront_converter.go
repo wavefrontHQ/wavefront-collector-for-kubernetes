@@ -135,7 +135,7 @@ func (converter *pointConverter) Process(batch *metrics.DataBatch) (*metrics.Dat
 }
 
 func (converter *pointConverter) filterAppend(slice []*metrics.MetricPoint, point *metrics.MetricPoint) []*metrics.MetricPoint {
-	if converter.filters == nil || converter.filters.MatchMetricAndFilterTags(point.Metric, point.Tags) {
+	if converter.filters == nil || converter.filters.MatchMetric(point.Metric, point.GetTags()) {
 		return append(slice, point)
 	}
 	converter.filteredPoints.Inc(1)
@@ -163,13 +163,14 @@ func (converter *pointConverter) addLabelTags(ms *metrics.MetricSet, tags map[st
 }
 
 func (converter *pointConverter) metricPoint(name string, value float64, ts int64, source string, tags map[string]string) *metrics.MetricPoint {
-	return &metrics.MetricPoint{
+	point := &metrics.MetricPoint{
 		Metric:    name,
 		Value:     value,
 		Timestamp: ts,
 		Source:    source,
-		Tags:      tags,
 	}
+	point.SetTags(tags)
+	return point
 }
 
 func (converter *pointConverter) cleanMetricName(metricType string, metricName string) string {

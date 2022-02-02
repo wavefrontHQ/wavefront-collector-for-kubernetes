@@ -108,8 +108,8 @@ func (dummy *DummyMetricsSource) ScrapeMetrics() (*metrics.DataBatch, error) {
 		Value:     1,
 		Timestamp: time.Now().UnixNano() / 1000,
 		Source:    dummy.Name(),
-		Tags:      map[string]string{"tag": "tag"},
 	}
+	point.SetTags(map[string]string{"tag": "tag"})
 
 	res := &metrics.DataBatch{
 		Timestamp: time.Now(),

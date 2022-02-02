@@ -28,13 +28,14 @@ func copyLabels(in map[string]string, out map[string]string) {
 }
 
 func metricPoint(prefix, name string, value float64, ts int64, source string, tags map[string]string) *metrics.MetricPoint {
-	return &metrics.MetricPoint{
+	point := &metrics.MetricPoint{
 		Metric:    prefix + name,
 		Value:     value,
 		Timestamp: ts,
 		Source:    source,
-		Tags:      tags,
 	}
+	point.SetTags(tags)
+	return point
 }
 
 func floatVal(i *int32, f float64) float64 {

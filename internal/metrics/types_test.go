@@ -63,7 +63,7 @@ func TestGetTagsFromTags(t *testing.T) {
 		Value:     1,
 		Timestamp: 0,
 		Source:    "test.source",
-		Tags:      map[string]string{"name": "value"},
+		tags:      map[string]string{"name": "value"},
 	}
 
 	assert.Equal(t, map[string]string{"name": "value"}, point.GetTags(), "expect tags")
@@ -75,7 +75,7 @@ func TestGetTagsFromTagsAndLabelPairs(t *testing.T) {
 		Value:     1,
 		Timestamp: 0,
 		Source:    "test.source",
-		Tags:      map[string]string{"tag": "tag_value"},
+		tags:      map[string]string{"tag": "tag_value"},
 	}
 
 	name := "label_pair"

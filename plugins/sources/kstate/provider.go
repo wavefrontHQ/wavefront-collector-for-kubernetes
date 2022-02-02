@@ -94,7 +94,7 @@ func (src *stateMetricsSource) ScrapeMetrics() (*metrics.DataBatch, error) {
 
 	n := 0
 	for _, point := range points {
-		if src.keep(point.Metric, point.Tags) {
+		if src.keep(point.Metric, point.GetTags()) {
 			// in-place filtering
 			points[n] = point
 			n++
@@ -130,7 +130,7 @@ func (src *stateMetricsSource) pointsForResource(resType string) []*metrics.Metr
 }
 
 func (src *stateMetricsSource) keep(name string, tags map[string]string) bool {
-	if src.filters == nil || src.filters.MatchMetricAndFilterTags(name, tags) {
+	if src.filters == nil || src.filters.MatchMetric(name, tags) {
 		return true
 	}
 	src.fps.Inc(1)

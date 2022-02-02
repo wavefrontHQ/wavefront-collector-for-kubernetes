@@ -101,18 +101,18 @@ func TestMetricAllowList(t *testing.T) {
 	f := NewGlobFilter(cfg)
 
 	pt := point("foobar", 1.0, 0, "", nil)
-	if f.MatchMetricAndFilterTags(pt.Metric, pt.Tags) {
+	if f.MatchMetric(pt.Metric, pt.tags) {
 		t.Errorf("name pass error")
 	}
 
 	pt = point("foo", 1.0, 0, "", nil)
-	if !f.MatchMetricAndFilterTags(pt.Metric, pt.Tags) {
+	if !f.MatchMetric(pt.Metric, pt.tags) {
 		t.Errorf("name pass error")
 	}
 
 	cfg.MetricAllowList = []string{"foo*"}
 	f = NewGlobFilter(cfg)
-	if !f.MatchMetricAndFilterTags(pt.Metric, pt.Tags) {
+	if !f.MatchMetric(pt.Metric, pt.tags) {
 		t.Errorf("name pass error")
 	}
 }
@@ -123,13 +123,13 @@ func TestMetricDenyList(t *testing.T) {
 	}
 	f := NewGlobFilter(cfg)
 	pt := point("foobar", 1.0, 0, "", nil)
-	if !f.MatchMetricAndFilterTags(pt.Metric, pt.Tags) {
+	if !f.MatchMetric(pt.Metric, pt.tags) {
 		t.Errorf("name drop error")
 	}
 
 	cfg.MetricDenyList = []string{"foo*"}
 	f = NewGlobFilter(cfg)
-	if f.MatchMetricAndFilterTags(pt.Metric, pt.Tags) {
+	if f.MatchMetric(pt.Metric, pt.tags) {
 		t.Errorf("name drop error")
 	}
 }
@@ -142,12 +142,12 @@ func TestMetricTagAllowList(t *testing.T) {
 	}
 	f := NewGlobFilter(cfg)
 	pt := point("bar", 1.0, 0, "", map[string]string{"bar": "foo"})
-	if f.MatchMetricAndFilterTags(pt.Metric, pt.Tags) {
+	if f.MatchMetric(pt.Metric, pt.tags) {
 		t.Errorf("tag pass error")
 	}
 
 	pt = point("bar", 1.0, 0, "", map[string]string{"bar": "foo", "foo": "val"})
-	if !f.MatchMetricAndFilterTags(pt.Metric, pt.Tags) {
+	if !f.MatchMetric(pt.Metric, pt.tags) {
 		t.Errorf("tag pass error")
 	}
 }
@@ -160,12 +160,12 @@ func TestMetricTagDenyList(t *testing.T) {
 	}
 	f := NewGlobFilter(cfg)
 	pt := point("bar", 1.0, 0, "", map[string]string{"bar": "foo"})
-	if !f.MatchMetricAndFilterTags(pt.Metric, pt.Tags) {
+	if !f.MatchMetric(pt.Metric, pt.tags) {
 		t.Errorf("tag drop error")
 	}
 
 	pt = point("bar", 1.0, 0, "", map[string]string{"bar": "foo", "foo": "val"})
-	if f.MatchMetricAndFilterTags(pt.Metric, pt.Tags) {
+	if f.MatchMetric(pt.Metric, pt.tags) {
 		t.Errorf("tag drop error")
 	}
 }
@@ -176,13 +176,13 @@ func TestTagInclude(t *testing.T) {
 	}
 	f := NewGlobFilter(cfg)
 	pt := point("bar", 1.0, 0, "", map[string]string{"foo": "bar", "key1": "val1"})
-	if !f.MatchMetricAndFilterTags(pt.Metric, pt.Tags) {
+	if !f.MatchMetric(pt.Metric, pt.tags) {
 		t.Errorf("tag include error")
 	}
-	if len(pt.Tags) != 1 {
+	if len(pt.tags) != 1 {
 		t.Errorf("tag include error")
 	}
-	if _, ok := pt.Tags["foo"]; !ok {
+	if _, ok := pt.tags["foo"]; !ok {
 		t.Errorf("tag include error")
 	}
 }
@@ -193,13 +193,13 @@ func TestTagExclude(t *testing.T) {
 	}
 	f := NewGlobFilter(cfg)
 	pt := point("bar", 1.0, 0, "", map[string]string{"foo": "bar", "key1": "val1"})
-	if !f.MatchMetricAndFilterTags(pt.Metric, pt.Tags) {
+	if !f.MatchMetric(pt.Metric, pt.tags) {
 		t.Errorf("tag exclude error")
 	}
-	if len(pt.Tags) != 1 {
+	if len(pt.tags) != 1 {
 		t.Errorf("tag exclude error")
 	}
-	if _, ok := pt.Tags["foo"]; ok {
+	if _, ok := pt.tags["foo"]; ok {
 		t.Errorf("tag exclude error")
 	}
 }
@@ -210,7 +210,7 @@ func point(name string, value float64, ts int64, source string, tags map[string]
 		Value:     value,
 		Timestamp: ts,
 		Source:    source,
-		Tags:      tags,
+		tags:      tags,
 	}
 }
 

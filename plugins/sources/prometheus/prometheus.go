@@ -192,14 +192,16 @@ func (src *prometheusMetricsSource) parseMetrics(reader io.Reader) ([]*metrics.M
 		batch, err := pointBuilder.build(metricFamilies)
 		points = append(points, batch...)
 	}
-	for _, point := range points {
-		point.FilterTags(src.filters.MatchTag)
+	if src.filters != nil {
+		for _, point := range points {
+			point.FilterTags(src.filters.MatchTag)
+		}
 	}
 	return points, err
 }
 
 func (src *prometheusMetricsSource) isValidMetric(name string, tags map[string]string) bool {
-	if src.filters == nil || src.filters.MatchMetricAndFilterTags(name, tags) {
+	if src.filters == nil || src.filters.MatchMetric(name, tags) {
 		return true
 	}
 	filteredPoints.Inc(1)
