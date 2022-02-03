@@ -27,10 +27,10 @@ type Config struct {
 	// List of glob pattern strings. Metrics containing these tag keys will be dropped.
 	MetricTagDenyList map[string][]string `yaml:"metricTagDenyList"`
 
-	// List of glob pattern strings. tags with matching keys will be included. All other tags will be excluded.
+	// List of glob pattern strings. Tags with matching keys will be included. All other tags will be excluded.
 	TagInclude []string `yaml:"tagInclude"`
 
-	// List of glob pattern strings. tags with matching keys will be excluded.
+	// List of glob pattern strings. Tags with matching keys will be excluded.
 	TagExclude []string `yaml:"tagExclude"`
 
 	// Deprecated: use MetricAllowList instead
