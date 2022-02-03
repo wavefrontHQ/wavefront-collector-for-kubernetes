@@ -9,9 +9,10 @@ import (
 	"strings"
 	"time"
 
-	dto "github.com/prometheus/client_model/go"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
+	prom "github.com/prometheus/client_model/go"
+
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 )
 
@@ -38,17 +39,17 @@ func NewPointBuilder(src *prometheusMetricsSource) *pointBuilder {
 
 // build converts a map of prometheus metric families by metric name to a collection of wavefront points
 // build actually never returns an error
-func (builder *pointBuilder) build(metricFamilies map[string]*dto.MetricFamily) ([]*metrics.MetricPoint, error) {
+func (builder *pointBuilder) build(metricFamilies map[string]*prom.MetricFamily) ([]*wf.Point, error) {
 	now := time.Now().Unix()
-	var result []*metrics.MetricPoint
+	var result []*wf.Point
 
 	for metricName, mf := range metricFamilies {
 		for _, m := range mf.Metric {
-			var points []*metrics.MetricPoint
+			var points []*wf.Point
 			// Prometheus metric family -> wavefront metric points
-			if mf.GetType() == dto.MetricType_SUMMARY {
+			if mf.GetType() == prom.MetricType_SUMMARY {
 				points = builder.buildSummaryPoints(metricName, m, now, builder.buildTags(m))
-			} else if mf.GetType() == dto.MetricType_HISTOGRAM {
+			} else if mf.GetType() == prom.MetricType_HISTOGRAM {
 				points = builder.buildHistogramPoints(metricName, m, now, builder.buildTags(m))
 			} else {
 				points = builder.buildPoints(metricName, m, now)
@@ -62,8 +63,8 @@ func (builder *pointBuilder) build(metricFamilies map[string]*dto.MetricFamily) 
 	return result, nil
 }
 
-func (builder *pointBuilder) metricPoint(name string, value float64, ts int64, source string, tags map[string]string) *metrics.MetricPoint {
-	point := metrics.NewMetricPoint(
+func (builder *pointBuilder) metricPoint(name string, value float64, ts int64, source string, tags map[string]string) *wf.Point {
+	point := wf.NewPoint(
 		builder.prefix+strings.Replace(name, "_", ".", -1),
 		value,
 		ts,
@@ -74,7 +75,7 @@ func (builder *pointBuilder) metricPoint(name string, value float64, ts int64, s
 	return point
 }
 
-func (builder *pointBuilder) filterAppend(slice []*metrics.MetricPoint, point *metrics.MetricPoint) []*metrics.MetricPoint {
+func (builder *pointBuilder) filterAppend(slice []*wf.Point, point *wf.Point) []*wf.Point {
 	if builder.isValidMetric(point.Metric, point.GetTags()) {
 		return append(slice, point)
 	}
@@ -82,8 +83,8 @@ func (builder *pointBuilder) filterAppend(slice []*metrics.MetricPoint, point *m
 }
 
 // Get name and value from metric
-func (builder *pointBuilder) buildPoints(name string, m *dto.Metric, now int64) []*metrics.MetricPoint {
-	var result []*metrics.MetricPoint
+func (builder *pointBuilder) buildPoints(name string, m *prom.Metric, now int64) []*wf.Point {
+	var result []*wf.Point
 	if m.Gauge != nil {
 		if !math.IsNaN(m.GetGauge().GetValue()) {
 			point := builder.metricPoint(name+".gauge", m.GetGauge().GetValue(), now, builder.source, builder.buildTags(m))
@@ -104,8 +105,8 @@ func (builder *pointBuilder) buildPoints(name string, m *dto.Metric, now int64) 
 }
 
 // Get Quantiles from summary metric
-func (builder *pointBuilder) buildSummaryPoints(name string, m *dto.Metric, now int64, tags map[string]string) []*metrics.MetricPoint {
-	var result []*metrics.MetricPoint
+func (builder *pointBuilder) buildSummaryPoints(name string, m *prom.Metric, now int64, tags map[string]string) []*wf.Point {
+	var result []*wf.Point
 	for _, q := range m.GetSummary().Quantile {
 		if !math.IsNaN(q.GetValue()) {
 			newTags := copyOf(tags)
@@ -123,8 +124,8 @@ func (builder *pointBuilder) buildSummaryPoints(name string, m *dto.Metric, now 
 }
 
 // Get Buckets from histogram metric
-func (builder *pointBuilder) buildHistogramPoints(name string, m *dto.Metric, now int64, tags map[string]string) []*metrics.MetricPoint {
-	var result []*metrics.MetricPoint
+func (builder *pointBuilder) buildHistogramPoints(name string, m *prom.Metric, now int64, tags map[string]string) []*wf.Point {
+	var result []*wf.Point
 	histName := builder.histogramName(name)
 	for _, b := range m.GetHistogram().Bucket {
 		newTags := copyOf(tags)
@@ -140,7 +141,7 @@ func (builder *pointBuilder) buildHistogramPoints(name string, m *dto.Metric, no
 }
 
 // Get labels from metric
-func (builder *pointBuilder) buildTags(m *dto.Metric) map[string]string {
+func (builder *pointBuilder) buildTags(m *prom.Metric) map[string]string {
 	tags := make(map[string]string, len(builder.tags)+len(m.Label))
 	for k, v := range builder.tags {
 		if len(v) > 0 {
@@ -164,10 +165,10 @@ func (builder *pointBuilder) histogramName(name string) string {
 	return name + ".bucket"
 }
 
-func (builder *pointBuilder) deduplicate(tags map[string]string) []metrics.LabelPair {
-	result := make([]metrics.LabelPair, 0)
+func (builder *pointBuilder) deduplicate(tags map[string]string) []wf.LabelPair {
+	result := make([]wf.LabelPair, 0)
 	for k, v := range tags {
-		result = append(result, metrics.LabelPair{
+		result = append(result, wf.LabelPair{
 			Name:  builder.interner.Intern(k),
 			Value: builder.interner.Intern(v),
 		})

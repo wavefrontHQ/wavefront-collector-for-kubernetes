@@ -8,10 +8,10 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 )
 
 // example pulled from https://github.com/prometheus/docs/blob/master/content/docs/instrumenting/exposition_formats.md
@@ -155,7 +155,7 @@ rpc_duration_seconds_count 2693
 	assert.Equal(t, map[string]string{"pod": "myPod"}, points[6].GetTags(), "wrong point tags for count")
 }
 
-func parseMetrics(t *testing.T, src *prometheusMetricsSource, metricsString string) []*metrics.MetricPoint {
+func parseMetrics(t *testing.T, src *prometheusMetricsSource, metricsString string) []*wf.Point {
 	points, err := src.parseMetrics(bytes.NewReader([]byte(metricsString)))
 	require.NoError(t, err, "parsing metrics")
 
@@ -163,7 +163,7 @@ func parseMetrics(t *testing.T, src *prometheusMetricsSource, metricsString stri
 	return points
 }
 
-type byKeyValue []*metrics.MetricPoint
+type byKeyValue []*wf.Point
 
 func (a byKeyValue) Len() int      { return len(a) }
 func (a byKeyValue) Swap(i, j int) { a[i], a[j] = a[j], a[i] }

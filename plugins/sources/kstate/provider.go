@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
+
 	log "github.com/sirupsen/logrus"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
@@ -20,7 +22,7 @@ import (
 	gometrics "github.com/rcrowley/go-metrics"
 )
 
-type resourceHandler func(interface{}, configuration.Transforms) []*metrics.MetricPoint
+type resourceHandler func(interface{}, configuration.Transforms) []*wf.Point
 
 type stateMetricsSource struct {
 	lister     *lister
@@ -87,7 +89,7 @@ func (src *stateMetricsSource) ScrapeMetrics() (*metrics.DataBatch, error) {
 		Timestamp: time.Now(),
 	}
 
-	var points []*metrics.MetricPoint
+	var points []*wf.Point
 	for resType := range src.funcs {
 		points = append(points, src.pointsForResource(resType)...)
 	}
@@ -100,13 +102,13 @@ func (src *stateMetricsSource) ScrapeMetrics() (*metrics.DataBatch, error) {
 			n++
 		}
 	}
-	result.MetricPoints = points[:n]
+	result.Points = points[:n]
 
-	src.pps.Inc(int64(len(result.MetricPoints)))
+	src.pps.Inc(int64(len(result.Points)))
 	return result, nil
 }
 
-func (src *stateMetricsSource) pointsForResource(resType string) []*metrics.MetricPoint {
+func (src *stateMetricsSource) pointsForResource(resType string) []*wf.Point {
 	items, err := src.lister.List(resType)
 	if err != nil {
 		log.Errorf("error listing %s: %v", resType, err)
@@ -122,7 +124,7 @@ func (src *stateMetricsSource) pointsForResource(resType string) []*metrics.Metr
 		return nil
 	}
 
-	var points []*metrics.MetricPoint
+	var points []*wf.Point
 	for _, item := range items {
 		points = append(points, f(item, src.transforms)...)
 	}

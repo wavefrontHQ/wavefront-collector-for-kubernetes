@@ -6,25 +6,12 @@ package filter
 import (
 	"testing"
 
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
+
 	"github.com/gobwas/glob"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
+	"github.com/stretchr/testify/assert"
 )
-
-func TestMatchesTag(t *testing.T) {
-	matcher := compileGlob([]string{"foo"}, t)
-	if !matchesTag(matcher, map[string]string{"foo": "bar", "key1": "val1"}) {
-		t.Errorf("error matching tag")
-	}
-	if matchesTag(matcher, map[string]string{"foobar": "bar", "key1": "val1"}) {
-		t.Errorf("error matching tag")
-	}
-
-	matcher = compileGlob([]string{"foo*"}, t)
-	if !matchesTag(matcher, map[string]string{"foobar": "bar", "key1": "val1"}) {
-		t.Errorf("error matching tag")
-	}
-}
 
 func TestMatchesTags(t *testing.T) {
 	matchers := MultiCompile(map[string][]string{
@@ -66,45 +53,18 @@ func TestMatchesAllTags(t *testing.T) {
 	}
 }
 
-func TestDeleteTags(t *testing.T) {
-	// test tagIncludes: only matching tags should remain in the map
-	matcher := compileGlob([]string{"foo"}, t)
-	tags := map[string]string{"foo": "bar", "key1": "val1", "key2": "val2", "foobar": "bar"}
-	deleteTags(matcher, tags, true)
-	if len(tags) != 1 {
-		t.Errorf("error deleting tags")
-	}
-	if _, ok := tags["foo"]; !ok {
-		t.Errorf("error deleting tags")
-	}
-
-	// test tagExcludes: excluded tags should be removed
-	matcher = compileGlob([]string{"foo*"}, t)
-	tags = map[string]string{"foo": "bar", "key1": "val1", "key2": "val2", "foobar": "bar"}
-	deleteTags(matcher, tags, false)
-	if len(tags) != 2 {
-		t.Errorf("error deleting tags")
-	}
-	if _, ok := tags["foo"]; ok {
-		t.Errorf("error deleting tags")
-	}
-	if _, ok := tags["foobar"]; ok {
-		t.Errorf("error deleting tags")
-	}
-}
-
 func TestMetricAllowList(t *testing.T) {
 	cfg := Config{
 		MetricAllowList: []string{"foo"},
 	}
 	f := NewGlobFilter(cfg)
 
-	pt := metrics.NewMetricPoint("foobar", 1.0, 0, "", nil)
+	pt := wf.NewPoint("foobar", 1.0, 0, "", nil)
 	if f.MatchMetric(pt.Metric, pt.GetTags()) {
 		t.Errorf("name pass error")
 	}
 
-	pt = metrics.NewMetricPoint("foo", 1.0, 0, "", nil)
+	pt = wf.NewPoint("foo", 1.0, 0, "", nil)
 	if !f.MatchMetric(pt.Metric, pt.GetTags()) {
 		t.Errorf("name pass error")
 	}
@@ -121,7 +81,7 @@ func TestMetricDenyList(t *testing.T) {
 		MetricDenyList: []string{"foo"},
 	}
 	f := NewGlobFilter(cfg)
-	pt := metrics.NewMetricPoint("foobar", 1.0, 0, "", nil)
+	pt := wf.NewPoint("foobar", 1.0, 0, "", nil)
 	if !f.MatchMetric(pt.Metric, pt.GetTags()) {
 		t.Errorf("name drop error")
 	}
@@ -140,12 +100,12 @@ func TestMetricTagAllowList(t *testing.T) {
 		},
 	}
 	f := NewGlobFilter(cfg)
-	pt := metrics.NewMetricPoint("bar", 1.0, 0, "", map[string]string{"bar": "foo"})
+	pt := wf.NewPoint("bar", 1.0, 0, "", map[string]string{"bar": "foo"})
 	if f.MatchMetric(pt.Metric, pt.GetTags()) {
 		t.Errorf("tag pass error")
 	}
 
-	pt = metrics.NewMetricPoint("bar", 1.0, 0, "", map[string]string{"bar": "foo", "foo": "val"})
+	pt = wf.NewPoint("bar", 1.0, 0, "", map[string]string{"bar": "foo", "foo": "val"})
 	if !f.MatchMetric(pt.Metric, pt.GetTags()) {
 		t.Errorf("tag pass error")
 	}
@@ -158,49 +118,35 @@ func TestMetricTagDenyList(t *testing.T) {
 		},
 	}
 	f := NewGlobFilter(cfg)
-	pt := metrics.NewMetricPoint("bar", 1.0, 0, "", map[string]string{"bar": "foo"})
+	pt := wf.NewPoint("bar", 1.0, 0, "", map[string]string{"bar": "foo"})
 	if !f.MatchMetric(pt.Metric, pt.GetTags()) {
 		t.Errorf("tag drop error")
 	}
 
-	pt = metrics.NewMetricPoint("bar", 1.0, 0, "", map[string]string{"bar": "foo", "foo": "val"})
+	pt = wf.NewPoint("bar", 1.0, 0, "", map[string]string{"bar": "foo", "foo": "val"})
 	if f.MatchMetric(pt.Metric, pt.GetTags()) {
 		t.Errorf("tag drop error")
 	}
 }
 
 func TestTagInclude(t *testing.T) {
-	cfg := Config{
+	f := NewGlobFilter(Config{
 		TagInclude: []string{"foo*"},
-	}
-	f := NewGlobFilter(cfg)
-	pt := metrics.NewMetricPoint("bar", 1.0, 0, "", map[string]string{"foo": "bar", "key1": "val1"})
-	if !f.MatchMetric(pt.Metric, pt.GetTags()) {
-		t.Errorf("tag include error")
-	}
-	if len(pt.GetTags()) != 1 {
-		t.Errorf("tag include error")
-	}
-	if _, ok := pt.GetTags()["foo"]; !ok {
-		t.Errorf("tag include error")
-	}
+	})
+
+	assert.True(t, f.MatchTag("foo"))
+	assert.True(t, f.MatchTag("foobar"))
+	assert.False(t, f.MatchTag("barfoo"))
 }
 
 func TestTagExclude(t *testing.T) {
-	cfg := Config{
+	f := NewGlobFilter(Config{
 		TagExclude: []string{"foo*"},
-	}
-	f := NewGlobFilter(cfg)
-	pt := metrics.NewMetricPoint("bar", 1.0, 0, "", map[string]string{"foo": "bar", "key1": "val1"})
-	if !f.MatchMetric(pt.Metric, pt.GetTags()) {
-		t.Errorf("tag exclude error")
-	}
-	if len(pt.GetTags()) != 1 {
-		t.Errorf("tag exclude error")
-	}
-	if _, ok := pt.GetTags()["foo"]; ok {
-		t.Errorf("tag exclude error")
-	}
+	})
+
+	assert.False(t, f.MatchTag("foo"))
+	assert.False(t, f.MatchTag("foobar"))
+	assert.True(t, f.MatchTag("barfoo"))
 }
 
 func compileGlob(filter []string, t *testing.T) glob.Glob {

@@ -14,6 +14,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
+
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/httputil"
@@ -168,7 +170,7 @@ func (src *prometheusMetricsSource) ScrapeMetrics() (*metrics.DataBatch, error) 
 		src.eps.Inc(1)
 		return result, err
 	}
-	result.MetricPoints = points
+	result.Points = points
 	collectedPoints.Inc(int64(len(points)))
 	src.pps.Inc(int64(len(points)))
 
@@ -177,10 +179,10 @@ func (src *prometheusMetricsSource) ScrapeMetrics() (*metrics.DataBatch, error) 
 
 // parseMetrics converts serialized prometheus metrics to wavefront points
 // parseMetrics returns an error when IO or parsing fails
-func (src *prometheusMetricsSource) parseMetrics(reader io.Reader) ([]*metrics.MetricPoint, error) {
+func (src *prometheusMetricsSource) parseMetrics(reader io.Reader) ([]*wf.Point, error) {
 	metricReader := NewMetricReader(reader)
 	pointBuilder := NewPointBuilder(src)
-	var points = make([]*metrics.MetricPoint, 0)
+	var points = make([]*wf.Point, 0)
 	var err error
 	for !metricReader.Done() {
 		var parser expfmt.TextParser

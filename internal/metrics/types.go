@@ -22,6 +22,8 @@ package metrics
 
 import (
 	"time"
+
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
 )
 
 type MetricType int8
@@ -139,8 +141,8 @@ type MetricSet struct {
 type DataBatch struct {
 	Timestamp time.Time
 	// Should use key functions from ms_keys.go
-	MetricSets   map[string]*MetricSet
-	MetricPoints []*MetricPoint
+	MetricSets map[string]*MetricSet
+	Points     []*wf.Point
 }
 
 // A place from where the metrics should be scraped.
@@ -169,69 +171,6 @@ type DataSink interface {
 type DataProcessor interface {
 	Name() string
 	Process(*DataBatch) (*DataBatch, error)
-}
-
-type LabelPair struct {
-	Name  *string
-	Value *string
-}
-
-// Represents a single point in Wavefront metric format.
-type MetricPoint struct {
-	Metric    string
-	Value     float64
-	Timestamp int64
-	Source    string
-
-	tags       map[string]string
-	labelPairs []LabelPair
-}
-
-func NewMetricPoint(metric string, value float64, timestamp int64, source string, tags map[string]string) *MetricPoint {
-	return &MetricPoint{
-		Metric:    metric,
-		Value:     value,
-		Timestamp: timestamp,
-		Source:    source,
-		tags:      tags,
-	}
-}
-
-func (m *MetricPoint) SetLabelPairs(pairs []LabelPair) {
-	m.labelPairs = pairs
-}
-
-func (m *MetricPoint) SetTags(tags map[string]string) {
-	m.tags = tags
-}
-
-func (m *MetricPoint) GetTags() map[string]string {
-	tags := make(map[string]string, len(m.labelPairs))
-	for _, labelPair := range m.labelPairs {
-		tags[*labelPair.Name] = *labelPair.Value
-	}
-
-	for k, v := range m.tags {
-		tags[k] = v
-	}
-
-	return tags
-}
-
-func (m *MetricPoint) FilterTags(pred func(string) bool) {
-	var nextLabelPairs []LabelPair
-	for _, labelPair := range m.labelPairs {
-		if pred(*labelPair.Name) {
-			nextLabelPairs = append(nextLabelPairs, labelPair)
-		}
-	}
-	m.labelPairs = nextLabelPairs
-
-	for name := range m.tags {
-		if !pred(name) {
-			delete(m.tags, name)
-		}
-	}
 }
 
 // ProviderHandler is an interface for dynamically adding and removing MetricSourceProviders

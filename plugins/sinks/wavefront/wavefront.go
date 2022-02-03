@@ -202,10 +202,10 @@ func combineGlobalTags(tags, globalTags map[string]string) map[string]string {
 }
 
 func (sink *wavefrontSink) send(batch *metrics.DataBatch) {
-	log.Debugf("received metric points: %d", len(batch.MetricPoints))
+	log.Debugf("received metric points: %d", len(batch.Points))
 
 	before := errPoints.Count()
-	for _, point := range batch.MetricPoints {
+	for _, point := range batch.Points {
 		if point == nil {
 			continue
 		}

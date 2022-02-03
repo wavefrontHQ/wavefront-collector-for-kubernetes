@@ -6,6 +6,8 @@ package summary
 import (
 	"strings"
 
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
+
 	"github.com/wavefronthq/go-metrics-wavefront/reporting"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
@@ -16,7 +18,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// converts MetricSets to MetricPoints.
+// converts MetricSets to Points.
 type pointConverter struct {
 	cluster string
 	prefix  string
@@ -98,8 +100,8 @@ func (converter *pointConverter) Process(batch *metrics.DataBatch) (*metrics.Dat
 			}
 
 			// convert to a point and add it to the data batch
-			point := metrics.NewMetricPoint(converter.cleanMetricName(metricType, metricName), value, ts, source, tags)
-			batch.MetricPoints = converter.filterAppend(batch.MetricPoints, point)
+			point := wf.NewPoint(converter.cleanMetricName(metricType, metricName), value, ts, source, tags)
+			batch.Points = converter.filterAppend(batch.Points, point)
 			converter.collectedPoints.Inc(1)
 		}
 		for _, metric := range ms.LabeledMetrics {
@@ -126,15 +128,15 @@ func (converter *pointConverter) Process(batch *metrics.DataBatch) (*metrics.Dat
 			}
 
 			// convert to a point and add it to the data batch
-			point := metrics.NewMetricPoint(converter.cleanMetricName(metricType, metric.Name), value, ts, source, labels)
-			batch.MetricPoints = converter.filterAppend(batch.MetricPoints, point)
+			point := wf.NewPoint(converter.cleanMetricName(metricType, metric.Name), value, ts, source, labels)
+			batch.Points = converter.filterAppend(batch.Points, point)
 			converter.collectedPoints.Inc(1)
 		}
 	}
 	return batch, nil
 }
 
-func (converter *pointConverter) filterAppend(slice []*metrics.MetricPoint, point *metrics.MetricPoint) []*metrics.MetricPoint {
+func (converter *pointConverter) filterAppend(slice []*wf.Point, point *wf.Point) []*wf.Point {
 	if converter.filters == nil || converter.filters.MatchMetric(point.Metric, point.GetTags()) {
 		return append(slice, point)
 	}
