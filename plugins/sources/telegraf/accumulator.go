@@ -94,7 +94,7 @@ func (t *telegrafDataBatch) AddGauge(measurement string, fields map[string]inter
 	t.preparePoints(measurement, fields, tags, timestamp...)
 }
 
-// AddCounter is the same as AddFields, but will add the metric as a "Incrementer" type
+// AddCounter is the same as AddFields, but will add the metric as a "Counter" type
 func (t *telegrafDataBatch) AddCounter(measurement string, fields map[string]interface{}, tags map[string]string, timestamp ...time.Time) {
 	t.preparePoints(measurement, fields, tags, timestamp...)
 }
