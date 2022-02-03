@@ -12,6 +12,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
+
 	"github.com/wavefronthq/wavefront-sdk-go/event"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
@@ -152,16 +154,6 @@ func (sink *wavefrontSink) sendPoint(metricName string, value float64, timestamp
 	if len(sink.Prefix) > 0 {
 		metricName = sink.Prefix + "." + metricName
 	}
-	if sink.filters != nil && !sink.filters.MatchMetric(metricName, tags) {
-		filteredPoints.Inc(1)
-		if log.IsLevelEnabled(log.TraceLevel) {
-			log.WithField("name", metricName).Trace("Dropping metric")
-		}
-		return
-	}
-
-	tags = combineGlobalTags(tags, sink.globalTags)
-
 	logTagCleaningReasons(metricName, cleanTags(tags, maxWavefrontTags))
 
 	err := sink.WavefrontClient.SendMetric(metricName, value, timestamp, source, tags)
@@ -184,34 +176,18 @@ func (sink *wavefrontSink) logVerboseError(f log.Fields, msg string) {
 	}
 }
 
-func combineGlobalTags(tags, globalTags map[string]string) map[string]string {
-	if tags == nil || len(tags) == 0 {
-		return globalTags
-	}
-	if globalTags == nil || len(globalTags) == 0 {
-		return tags
-	}
-
-	for k, v := range globalTags {
-		// add global tag if key is missing from tags
-		if _, exists := tags[k]; !exists {
-			tags[k] = v
-		}
-	}
-	return tags
-}
-
 func (sink *wavefrontSink) send(batch *metrics.DataBatch) {
 	log.Debugf("received metric points: %d", len(batch.Points))
 
 	before := errPoints.Count()
 	for _, point := range batch.Points {
+		point.OverrideTag("cluster", sink.ClusterName)
+		point.AddTags(sink.globalTags)
+		point = wf.Filter(sink.filters, filteredPoints, point)
 		if point == nil {
 			continue
 		}
-		tags := point.Tags()
-		tags["cluster"] = sink.ClusterName
-		sink.sendPoint(point.Metric, point.Value, point.Timestamp, point.Source, tags)
+		sink.sendPoint(point.Metric, point.Value, point.Timestamp, point.Source, point.Tags())
 	}
 
 	after := errPoints.Count()

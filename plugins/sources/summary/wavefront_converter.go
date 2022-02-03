@@ -136,10 +136,6 @@ func (converter *pointConverter) Process(batch *metrics.DataBatch) (*metrics.Dat
 	return batch, nil
 }
 
-func (converter *pointConverter) filterAppend(slice []*wf.Point, point *wf.Point) []*wf.Point {
-	return wf.FilterAppend(converter.filters, converter.filteredPoints, slice, point)
-}
-
 func (converter *pointConverter) addLabelTags(ms *metrics.MetricSet, tags map[string]string) {
 	for _, labelName := range sortedLabelKeys(ms.Labels) {
 		labelValue := ms.Labels[labelName]

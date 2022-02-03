@@ -34,6 +34,40 @@ func (m *Point) SetTags(tags map[string]string) {
 	m.tags = tags
 }
 
+// OverrideTag sets a tag regardless of whether it already exists
+func (m *Point) OverrideTag(name, value string) {
+	if m == nil {
+		return
+	}
+	if m.tags == nil {
+		m.tags = map[string]string{}
+	}
+	m.tags[name] = value
+}
+
+// AddTag adds a tag if it does not already exist
+func (m *Point) AddTag(name, value string) {
+	if m == nil {
+		return
+	}
+	if m.tags == nil {
+		m.tags = map[string]string{}
+	}
+	if _, exists := m.tags[name]; !exists {
+		m.tags[name] = value
+	}
+}
+
+// AddTags adds any tags that do not already exist
+func (m *Point) AddTags(tags map[string]string) {
+	if tags == nil {
+		return
+	}
+	for name, value := range tags {
+		m.AddTag(name, value)
+	}
+}
+
 func (m *Point) Tags() map[string]string {
 	tags := make(map[string]string, len(m.labelPairs))
 	for _, labelPair := range m.labelPairs {
