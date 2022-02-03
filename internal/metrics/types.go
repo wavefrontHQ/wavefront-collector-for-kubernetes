@@ -183,8 +183,18 @@ type MetricPoint struct {
 	Timestamp int64
 	Source    string
 
-	tags      map[string]string
+	tags       map[string]string
 	labelPairs []LabelPair
+}
+
+func NewMetricPoint(metric string, value float64, timestamp int64, source string, tags map[string]string) *MetricPoint {
+	return &MetricPoint{
+		Metric:    metric,
+		Value:     value,
+		Timestamp: timestamp,
+		Source:    source,
+		tags:      tags,
+	}
 }
 
 func (m *MetricPoint) SetLabelPairs(pairs []LabelPair) {

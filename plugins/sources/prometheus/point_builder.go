@@ -63,12 +63,13 @@ func (builder *pointBuilder) build(metricFamilies map[string]*dto.MetricFamily) 
 }
 
 func (builder *pointBuilder) metricPoint(name string, value float64, ts int64, source string, tags map[string]string) *metrics.MetricPoint {
-	point := &metrics.MetricPoint{
-		Metric:    builder.prefix + strings.Replace(name, "_", ".", -1),
-		Value:     value,
-		Timestamp: ts,
-		Source:    source,
-	}
+	point := metrics.NewMetricPoint(
+		builder.prefix+strings.Replace(name, "_", ".", -1),
+		value,
+		ts,
+		source,
+		nil,
+	)
 	point.SetLabelPairs(builder.deduplicate(tags)) //store tags as LabelPairs for memory optimization
 	return point
 }

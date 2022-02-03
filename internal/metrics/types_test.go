@@ -10,24 +10,12 @@ import (
 )
 
 func TestGetEmptyTags(t *testing.T) {
-	point := &MetricPoint{
-		Metric:    "test",
-		Value:     1,
-		Timestamp: 0,
-		Source:    "test.source",
-	}
-
+	point := NewMetricPoint("test", 1, 0, "test.source", nil)
 	assert.Equal(t, map[string]string{}, point.GetTags(), "expect empty tags")
 }
 
 func TestGetTagsLabelPairs(t *testing.T) {
-	point := &MetricPoint{
-		Metric:    "test",
-		Value:     1,
-		Timestamp: 0,
-		Source:    "test.source",
-	}
-
+	point := NewMetricPoint("test", 1, 0, "test.source", nil)
 	name := "name"
 	value := "value"
 	point.SetLabelPairs([]LabelPair{{
@@ -39,13 +27,7 @@ func TestGetTagsLabelPairs(t *testing.T) {
 }
 
 func TestGetTagsFromMultipleLabelPairs(t *testing.T) {
-	point := &MetricPoint{
-		Metric:    "test",
-		Value:     1,
-		Timestamp: 0,
-		Source:    "test.source",
-	}
-
+	point := NewMetricPoint("test", 1, 0, "test.source", nil)
 	name := "name"
 	name2 := "name2"
 	value := "value"
@@ -58,26 +40,13 @@ func TestGetTagsFromMultipleLabelPairs(t *testing.T) {
 }
 
 func TestGetTagsFromTags(t *testing.T) {
-	point := &MetricPoint{
-		Metric:    "test",
-		Value:     1,
-		Timestamp: 0,
-		Source:    "test.source",
-		tags:      map[string]string{"name": "value"},
-	}
+	point := NewMetricPoint("test", 1, 0, "test.source", map[string]string{"name": "value"})
 
 	assert.Equal(t, map[string]string{"name": "value"}, point.GetTags(), "expect tags")
 }
 
 func TestGetTagsFromTagsAndLabelPairs(t *testing.T) {
-	point := &MetricPoint{
-		Metric:    "test",
-		Value:     1,
-		Timestamp: 0,
-		Source:    "test.source",
-		tags:      map[string]string{"tag": "tag_value"},
-	}
-
+	point := NewMetricPoint("test", 1, 0, "test.source", map[string]string{"tag": "tag_value"})
 	name := "label_pair"
 	value := "label_pair_value"
 	point.SetLabelPairs([]LabelPair{{

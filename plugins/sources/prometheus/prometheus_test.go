@@ -101,7 +101,7 @@ func TestTagInclude(t *testing.T) {
 			tagCounts[tagName] += 1
 		}
 	}
-	assert.Equal(t,1, len(tagCounts), "the only tags left are 'label'")
+	assert.Equal(t, 1, len(tagCounts), "the only tags left are 'label'")
 	assert.Equal(t, 2, tagCounts["label"], "two metrics have a tag named 'label'")
 }
 

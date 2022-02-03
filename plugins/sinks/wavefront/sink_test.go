@@ -65,11 +65,7 @@ func TestPrefix(t *testing.T) {
 
 	db := metrics.DataBatch{
 		MetricPoints: []*metrics.MetricPoint{
-			{
-				Metric: "cpu.idle",
-				Value:  1.0,
-				Source: "fakeSource",
-			},
+			metrics.NewMetricPoint("cpu.idle", 1.0, 0, "fakeSource", nil),
 		},
 	}
 	sink.ExportData(&db)
@@ -89,11 +85,7 @@ func TestNilPointDataBatch(t *testing.T) {
 
 	db := metrics.DataBatch{
 		MetricPoints: []*metrics.MetricPoint{
-			{
-				Metric: "cpu.idle",
-				Value:  1.0,
-				Source: "fakeSource",
-			},
+			metrics.NewMetricPoint("cpu.idle", 1.0, 0, "fakeSource", nil),
 			nil,
 		},
 	}
@@ -112,16 +104,15 @@ func TestCleansTagsBeforeSending(t *testing.T) {
 	sink, err := NewWavefrontSink(cfg)
 	assert.NoError(t, err)
 
-	point := &metrics.MetricPoint{
-		Metric: "cpu.idle",
-		Value:  1.0,
-		Source: "fakeSource",
-	}
-	point.SetTags(map[string]string{"emptyTag": ""})
-
 	db := metrics.DataBatch{
 		MetricPoints: []*metrics.MetricPoint{
-			point,
+			metrics.NewMetricPoint(
+				"cpu.idle",
+				1.0,
+				0,
+				"fakeSource",
+				map[string]string{"emptyTag": ""},
+			),
 		},
 	}
 	sink.ExportData(&db)

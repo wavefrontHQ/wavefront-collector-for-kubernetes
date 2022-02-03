@@ -396,14 +396,13 @@ func setTag(tags map[string]string, key, val string) {
 }
 
 func (src *systemdMetricsSource) metricPoint(name string, value float64, ts int64, tags map[string]string) *MetricPoint {
-	point := &MetricPoint{
-		Metric:    src.prefix + strings.Replace(name, "_", ".", -1),
-		Value:     value,
-		Timestamp: ts,
-		Source:    src.source,
-	}
-	point.SetTags(tags)
-	return point
+	return NewMetricPoint(
+		src.prefix+strings.Replace(name, "_", ".", -1),
+		value,
+		ts,
+		src.source,
+		tags,
+	)
 }
 
 type systemdProvider struct {

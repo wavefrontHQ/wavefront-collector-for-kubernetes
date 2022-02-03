@@ -151,15 +151,13 @@ func (src *internalMetricsSource) point(name string, value float64, ts int64) *m
 		// don't emit internal counts with zero values
 		return nil
 	}
-
-	point := &metrics.MetricPoint{
-		Metric:    src.prefix + "collector." + strings.Replace(name, "_", ".", -1),
-		Value:     value,
-		Timestamp: ts,
-		Source:    src.source,
-	}
-	point.SetTags(src.buildTags(tags))
-	return point
+	return metrics.NewMetricPoint(
+		src.prefix+"collector."+strings.Replace(name, "_", ".", -1),
+		value,
+		ts,
+		src.source,
+		src.buildTags(tags),
+	)
 }
 
 func (src *internalMetricsSource) buildTags(tags map[string]string) map[string]string {

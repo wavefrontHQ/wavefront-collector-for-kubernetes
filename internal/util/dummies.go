@@ -103,13 +103,13 @@ func (dummy *DummyMetricsSource) ScrapeMetrics() (*metrics.DataBatch, error) {
 		return nil, errors.New("scrape error")
 	}
 
-	point := &metrics.MetricPoint{
-		Metric:    strings.Replace(dummy.Name(), " ", ".", -1),
-		Value:     1,
-		Timestamp: time.Now().UnixNano() / 1000,
-		Source:    dummy.Name(),
-	}
-	point.SetTags(map[string]string{"tag": "tag"})
+	point := metrics.NewMetricPoint(
+		strings.Replace(dummy.Name(), " ", ".", -1),
+		1,
+		time.Now().UnixNano()/1000,
+		dummy.Name(),
+		map[string]string{"tag": "tag"},
+	)
 
 	res := &metrics.DataBatch{
 		Timestamp: time.Now(),

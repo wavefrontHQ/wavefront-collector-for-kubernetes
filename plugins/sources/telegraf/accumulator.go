@@ -55,14 +55,13 @@ func (t *telegrafDataBatch) preparePoints(measurement string, fields map[string]
 			metricName = t.source.prefix + "." + metricName
 		}
 
-		point := &metrics.MetricPoint{
-			Metric:    metricName,
-			Value:     value,
-			Timestamp: ts.UnixNano() / 1000,
-			Source:    t.source.source,
-		}
-		point.SetTags(t.buildTags(tags))
-		t.MetricPoints = t.filterAppend(t.MetricPoints, point)
+		t.MetricPoints = t.filterAppend(t.MetricPoints, metrics.NewMetricPoint(
+			metricName,
+			value,
+			ts.UnixNano()/1000,
+			t.source.source,
+			t.buildTags(tags),
+		))
 	}
 }
 

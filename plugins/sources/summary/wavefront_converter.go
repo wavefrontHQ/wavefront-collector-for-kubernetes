@@ -98,7 +98,7 @@ func (converter *pointConverter) Process(batch *metrics.DataBatch) (*metrics.Dat
 			}
 
 			// convert to a point and add it to the data batch
-			point := converter.metricPoint(converter.cleanMetricName(metricType, metricName), value, ts, source, tags)
+			point := metrics.NewMetricPoint(converter.cleanMetricName(metricType, metricName), value, ts, source, tags)
 			batch.MetricPoints = converter.filterAppend(batch.MetricPoints, point)
 			converter.collectedPoints.Inc(1)
 		}
@@ -126,7 +126,7 @@ func (converter *pointConverter) Process(batch *metrics.DataBatch) (*metrics.Dat
 			}
 
 			// convert to a point and add it to the data batch
-			point := converter.metricPoint(converter.cleanMetricName(metricType, metric.Name), value, ts, source, labels)
+			point := metrics.NewMetricPoint(converter.cleanMetricName(metricType, metric.Name), value, ts, source, labels)
 			batch.MetricPoints = converter.filterAppend(batch.MetricPoints, point)
 			converter.collectedPoints.Inc(1)
 		}
@@ -160,17 +160,6 @@ func (converter *pointConverter) addLabelTags(ms *metrics.MetricSet, tags map[st
 			tags[labelName] = labelValue
 		}
 	}
-}
-
-func (converter *pointConverter) metricPoint(name string, value float64, ts int64, source string, tags map[string]string) *metrics.MetricPoint {
-	point := &metrics.MetricPoint{
-		Metric:    name,
-		Value:     value,
-		Timestamp: ts,
-		Source:    source,
-	}
-	point.SetTags(tags)
-	return point
 }
 
 func (converter *pointConverter) cleanMetricName(metricType string, metricName string) string {

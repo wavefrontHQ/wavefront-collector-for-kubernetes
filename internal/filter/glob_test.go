@@ -4,7 +4,6 @@
 package filter
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/gobwas/glob"
@@ -100,19 +99,19 @@ func TestMetricAllowList(t *testing.T) {
 	}
 	f := NewGlobFilter(cfg)
 
-	pt := point("foobar", 1.0, 0, "", nil)
-	if f.MatchMetric(pt.Metric, pt.tags) {
+	pt := metrics.NewMetricPoint("foobar", 1.0, 0, "", nil)
+	if f.MatchMetric(pt.Metric, pt.GetTags()) {
 		t.Errorf("name pass error")
 	}
 
-	pt = point("foo", 1.0, 0, "", nil)
-	if !f.MatchMetric(pt.Metric, pt.tags) {
+	pt = metrics.NewMetricPoint("foo", 1.0, 0, "", nil)
+	if !f.MatchMetric(pt.Metric, pt.GetTags()) {
 		t.Errorf("name pass error")
 	}
 
 	cfg.MetricAllowList = []string{"foo*"}
 	f = NewGlobFilter(cfg)
-	if !f.MatchMetric(pt.Metric, pt.tags) {
+	if !f.MatchMetric(pt.Metric, pt.GetTags()) {
 		t.Errorf("name pass error")
 	}
 }
@@ -122,14 +121,14 @@ func TestMetricDenyList(t *testing.T) {
 		MetricDenyList: []string{"foo"},
 	}
 	f := NewGlobFilter(cfg)
-	pt := point("foobar", 1.0, 0, "", nil)
-	if !f.MatchMetric(pt.Metric, pt.tags) {
+	pt := metrics.NewMetricPoint("foobar", 1.0, 0, "", nil)
+	if !f.MatchMetric(pt.Metric, pt.GetTags()) {
 		t.Errorf("name drop error")
 	}
 
 	cfg.MetricDenyList = []string{"foo*"}
 	f = NewGlobFilter(cfg)
-	if f.MatchMetric(pt.Metric, pt.tags) {
+	if f.MatchMetric(pt.Metric, pt.GetTags()) {
 		t.Errorf("name drop error")
 	}
 }
@@ -141,13 +140,13 @@ func TestMetricTagAllowList(t *testing.T) {
 		},
 	}
 	f := NewGlobFilter(cfg)
-	pt := point("bar", 1.0, 0, "", map[string]string{"bar": "foo"})
-	if f.MatchMetric(pt.Metric, pt.tags) {
+	pt := metrics.NewMetricPoint("bar", 1.0, 0, "", map[string]string{"bar": "foo"})
+	if f.MatchMetric(pt.Metric, pt.GetTags()) {
 		t.Errorf("tag pass error")
 	}
 
-	pt = point("bar", 1.0, 0, "", map[string]string{"bar": "foo", "foo": "val"})
-	if !f.MatchMetric(pt.Metric, pt.tags) {
+	pt = metrics.NewMetricPoint("bar", 1.0, 0, "", map[string]string{"bar": "foo", "foo": "val"})
+	if !f.MatchMetric(pt.Metric, pt.GetTags()) {
 		t.Errorf("tag pass error")
 	}
 }
@@ -159,13 +158,13 @@ func TestMetricTagDenyList(t *testing.T) {
 		},
 	}
 	f := NewGlobFilter(cfg)
-	pt := point("bar", 1.0, 0, "", map[string]string{"bar": "foo"})
-	if !f.MatchMetric(pt.Metric, pt.tags) {
+	pt := metrics.NewMetricPoint("bar", 1.0, 0, "", map[string]string{"bar": "foo"})
+	if !f.MatchMetric(pt.Metric, pt.GetTags()) {
 		t.Errorf("tag drop error")
 	}
 
-	pt = point("bar", 1.0, 0, "", map[string]string{"bar": "foo", "foo": "val"})
-	if f.MatchMetric(pt.Metric, pt.tags) {
+	pt = metrics.NewMetricPoint("bar", 1.0, 0, "", map[string]string{"bar": "foo", "foo": "val"})
+	if f.MatchMetric(pt.Metric, pt.GetTags()) {
 		t.Errorf("tag drop error")
 	}
 }
@@ -175,14 +174,14 @@ func TestTagInclude(t *testing.T) {
 		TagInclude: []string{"foo*"},
 	}
 	f := NewGlobFilter(cfg)
-	pt := point("bar", 1.0, 0, "", map[string]string{"foo": "bar", "key1": "val1"})
-	if !f.MatchMetric(pt.Metric, pt.tags) {
+	pt := metrics.NewMetricPoint("bar", 1.0, 0, "", map[string]string{"foo": "bar", "key1": "val1"})
+	if !f.MatchMetric(pt.Metric, pt.GetTags()) {
 		t.Errorf("tag include error")
 	}
-	if len(pt.tags) != 1 {
+	if len(pt.GetTags()) != 1 {
 		t.Errorf("tag include error")
 	}
-	if _, ok := pt.tags["foo"]; !ok {
+	if _, ok := pt.GetTags()["foo"]; !ok {
 		t.Errorf("tag include error")
 	}
 }
@@ -192,25 +191,15 @@ func TestTagExclude(t *testing.T) {
 		TagExclude: []string{"foo*"},
 	}
 	f := NewGlobFilter(cfg)
-	pt := point("bar", 1.0, 0, "", map[string]string{"foo": "bar", "key1": "val1"})
-	if !f.MatchMetric(pt.Metric, pt.tags) {
+	pt := metrics.NewMetricPoint("bar", 1.0, 0, "", map[string]string{"foo": "bar", "key1": "val1"})
+	if !f.MatchMetric(pt.Metric, pt.GetTags()) {
 		t.Errorf("tag exclude error")
 	}
-	if len(pt.tags) != 1 {
+	if len(pt.GetTags()) != 1 {
 		t.Errorf("tag exclude error")
 	}
-	if _, ok := pt.tags["foo"]; ok {
+	if _, ok := pt.GetTags()["foo"]; ok {
 		t.Errorf("tag exclude error")
-	}
-}
-
-func point(name string, value float64, ts int64, source string, tags map[string]string) *metrics.MetricPoint {
-	return &metrics.MetricPoint{
-		Metric:    strings.Replace(name, "_", ".", -1),
-		Value:     value,
-		Timestamp: ts,
-		Source:    source,
-		tags:      tags,
 	}
 }
 
