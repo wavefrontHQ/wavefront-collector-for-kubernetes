@@ -60,18 +60,18 @@ func TestMetricAllowList(t *testing.T) {
 	f := NewGlobFilter(cfg)
 
 	pt := wf.NewPoint("foobar", 1.0, 0, "", nil)
-	if f.MatchMetric(pt.Metric, pt.GetTags()) {
+	if f.MatchMetric(pt.Metric, pt.Tags()) {
 		t.Errorf("name pass error")
 	}
 
 	pt = wf.NewPoint("foo", 1.0, 0, "", nil)
-	if !f.MatchMetric(pt.Metric, pt.GetTags()) {
+	if !f.MatchMetric(pt.Metric, pt.Tags()) {
 		t.Errorf("name pass error")
 	}
 
 	cfg.MetricAllowList = []string{"foo*"}
 	f = NewGlobFilter(cfg)
-	if !f.MatchMetric(pt.Metric, pt.GetTags()) {
+	if !f.MatchMetric(pt.Metric, pt.Tags()) {
 		t.Errorf("name pass error")
 	}
 }
@@ -82,13 +82,13 @@ func TestMetricDenyList(t *testing.T) {
 	}
 	f := NewGlobFilter(cfg)
 	pt := wf.NewPoint("foobar", 1.0, 0, "", nil)
-	if !f.MatchMetric(pt.Metric, pt.GetTags()) {
+	if !f.MatchMetric(pt.Metric, pt.Tags()) {
 		t.Errorf("name drop error")
 	}
 
 	cfg.MetricDenyList = []string{"foo*"}
 	f = NewGlobFilter(cfg)
-	if f.MatchMetric(pt.Metric, pt.GetTags()) {
+	if f.MatchMetric(pt.Metric, pt.Tags()) {
 		t.Errorf("name drop error")
 	}
 }
@@ -101,12 +101,12 @@ func TestMetricTagAllowList(t *testing.T) {
 	}
 	f := NewGlobFilter(cfg)
 	pt := wf.NewPoint("bar", 1.0, 0, "", map[string]string{"bar": "foo"})
-	if f.MatchMetric(pt.Metric, pt.GetTags()) {
+	if f.MatchMetric(pt.Metric, pt.Tags()) {
 		t.Errorf("tag pass error")
 	}
 
 	pt = wf.NewPoint("bar", 1.0, 0, "", map[string]string{"bar": "foo", "foo": "val"})
-	if !f.MatchMetric(pt.Metric, pt.GetTags()) {
+	if !f.MatchMetric(pt.Metric, pt.Tags()) {
 		t.Errorf("tag pass error")
 	}
 }
@@ -119,12 +119,12 @@ func TestMetricTagDenyList(t *testing.T) {
 	}
 	f := NewGlobFilter(cfg)
 	pt := wf.NewPoint("bar", 1.0, 0, "", map[string]string{"bar": "foo"})
-	if !f.MatchMetric(pt.Metric, pt.GetTags()) {
+	if !f.MatchMetric(pt.Metric, pt.Tags()) {
 		t.Errorf("tag drop error")
 	}
 
 	pt = wf.NewPoint("bar", 1.0, 0, "", map[string]string{"bar": "foo", "foo": "val"})
-	if f.MatchMetric(pt.Metric, pt.GetTags()) {
+	if f.MatchMetric(pt.Metric, pt.Tags()) {
 		t.Errorf("tag drop error")
 	}
 }

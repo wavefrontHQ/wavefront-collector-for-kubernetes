@@ -91,19 +91,11 @@ func (src *stateMetricsSource) ScrapeMetrics() (*metrics.DataBatch, error) {
 
 	var points []*wf.Point
 	for resType := range src.funcs {
-		points = append(points, src.pointsForResource(resType)...)
-	}
-
-	n := 0
-	for _, point := range points {
-		if src.keep(point.Metric, point.GetTags()) {
-			// in-place filtering
-			points[n] = point
-			n++
+		for _, point := range src.pointsForResource(resType) {
+			points = util.FilterAppend(src.filters, src.fps, points, point)
 		}
 	}
-	result.Points = points[:n]
-
+	result.Points = points
 	src.pps.Inc(int64(len(result.Points)))
 	return result, nil
 }
@@ -129,15 +121,6 @@ func (src *stateMetricsSource) pointsForResource(resType string) []*wf.Point {
 		points = append(points, f(item, src.transforms)...)
 	}
 	return points
-}
-
-func (src *stateMetricsSource) keep(name string, tags map[string]string) bool {
-	if src.filters == nil || src.filters.MatchMetric(name, tags) {
-		return true
-	}
-	src.fps.Inc(1)
-	log.Tracef("dropping metric: %s", name)
-	return false
 }
 
 type stateProvider struct {

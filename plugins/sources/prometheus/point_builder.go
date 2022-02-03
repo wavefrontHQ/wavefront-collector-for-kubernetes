@@ -9,15 +9,19 @@ import (
 	"strings"
 	"time"
 
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
+
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
 
 	prom "github.com/prometheus/client_model/go"
 
+	gometrics "github.com/rcrowley/go-metrics"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 )
 
 type pointBuilder struct {
-	isValidMetric    func(name string, tags map[string]string) bool
+	filters          filter.Filter
+	filtered         gometrics.Counter
 	source           string
 	prefix           string
 	omitBucketSuffix bool
@@ -25,13 +29,14 @@ type pointBuilder struct {
 	interner         util.StringInterner
 }
 
-func NewPointBuilder(src *prometheusMetricsSource) *pointBuilder {
+func NewPointBuilder(src *prometheusMetricsSource, filtered gometrics.Counter) *pointBuilder {
 	return &pointBuilder{
 		source:           src.source,
 		prefix:           src.prefix,
 		omitBucketSuffix: src.omitBucketSuffix,
 		tags:             src.tags,
-		isValidMetric:    src.isValidMetric,
+		filters:          src.filters,
+		filtered:         filtered,
 		interner:         util.NewStringInterner(),
 	}
 
@@ -75,30 +80,23 @@ func (builder *pointBuilder) metricPoint(name string, value float64, ts int64, s
 	return point
 }
 
-func (builder *pointBuilder) filterAppend(slice []*wf.Point, point *wf.Point) []*wf.Point {
-	if builder.isValidMetric(point.Metric, point.GetTags()) {
-		return append(slice, point)
-	}
-	return slice
-}
-
 // Get name and value from metric
 func (builder *pointBuilder) buildPoints(name string, m *prom.Metric, now int64) []*wf.Point {
 	var result []*wf.Point
 	if m.Gauge != nil {
 		if !math.IsNaN(m.GetGauge().GetValue()) {
 			point := builder.metricPoint(name+".gauge", m.GetGauge().GetValue(), now, builder.source, builder.buildTags(m))
-			result = builder.filterAppend(result, point)
+			result = util.FilterAppend(builder.filters, builder.filtered, result, point)
 		}
 	} else if m.Counter != nil {
 		if !math.IsNaN(m.GetCounter().GetValue()) {
 			point := builder.metricPoint(name+".counter", m.GetCounter().GetValue(), now, builder.source, builder.buildTags(m))
-			result = builder.filterAppend(result, point)
+			result = util.FilterAppend(builder.filters, builder.filtered, result, point)
 		}
 	} else if m.Untyped != nil {
 		if !math.IsNaN(m.GetUntyped().GetValue()) {
 			point := builder.metricPoint(name+".value", m.GetUntyped().GetValue(), now, builder.source, builder.buildTags(m))
-			result = builder.filterAppend(result, point)
+			result = util.FilterAppend(builder.filters, builder.filtered, result, point)
 		}
 	}
 	return result
@@ -112,13 +110,13 @@ func (builder *pointBuilder) buildSummaryPoints(name string, m *prom.Metric, now
 			newTags := copyOf(tags)
 			newTags["quantile"] = fmt.Sprintf("%v", q.GetQuantile())
 			point := builder.metricPoint(name, q.GetValue(), now, builder.source, newTags)
-			result = builder.filterAppend(result, point)
+			result = util.FilterAppend(builder.filters, builder.filtered, result, point)
 		}
 	}
 	point := builder.metricPoint(name+".count", float64(m.GetSummary().GetSampleCount()), now, builder.source, tags)
-	result = builder.filterAppend(result, point)
+	result = util.FilterAppend(builder.filters, builder.filtered, result, point)
 	point = builder.metricPoint(name+".sum", m.GetSummary().GetSampleSum(), now, builder.source, tags)
-	result = builder.filterAppend(result, point)
+	result = util.FilterAppend(builder.filters, builder.filtered, result, point)
 
 	return result
 }
@@ -131,12 +129,12 @@ func (builder *pointBuilder) buildHistogramPoints(name string, m *prom.Metric, n
 		newTags := copyOf(tags)
 		newTags["le"] = fmt.Sprintf("%v", b.GetUpperBound())
 		point := builder.metricPoint(histName, float64(b.GetCumulativeCount()), now, builder.source, newTags)
-		result = builder.filterAppend(result, point)
+		result = util.FilterAppend(builder.filters, builder.filtered, result, point)
 	}
 	point := builder.metricPoint(name+".count", float64(m.GetHistogram().GetSampleCount()), now, builder.source, tags)
-	result = builder.filterAppend(result, point)
+	result = util.FilterAppend(builder.filters, builder.filtered, result, point)
 	point = builder.metricPoint(name+".sum", m.GetHistogram().GetSampleSum(), now, builder.source, tags)
-	result = builder.filterAppend(result, point)
+	result = util.FilterAppend(builder.filters, builder.filtered, result, point)
 	return result
 }
 

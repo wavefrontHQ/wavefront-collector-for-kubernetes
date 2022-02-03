@@ -103,7 +103,7 @@ func (src *systemdMetricsSource) ScrapeMetrics() (*DataBatch, error) {
 					done <- true
 					return
 				}
-				points = src.filterAppend(points, point)
+				points = util.FilterAppend(src.filters, src.fps, points, point)
 			}
 		}
 	}()
@@ -363,15 +363,6 @@ func (src *systemdMetricsSource) filterUnits(units []unit) []unit {
 		}
 	}
 	return filtered
-}
-
-func (src *systemdMetricsSource) filterAppend(slice []*wf.Point, point *wf.Point) []*wf.Point {
-	if src.filters == nil || src.filters.MatchMetric(point.Metric, point.GetTags()) {
-		return append(slice, point)
-	}
-	src.fps.Inc(1)
-	log.Debugf("dropping metric: %s", point.Metric)
-	return slice
 }
 
 func summarizeUnits(units []unit) map[string]float64 {

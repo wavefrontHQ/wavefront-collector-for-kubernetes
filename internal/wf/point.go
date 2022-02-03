@@ -34,7 +34,7 @@ func (m *Point) SetTags(tags map[string]string) {
 	m.tags = tags
 }
 
-func (m *Point) GetTags() map[string]string {
+func (m *Point) Tags() map[string]string {
 	tags := make(map[string]string, len(m.labelPairs))
 	for _, labelPair := range m.labelPairs {
 		tags[*labelPair.Name] = *labelPair.Value

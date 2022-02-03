@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	gm "github.com/rcrowley/go-metrics"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
 )
 
@@ -96,7 +97,7 @@ func TestTagInclude(t *testing.T) {
 
 	tagCounts := map[string]int{}
 	for _, point := range points {
-		tags := point.GetTags()
+		tags := point.Tags()
 		for tagName := range tags {
 			tagCounts[tagName] += 1
 		}
@@ -117,15 +118,16 @@ func TestTagExclude(t *testing.T) {
 	assert.Equal(t, 8, len(points), "wrong number of points")
 
 	for _, point := range points {
-		_, ok := point.GetTags()["label"]
-		assert.False(t, ok, point.GetTags())
+		_, ok := point.Tags()["label"]
+		assert.False(t, ok, point.Tags())
 	}
 }
 
 func BenchmarkMetricPoint(b *testing.B) {
+	filtered := gm.GetOrRegisterCounter("filtered", gm.DefaultRegistry)
 	tempTags := map[string]string{"pod_name": "prometheus_pod_xyz", "namespace_name": "default"}
 	src := &prometheusMetricsSource{prefix: "prefix."}
-	pointBuilder := NewPointBuilder(src)
+	pointBuilder := NewPointBuilder(src, filtered)
 	for i := 0; i < b.N; i++ {
 		_ = pointBuilder.metricPoint("http.requests.total.count", 1.0, 0, "", tempTags)
 	}

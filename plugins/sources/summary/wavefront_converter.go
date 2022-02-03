@@ -101,7 +101,7 @@ func (converter *pointConverter) Process(batch *metrics.DataBatch) (*metrics.Dat
 
 			// convert to a point and add it to the data batch
 			point := wf.NewPoint(converter.cleanMetricName(metricType, metricName), value, ts, source, tags)
-			batch.Points = converter.filterAppend(batch.Points, point)
+			batch.Points = util.FilterAppend(converter.filters, converter.filteredPoints, batch.Points, point)
 			converter.collectedPoints.Inc(1)
 		}
 		for _, metric := range ms.LabeledMetrics {
@@ -129,7 +129,7 @@ func (converter *pointConverter) Process(batch *metrics.DataBatch) (*metrics.Dat
 
 			// convert to a point and add it to the data batch
 			point := wf.NewPoint(converter.cleanMetricName(metricType, metric.Name), value, ts, source, labels)
-			batch.Points = converter.filterAppend(batch.Points, point)
+			batch.Points = util.FilterAppend(converter.filters, converter.filteredPoints, batch.Points, point)
 			converter.collectedPoints.Inc(1)
 		}
 	}
@@ -137,14 +137,7 @@ func (converter *pointConverter) Process(batch *metrics.DataBatch) (*metrics.Dat
 }
 
 func (converter *pointConverter) filterAppend(slice []*wf.Point, point *wf.Point) []*wf.Point {
-	if converter.filters == nil || converter.filters.MatchMetric(point.Metric, point.GetTags()) {
-		return append(slice, point)
-	}
-	converter.filteredPoints.Inc(1)
-	if log.IsLevelEnabled(log.TraceLevel) {
-		log.WithField("name", point.Metric).Trace("Dropping metric")
-	}
-	return slice
+	return util.FilterAppend(converter.filters, converter.filteredPoints, slice, point)
 }
 
 func (converter *pointConverter) addLabelTags(ms *metrics.MetricSet, tags map[string]string) {

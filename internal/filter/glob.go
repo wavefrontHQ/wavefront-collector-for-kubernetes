@@ -11,7 +11,6 @@ import (
 
 type Filter interface {
 	MatchMetric(name string, tags map[string]string) bool
-	UsesTags() bool
 	MatchTag(tagName string) bool
 }
 
@@ -70,11 +69,6 @@ func MultiSetCompile(filters []map[string][]string) []map[string]glob.Glob {
 		globs[i] = MultiCompile(f)
 	}
 	return globs
-}
-
-func (gf *globFilter) UsesTags() bool {
-	return gf.metricTagAllowList != nil || gf.metricTagDenyList != nil ||
-		gf.tagExclude != nil || gf.tagInclude != nil
 }
 
 func (gf *globFilter) MatchMetric(name string, tags map[string]string) bool {

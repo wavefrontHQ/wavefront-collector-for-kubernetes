@@ -181,7 +181,7 @@ func (src *prometheusMetricsSource) ScrapeMetrics() (*metrics.DataBatch, error) 
 // parseMetrics returns an error when IO or parsing fails
 func (src *prometheusMetricsSource) parseMetrics(reader io.Reader) ([]*wf.Point, error) {
 	metricReader := NewMetricReader(reader)
-	pointBuilder := NewPointBuilder(src)
+	pointBuilder := NewPointBuilder(src, filteredPoints)
 	var points = make([]*wf.Point, 0)
 	var err error
 	for !metricReader.Done() {
@@ -194,23 +194,7 @@ func (src *prometheusMetricsSource) parseMetrics(reader io.Reader) ([]*wf.Point,
 		batch, err := pointBuilder.build(metricFamilies)
 		points = append(points, batch...)
 	}
-	if src.filters != nil {
-		for _, point := range points {
-			point.FilterTags(src.filters.MatchTag)
-		}
-	}
 	return points, err
-}
-
-func (src *prometheusMetricsSource) isValidMetric(name string, tags map[string]string) bool {
-	if src.filters == nil || src.filters.MatchMetric(name, tags) {
-		return true
-	}
-	filteredPoints.Inc(1)
-	if log.IsLevelEnabled(log.TraceLevel) {
-		log.Tracef("dropping metric: %s", name)
-	}
-	return false
 }
 
 type prometheusProvider struct {

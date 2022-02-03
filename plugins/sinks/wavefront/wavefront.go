@@ -209,7 +209,7 @@ func (sink *wavefrontSink) send(batch *metrics.DataBatch) {
 		if point == nil {
 			continue
 		}
-		tags := point.GetTags()
+		tags := point.Tags()
 		tags["cluster"] = sink.ClusterName
 		sink.sendPoint(point.Metric, point.Value, point.Timestamp, point.Source, tags)
 	}

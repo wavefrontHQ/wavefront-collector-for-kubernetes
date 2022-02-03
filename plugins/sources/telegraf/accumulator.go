@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
+
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
 
 	"github.com/influxdata/telegraf"
@@ -57,7 +59,7 @@ func (t *telegrafDataBatch) preparePoints(measurement string, fields map[string]
 			metricName = t.source.prefix + "." + metricName
 		}
 
-		t.Points = t.filterAppend(t.Points, wf.NewPoint(
+		t.Points = util.FilterAppend(t.source.filters, t.source.pointsFiltered, t.Points, wf.NewPoint(
 			metricName,
 			value,
 			ts.UnixNano()/1000,
@@ -82,15 +84,6 @@ func (t *telegrafDataBatch) buildTags(pointTags map[string]string) map[string]st
 	return result
 }
 
-func (t *telegrafDataBatch) filterAppend(slice []*wf.Point, point *wf.Point) []*wf.Point {
-	if t.source.filters == nil || t.source.filters.MatchMetric(point.Metric, point.GetTags()) {
-		return append(slice, point)
-	}
-	t.source.pointsFiltered.Inc(1)
-	log.Tracef("dropping metric: %s", point.Metric)
-	return slice
-}
-
 // AddFields adds a metric to the accumulator with the given measurement
 // name, fields, and tags (and timestamp). If a timestamp is not provided,
 // then the accumulator sets it to "now".
@@ -103,7 +96,7 @@ func (t *telegrafDataBatch) AddGauge(measurement string, fields map[string]inter
 	t.preparePoints(measurement, fields, tags, timestamp...)
 }
 
-// AddCounter is the same as AddFields, but will add the metric as a "Counter" type
+// AddCounter is the same as AddFields, but will add the metric as a "Incrementer" type
 func (t *telegrafDataBatch) AddCounter(measurement string, fields map[string]interface{}, tags map[string]string, timestamp ...time.Time) {
 	t.preparePoints(measurement, fields, tags, timestamp...)
 }

@@ -11,7 +11,7 @@ import (
 
 func TestGetEmptyTags(t *testing.T) {
 	point := NewPoint("test", 1, 0, "test.source", nil)
-	assert.Equal(t, map[string]string{}, point.GetTags(), "expect empty tags")
+	assert.Equal(t, map[string]string{}, point.Tags(), "expect empty tags")
 }
 
 func TestGetTagsLabelPairs(t *testing.T) {
@@ -23,7 +23,7 @@ func TestGetTagsLabelPairs(t *testing.T) {
 		Value: &value,
 	}})
 
-	assert.Equal(t, map[string]string{"name": "value"}, point.GetTags(), "expect tags")
+	assert.Equal(t, map[string]string{"name": "value"}, point.Tags(), "expect tags")
 }
 
 func TestGetTagsFromMultipleLabelPairs(t *testing.T) {
@@ -36,13 +36,13 @@ func TestGetTagsFromMultipleLabelPairs(t *testing.T) {
 		{Name: &name, Value: &value},
 		{Name: &name2, Value: &value2}})
 
-	assert.Equal(t, map[string]string{"name": "value", "name2": "value2"}, point.GetTags(), "expect tags")
+	assert.Equal(t, map[string]string{"name": "value", "name2": "value2"}, point.Tags(), "expect tags")
 }
 
 func TestGetTagsFromTags(t *testing.T) {
 	point := NewPoint("test", 1, 0, "test.source", map[string]string{"name": "value"})
 
-	assert.Equal(t, map[string]string{"name": "value"}, point.GetTags(), "expect tags")
+	assert.Equal(t, map[string]string{"name": "value"}, point.Tags(), "expect tags")
 }
 
 func TestGetTagsFromTagsAndLabelPairs(t *testing.T) {
@@ -54,5 +54,5 @@ func TestGetTagsFromTagsAndLabelPairs(t *testing.T) {
 		Value: &value,
 	}})
 
-	assert.Equal(t, map[string]string{"tag": "tag_value", "label_pair": "label_pair_value"}, point.GetTags(), "expect tags")
+	assert.Equal(t, map[string]string{"tag": "tag_value", "label_pair": "label_pair_value"}, point.Tags(), "expect tags")
 }
