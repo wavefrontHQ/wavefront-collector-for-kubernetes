@@ -71,6 +71,8 @@ sources:
         - 'kube.apiserver.workqueue.adds.total.*'
         - 'kube.apiserver.workqueue.depth.*'
         - 'kube.apiserver.workqueue.queue.duration.seconds.*'
+        tagExclude:
+        - le
 
   telegraf_sources:
     # enable all telegraf plugins
