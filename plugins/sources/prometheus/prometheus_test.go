@@ -129,7 +129,7 @@ func BenchmarkMetricPoint(b *testing.B) {
 	src := &prometheusMetricsSource{prefix: "prefix."}
 	pointBuilder := NewPointBuilder(src, filtered)
 	for i := 0; i < b.N; i++ {
-		_ = pointBuilder.metricPoint("http.requests.total.count", 1.0, 0, "", tempTags)
+		_ = pointBuilder.point("http.requests.total.count", 1.0, 0, "", tempTags)
 	}
 }
 

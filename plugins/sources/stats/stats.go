@@ -97,11 +97,11 @@ func (src *internalMetricsSource) internalStats() (*metrics.DataBatch, error) {
 	gometrics.DefaultRegistry.Each(func(name string, i interface{}) {
 		switch metric := i.(type) {
 		case gometrics.Counter:
-			points = util.FilterAppend(src.filters, src.fps, points, src.point(name, float64(metric.Count()), now.Unix()))
+			points = wf.FilterAppend(src.filters, src.fps, points, src.point(name, float64(metric.Count()), now.Unix()))
 		case gometrics.Gauge:
-			points = util.FilterAppend(src.filters, src.fps, points, src.point(name, float64(metric.Value()), now.Unix()))
+			points = wf.FilterAppend(src.filters, src.fps, points, src.point(name, float64(metric.Value()), now.Unix()))
 		case gometrics.GaugeFloat64:
-			points = util.FilterAppend(src.filters, src.fps, points, src.point(name, metric.Value(), now.Unix()))
+			points = wf.FilterAppend(src.filters, src.fps, points, src.point(name, metric.Value(), now.Unix()))
 		case gometrics.Timer:
 			timer := metric.Snapshot()
 			points = append(points, src.addHisto(name, timer.Min(), timer.Max(), timer.Mean(),
@@ -124,22 +124,22 @@ func (src *internalMetricsSource) internalStats() (*metrics.DataBatch, error) {
 func (src *internalMetricsSource) addHisto(name string, min, max int64, mean float64, percentiles []float64, now int64) []*wf.Point {
 	// convert from nanoseconds to milliseconds
 	var points []*wf.Point
-	points = util.FilterAppend(src.filters, src.fps, points, src.point(combine(name, "duration.min"), float64(min)/1e6, now))
-	points = util.FilterAppend(src.filters, src.fps, points, src.point(combine(name, "duration.max"), float64(max)/1e6, now))
-	points = util.FilterAppend(src.filters, src.fps, points, src.point(combine(name, "duration.mean"), mean/1e6, now))
-	points = util.FilterAppend(src.filters, src.fps, points, src.point(combine(name, "duration.median"), percentiles[0]/1e6, now))
-	points = util.FilterAppend(src.filters, src.fps, points, src.point(combine(name, "duration.p75"), percentiles[1]/1e6, now))
-	points = util.FilterAppend(src.filters, src.fps, points, src.point(combine(name, "duration.p95"), percentiles[2]/1e6, now))
-	points = util.FilterAppend(src.filters, src.fps, points, src.point(combine(name, "duration.p99"), percentiles[3]/1e6, now))
-	points = util.FilterAppend(src.filters, src.fps, points, src.point(combine(name, "duration.p999"), percentiles[4]/1e6, now))
+	points = wf.FilterAppend(src.filters, src.fps, points, src.point(combine(name, "duration.min"), float64(min)/1e6, now))
+	points = wf.FilterAppend(src.filters, src.fps, points, src.point(combine(name, "duration.max"), float64(max)/1e6, now))
+	points = wf.FilterAppend(src.filters, src.fps, points, src.point(combine(name, "duration.mean"), mean/1e6, now))
+	points = wf.FilterAppend(src.filters, src.fps, points, src.point(combine(name, "duration.median"), percentiles[0]/1e6, now))
+	points = wf.FilterAppend(src.filters, src.fps, points, src.point(combine(name, "duration.p75"), percentiles[1]/1e6, now))
+	points = wf.FilterAppend(src.filters, src.fps, points, src.point(combine(name, "duration.p95"), percentiles[2]/1e6, now))
+	points = wf.FilterAppend(src.filters, src.fps, points, src.point(combine(name, "duration.p99"), percentiles[3]/1e6, now))
+	points = wf.FilterAppend(src.filters, src.fps, points, src.point(combine(name, "duration.p999"), percentiles[4]/1e6, now))
 	return points
 }
 
 func (src *internalMetricsSource) addRate(name string, count int64, m1, mean float64, now int64) []*wf.Point {
 	var points []*wf.Point
-	points = util.FilterAppend(src.filters, src.fps, points, src.point(combine(name, "rate.count"), float64(count), now))
-	points = util.FilterAppend(src.filters, src.fps, points, src.point(combine(name, "rate.m1"), m1, now))
-	points = util.FilterAppend(src.filters, src.fps, points, src.point(combine(name, "rate.mean"), mean, now))
+	points = wf.FilterAppend(src.filters, src.fps, points, src.point(combine(name, "rate.count"), float64(count), now))
+	points = wf.FilterAppend(src.filters, src.fps, points, src.point(combine(name, "rate.m1"), m1, now))
+	points = wf.FilterAppend(src.filters, src.fps, points, src.point(combine(name, "rate.mean"), mean, now))
 	return points
 }
 

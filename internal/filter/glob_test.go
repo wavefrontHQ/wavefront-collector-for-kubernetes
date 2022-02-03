@@ -6,10 +6,6 @@ package filter
 import (
 	"testing"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
-
-	"github.com/gobwas/glob"
-
 	"github.com/stretchr/testify/assert"
 )
 
@@ -59,19 +55,17 @@ func TestMetricAllowList(t *testing.T) {
 	}
 	f := NewGlobFilter(cfg)
 
-	pt := wf.NewPoint("foobar", 1.0, 0, "", nil)
-	if f.MatchMetric(pt.Metric, pt.Tags()) {
+	if f.MatchMetric("foobar", map[string]string{}) {
 		t.Errorf("name pass error")
 	}
 
-	pt = wf.NewPoint("foo", 1.0, 0, "", nil)
-	if !f.MatchMetric(pt.Metric, pt.Tags()) {
+	if !f.MatchMetric("foo", map[string]string{}) {
 		t.Errorf("name pass error")
 	}
 
 	cfg.MetricAllowList = []string{"foo*"}
 	f = NewGlobFilter(cfg)
-	if !f.MatchMetric(pt.Metric, pt.Tags()) {
+	if !f.MatchMetric("foo", map[string]string{}) {
 		t.Errorf("name pass error")
 	}
 }
@@ -81,14 +75,13 @@ func TestMetricDenyList(t *testing.T) {
 		MetricDenyList: []string{"foo"},
 	}
 	f := NewGlobFilter(cfg)
-	pt := wf.NewPoint("foobar", 1.0, 0, "", nil)
-	if !f.MatchMetric(pt.Metric, pt.Tags()) {
+	if !f.MatchMetric("foobar", map[string]string{}) {
 		t.Errorf("name drop error")
 	}
 
 	cfg.MetricDenyList = []string{"foo*"}
 	f = NewGlobFilter(cfg)
-	if f.MatchMetric(pt.Metric, pt.Tags()) {
+	if f.MatchMetric("foobar", map[string]string{}) {
 		t.Errorf("name drop error")
 	}
 }
@@ -100,13 +93,11 @@ func TestMetricTagAllowList(t *testing.T) {
 		},
 	}
 	f := NewGlobFilter(cfg)
-	pt := wf.NewPoint("bar", 1.0, 0, "", map[string]string{"bar": "foo"})
-	if f.MatchMetric(pt.Metric, pt.Tags()) {
+	if f.MatchMetric("bar", map[string]string{"bar": "foo"}) {
 		t.Errorf("tag pass error")
 	}
 
-	pt = wf.NewPoint("bar", 1.0, 0, "", map[string]string{"bar": "foo", "foo": "val"})
-	if !f.MatchMetric(pt.Metric, pt.Tags()) {
+	if !f.MatchMetric("bar", map[string]string{"bar": "foo", "foo": "val"}) {
 		t.Errorf("tag pass error")
 	}
 }
@@ -118,13 +109,11 @@ func TestMetricTagDenyList(t *testing.T) {
 		},
 	}
 	f := NewGlobFilter(cfg)
-	pt := wf.NewPoint("bar", 1.0, 0, "", map[string]string{"bar": "foo"})
-	if !f.MatchMetric(pt.Metric, pt.Tags()) {
+	if !f.MatchMetric("bar", map[string]string{"bar": "foo"}) {
 		t.Errorf("tag drop error")
 	}
 
-	pt = wf.NewPoint("bar", 1.0, 0, "", map[string]string{"bar": "foo", "foo": "val"})
-	if f.MatchMetric(pt.Metric, pt.Tags()) {
+	if f.MatchMetric("bar", map[string]string{"bar": "foo", "foo": "val"}) {
 		t.Errorf("tag drop error")
 	}
 }
@@ -147,12 +136,4 @@ func TestTagExclude(t *testing.T) {
 	assert.False(t, f.MatchTag("foo"))
 	assert.False(t, f.MatchTag("foobar"))
 	assert.True(t, f.MatchTag("barfoo"))
-}
-
-func compileGlob(filter []string, t *testing.T) glob.Glob {
-	matcher := Compile(filter)
-	if matcher == nil {
-		t.Errorf("error creating matcher: %q", filter)
-	}
-	return matcher
 }

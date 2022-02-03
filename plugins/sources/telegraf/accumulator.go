@@ -9,8 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
-
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
 
 	"github.com/influxdata/telegraf"
@@ -59,7 +57,7 @@ func (t *telegrafDataBatch) preparePoints(measurement string, fields map[string]
 			metricName = t.source.prefix + "." + metricName
 		}
 
-		t.Points = util.FilterAppend(t.source.filters, t.source.pointsFiltered, t.Points, wf.NewPoint(
+		t.Points = wf.FilterAppend(t.source.filters, t.source.pointsFiltered, t.Points, wf.NewPoint(
 			metricName,
 			value,
 			ts.UnixNano()/1000,

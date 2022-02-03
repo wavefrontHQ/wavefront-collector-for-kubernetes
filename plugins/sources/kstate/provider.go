@@ -92,7 +92,7 @@ func (src *stateMetricsSource) ScrapeMetrics() (*metrics.DataBatch, error) {
 	var points []*wf.Point
 	for resType := range src.funcs {
 		for _, point := range src.pointsForResource(resType) {
-			points = util.FilterAppend(src.filters, src.fps, points, point)
+			points = wf.FilterAppend(src.filters, src.fps, points, point)
 		}
 	}
 	result.Points = points

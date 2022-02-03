@@ -103,7 +103,7 @@ func (src *systemdMetricsSource) ScrapeMetrics() (*DataBatch, error) {
 					done <- true
 					return
 				}
-				points = util.FilterAppend(src.filters, src.fps, points, point)
+				points = wf.FilterAppend(src.filters, src.fps, points, point)
 			}
 		}
 	}()

@@ -1,16 +1,15 @@
-package util
+package wf
 
 import (
 	log "github.com/sirupsen/logrus"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
 )
 
 type Incrementer interface {
 	Inc(int642 int64)
 }
 
-func FilterAppend(filter filter.Filter, filtered Incrementer, points []*wf.Point, point *wf.Point) []*wf.Point {
+func FilterAppend(filter filter.Filter, filtered Incrementer, points []*Point, point *Point) []*Point {
 	if filter == nil {
 		return append(points, point)
 	}
