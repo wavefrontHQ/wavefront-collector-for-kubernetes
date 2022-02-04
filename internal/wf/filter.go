@@ -22,7 +22,7 @@ func FilterAppend(filter filter.Filter, filtered Incrementer, points []*Point, p
 // Filter increments the Incrementor when filtering.
 // Filter filters the tags on a matched point.
 func Filter(filter filter.Filter, filtered Incrementer, point *Point) *Point {
-	if filter == nil {
+	if filter == nil || point == nil {
 		return point
 	}
 	if !filter.MatchMetric(point.Metric, point.Tags()) {

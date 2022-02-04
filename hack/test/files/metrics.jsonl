@@ -46,12 +46,12 @@
 {"Name":"kube.apiserver.apiserver.admission.step.admission.duration.seconds.summary.sum","Tags":{"cluster":"","operation":"","rejected":"","source":"","type":""}}
 {"Name":"kube.apiserver.apiserver.admission.step.admission.duration.seconds.summary.count","Tags":{"cluster":"","operation":"","rejected":"","source":"","type":""}}
 {"Name":"kube.apiserver.apiserver.audit.event.total.counter","Tags":{"cluster":"","source":""}}
-{"Name":"kube.apiserver.apiserver.audit.level.total.counter","Tags":{"cluster":"","!level":"","source":""}}
 {"Name":"kube.apiserver.apiserver.audit.requests.rejected.total.counter","Tags":{"cluster":"","source":""}}
 {"Name":"kube.apiserver.apiserver.client.certificate.expiration.seconds.bucket","Tags":{"cluster":"","source":""}}
 {"Name":"kube.apiserver.apiserver.client.certificate.expiration.seconds.count","Tags":{"cluster":"","source":""}}
 {"Name":"kube.apiserver.apiserver.client.certificate.expiration.seconds.sum","Tags":{"cluster":"","source":""}}
 {"Name":"kube.apiserver.apiserver.envelope.encryption.dek.cache.fill.percent.gauge","Tags":{"cluster":"","source":""}}
+{"Name":"kube.apiserver.apiserver.request.duration.seconds.bucket","Tags":{"cluster":"","component":"","group":"","le":"","resource":"","scope":"","source":"","verb":"","!version":""}}
 {"Name":"kube.apiserver.etcd.db.total.size.in.bytes.gauge","Tags":{"cluster":"","endpoint":"","source":""}}
 {"Name":"kube.apiserver.etcd.lease.object.counts.bucket","Tags":{"cluster":"","source":""}}
 {"Name":"kube.apiserver.etcd.lease.object.counts.count","Tags":{"cluster":"","source":""}}
@@ -162,6 +162,7 @@
 {"Name":"kubernetes.collector.source.points.collected","Tags":{"cluster":"","leading":"","source":"","type":"telegraf_host.swap"}}
 {"Name":"kubernetes.collector.source.points.collected","Tags":{"cluster":"","leading":"","source":"","type":"telegraf_host.system"}}
 {"Name":"kubernetes.collector.target.points.collected","Tags":{"cluster":"","discovered":"","leading":"","namespace":"","pod":"","source":"","type":""}}
+{"Name":"kubernetes.collector.target.points.collected","Tags":{"cluster":"","discovered":"","leading":"","source":"","type":"prometheus","!service":"","!url":""}}
 {"Name":"kubernetes.collector.version","Tags":{"cluster":"","leading":"","source":""}}
 {"Name":"kubernetes.collector.wavefront.events.sent.count","Tags":{"cluster":"","leading":"","source":""}}
 {"Name":"kubernetes.collector.wavefront.points.sent.count","Tags":{"cluster":"","leading":"","source":""}}

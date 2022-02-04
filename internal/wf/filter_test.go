@@ -59,20 +59,33 @@ func TestFilter(t *testing.T) {
 	})
 
 	t.Run("filters tags on matched point", func(t *testing.T) {
-		actualPoint := NewPoint("some.metric", 1.0, 2, "pod-123", map[string]string{"foo": "bar", "bar": "foo"})
+		expectedPoint := NewPoint("some.metric", 1.0, 2, "pod-123", map[string]string{"foo": "bar", "bar": "foo"})
 		incrementer := fakeCounter(0)
 		filters := filter.NewGlobFilter(filter.Config{
 			MetricDenyList: []string{"other*"},
 			TagExclude:     []string{"foo*"},
 		})
 
-		expectedPoint := Filter(filters, &incrementer, actualPoint)
+		actualPoint := Filter(filters, &incrementer, expectedPoint)
 
 		assert.Equal(t, fakeCounter(0), incrementer, "does not increment filtered")
-		if assert.Equal(t, expectedPoint, actualPoint, "returns the point") &&
-			assert.Equal(t, 1, len(expectedPoint.Tags()), "filters correct tags") {
-			assert.Equal(t, "foo", expectedPoint.Tags()["bar"], "preserves bar tag")
+		if assert.Equal(t, actualPoint, expectedPoint, "returns the point") &&
+			assert.Equal(t, 1, len(actualPoint.Tags()), "filters correct tags") {
+			assert.Equal(t, "foo", actualPoint.Tags()["bar"], "preserves bar tag")
 		}
+	})
+
+	t.Run("Does not try to filter on nil point", func(t *testing.T) {
+		incrementer := fakeCounter(0)
+		filters := filter.NewGlobFilter(filter.Config{
+			MetricDenyList: []string{"other*"},
+			TagExclude:     []string{"foo*"},
+		})
+
+		actualPoint := Filter(filters, &incrementer, nil)
+
+		assert.Equal(t, fakeCounter(0), incrementer, "does not increment filtered")
+		assert.Nil(t, actualPoint)
 	})
 }
 
