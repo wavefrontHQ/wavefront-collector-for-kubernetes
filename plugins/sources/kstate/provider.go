@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
-
 	log "github.com/sirupsen/logrus"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
@@ -22,7 +20,7 @@ import (
 	gometrics "github.com/rcrowley/go-metrics"
 )
 
-type resourceHandler func(interface{}, configuration.Transforms) []*wf.Point
+type resourceHandler func(interface{}, configuration.Transforms) []*metrics.MetricPoint
 
 type stateMetricsSource struct {
 	lister     *lister
@@ -89,18 +87,26 @@ func (src *stateMetricsSource) ScrapeMetrics() (*metrics.DataBatch, error) {
 		Timestamp: time.Now(),
 	}
 
-	var points []*wf.Point
+	var points []*metrics.MetricPoint
 	for resType := range src.funcs {
-		for _, point := range src.pointsForResource(resType) {
-			points = wf.FilterAppend(src.filters, src.fps, points, point)
+		points = append(points, src.pointsForResource(resType)...)
+	}
+
+	n := 0
+	for _, point := range points {
+		if src.keep(point.Metric, point.Tags) {
+			// in-place filtering
+			points[n] = point
+			n++
 		}
 	}
-	result.Points = points
-	src.pps.Inc(int64(len(result.Points)))
+	result.MetricPoints = points[:n]
+
+	src.pps.Inc(int64(len(result.MetricPoints)))
 	return result, nil
 }
 
-func (src *stateMetricsSource) pointsForResource(resType string) []*wf.Point {
+func (src *stateMetricsSource) pointsForResource(resType string) []*metrics.MetricPoint {
 	items, err := src.lister.List(resType)
 	if err != nil {
 		log.Errorf("error listing %s: %v", resType, err)
@@ -116,11 +122,20 @@ func (src *stateMetricsSource) pointsForResource(resType string) []*wf.Point {
 		return nil
 	}
 
-	var points []*wf.Point
+	var points []*metrics.MetricPoint
 	for _, item := range items {
 		points = append(points, f(item, src.transforms)...)
 	}
 	return points
+}
+
+func (src *stateMetricsSource) keep(name string, tags map[string]string) bool {
+	if src.filters == nil || src.filters.Match(name, tags) {
+		return true
+	}
+	src.fps.Inc(1)
+	log.Tracef("dropping metric: %s", name)
+	return false
 }
 
 type stateProvider struct {

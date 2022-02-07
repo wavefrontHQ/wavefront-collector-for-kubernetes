@@ -7,15 +7,15 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
-
 	log "github.com/sirupsen/logrus"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
+
 	v1 "k8s.io/api/core/v1"
 )
 
-func pointsForReplicationController(item interface{}, transforms configuration.Transforms) []*wf.Point {
+func pointsForReplicationController(item interface{}, transforms configuration.Transforms) []*metrics.MetricPoint {
 	rs, ok := item.(*v1.ReplicationController)
 	if !ok {
 		log.Errorf("invalid type: %s", reflect.TypeOf(item).String())
@@ -28,7 +28,7 @@ func pointsForReplicationController(item interface{}, transforms configuration.T
 	available := float64(rs.Status.AvailableReplicas)
 	ready := float64(rs.Status.ReadyReplicas)
 
-	return []*wf.Point{
+	return []*metrics.MetricPoint{
 		metricPoint(transforms.Prefix, "replicationcontroller.desired_replicas", desired, now, transforms.Source, tags),
 		metricPoint(transforms.Prefix, "replicationcontroller.available_replicas", available, now, transforms.Source, tags),
 		metricPoint(transforms.Prefix, "replicationcontroller.ready_replicas", ready, now, transforms.Source, tags),

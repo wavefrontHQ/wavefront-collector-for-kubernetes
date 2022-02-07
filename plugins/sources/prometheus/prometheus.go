@@ -14,8 +14,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
-
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/httputil"
@@ -165,24 +163,23 @@ func (src *prometheusMetricsSource) ScrapeMetrics() (*metrics.DataBatch, error) 
 	}
 
 	points, err := src.parseMetrics(resp.Body)
+
 	if err != nil {
 		collectErrors.Inc(1)
 		src.eps.Inc(1)
 		return result, err
 	}
-	result.Points = points
+	result.MetricPoints = points
 	collectedPoints.Inc(int64(len(points)))
 	src.pps.Inc(int64(len(points)))
 
 	return result, nil
 }
 
-// parseMetrics converts serialized prometheus metrics to wavefront points
-// parseMetrics returns an error when IO or parsing fails
-func (src *prometheusMetricsSource) parseMetrics(reader io.Reader) ([]*wf.Point, error) {
+func (src *prometheusMetricsSource) parseMetrics(reader io.Reader) ([]*metrics.MetricPoint, error) {
 	metricReader := NewMetricReader(reader)
-	pointBuilder := NewPointBuilder(src, filteredPoints)
-	var points = make([]*wf.Point, 0)
+	pointBuilder := NewPointBuilder(src)
+	var points = make([]*metrics.MetricPoint, 0)
 	var err error
 	for !metricReader.Done() {
 		var parser expfmt.TextParser
@@ -195,6 +192,17 @@ func (src *prometheusMetricsSource) parseMetrics(reader io.Reader) ([]*wf.Point,
 		points = append(points, batch...)
 	}
 	return points, err
+}
+
+func (src *prometheusMetricsSource) isValidMetric(name string, tags map[string]string) bool {
+	if src.filters == nil || src.filters.Match(name, tags) {
+		return true
+	}
+	filteredPoints.Inc(1)
+	if log.IsLevelEnabled(log.TraceLevel) {
+		log.Tracef("dropping metric: %s", name)
+	}
+	return false
 }
 
 type prometheusProvider struct {

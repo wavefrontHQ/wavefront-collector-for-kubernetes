@@ -7,8 +7,6 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
-
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 
 	log "github.com/sirupsen/logrus"
@@ -19,7 +17,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
-func pointsForNode(item interface{}, transforms configuration.Transforms) []*wf.Point {
+func pointsForNode(item interface{}, transforms configuration.Transforms) []*metrics.MetricPoint {
 	node, ok := item.(*v1.Node)
 	if !ok {
 		log.Errorf("invalid type: %s", reflect.TypeOf(item).String())
@@ -32,8 +30,8 @@ func pointsForNode(item interface{}, transforms configuration.Transforms) []*wf.
 	return points
 }
 
-func buildNodeConditions(node *v1.Node, transforms configuration.Transforms, ts int64) []*wf.Point {
-	points := make([]*wf.Point, len(node.Status.Conditions))
+func buildNodeConditions(node *v1.Node, transforms configuration.Transforms, ts int64) []*metrics.MetricPoint {
+	points := make([]*metrics.MetricPoint, len(node.Status.Conditions))
 	for i, condition := range node.Status.Conditions {
 		tags := buildTags("nodename", node.Name, "", transforms.Tags)
 		copyLabels(node.GetLabels(), tags)
@@ -48,8 +46,8 @@ func buildNodeConditions(node *v1.Node, transforms configuration.Transforms, ts 
 	return points
 }
 
-func buildNodeTaints(node *v1.Node, transforms configuration.Transforms, ts int64) []*wf.Point {
-	points := make([]*wf.Point, len(node.Spec.Taints))
+func buildNodeTaints(node *v1.Node, transforms configuration.Transforms, ts int64) []*metrics.MetricPoint {
+	points := make([]*metrics.MetricPoint, len(node.Spec.Taints))
 	for i, taint := range node.Spec.Taints {
 		tags := buildTags("nodename", node.Name, "", transforms.Tags)
 		copyLabels(node.GetLabels(), tags)
@@ -61,7 +59,7 @@ func buildNodeTaints(node *v1.Node, transforms configuration.Transforms, ts int6
 	return points
 }
 
-func buildNodeInfo(node *v1.Node, transforms configuration.Transforms, ts int64) *wf.Point {
+func buildNodeInfo(node *v1.Node, transforms configuration.Transforms, ts int64) *metrics.MetricPoint {
 	tags := buildTags("nodename", node.Name, "", transforms.Tags)
 	copyLabels(node.GetLabels(), tags)
 	tags["kernel_version"] = node.Status.NodeInfo.KernelVersion

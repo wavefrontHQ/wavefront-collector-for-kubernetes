@@ -7,8 +7,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
-
 	"github.com/stretchr/testify/assert"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
@@ -66,8 +64,12 @@ func TestPrefix(t *testing.T) {
 	assert.NoError(t, err)
 
 	db := metrics.DataBatch{
-		Points: []*wf.Point{
-			wf.NewPoint("cpu.idle", 1.0, 0, "fakeSource", nil),
+		MetricPoints: []*metrics.MetricPoint{
+			{
+				Metric: "cpu.idle",
+				Value:  1.0,
+				Source: "fakeSource",
+			},
 		},
 	}
 	sink.ExportData(&db)
@@ -86,8 +88,12 @@ func TestNilPointDataBatch(t *testing.T) {
 	assert.NoError(t, err)
 
 	db := metrics.DataBatch{
-		Points: []*wf.Point{
-			wf.NewPoint("cpu.idle", 1.0, 0, "fakeSource", nil),
+		MetricPoints: []*metrics.MetricPoint{
+			{
+				Metric: "cpu.idle",
+				Value:  1.0,
+				Source: "fakeSource",
+			},
 			nil,
 		},
 	}
@@ -107,14 +113,13 @@ func TestCleansTagsBeforeSending(t *testing.T) {
 	assert.NoError(t, err)
 
 	db := metrics.DataBatch{
-		Points: []*wf.Point{
-			wf.NewPoint(
-				"cpu.idle",
-				1.0,
-				0,
-				"fakeSource",
-				map[string]string{"emptyTag": ""},
-			),
+		MetricPoints: []*metrics.MetricPoint{
+			{
+				Metric: "cpu.idle",
+				Value:  1.0,
+				Source: "fakeSource",
+				Tags:   map[string]string{"emptyTag": ""},
+			},
 		},
 	}
 	sink.ExportData(&db)

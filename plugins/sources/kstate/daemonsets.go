@@ -7,15 +7,15 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
-
 	log "github.com/sirupsen/logrus"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
+
 	appsv1 "k8s.io/api/apps/v1"
 )
 
-func pointsForDaemonSet(item interface{}, transforms configuration.Transforms) []*wf.Point {
+func pointsForDaemonSet(item interface{}, transforms configuration.Transforms) []*metrics.MetricPoint {
 	ds, ok := item.(*appsv1.DaemonSet)
 	if !ok {
 		log.Errorf("invalid type: %s", reflect.TypeOf(item).String())
@@ -29,7 +29,7 @@ func pointsForDaemonSet(item interface{}, transforms configuration.Transforms) [
 	misScheduled := float64(ds.Status.NumberMisscheduled)
 	ready := float64(ds.Status.NumberReady)
 
-	return []*wf.Point{
+	return []*metrics.MetricPoint{
 		metricPoint(transforms.Prefix, "daemonset.current_scheduled", currentScheduled, now, transforms.Source, tags),
 		metricPoint(transforms.Prefix, "daemonset.desired_scheduled", desiredScheduled, now, transforms.Source, tags),
 		metricPoint(transforms.Prefix, "daemonset.misscheduled", misScheduled, now, transforms.Source, tags),

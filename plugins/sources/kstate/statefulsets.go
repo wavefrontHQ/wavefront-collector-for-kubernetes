@@ -7,15 +7,15 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
-
 	log "github.com/sirupsen/logrus"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
+
 	appsv1 "k8s.io/api/apps/v1"
 )
 
-func pointsForStatefulSet(item interface{}, transforms configuration.Transforms) []*wf.Point {
+func pointsForStatefulSet(item interface{}, transforms configuration.Transforms) []*metrics.MetricPoint {
 	ss, ok := item.(*appsv1.StatefulSet)
 	if !ok {
 		log.Errorf("invalid type: %s", reflect.TypeOf(item).String())
@@ -30,7 +30,7 @@ func pointsForStatefulSet(item interface{}, transforms configuration.Transforms)
 	current := float64(ss.Status.CurrentReplicas)
 	updated := float64(ss.Status.UpdatedReplicas)
 
-	return []*wf.Point{
+	return []*metrics.MetricPoint{
 		metricPoint(transforms.Prefix, "statefulset.desired_replicas", desired, now, transforms.Source, tags),
 		metricPoint(transforms.Prefix, "statefulset.current_replicas", current, now, transforms.Source, tags),
 		metricPoint(transforms.Prefix, "statefulset.ready_replicas", ready, now, transforms.Source, tags),

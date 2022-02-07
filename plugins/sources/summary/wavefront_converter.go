@@ -6,8 +6,6 @@ package summary
 import (
 	"strings"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
-
 	"github.com/wavefronthq/go-metrics-wavefront/reporting"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
@@ -18,7 +16,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// converts MetricSets to Points.
+// converts MetricSets to MetricPoints.
 type pointConverter struct {
 	cluster string
 	prefix  string
@@ -100,8 +98,8 @@ func (converter *pointConverter) Process(batch *metrics.DataBatch) (*metrics.Dat
 			}
 
 			// convert to a point and add it to the data batch
-			point := wf.NewPoint(converter.cleanMetricName(metricType, metricName), value, ts, source, tags)
-			batch.Points = wf.FilterAppend(converter.filters, converter.filteredPoints, batch.Points, point)
+			point := converter.metricPoint(converter.cleanMetricName(metricType, metricName), value, ts, source, tags)
+			batch.MetricPoints = converter.filterAppend(batch.MetricPoints, point)
 			converter.collectedPoints.Inc(1)
 		}
 		for _, metric := range ms.LabeledMetrics {
@@ -128,12 +126,23 @@ func (converter *pointConverter) Process(batch *metrics.DataBatch) (*metrics.Dat
 			}
 
 			// convert to a point and add it to the data batch
-			point := wf.NewPoint(converter.cleanMetricName(metricType, metric.Name), value, ts, source, labels)
-			batch.Points = wf.FilterAppend(converter.filters, converter.filteredPoints, batch.Points, point)
+			point := converter.metricPoint(converter.cleanMetricName(metricType, metric.Name), value, ts, source, labels)
+			batch.MetricPoints = converter.filterAppend(batch.MetricPoints, point)
 			converter.collectedPoints.Inc(1)
 		}
 	}
 	return batch, nil
+}
+
+func (converter *pointConverter) filterAppend(slice []*metrics.MetricPoint, point *metrics.MetricPoint) []*metrics.MetricPoint {
+	if converter.filters == nil || converter.filters.Match(point.Metric, point.Tags) {
+		return append(slice, point)
+	}
+	converter.filteredPoints.Inc(1)
+	if log.IsLevelEnabled(log.TraceLevel) {
+		log.WithField("name", point.Metric).Trace("Dropping metric")
+	}
+	return slice
 }
 
 func (converter *pointConverter) addLabelTags(ms *metrics.MetricSet, tags map[string]string) {
@@ -150,6 +159,16 @@ func (converter *pointConverter) addLabelTags(ms *metrics.MetricSet, tags map[st
 		} else {
 			tags[labelName] = labelValue
 		}
+	}
+}
+
+func (converter *pointConverter) metricPoint(name string, value float64, ts int64, source string, tags map[string]string) *metrics.MetricPoint {
+	return &metrics.MetricPoint{
+		Metric:    name,
+		Value:     value,
+		Timestamp: ts,
+		Source:    source,
+		Tags:      tags,
 	}
 }
 

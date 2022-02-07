@@ -49,7 +49,7 @@ func TestStoreTimeseriesMultipleTimeseriesInput(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	assert.Equal(t, count, len(data.Points))
+	assert.Equal(t, count, len(data.MetricPoints))
 }
 
 func TestFiltering(t *testing.T) {
@@ -66,7 +66,7 @@ func TestFiltering(t *testing.T) {
 		t.Error(err)
 	}
 	assert.Equal(t, 8, len(data.MetricSets))
-	assert.Equal(t, 2, len(data.Points))
+	assert.Equal(t, 2, len(data.MetricPoints))
 
 	fakeConverter = fakeWavefrontConverter(t, configuration.SummarySourceConfig{
 		Transforms: configuration.Transforms{
@@ -81,7 +81,7 @@ func TestFiltering(t *testing.T) {
 		t.Error(err)
 	}
 	assert.Equal(t, 8, len(data.MetricSets))
-	assert.Equal(t, 6, len(data.Points))
+	assert.Equal(t, 6, len(data.MetricPoints))
 }
 
 func TestPrefix(t *testing.T) {

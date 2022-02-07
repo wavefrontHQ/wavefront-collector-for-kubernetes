@@ -10,8 +10,8 @@ import (
 )
 
 type Filter interface {
-	MatchMetric(name string, tags map[string]string) bool
-	MatchTag(tagName string) bool
+	Match(name string, tags map[string]string) bool
+	UsesTags() bool
 }
 
 type globFilter struct {
@@ -71,7 +71,12 @@ func MultiSetCompile(filters []map[string][]string) []map[string]glob.Glob {
 	return globs
 }
 
-func (gf *globFilter) MatchMetric(name string, tags map[string]string) bool {
+func (gf *globFilter) UsesTags() bool {
+	return gf.metricTagAllowList != nil || gf.metricTagDenyList != nil ||
+		gf.tagExclude != nil || gf.tagInclude != nil
+}
+
+func (gf *globFilter) Match(name string, tags map[string]string) bool {
 	if gf.metricAllowList != nil && !gf.metricAllowList.Match(name) {
 		return false
 	}
@@ -86,18 +91,13 @@ func (gf *globFilter) MatchMetric(name string, tags map[string]string) bool {
 		return false
 	}
 
-	return true
-}
-
-func (gf *globFilter) MatchTag(tagName string) bool {
-	matches := true
 	if gf.tagInclude != nil {
-		matches = matches && gf.tagInclude.Match(tagName)
+		deleteTags(gf.tagInclude, tags, true)
 	}
 	if gf.tagExclude != nil {
-		matches = matches && !gf.tagExclude.Match(tagName)
+		deleteTags(gf.tagExclude, tags, false)
 	}
-	return matches
+	return true
 }
 
 func MatchesTags(matchers map[string]glob.Glob, tags map[string]string) bool {
@@ -122,4 +122,22 @@ func MatchesAllTags(matchers map[string]glob.Glob, tags map[string]string) bool 
 		}
 	}
 	return true
+}
+
+func matchesTag(matcher glob.Glob, tags map[string]string) bool {
+	for k := range tags {
+		if matcher.Match(k) {
+			return true
+		}
+	}
+	return false
+}
+
+func deleteTags(matcher glob.Glob, tags map[string]string, include bool) {
+	for k := range tags {
+		matches := matcher.Match(k)
+		if (include && !matches) || (!include && matches) {
+			delete(tags, k)
+		}
+	}
 }

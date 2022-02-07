@@ -87,28 +87,15 @@ func timestampKey(expected string) keyer {
 }
 
 func tagNameKey(name string) keyer {
-	key := strings.TrimPrefix(name, "!")
-	if strings.HasPrefix(name, "!") {
-		return func(metric *Metric) (bool, string) {
-			_, exists := metric.Tags[key]
-			return !exists, fmt.Sprintf("%s!=*", key)
-		}
-	}
 	return func(metric *Metric) (bool, string) {
-		_, exists := metric.Tags[key]
-		return exists, fmt.Sprintf("%s=*", key)
+		_, exists := metric.Tags[name]
+		return exists, fmt.Sprintf("%s=*", name)
 	}
 }
 
 func fullTagKey(name, value string) keyer {
-	key := strings.TrimPrefix(name, "!")
-	if strings.HasPrefix(name, "!") {
-		return func(metric *Metric) (bool, string) {
-			return metric.Tags[key] != value, fmt.Sprintf("%s!=%#v", key, metric.Tags[key])
-		}
-	}
 	return func(metric *Metric) (bool, string) {
-		return metric.Tags[key] == value, fmt.Sprintf("%s=%#v", key, metric.Tags[key])
+		return metric.Tags[name] == value, fmt.Sprintf("%s=%#v", name, metric.Tags[name])
 	}
 }
 

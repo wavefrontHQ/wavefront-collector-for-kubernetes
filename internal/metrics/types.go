@@ -22,8 +22,6 @@ package metrics
 
 import (
 	"time"
-
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
 )
 
 type MetricType int8
@@ -141,8 +139,8 @@ type MetricSet struct {
 type DataBatch struct {
 	Timestamp time.Time
 	// Should use key functions from ms_keys.go
-	MetricSets map[string]*MetricSet
-	Points     []*wf.Point
+	MetricSets   map[string]*MetricSet
+	MetricPoints []*MetricPoint
 }
 
 // A place from where the metrics should be scraped.
@@ -171,6 +169,39 @@ type DataSink interface {
 type DataProcessor interface {
 	Name() string
 	Process(*DataBatch) (*DataBatch, error)
+}
+
+type LabelPair struct {
+	Name  *string
+	Value *string
+}
+
+// Represents a single point in Wavefront metric format.
+type MetricPoint struct {
+	Metric    string
+	Value     float64
+	Timestamp int64
+	Source    string
+	Tags      map[string]string
+
+	labelPairs []LabelPair
+}
+
+func (m *MetricPoint) SetLabelPairs(pairs []LabelPair) {
+	m.labelPairs = pairs
+}
+
+func (m *MetricPoint) GetTags() map[string]string {
+	tags := make(map[string]string, len(m.labelPairs))
+	for _, labelPair := range m.labelPairs {
+		tags[*labelPair.Name] = *labelPair.Value
+	}
+
+	for k, v := range m.Tags {
+		tags[k] = v
+	}
+
+	return tags
 }
 
 // ProviderHandler is an interface for dynamically adding and removing MetricSourceProviders

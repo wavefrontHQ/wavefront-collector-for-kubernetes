@@ -27,8 +27,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
-
 	"github.com/wavefronthq/go-metrics-wavefront/reporting"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
 
@@ -89,9 +87,9 @@ func (src *systemdMetricsSource) ScrapeMetrics() (*DataBatch, error) {
 	}
 
 	// channel for gathering collected metrics
-	gather := make(chan *wf.Point, 1000)
+	gather := make(chan *MetricPoint, 1000)
 	done := make(chan bool)
-	var points []*wf.Point
+	var points []*MetricPoint
 
 	// goroutine for gathering collected metrics
 	go func() {
@@ -103,7 +101,7 @@ func (src *systemdMetricsSource) ScrapeMetrics() (*DataBatch, error) {
 					done <- true
 					return
 				}
-				points = wf.FilterAppend(src.filters, src.fps, points, point)
+				points = src.filterAppend(points, point)
 			}
 		}
 	}()
@@ -162,15 +160,15 @@ func (src *systemdMetricsSource) ScrapeMetrics() (*DataBatch, error) {
 	// wait for gathering to process all the points
 	<-done
 
-	result.Points = points
-	count := len(result.Points)
+	result.MetricPoints = points
+	count := len(result.MetricPoints)
 	log.Infof("%s metrics: %d", "systemd", count)
 	src.pps.Inc(int64(count))
 
 	return result, err
 }
 
-func (src *systemdMetricsSource) collectUnitStatusMetrics(conn *dbus.Conn, units []unit, ch chan<- *wf.Point, now int64) {
+func (src *systemdMetricsSource) collectUnitStatusMetrics(conn *dbus.Conn, units []unit, ch chan<- *MetricPoint, now int64) {
 	for _, unit := range units {
 		serviceType := ""
 		if strings.HasSuffix(unit.Name, ".service") {
@@ -211,7 +209,7 @@ func (src *systemdMetricsSource) collectUnitStatusMetrics(conn *dbus.Conn, units
 	}
 }
 
-func (src *systemdMetricsSource) collectSockets(conn *dbus.Conn, units []unit, ch chan<- *wf.Point, now int64) {
+func (src *systemdMetricsSource) collectSockets(conn *dbus.Conn, units []unit, ch chan<- *MetricPoint, now int64) {
 	for _, unit := range units {
 		if !strings.HasSuffix(unit.Name, ".socket") {
 			continue
@@ -243,7 +241,7 @@ func (src *systemdMetricsSource) collectSockets(conn *dbus.Conn, units []unit, c
 	}
 }
 
-func (src *systemdMetricsSource) collectUnitStartTimeMetrics(conn *dbus.Conn, units []unit, ch chan<- *wf.Point, now int64) {
+func (src *systemdMetricsSource) collectUnitStartTimeMetrics(conn *dbus.Conn, units []unit, ch chan<- *MetricPoint, now int64) {
 	var startTimeUsec uint64
 	for _, unit := range units {
 		if unit.ActiveState != "active" {
@@ -262,7 +260,7 @@ func (src *systemdMetricsSource) collectUnitStartTimeMetrics(conn *dbus.Conn, un
 	}
 }
 
-func (src *systemdMetricsSource) collectUnitTasksMetrics(conn *dbus.Conn, units []unit, ch chan<- *wf.Point, now int64) {
+func (src *systemdMetricsSource) collectUnitTasksMetrics(conn *dbus.Conn, units []unit, ch chan<- *MetricPoint, now int64) {
 	var val uint64
 	for _, unit := range units {
 		if strings.HasSuffix(unit.Name, ".service") {
@@ -294,7 +292,7 @@ func (src *systemdMetricsSource) collectUnitTasksMetrics(conn *dbus.Conn, units 
 	}
 }
 
-func (src *systemdMetricsSource) collectTimers(conn *dbus.Conn, units []unit, ch chan<- *wf.Point, now int64) {
+func (src *systemdMetricsSource) collectTimers(conn *dbus.Conn, units []unit, ch chan<- *MetricPoint, now int64) {
 	for _, unit := range units {
 		if !strings.HasSuffix(unit.Name, ".timer") {
 			continue
@@ -311,7 +309,7 @@ func (src *systemdMetricsSource) collectTimers(conn *dbus.Conn, units []unit, ch
 	}
 }
 
-func (src *systemdMetricsSource) collectSummaryMetrics(summary map[string]float64, ch chan<- *wf.Point, now int64) {
+func (src *systemdMetricsSource) collectSummaryMetrics(summary map[string]float64, ch chan<- *MetricPoint, now int64) {
 	for stateName, count := range summary {
 		tags := map[string]string{}
 		setTag(tags, "state_name", stateName)
@@ -319,7 +317,7 @@ func (src *systemdMetricsSource) collectSummaryMetrics(summary map[string]float6
 	}
 }
 
-func (src *systemdMetricsSource) collectSystemState(conn *dbus.Conn, ch chan<- *wf.Point, now int64) error {
+func (src *systemdMetricsSource) collectSystemState(conn *dbus.Conn, ch chan<- *MetricPoint, now int64) error {
 	systemState, err := conn.GetManagerProperty("SystemState")
 	if err != nil {
 		return fmt.Errorf("couldn't get system state: %s", err)
@@ -365,6 +363,15 @@ func (src *systemdMetricsSource) filterUnits(units []unit) []unit {
 	return filtered
 }
 
+func (src *systemdMetricsSource) filterAppend(slice []*MetricPoint, point *MetricPoint) []*MetricPoint {
+	if src.filters == nil || src.filters.Match(point.Metric, point.Tags) {
+		return append(slice, point)
+	}
+	src.fps.Inc(1)
+	log.Debugf("dropping metric: %s", point.Metric)
+	return slice
+}
+
 func summarizeUnits(units []unit) map[string]float64 {
 	summarized := make(map[string]float64)
 	for _, unitStateName := range unitStatesName {
@@ -388,14 +395,14 @@ func setTag(tags map[string]string, key, val string) {
 	}
 }
 
-func (src *systemdMetricsSource) metricPoint(name string, value float64, ts int64, tags map[string]string) *wf.Point {
-	return wf.NewPoint(
-		src.prefix+strings.Replace(name, "_", ".", -1),
-		value,
-		ts,
-		src.source,
-		tags,
-	)
+func (src *systemdMetricsSource) metricPoint(name string, value float64, ts int64, tags map[string]string) *MetricPoint {
+	return &MetricPoint{
+		Metric:    src.prefix + strings.Replace(name, "_", ".", -1),
+		Value:     value,
+		Timestamp: ts,
+		Source:    src.source,
+		Tags:      tags,
+	}
 }
 
 type systemdProvider struct {

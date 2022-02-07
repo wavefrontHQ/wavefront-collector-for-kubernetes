@@ -8,10 +8,10 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 )
 
 // example pulled from https://github.com/prometheus/docs/blob/master/content/docs/instrumenting/exposition_formats.md
@@ -30,11 +30,11 @@ http_requests_total{method="post",code="400"}    3 1395066363000
 
 	assert.Equal(t, "http.requests.total.counter", points[0].Metric)
 	assert.Equal(t, float64(3), points[0].Value)
-	assert.Equal(t, map[string]string{"method": "post", "code": "400"}, points[0].Tags(), "wrong point tags")
+	assert.Equal(t, map[string]string{"method": "post", "code": "400"}, points[0].GetTags(), "wrong point tags")
 
 	assert.Equal(t, "http.requests.total.counter", points[1].Metric)
 	assert.Equal(t, float64(1027), points[1].Value)
-	assert.Equal(t, map[string]string{"method": "post", "code": "200"}, points[1].Tags(), "wrong point tags")
+	assert.Equal(t, map[string]string{"method": "post", "code": "200"}, points[1].GetTags(), "wrong point tags")
 }
 
 func TestParsingOfHistogramPoints(t *testing.T) {
@@ -58,11 +58,11 @@ http_request_duration_seconds_count 144320
 
 	assert.Equal(t, "http.request.duration.seconds.bucket", points[0].Metric)
 	assert.Equal(t, float64(24054), points[0].Value)
-	assert.Equal(t, map[string]string{"le": "0.05"}, points[0].Tags(), "wrong point tags")
+	assert.Equal(t, map[string]string{"le": "0.05"}, points[0].GetTags(), "wrong point tags")
 
 	assert.Equal(t, "http.request.duration.seconds.bucket", points[5].Metric)
 	assert.Equal(t, float64(144320), points[5].Value)
-	assert.Equal(t, map[string]string{"le": "+Inf"}, points[5].Tags(), "wrong point tags")
+	assert.Equal(t, map[string]string{"le": "+Inf"}, points[5].GetTags(), "wrong point tags")
 
 	assert.Equal(t, "http.request.duration.seconds.count", points[6].Metric)
 	assert.Equal(t, float64(144320), points[6].Value)
@@ -91,11 +91,11 @@ rpc_duration_seconds_count 2693
 
 	assert.Equal(t, "rpc.duration.seconds", points[0].Metric)
 	assert.Equal(t, float64(3102), points[0].Value)
-	assert.Equal(t, map[string]string{"quantile": "0.01"}, points[0].Tags(), "wrong point tags")
+	assert.Equal(t, map[string]string{"quantile": "0.01"}, points[0].GetTags(), "wrong point tags")
 
 	assert.Equal(t, "rpc.duration.seconds", points[4].Metric)
 	assert.Equal(t, float64(76656), points[4].Value)
-	assert.Equal(t, map[string]string{"quantile": "0.99"}, points[4].Tags(), "wrong point tags")
+	assert.Equal(t, map[string]string{"quantile": "0.99"}, points[4].GetTags(), "wrong point tags")
 
 	assert.Equal(t, "rpc.duration.seconds.count", points[5].Metric)
 	assert.Equal(t, float64(2693), points[5].Value)
@@ -115,7 +115,7 @@ http_requests_total{method="post",code="400"}    3 1395066363000
 `)
 
 	assert.Equal(t, 2, len(points))
-	assert.Equal(t, map[string]string{"method": "post", "code": "400", "pod": "myPod"}, points[0].Tags(), "wrong point tags")
+	assert.Equal(t, map[string]string{"method": "post", "code": "400", "pod": "myPod"}, points[0].GetTags(), "wrong point tags")
 
 	points = parseMetrics(t, src, `
 # A histogram, which has a pretty complex representation in the text format:
@@ -132,9 +132,9 @@ http_request_duration_seconds_count 144320
 `)
 
 	assert.Equal(t, 8, len(points))
-	assert.Equal(t, map[string]string{"le": "0.05", "pod": "myPod"}, points[0].Tags(), "wrong point tags")
-	assert.Equal(t, map[string]string{"pod": "myPod"}, points[6].Tags(), "wrong point tags for sum")
-	assert.Equal(t, map[string]string{"pod": "myPod"}, points[6].Tags(), "wrong point tags for count")
+	assert.Equal(t, map[string]string{"le": "0.05", "pod": "myPod"}, points[0].GetTags(), "wrong point tags")
+	assert.Equal(t, map[string]string{"pod": "myPod"}, points[6].GetTags(), "wrong point tags for sum")
+	assert.Equal(t, map[string]string{"pod": "myPod"}, points[6].GetTags(), "wrong point tags for count")
 
 	points = parseMetrics(t, src, `
 # Finally a summary, which has a complex representation, too:
@@ -150,12 +150,12 @@ rpc_duration_seconds_count 2693
 `)
 
 	assert.Equal(t, 7, len(points))
-	assert.Equal(t, map[string]string{"quantile": "0.01", "pod": "myPod"}, points[0].Tags(), "wrong point tags")
-	assert.Equal(t, map[string]string{"pod": "myPod"}, points[5].Tags(), "wrong point tags for sum")
-	assert.Equal(t, map[string]string{"pod": "myPod"}, points[6].Tags(), "wrong point tags for count")
+	assert.Equal(t, map[string]string{"quantile": "0.01", "pod": "myPod"}, points[0].GetTags(), "wrong point tags")
+	assert.Equal(t, map[string]string{"pod": "myPod"}, points[5].GetTags(), "wrong point tags for sum")
+	assert.Equal(t, map[string]string{"pod": "myPod"}, points[6].GetTags(), "wrong point tags for count")
 }
 
-func parseMetrics(t *testing.T, src *prometheusMetricsSource, metricsString string) []*wf.Point {
+func parseMetrics(t *testing.T, src *prometheusMetricsSource, metricsString string) []*metrics.MetricPoint {
 	points, err := src.parseMetrics(bytes.NewReader([]byte(metricsString)))
 	require.NoError(t, err, "parsing metrics")
 
@@ -163,7 +163,7 @@ func parseMetrics(t *testing.T, src *prometheusMetricsSource, metricsString stri
 	return points
 }
 
-type byKeyValue []*wf.Point
+type byKeyValue []*metrics.MetricPoint
 
 func (a byKeyValue) Len() int      { return len(a) }
 func (a byKeyValue) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
