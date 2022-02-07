@@ -23,6 +23,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
+
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/events"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 )
@@ -103,18 +105,18 @@ func (dummy *DummyMetricsSource) ScrapeMetrics() (*metrics.DataBatch, error) {
 		return nil, errors.New("scrape error")
 	}
 
-	point := &metrics.MetricPoint{
-		Metric:    strings.Replace(dummy.Name(), " ", ".", -1),
-		Value:     1,
-		Timestamp: time.Now().UnixNano() / 1000,
-		Source:    dummy.Name(),
-		Tags:      map[string]string{"tag": "tag"},
-	}
+	point := wf.NewPoint(
+		strings.Replace(dummy.Name(), " ", ".", -1),
+		1,
+		time.Now().UnixNano()/1000,
+		dummy.Name(),
+		map[string]string{"tag": "tag"},
+	)
 
 	res := &metrics.DataBatch{
 		Timestamp: time.Now(),
 	}
-	res.MetricPoints = append(res.MetricPoints, point)
+	res.Points = append(res.Points, point)
 	return res, nil
 }
 

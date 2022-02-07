@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
+
 	"github.com/influxdata/telegraf"
 	log "github.com/sirupsen/logrus"
 
@@ -55,14 +57,13 @@ func (t *telegrafDataBatch) preparePoints(measurement string, fields map[string]
 			metricName = t.source.prefix + "." + metricName
 		}
 
-		point := &metrics.MetricPoint{
-			Metric:    metricName,
-			Value:     value,
-			Timestamp: ts.UnixNano() / 1000,
-			Source:    t.source.source,
-			Tags:      t.buildTags(tags),
-		}
-		t.MetricPoints = t.filterAppend(t.MetricPoints, point)
+		t.Points = wf.FilterAppend(t.source.filters, t.source.pointsFiltered, t.Points, wf.NewPoint(
+			metricName,
+			value,
+			ts.UnixNano()/1000,
+			t.source.source,
+			t.buildTags(tags),
+		))
 	}
 }
 
@@ -79,15 +80,6 @@ func (t *telegrafDataBatch) buildTags(pointTags map[string]string) map[string]st
 		}
 	}
 	return result
-}
-
-func (t *telegrafDataBatch) filterAppend(slice []*metrics.MetricPoint, point *metrics.MetricPoint) []*metrics.MetricPoint {
-	if t.source.filters == nil || t.source.filters.Match(point.Metric, point.Tags) {
-		return append(slice, point)
-	}
-	t.source.pointsFiltered.Inc(1)
-	log.Tracef("dropping metric: %s", point.Metric)
-	return slice
 }
 
 // AddFields adds a metric to the accumulator with the given measurement

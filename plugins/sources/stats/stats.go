@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
+
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/leadership"
 
 	gometrics "github.com/rcrowley/go-metrics"
@@ -84,7 +86,7 @@ func (src *internalMetricsSource) internalStats() (*metrics.DataBatch, error) {
 	result := &metrics.DataBatch{
 		Timestamp: now,
 	}
-	var points []*metrics.MetricPoint
+	var points []*wf.Point
 
 	src.tags["leading"] = strconv.FormatBool(leadership.Leading())
 	src.tags["installation_method"] = util.GetInstallationMethod()
@@ -95,11 +97,11 @@ func (src *internalMetricsSource) internalStats() (*metrics.DataBatch, error) {
 	gometrics.DefaultRegistry.Each(func(name string, i interface{}) {
 		switch metric := i.(type) {
 		case gometrics.Counter:
-			points = src.filterAppend(points, src.point(name, float64(metric.Count()), now.Unix()))
+			points = wf.FilterAppend(src.filters, src.fps, points, src.point(name, float64(metric.Count()), now.Unix()))
 		case gometrics.Gauge:
-			points = src.filterAppend(points, src.point(name, float64(metric.Value()), now.Unix()))
+			points = wf.FilterAppend(src.filters, src.fps, points, src.point(name, float64(metric.Value()), now.Unix()))
 		case gometrics.GaugeFloat64:
-			points = src.filterAppend(points, src.point(name, metric.Value(), now.Unix()))
+			points = wf.FilterAppend(src.filters, src.fps, points, src.point(name, metric.Value(), now.Unix()))
 		case gometrics.Timer:
 			timer := metric.Snapshot()
 			points = append(points, src.addHisto(name, timer.Min(), timer.Max(), timer.Mean(),
@@ -115,29 +117,29 @@ func (src *internalMetricsSource) internalStats() (*metrics.DataBatch, error) {
 		}
 	})
 	src.pps.Inc(int64(len(points)))
-	result.MetricPoints = points
+	result.Points = points
 	return result, nil
 }
 
-func (src *internalMetricsSource) addHisto(name string, min, max int64, mean float64, percentiles []float64, now int64) []*metrics.MetricPoint {
+func (src *internalMetricsSource) addHisto(name string, min, max int64, mean float64, percentiles []float64, now int64) []*wf.Point {
 	// convert from nanoseconds to milliseconds
-	var points []*metrics.MetricPoint
-	points = src.filterAppend(points, src.point(combine(name, "duration.min"), float64(min)/1e6, now))
-	points = src.filterAppend(points, src.point(combine(name, "duration.max"), float64(max)/1e6, now))
-	points = src.filterAppend(points, src.point(combine(name, "duration.mean"), mean/1e6, now))
-	points = src.filterAppend(points, src.point(combine(name, "duration.median"), percentiles[0]/1e6, now))
-	points = src.filterAppend(points, src.point(combine(name, "duration.p75"), percentiles[1]/1e6, now))
-	points = src.filterAppend(points, src.point(combine(name, "duration.p95"), percentiles[2]/1e6, now))
-	points = src.filterAppend(points, src.point(combine(name, "duration.p99"), percentiles[3]/1e6, now))
-	points = src.filterAppend(points, src.point(combine(name, "duration.p999"), percentiles[4]/1e6, now))
+	var points []*wf.Point
+	points = wf.FilterAppend(src.filters, src.fps, points, src.point(combine(name, "duration.min"), float64(min)/1e6, now))
+	points = wf.FilterAppend(src.filters, src.fps, points, src.point(combine(name, "duration.max"), float64(max)/1e6, now))
+	points = wf.FilterAppend(src.filters, src.fps, points, src.point(combine(name, "duration.mean"), mean/1e6, now))
+	points = wf.FilterAppend(src.filters, src.fps, points, src.point(combine(name, "duration.median"), percentiles[0]/1e6, now))
+	points = wf.FilterAppend(src.filters, src.fps, points, src.point(combine(name, "duration.p75"), percentiles[1]/1e6, now))
+	points = wf.FilterAppend(src.filters, src.fps, points, src.point(combine(name, "duration.p95"), percentiles[2]/1e6, now))
+	points = wf.FilterAppend(src.filters, src.fps, points, src.point(combine(name, "duration.p99"), percentiles[3]/1e6, now))
+	points = wf.FilterAppend(src.filters, src.fps, points, src.point(combine(name, "duration.p999"), percentiles[4]/1e6, now))
 	return points
 }
 
-func (src *internalMetricsSource) addRate(name string, count int64, m1, mean float64, now int64) []*metrics.MetricPoint {
-	var points []*metrics.MetricPoint
-	points = src.filterAppend(points, src.point(combine(name, "rate.count"), float64(count), now))
-	points = src.filterAppend(points, src.point(combine(name, "rate.m1"), m1, now))
-	points = src.filterAppend(points, src.point(combine(name, "rate.mean"), mean, now))
+func (src *internalMetricsSource) addRate(name string, count int64, m1, mean float64, now int64) []*wf.Point {
+	var points []*wf.Point
+	points = wf.FilterAppend(src.filters, src.fps, points, src.point(combine(name, "rate.count"), float64(count), now))
+	points = wf.FilterAppend(src.filters, src.fps, points, src.point(combine(name, "rate.m1"), m1, now))
+	points = wf.FilterAppend(src.filters, src.fps, points, src.point(combine(name, "rate.mean"), mean, now))
 	return points
 }
 
@@ -145,20 +147,19 @@ func combine(prefix, name string) string {
 	return fmt.Sprintf("%s.%s", prefix, name)
 }
 
-func (src *internalMetricsSource) point(name string, value float64, ts int64) *metrics.MetricPoint {
+func (src *internalMetricsSource) point(name string, value float64, ts int64) *wf.Point {
 	name, tags := reporting.DecodeKey(name)
 	if value == 0.0 && src.filterName(name) {
 		// don't emit internal counts with zero values
 		return nil
 	}
-
-	return &metrics.MetricPoint{
-		Metric:    src.prefix + "collector." + strings.Replace(name, "_", ".", -1),
-		Value:     value,
-		Timestamp: ts,
-		Source:    src.source,
-		Tags:      src.buildTags(tags),
-	}
+	return wf.NewPoint(
+		src.prefix+"collector."+strings.Replace(name, "_", ".", -1),
+		value,
+		ts,
+		src.source,
+		src.buildTags(tags),
+	)
 }
 
 func (src *internalMetricsSource) buildTags(tags map[string]string) map[string]string {
@@ -176,17 +177,6 @@ func (src *internalMetricsSource) buildTags(tags map[string]string) map[string]s
 		}
 	}
 	return tags
-}
-
-func (src *internalMetricsSource) filterAppend(slice []*metrics.MetricPoint, point *metrics.MetricPoint) []*metrics.MetricPoint {
-	if point == nil {
-		return slice
-	}
-	if src.filters == nil || src.filters.Match(point.Metric, point.Tags) {
-		return append(slice, point)
-	}
-	src.fps.Inc(1)
-	return slice
 }
 
 func (src *internalMetricsSource) filterName(name string) bool {

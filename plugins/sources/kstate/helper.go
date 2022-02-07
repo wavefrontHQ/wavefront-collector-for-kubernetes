@@ -3,7 +3,9 @@
 
 package kstate
 
-import "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
+import (
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
+)
 
 func buildTags(key, name, ns string, srcTags map[string]string) map[string]string {
 	tags := make(map[string]string, len(srcTags)+2)
@@ -27,14 +29,14 @@ func copyLabels(in map[string]string, out map[string]string) {
 	}
 }
 
-func metricPoint(prefix, name string, value float64, ts int64, source string, tags map[string]string) *metrics.MetricPoint {
-	return &metrics.MetricPoint{
-		Metric:    prefix + name,
-		Value:     value,
-		Timestamp: ts,
-		Source:    source,
-		Tags:      tags,
-	}
+func metricPoint(prefix, name string, value float64, ts int64, source string, tags map[string]string) *wf.Point {
+	return wf.NewPoint(
+		prefix+name,
+		value,
+		ts,
+		source,
+		tags,
+	)
 }
 
 func floatVal(i *int32, f float64) float64 {

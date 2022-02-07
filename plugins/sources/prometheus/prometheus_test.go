@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	gm "github.com/rcrowley/go-metrics"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
 )
 
@@ -83,12 +84,52 @@ func TestMetricTagDenyList(t *testing.T) {
 	assert.Equal(t, 7, len(points), "wrong number of points")
 }
 
+func TestTagInclude(t *testing.T) {
+	src := &prometheusMetricsSource{
+		filters: filter.FromConfig(filter.Config{
+			TagInclude: []string{"label"},
+		}),
+	}
+
+	points, err := src.parseMetrics(testMetricReader())
+	require.NoError(t, err, "parsing metrics")
+	assert.Equal(t, 8, len(points), "wrong number of points")
+
+	tagCounts := map[string]int{}
+	for _, point := range points {
+		tags := point.Tags()
+		for tagName := range tags {
+			tagCounts[tagName] += 1
+		}
+	}
+	assert.Equal(t, 1, len(tagCounts), "the only tags left are 'label'")
+	assert.Equal(t, 2, tagCounts["label"], "two metrics have a tag named 'label'")
+}
+
+func TestTagExclude(t *testing.T) {
+	src := &prometheusMetricsSource{
+		filters: filter.FromConfig(filter.Config{
+			TagExclude: []string{"label"},
+		}),
+	}
+
+	points, err := src.parseMetrics(testMetricReader())
+	require.NoError(t, err, "parsing metrics")
+	assert.Equal(t, 8, len(points), "wrong number of points")
+
+	for _, point := range points {
+		_, ok := point.Tags()["label"]
+		assert.False(t, ok, point.Tags())
+	}
+}
+
 func BenchmarkMetricPoint(b *testing.B) {
+	filtered := gm.GetOrRegisterCounter("filtered", gm.DefaultRegistry)
 	tempTags := map[string]string{"pod_name": "prometheus_pod_xyz", "namespace_name": "default"}
 	src := &prometheusMetricsSource{prefix: "prefix."}
-	pointBuilder := NewPointBuilder(src)
+	pointBuilder := NewPointBuilder(src, filtered)
 	for i := 0; i < b.N; i++ {
-		_ = pointBuilder.metricPoint("http.requests.total.count", 1.0, 0, "", tempTags)
+		_ = pointBuilder.point("http.requests.total.count", 1.0, 0, "", tempTags)
 	}
 }
 

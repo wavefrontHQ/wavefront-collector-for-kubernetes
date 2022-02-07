@@ -33,12 +33,20 @@ sources:
     filters:
       metricDenyList:
       - 'kubernetes.sys_container.*'
+      tagExclude:
+      - 'label.kubernetes.io/arch'
 
   internal_stats_source:
     prefix: 'kubernetes.'
+    filters:
+      tagExclude:
+      - 'url'
 
   kubernetes_state_source:
     prefix: 'kubernetes.'
+    filters:
+      tagExclude:
+        - 'label.kubernetes.io/arch'
 
   kubernetes_cadvisor_source:
     prefix: 'kubernetes.cadvisor.'
@@ -71,6 +79,8 @@ sources:
         - 'kube.apiserver.workqueue.adds.total.*'
         - 'kube.apiserver.workqueue.depth.*'
         - 'kube.apiserver.workqueue.queue.duration.seconds.*'
+        tagExclude:
+        - version
 
   telegraf_sources:
     # enable all telegraf plugins
@@ -82,3 +92,6 @@ sources:
           gather_table_io_waits                     = true
           gather_table_lock_waits                   = true
           gather_index_io_waits                     = true
+      filters:
+        tagExclude:
+        - server
