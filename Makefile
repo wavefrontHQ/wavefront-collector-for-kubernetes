@@ -107,15 +107,15 @@ test-proxy: peg $(REPO_DIR)/cmd/test-proxy/metric_grammar.peg.go clean fmt vet
 
 peg:
 	@which peg > /dev/null || \
-		(cd $(REPO_DIR)/..; GOARCH=$(ARCH) CGO_ENABLED=0 go get -u github.com/pointlander/peg)
+		(cd $(REPO_DIR)/..; GOARCH=$(ARCH) CGO_ENABLED=0 go install github.com/pointlander/peg@latest)
 
 $(GO_IMPORTS_BIN):
-	@(cd $(REPO_DIR)/..; CGO_ENABLED=0 go get -u golang.org/x/tools/cmd/goimports)
+	@(cd $(REPO_DIR)/..; CGO_ENABLED=0 go install golang.org/x/tools/cmd/goimports@latest)
 
 semver-cli: $(SEMVER_CLI_BIN)
 
 $(SEMVER_CLI_BIN):
-	@(cd $(REPO_DIR)/..; CGO_ENABLED=0 go get github.com/davidrjonas/semver-cli)
+	@(cd $(REPO_DIR)/..; CGO_ENABLED=0 go install github.com/davidrjonas/semver-cli@latest)
 
 %.peg.go: %.peg
 	peg -switch -inline $<
