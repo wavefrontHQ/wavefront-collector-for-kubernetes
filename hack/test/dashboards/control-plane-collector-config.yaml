@@ -303,48 +303,46 @@ data:
       # Kubernetes component auto discovery
       ##########################################################################
 
-      # auto-discover kube DNS
-      - name: kube-dns-discovery
-        type: prometheus
-        selectors:
-          images:
-          - '*kube-dns/sidecar*'
-          labels:
-            k8s-app:
-            - kube-dns
-        port: 10054
-        path: /metrics
-        scheme: http
-        prefix: kube.dns.
-        filters:
-          metricAllowList:
-          - 'kube.dns.http.request.duration.microseconds'
-          - 'kube.dns.http.request.size.bytes'
-          - 'kube.dns.http.requests.total.counter'
-          - 'kube.dns.http.response.size.bytes'
-          - 'kube.dns.kubedns.dnsmasq.*'
-          - 'kube.dns.process.*'
+#      # auto-discover kube DNS
+#      - name: kube-dns-discovery
+#        type: prometheus
+#        selectors:
+#          images:
+#          - '*kube-dns/sidecar*'
+#          labels:
+#            k8s-app:
+#            - kube-dns
+#        port: 10054
+#        path: /metrics
+#        scheme: http
+#        prefix: kube.dns.
+#        filters:
+#          metricAllowList:
+#          - 'kube.dns.http.request.duration.microseconds'
+#          - 'kube.dns.http.request.size.bytes'
+#          - 'kube.dns.http.requests.total.counter'
+#          - 'kube.dns.http.response.size.bytes'
+#          - 'kube.dns.kubedns.dnsmasq.*'
+#          - 'kube.dns.process.*'
 
       # auto-discover coredns
-      - name: coredns-discovery
-        type: prometheus
-        selectors:
-          images:
+    ##########################################################################
+    # Kubernetes component auto discovery
+    ##########################################################################
+
+    # auto-discover coredns
+    - name: coredns-discovery
+      type: prometheus
+      selectors:
+        images:
           - '*coredns:*'
-          labels:
-            k8s-app:
+        labels:
+          k8s-app:
             - kube-dns
-        port: 9153
-        path: /metrics
-        scheme: http
-        prefix: kube.coredns.
-        filters:
-          metricAllowList:
-          - 'kube.coredns.coredns.cache.*'
-          - 'kube.coredns.coredns.dns.request.count.total.counter'
-          - 'kube.coredns.coredns.dns.request.duration.seconds'
-          - 'kube.coredns.coredns.dns.request.size.bytes'
-          - 'kube.coredns.coredns.dns.request.type.count.total.counter'
-          - 'kube.coredns.coredns.dns.response.rcode.count.total.counter'
-          - 'kube.coredns.coredns.dns.response.size.bytes'
-          - 'kube.coredns.process.*'
+      port: 9153
+      path: /metrics
+      scheme: http
+      filters:
+        metricAllowList:
+          - 'coredns.dns.request.duration.seconds.bucket'
+          - 'coredns.dns.responses.total.counter'
