@@ -1,8 +1,8 @@
 clusterName: YOUR_CLUSTER_NAME
 enableEvents: false
 enableDiscovery: true
-flushInterval: FLUSH_INTERVALs
-defaultCollectionInterval: COLLECTION_INTERVALs
+flushInterval: 20s
+defaultCollectionInterval: 5s
 
 
 sinks:
@@ -20,6 +20,27 @@ discovery:
   annotation_excludes:
   - labels:
       please-exclude-from-discovery: ['true']
+  plugins:
+  ##########################################################################
+  # Kubernetes component auto discovery
+  ##########################################################################
+
+  # auto-discover coredns
+  - name: coredns-discovery
+    type: prometheus
+    selectors:
+      images:
+        - '*coredns:*'
+      labels:
+        k8s-app:
+          - kube-dns
+    port: 9153
+    path: /metrics
+    scheme: http
+    filters:
+      metricAllowList:
+        - 'coredns.dns.request.duration.seconds.bucket'
+        - 'coredns.dns.responses.total.counter'
 
 sources:
   kubernetes_source:

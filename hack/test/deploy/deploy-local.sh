@@ -47,6 +47,11 @@ cp "$ROOT_DIR/hack/test/deploy/memcached-config.yaml" "$TEMP_DIR/."
 cp "$ROOT_DIR/hack/test/deploy/mysql-config.yaml" "$TEMP_DIR/."
 cp "$ROOT_DIR/hack/test/deploy/prom-example.yaml" "$TEMP_DIR/."
 
+if [ -n "${COLLECTOR_CONFIG_FILE_PATH}" ]; then
+    echo "VAR is set to a non-empty string"
+  cp "$ROOT_DIR/$COLLECTOR_CONFIG_FILE_PATH" "$TEMP_DIR/4-collector-config.yaml"
+fi
+
 pushd "$TEMP_DIR"
   sed -i '' "s/YOUR_CLUSTER/${WF_CLUSTER}/g; s/YOUR_API_TOKEN/${WAVEFRONT_TOKEN}/g" "$TEMP_DIR/6-wavefront-proxy.yaml"
   sed -i '' "s/k8s-cluster/${CONFIG_CLUSTER_NAME}/g" "$TEMP_DIR/4-collector-config.yaml"
