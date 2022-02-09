@@ -76,7 +76,7 @@ endif
 BUILDER_SUFFIX=$(shell echo $(PREFIX) | cut -d '/' -f1)
 
 publish:
-	docker login projects.registry.vmware.com/tanzu_observability_keights_saas
+	docker login $(PREFIX)
 
 	docker buildx create --use --node wavefront_collector_builder_$(BUILDER_SUFFIX)
 ifeq ($(RELEASE_TYPE), release)
