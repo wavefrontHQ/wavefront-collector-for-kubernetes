@@ -5,7 +5,7 @@ metadata:
   namespace: wavefront-collector
 data:
   collector.yaml: |
-    clusterName: k8s-cluster
+    clusterName: control-plane-demo
     enableEvents: false
     enableDiscovery: true
     flushInterval: 30s
@@ -24,7 +24,7 @@ data:
     #       - "SuccessfulCreate"
 
     sinks:
-    - proxyAddress: wavefront-proxy.default.svc.cluster.local:2878
+    - proxyAddress: wavefront-proxy.wavefront-collector.svc.cluster.local:2878
       filters:
         # Optimized metrics collection to omit peripheral metrics.
         metricDenyList:
