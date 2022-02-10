@@ -1,8 +1,8 @@
 clusterName: YOUR_CLUSTER_NAME
 enableEvents: false
 enableDiscovery: true
-flushInterval: 20s
-defaultCollectionInterval: 5s
+flushInterval: FLUSH_INTERVALs
+defaultCollectionInterval: COLLECTION_INTERVALs
 
 
 sinks:
