@@ -5,7 +5,7 @@ metadata:
   namespace: wavefront-collector
 data:
   collector.yaml: |
-    clusterName: control-plane-demo
+    clusterName: control-plane-demo-kind-ha
     enableEvents: false
     enableDiscovery: true
     flushInterval: 30s
