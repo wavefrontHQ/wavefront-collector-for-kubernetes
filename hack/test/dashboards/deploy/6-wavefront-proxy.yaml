@@ -23,7 +23,7 @@ spec:
           imagePullPolicy: IfNotPresent
           env:
             - name: WAVEFRONT_URL
-              value: https://demo.wavefront.com/api/
+              value: https://YOUR_CLUSTER.wavefront.com/api/
             - name: WAVEFRONT_TOKEN
               value: YOUR_API_TOKEN
           # Uncomment the below lines to consume Zipkin/Istio traces
