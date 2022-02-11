@@ -45,12 +45,12 @@ sudo su -
 
 cd /home/k8po/wavefront-collector-for-kubernetes/
 
-## Set your values for WAVEFRONT_TOKEN and WF_CLUSTER in ~/.profile
-#vi ~/.profile
-#source ~/.profile
+# Set your values for WAVEFRONT_TOKEN and WF_CLUSTER in ~/.profile
+vi ~/.profile
+source ~/.profile
 
-## Do the below when you are trying to pull in changes and/or do a new deploy
-#git checkout -- .
-#git pull
+# Do the below when you are trying to pull in changes and/or do a new deploy
+git checkout -- .
+git pull
 
 ./hack/test/dashboards/deploy/deploy-demo.sh
