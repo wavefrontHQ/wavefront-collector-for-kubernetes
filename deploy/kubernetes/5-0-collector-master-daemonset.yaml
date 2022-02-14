@@ -1,34 +1,36 @@
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: wavefront-collector
+  name: wavefront-collector-control-plane
   namespace: wavefront-collector
   labels:
-    k8s-app: wavefront-collector
-    name: wavefront-collector
+    k8s-app: wavefront-collector-control-plane
+    name: wavefront-collector-control-plane
 spec:
   selector:
     matchLabels:
-      k8s-app: wavefront-collector
+      k8s-app: wavefront-collector-control-plane
   template:
     metadata:
       labels:
-        k8s-app: wavefront-collector
+        k8s-app: wavefront-collector-control-plane
       annotations:
         installation-method: manual
     spec:
-#      tolerations:
-#      - effect: NoSchedule
-#        key: node.alpha.kubernetes.io/role
-#        operator: Exists
-#      - effect: NoSchedule
-#        key: node-role.kubernetes.io/master
-#        operator: Exists
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingRequiredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node.alpha.kubernetes.io/role
+                operator: Exists
+              - key: node-role.kubernetes.io/master
+                operator: Exists
 
       serviceAccountName: wavefront-collector
 
       containers:
-      - name: wavefront-collector
+      - name: wavefront-collector-control-plane
         image: projects.registry.vmware.com/tanzu_observability/kubernetes-collector:1.8.0
         imagePullPolicy: IfNotPresent
         command:
@@ -38,12 +40,6 @@ spec:
         volumeMounts:
         - name: procfs
           mountPath: /host/proc
-          readOnly: true
-        - name: etcd-certs
-          mountPath: /host/etc/kubernetes/pki/etcd
-          readOnly: true
-        - name: apiserver-certs
-          mountPath: /host/etc/kubernetes/pki
           readOnly: true
         - mountPath: /etc/collector/
           name: collector-config
@@ -70,12 +66,6 @@ spec:
       - name: procfs
         hostPath:
           path: /proc
-      - name: etcd-certs
-        hostPath:
-          path: /etc/kubernetes/pki/etcd
-      - name: apiserver-certs
-        hostPath:
-          path: /etc/kubernetes/pki/
       - name: collector-config
         configMap:
           name: collector-config

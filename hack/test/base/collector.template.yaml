@@ -1,3 +1,10 @@
+# TODO: rename this file? collector is confusing -> collector-config
+
+
+
+
+
+
 clusterName: YOUR_CLUSTER_NAME
 enableEvents: false
 enableDiscovery: true
@@ -20,6 +27,45 @@ discovery:
   annotation_excludes:
   - labels:
       please-exclude-from-discovery: ['true']
+  plugins:
+  # etcd
+#  - name: scheduler-discovery
+#    type: prometheus
+#    selectors:
+#      images:
+#        - '*scheduler*'
+#      labels:
+#        component:
+#          - kube-scheduler
+#    port: 10259
+#    path: /metrics
+#    scheme: https
+#    prefix: 'scheduler.discovery.'
+#    conf: |
+#      tls_config:
+#        ca_file: '/host/etc/kubernetes/pki/apiserver-kubelet-client.crt'
+#        cert_file: '/host/etc/kubernetes/pki/apiserver-kubelet-client.crt'
+#        key_file: '/host/etc/kubernetes/pki/apiserver-kubelet-client.key'
+#        insecure_skip_verify: true
+
+#  - name: scheduler-discovery
+#    type: prometheus
+#    selectors:
+#      images:
+#        - '*scheduler*'
+#      labels:
+#        component:
+#          - kube-scheduler
+#    port: 10259
+#    path: /metrics
+#    scheme: https
+#    prefix: 'scheduler.discovery.'
+#    conf: |
+#      httpConfig:
+#        bearer_token_file: '/var/run/soooooooooooooooooooocrets/kubernetes.io/serviceaccount/token'
+#        tls_config:
+#          ca_file: '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
+#          insecure_skip_verify: true
 
 sources:
   kubernetes_source:
@@ -81,6 +127,14 @@ sources:
         - 'kube.apiserver.workqueue.queue.duration.seconds.*'
         tagExclude:
         - version
+    - url: 'https://schrooooduler-metrics-endpoint.kube-system.svc.cluster.local:10259/metrics'
+      httpConfig:
+        tls_config:
+          ca_file: '/host/etc/kubernetes/pki/apiserver-kubelet-client.crt'
+          cert_file: '/host/etc/kubernetes/pki/apiserver-kubelet-client.crt'
+          key_file: '/host/etc/kubernetes/pki/apiserver-kubelet-client.key'
+          insecure_skip_verify: true
+      prefix: 'kube.schedooooooler.'
 
   telegraf_sources:
     # enable all telegraf plugins
@@ -95,3 +149,16 @@ sources:
       filters:
         tagExclude:
         - server
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: scheduler-metrics-endpoint
+  namespace: kube-system
+spec:
+  selector:
+    component: kube-scheduler
+  ports:
+    - name: scheduler-metrics-endpoint
+      protocol: TCP
+      port: 10259
