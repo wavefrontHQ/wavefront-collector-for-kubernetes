@@ -166,9 +166,6 @@ func (src *internalMetricsSource) buildTags(tags map[string]string) map[string]s
 	if len(src.tags) == 0 {
 		return tags
 	}
-	if len(tags) == 0 {
-		return src.tags
-	}
 	for k, v := range src.tags {
 		if len(v) > 0 {
 			if _, exists := tags[k]; !exists {
