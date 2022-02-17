@@ -1,0 +1,72 @@
+# Need to change YOUR_CLUSTER, YOUR_API_TOKEN, YOUR_HTTP_PROXY_HOST, YOUR_HTTP_PROXY_PORT and YOUR_CA_CERT accordingly
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: wavefront-proxy
+    name: wavefront-proxy
+  name: wavefront-proxy
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wavefront-proxy
+  template:
+    metadata:
+      labels:
+        app: wavefront-proxy
+    spec:
+      containers:
+        - name: wavefront-proxy
+          image: projects.registry.vmware.com/tanzu_observability/proxy:10.13
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: WAVEFRONT_URL
+              value: https://YOUR_CLUSTER.wavefront.com/api/
+            - name: WAVEFRONT_TOKEN
+              value: YOUR_API_TOKEN
+            - name: WAVEFRONT_PROXY_ARGS
+              value: --proxyHost YOUR_HTTP_PROXY_HOST --proxyPort YOUR_HTTP_PROXY_PORT
+              # example: --proxyHost 10.96.218.42 --proxyPort 8080
+          ports:
+            - containerPort: 2878
+              protocol: TCP
+          securityContext:
+            privileged: false
+          volumeMounts:
+            - name: http-proxy-ca
+              mountPath: /tmp/ca
+      volumes:
+        - name: http-proxy-ca
+          secret:
+            secretName: http-proxy-secret
+            items:
+              - key: tls-root-ca-bundle
+                path: ca.pem
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wavefront-proxy
+  labels:
+    app: wavefront-proxy
+  namespace: default
+spec:
+  ports:
+    - name: wavefront
+      port: 2878
+      protocol: TCP
+  selector:
+    app: wavefront-proxy
+---
+# Secret for http proxy CA cert
+apiVersion: v1
+kind: Secret
+metadata:
+  name: http-proxy-secret
+  namespace: default
+type: Opaque
+stringData:
+  tls-root-ca-bundle: |
+    YOUR_CA_CERT
