@@ -348,3 +348,5 @@ data:
           - 'kube.coredns.coredns.dns.response.rcode.count.total.counter'
           - 'kube.coredns.coredns.dns.response.size.bytes'
           - 'kube.coredns.process.*'
+          - 'kube.coredns.dns.request.duration.seconds.bucket'
+          - 'kube.coredns.dns.responses.total.counter'

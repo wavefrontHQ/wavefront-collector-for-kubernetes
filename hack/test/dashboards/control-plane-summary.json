@@ -1,6 +1,6 @@
 {
-  "name": "Control Plane Summary v1",
-  "url": "Control-Plane-Summary-v1",
+  "name": "Control Plane Summary v2 ",
+  "url": "Control-Plane-Summary-v2",
   "eventFilterType": "BYCHART",
   "displayDescription": false,
   "displaySectionTableOfContents": true,
@@ -16,160 +16,90 @@
               "anomalySeverity": "medium",
               "anomalyDetectionOn": false,
               "chartSettings": {
+                "plainMarkdownContent": "<h4 align=\"center\">API Server SLI</h4>\n<p align=\"center\">\nThe 99th percentile of request latency for the API Server over a 5 minute period.",
                 "y1ScaleSIBy1024": false,
                 "fixedLegendEnabled": false,
                 "fixedLegendFilterField": "CURRENT",
                 "y0ScaleSIBy1024": false,
+                "sparklineDisplayFontSize": "150",
                 "fixedLegendFilterLimit": 5,
                 "fixedLegendShowSourceName": true,
-                "showValueColumn": true,
-                "fixedLegendPosition": "RIGHT",
-                "customTags": [
-                  "cluster",
-                  "kubelet_version",
-                  "internal_ip",
-                  "provider_id",
-                  "os_image",
-                  "node_role",
-                  "nodename",
-                  "ready"
+                "sparklineValueColorMapColors": [
+                  "rgba(87,170,19,1)",
+                  "rgba(255,225,100,1)",
+                  "rgba(224,34,0,1)"
                 ],
-                "showRawValues": false,
-                "lineType": "linear",
-                "showHosts": false,
-                "groupBySource": false,
-                "windowing": "full",
-                "defaultSortColumn": "tags[\"label.kubernetes.io/hostname\"]",
-                "fixedLegendFilterSort": "TOP",
-                "y1Units": "",
-                "sortValuesDescending": true,
-                "fixedLegendShowMetricName": false,
-                "type": "table",
-                "y1UnitAutoscaling": false,
-                "showLabels": false,
-                "tagMode": "all",
-                "fixedLegendUseRawStats": false,
-                "y0UnitAutoscaling": true,
-                "fixedLegendDisplayStats": [
-                  "CURRENT"
-                ],
-                "autoColumnTags": false,
-                "numTags": 8,
-                "sparklineDisplayColor": null,
-                "sparklineLineColor": null,
-                "sparklineFillColor": null
-              },
-              "displayConfidenceBounds": false,
-              "includeObsoleteMetrics": false,
-              "filterOutNonAnomalies": false,
-              "name": "Node Uptime Details",
-              "anomalySampleSize": "8",
-              "units": "min",
-              "summarization": "LAST",
-              "base": 0,
-              "chartAttributes": {
-                "dashboardLinks": {},
-                "lineFill": 1,
-                "dashboardLayout": {
-                  "x": 0,
-                  "y": 0,
-                  "w": 12,
-                  "h": 5
-                }
-              },
-              "sources": [
-                {
-                  "name": "uptime",
-                  "query": "join(\n  ts(\"kubernetes.node.uptime\", cluster=\"${cluster_name}\" and node_role=\"control-plane\" ) AS ts1 \n  INNER JOIN \n  ts(\"kubernetes.node.info\", cluster=\"${cluster_name}\" and node_role=\"control-plane\") AS ts2\n  USING(nodename), metric='nodedetails', source=ts1.source, cluster=ts1.cluster, nodename=ts1.nodename, node_role=ts2.node_role, internal_ip=ts2.internal_ip, provider_id=ts2.provider_id, kubelet_version=ts2.kubelet_version, os_image=ts2.os_image,\n  ts1 / 60000\n)",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": "",
-                  "disabled": true,
-                  "secondaryAxis": false,
-                  "queryType": "WQL"
-                },
-                {
-                  "name": "nodeCondition",
-                  "query": "join(\n  ts(\"kubernetes.node.status.condition\"  and condition=\"Ready\" AND nodename=\"${node_name}\" AND node_role=\"control-plane\") AS ts1 \n  INNER JOIN \n  ${uptime} AS ts2\n  USING(nodename), metric='nodedetails', source=ts1.source, cluster=ts1.cluster, nodename=ts1.nodename, node_role=ts2.node_role, internal_ip=ts2.internal_ip, provider_id=ts2.provider_id, kubelet_version=ts2.kubelet_version, os_image=ts2.os_image, ready=ts1.status, uptime=ts2.value, \n  ts2\n  )",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": "",
-                  "disabled": false,
-                  "secondaryAxis": false,
-                  "queryType": "WQL"
-                }
-              ],
-              "noDefaultEvents": true,
-              "description": "status=true means node is in Ready state.",
-              "anomalyType": "both"
-            }
-          ],
-          "heightFactor": 100
-        },
-        {
-          "charts": [
-            {
-              "anomalySeverity": "medium",
-              "anomalyDetectionOn": false,
-              "chartSettings": {
-                "y1ScaleSIBy1024": false,
-                "fixedLegendEnabled": false,
-                "fixedLegendFilterField": "CURRENT",
-                "y0ScaleSIBy1024": false,
-                "fixedLegendFilterLimit": 5,
-                "fixedLegendShowSourceName": true,
                 "fixedLegendPosition": "RIGHT",
                 "customTags": [],
                 "lineType": "linear",
+                "sparklineFillColor": "rgba(0,0,0,0.2)",
+                "sparklineValueColorMapApplyTo": "BACKGROUND",
                 "windowing": "full",
+                "sparklineDisplayColor": "rgba(250,250,250,1)",
+                "sparklineSize": "NONE",
                 "fixedLegendFilterSort": "TOP",
+                "sparklineValueColorMapValuesV2": [
+                  10,
+                  15
+                ],
                 "y1Units": "",
-                "sortValuesDescending": true,
+                "sparklineValueTextMapThresholds": [
+                  10,
+                  15
+                ],
                 "fixedLegendShowMetricName": false,
-                "type": "line",
+                "sparklineDisplayValueType": "VALUE",
+                "type": "markdown-widget",
                 "y1UnitAutoscaling": false,
+                "sparklineValueTextMapText": [
+                  "Healthy",
+                  "Degraded",
+                  "Down"
+                ],
                 "tagMode": "all",
                 "fixedLegendUseRawStats": false,
                 "y0UnitAutoscaling": false,
                 "fixedLegendDisplayStats": [
                   "CURRENT"
                 ],
+                "sparklineDisplayHorizontalPosition": "MIDDLE",
+                "sparklineLineColor": "rgba(0,0,0,0.3)",
+                "sparklineDecimalPrecision": 1,
                 "autoColumnTags": false,
                 "numTags": 4,
-                "defaultSortColumn": null,
-                "sparklineDisplayColor": null,
-                "sparklineLineColor": null,
-                "sparklineFillColor": null
+                "defaultSortColumn": null
               },
               "displayConfidenceBounds": false,
               "includeObsoleteMetrics": false,
               "filterOutNonAnomalies": false,
-              "name": "CPU Utilization by Node",
+              "name": "",
               "anomalySampleSize": "8",
-              "units": "%",
+              "units": "",
               "summarization": "MEAN",
               "base": 0,
               "chartAttributes": {
-                "topK": {
-                  "labelBy": [
-                    "nodename"
-                  ]
-                },
                 "lineFill": 1,
+                "singleStat": {
+                  "sparklineDisplayLabel": "A",
+                  "sparklineDisplaySubLabel": "API Server"
+                },
                 "dashboardLayout": {
                   "x": 0,
-                  "y": 5,
-                  "w": 6,
-                  "h": 5
-                }
+                  "y": 0,
+                  "w": 1,
+                  "h": 3
+                },
+                "y0ScaleDecimal": false
               },
               "sources": [
                 {
-                  "name": "cpu_util",
-                  "query": "limit(250, ts(\"kubernetes.node.cpu.node_utilization\", cluster=\"${cluster_name}\" and nodename=\"${node_name}\" and node_role=\"control-plane\") * 100)",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": "",
+                  "name": "A",
+                  "query": "",
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL"
+                  "queryType": "WQL",
+                  "querybuilderEnabled": true,
+                  "querybuilderSerialization": "{\"metricType\":\"m\",\"filters\":[[],\"and\"],\"functions\":[],\"_v\":1,\"metric\":\"ts()\"}"
                 }
               ],
               "noDefaultEvents": false,
@@ -183,63 +113,1636 @@
                 "fixedLegendEnabled": false,
                 "fixedLegendFilterField": "CURRENT",
                 "y0ScaleSIBy1024": false,
+                "sparklineDisplayFontSize": "150",
                 "fixedLegendFilterLimit": 5,
                 "fixedLegendShowSourceName": true,
+                "sparklineValueColorMapColors": [
+                  "rgba(87,170,19,1)",
+                  "rgba(224,34,0,1)"
+                ],
                 "fixedLegendPosition": "RIGHT",
                 "customTags": [],
                 "lineType": "linear",
+                "sparklineFillColor": "rgba(0,0,0,0.2)",
+                "sparklineValueColorMapApplyTo": "BACKGROUND",
                 "windowing": "full",
+                "sparklineDisplayColor": "rgba(250,250,250,1)",
+                "sparklineSize": "NONE",
                 "fixedLegendFilterSort": "TOP",
+                "sparklineValueColorMapValuesV2": [
+                  1000
+                ],
                 "y1Units": "",
+                "sparklineValueTextMapThresholds": [
+                  1000
+                ],
                 "fixedLegendShowMetricName": false,
-                "type": "line",
+                "sparklineDisplayValueType": "VALUE",
+                "type": "sparkline",
                 "y1UnitAutoscaling": false,
+                "sparklineValueTextMapText": [
+                  "✓",
+                  "X"
+                ],
                 "tagMode": "all",
                 "fixedLegendUseRawStats": false,
                 "y0UnitAutoscaling": false,
                 "fixedLegendDisplayStats": [
                   "CURRENT"
                 ],
+                "sparklineDisplayHorizontalPosition": "MIDDLE",
+                "sparklineLineColor": "rgba(0,0,0,0.3)",
+                "sparklineDecimalPrecision": 1,
                 "autoColumnTags": false,
                 "numTags": 4,
-                "defaultSortColumn": null,
-                "sparklineDisplayColor": null,
-                "sparklineLineColor": null,
-                "sparklineFillColor": null
+                "defaultSortColumn": null
               },
               "displayConfidenceBounds": false,
               "includeObsoleteMetrics": false,
               "filterOutNonAnomalies": false,
-              "name": "Memory Utilization by Node",
+              "name": "API Server Test",
               "anomalySampleSize": "8",
-              "units": "%",
+              "units": "ms",
               "summarization": "MEAN",
               "base": 0,
               "chartAttributes": {
                 "lineFill": 1,
+                "singleStat": {
+                  "sparklineDisplayLabel": "A",
+                  "sparklineDisplaySubLabel": "API Server SLI"
+                },
                 "dashboardLayout": {
-                  "x": 6,
-                  "y": 5,
-                  "w": 6,
-                  "h": 5
-                }
+                  "x": 1,
+                  "y": 0,
+                  "w": 3,
+                  "h": 3
+                },
+                "y0ScaleDecimal": false
               },
               "sources": [
                 {
-                  "name": "memory_util",
-                  "query": "limit(250, ts(\"kubernetes.node.memory.working_set\", cluster=\"${cluster_name}\" and nodename=\"${node_name}\" and node_role=\"control-plane\") / ts(\"kubernetes.node.memory.node_allocatable\", cluster=\"${cluster_name}\" and nodename=\"${node_name}\" and node_role=\"control-plane\") * 100)",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": "",
+                  "name": "histo",
+                  "query": "cumulativeHisto(sum(align(1m, rate(ts(kube.apiserver.apiserver.request.duration.seconds.bucket, cluster=${cluster_name}))), le))",
+                  "disabled": true,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false
+                },
+                {
+                  "name": "P99 Latency",
+                  "query": "percentile(99, ${histo})",
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL"
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false
+                },
+                {
+                  "name": "P99 Latency Clone",
+                  "query": "mpercentile(99,5m, ${histo})",
+                  "disabled": true,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false
+                },
+                {
+                  "name": "Promql P99 Latency",
+                  "query": "histogram_quantile(0.99, sum by (le) (rate(kube.apiserver.apiserver.request.duration.seconds.bucket{cluster=\"${cluster_name}\"}[5m])))",
+                  "disabled": true,
+                  "secondaryAxis": false,
+                  "queryType": "PROMQL",
+                  "querybuilderEnabled": false
+                }
+              ],
+              "noDefaultEvents": false,
+              "description": "The service level indicator (SLI) of the API server is measured as the 99th percentile of request latency",
+              "anomalyType": "both"
+            },
+            {
+              "anomalySeverity": "medium",
+              "anomalyDetectionOn": false,
+              "chartSettings": {
+                "plainMarkdownContent": "<h4 align=\"center\">etcd SLI</h4>\n<p align=\"center\">\nThe 99th percentile of request latency for etcd over a 5 minute period.",
+                "y1ScaleSIBy1024": false,
+                "fixedLegendEnabled": false,
+                "fixedLegendFilterField": "CURRENT",
+                "y0ScaleSIBy1024": false,
+                "sparklineDisplayFontSize": "150",
+                "fixedLegendFilterLimit": 5,
+                "fixedLegendShowSourceName": true,
+                "sparklineValueColorMapColors": [
+                  "rgba(87,170,19,1)",
+                  "rgba(255,225,100,1)",
+                  "rgba(224,34,0,1)"
+                ],
+                "fixedLegendPosition": "RIGHT",
+                "customTags": [],
+                "lineType": "linear",
+                "sparklineFillColor": "rgba(0,0,0,0.2)",
+                "sparklineValueColorMapApplyTo": "BACKGROUND",
+                "windowing": "full",
+                "sparklineDisplayColor": "rgba(250,250,250,1)",
+                "sparklineSize": "NONE",
+                "fixedLegendFilterSort": "TOP",
+                "sparklineValueColorMapValuesV2": [
+                  10,
+                  15
+                ],
+                "y1Units": "",
+                "sparklineValueTextMapThresholds": [
+                  10,
+                  15
+                ],
+                "fixedLegendShowMetricName": false,
+                "sparklineDisplayValueType": "VALUE",
+                "type": "markdown-widget",
+                "y1UnitAutoscaling": false,
+                "sparklineValueTextMapText": [
+                  "Healthy",
+                  "Degraded",
+                  "Down"
+                ],
+                "tagMode": "all",
+                "fixedLegendUseRawStats": false,
+                "y0UnitAutoscaling": false,
+                "fixedLegendDisplayStats": [
+                  "CURRENT"
+                ],
+                "sparklineDisplayHorizontalPosition": "MIDDLE",
+                "sparklineLineColor": "rgba(0,0,0,0.3)",
+                "sparklineDecimalPrecision": 1,
+                "autoColumnTags": false,
+                "numTags": 4,
+                "defaultSortColumn": null
+              },
+              "displayConfidenceBounds": false,
+              "includeObsoleteMetrics": false,
+              "filterOutNonAnomalies": false,
+              "name": "",
+              "anomalySampleSize": "8",
+              "units": "",
+              "summarization": "MEAN",
+              "base": 0,
+              "chartAttributes": {
+                "lineFill": 1,
+                "singleStat": {
+                  "sparklineDisplayLabel": "A",
+                  "sparklineDisplaySubLabel": "API Server"
+                },
+                "dashboardLayout": {
+                  "x": 4,
+                  "y": 0,
+                  "w": 1,
+                  "h": 3
+                },
+                "y0ScaleDecimal": false
+              },
+              "sources": [
+                {
+                  "name": "A",
+                  "query": "",
+                  "disabled": false,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": true,
+                  "querybuilderSerialization": "{\"metricType\":\"m\",\"filters\":[[],\"and\"],\"functions\":[],\"_v\":1,\"metric\":\"ts()\"}"
+                }
+              ],
+              "noDefaultEvents": false,
+              "anomalyType": "both"
+            },
+            {
+              "anomalySeverity": "medium",
+              "anomalyDetectionOn": false,
+              "chartSettings": {
+                "y1ScaleSIBy1024": false,
+                "fixedLegendEnabled": false,
+                "fixedLegendFilterField": "CURRENT",
+                "y0ScaleSIBy1024": false,
+                "sparklineDisplayFontSize": "150",
+                "fixedLegendFilterLimit": 5,
+                "fixedLegendShowSourceName": true,
+                "sparklineValueColorMapColors": [
+                  "rgba(87,170,19,1)",
+                  "rgba(255,225,100,1)",
+                  "rgba(224,34,0,1)"
+                ],
+                "fixedLegendPosition": "RIGHT",
+                "customTags": [],
+                "lineType": "linear",
+                "sparklineFillColor": "rgba(0,0,0,0.2)",
+                "sparklineValueColorMapApplyTo": "BACKGROUND",
+                "windowing": "full",
+                "sparklineDisplayColor": "rgba(250,250,250,1)",
+                "sparklineSize": "NONE",
+                "fixedLegendFilterSort": "TOP",
+                "sparklineValueColorMapValuesV2": [
+                  10,
+                  15
+                ],
+                "y1Units": "",
+                "sparklineValueTextMapThresholds": [
+                  10
+                ],
+                "fixedLegendShowMetricName": false,
+                "sparklineDisplayValueType": "VALUE",
+                "type": "sparkline",
+                "y1UnitAutoscaling": false,
+                "sparklineValueTextMapText": [
+                  "✓",
+                  "X"
+                ],
+                "tagMode": "all",
+                "fixedLegendUseRawStats": false,
+                "y0UnitAutoscaling": false,
+                "fixedLegendDisplayStats": [
+                  "CURRENT"
+                ],
+                "sparklineDisplayHorizontalPosition": "MIDDLE",
+                "sparklineLineColor": "rgba(0,0,0,0.3)",
+                "sparklineDecimalPrecision": 1,
+                "autoColumnTags": false,
+                "numTags": 4,
+                "defaultSortColumn": null
+              },
+              "displayConfidenceBounds": false,
+              "includeObsoleteMetrics": false,
+              "filterOutNonAnomalies": false,
+              "name": "",
+              "anomalySampleSize": "8",
+              "units": "",
+              "summarization": "MEAN",
+              "base": 0,
+              "chartAttributes": {
+                "lineFill": 1,
+                "singleStat": {
+                  "sparklineDisplayLabel": "A",
+                  "sparklineDisplaySubLabel": "etcd SLI"
+                },
+                "dashboardLayout": {
+                  "x": 5,
+                  "y": 0,
+                  "w": 3,
+                  "h": 3
+                },
+                "y0ScaleDecimal": false
+              },
+              "sources": [
+                {
+                  "name": "etcd latency SLI",
+                  "query": "avg(avg(align(5m, rate(ts(kube.apiserver.etcd.request.duration.seconds.bucket, cluster=${cluster_name}))), le))",
+                  "disabled": false,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false
+                }
+              ],
+              "noDefaultEvents": false,
+              "anomalyType": "both"
+            },
+            {
+              "anomalySeverity": "medium",
+              "anomalyDetectionOn": false,
+              "chartSettings": {
+                "plainMarkdownContent": "<h4 align=\"center\">CoreDNS SLI</h4>\n<p align=\"center\">\nThe 99th percentile of request latency of CoreDNS over a 5 minute period. ",
+                "y1ScaleSIBy1024": false,
+                "fixedLegendEnabled": false,
+                "fixedLegendFilterField": "CURRENT",
+                "y0ScaleSIBy1024": false,
+                "sparklineDisplayFontSize": "150",
+                "fixedLegendFilterLimit": 5,
+                "fixedLegendShowSourceName": true,
+                "sparklineValueColorMapColors": [
+                  "rgba(87,170,19,1)",
+                  "rgba(255,225,100,1)",
+                  "rgba(224,34,0,1)"
+                ],
+                "fixedLegendPosition": "RIGHT",
+                "customTags": [],
+                "lineType": "linear",
+                "sparklineFillColor": "rgba(0,0,0,0.2)",
+                "sparklineValueColorMapApplyTo": "BACKGROUND",
+                "windowing": "full",
+                "sparklineDisplayColor": "rgba(250,250,250,1)",
+                "sparklineSize": "NONE",
+                "fixedLegendFilterSort": "TOP",
+                "sparklineValueColorMapValuesV2": [
+                  10,
+                  15
+                ],
+                "y1Units": "",
+                "sparklineValueTextMapThresholds": [
+                  10,
+                  15
+                ],
+                "fixedLegendShowMetricName": false,
+                "sparklineDisplayValueType": "VALUE",
+                "type": "markdown-widget",
+                "y1UnitAutoscaling": false,
+                "sparklineValueTextMapText": [
+                  "Healthy",
+                  "Degraded",
+                  "Down"
+                ],
+                "tagMode": "all",
+                "fixedLegendUseRawStats": false,
+                "y0UnitAutoscaling": false,
+                "fixedLegendDisplayStats": [
+                  "CURRENT"
+                ],
+                "sparklineDisplayHorizontalPosition": "MIDDLE",
+                "sparklineLineColor": "rgba(0,0,0,0.3)",
+                "sparklineDecimalPrecision": 1,
+                "autoColumnTags": false,
+                "numTags": 4,
+                "defaultSortColumn": null
+              },
+              "displayConfidenceBounds": false,
+              "includeObsoleteMetrics": false,
+              "filterOutNonAnomalies": false,
+              "name": "",
+              "anomalySampleSize": "8",
+              "units": "",
+              "summarization": "MEAN",
+              "base": 0,
+              "chartAttributes": {
+                "lineFill": 1,
+                "singleStat": {
+                  "sparklineDisplayLabel": "A",
+                  "sparklineDisplaySubLabel": "API Server"
+                },
+                "dashboardLayout": {
+                  "x": 8,
+                  "y": 0,
+                  "w": 1,
+                  "h": 3
+                },
+                "y0ScaleDecimal": false
+              },
+              "sources": [
+                {
+                  "name": "A",
+                  "query": "",
+                  "disabled": false,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": true,
+                  "querybuilderSerialization": "{\"metricType\":\"m\",\"filters\":[[],\"and\"],\"functions\":[],\"_v\":1,\"metric\":\"ts()\"}"
+                }
+              ],
+              "noDefaultEvents": false,
+              "anomalyType": "both"
+            },
+            {
+              "anomalySeverity": "medium",
+              "anomalyDetectionOn": false,
+              "chartSettings": {
+                "y1ScaleSIBy1024": false,
+                "fixedLegendEnabled": false,
+                "fixedLegendFilterField": "CURRENT",
+                "y0ScaleSIBy1024": false,
+                "sparklineDisplayFontSize": "150",
+                "fixedLegendFilterLimit": 5,
+                "fixedLegendShowSourceName": true,
+                "sparklineValueColorMapColors": [
+                  "rgba(87,170,19,1)",
+                  "rgba(255,225,100,1)",
+                  "rgba(224,34,0,1)"
+                ],
+                "fixedLegendPosition": "RIGHT",
+                "customTags": [],
+                "lineType": "linear",
+                "sparklineFillColor": "rgba(0,0,0,0.2)",
+                "sparklineValueColorMapApplyTo": "BACKGROUND",
+                "windowing": "full",
+                "sparklineDisplayColor": "rgba(250,250,250,1)",
+                "sparklineSize": "NONE",
+                "fixedLegendFilterSort": "TOP",
+                "sparklineValueColorMapValuesV2": [
+                  10,
+                  15
+                ],
+                "y1Units": "",
+                "sparklineValueTextMapThresholds": [
+                  10
+                ],
+                "fixedLegendShowMetricName": false,
+                "sparklineDisplayValueType": "VALUE",
+                "type": "sparkline",
+                "y1UnitAutoscaling": false,
+                "sparklineValueTextMapText": [
+                  "✓",
+                  "X"
+                ],
+                "tagMode": "all",
+                "fixedLegendUseRawStats": false,
+                "y0UnitAutoscaling": false,
+                "fixedLegendDisplayStats": [
+                  "CURRENT"
+                ],
+                "sparklineDisplayHorizontalPosition": "MIDDLE",
+                "sparklineLineColor": "rgba(0,0,0,0.3)",
+                "sparklineDecimalPrecision": 1,
+                "autoColumnTags": false,
+                "numTags": 4,
+                "defaultSortColumn": null
+              },
+              "displayConfidenceBounds": false,
+              "includeObsoleteMetrics": false,
+              "filterOutNonAnomalies": false,
+              "name": "",
+              "anomalySampleSize": "8",
+              "summarization": "MEAN",
+              "base": 0,
+              "chartAttributes": {
+                "lineFill": 1,
+                "singleStat": {
+                  "sparklineDisplayLabel": "A",
+                  "sparklineDisplaySubLabel": "CoreDNS SLI"
+                },
+                "dashboardLayout": {
+                  "x": 9,
+                  "y": 0,
+                  "w": 3,
+                  "h": 3
+                },
+                "y0ScaleDecimal": false
+              },
+              "sources": [
+                {
+                  "name": "CoreDNS SLI",
+                  "query": "avg(rate(ts(coredns.dns.responses.total.counter, not rcode=NOERROR and cluster=${cluster_name})))",
+                  "disabled": false,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false
                 }
               ],
               "noDefaultEvents": false,
               "anomalyType": "both"
             }
           ],
-          "heightFactor": 100
+          "heightFactor": 50
+        },
+        {
+          "charts": [
+            {
+              "anomalySeverity": "medium",
+              "anomalyDetectionOn": true,
+              "chartSettings": {
+                "y1ScaleSIBy1024": false,
+                "fixedLegendEnabled": false,
+                "fixedLegendFilterField": "CURRENT",
+                "y0ScaleSIBy1024": false,
+                "sparklineDisplayFontSize": "150",
+                "stackType": "zero",
+                "fixedLegendFilterLimit": 5,
+                "fixedLegendShowSourceName": true,
+                "sparklineValueColorMapColors": [
+                  "rgba(87,170,19,1)",
+                  "rgba(255,225,100,1)",
+                  "rgba(224,34,0,1)"
+                ],
+                "fixedLegendPosition": "RIGHT",
+                "customTags": [],
+                "lineType": "linear",
+                "sparklineFillColor": "rgba(0,0,0,0.2)",
+                "sparklineValueColorMapApplyTo": "BACKGROUND",
+                "windowing": "full",
+                "sparklineDisplayColor": "rgba(250,250,250,1)",
+                "sparklineSize": "NONE",
+                "fixedLegendFilterSort": "TOP",
+                "sparklineValueColorMapValuesV2": [
+                  10,
+                  15
+                ],
+                "y1Units": "",
+                "sparklineValueTextMapThresholds": [
+                  10,
+                  15
+                ],
+                "fixedLegendShowMetricName": false,
+                "sparklineDisplayValueType": "VALUE",
+                "type": "line",
+                "y1UnitAutoscaling": false,
+                "sparklineValueTextMapText": [
+                  "Healthy",
+                  "Degraded",
+                  "Down"
+                ],
+                "tagMode": "all",
+                "fixedLegendUseRawStats": false,
+                "y0UnitAutoscaling": false,
+                "fixedLegendDisplayStats": [
+                  "CURRENT"
+                ],
+                "sparklineDisplayHorizontalPosition": "MIDDLE",
+                "sparklineLineColor": "rgba(0,0,0,0.3)",
+                "sparklineDecimalPrecision": 1,
+                "autoColumnTags": false,
+                "numTags": 4,
+                "defaultSortColumn": null
+              },
+              "displayConfidenceBounds": false,
+              "includeObsoleteMetrics": false,
+              "filterOutNonAnomalies": false,
+              "name": "API Server SLI ",
+              "anomalySampleSize": "8",
+              "units": "%",
+              "summarization": "MEAN",
+              "base": 0,
+              "chartAttributes": {
+                "lineFill": 1,
+                "singleStat": {
+                  "sparklineDisplayLabel": "A",
+                  "sparklineDisplaySubLabel": "API Server SLI"
+                },
+                "dashboardLayout": {
+                  "x": 0,
+                  "y": 3,
+                  "w": 4,
+                  "h": 3
+                },
+                "y0ScaleDecimal": false
+              },
+              "sources": [
+                {
+                  "name": "Errors",
+                  "query": "rate(sum(ts(kube.apiserver.apiserver.request.total.counter, cluster=${cluster_name} and (code=\"4*\" OR code=\"5*\")), verb))",
+                  "disabled": true,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false
+                },
+                {
+                  "name": "Requests",
+                  "query": "rate(sum(ts(kube.apiserver.apiserver.request.total.counter, cluster=${cluster_name}), verb))",
+                  "disabled": true,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false
+                },
+                {
+                  "name": "Error",
+                  "query": "${Errors}/${Requests} * 100",
+                  "disabled": true,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false
+                },
+                {
+                  "name": "API Server SLI",
+                  "query": "avg(${Error})",
+                  "disabled": false,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false
+                }
+              ],
+              "noDefaultEvents": false,
+              "anomalyType": "both"
+            },
+            {
+              "anomalySeverity": "medium",
+              "anomalyDetectionOn": true,
+              "chartSettings": {
+                "y1ScaleSIBy1024": false,
+                "fixedLegendEnabled": false,
+                "fixedLegendFilterField": "CURRENT",
+                "y0ScaleSIBy1024": false,
+                "sparklineDisplayFontSize": "150",
+                "stackType": "zero",
+                "fixedLegendFilterLimit": 5,
+                "fixedLegendShowSourceName": true,
+                "sparklineValueColorMapColors": [
+                  "rgba(87,170,19,1)",
+                  "rgba(255,225,100,1)",
+                  "rgba(224,34,0,1)"
+                ],
+                "fixedLegendPosition": "RIGHT",
+                "customTags": [],
+                "lineType": "linear",
+                "sparklineFillColor": "rgba(0,0,0,0.2)",
+                "sparklineValueColorMapApplyTo": "BACKGROUND",
+                "windowing": "full",
+                "sparklineDisplayColor": "rgba(250,250,250,1)",
+                "sparklineSize": "NONE",
+                "fixedLegendFilterSort": "TOP",
+                "sparklineValueColorMapValuesV2": [
+                  10,
+                  15
+                ],
+                "y1Units": "",
+                "sparklineValueTextMapThresholds": [
+                  10,
+                  15
+                ],
+                "fixedLegendShowMetricName": false,
+                "sparklineDisplayValueType": "VALUE",
+                "type": "line",
+                "y1UnitAutoscaling": false,
+                "sparklineValueTextMapText": [
+                  "Healthy",
+                  "Degraded",
+                  "Down"
+                ],
+                "tagMode": "all",
+                "fixedLegendUseRawStats": false,
+                "y0UnitAutoscaling": true,
+                "fixedLegendDisplayStats": [
+                  "CURRENT"
+                ],
+                "sparklineDisplayHorizontalPosition": "MIDDLE",
+                "sparklineLineColor": "rgba(0,0,0,0.3)",
+                "sparklineDecimalPrecision": 1,
+                "autoColumnTags": false,
+                "numTags": 4,
+                "defaultSortColumn": null
+              },
+              "displayConfidenceBounds": false,
+              "includeObsoleteMetrics": false,
+              "filterOutNonAnomalies": false,
+              "name": "etcd SLI ",
+              "anomalySampleSize": "8",
+              "units": "s",
+              "summarization": "MEAN",
+              "base": 0,
+              "chartAttributes": {
+                "lineFill": 1,
+                "singleStat": {
+                  "sparklineDisplayLabel": "A",
+                  "sparklineDisplaySubLabel": "API Server SLI"
+                },
+                "dashboardLayout": {
+                  "x": 4,
+                  "y": 3,
+                  "w": 4,
+                  "h": 3
+                },
+                "y0ScaleDecimal": false
+              },
+              "sources": [
+                {
+                  "name": "etcd SLI",
+                  "query": "avg(avg(align(5m, rate(ts(kube.apiserver.etcd.request.duration.seconds.bucket, cluster=${cluster_name}))), le))",
+                  "disabled": false,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false
+                }
+              ],
+              "noDefaultEvents": false,
+              "anomalyType": "both"
+            },
+            {
+              "anomalySeverity": "medium",
+              "anomalyDetectionOn": true,
+              "chartSettings": {
+                "y1ScaleSIBy1024": false,
+                "fixedLegendEnabled": false,
+                "fixedLegendFilterField": "CURRENT",
+                "y0ScaleSIBy1024": false,
+                "sparklineDisplayFontSize": "150",
+                "stackType": "zero",
+                "fixedLegendFilterLimit": 5,
+                "fixedLegendShowSourceName": true,
+                "sparklineValueColorMapColors": [
+                  "rgba(87,170,19,1)",
+                  "rgba(255,225,100,1)",
+                  "rgba(224,34,0,1)"
+                ],
+                "fixedLegendPosition": "RIGHT",
+                "customTags": [],
+                "lineType": "linear",
+                "sparklineFillColor": "rgba(0,0,0,0.2)",
+                "sparklineValueColorMapApplyTo": "BACKGROUND",
+                "windowing": "full",
+                "sparklineDisplayColor": "rgba(250,250,250,1)",
+                "sparklineSize": "NONE",
+                "fixedLegendFilterSort": "TOP",
+                "sparklineValueColorMapValuesV2": [
+                  10,
+                  15
+                ],
+                "y1Units": "",
+                "sparklineValueTextMapThresholds": [
+                  10,
+                  15
+                ],
+                "fixedLegendShowMetricName": false,
+                "sparklineDisplayValueType": "VALUE",
+                "type": "line",
+                "y1UnitAutoscaling": false,
+                "sparklineValueTextMapText": [
+                  "Healthy",
+                  "Degraded",
+                  "Down"
+                ],
+                "tagMode": "all",
+                "fixedLegendUseRawStats": false,
+                "y0UnitAutoscaling": false,
+                "fixedLegendDisplayStats": [
+                  "CURRENT"
+                ],
+                "sparklineDisplayHorizontalPosition": "MIDDLE",
+                "sparklineLineColor": "rgba(0,0,0,0.3)",
+                "sparklineDecimalPrecision": 1,
+                "autoColumnTags": false,
+                "numTags": 4,
+                "defaultSortColumn": null
+              },
+              "displayConfidenceBounds": false,
+              "includeObsoleteMetrics": false,
+              "filterOutNonAnomalies": false,
+              "name": "CoreDNS SLI",
+              "anomalySampleSize": "8",
+              "units": "%",
+              "summarization": "MEAN",
+              "base": 0,
+              "chartAttributes": {
+                "lineFill": 1,
+                "singleStat": {
+                  "sparklineDisplayLabel": "A",
+                  "sparklineDisplaySubLabel": "API Server SLI"
+                },
+                "dashboardLayout": {
+                  "x": 8,
+                  "y": 3,
+                  "w": 4,
+                  "h": 3
+                },
+                "y0ScaleDecimal": false
+              },
+              "sources": [
+                {
+                  "name": "CoreDNS SLI",
+                  "query": "avg(rate(ts(coredns.dns.responses.total.counter, not rcode=NOERROR and cluster=${cluster_name})))",
+                  "disabled": false,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false
+                }
+              ],
+              "noDefaultEvents": false,
+              "anomalyType": "both"
+            }
+          ],
+          "heightFactor": 50
+        },
+        {
+          "charts": [
+            {
+              "anomalySeverity": "medium",
+              "anomalyDetectionOn": false,
+              "chartSettings": {
+                "plainMarkdownContent": "<h4 align=\"center\">API Server SLO</h4>\n<p align=\"center\">\nThe 99th percentile of request latency on the API server for a 5 minute period should be < = 1 second , measured over a single day period. ",
+                "y1ScaleSIBy1024": false,
+                "fixedLegendEnabled": false,
+                "fixedLegendFilterField": "CURRENT",
+                "y0ScaleSIBy1024": false,
+                "sparklineDisplayFontSize": "150",
+                "fixedLegendFilterLimit": 5,
+                "fixedLegendShowSourceName": true,
+                "sparklineValueColorMapColors": [
+                  "rgba(87,170,19,1)",
+                  "rgba(255,225,100,1)",
+                  "rgba(224,34,0,1)"
+                ],
+                "fixedLegendPosition": "RIGHT",
+                "customTags": [],
+                "lineType": "linear",
+                "sparklineFillColor": "rgba(0,0,0,0.2)",
+                "sparklineValueColorMapApplyTo": "BACKGROUND",
+                "windowing": "full",
+                "sparklineDisplayColor": "rgba(250,250,250,1)",
+                "sparklineSize": "NONE",
+                "fixedLegendFilterSort": "TOP",
+                "sparklineValueColorMapValuesV2": [
+                  10,
+                  15
+                ],
+                "y1Units": "",
+                "sparklineValueTextMapThresholds": [
+                  10,
+                  15
+                ],
+                "fixedLegendShowMetricName": false,
+                "sparklineDisplayValueType": "VALUE",
+                "type": "markdown-widget",
+                "y1UnitAutoscaling": false,
+                "sparklineValueTextMapText": [
+                  "Healthy",
+                  "Degraded",
+                  "Down"
+                ],
+                "tagMode": "all",
+                "fixedLegendUseRawStats": false,
+                "y0UnitAutoscaling": false,
+                "fixedLegendDisplayStats": [
+                  "CURRENT"
+                ],
+                "sparklineDisplayHorizontalPosition": "MIDDLE",
+                "sparklineLineColor": "rgba(0,0,0,0.3)",
+                "sparklineDecimalPrecision": 1,
+                "autoColumnTags": false,
+                "numTags": 4,
+                "defaultSortColumn": null
+              },
+              "displayConfidenceBounds": false,
+              "includeObsoleteMetrics": false,
+              "filterOutNonAnomalies": false,
+              "name": "",
+              "anomalySampleSize": "8",
+              "units": "",
+              "summarization": "MEAN",
+              "base": 0,
+              "chartAttributes": {
+                "lineFill": 1,
+                "singleStat": {
+                  "sparklineDisplayLabel": "A",
+                  "sparklineDisplaySubLabel": "API Server"
+                },
+                "dashboardLayout": {
+                  "x": 0,
+                  "y": 6,
+                  "w": 1,
+                  "h": 4
+                },
+                "y0ScaleDecimal": false
+              },
+              "sources": [
+                {
+                  "name": "A",
+                  "query": "",
+                  "disabled": false,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": true,
+                  "querybuilderSerialization": "{\"metricType\":\"m\",\"filters\":[[],\"and\"],\"functions\":[],\"_v\":1,\"metric\":\"ts()\"}"
+                }
+              ],
+              "noDefaultEvents": false,
+              "anomalyType": "both"
+            },
+            {
+              "anomalySeverity": "medium",
+              "anomalyDetectionOn": false,
+              "chartSettings": {
+                "y1ScaleSIBy1024": false,
+                "fixedLegendEnabled": false,
+                "fixedLegendFilterField": "CURRENT",
+                "y0ScaleSIBy1024": false,
+                "sparklineDisplayFontSize": "150",
+                "fixedLegendFilterLimit": 5,
+                "sparklineDisplayPrefix": "API Server SLO: ",
+                "fixedLegendShowSourceName": true,
+                "sparklineValueColorMapColors": [
+                  "rgba(224,34,0,1)",
+                  "rgba(255,225,100,1)",
+                  "rgba(87,170,19,1)"
+                ],
+                "fixedLegendPosition": "RIGHT",
+                "customTags": [],
+                "lineType": "linear",
+                "sparklineFillColor": "rgba(0,0,0,0.2)",
+                "sparklineValueColorMapApplyTo": "BACKGROUND",
+                "windowing": "full",
+                "sparklineDisplayColor": "rgba(250,250,250,1)",
+                "sparklineSize": "NONE",
+                "fixedLegendFilterSort": "TOP",
+                "sparklineValueColorMapValuesV2": [
+                  99.95,
+                  99.97
+                ],
+                "y1Units": "",
+                "sparklineValueTextMapThresholds": [],
+                "fixedLegendShowMetricName": false,
+                "sparklineDisplayValueType": "VALUE",
+                "type": "sparkline",
+                "y1UnitAutoscaling": false,
+                "sparklineValueTextMapText": [
+                  "new highest"
+                ],
+                "tagMode": "all",
+                "fixedLegendUseRawStats": false,
+                "y0UnitAutoscaling": false,
+                "fixedLegendDisplayStats": [
+                  "CURRENT"
+                ],
+                "sparklineDisplayHorizontalPosition": "MIDDLE",
+                "sparklineLineColor": "rgba(0,0,0,0.3)",
+                "sparklineDecimalPrecision": 1,
+                "autoColumnTags": false,
+                "numTags": 4,
+                "defaultSortColumn": null
+              },
+              "displayConfidenceBounds": false,
+              "includeObsoleteMetrics": false,
+              "filterOutNonAnomalies": false,
+              "name": "",
+              "anomalySampleSize": "8",
+              "units": "%",
+              "summarization": "MEAN",
+              "base": 0,
+              "chartAttributes": {
+                "lineFill": 1,
+                "singleStat": {
+                  "sparklineDisplayLabel": "A",
+                  "sparklineDisplaySubLabel": "30 Day SLO"
+                },
+                "dashboardLayout": {
+                  "x": 1,
+                  "y": 6,
+                  "w": 3,
+                  "h": 4
+                },
+                "y0ScaleDecimal": false
+              },
+              "sources": [
+                {
+                  "name": "Errors",
+                  "query": "avg(mdiff(30d,ts(kube.apiserver.apiserver.request.total.counter, cluster=${cluster_name} and (code=\"4*\" OR code=\"5*\"))))",
+                  "disabled": true,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
+                },
+                {
+                  "name": "API Server SLI",
+                  "query": "100 * (1 - mcount(30d, highpass(0, align(1m, max, default(0, ${Errors})))) / (3600 * 24 * 30))",
+                  "disabled": false,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
+                }
+              ],
+              "noDefaultEvents": false,
+              "anomalyType": "both"
+            },
+            {
+              "anomalySeverity": "medium",
+              "anomalyDetectionOn": false,
+              "chartSettings": {
+                "plainMarkdownContent": "<h4 align=\"center\"> etcd SLO</h4>\n<p align=\"center\">\nThe 99th percentile of request latency for etcd for a 5 minute period should be < = 1 second , measured over a single day period. ",
+                "y1ScaleSIBy1024": false,
+                "fixedLegendEnabled": false,
+                "fixedLegendFilterField": "CURRENT",
+                "y0ScaleSIBy1024": false,
+                "sparklineDisplayFontSize": "150",
+                "fixedLegendFilterLimit": 5,
+                "fixedLegendShowSourceName": true,
+                "sparklineValueColorMapColors": [
+                  "rgba(87,170,19,1)",
+                  "rgba(255,225,100,1)",
+                  "rgba(224,34,0,1)"
+                ],
+                "fixedLegendPosition": "RIGHT",
+                "customTags": [],
+                "lineType": "linear",
+                "sparklineFillColor": "rgba(0,0,0,0.2)",
+                "sparklineValueColorMapApplyTo": "BACKGROUND",
+                "windowing": "full",
+                "sparklineDisplayColor": "rgba(250,250,250,1)",
+                "sparklineSize": "NONE",
+                "fixedLegendFilterSort": "TOP",
+                "sparklineValueColorMapValuesV2": [
+                  10,
+                  15
+                ],
+                "y1Units": "",
+                "sparklineValueTextMapThresholds": [
+                  10,
+                  15
+                ],
+                "fixedLegendShowMetricName": false,
+                "sparklineDisplayValueType": "VALUE",
+                "type": "markdown-widget",
+                "y1UnitAutoscaling": false,
+                "sparklineValueTextMapText": [
+                  "Healthy",
+                  "Degraded",
+                  "Down"
+                ],
+                "tagMode": "all",
+                "fixedLegendUseRawStats": false,
+                "y0UnitAutoscaling": false,
+                "fixedLegendDisplayStats": [
+                  "CURRENT"
+                ],
+                "sparklineDisplayHorizontalPosition": "MIDDLE",
+                "sparklineLineColor": "rgba(0,0,0,0.3)",
+                "sparklineDecimalPrecision": 1,
+                "autoColumnTags": false,
+                "numTags": 4,
+                "defaultSortColumn": null
+              },
+              "displayConfidenceBounds": false,
+              "includeObsoleteMetrics": false,
+              "filterOutNonAnomalies": false,
+              "name": "",
+              "anomalySampleSize": "8",
+              "units": "",
+              "summarization": "MEAN",
+              "base": 0,
+              "chartAttributes": {
+                "lineFill": 1,
+                "singleStat": {
+                  "sparklineDisplayLabel": "A",
+                  "sparklineDisplaySubLabel": "API Server"
+                },
+                "dashboardLayout": {
+                  "x": 4,
+                  "y": 6,
+                  "w": 1,
+                  "h": 4
+                },
+                "y0ScaleDecimal": false
+              },
+              "sources": [
+                {
+                  "name": "A",
+                  "query": "",
+                  "disabled": false,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": true,
+                  "querybuilderSerialization": "{\"metric\":\"ts()\",\"metricType\":\"m\",\"filters\":[[],\"and\"],\"functions\":[],\"_v\":1}"
+                }
+              ],
+              "noDefaultEvents": false,
+              "anomalyType": "both"
+            },
+            {
+              "anomalySeverity": "medium",
+              "anomalyDetectionOn": false,
+              "chartSettings": {
+                "y1ScaleSIBy1024": false,
+                "fixedLegendEnabled": false,
+                "fixedLegendFilterField": "CURRENT",
+                "y0ScaleSIBy1024": false,
+                "sparklineDisplayFontSize": "150",
+                "fixedLegendFilterLimit": 5,
+                "sparklineDisplayPrefix": "etcd SLO: ",
+                "fixedLegendShowSourceName": true,
+                "sparklineValueColorMapColors": [
+                  "rgba(224,34,0,1)",
+                  "rgba(255,225,100,1)",
+                  "rgba(87,170,19,1)"
+                ],
+                "fixedLegendPosition": "RIGHT",
+                "customTags": [],
+                "lineType": "linear",
+                "sparklineFillColor": "rgba(0,0,0,0.2)",
+                "sparklineValueColorMapApplyTo": "BACKGROUND",
+                "windowing": "full",
+                "sparklineDisplayColor": "rgba(250,250,250,1)",
+                "sparklineSize": "NONE",
+                "fixedLegendFilterSort": "TOP",
+                "sparklineValueColorMapValuesV2": [
+                  99.95,
+                  99.97
+                ],
+                "y1Units": "",
+                "sparklineValueTextMapThresholds": [],
+                "fixedLegendShowMetricName": false,
+                "sparklineDisplayValueType": "VALUE",
+                "type": "sparkline",
+                "y1UnitAutoscaling": false,
+                "sparklineValueTextMapText": [
+                  "new highest"
+                ],
+                "tagMode": "all",
+                "fixedLegendUseRawStats": false,
+                "y0UnitAutoscaling": false,
+                "fixedLegendDisplayStats": [
+                  "CURRENT"
+                ],
+                "sparklineDisplayHorizontalPosition": "MIDDLE",
+                "sparklineLineColor": "rgba(0,0,0,0.3)",
+                "sparklineDecimalPrecision": 1,
+                "autoColumnTags": false,
+                "numTags": 4,
+                "defaultSortColumn": null
+              },
+              "displayConfidenceBounds": false,
+              "includeObsoleteMetrics": false,
+              "filterOutNonAnomalies": false,
+              "name": "",
+              "anomalySampleSize": "8",
+              "units": "%",
+              "summarization": "MEAN",
+              "base": 0,
+              "chartAttributes": {
+                "lineFill": 1,
+                "singleStat": {
+                  "sparklineDisplayLabel": "A",
+                  "sparklineDisplaySubLabel": "30 Day SLO"
+                },
+                "dashboardLayout": {
+                  "x": 5,
+                  "y": 6,
+                  "w": 3,
+                  "h": 4
+                },
+                "y0ScaleDecimal": false
+              },
+              "sources": [
+                {
+                  "name": "Errors",
+                  "query": "avg(mdiff(30d,ts(kube.apiserver.apiserver.request.total.counter, cluster=${cluster_name} and (code=\"4*\" OR code=\"5*\"))))",
+                  "disabled": true,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
+                },
+                {
+                  "name": "API Server SLI",
+                  "query": "100 * (1 - mcount(30d, highpass(0, align(1m, max, default(0, ${Errors})))) / (3600 * 24 * 30))",
+                  "disabled": false,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
+                }
+              ],
+              "noDefaultEvents": false,
+              "anomalyType": "both"
+            },
+            {
+              "anomalySeverity": "medium",
+              "anomalyDetectionOn": false,
+              "chartSettings": {
+                "plainMarkdownContent": "<h4 align=\"center\">CoreDNS SLO</h4>\n<p align=\"center\">\nThe 99th percentile of request latency for CoreDNS for a 5 minute period should be < = 1 second , measured over a single day period. ",
+                "y1ScaleSIBy1024": false,
+                "fixedLegendEnabled": false,
+                "fixedLegendFilterField": "CURRENT",
+                "y0ScaleSIBy1024": false,
+                "sparklineDisplayFontSize": "150",
+                "fixedLegendFilterLimit": 5,
+                "fixedLegendShowSourceName": true,
+                "sparklineValueColorMapColors": [
+                  "rgba(87,170,19,1)",
+                  "rgba(255,225,100,1)",
+                  "rgba(224,34,0,1)"
+                ],
+                "fixedLegendPosition": "RIGHT",
+                "customTags": [],
+                "lineType": "linear",
+                "sparklineFillColor": "rgba(0,0,0,0.2)",
+                "sparklineValueColorMapApplyTo": "BACKGROUND",
+                "windowing": "full",
+                "sparklineDisplayColor": "rgba(250,250,250,1)",
+                "sparklineSize": "NONE",
+                "fixedLegendFilterSort": "TOP",
+                "sparklineValueColorMapValuesV2": [
+                  10,
+                  15
+                ],
+                "y1Units": "",
+                "sparklineValueTextMapThresholds": [
+                  10,
+                  15
+                ],
+                "fixedLegendShowMetricName": false,
+                "sparklineDisplayValueType": "VALUE",
+                "type": "markdown-widget",
+                "y1UnitAutoscaling": false,
+                "sparklineValueTextMapText": [
+                  "Healthy",
+                  "Degraded",
+                  "Down"
+                ],
+                "tagMode": "all",
+                "fixedLegendUseRawStats": false,
+                "y0UnitAutoscaling": false,
+                "fixedLegendDisplayStats": [
+                  "CURRENT"
+                ],
+                "sparklineDisplayHorizontalPosition": "MIDDLE",
+                "sparklineLineColor": "rgba(0,0,0,0.3)",
+                "sparklineDecimalPrecision": 1,
+                "autoColumnTags": false,
+                "numTags": 4,
+                "defaultSortColumn": null
+              },
+              "displayConfidenceBounds": false,
+              "includeObsoleteMetrics": false,
+              "filterOutNonAnomalies": false,
+              "name": "",
+              "anomalySampleSize": "8",
+              "units": "",
+              "summarization": "MEAN",
+              "base": 0,
+              "chartAttributes": {
+                "lineFill": 1,
+                "singleStat": {
+                  "sparklineDisplayLabel": "A",
+                  "sparklineDisplaySubLabel": "API Server"
+                },
+                "dashboardLayout": {
+                  "x": 8,
+                  "y": 6,
+                  "w": 1,
+                  "h": 4
+                },
+                "y0ScaleDecimal": false
+              },
+              "sources": [
+                {
+                  "name": "A",
+                  "query": "",
+                  "disabled": false,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": true,
+                  "querybuilderSerialization": "{\"metric\":\"ts()\",\"metricType\":\"m\",\"filters\":[[],\"and\"],\"functions\":[],\"_v\":1}"
+                }
+              ],
+              "noDefaultEvents": false,
+              "anomalyType": "both"
+            },
+            {
+              "anomalySeverity": "medium",
+              "anomalyDetectionOn": false,
+              "chartSettings": {
+                "y1ScaleSIBy1024": false,
+                "fixedLegendEnabled": false,
+                "fixedLegendFilterField": "CURRENT",
+                "y0ScaleSIBy1024": false,
+                "sparklineDisplayFontSize": "150",
+                "fixedLegendFilterLimit": 5,
+                "sparklineDisplayPrefix": "CoreDNS SLO: ",
+                "fixedLegendShowSourceName": true,
+                "sparklineValueColorMapColors": [
+                  "rgba(224,34,0,1)",
+                  "rgba(255,225,100,1)",
+                  "rgba(87,170,19,1)"
+                ],
+                "fixedLegendPosition": "RIGHT",
+                "customTags": [],
+                "lineType": "linear",
+                "sparklineFillColor": "rgba(0,0,0,0.2)",
+                "sparklineValueColorMapApplyTo": "BACKGROUND",
+                "windowing": "full",
+                "sparklineDisplayColor": "rgba(250,250,250,1)",
+                "sparklineSize": "NONE",
+                "fixedLegendFilterSort": "TOP",
+                "sparklineValueColorMapValuesV2": [
+                  99.95,
+                  99.97
+                ],
+                "y1Units": "",
+                "sparklineValueTextMapThresholds": [],
+                "fixedLegendShowMetricName": false,
+                "sparklineDisplayValueType": "VALUE",
+                "type": "sparkline",
+                "y1UnitAutoscaling": false,
+                "sparklineValueTextMapText": [
+                  "new highest"
+                ],
+                "tagMode": "all",
+                "fixedLegendUseRawStats": false,
+                "y0UnitAutoscaling": false,
+                "fixedLegendDisplayStats": [
+                  "CURRENT"
+                ],
+                "sparklineDisplayHorizontalPosition": "MIDDLE",
+                "sparklineLineColor": "rgba(0,0,0,0.3)",
+                "sparklineDecimalPrecision": 1,
+                "autoColumnTags": false,
+                "numTags": 4,
+                "defaultSortColumn": null
+              },
+              "displayConfidenceBounds": false,
+              "includeObsoleteMetrics": false,
+              "filterOutNonAnomalies": false,
+              "name": "",
+              "anomalySampleSize": "8",
+              "units": "%",
+              "summarization": "MEAN",
+              "base": 0,
+              "chartAttributes": {
+                "lineFill": 1,
+                "singleStat": {
+                  "sparklineDisplayLabel": "A",
+                  "sparklineDisplaySubLabel": "30 Day SLO"
+                },
+                "dashboardLayout": {
+                  "x": 9,
+                  "y": 6,
+                  "w": 3,
+                  "h": 4
+                },
+                "y0ScaleDecimal": false
+              },
+              "sources": [
+                {
+                  "name": "Errors",
+                  "query": "avg(mdiff(30d,ts(kube.apiserver.apiserver.request.total.counter, cluster=${cluster_name} and (code=\"4*\" OR code=\"5*\"))))",
+                  "disabled": true,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
+                },
+                {
+                  "name": "API Server SLI",
+                  "query": "100 * (1 - mcount(30d, highpass(0, align(1m, max, default(0, ${Errors})))) / (3600 * 24 * 30))",
+                  "disabled": false,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
+                }
+              ],
+              "noDefaultEvents": false,
+              "anomalyType": "both"
+            }
+          ],
+          "heightFactor": 80
+        },
+        {
+          "charts": [
+            {
+              "anomalySeverity": "medium",
+              "anomalyDetectionOn": false,
+              "chartSettings": {
+                "y1ScaleSIBy1024": false,
+                "fixedLegendEnabled": false,
+                "fixedLegendFilterField": "CURRENT",
+                "y0ScaleSIBy1024": false,
+                "sparklineDisplayFontSize": "150",
+                "fixedLegendFilterLimit": 5,
+                "sparklineDisplayPostfix": "%",
+                "fixedLegendShowSourceName": true,
+                "sparklineValueColorMapColors": [
+                  "rgba(87,170,19,1)",
+                  "rgba(255,250,125,1)",
+                  "rgba(224,34,0,1)",
+                  "rgba(133,147,153,1)"
+                ],
+                "fixedLegendPosition": "RIGHT",
+                "customTags": [],
+                "lineType": "linear",
+                "sparklineFillColor": "rgba(0,0,0,0.2)",
+                "sparklineValueColorMapApplyTo": "BACKGROUND",
+                "windowing": "full",
+                "sparklineDisplayColor": "rgba(250,250,250,1)",
+                "sparklineSize": "NONE",
+                "fixedLegendFilterSort": "TOP",
+                "sparklineValueColorMapValuesV2": [
+                  75,
+                  85,
+                  95
+                ],
+                "y1Units": "",
+                "fixedLegendShowMetricName": false,
+                "sparklineDisplayValueType": "VALUE",
+                "type": "sparkline",
+                "y1UnitAutoscaling": false,
+                "sparklineValueTextMapText": [
+                  "new highest"
+                ],
+                "tagMode": "all",
+                "fixedLegendUseRawStats": false,
+                "y0UnitAutoscaling": false,
+                "fixedLegendDisplayStats": [
+                  "CURRENT"
+                ],
+                "sparklineDisplayHorizontalPosition": "MIDDLE",
+                "sparklineLineColor": "rgba(0,0,0,0.3)",
+                "sparklineDecimalPrecision": 1,
+                "autoColumnTags": false,
+                "numTags": 4,
+                "defaultSortColumn": null
+              },
+              "displayConfidenceBounds": false,
+              "includeObsoleteMetrics": false,
+              "filterOutNonAnomalies": false,
+              "name": "",
+              "anomalySampleSize": "8",
+              "units": "",
+              "summarization": "MEAN",
+              "base": 0,
+              "chartAttributes": {
+                "lineFill": 1,
+                "singleStat": {
+                  "sparklineDisplayLabel": "A",
+                  "sparklineDisplaySubLabel": "Average CPU Utilization"
+                },
+                "dashboardLayout": {
+                  "x": 0,
+                  "y": 10,
+                  "w": 4,
+                  "h": 4
+                },
+                "y0ScaleDecimal": false
+              },
+              "sources": [
+                {
+                  "name": "cpu_util",
+                  "query": "limit(250, ts(\"kubernetes.node.cpu.node_utilization\", cluster=\"${cluster_name}\" and nodename=\"${node_name}\" and node_role=\"control-plane\") * 100)",
+                  "disabled": false,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
+                }
+              ],
+              "noDefaultEvents": false,
+              "anomalyType": "both"
+            },
+            {
+              "anomalySeverity": "medium",
+              "anomalyDetectionOn": false,
+              "chartSettings": {
+                "y1ScaleSIBy1024": false,
+                "fixedLegendEnabled": false,
+                "fixedLegendFilterField": "CURRENT",
+                "y0ScaleSIBy1024": false,
+                "sparklineDisplayFontSize": "150",
+                "fixedLegendFilterLimit": 5,
+                "sparklineDisplayPostfix": "%",
+                "fixedLegendShowSourceName": true,
+                "sparklineValueColorMapColors": [
+                  "rgba(87,170,19,1)",
+                  "rgba(255,250,125,1)",
+                  "rgba(224,34,0,1)",
+                  "rgba(133,147,153,1)"
+                ],
+                "fixedLegendPosition": "RIGHT",
+                "customTags": [],
+                "lineType": "linear",
+                "sparklineFillColor": "rgba(0,0,0,0.2)",
+                "sparklineValueColorMapApplyTo": "BACKGROUND",
+                "windowing": "full",
+                "sparklineDisplayColor": "rgba(250,250,250,1)",
+                "sparklineSize": "NONE",
+                "fixedLegendFilterSort": "TOP",
+                "sparklineValueColorMapValuesV2": [
+                  75,
+                  85,
+                  90
+                ],
+                "y1Units": "",
+                "fixedLegendShowMetricName": false,
+                "sparklineDisplayValueType": "VALUE",
+                "type": "sparkline",
+                "y1UnitAutoscaling": false,
+                "sparklineValueTextMapText": [
+                  "new highest"
+                ],
+                "tagMode": "all",
+                "fixedLegendUseRawStats": false,
+                "y0UnitAutoscaling": false,
+                "fixedLegendDisplayStats": [
+                  "CURRENT"
+                ],
+                "sparklineDisplayHorizontalPosition": "MIDDLE",
+                "sparklineLineColor": "rgba(0,0,0,0.3)",
+                "sparklineDecimalPrecision": 1,
+                "autoColumnTags": false,
+                "numTags": 4,
+                "defaultSortColumn": null
+              },
+              "displayConfidenceBounds": false,
+              "includeObsoleteMetrics": false,
+              "filterOutNonAnomalies": false,
+              "name": "",
+              "anomalySampleSize": "8",
+              "units": "",
+              "summarization": "MEAN",
+              "base": 0,
+              "chartAttributes": {
+                "lineFill": 1,
+                "singleStat": {
+                  "sparklineDisplayLabel": "A",
+                  "sparklineDisplaySubLabel": "Average Memory Utilization"
+                },
+                "dashboardLayout": {
+                  "x": 4,
+                  "y": 10,
+                  "w": 4,
+                  "h": 4
+                },
+                "y0ScaleDecimal": false
+              },
+              "sources": [
+                {
+                  "name": "memory_util",
+                  "query": "limit(250, ts(\"kubernetes.node.memory.working_set\", cluster=\"${cluster_name}\" and nodename=\"${node_name}\" and node_role=\"control-plane\") / ts(\"kubernetes.node.memory.node_allocatable\", cluster=\"${cluster_name}\" and nodename=\"${node_name}\" and node_role=\"control-plane\") * 100)",
+                  "disabled": false,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
+                }
+              ],
+              "noDefaultEvents": false,
+              "anomalyType": "both"
+            },
+            {
+              "anomalySeverity": "medium",
+              "anomalyDetectionOn": false,
+              "chartSettings": {
+                "y1ScaleSIBy1024": false,
+                "fixedLegendEnabled": false,
+                "fixedLegendFilterField": "CURRENT",
+                "y0ScaleSIBy1024": false,
+                "sparklineDisplayFontSize": "150",
+                "fixedLegendFilterLimit": 5,
+                "sparklineDisplayPostfix": "%",
+                "fixedLegendShowSourceName": true,
+                "sparklineValueColorMapColors": [
+                  "rgba(87,170,19,1)",
+                  "rgba(255,250,125,1)",
+                  "rgba(224,34,0,1)",
+                  "rgba(133,147,153,1)"
+                ],
+                "fixedLegendPosition": "RIGHT",
+                "customTags": [],
+                "lineType": "linear",
+                "sparklineFillColor": "rgba(0,0,0,0.2)",
+                "sparklineValueColorMapApplyTo": "BACKGROUND",
+                "windowing": "full",
+                "sparklineDisplayColor": "rgba(250,250,250,1)",
+                "sparklineSize": "NONE",
+                "fixedLegendFilterSort": "TOP",
+                "sparklineValueColorMapValuesV2": [
+                  75,
+                  85,
+                  95
+                ],
+                "y1Units": "",
+                "fixedLegendShowMetricName": false,
+                "sparklineDisplayValueType": "VALUE",
+                "type": "sparkline",
+                "y1UnitAutoscaling": false,
+                "sparklineValueTextMapText": [
+                  "new highest"
+                ],
+                "tagMode": "all",
+                "fixedLegendUseRawStats": false,
+                "y0UnitAutoscaling": false,
+                "fixedLegendDisplayStats": [
+                  "CURRENT"
+                ],
+                "sparklineDisplayHorizontalPosition": "MIDDLE",
+                "sparklineLineColor": "rgba(0,0,0,0.3)",
+                "sparklineDecimalPrecision": 1,
+                "autoColumnTags": false,
+                "numTags": 4,
+                "defaultSortColumn": null
+              },
+              "displayConfidenceBounds": false,
+              "includeObsoleteMetrics": false,
+              "filterOutNonAnomalies": false,
+              "name": "",
+              "anomalySampleSize": "8",
+              "units": "",
+              "summarization": "MEAN",
+              "base": 0,
+              "chartAttributes": {
+                "lineFill": 1,
+                "singleStat": {
+                  "sparklineDisplayLabel": "A",
+                  "sparklineDisplaySubLabel": "Average Storage Utilization"
+                },
+                "dashboardLayout": {
+                  "x": 8,
+                  "y": 10,
+                  "w": 4,
+                  "h": 4
+                },
+                "y0ScaleDecimal": false
+              },
+              "sources": [
+                {
+                  "name": "storage",
+                  "query": "ts(\"kubernetes.node.filesystem.usage\", cluster=\"${cluster_name}\" and nodename=\"${node_name}\") / ts(\"kubernetes.node.filesystem.limit\", cluster=\"${cluster_name}\" and nodename=\"${node_name}\")",
+                  "disabled": true,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
+                },
+                {
+                  "name": "avg_storage",
+                  "query": "avg(${storage})",
+                  "disabled": false,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
+                }
+              ],
+              "noDefaultEvents": false,
+              "anomalyType": "both"
+            }
+          ],
+          "heightFactor": 80
         }
       ]
     },
@@ -267,7 +1770,7 @@
                 "fixedLegendFilterSort": "TOP",
                 "y1Units": "",
                 "fixedLegendShowMetricName": false,
-                "type": "line",
+                "type": "stacked-column",
                 "y1UnitAutoscaling": false,
                 "tagMode": "all",
                 "fixedLegendUseRawStats": false,
@@ -303,10 +1806,10 @@
                 {
                   "name": "request_rate",
                   "query": "sum(rate(ts(kube.apiserver.apiserver.request.total.counter, cluster=${cluster_name})), verb)",
-                  "querybuilderEnabled": false,
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL"
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false
                 }
               ],
               "noDefaultEvents": false,
@@ -369,26 +1872,26 @@
                 {
                   "name": "Errors",
                   "query": "rate(sum(ts(kube.apiserver.apiserver.request.total.counter, cluster=${cluster_name} and (code=\"4*\" OR code=\"5*\")), verb))",
-                  "querybuilderEnabled": false,
                   "disabled": true,
                   "secondaryAxis": false,
-                  "queryType": "WQL"
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false
                 },
                 {
                   "name": "Requests",
                   "query": "rate(sum(ts(kube.apiserver.apiserver.request.total.counter, cluster=${cluster_name}), verb))",
-                  "querybuilderEnabled": false,
                   "disabled": true,
                   "secondaryAxis": false,
-                  "queryType": "WQL"
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false
                 },
                 {
                   "name": "Error %",
                   "query": "${Errors}/${Requests} * 100",
-                  "querybuilderEnabled": false,
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL"
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false
                 }
               ],
               "noDefaultEvents": true,
@@ -403,6 +1906,7 @@
                 "fixedLegendEnabled": false,
                 "fixedLegendFilterField": "CURRENT",
                 "y0ScaleSIBy1024": false,
+                "stackType": "zero",
                 "fixedLegendFilterLimit": 5,
                 "fixedLegendShowSourceName": true,
                 "fixedLegendPosition": "RIGHT",
@@ -412,7 +1916,7 @@
                 "fixedLegendFilterSort": "TOP",
                 "y1Units": "",
                 "fixedLegendShowMetricName": false,
-                "type": "line",
+                "type": "stacked-area",
                 "y1UnitAutoscaling": false,
                 "tagMode": "all",
                 "fixedLegendUseRawStats": false,
@@ -448,38 +1952,38 @@
                 {
                   "name": "histo",
                   "query": "cumulativeHisto(sum(align(1m, rate(ts(kube.apiserver.apiserver.request.duration.seconds.bucket, cluster=${cluster_name}))), le))",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": "",
                   "disabled": true,
                   "secondaryAxis": false,
-                  "queryType": "WQL"
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
                 },
                 {
                   "name": "p95_request_latency",
                   "query": "percentile(95, ${histo})",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": "",
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL"
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
                 },
                 {
-                  "name": "p90_request_latency",
-                  "query": "percentile(90, ${histo})",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": "",
+                  "name": "p99_request_latency",
+                  "query": "percentile(99, ${histo})",
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL"
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
                 },
                 {
                   "name": "p50_request_latency",
                   "query": "percentile(50, ${histo})",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": "",
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL"
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
                 }
               ],
               "noDefaultEvents": true,
@@ -543,11 +2047,11 @@
                 {
                   "name": "adds_rate",
                   "query": "rate(ts(kube.apiserver.workqueue.adds.total.counter, cluster=${cluster_name}))",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": "",
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL"
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
                 }
               ],
               "noDefaultEvents": false,
@@ -606,38 +2110,38 @@
                 {
                   "name": "histo",
                   "query": "cumulativeHisto(sum(align(1m, rate(ts(kube.apiserver.workqueue.queue.duration.seconds.bucket, cluster=${cluster_name}))), le))",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": "",
                   "disabled": true,
                   "secondaryAxis": false,
-                  "queryType": "WQL"
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
                 },
                 {
                   "name": "p95_request_latency",
                   "query": "percentile(95, ${histo})",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": "",
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL"
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
                 },
                 {
                   "name": "p90_request_latency",
                   "query": "percentile(90, ${histo})",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": "",
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL"
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
                 },
                 {
                   "name": "p50_request_latency",
                   "query": "percentile(50, ${histo})",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": "",
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL"
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
                 }
               ],
               "noDefaultEvents": true,
@@ -649,7 +2153,7 @@
       ]
     },
     {
-      "name": "etcd",
+      "name": "etcd Details",
       "id": "untitled-dashboard-section-3",
       "rows": [
         {
@@ -713,42 +2217,42 @@
                 {
                   "name": "histo",
                   "query": "cumulativeHisto(sum(align(1m, rate(ts(kube.apiserver.etcd.request.duration.seconds.bucket, cluster=${cluster_name}))), le))",
-                  "querybuilderEnabled": false,
                   "disabled": true,
                   "secondaryAxis": false,
-                  "queryType": "WQL"
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false
                 },
                 {
                   "name": "P95",
                   "query": "percentile(95, ${histo})",
-                  "querybuilderEnabled": false,
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL"
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false
                 },
                 {
                   "name": "P90",
                   "query": "percentile(90, ${histo})",
-                  "querybuilderEnabled": false,
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL"
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false
                 },
                 {
                   "name": "P50",
                   "query": "percentile(50, ${histo})",
-                  "querybuilderEnabled": false,
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL"
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false
                 },
                 {
                   "name": "A",
                   "query": "ts(kube.apiserver.etcd.request.duration.seconds.bucket, cluster=${cluster_name})",
-                  "querybuilderEnabled": false,
                   "disabled": true,
                   "secondaryAxis": false,
-                  "queryType": "WQL"
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false
                 }
               ],
               "noDefaultEvents": false,
@@ -764,16 +2268,24 @@
                 "y0ScaleSIBy1024": false,
                 "fixedLegendFilterLimit": 5,
                 "fixedLegendShowSourceName": true,
+                "showValueColumn": true,
                 "fixedLegendPosition": "RIGHT",
-                "customTags": [],
+                "customTags": [
+                  "resource"
+                ],
+                "showRawValues": false,
                 "lineType": "linear",
+                "showHosts": false,
+                "groupBySource": false,
                 "windowing": "full",
                 "fixedLegendFilterSort": "TOP",
                 "y1Units": "",
+                "sortValuesDescending": true,
                 "fixedLegendShowMetricName": false,
-                "type": "line",
+                "type": "table",
                 "y1UnitAutoscaling": false,
-                "tagMode": "all",
+                "showLabels": false,
+                "tagMode": "custom",
                 "fixedLegendUseRawStats": false,
                 "y0UnitAutoscaling": true,
                 "fixedLegendDisplayStats": [
@@ -791,6 +2303,7 @@
               "filterOutNonAnomalies": false,
               "name": "etcd Object Counts",
               "anomalySampleSize": "8",
+              "units": "",
               "summarization": "MEAN",
               "base": 0,
               "chartAttributes": {
@@ -806,18 +2319,20 @@
                 {
                   "name": "A",
                   "query": "sum(ts(kube.apiserver.etcd.object.counts.gauge, cluster=${cluster_name}))",
-                  "querybuilderEnabled": false,
                   "disabled": true,
                   "secondaryAxis": false,
-                  "queryType": "WQL"
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
                 },
                 {
                   "name": "A Clone",
                   "query": "ts(kube.apiserver.etcd.object.counts.gauge, cluster=${cluster_name})",
-                  "querybuilderEnabled": false,
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL"
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
                 }
               ],
               "noDefaultEvents": false,
@@ -876,10 +2391,10 @@
                 {
                   "name": "A",
                   "query": "ts(kube.apiserver.etcd.db.total.size.in.bytes.gauge, cluster=${cluster_name})",
-                  "querybuilderEnabled": false,
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL"
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false
                 }
               ],
               "noDefaultEvents": false,
@@ -891,7 +2406,7 @@
       ]
     },
     {
-      "name": "coreDNS",
+      "name": "coreDNS Details",
       "id": "lsaPH",
       "rows": [
         {
@@ -951,11 +2466,11 @@
                 {
                   "name": "error_rate",
                   "query": "rate(ts(coredns.dns.responses.total.counter, not rcode=NOERROR and cluster=${cluster_name}))",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": "",
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL"
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
                 }
               ],
               "noDefaultEvents": false,
@@ -1014,38 +2529,38 @@
                 {
                   "name": "histo",
                   "query": "cumulativeHisto(sum(align(1m, rate(ts(coredns.dns.request.duration.seconds.bucket, cluster=${cluster_name}))), le))",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": "",
                   "disabled": true,
                   "secondaryAxis": false,
-                  "queryType": "WQL"
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
                 },
                 {
                   "name": "P95",
                   "query": "percentile(95, ${histo})",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": "",
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL"
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
                 },
                 {
                   "name": "P90",
                   "query": "percentile(90, ${histo})",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": "",
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL"
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
                 },
                 {
                   "name": "P50",
                   "query": "percentile(50, ${histo})",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": "",
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL"
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
                 }
               ],
               "noDefaultEvents": false,
@@ -1053,6 +2568,127 @@
             }
           ],
           "heightFactor": 100
+        },
+        {
+          "charts": [
+            {
+              "anomalySeverity": "medium",
+              "anomalyDetectionOn": false,
+              "chartSettings": {
+                "y1ScaleSIBy1024": false,
+                "fixedLegendEnabled": false,
+                "fixedLegendFilterField": "CURRENT",
+                "y0ScaleSIBy1024": false,
+                "sparklineDisplayFontSize": "150",
+                "fixedLegendFilterLimit": 5,
+                "fixedLegendShowSourceName": true,
+                "sparklineValueColorMapColors": [
+                  "rgba(87,170,19,1)",
+                  "rgba(224,34,0,1)"
+                ],
+                "fixedLegendPosition": "RIGHT",
+                "customTags": [],
+                "lineType": "linear",
+                "sparklineFillColor": "rgba(0,0,0,0.2)",
+                "sparklineValueColorMapApplyTo": "BACKGROUND",
+                "windowing": "full",
+                "sparklineDisplayColor": "rgba(250,250,250,1)",
+                "sparklineSize": "NONE",
+                "fixedLegendFilterSort": "TOP",
+                "sparklineValueColorMapValuesV2": [
+                  1000
+                ],
+                "y1Units": "",
+                "sparklineValueTextMapThresholds": [
+                  1000
+                ],
+                "fixedLegendShowMetricName": false,
+                "sparklineDisplayValueType": "VALUE",
+                "type": "sparkline",
+                "y1UnitAutoscaling": false,
+                "sparklineValueTextMapText": [
+                  "✓",
+                  "X"
+                ],
+                "tagMode": "all",
+                "fixedLegendUseRawStats": false,
+                "y0UnitAutoscaling": false,
+                "fixedLegendDisplayStats": [
+                  "CURRENT"
+                ],
+                "sparklineDisplayHorizontalPosition": "MIDDLE",
+                "sparklineLineColor": "rgba(0,0,0,0.3)",
+                "sparklineDecimalPrecision": 1,
+                "autoColumnTags": false,
+                "numTags": 4,
+                "defaultSortColumn": null
+              },
+              "displayConfidenceBounds": false,
+              "includeObsoleteMetrics": false,
+              "filterOutNonAnomalies": false,
+              "name": "API Server Test",
+              "anomalySampleSize": "8",
+              "units": "ms",
+              "summarization": "MEAN",
+              "base": 0,
+              "chartAttributes": {
+                "lineFill": 1,
+                "singleStat": {
+                  "sparklineDisplayLabel": "A",
+                  "sparklineDisplaySubLabel": "API Server SLI"
+                },
+                "dashboardLayout": {
+                  "x": 0,
+                  "y": 5,
+                  "w": 4,
+                  "h": 3
+                },
+                "y0ScaleDecimal": false
+              },
+              "sources": [
+                {
+                  "name": "histo",
+                  "query": "cumulativeHisto(sum(align(1m, rate(ts(kube.apiserver.apiserver.request.duration.seconds.bucket, cluster=${cluster_name}))), le))",
+                  "disabled": true,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
+                },
+                {
+                  "name": "P99 Latency",
+                  "query": "percentile(99, ${histo})",
+                  "disabled": true,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
+                },
+                {
+                  "name": "P99 Latency Clone",
+                  "query": "mpercentile(5m, 99, ${histo})",
+                  "disabled": false,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
+                },
+                {
+                  "name": "Promql P99 Latency",
+                  "query": "histogram_quantile(0.99, sum by (le) (rate(kube.apiserver.apiserver.request.duration.seconds.bucket{cluster=\"${cluster_name}\"}[5m])))",
+                  "disabled": true,
+                  "secondaryAxis": false,
+                  "queryType": "PROMQL",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
+                }
+              ],
+              "noDefaultEvents": false,
+              "description": "The service level indicator (SLI) of the API server is measured as the 99th percentile of request latency",
+              "anomalyType": "both"
+            }
+          ],
+          "heightFactor": 50
         }
       ]
     }
@@ -1092,5 +2728,6 @@
       "allowAll": false,
       "selectedLabel": "Label"
     }
-  }
+  },
+  "disableRefreshInLiveMode": false
 }

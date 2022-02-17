@@ -163,12 +163,6 @@ func (src *internalMetricsSource) point(name string, value float64, ts int64) *w
 }
 
 func (src *internalMetricsSource) buildTags(tags map[string]string) map[string]string {
-	if len(src.tags) == 0 {
-		return tags
-	}
-	if len(tags) == 0 {
-		return src.tags
-	}
 	for k, v := range src.tags {
 		if len(v) > 0 {
 			if _, exists := tags[k]; !exists {
