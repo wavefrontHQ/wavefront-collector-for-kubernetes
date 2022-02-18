@@ -59,12 +59,12 @@
           tls_config:
             ca_file: '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
             insecure_skip_verify: true
-        prefix: 'kube.apiserver.'
+        prefix: 'kubernetes.apiserver.'
         filters:
           metricWhitelist:
-          - 'kube.apiserver.apiserver.*'
-          - 'kube.apiserver.etcd.*'
-          - 'kube.apiserver.process.*'
+          - 'kubernetes.apiserver.apiserver.*'
+          - 'kubernetes.apiserver.etcd.*'
+          - 'kubernetes.apiserver.process.*'
       - url: 'https://kube-state-metrics.openshift-monitoring:8443/metrics'
         httpConfig:
           bearer_token_file: '/var/run/secrets/kubernetes.io/serviceaccount/token'
@@ -130,15 +130,15 @@
         port: 10054
         path: /metrics
         scheme: http
-        prefix: kube.dns.
+        prefix: kubernetes.dns.
         filters:
           metricAllowList:
-          - 'kube.dns.http.request.duration.microseconds'
-          - 'kube.dns.http.request.size.bytes'
-          - 'kube.dns.http.requests.total.counter'
-          - 'kube.dns.http.response.size.bytes'
-          - 'kube.dns.kubedns.dnsmasq.*'
-          - 'kube.dns.process.*'
+          - 'kubernetes.dns.http.request.duration.microseconds'
+          - 'kubernetes.dns.http.request.size.bytes'
+          - 'kubernetes.dns.http.requests.total.counter'
+          - 'kubernetes.dns.http.response.size.bytes'
+          - 'kubernetes.dns.kubedns.dnsmasq.*'
+          - 'kubernetes.dns.process.*'
 
       # auto-discover coredns
       - name: coredns-discovery
@@ -152,14 +152,14 @@
         port: 9153
         path: /metrics
         scheme: http
-        prefix: kube.coredns.
+        prefix: kubernetes.coredns.
         filters:
           metricAllowList:
-          - 'kube.coredns.coredns.cache.*'
-          - 'kube.coredns.coredns.dns.request.count.total.counter'
-          - 'kube.coredns.coredns.dns.request.duration.seconds'
-          - 'kube.coredns.coredns.dns.request.size.bytes'
-          - 'kube.coredns.coredns.dns.request.type.count.total.counter'
-          - 'kube.coredns.coredns.dns.response.rcode.count.total.counter'
-          - 'kube.coredns.coredns.dns.response.size.bytes'
-          - 'kube.coredns.process.*'
+          - 'kubernetes.coredns.coredns.cache.*'
+          - 'kubernetes.coredns.coredns.dns.request.count.total.counter'
+          - 'kubernetes.coredns.coredns.dns.request.duration.seconds'
+          - 'kubernetes.coredns.coredns.dns.request.size.bytes'
+          - 'kubernetes.coredns.coredns.dns.request.type.count.total.counter'
+          - 'kubernetes.coredns.coredns.dns.response.rcode.count.total.counter'
+          - 'kubernetes.coredns.coredns.dns.response.size.bytes'
+          - 'kubernetes.coredns.process.*'

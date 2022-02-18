@@ -31,8 +31,8 @@ sinks:
   filters:
     # Filter out all go runtime metrics for kube-dns and apiserver.
     metricDenyList:
-    - 'kube.dns.go.*'
-    - 'kube.apiserver.go.*'
+    - 'kubernetes.dns.go.*'
+    - 'kubernetes.apiserver.go.*'
 
     # Allow metrics that have an environment tag of production or staging
     metricTagAllowList:
@@ -77,13 +77,13 @@ discovery_configs:
     labels:
       k8s-app: kube-dns
     port: 10054
-    prefix: kube.dns.
+    prefix: kubernetes.dns.
 
     # filtering rules to be applied towards kube-dns metrics
     filters:
       metricDenyList:
-      - 'kube.dns.go.*'
-      - 'kube.dns.probe.*'
+      - 'kubernetes.dns.go.*'
+      - 'kubernetes.dns.probe.*'
 
       metricTagAllowList:
         env:

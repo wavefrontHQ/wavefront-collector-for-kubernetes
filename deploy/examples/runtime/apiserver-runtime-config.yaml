@@ -20,7 +20,7 @@ data:
             - apiserver
           provider:
             - kubernetes
-      prefix: kube.apiserver.
+      prefix: kubernetes.apiserver.
       scheme: https
       port: 443
       path: /metrics

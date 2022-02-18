@@ -48,7 +48,7 @@ plugins:
     port: 10054
     path: /metrics
     scheme: http
-    prefix: kube.dns.
+    prefix: kubernetes.dns.
     tags:
       env: prod
     filters:
@@ -56,8 +56,8 @@ plugins:
       - '*foo*'
       - 'bar*'
       metricDenyList:
-      - 'kube.dns.go.*'
-      - 'kube.dns.probe.*'
+      - 'kubernetes.dns.go.*'
+      - 'kubernetes.dns.probe.*'
       metricTagAllowList:
         env:
         - 'prod1*'

@@ -237,12 +237,12 @@ tags:
 filters:
   # List of glob patterns. Only metrics with names matching the list are reported.
   metricAllowList:
-  - 'kube.dns.http.*'
-  - 'kube.dns.process.*'
+  - 'kubernetes.dns.http.*'
+  - 'kubernetes.dns.process.*'
 
   # List of glob patterns. Metrics with names matching the list are dropped.
   metricDenyList:
-  - 'kube.dns.go.*'
+  - 'kubernetes.dns.go.*'
 
   # Map of tag names to list of glob patterns. Only metrics containing tag keys and values matching the list will be reported.
   metricTagAllowList:

@@ -65,20 +65,20 @@ sources:
         tls_config:
           ca_file: '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
           insecure_skip_verify: true
-      prefix: 'kube.apiserver.'
+      prefix: 'kubernetes.apiserver.'
       filters:
         metricAllowList:
-        - 'kube.apiserver.apiserver.admission.step.*'
-        - 'kube.apiserver.apiserver.audit.*'
-        - 'kube.apiserver.apiserver.client.*'
-        - 'kube.apiserver.apiserver.envelope.*'
-        - 'kube.apiserver.etcd.*'
-        - 'kube.apiserver.process.*'
-        - 'kube.apiserver.apiserver.request.duration.seconds.*'
-        - 'kube.apiserver.apiserver.request.total.counter'
-        - 'kube.apiserver.workqueue.adds.total.*'
-        - 'kube.apiserver.workqueue.depth.*'
-        - 'kube.apiserver.workqueue.queue.duration.seconds.*'
+        - 'kubernetes.apiserver.apiserver.admission.step.*'
+        - 'kubernetes.apiserver.apiserver.audit.*'
+        - 'kubernetes.apiserver.apiserver.client.*'
+        - 'kubernetes.apiserver.apiserver.envelope.*'
+        - 'kubernetes.apiserver.etcd.*'
+        - 'kubernetes.apiserver.process.*'
+        - 'kubernetes.apiserver.apiserver.request.duration.seconds.*'
+        - 'kubernetes.apiserver.apiserver.request.total.counter'
+        - 'kubernetes.apiserver.workqueue.adds.total.*'
+        - 'kubernetes.apiserver.workqueue.depth.*'
+        - 'kubernetes.apiserver.workqueue.queue.duration.seconds.*'
         tagExclude:
         - version
 
