@@ -7,6 +7,11 @@
   "displayQueryParameters": true,
   "sections": [
     {
+      "name": "Introduction",
+      "id": "yDWMn",
+      "rows": []
+    },
+    {
       "name": "Control Plane Summary",
       "id": "z2Fog",
       "rows": [
@@ -160,7 +165,7 @@
               "displayConfidenceBounds": false,
               "includeObsoleteMetrics": false,
               "filterOutNonAnomalies": false,
-              "name": "API Server Test",
+              "name": "API Server SLI",
               "anomalySampleSize": "8",
               "units": "ms",
               "summarization": "MEAN",
@@ -181,36 +186,13 @@
               },
               "sources": [
                 {
-                  "name": "histo",
-                  "query": "cumulativeHisto(sum(align(1m, rate(ts(kubernetes.apiserver.apiserver.request.duration.seconds.bucket, cluster=${cluster_name}))), le))",
-                  "disabled": true,
-                  "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false
-                },
-                {
-                  "name": "P99 Latency",
-                  "query": "percentile(99, ${histo})",
+                  "name": "API Server SLI",
+                  "query": "cumulativePercentile(99.0,rawsum(align(60s, mean, aliasMetric(mavg(5m, rate(ts(kubernetes.apiserver.apiserver.request.duration.seconds.bucket, cluster=${cluster_name}))), '')) by (le)), metrics, sources, pointTags)",
                   "disabled": false,
                   "secondaryAxis": false,
                   "queryType": "WQL",
-                  "querybuilderEnabled": false
-                },
-                {
-                  "name": "P99 Latency Clone",
-                  "query": "mpercentile(99,5m, ${histo})",
-                  "disabled": true,
-                  "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false
-                },
-                {
-                  "name": "Promql P99 Latency",
-                  "query": "histogram_quantile(0.99, sum by (le) (rate(kubernetes.apiserver.apiserver.request.duration.seconds.bucket{cluster=\"${cluster_name}\"}[5m])))",
-                  "disabled": true,
-                  "secondaryAxis": false,
-                  "queryType": "PROMQL",
-                  "querybuilderEnabled": false
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
                 }
               ],
               "noDefaultEvents": false,
@@ -389,11 +371,12 @@
               "sources": [
                 {
                   "name": "etcd latency SLI",
-                  "query": "avg(avg(align(5m, rate(ts(kubernetes.apiserver.etcd.request.duration.seconds.bucket, cluster=${cluster_name}))), le))",
+                  "query": "cumulativePercentile(99.0,rawsum(align(60s, mean, aliasMetric(mavg(5m, rate(ts(kubernetes.apiserver.etcd.request.duration.seconds.bucket, cluster=${cluster_name}))), '')) by (le)), metrics, sources, pointTags)",
                   "disabled": false,
                   "secondaryAxis": false,
                   "queryType": "WQL",
-                  "querybuilderEnabled": false
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
                 }
               ],
               "noDefaultEvents": false,
@@ -551,6 +534,7 @@
               "filterOutNonAnomalies": false,
               "name": "",
               "anomalySampleSize": "8",
+              "units": "",
               "summarization": "MEAN",
               "base": 0,
               "chartAttributes": {
@@ -570,11 +554,12 @@
               "sources": [
                 {
                   "name": "CoreDNS SLI",
-                  "query": "avg(rate(ts(coredns.dns.responses.total.counter, not rcode=NOERROR and cluster=${cluster_name})))",
+                  "query": "cumulativePercentile(99.0,rawsum(align(60s, mean, aliasMetric(mavg(5m, rate(ts(coredns.dns.request.duration.seconds.bucket, cluster=${cluster_name}))), '')) by (le)), metrics, sources, pointTags)",
                   "disabled": false,
                   "secondaryAxis": false,
                   "queryType": "WQL",
-                  "querybuilderEnabled": false
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
                 }
               ],
               "noDefaultEvents": false,
@@ -666,36 +651,13 @@
               },
               "sources": [
                 {
-                  "name": "Errors",
-                  "query": "rate(sum(ts(kubernetes.apiserver.apiserver.request.total.counter, cluster=${cluster_name} and (code=\"4*\" OR code=\"5*\")), verb))",
-                  "disabled": true,
-                  "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false
-                },
-                {
-                  "name": "Requests",
-                  "query": "rate(sum(ts(kubernetes.apiserver.apiserver.request.total.counter, cluster=${cluster_name}), verb))",
-                  "disabled": true,
-                  "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false
-                },
-                {
-                  "name": "Error",
-                  "query": "${Errors}/${Requests} * 100",
-                  "disabled": true,
-                  "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false
-                },
-                {
                   "name": "API Server SLI",
-                  "query": "avg(${Error})",
+                  "query": "cumulativePercentile(99.0,rawsum(align(60s, mean, aliasMetric(mavg(5m, rate(ts(kubernetes.apiserver.apiserver.request.duration.seconds.bucket, cluster=${cluster_name}))), '')) by (le)), metrics, sources, pointTags)",
                   "disabled": false,
                   "secondaryAxis": false,
                   "queryType": "WQL",
-                  "querybuilderEnabled": false
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
                 }
               ],
               "noDefaultEvents": false,
@@ -783,11 +745,12 @@
               "sources": [
                 {
                   "name": "etcd SLI",
-                  "query": "avg(avg(align(5m, rate(ts(kubernetes.apiserver.etcd.request.duration.seconds.bucket, cluster=${cluster_name}))), le))",
+                  "query": "cumulativePercentile(99.0,rawsum(align(60s, mean, aliasMetric(mavg(5m, rate(ts(kubernetes.apiserver.etcd.request.duration.seconds.bucket, cluster=${cluster_name}))), '')) by (le)), metrics, sources, pointTags)",
                   "disabled": false,
                   "secondaryAxis": false,
                   "queryType": "WQL",
-                  "querybuilderEnabled": false
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
                 }
               ],
               "noDefaultEvents": false,
@@ -875,11 +838,12 @@
               "sources": [
                 {
                   "name": "CoreDNS SLI",
-                  "query": "avg(rate(ts(coredns.dns.responses.total.counter, not rcode=NOERROR and cluster=${cluster_name})))",
+                  "query": "cumulativePercentile(99.0,rawsum(align(60s, mean, aliasMetric(mavg(5m, rate(ts(coredns.dns.request.duration.seconds.bucket, cluster=${cluster_name}))), '')) by (le)), metrics, sources, pointTags)",
                   "disabled": false,
                   "secondaryAxis": false,
                   "queryType": "WQL",
-                  "querybuilderEnabled": false
+                  "querybuilderEnabled": false,
+                  "sourceDescription": ""
                 }
               ],
               "noDefaultEvents": false,
@@ -1059,8 +1023,8 @@
               },
               "sources": [
                 {
-                  "name": "Errors",
-                  "query": "avg(mdiff(30d,ts(kubernetes.apiserver.apiserver.request.total.counter, cluster=${cluster_name} and (code=\"4*\" OR code=\"5*\"))))",
+                  "name": "API Server SLI",
+                  "query": "cumulativePercentile(99.0,rawsum(align(60s, mean, aliasMetric(mavg(5m, rate(ts(kubernetes.apiserver.apiserver.request.duration.seconds.bucket, cluster=${cluster_name}))), '')) by (le)), metrics, sources, pointTags)",
                   "disabled": true,
                   "secondaryAxis": false,
                   "queryType": "WQL",
@@ -1068,8 +1032,8 @@
                   "sourceDescription": ""
                 },
                 {
-                  "name": "API Server SLI",
-                  "query": "100 * (1 - mcount(30d, highpass(0, align(1m, max, default(0, ${Errors})))) / (3600 * 24 * 30))",
+                  "name": "API Server SLO",
+                  "query": "100 * (1 - mcount(30d, highpass(0, align(1m, max, default(0, ${API Server SLI})))) / (3600 * 24 * 30))",
                   "disabled": false,
                   "secondaryAxis": false,
                   "queryType": "WQL",
@@ -1249,8 +1213,8 @@
               },
               "sources": [
                 {
-                  "name": "Errors",
-                  "query": "avg(mdiff(30d,ts(kubernetes.apiserver.apiserver.request.total.counter, cluster=${cluster_name} and (code=\"4*\" OR code=\"5*\"))))",
+                  "name": "etcd SLI",
+                  "query": "cumulativePercentile(99.0,rawsum(align(60s, mean, aliasMetric(mavg(5m, rate(ts(kubernetes.apiserver.etcd.request.duration.seconds.bucket, cluster=${cluster_name}))), '')) by (le)), metrics, sources, pointTags)",
                   "disabled": true,
                   "secondaryAxis": false,
                   "queryType": "WQL",
@@ -1258,8 +1222,8 @@
                   "sourceDescription": ""
                 },
                 {
-                  "name": "API Server SLI",
-                  "query": "100 * (1 - mcount(30d, highpass(0, align(1m, max, default(0, ${Errors})))) / (3600 * 24 * 30))",
+                  "name": "etcd SLO",
+                  "query": "100 * (1 - mcount(30d, highpass(0, align(1m, max, default(0, ${etcd SLI})))) / (3600 * 24 * 30))",
                   "disabled": false,
                   "secondaryAxis": false,
                   "queryType": "WQL",
@@ -1439,8 +1403,8 @@
               },
               "sources": [
                 {
-                  "name": "Errors",
-                  "query": "avg(mdiff(30d,ts(kubernetes.apiserver.apiserver.request.total.counter, cluster=${cluster_name} and (code=\"4*\" OR code=\"5*\"))))",
+                  "name": "CoreDNS SLI",
+                  "query": "cumulativePercentile(99.0,rawsum(align(60s, mean, aliasMetric(mavg(5m, rate(ts(coredns.dns.request.duration.seconds.bucket, cluster=${cluster_name}))), '')) by (le)), metrics, sources, pointTags)",
                   "disabled": true,
                   "secondaryAxis": false,
                   "queryType": "WQL",
@@ -1448,8 +1412,8 @@
                   "sourceDescription": ""
                 },
                 {
-                  "name": "API Server SLI",
-                  "query": "100 * (1 - mcount(30d, highpass(0, align(1m, max, default(0, ${Errors})))) / (3600 * 24 * 30))",
+                  "name": "CoreDNS SLO",
+                  "query": "100 * (1 - mcount(30d, highpass(0, align(1m, max, default(0, ${CoreDNS SLI})))) / (3600 * 24 * 30))",
                   "disabled": false,
                   "secondaryAxis": false,
                   "queryType": "WQL",
@@ -2568,127 +2532,6 @@
             }
           ],
           "heightFactor": 100
-        },
-        {
-          "charts": [
-            {
-              "anomalySeverity": "medium",
-              "anomalyDetectionOn": false,
-              "chartSettings": {
-                "y1ScaleSIBy1024": false,
-                "fixedLegendEnabled": false,
-                "fixedLegendFilterField": "CURRENT",
-                "y0ScaleSIBy1024": false,
-                "sparklineDisplayFontSize": "150",
-                "fixedLegendFilterLimit": 5,
-                "fixedLegendShowSourceName": true,
-                "sparklineValueColorMapColors": [
-                  "rgba(87,170,19,1)",
-                  "rgba(224,34,0,1)"
-                ],
-                "fixedLegendPosition": "RIGHT",
-                "customTags": [],
-                "lineType": "linear",
-                "sparklineFillColor": "rgba(0,0,0,0.2)",
-                "sparklineValueColorMapApplyTo": "BACKGROUND",
-                "windowing": "full",
-                "sparklineDisplayColor": "rgba(250,250,250,1)",
-                "sparklineSize": "NONE",
-                "fixedLegendFilterSort": "TOP",
-                "sparklineValueColorMapValuesV2": [
-                  1000
-                ],
-                "y1Units": "",
-                "sparklineValueTextMapThresholds": [
-                  1000
-                ],
-                "fixedLegendShowMetricName": false,
-                "sparklineDisplayValueType": "VALUE",
-                "type": "sparkline",
-                "y1UnitAutoscaling": false,
-                "sparklineValueTextMapText": [
-                  "✓",
-                  "X"
-                ],
-                "tagMode": "all",
-                "fixedLegendUseRawStats": false,
-                "y0UnitAutoscaling": false,
-                "fixedLegendDisplayStats": [
-                  "CURRENT"
-                ],
-                "sparklineDisplayHorizontalPosition": "MIDDLE",
-                "sparklineLineColor": "rgba(0,0,0,0.3)",
-                "sparklineDecimalPrecision": 1,
-                "autoColumnTags": false,
-                "numTags": 4,
-                "defaultSortColumn": null
-              },
-              "displayConfidenceBounds": false,
-              "includeObsoleteMetrics": false,
-              "filterOutNonAnomalies": false,
-              "name": "API Server Test",
-              "anomalySampleSize": "8",
-              "units": "ms",
-              "summarization": "MEAN",
-              "base": 0,
-              "chartAttributes": {
-                "lineFill": 1,
-                "singleStat": {
-                  "sparklineDisplayLabel": "A",
-                  "sparklineDisplaySubLabel": "API Server SLI"
-                },
-                "dashboardLayout": {
-                  "x": 0,
-                  "y": 5,
-                  "w": 4,
-                  "h": 3
-                },
-                "y0ScaleDecimal": false
-              },
-              "sources": [
-                {
-                  "name": "histo",
-                  "query": "cumulativeHisto(sum(align(1m, rate(ts(kubernetes.apiserver.apiserver.request.duration.seconds.bucket, cluster=${cluster_name}))), le))",
-                  "disabled": true,
-                  "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": ""
-                },
-                {
-                  "name": "P99 Latency",
-                  "query": "percentile(99, ${histo})",
-                  "disabled": true,
-                  "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": ""
-                },
-                {
-                  "name": "P99 Latency Clone",
-                  "query": "mpercentile(5m, 99, ${histo})",
-                  "disabled": false,
-                  "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": ""
-                },
-                {
-                  "name": "Promql P99 Latency",
-                  "query": "histogram_quantile(0.99, sum by (le) (rate(kubernetes.apiserver.apiserver.request.duration.seconds.bucket{cluster=\"${cluster_name}\"}[5m])))",
-                  "disabled": true,
-                  "secondaryAxis": false,
-                  "queryType": "PROMQL",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": ""
-                }
-              ],
-              "noDefaultEvents": false,
-              "description": "The service level indicator (SLI) of the API server is measured as the 99th percentile of request latency",
-              "anomalyType": "both"
-            }
-          ],
-          "heightFactor": 50
         }
       ]
     }
