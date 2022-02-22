@@ -28,8 +28,6 @@ COPY LICENSE /licenses/license.txt
 
 RUN mkdir -p /etc/collector
 
-#COPY deploy/examples/openshift-config.yaml /etc/collector/collector.yaml
-
 COPY --from=builder /workspace/wavefront-collector /
 
 #   nobody:nobody
