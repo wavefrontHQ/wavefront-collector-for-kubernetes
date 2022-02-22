@@ -88,17 +88,17 @@ data:
            tls_config:
              ca_file: '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
              insecure_skip_verify: true
-         prefix: 'kubernetes.apiserver.'
+         prefix: 'kubernetes.'
 
          filters:
            metricAllowList:
-           - 'kubernetes.apiserver.etcd.request.duration.seconds.bucket'
-           - 'kubernetes.apiserver.etcd.object.counts.gauge'
-           - 'kubernetes.apiserver.etcd.db.total.size.in.bytes.gauge'
-           - 'kubernetes.apiserver.apiserver.request.duration.seconds.bucket'
-           - 'kubernetes.apiserver.apiserver.request.total.counter'
-           - 'kubernetes.apiserver.workqueue.adds.total.counter'
-           - 'kubernetes.apiserver.workqueue.queue.duration.seconds.bucket'
+           - 'kubernetes.etcd.request.duration.seconds.bucket'
+           - 'kubernetes.etcd.object.counts.gauge'
+           - 'kubernetes.etcd.db.total.size.in.bytes.gauge'
+           - 'kubernetes.apiserver.request.duration.seconds.bucket'
+           - 'kubernetes.apiserver.request.total.counter'
+           - 'kubernetes.workqueue.adds.total.counter'
+           - 'kubernetes.workqueue.queue.duration.seconds.bucket'
 
     # discovery rules for auto-discovery of pods and services
     discovery:
