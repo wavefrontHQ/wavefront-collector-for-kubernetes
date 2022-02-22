@@ -20,7 +20,7 @@ data:
             - apiserver
           provider:
             - kubernetes
-      prefix: kubernetes.apiserver.
+      prefix: kubernetes.controlplane.
       scheme: https
       port: 443
       path: /metrics

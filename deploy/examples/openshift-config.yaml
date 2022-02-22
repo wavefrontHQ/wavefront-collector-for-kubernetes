@@ -59,12 +59,12 @@
           tls_config:
             ca_file: '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
             insecure_skip_verify: true
-        prefix: 'kubernetes.apiserver.'
+        prefix: 'kubernetes.controlplane.'
         filters:
           metricWhitelist:
-          - 'kubernetes.apiserver.apiserver.*'
-          - 'kubernetes.apiserver.etcd.*'
-          - 'kubernetes.apiserver.process.*'
+          - 'kubernetes.controlplane.apiserver.*'
+          - 'kubernetes.controlplane.etcd.*'
+          - 'kubernetes.controlplane.process.*'
       - url: 'https://kube-state-metrics.openshift-monitoring:8443/metrics'
         httpConfig:
           bearer_token_file: '/var/run/secrets/kubernetes.io/serviceaccount/token'
@@ -152,14 +152,14 @@
         port: 9153
         path: /metrics
         scheme: http
-        prefix: kubernetes.coredns.
+        prefix: kubernetes.controlplane.
         filters:
           metricAllowList:
-          - 'kubernetes.coredns.coredns.cache.*'
-          - 'kubernetes.coredns.coredns.dns.request.count.total.counter'
-          - 'kubernetes.coredns.coredns.dns.request.duration.seconds'
-          - 'kubernetes.coredns.coredns.dns.request.size.bytes'
-          - 'kubernetes.coredns.coredns.dns.request.type.count.total.counter'
-          - 'kubernetes.coredns.coredns.dns.response.rcode.count.total.counter'
-          - 'kubernetes.coredns.coredns.dns.response.size.bytes'
-          - 'kubernetes.coredns.process.*'
+          - 'kubernetes.controlplane.coredns.cache.*'
+          - 'kubernetes.controlplane.coredns.dns.request.count.total.counter'
+          - 'kubernetes.controlplane.coredns.dns.request.duration.seconds'
+          - 'kubernetes.controlplane.coredns.dns.request.size.bytes'
+          - 'kubernetes.controlplane.coredns.dns.request.type.count.total.counter'
+          - 'kubernetes.controlplane.coredns.dns.response.rcode.count.total.counter'
+          - 'kubernetes.controlplane.coredns.dns.response.size.bytes'
+          - 'kubernetes.controlplane.process.*'

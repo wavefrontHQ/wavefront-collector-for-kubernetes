@@ -20,12 +20,12 @@ data:
           tls_config:
             ca_file: '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
             insecure_skip_verify: true
-        prefix: 'kubernetes.apiserver.'
+        prefix: 'kubernetes.controlplane.'
         filters:
           metricWhitelist:
-          - 'kubernetes.apiserver.apiserver.*'
-          - 'kubernetes.apiserver.etcd.*'
-          - 'kubernetes.apiserver.process.*'
+          - 'kubernetes.controlplane.apiserver.*'
+          - 'kubernetes.controlplane.etcd.*'
+          - 'kubernetes.controlplane.process.*'
       - url: 'https://kube-state-metrics.openshift-monitoring:8443/metrics'
         httpConfig:
           bearer_token_file: '/var/run/secrets/kubernetes.io/serviceaccount/token'

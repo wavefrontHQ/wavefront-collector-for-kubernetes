@@ -54,7 +54,7 @@ sources:
     ##########################################################################
     - url: 'https://kubernetes.default.svc.cluster.local:443/metrics'
       httpConfig:
-        bearer_token_file: '/var/run/secrets/kubernetes.io/serviceaccount/token'
+        bearer_token_file: '/var/run/secrets/kubernetes.io/serviceaccount/token'deploy/examples/conf.example.yaml
         tls_config:
           ca_file: '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
           insecure_skip_verify: true
