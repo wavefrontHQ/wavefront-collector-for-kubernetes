@@ -9,7 +9,70 @@
     {
       "name": "Introduction",
       "id": "yDWMn",
-      "rows": []
+      "rows": [
+        {
+          "charts": [
+            {
+              "chartSettings": {
+                "plainMarkdownContent": "<p align=\"center\">\n    Control Plane Dashboard Introduction\n</p>\n\n* To start sending control plane metrics, makes sure that your Kubernetes Collector and Proxy are on the latest version, and that the helm flag is set to true. \n* To learn more about the PPS impact of enabling Control Plane metrics, please see our sizing guidelines in documentation. \n\n  \n\n",
+                "y1ScaleSIBy1024": false,
+                "fixedLegendEnabled": false,
+                "fixedLegendFilterField": "CURRENT",
+                "y0ScaleSIBy1024": false,
+                "fixedLegendFilterLimit": 5,
+                "fixedLegendShowSourceName": true,
+                "fixedLegendPosition": "RIGHT",
+                "customTags": [],
+                "lineType": "linear",
+                "windowing": "full",
+                "fixedLegendFilterSort": "TOP",
+                "y1Units": "",
+                "fixedLegendShowMetricName": false,
+                "type": "markdown-widget",
+                "y1UnitAutoscaling": false,
+                "tagMode": "all",
+                "fixedLegendUseRawStats": false,
+                "y0UnitAutoscaling": false,
+                "fixedLegendDisplayStats": [
+                  "CURRENT"
+                ],
+                "autoColumnTags": false,
+                "numTags": 4,
+                "defaultSortColumn": null,
+                "sparklineDisplayColor": null,
+                "sparklineLineColor": null,
+                "sparklineFillColor": null
+              },
+              "includeObsoleteMetrics": false,
+              "name": "New Chart",
+              "units": "Units",
+              "base": 0,
+              "chartAttributes": {
+                "lineFill": 1,
+                "dashboardLayout": {
+                  "x": 0,
+                  "y": 0,
+                  "w": 12,
+                  "h": 5
+                }
+              },
+              "sources": [
+                {
+                  "name": "A",
+                  "query": "",
+                  "disabled": false,
+                  "secondaryAxis": false,
+                  "queryType": "WQL",
+                  "querybuilderEnabled": true,
+                  "querybuilderSerialization": "{\"_v\":1,\"metric\":\"ts()\",\"filters\":[[],\"and\"],\"functions\":[]}"
+                }
+              ],
+              "noDefaultEvents": false
+            }
+          ],
+          "heightFactor": 100
+        }
+      ]
     },
     {
       "name": "Control Plane Summary",
