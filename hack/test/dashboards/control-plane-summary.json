@@ -250,7 +250,7 @@
               "sources": [
                 {
                   "name": "API Server SLI",
-                  "query": "cumulativePercentile(99.0,rawsum(align(60s, mean, aliasMetric(mavg(5m, rate(ts(kubernetes.apiserver.request.duration.seconds.bucket, cluster=${cluster_name}))), '')) by (le)), metrics, sources, pointTags)",
+                  "query": "cumulativePercentile(99.0,rawsum(align(60s, mean, aliasMetric(mavg(5m, rate(ts(kubernetes.controlplane.apiserver.request.duration.seconds.bucket, cluster=${cluster_name}))), '')) by (le)), metrics, sources, pointTags)",
                   "disabled": false,
                   "secondaryAxis": false,
                   "queryType": "WQL",
@@ -434,7 +434,7 @@
               "sources": [
                 {
                   "name": "etcd latency SLI",
-                  "query": "cumulativePercentile(99.0,rawsum(align(60s, mean, aliasMetric(mavg(5m, rate(ts(kubernetes.etcd.request.duration.seconds.bucket, cluster=${cluster_name}))), '')) by (le)), metrics, sources, pointTags)",
+                  "query": "cumulativePercentile(99.0,rawsum(align(60s, mean, aliasMetric(mavg(5m, rate(ts(kubernetes.controlplane.etcd.request.duration.seconds.bucket, cluster=${cluster_name}))), '')) by (le)), metrics, sources, pointTags)",
                   "disabled": false,
                   "secondaryAxis": false,
                   "queryType": "WQL",
@@ -617,7 +617,7 @@
               "sources": [
                 {
                   "name": "CoreDNS SLI",
-                  "query": "cumulativePercentile(99.0,rawsum(align(60s, mean, aliasMetric(mavg(5m, rate(ts(kubernetes.coredns.dns.request.duration.seconds.bucket, cluster=${cluster_name}))), '')) by (le)), metrics, sources, pointTags)",
+                  "query": "cumulativePercentile(99.0,rawsum(align(60s, mean, aliasMetric(mavg(5m, rate(ts(kubernetes.controlplane.coredns.dns.request.duration.seconds.bucket, cluster=${cluster_name}))), '')) by (le)), metrics, sources, pointTags)",
                   "disabled": false,
                   "secondaryAxis": false,
                   "queryType": "WQL",
@@ -715,7 +715,7 @@
               "sources": [
                 {
                   "name": "API Server SLI",
-                  "query": "cumulativePercentile(99.0,rawsum(align(60s, mean, aliasMetric(mavg(5m, rate(ts(kubernetes.apiserver.request.duration.seconds.bucket, cluster=${cluster_name}))), '')) by (le)), metrics, sources, pointTags)",
+                  "query": "cumulativePercentile(99.0,rawsum(align(60s, mean, aliasMetric(mavg(5m, rate(ts(kubernetes.controlplane.apiserver.request.duration.seconds.bucket, cluster=${cluster_name}))), '')) by (le)), metrics, sources, pointTags)",
                   "disabled": false,
                   "secondaryAxis": false,
                   "queryType": "WQL",
@@ -808,7 +808,7 @@
               "sources": [
                 {
                   "name": "etcd SLI",
-                  "query": "cumulativePercentile(99.0,rawsum(align(60s, mean, aliasMetric(mavg(5m, rate(ts(kubernetes.etcd.request.duration.seconds.bucket, cluster=${cluster_name}))), '')) by (le)), metrics, sources, pointTags)",
+                  "query": "cumulativePercentile(99.0,rawsum(align(60s, mean, aliasMetric(mavg(5m, rate(ts(kubernetes.controlplane.etcd.request.duration.seconds.bucket, cluster=${cluster_name}))), '')) by (le)), metrics, sources, pointTags)",
                   "disabled": false,
                   "secondaryAxis": false,
                   "queryType": "WQL",
@@ -901,7 +901,7 @@
               "sources": [
                 {
                   "name": "CoreDNS SLI",
-                  "query": "cumulativePercentile(99.0,rawsum(align(60s, mean, aliasMetric(mavg(5m, rate(ts(kubernetes.coredns.dns.request.duration.seconds.bucket, cluster=${cluster_name}))), '')) by (le)), metrics, sources, pointTags)",
+                  "query": "cumulativePercentile(99.0,rawsum(align(60s, mean, aliasMetric(mavg(5m, rate(ts(kubernetes.controlplane.coredns.dns.request.duration.seconds.bucket, cluster=${cluster_name}))), '')) by (le)), metrics, sources, pointTags)",
                   "disabled": false,
                   "secondaryAxis": false,
                   "queryType": "WQL",
@@ -1087,7 +1087,7 @@
               "sources": [
                 {
                   "name": "API Server SLI",
-                  "query": "cumulativePercentile(99.0,rawsum(align(60s, mean, aliasMetric(mavg(5m, rate(ts(kubernetes.apiserver.request.duration.seconds.bucket, cluster=${cluster_name}))), '')) by (le)), metrics, sources, pointTags)",
+                  "query": "cumulativePercentile(99.0,rawsum(align(60s, mean, aliasMetric(mavg(5m, rate(ts(kubernetes.controlplane.apiserver.request.duration.seconds.bucket, cluster=${cluster_name}))), '')) by (le)), metrics, sources, pointTags)",
                   "disabled": true,
                   "secondaryAxis": false,
                   "queryType": "WQL",
@@ -1277,7 +1277,7 @@
               "sources": [
                 {
                   "name": "etcd SLI",
-                  "query": "cumulativePercentile(99.0,rawsum(align(60s, mean, aliasMetric(mavg(5m, rate(ts(kubernetes.etcd.request.duration.seconds.bucket, cluster=${cluster_name}))), '')) by (le)), metrics, sources, pointTags)",
+                  "query": "cumulativePercentile(99.0,rawsum(align(60s, mean, aliasMetric(mavg(5m, rate(ts(kubernetes.controlplane.etcd.request.duration.seconds.bucket, cluster=${cluster_name}))), '')) by (le)), metrics, sources, pointTags)",
                   "disabled": true,
                   "secondaryAxis": false,
                   "queryType": "WQL",
@@ -1467,7 +1467,7 @@
               "sources": [
                 {
                   "name": "CoreDNS SLI",
-                  "query": "cumulativePercentile(99.0,rawsum(align(60s, mean, aliasMetric(mavg(5m, rate(ts(kubernetes.coredns.dns.request.duration.seconds.bucket, cluster=${cluster_name}))), '')) by (le)), metrics, sources, pointTags)",
+                  "query": "cumulativePercentile(99.0,rawsum(align(60s, mean, aliasMetric(mavg(5m, rate(ts(kubernetes.controlplane.coredns.dns.request.duration.seconds.bucket, cluster=${cluster_name}))), '')) by (le)), metrics, sources, pointTags)",
                   "disabled": true,
                   "secondaryAxis": false,
                   "queryType": "WQL",
@@ -1832,7 +1832,7 @@
               "sources": [
                 {
                   "name": "request_rate",
-                  "query": "sum(rate(ts(kubernetes.apiserver.request.total.counter, cluster=${cluster_name})), verb)",
+                  "query": "sum(rate(ts(kubernetes.controlplane.apiserver.request.total.counter, cluster=${cluster_name})), verb)",
                   "disabled": false,
                   "secondaryAxis": false,
                   "queryType": "WQL",
@@ -1898,7 +1898,7 @@
               "sources": [
                 {
                   "name": "Errors",
-                  "query": "rate(sum(ts(kubernetes.apiserver.request.total.counter, cluster=${cluster_name} and (code=\"4*\" OR code=\"5*\")), verb))",
+                  "query": "rate(sum(ts(kubernetes.controlplane.apiserver.request.total.counter, cluster=${cluster_name} and (code=\"4*\" OR code=\"5*\")), verb))",
                   "disabled": true,
                   "secondaryAxis": false,
                   "queryType": "WQL",
@@ -1906,7 +1906,7 @@
                 },
                 {
                   "name": "Requests",
-                  "query": "rate(sum(ts(kubernetes.apiserver.request.total.counter, cluster=${cluster_name}), verb))",
+                  "query": "rate(sum(ts(kubernetes.controlplane.apiserver.request.total.counter, cluster=${cluster_name}), verb))",
                   "disabled": true,
                   "secondaryAxis": false,
                   "queryType": "WQL",
@@ -1978,7 +1978,7 @@
               "sources": [
                 {
                   "name": "histo",
-                  "query": "cumulativeHisto(sum(align(1m, rate(ts(kubernetes.apiserver.request.duration.seconds.bucket, cluster=${cluster_name}))), le))",
+                  "query": "cumulativeHisto(sum(align(1m, rate(ts(kubernetes.controlplane.apiserver.request.duration.seconds.bucket, cluster=${cluster_name}))), le))",
                   "disabled": true,
                   "secondaryAxis": false,
                   "queryType": "WQL",
@@ -2073,7 +2073,7 @@
               "sources": [
                 {
                   "name": "adds_rate",
-                  "query": "rate(ts(kubernetes.workqueue.adds.total.counter, cluster=${cluster_name}))",
+                  "query": "rate(ts(kubernetes.controlplane.workqueue.adds.total.counter, cluster=${cluster_name}))",
                   "disabled": false,
                   "secondaryAxis": false,
                   "queryType": "WQL",
@@ -2136,7 +2136,7 @@
               "sources": [
                 {
                   "name": "histo",
-                  "query": "cumulativeHisto(sum(align(1m, rate(ts(kubernetes.workqueue.queue.duration.seconds.bucket, cluster=${cluster_name}))), le))",
+                  "query": "cumulativeHisto(sum(align(1m, rate(ts(kubernetes.controlplane.workqueue.queue.duration.seconds.bucket, cluster=${cluster_name}))), le))",
                   "disabled": true,
                   "secondaryAxis": false,
                   "queryType": "WQL",
@@ -2243,7 +2243,7 @@
               "sources": [
                 {
                   "name": "histo",
-                  "query": "cumulativeHisto(sum(align(1m, rate(ts(kubernetes.etcd.request.duration.seconds.bucket, cluster=${cluster_name}))), le))",
+                  "query": "cumulativeHisto(sum(align(1m, rate(ts(kubernetes.controlplane.etcd.request.duration.seconds.bucket, cluster=${cluster_name}))), le))",
                   "disabled": true,
                   "secondaryAxis": false,
                   "queryType": "WQL",
@@ -2275,7 +2275,7 @@
                 },
                 {
                   "name": "A",
-                  "query": "ts(kubernetes.etcd.request.duration.seconds.bucket, cluster=${cluster_name})",
+                  "query": "ts(kubernetes.controlplane.etcd.request.duration.seconds.bucket, cluster=${cluster_name})",
                   "disabled": true,
                   "secondaryAxis": false,
                   "queryType": "WQL",
@@ -2345,7 +2345,7 @@
               "sources": [
                 {
                   "name": "A",
-                  "query": "sum(ts(kubernetes.etcd.object.counts.gauge, cluster=${cluster_name}))",
+                  "query": "sum(ts(kubernetes.controlplane.etcd.object.counts.gauge, cluster=${cluster_name}))",
                   "disabled": true,
                   "secondaryAxis": false,
                   "queryType": "WQL",
@@ -2354,7 +2354,7 @@
                 },
                 {
                   "name": "A Clone",
-                  "query": "ts(kubernetes.etcd.object.counts.gauge, cluster=${cluster_name})",
+                  "query": "ts(kubernetes.controlplane.etcd.object.counts.gauge, cluster=${cluster_name})",
                   "disabled": false,
                   "secondaryAxis": false,
                   "queryType": "WQL",
@@ -2417,7 +2417,7 @@
               "sources": [
                 {
                   "name": "A",
-                  "query": "ts(kubernetes.etcd.db.total.size.in.bytes.gauge, cluster=${cluster_name})",
+                  "query": "ts(kubernetes.controlplane.etcd.db.total.size.in.bytes.gauge, cluster=${cluster_name})",
                   "disabled": false,
                   "secondaryAxis": false,
                   "queryType": "WQL",
@@ -2492,7 +2492,7 @@
               "sources": [
                 {
                   "name": "error_rate",
-                  "query": "rate(ts(kubernetes.coredns.dns.responses.total.counter, not rcode=NOERROR and cluster=${cluster_name}))",
+                  "query": "rate(ts(kubernetes.controlplane.coredns.dns.responses.total.counter, not rcode=NOERROR and cluster=${cluster_name}))",
                   "disabled": false,
                   "secondaryAxis": false,
                   "queryType": "WQL",
@@ -2555,7 +2555,7 @@
               "sources": [
                 {
                   "name": "histo",
-                  "query": "cumulativeHisto(sum(align(1m, rate(ts(kubernetes.coredns.dns.request.duration.seconds.bucket, cluster=${cluster_name}))), le))",
+                  "query": "cumulativeHisto(sum(align(1m, rate(ts(kubernetes.controlplane.coredns.dns.request.duration.seconds.bucket, cluster=${cluster_name}))), le))",
                   "disabled": true,
                   "secondaryAxis": false,
                   "queryType": "WQL",
