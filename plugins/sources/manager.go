@@ -241,7 +241,7 @@ func scrape(provider metrics.MetricsSourceProvider, channel chan *metrics.DataBa
 		dataBatch, err := source.ScrapeMetrics()
 		if err != nil {
 			if source.AutoDiscovered() {
-				log.Warningf("Could not scrape conainers, skipping source '%s': %v", source.Name(), err)
+				log.Warningf("Could not scrape containers, skipping source '%s': %v", source.Name(), err)
 				scrapeWarnings.Inc(1)
 			} else {
 				log.Errorf("Error in scraping containers from '%s': %v", source.Name(), err)
