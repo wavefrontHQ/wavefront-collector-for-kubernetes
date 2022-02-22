@@ -14,13 +14,6 @@ sinks:
     - 'label?pod?template*'
     - 'annotation_kubectl_kubernetes_io_last_applied_configuration'
 
-# discovery rules for auto-discovery of pods and services
-discovery:
-  enable_runtime_plugins: true
-  annotation_excludes:
-  - labels:
-      please-exclude-from-discovery: ['true']
-
 sources:
   kubernetes_source:
     url: 'https://kubernetes.default.svc'
@@ -65,20 +58,16 @@ sources:
         tls_config:
           ca_file: '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
           insecure_skip_verify: true
-      prefix: 'kubernetes.apiserver.'
+      prefix: 'kubernetes.controlplane.'
       filters:
         metricAllowList:
-        - 'kubernetes.apiserver.apiserver.admission.step.*'
-        - 'kubernetes.apiserver.apiserver.audit.*'
-        - 'kubernetes.apiserver.apiserver.client.*'
-        - 'kubernetes.apiserver.apiserver.envelope.*'
-        - 'kubernetes.apiserver.etcd.*'
-        - 'kubernetes.apiserver.process.*'
-        - 'kubernetes.apiserver.apiserver.request.duration.seconds.*'
-        - 'kubernetes.apiserver.apiserver.request.total.counter'
-        - 'kubernetes.apiserver.workqueue.adds.total.*'
-        - 'kubernetes.apiserver.workqueue.depth.*'
-        - 'kubernetes.apiserver.workqueue.queue.duration.seconds.*'
+        - 'kubernetes.controlplane.etcd.request.duration.seconds.bucket'
+        - 'kubernetes.controlplane.etcd.object.counts.gauge'
+        - 'kubernetes.controlplane.etcd.db.total.size.in.bytes.gauge'
+        - 'kubernetes.controlplane.apiserver.request.duration.seconds.bucket'
+        - 'kubernetes.controlplane.apiserver.request.total.counter'
+        - 'kubernetes.controlplane.workqueue.adds.total.counter'
+        - 'kubernetes.controlplane.workqueue.queue.duration.seconds.bucket'
         tagExclude:
         - version
 
@@ -95,3 +84,28 @@ sources:
       filters:
         tagExclude:
         - server
+
+# discovery rules for auto-discovery of pods and services
+discovery:
+  enable_runtime_plugins: true
+  annotation_excludes:
+    - labels:
+        please-exclude-from-discovery: ['true']
+  plugins:
+  # auto-discover coredns (control plane dashboard)
+  - name: coredns-discovery
+    type: prometheus
+    selectors:
+      images:
+        - '*coredns:*'
+      labels:
+        k8s-app:
+          - kube-dns
+    port: 9153
+    path: /metrics
+    scheme: http
+    prefix: kubernetes.controlplane.
+    filters:
+      metricAllowList:
+        - 'kubernetes.controlplane.coredns.dns.request.duration.seconds.bucket'
+        - 'kubernetes.controlplane.coredns.dns.responses.total.counter'

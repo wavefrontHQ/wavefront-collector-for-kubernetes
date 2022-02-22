@@ -1,1 +1,3 @@
+{"Name":"kubernetes.controlplane.coredns.dns.request.duration.seconds.bucket","Tags":{"source":"","cluster":"","le":"","namespace":"","pod":"","server":"","type":"","zone":""}}
+{"Name":"kubernetes.controlplane.coredns.dns.responses.total.counter","Tags":{"source":"","cluster":"","namespace":"","pod":"","rcode":"","server":"","zone":""}}
 {"Name":"kubernetes.node.info","Tags":{"cluster":"","container_runtime_version":"","internal_ip":"","kernel_version":"","kubelet_version":"","label.kubernetes.io/os":"linux","nodename":"","os_image":"","provider_id":"","source":"","node_role":"control-plane"}}
