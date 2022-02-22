@@ -101,9 +101,13 @@ data:
 
         filters:
           metricAllowList:
-          - 'kubernetes.controlplane.apiserver.*'
-          - 'kubernetes.controlplane.etcd.*'
-          - 'kubernetes.controlplane.process.*'
+          - 'kubernetes.controlplane.etcd.request.duration.seconds.bucket'
+          - 'kubernetes.controlplane.etcd.object.counts.gauge'
+          - 'kubernetes.controlplane.etcd.db.total.size.in.bytes.gauge'
+          - 'kubernetes.controlplane.apiserver.request.duration.seconds.bucket'
+          - 'kubernetes.controlplane.apiserver.request.total.counter'
+          - 'kubernetes.controlplane.workqueue.adds.total.counter'
+          - 'kubernetes.controlplane.workqueue.queue.duration.seconds.bucket'
 
     # discovery rules for auto-discovery of pods and services
     discovery:
@@ -340,11 +344,5 @@ data:
         prefix: kubernetes.controlplane.
         filters:
           metricAllowList:
-          - 'kubernetes.controlplane.coredns.cache.*'
-          - 'kubernetes.controlplane.coredns.dns.request.count.total.counter'
-          - 'kubernetes.controlplane.coredns.dns.request.duration.seconds'
-          - 'kubernetes.controlplane.coredns.dns.request.size.bytes'
-          - 'kubernetes.controlplane.coredns.dns.request.type.count.total.counter'
-          - 'kubernetes.controlplane.coredns.dns.response.rcode.count.total.counter'
-          - 'kubernetes.controlplane.coredns.dns.response.size.bytes'
-          - 'kubernetes.controlplane.process.*'
+          - 'kubernetes.controlplane.coredns.dns.request.duration.seconds.bucket'
+          - 'kubernetes.controlplane.coredns.dns.responses.total.counter'
