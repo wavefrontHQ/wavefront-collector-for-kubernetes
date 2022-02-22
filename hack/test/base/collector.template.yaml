@@ -68,8 +68,6 @@ sources:
         - 'kubernetes.controlplane.apiserver.request.total.counter'
         - 'kubernetes.controlplane.workqueue.adds.total.counter'
         - 'kubernetes.controlplane.workqueue.queue.duration.seconds.bucket'
-        tagExclude:
-        - version
 
   telegraf_sources:
     # enable all telegraf plugins
