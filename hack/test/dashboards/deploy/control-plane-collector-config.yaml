@@ -303,28 +303,6 @@ data:
       # Kubernetes component auto discovery
       ##########################################################################
 
-      # auto-discover kube DNS
-      - name: kube-dns-discovery
-        type: prometheus
-        selectors:
-          images:
-          - '*kube-dns/sidecar*'
-          labels:
-            k8s-app:
-            - kube-dns
-        port: 10054
-        path: /metrics
-        scheme: http
-        prefix: kubernetes.dns.
-        filters:
-          metricAllowList:
-          - 'kubernetes.dns.http.request.duration.microseconds'
-          - 'kubernetes.dns.http.request.size.bytes'
-          - 'kubernetes.dns.http.requests.total.counter'
-          - 'kubernetes.dns.http.response.size.bytes'
-          - 'kubernetes.dns.kubedns.dnsmasq.*'
-          - 'kubernetes.dns.process.*'
-
       # auto-discover coredns
       - name: coredns-discovery
         type: prometheus
@@ -337,16 +315,8 @@ data:
         port: 9153
         path: /metrics
         scheme: http
-        prefix: kubernetes.coredns.
+        prefix: kubernetes.
         filters:
           metricAllowList:
-          - 'kubernetes.coredns.coredns.cache.*'
-          - 'kubernetes.coredns.coredns.dns.request.count.total.counter'
-          - 'kubernetes.coredns.coredns.dns.request.duration.seconds'
-          - 'kubernetes.coredns.coredns.dns.request.size.bytes'
-          - 'kubernetes.coredns.coredns.dns.request.type.count.total.counter'
-          - 'kubernetes.coredns.coredns.dns.response.rcode.count.total.counter'
-          - 'kubernetes.coredns.coredns.dns.response.size.bytes'
-          - 'kubernetes.coredns.process.*'
           - 'kubernetes.coredns.dns.request.duration.seconds.bucket'
           - 'kubernetes.coredns.dns.responses.total.counter'
