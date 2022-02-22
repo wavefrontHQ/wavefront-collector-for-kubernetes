@@ -617,7 +617,7 @@
               "sources": [
                 {
                   "name": "CoreDNS SLI",
-                  "query": "cumulativePercentile(99.0,rawsum(align(60s, mean, aliasMetric(mavg(5m, rate(ts(kubernetes.corednsdns.request.duration.seconds.bucket, cluster=${cluster_name}))), '')) by (le)), metrics, sources, pointTags)",
+                  "query": "cumulativePercentile(99.0,rawsum(align(60s, mean, aliasMetric(mavg(5m, rate(ts(kubernetes.coredns.dns.request.duration.seconds.bucket, cluster=${cluster_name}))), '')) by (le)), metrics, sources, pointTags)",
                   "disabled": false,
                   "secondaryAxis": false,
                   "queryType": "WQL",
@@ -901,7 +901,7 @@
               "sources": [
                 {
                   "name": "CoreDNS SLI",
-                  "query": "cumulativePercentile(99.0,rawsum(align(60s, mean, aliasMetric(mavg(5m, rate(ts(kubernetes.corednsdns.request.duration.seconds.bucket, cluster=${cluster_name}))), '')) by (le)), metrics, sources, pointTags)",
+                  "query": "cumulativePercentile(99.0,rawsum(align(60s, mean, aliasMetric(mavg(5m, rate(ts(kubernetes.coredns.dns.request.duration.seconds.bucket, cluster=${cluster_name}))), '')) by (le)), metrics, sources, pointTags)",
                   "disabled": false,
                   "secondaryAxis": false,
                   "queryType": "WQL",
@@ -1467,7 +1467,7 @@
               "sources": [
                 {
                   "name": "CoreDNS SLI",
-                  "query": "cumulativePercentile(99.0,rawsum(align(60s, mean, aliasMetric(mavg(5m, rate(ts(kubernetes.corednsdns.request.duration.seconds.bucket, cluster=${cluster_name}))), '')) by (le)), metrics, sources, pointTags)",
+                  "query": "cumulativePercentile(99.0,rawsum(align(60s, mean, aliasMetric(mavg(5m, rate(ts(kubernetes.coredns.dns.request.duration.seconds.bucket, cluster=${cluster_name}))), '')) by (le)), metrics, sources, pointTags)",
                   "disabled": true,
                   "secondaryAxis": false,
                   "queryType": "WQL",
@@ -2492,7 +2492,7 @@
               "sources": [
                 {
                   "name": "error_rate",
-                  "query": "rate(ts(kubernetes.corednsdns.responses.total.counter, not rcode=NOERROR and cluster=${cluster_name}))",
+                  "query": "rate(ts(kubernetes.coredns.dns.responses.total.counter, not rcode=NOERROR and cluster=${cluster_name}))",
                   "disabled": false,
                   "secondaryAxis": false,
                   "queryType": "WQL",
@@ -2555,7 +2555,7 @@
               "sources": [
                 {
                   "name": "histo",
-                  "query": "cumulativeHisto(sum(align(1m, rate(ts(kubernetes.corednsdns.request.duration.seconds.bucket, cluster=${cluster_name}))), le))",
+                  "query": "cumulativeHisto(sum(align(1m, rate(ts(kubernetes.coredns.dns.request.duration.seconds.bucket, cluster=${cluster_name}))), le))",
                   "disabled": true,
                   "secondaryAxis": false,
                   "queryType": "WQL",
