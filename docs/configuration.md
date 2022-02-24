@@ -284,7 +284,7 @@ collection:
 
 ##### Control Plane Metric configuration
 
-For more information on control plane metrics below, see reference.  
+For more information on control plane metrics below, [see reference](https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes/blob/master/docs/metrics.md#control-plane-metrics).  
 Add the following to calculate API server and etcd SLIs and SLOs.
 
 ```yaml
