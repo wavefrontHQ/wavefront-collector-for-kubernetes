@@ -47,8 +47,6 @@
 {"Name":"kube.apiserver.etcd.object.counts.gauge","Tags":{"cluster":"","resource":"","source":""}}
 {"Name":"kube.apiserver.etcd.request.duration.seconds.bucket","Tags":{"cluster":"","operation":"","source":"","type":""}}
 {"Name":"kube.apiserver.workqueue.queue.duration.seconds.bucket","Tags":{"cluster":"","le":"","name":"","source":""}}
-{"Name":"kube.coredns.coredns.dns.request.duration.seconds.bucket","Tags":{"cluster":"","le":"","namespace":"kube-system","source":"","type":"","zone":""}}
-{"Name":"kube.coredns.coredns.dns.responses.total.counter","Tags":{"cluster":"","namespace":"kube-system","rcode":"","source":"","zone":""}}
 {"Name":"kubernetes.cadvisor.container.cpu.cfs.throttled.periods.total.counter","Tags":{"cluster":"","container":"","id":"","image":"","name":"","namespace":"","pod":"","source":""}}
 {"Name":"kubernetes.cadvisor.container.cpu.cfs.throttled.periods.total.counter","Tags":{"cluster":"","id":"","namespace":"","pod":"","source":""}}
 {"Name":"kubernetes.cadvisor.container.cpu.cfs.throttled.seconds.total.counter","Tags":{"cluster":"","container":"","id":"","image":"","name":"","namespace":"","pod":"","source":""}}
