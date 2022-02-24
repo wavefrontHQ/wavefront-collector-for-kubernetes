@@ -14,12 +14,6 @@ sinks:
     - 'label?pod?template*'
     - 'annotation_kubectl_kubernetes_io_last_applied_configuration'
 
-# discovery rules for auto-discovery of pods and services
-discovery:
-  enable_runtime_plugins: true
-  annotation_excludes:
-  - labels:
-      please-exclude-from-discovery: ['true']
 
 sources:
   kubernetes_source:
@@ -46,52 +40,81 @@ sources:
     prefix: 'kubernetes.'
     filters:
       tagExclude:
-        - 'label.kubernetes.io/arch'
+      - 'label.kubernetes.io/arch'
 
   kubernetes_cadvisor_source:
     prefix: 'kubernetes.cadvisor.'
     filters:
       metricAllowList:
-        - "kubernetes.cadvisor.container.cpu.cfs.throttled.seconds.total.counter"
-        - "kubernetes.cadvisor.container.cpu.cfs.throttled.periods.total.counter"
+      - "kubernetes.cadvisor.container.cpu.cfs.throttled.seconds.total.counter"
+      - "kubernetes.cadvisor.container.cpu.cfs.throttled.periods.total.counter"
 
   prometheus_sources:
-    ##########################################################################
-    # Static source to collect control plane metrics from the API Server
-    ##########################################################################
-    - url: 'https://kubernetes.default.svc.cluster.local:443/metrics'
-      httpConfig:
-        bearer_token_file: '/var/run/secrets/kubernetes.io/serviceaccount/token'
-        tls_config:
-          ca_file: '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
-          insecure_skip_verify: true
-      prefix: 'kube.apiserver.'
-      filters:
-        metricAllowList:
-        - 'kube.apiserver.apiserver.admission.step.*'
-        - 'kube.apiserver.apiserver.audit.*'
-        - 'kube.apiserver.apiserver.client.*'
-        - 'kube.apiserver.apiserver.envelope.*'
-        - 'kube.apiserver.etcd.*'
-        - 'kube.apiserver.process.*'
-        - 'kube.apiserver.apiserver.request.duration.seconds.*'
-        - 'kube.apiserver.apiserver.request.total.counter'
-        - 'kube.apiserver.workqueue.adds.total.*'
-        - 'kube.apiserver.workqueue.depth.*'
-        - 'kube.apiserver.workqueue.queue.duration.seconds.*'
-        tagExclude:
-        - version
+  ##########################################################################
+  # Static source to collect control plane metrics from the API Server
+  ##########################################################################
+  - url: 'https://kubernetes.default.svc.cluster.local:443/metrics'
+    httpConfig:
+      bearer_token_file: '/var/run/secrets/kubernetes.io/serviceaccount/token'
+      tls_config:
+        ca_file: '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
+        insecure_skip_verify: true
+    prefix: 'kube.apiserver.'
+    filters:
+      metricAllowList:
+      - 'kube.apiserver.etcd.request.duration.seconds.bucket'
+      - 'kube.apiserver.etcd.object.counts.gauge'
+      - 'kube.apiserver.etcd.db.total.size.in.bytes.gauge'
+      - 'kube.apiserver.apiserver.request.duration.seconds.bucket'
+      - 'kube.apiserver.apiserver.request.total.counter'
+      - 'kube.apiserver.workqueue.adds.total.counter'
+      - 'kube.apiserver.workqueue.queue.duration.seconds.bucket'
+      tagExclude:
+      - version
 
   telegraf_sources:
-    # enable all telegraf plugins
-    - plugins: [ ]
-    - plugins:  [ mysql ]
-      conf: |
-          servers = ["root:password123@tcp(mysql-release.collector-targets.svc.cluster.local:3306)/?tls=false"]
-          table_schema_databases                    = []
-          gather_table_io_waits                     = true
-          gather_table_lock_waits                   = true
-          gather_index_io_waits                     = true
-      filters:
-        tagExclude:
-        - server
+  # enable all telegraf plugins
+  - plugins: [ ]
+  - plugins:  [ mysql ]
+    conf: |
+        servers = ["root:password123@tcp(mysql-release.collector-targets.svc.cluster.local:3306)/?tls=false"]
+        table_schema_databases                    = []
+        gather_table_io_waits                     = true
+        gather_table_lock_waits                   = true
+        gather_index_io_waits                     = true
+    filters:
+      tagExclude:
+      - server
+
+
+# discovery rules for auto-discovery of pods and services
+discovery:
+  enable_runtime_plugins: true
+  annotation_excludes:
+  - labels:
+      please-exclude-from-discovery: ['true']
+  plugins:
+  - name: coredns-discovery
+    type: prometheus
+    selectors:
+      images:
+      - '*coredns:*'
+      labels:
+        k8s-app:
+        - kube-dns
+    port: 9153
+    path: /metrics
+    scheme: http
+    prefix: kube.coredns.
+    filters:
+      metricWhitelist:
+      - 'kube.coredns.coredns.cache.*'
+      - 'kube.coredns.coredns.dns.request.count.total.counter'
+      - 'kube.coredns.coredns.dns.request.duration.seconds'
+      - 'kube.coredns.coredns.dns.request.size.bytes'
+      - 'kube.coredns.coredns.dns.request.type.count.total.counter'
+      - 'kube.coredns.coredns.dns.response.rcode.count.total.counter'
+      - 'kube.coredns.coredns.dns.response.size.bytes'
+      - 'kube.coredns.process.*'
+      - 'kube.coredns.coredns.dns.request.duration.seconds.bucket'
+      - 'kube.coredns.coredns.dns.responses.total.counter'

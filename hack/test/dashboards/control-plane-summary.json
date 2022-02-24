@@ -7,6 +7,74 @@
   "displayQueryParameters": true,
   "sections": [
     {
+      "name": "Introduction",
+      "id": "yDWMn",
+      "rows": [
+        {
+          "charts": [
+            {
+              "chartSettings": {
+                "plainMarkdownContent": "<p align=\"center\">\n    Control Plane Dashboard Introduction\n</p>\n\n* To start sending control plane metrics, makes sure that your Kubernetes Collector and Proxy are on the latest version, and that the helm flag is set to true. \n* To learn more about the PPS impact of enabling Control Plane metrics, please see our sizing guidelines in documentation. \n\n  \n\n",
+                "y1ScaleSIBy1024": false,
+                "fixedLegendEnabled": false,
+                "fixedLegendFilterField": "CURRENT",
+                "y0ScaleSIBy1024": false,
+                "fixedLegendFilterLimit": 5,
+                "fixedLegendShowSourceName": true,
+                "fixedLegendPosition": "RIGHT",
+                "customTags": [],
+                "lineType": "linear",
+                "windowing": "full",
+                "fixedLegendFilterSort": "TOP",
+                "y1Units": "",
+                "fixedLegendShowMetricName": false,
+                "type": "markdown-widget",
+                "y1UnitAutoscaling": false,
+                "tagMode": "all",
+                "fixedLegendUseRawStats": false,
+                "y0UnitAutoscaling": false,
+                "fixedLegendDisplayStats": [
+                  "CURRENT"
+                ],
+                "autoColumnTags": false,
+                "numTags": 4,
+                "defaultSortColumn": null,
+                "sparklineDisplayColor": null,
+                "sparklineLineColor": null,
+                "sparklineFillColor": null
+              },
+              "includeObsoleteMetrics": false,
+              "name": "New Chart",
+              "units": "Units",
+              "base": 0,
+              "chartAttributes": {
+                "lineFill": 1,
+                "dashboardLayout": {
+                  "x": 0,
+                  "y": 0,
+                  "w": 12,
+                  "h": 5
+                }
+              },
+              "sources": [
+                {
+                  "name": "A",
+                  "query": "",
+                  "querybuilderSerialization": "{\"_v\":1,\"metric\":\"ts()\",\"filters\":[[],\"and\"],\"functions\":[]}",
+                  "querybuilderEnabled": true,
+                  "disabled": false,
+                  "secondaryAxis": false,
+                  "queryType": "WQL"
+                }
+              ],
+              "noDefaultEvents": false
+            }
+          ],
+          "heightFactor": 100
+        }
+      ]
+    },
+    {
       "name": "Control Plane Summary",
       "id": "z2Fog",
       "rows": [
@@ -95,11 +163,11 @@
                 {
                   "name": "A",
                   "query": "",
+                  "querybuilderSerialization": "{\"metricType\":\"m\",\"filters\":[[],\"and\"],\"functions\":[],\"_v\":1,\"metric\":\"ts()\"}",
+                  "querybuilderEnabled": true,
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": true,
-                  "querybuilderSerialization": "{\"metricType\":\"m\",\"filters\":[[],\"and\"],\"functions\":[],\"_v\":1,\"metric\":\"ts()\"}"
+                  "queryType": "WQL"
                 }
               ],
               "noDefaultEvents": false,
@@ -160,7 +228,7 @@
               "displayConfidenceBounds": false,
               "includeObsoleteMetrics": false,
               "filterOutNonAnomalies": false,
-              "name": "API Server Test",
+              "name": "API Server SLI",
               "anomalySampleSize": "8",
               "units": "ms",
               "summarization": "MEAN",
@@ -181,36 +249,13 @@
               },
               "sources": [
                 {
-                  "name": "histo",
-                  "query": "cumulativeHisto(sum(align(1m, rate(ts(kube.apiserver.apiserver.request.duration.seconds.bucket, cluster=${cluster_name}))), le))",
-                  "disabled": true,
-                  "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false
-                },
-                {
-                  "name": "P99 Latency",
-                  "query": "percentile(99, ${histo})",
+                  "name": "API Server SLI",
+                  "query": "cumulativePercentile(99.0,rawsum(align(60s, mean, aliasMetric(mavg(5m, rate(ts(kube.apiserver.apiserver.request.duration.seconds.bucket, cluster=${cluster_name}))), '')) by (le)), metrics, sources, pointTags)",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": "",
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false
-                },
-                {
-                  "name": "P99 Latency Clone",
-                  "query": "mpercentile(99,5m, ${histo})",
-                  "disabled": true,
-                  "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false
-                },
-                {
-                  "name": "Promql P99 Latency",
-                  "query": "histogram_quantile(0.99, sum by (le) (rate(kube.apiserver.apiserver.request.duration.seconds.bucket{cluster=\"${cluster_name}\"}[5m])))",
-                  "disabled": true,
-                  "secondaryAxis": false,
-                  "queryType": "PROMQL",
-                  "querybuilderEnabled": false
+                  "queryType": "WQL"
                 }
               ],
               "noDefaultEvents": false,
@@ -300,11 +345,11 @@
                 {
                   "name": "A",
                   "query": "",
+                  "querybuilderSerialization": "{\"metricType\":\"m\",\"filters\":[[],\"and\"],\"functions\":[],\"_v\":1,\"metric\":\"ts()\"}",
+                  "querybuilderEnabled": true,
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": true,
-                  "querybuilderSerialization": "{\"metricType\":\"m\",\"filters\":[[],\"and\"],\"functions\":[],\"_v\":1,\"metric\":\"ts()\"}"
+                  "queryType": "WQL"
                 }
               ],
               "noDefaultEvents": false,
@@ -389,11 +434,12 @@
               "sources": [
                 {
                   "name": "etcd latency SLI",
-                  "query": "avg(avg(align(5m, rate(ts(kube.apiserver.etcd.request.duration.seconds.bucket, cluster=${cluster_name}))), le))",
+                  "query": "cumulativePercentile(99.0,rawsum(align(60s, mean, aliasMetric(mavg(5m, rate(ts(kube.apiserver.etcd.request.duration.seconds.bucket, cluster=${cluster_name}))), '')) by (le)), metrics, sources, pointTags)",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": "",
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false
+                  "queryType": "WQL"
                 }
               ],
               "noDefaultEvents": false,
@@ -482,11 +528,11 @@
                 {
                   "name": "A",
                   "query": "",
+                  "querybuilderSerialization": "{\"metricType\":\"m\",\"filters\":[[],\"and\"],\"functions\":[],\"_v\":1,\"metric\":\"ts()\"}",
+                  "querybuilderEnabled": true,
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": true,
-                  "querybuilderSerialization": "{\"metricType\":\"m\",\"filters\":[[],\"and\"],\"functions\":[],\"_v\":1,\"metric\":\"ts()\"}"
+                  "queryType": "WQL"
                 }
               ],
               "noDefaultEvents": false,
@@ -551,6 +597,7 @@
               "filterOutNonAnomalies": false,
               "name": "",
               "anomalySampleSize": "8",
+              "units": "",
               "summarization": "MEAN",
               "base": 0,
               "chartAttributes": {
@@ -570,11 +617,12 @@
               "sources": [
                 {
                   "name": "CoreDNS SLI",
-                  "query": "avg(rate(ts(coredns.dns.responses.total.counter, not rcode=NOERROR and cluster=${cluster_name})))",
+                  "query": "cumulativePercentile(99.0,rawsum(align(60s, mean, aliasMetric(mavg(5m, rate(ts(kube.coredns.coredns.dns.request.duration.seconds.bucket, cluster=${cluster_name}))), '')) by (le)), metrics, sources, pointTags)",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": "",
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false
+                  "queryType": "WQL"
                 }
               ],
               "noDefaultEvents": false,
@@ -666,36 +714,13 @@
               },
               "sources": [
                 {
-                  "name": "Errors",
-                  "query": "rate(sum(ts(kube.apiserver.apiserver.request.total.counter, cluster=${cluster_name} and (code=\"4*\" OR code=\"5*\")), verb))",
-                  "disabled": true,
-                  "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false
-                },
-                {
-                  "name": "Requests",
-                  "query": "rate(sum(ts(kube.apiserver.apiserver.request.total.counter, cluster=${cluster_name}), verb))",
-                  "disabled": true,
-                  "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false
-                },
-                {
-                  "name": "Error",
-                  "query": "${Errors}/${Requests} * 100",
-                  "disabled": true,
-                  "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false
-                },
-                {
                   "name": "API Server SLI",
-                  "query": "avg(${Error})",
+                  "query": "cumulativePercentile(99.0,rawsum(align(60s, mean, aliasMetric(mavg(5m, rate(ts(kube.apiserver.apiserver.request.duration.seconds.bucket, cluster=${cluster_name}))), '')) by (le)), metrics, sources, pointTags)",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": "",
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false
+                  "queryType": "WQL"
                 }
               ],
               "noDefaultEvents": false,
@@ -783,11 +808,12 @@
               "sources": [
                 {
                   "name": "etcd SLI",
-                  "query": "avg(avg(align(5m, rate(ts(kube.apiserver.etcd.request.duration.seconds.bucket, cluster=${cluster_name}))), le))",
+                  "query": "cumulativePercentile(99.0,rawsum(align(60s, mean, aliasMetric(mavg(5m, rate(ts(kube.apiserver.etcd.request.duration.seconds.bucket, cluster=${cluster_name}))), '')) by (le)), metrics, sources, pointTags)",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": "",
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false
+                  "queryType": "WQL"
                 }
               ],
               "noDefaultEvents": false,
@@ -875,11 +901,12 @@
               "sources": [
                 {
                   "name": "CoreDNS SLI",
-                  "query": "avg(rate(ts(coredns.dns.responses.total.counter, not rcode=NOERROR and cluster=${cluster_name})))",
+                  "query": "cumulativePercentile(99.0,rawsum(align(60s, mean, aliasMetric(mavg(5m, rate(ts(kube.coredns.coredns.dns.request.duration.seconds.bucket, cluster=${cluster_name}))), '')) by (le)), metrics, sources, pointTags)",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": "",
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false
+                  "queryType": "WQL"
                 }
               ],
               "noDefaultEvents": false,
@@ -973,11 +1000,11 @@
                 {
                   "name": "A",
                   "query": "",
+                  "querybuilderSerialization": "{\"metricType\":\"m\",\"filters\":[[],\"and\"],\"functions\":[],\"_v\":1,\"metric\":\"ts()\"}",
+                  "querybuilderEnabled": true,
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": true,
-                  "querybuilderSerialization": "{\"metricType\":\"m\",\"filters\":[[],\"and\"],\"functions\":[],\"_v\":1,\"metric\":\"ts()\"}"
+                  "queryType": "WQL"
                 }
               ],
               "noDefaultEvents": false,
@@ -1059,22 +1086,22 @@
               },
               "sources": [
                 {
-                  "name": "Errors",
-                  "query": "avg(mdiff(30d,ts(kube.apiserver.apiserver.request.total.counter, cluster=${cluster_name} and (code=\"4*\" OR code=\"5*\"))))",
+                  "name": "API Server SLI",
+                  "query": "cumulativePercentile(99.0,rawsum(align(60s, mean, aliasMetric(mavg(5m, rate(ts(kube.apiserver.apiserver.request.duration.seconds.bucket, cluster=${cluster_name}))), '')) by (le)), metrics, sources, pointTags)",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": "",
                   "disabled": true,
                   "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": ""
+                  "queryType": "WQL"
                 },
                 {
-                  "name": "API Server SLI",
-                  "query": "100 * (1 - mcount(30d, highpass(0, align(1m, max, default(0, ${Errors})))) / (3600 * 24 * 30))",
+                  "name": "API Server SLO",
+                  "query": "100 * (1 - mcount(30d, highpass(0, align(1m, max, default(0, ${API Server SLI})))) / (3600 * 24 * 30))",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": "",
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": ""
+                  "queryType": "WQL"
                 }
               ],
               "noDefaultEvents": false,
@@ -1163,11 +1190,11 @@
                 {
                   "name": "A",
                   "query": "",
+                  "querybuilderSerialization": "{\"metric\":\"ts()\",\"metricType\":\"m\",\"filters\":[[],\"and\"],\"functions\":[],\"_v\":1}",
+                  "querybuilderEnabled": true,
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": true,
-                  "querybuilderSerialization": "{\"metric\":\"ts()\",\"metricType\":\"m\",\"filters\":[[],\"and\"],\"functions\":[],\"_v\":1}"
+                  "queryType": "WQL"
                 }
               ],
               "noDefaultEvents": false,
@@ -1249,22 +1276,22 @@
               },
               "sources": [
                 {
-                  "name": "Errors",
-                  "query": "avg(mdiff(30d,ts(kube.apiserver.apiserver.request.total.counter, cluster=${cluster_name} and (code=\"4*\" OR code=\"5*\"))))",
+                  "name": "etcd SLI",
+                  "query": "cumulativePercentile(99.0,rawsum(align(60s, mean, aliasMetric(mavg(5m, rate(ts(kube.apiserver.etcd.request.duration.seconds.bucket, cluster=${cluster_name}))), '')) by (le)), metrics, sources, pointTags)",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": "",
                   "disabled": true,
                   "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": ""
+                  "queryType": "WQL"
                 },
                 {
-                  "name": "API Server SLI",
-                  "query": "100 * (1 - mcount(30d, highpass(0, align(1m, max, default(0, ${Errors})))) / (3600 * 24 * 30))",
+                  "name": "etcd SLO",
+                  "query": "100 * (1 - mcount(30d, highpass(0, align(1m, max, default(0, ${etcd SLI})))) / (3600 * 24 * 30))",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": "",
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": ""
+                  "queryType": "WQL"
                 }
               ],
               "noDefaultEvents": false,
@@ -1353,11 +1380,11 @@
                 {
                   "name": "A",
                   "query": "",
+                  "querybuilderSerialization": "{\"metric\":\"ts()\",\"metricType\":\"m\",\"filters\":[[],\"and\"],\"functions\":[],\"_v\":1}",
+                  "querybuilderEnabled": true,
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": true,
-                  "querybuilderSerialization": "{\"metric\":\"ts()\",\"metricType\":\"m\",\"filters\":[[],\"and\"],\"functions\":[],\"_v\":1}"
+                  "queryType": "WQL"
                 }
               ],
               "noDefaultEvents": false,
@@ -1439,22 +1466,22 @@
               },
               "sources": [
                 {
-                  "name": "Errors",
-                  "query": "avg(mdiff(30d,ts(kube.apiserver.apiserver.request.total.counter, cluster=${cluster_name} and (code=\"4*\" OR code=\"5*\"))))",
+                  "name": "CoreDNS SLI",
+                  "query": "cumulativePercentile(99.0,rawsum(align(60s, mean, aliasMetric(mavg(5m, rate(ts(kube.coredns.coredns.dns.request.duration.seconds.bucket, cluster=${cluster_name}))), '')) by (le)), metrics, sources, pointTags)",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": "",
                   "disabled": true,
                   "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": ""
+                  "queryType": "WQL"
                 },
                 {
-                  "name": "API Server SLI",
-                  "query": "100 * (1 - mcount(30d, highpass(0, align(1m, max, default(0, ${Errors})))) / (3600 * 24 * 30))",
+                  "name": "CoreDNS SLO",
+                  "query": "100 * (1 - mcount(30d, highpass(0, align(1m, max, default(0, ${CoreDNS SLI})))) / (3600 * 24 * 30))",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": "",
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": ""
+                  "queryType": "WQL"
                 }
               ],
               "noDefaultEvents": false,
@@ -1544,11 +1571,11 @@
                 {
                   "name": "cpu_util",
                   "query": "limit(250, ts(\"kubernetes.node.cpu.node_utilization\", cluster=\"${cluster_name}\" and nodename=\"${node_name}\" and node_role=\"control-plane\") * 100)",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": "",
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": ""
+                  "queryType": "WQL"
                 }
               ],
               "noDefaultEvents": false,
@@ -1633,11 +1660,11 @@
                 {
                   "name": "memory_util",
                   "query": "limit(250, ts(\"kubernetes.node.memory.working_set\", cluster=\"${cluster_name}\" and nodename=\"${node_name}\" and node_role=\"control-plane\") / ts(\"kubernetes.node.memory.node_allocatable\", cluster=\"${cluster_name}\" and nodename=\"${node_name}\" and node_role=\"control-plane\") * 100)",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": "",
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": ""
+                  "queryType": "WQL"
                 }
               ],
               "noDefaultEvents": false,
@@ -1722,20 +1749,20 @@
                 {
                   "name": "storage",
                   "query": "ts(\"kubernetes.node.filesystem.usage\", cluster=\"${cluster_name}\" and nodename=\"${node_name}\") / ts(\"kubernetes.node.filesystem.limit\", cluster=\"${cluster_name}\" and nodename=\"${node_name}\")",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": "",
                   "disabled": true,
                   "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": ""
+                  "queryType": "WQL"
                 },
                 {
                   "name": "avg_storage",
                   "query": "avg(${storage})",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": "",
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": ""
+                  "queryType": "WQL"
                 }
               ],
               "noDefaultEvents": false,
@@ -1806,10 +1833,10 @@
                 {
                   "name": "request_rate",
                   "query": "sum(rate(ts(kube.apiserver.apiserver.request.total.counter, cluster=${cluster_name})), verb)",
+                  "querybuilderEnabled": false,
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false
+                  "queryType": "WQL"
                 }
               ],
               "noDefaultEvents": false,
@@ -1872,26 +1899,26 @@
                 {
                   "name": "Errors",
                   "query": "rate(sum(ts(kube.apiserver.apiserver.request.total.counter, cluster=${cluster_name} and (code=\"4*\" OR code=\"5*\")), verb))",
+                  "querybuilderEnabled": false,
                   "disabled": true,
                   "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false
+                  "queryType": "WQL"
                 },
                 {
                   "name": "Requests",
                   "query": "rate(sum(ts(kube.apiserver.apiserver.request.total.counter, cluster=${cluster_name}), verb))",
+                  "querybuilderEnabled": false,
                   "disabled": true,
                   "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false
+                  "queryType": "WQL"
                 },
                 {
                   "name": "Error %",
                   "query": "${Errors}/${Requests} * 100",
+                  "querybuilderEnabled": false,
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false
+                  "queryType": "WQL"
                 }
               ],
               "noDefaultEvents": true,
@@ -1952,38 +1979,38 @@
                 {
                   "name": "histo",
                   "query": "cumulativeHisto(sum(align(1m, rate(ts(kube.apiserver.apiserver.request.duration.seconds.bucket, cluster=${cluster_name}))), le))",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": "",
                   "disabled": true,
                   "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": ""
+                  "queryType": "WQL"
                 },
                 {
                   "name": "p95_request_latency",
                   "query": "percentile(95, ${histo})",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": "",
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": ""
+                  "queryType": "WQL"
                 },
                 {
                   "name": "p99_request_latency",
                   "query": "percentile(99, ${histo})",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": "",
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": ""
+                  "queryType": "WQL"
                 },
                 {
                   "name": "p50_request_latency",
                   "query": "percentile(50, ${histo})",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": "",
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": ""
+                  "queryType": "WQL"
                 }
               ],
               "noDefaultEvents": true,
@@ -2047,11 +2074,11 @@
                 {
                   "name": "adds_rate",
                   "query": "rate(ts(kube.apiserver.workqueue.adds.total.counter, cluster=${cluster_name}))",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": "",
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": ""
+                  "queryType": "WQL"
                 }
               ],
               "noDefaultEvents": false,
@@ -2110,38 +2137,38 @@
                 {
                   "name": "histo",
                   "query": "cumulativeHisto(sum(align(1m, rate(ts(kube.apiserver.workqueue.queue.duration.seconds.bucket, cluster=${cluster_name}))), le))",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": "",
                   "disabled": true,
                   "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": ""
+                  "queryType": "WQL"
                 },
                 {
                   "name": "p95_request_latency",
                   "query": "percentile(95, ${histo})",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": "",
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": ""
+                  "queryType": "WQL"
                 },
                 {
                   "name": "p90_request_latency",
                   "query": "percentile(90, ${histo})",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": "",
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": ""
+                  "queryType": "WQL"
                 },
                 {
                   "name": "p50_request_latency",
                   "query": "percentile(50, ${histo})",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": "",
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": ""
+                  "queryType": "WQL"
                 }
               ],
               "noDefaultEvents": true,
@@ -2217,42 +2244,42 @@
                 {
                   "name": "histo",
                   "query": "cumulativeHisto(sum(align(1m, rate(ts(kube.apiserver.etcd.request.duration.seconds.bucket, cluster=${cluster_name}))), le))",
+                  "querybuilderEnabled": false,
                   "disabled": true,
                   "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false
+                  "queryType": "WQL"
                 },
                 {
                   "name": "P95",
                   "query": "percentile(95, ${histo})",
+                  "querybuilderEnabled": false,
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false
+                  "queryType": "WQL"
                 },
                 {
                   "name": "P90",
                   "query": "percentile(90, ${histo})",
+                  "querybuilderEnabled": false,
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false
+                  "queryType": "WQL"
                 },
                 {
                   "name": "P50",
                   "query": "percentile(50, ${histo})",
+                  "querybuilderEnabled": false,
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false
+                  "queryType": "WQL"
                 },
                 {
                   "name": "A",
                   "query": "ts(kube.apiserver.etcd.request.duration.seconds.bucket, cluster=${cluster_name})",
+                  "querybuilderEnabled": false,
                   "disabled": true,
                   "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false
+                  "queryType": "WQL"
                 }
               ],
               "noDefaultEvents": false,
@@ -2319,20 +2346,20 @@
                 {
                   "name": "A",
                   "query": "sum(ts(kube.apiserver.etcd.object.counts.gauge, cluster=${cluster_name}))",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": "",
                   "disabled": true,
                   "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": ""
+                  "queryType": "WQL"
                 },
                 {
                   "name": "A Clone",
                   "query": "ts(kube.apiserver.etcd.object.counts.gauge, cluster=${cluster_name})",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": "",
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": ""
+                  "queryType": "WQL"
                 }
               ],
               "noDefaultEvents": false,
@@ -2391,10 +2418,10 @@
                 {
                   "name": "A",
                   "query": "ts(kube.apiserver.etcd.db.total.size.in.bytes.gauge, cluster=${cluster_name})",
+                  "querybuilderEnabled": false,
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false
+                  "queryType": "WQL"
                 }
               ],
               "noDefaultEvents": false,
@@ -2465,12 +2492,12 @@
               "sources": [
                 {
                   "name": "error_rate",
-                  "query": "rate(ts(coredns.dns.responses.total.counter, not rcode=NOERROR and cluster=${cluster_name}))",
+                  "query": "rate(ts(kube.coredns.coredns.dns.responses.total.counter, not rcode=NOERROR and cluster=${cluster_name}))",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": "",
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": ""
+                  "queryType": "WQL"
                 }
               ],
               "noDefaultEvents": false,
@@ -2528,39 +2555,39 @@
               "sources": [
                 {
                   "name": "histo",
-                  "query": "cumulativeHisto(sum(align(1m, rate(ts(coredns.dns.request.duration.seconds.bucket, cluster=${cluster_name}))), le))",
+                  "query": "cumulativeHisto(sum(align(1m, rate(ts(kube.coredns.coredns.dns.request.duration.seconds.bucket, cluster=${cluster_name}))), le))",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": "",
                   "disabled": true,
                   "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": ""
+                  "queryType": "WQL"
                 },
                 {
                   "name": "P95",
                   "query": "percentile(95, ${histo})",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": "",
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": ""
+                  "queryType": "WQL"
                 },
                 {
                   "name": "P90",
                   "query": "percentile(90, ${histo})",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": "",
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": ""
+                  "queryType": "WQL"
                 },
                 {
                   "name": "P50",
                   "query": "percentile(50, ${histo})",
+                  "querybuilderEnabled": false,
+                  "sourceDescription": "",
                   "disabled": false,
                   "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": ""
+                  "queryType": "WQL"
                 }
               ],
               "noDefaultEvents": false,
@@ -2568,127 +2595,6 @@
             }
           ],
           "heightFactor": 100
-        },
-        {
-          "charts": [
-            {
-              "anomalySeverity": "medium",
-              "anomalyDetectionOn": false,
-              "chartSettings": {
-                "y1ScaleSIBy1024": false,
-                "fixedLegendEnabled": false,
-                "fixedLegendFilterField": "CURRENT",
-                "y0ScaleSIBy1024": false,
-                "sparklineDisplayFontSize": "150",
-                "fixedLegendFilterLimit": 5,
-                "fixedLegendShowSourceName": true,
-                "sparklineValueColorMapColors": [
-                  "rgba(87,170,19,1)",
-                  "rgba(224,34,0,1)"
-                ],
-                "fixedLegendPosition": "RIGHT",
-                "customTags": [],
-                "lineType": "linear",
-                "sparklineFillColor": "rgba(0,0,0,0.2)",
-                "sparklineValueColorMapApplyTo": "BACKGROUND",
-                "windowing": "full",
-                "sparklineDisplayColor": "rgba(250,250,250,1)",
-                "sparklineSize": "NONE",
-                "fixedLegendFilterSort": "TOP",
-                "sparklineValueColorMapValuesV2": [
-                  1000
-                ],
-                "y1Units": "",
-                "sparklineValueTextMapThresholds": [
-                  1000
-                ],
-                "fixedLegendShowMetricName": false,
-                "sparklineDisplayValueType": "VALUE",
-                "type": "sparkline",
-                "y1UnitAutoscaling": false,
-                "sparklineValueTextMapText": [
-                  "✓",
-                  "X"
-                ],
-                "tagMode": "all",
-                "fixedLegendUseRawStats": false,
-                "y0UnitAutoscaling": false,
-                "fixedLegendDisplayStats": [
-                  "CURRENT"
-                ],
-                "sparklineDisplayHorizontalPosition": "MIDDLE",
-                "sparklineLineColor": "rgba(0,0,0,0.3)",
-                "sparklineDecimalPrecision": 1,
-                "autoColumnTags": false,
-                "numTags": 4,
-                "defaultSortColumn": null
-              },
-              "displayConfidenceBounds": false,
-              "includeObsoleteMetrics": false,
-              "filterOutNonAnomalies": false,
-              "name": "API Server Test",
-              "anomalySampleSize": "8",
-              "units": "ms",
-              "summarization": "MEAN",
-              "base": 0,
-              "chartAttributes": {
-                "lineFill": 1,
-                "singleStat": {
-                  "sparklineDisplayLabel": "A",
-                  "sparklineDisplaySubLabel": "API Server SLI"
-                },
-                "dashboardLayout": {
-                  "x": 0,
-                  "y": 5,
-                  "w": 4,
-                  "h": 3
-                },
-                "y0ScaleDecimal": false
-              },
-              "sources": [
-                {
-                  "name": "histo",
-                  "query": "cumulativeHisto(sum(align(1m, rate(ts(kube.apiserver.apiserver.request.duration.seconds.bucket, cluster=${cluster_name}))), le))",
-                  "disabled": true,
-                  "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": ""
-                },
-                {
-                  "name": "P99 Latency",
-                  "query": "percentile(99, ${histo})",
-                  "disabled": true,
-                  "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": ""
-                },
-                {
-                  "name": "P99 Latency Clone",
-                  "query": "mpercentile(5m, 99, ${histo})",
-                  "disabled": false,
-                  "secondaryAxis": false,
-                  "queryType": "WQL",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": ""
-                },
-                {
-                  "name": "Promql P99 Latency",
-                  "query": "histogram_quantile(0.99, sum by (le) (rate(kube.apiserver.apiserver.request.duration.seconds.bucket{cluster=\"${cluster_name}\"}[5m])))",
-                  "disabled": true,
-                  "secondaryAxis": false,
-                  "queryType": "PROMQL",
-                  "querybuilderEnabled": false,
-                  "sourceDescription": ""
-                }
-              ],
-              "noDefaultEvents": false,
-              "description": "The service level indicator (SLI) of the API server is measured as the 99th percentile of request latency",
-              "anomalyType": "both"
-            }
-          ],
-          "heightFactor": 50
         }
       ]
     }
