@@ -4,6 +4,9 @@
 
 gcloud auth login
 gcloud config set project wavefront-gcp-dev
+
+# SSH-ing into the VM first time might involve creating an SSH key.
+# This would prompt for a passphrase, which can be empty (press enter)
 gcloud compute ssh --zone "us-central1-a" "k8po-kind-stable-env-vm"  --project "wavefront-gcp-dev"
 
 # get root access and setup folders
@@ -33,7 +36,7 @@ echo "export WF_CLUSTER=demo" >> ~/.profile
 cd ../
 git clone https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes.git
 cd wavefront-collector-for-kubernetes
-git checkout K8SSAAS-773-stable-env # This branch is not meant to be merged to master
+git checkout master
 ./hack/test/dashboards/deploy/deploy-demo.sh
 
 
