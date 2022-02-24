@@ -284,9 +284,9 @@ collection:
 
 ##### Control Plane Metric configuration
 
-For more information on control plane metrics below, see reference.  
-Add the following to calculate API server and etcd SLIs and SLOs.
+For more information on control plane metrics, see [reference](https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes/blob/master/docs/metrics.md#control-plane-metrics).  
 
+Add the following to calculate API server and etcd SLIs and SLOs.
 ```yaml
 prometheus_sources:
 
@@ -314,7 +314,6 @@ prometheus_sources:
     - 'kube.apiserver.workqueue.adds.total.counter'
     - 'kube.apiserver.workqueue.queue.duration.seconds.bucket'
 ```
-
 Add the following to calculate CoreDNS SLIs and SLOs.
 ```yaml
 discovery:
