@@ -9,6 +9,7 @@
 * [Telegraf Source](#telegraf-source)
 * [Collector Health](#collector-health-metrics)
 * [cAdvisor Metrics](#cadvisor-metrics)
+* [Control Plane Metrics](#control-plane-metrics)
 
 ## Kubernetes Source
 
@@ -207,3 +208,21 @@ These are internal metrics about the health and configuration of the Wavefront C
 ## cAdvisor Metrics
 
 cAdvisor exposes a prometheus endpoint which the collector can consume. See the [cAdvisor docs](https://github.com/google/cadvisor/blob/master/docs/storage/prometheus.md) for details on what metrics are available.
+
+## Control Plane Metrics
+
+These are metrics for the health of the Kubernetes Control Plane.
+
+Metrics collected per type:
+
+| Metric Name                                              | Description                                      |
+|----------------------------------------------------------|--------------------------------------------------|
+| kube.apiserver.etcd.request.duration.seconds.bucket      | Histogram buckets for etcd request latency       |
+| kube.apiserver.etcd.object.counts.gauge                  | etcd object counts                               |
+ | kube.apiserver.etcd.db.total.size.in.bytes.gauge         | etcd database size                               |
+ | kube.apiserver.apiserver.request.duration.seconds.bucket | Histogram buckets for API server request latency |
+ | kube.apiserver.apiserver.request.total.counter           | API server total request count                   |
+ | kube.apiserver.workqueue.adds.total.counter              | Current depth of API server workqueue            |
+| kube.apiserver.workqueue.queue.duration.seconds.bucket   | Histogram buckets for workqueue latency          |
+ | kube.coredns.coredns.dns.request.duration.seconds.bucket | Histogram buckets for CoreDNS request latency    |
+ | kube.coredns.coredns.dns.responses.total.counter         | CoreDNS total response count                     |
