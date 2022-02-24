@@ -76,8 +76,6 @@ endif
 BUILDER_SUFFIX=$(shell echo $(PREFIX) | cut -d '/' -f1)
 
 publish:
-	docker login $(PREFIX)
-
 	docker buildx create --use --node wavefront_collector_builder_$(BUILDER_SUFFIX)
 ifeq ($(RELEASE_TYPE), release)
 	docker buildx build --platform linux/amd64,linux/arm64 --push \
