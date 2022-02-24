@@ -338,3 +338,5 @@ discovery:
 ```
 
 ##### CA cert configuration
+
+To enable the HTTP proxy with CA cert see this proxy [example](https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes/blob/master/deploy/examples/6-wavefront-proxy-with-http-proxy.yaml).
