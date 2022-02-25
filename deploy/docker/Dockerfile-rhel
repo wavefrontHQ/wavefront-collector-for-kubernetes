@@ -22,6 +22,11 @@ LABEL name="Wavefront Collector" \
       summary="The Wavefront Collector for Kubernetes enables monitoring Kubernetes clusters and sending metrics to Wavefront." \
       description="The Wavefront Collector collects real-time metrics from all layers of a Kubernetes environment and Auto discovery of pods and services based on annotation and configuration."
 
+RUN microdnf install yum \
+  && yum -y update-minimal --security --sec-severity=Important --sec-severity=Critical \
+  && yum clean all \
+  && microdnf clean all
+
 RUN mkdir /licenses
 
 COPY LICENSE /licenses/license.txt
