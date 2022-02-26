@@ -80,7 +80,7 @@ pipeline {
     stages {
         stage('Hello') {
             steps {
-                sh 'exit 1'
+                sh 'exit 2'
 //                 echo "Success"
                 echo "Previous build: ${currentBuild.previousBuild}"
             }
