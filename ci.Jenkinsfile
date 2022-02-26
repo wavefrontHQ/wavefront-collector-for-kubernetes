@@ -80,19 +80,27 @@ pipeline {
     stages {
         stage('Hello') {
             steps {
-//                 sh 'exit 1'
-                echo "Success!"
+                sh 'exit 1'
+//                 echo "Success"
                 echo "Previous build: ${currentBuild.previousBuild}"
             }
         }
     }
 
     post {
+        // Notify only on null->failure or success->failure or failure->success
+        failure {
+            script {
+                if(currentBuild.previousBuild == null) {
+                    slackSend (channel: '#open-channel', color: '#FF0000', message: "BUILD FAILED: <${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>")
+                }
+            }
+        }
         regression {
-            slackSend (channel: '#open-channel', color: '#FF0000', message: "BUILD FAILED: '<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>")
+            slackSend (channel: '#open-channel', color: '#FF0000', message: "BUILD FAILED: <${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>")
         }
         fixed {
-            slackSend (channel: '#open-channel', color: '#008000', message: "BUILD FIXED: '<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>")
+            slackSend (channel: '#open-channel', color: '#008000', message: "BUILD FIXED: <${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>")
         }
 //         success {
 //             script {
