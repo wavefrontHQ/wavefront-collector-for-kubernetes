@@ -90,19 +90,19 @@ pipeline {
 
     post {
         // Notify only on null->failure or success->failure or failure->success
-        failure {
-            script {
-                if(currentBuild.previousBuild == null) {
-                    slackSend (channel: '#open-channel', color: '#FF0000', message: "BUILD FAILED: null->failure test-slack-2 <${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>")
-                }
-            }
-        }
-        regression {
-            slackSend (channel: '#open-channel', color: '#FF0000', message: "BUILD FAILED: success->failure test-slack-2 <${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>")
-        }
-        fixed {
-            slackSend (channel: '#open-channel', color: '#008000', message: "BUILD FIXED fixed: failure->success test-slack-2 <${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>")
-        }
+//         failure {
+//             script {
+//                 if(currentBuild.previousBuild == null) {
+//                     slackSend (channel: '#open-channel', color: '#FF0000', message: "BUILD FAILED: null->failure test-slack-2 <${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>")
+//                 }
+//             }
+//         }
+//         regression {
+//             slackSend (channel: '#open-channel', color: '#FF0000', message: "BUILD FAILED: success->failure test-slack-2 <${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>")
+//         }
+//         fixed {
+//             slackSend (channel: '#open-channel', color: '#008000', message: "BUILD FIXED fixed: failure->success test-slack-2 <${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>")
+//         }
         always {
             slackSend (channel: '#open-channel', color: '#008000', message: "always")
         }
