@@ -80,8 +80,8 @@ pipeline {
     stages {
         stage('Hello') {
             steps {
-                sh 'exit 1'
-//                 echo "Success"
+//                 sh 'exit 1'
+                echo "Success"
                 echo "Previous build: ${currentBuild.previousBuild}"
             }
         }
@@ -92,17 +92,17 @@ pipeline {
         failure {
             script {
                 if(currentBuild.previousBuild == null) {
-                    slackSend (channel: '#open-channel', color: '#FF0000', message: "RELEASE BUILD FAILED: <${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>")
+                    slackSend (channel: '#closed-channel', color: '#FF0000', message: "RELEASE BUILD FAILED: <${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>")
                 }
             }
         }
         regression {
-            slackSend (channel: '#open-channel', color: '#FF0000', message: "RELEASE BUILD FAILED: <${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>")
+            slackSend (channel: '#closed-channel', color: '#FF0000', message: "RELEASE BUILD FAILED: <${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>")
         }
         success {
             script {
                 BUILD_VERSION = readFile('./release/VERSION').trim()
-                slackSend (channel: '#open-channel', color: '#008000', message: "Success!! `wavefront-collector-for-kubernetes:v${BUILD_VERSION}` released!")
+                slackSend (channel: '#closed-channel', color: '#008000', message: "Success!! `wavefront-collector-for-kubernetes:v${BUILD_VERSION}` released!")
             }
         }
 //         success {
