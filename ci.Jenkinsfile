@@ -81,8 +81,8 @@ pipeline {
         stage('Hello') {
             steps {
 
-//                 sh 'exit 2'
-                echo "Success"
+                sh 'exit 2'
+//                 echo "Success"
                 echo "Previous build: ${currentBuild.previousBuild}"
             }
         }
@@ -108,6 +108,12 @@ pipeline {
         }
         changed {
             slackSend (channel: '#open-channel', color: '#008000', message: "changed")
+            success {
+                slackSend (channel: '#open-channel', color: '#008000', message: "changed (success)")
+            }
+            failure {
+                slackSend (channel: '#open-channel', color: '#008000', message: "changed (failure)")
+            }
         }
         fixed{
             slackSend (channel: '#open-channel', color: '#008000', message: "fixed")
@@ -118,12 +124,12 @@ pipeline {
         aborted {
             slackSend (channel: '#open-channel', color: '#008000', message: "aborted")
         }
-        failure {
-            slackSend (channel: '#open-channel', color: '#008000', message: "failure")
-        }
-        success {
-            slackSend (channel: '#open-channel', color: '#008000', message: "success")
-        }
+//         failure {
+//             slackSend (channel: '#open-channel', color: '#008000', message: "failure")
+//         }
+//         success {
+//             slackSend (channel: '#open-channel', color: '#008000', message: "success")
+//         }
         unstable {
             slackSend (channel: '#open-channel', color: '#008000', message: "unstable")
         }
