@@ -80,7 +80,8 @@ pipeline {
     stages {
         stage('Hello') {
             steps {
-                sh 'exit 2'
+            jhbjabwc
+//                 sh 'exit 2'
 //                 echo "Success"
                 echo "Previous build: ${currentBuild.previousBuild}"
             }
@@ -102,6 +103,33 @@ pipeline {
         fixed {
             slackSend (channel: '#open-channel', color: '#008000', message: "BUILD FIXED fixed: failure->success test-slack-2 <${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>")
         }
+        always {
+            slackSend (channel: '#open-channel', color: '#008000', message: "always")
+        }
+        changed {
+            slackSend (channel: '#open-channel', color: '#008000', message: "changed")
+        }
+        fixed{
+            slackSend (channel: '#open-channel', color: '#008000', message: "fixed")
+        }
+        regression{
+            slackSend (channel: '#open-channel', color: '#008000', message: "regression")
+        }
+        aborted {
+            slackSend (channel: '#open-channel', color: '#008000', message: "aborted")
+        }
+        failure {
+            slackSend (channel: '#open-channel', color: '#008000', message: "failure")
+        }
+        success {
+            slackSend (channel: '#open-channel', color: '#008000', message: "success")
+        }
+        unstable {
+            slackSend (channel: '#open-channel', color: '#008000', message: "unstable")
+        }
+        unsuccessful {
+            slackSend (channel: '#open-channel', color: '#008000', message: "unsuccessful")
+        }
 //         success {
 //             script {
 //                 if (env.BRANCH_NAME == 'master') {
@@ -110,4 +138,8 @@ pipeline {
 //             }
 //         }
     }
+}
+
+def sendNotification() {
+      return "${currentBuild.getBuildCauses()[0].userName}"
 }
