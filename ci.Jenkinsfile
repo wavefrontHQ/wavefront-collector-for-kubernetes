@@ -88,19 +88,22 @@ pipeline {
     }
 
     post {
-        // Notify only on null->failure or success->failure or failure->success
+         // Notify only on null->failure or success->failure or any->success
         failure {
             script {
                 if(currentBuild.previousBuild == null) {
-                    slackSend (channel: '#open-channel', color: '#FF0000', message: "BUILD FAILED: <${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>")
+                    slackSend (channel: '#closed-channel', color: '#FF0000', message: "RELEASE BUILD FAILED: <${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>")
                 }
             }
         }
         regression {
-            slackSend (channel: '#open-channel', color: '#FF0000', message: "BUILD FAILED: <${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>")
+            slackSend (channel: '#closed-channel', color: '#FF0000', message: "RELEASE BUILD FAILED: <${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>")
         }
-        fixed {
-            slackSend (channel: '#open-channel', color: '#008000', message: "BUILD FIXED: <${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>")
+        success {
+            script {
+                BUILD_VERSION=$(cat ./release/VERSION)
+                slackSend (channel: '#open-channel', color: '#008000', message: "Success!! \`wavefront-collector-for-kubernetes:v${BUILD_VERSION}\` released!>")
+            }
         }
 //         success {
 //             script {
