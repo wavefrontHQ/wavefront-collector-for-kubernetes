@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi7/go-toolset:1.16.7-3 as builder
+FROM registry.access.redhat.com/ubi8/go-toolset:1.16.7-3 as builder
 USER root
 
 WORKDIR /workspace
@@ -9,8 +9,8 @@ RUN /bin/bash -c "go version"
 
 RUN /bin/bash -c "CGO_ENABLED=0 go build -ldflags '-w -X main.version=1.9.0' -o ./wavefront-collector ./cmd/wavefront-collector/"
 
-#Using ubi7 minimal image
-FROM registry.access.redhat.com/ubi7/ubi-minimal:latest
+#Using ubi8 minimal image
+FROM registry.access.redhat.com/ubi8-minimal:latest
 
 MAINTAINER wavefront@vmware.com
 
