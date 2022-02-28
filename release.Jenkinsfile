@@ -117,6 +117,26 @@ pipeline {
       }
     }
     post {
+        // Notify only on null->failure or success->failure or any->success
+        failure {
+            script {
+                if(currentBuild.previousBuild == null) {
+                    slackSend (channel: '#tobs-k8po-team', color: '#FF0000', message: "RELEASE BUILD FAILED: <${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>")
+                }
+            }
+        }
+        regression {
+            slackSend (channel: '#tobs-k8po-team', color: '#FF0000', message: "RELEASE BUILD FAILED: <${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>")
+        }
+        success {
+            script {
+                BUILD_VERSION = readFile('./release/VERSION').trim()
+                slackSend (channel: '#tobs-k8s-assist', color: '#008000', message: "Success!! `wavefront-collector-for-kubernetes:v${BUILD_VERSION}` released!")
+            }
+        }
+        always {
+            cleanWs()
+        }
     }
 }
 
