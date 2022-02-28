@@ -82,7 +82,7 @@ pipeline {
             steps {
 
 //                 sh 'exit 2'
-                echo "Success"
+                echo "Success again"
                 echo "Previous build: ${currentBuild.previousBuild}"
             }
         }
