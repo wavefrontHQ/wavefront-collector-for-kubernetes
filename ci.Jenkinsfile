@@ -102,7 +102,7 @@ pipeline {
         success {
             script {
                 BUILD_VERSION = readFile('./release/VERSION').trim()
-                slackSend (channel: '#closed-channel', color: '#008000', message: "Success!! `wavefront-collector-for-kubernetes:v${BUILD_VERSION}` released!")
+                slackSend (channel: '#tobs-k8s-assist', color: '#008000', message: "Test message!")
             }
         }
 //         success {
