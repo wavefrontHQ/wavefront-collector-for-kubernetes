@@ -27,15 +27,15 @@ import (
 )
 
 func TestClusterAggregate(t *testing.T) {
-	batch := metrics.DataBatch{
+	batch := metrics.Batch{
 		Timestamp: time.Now(),
-		MetricSets: map[string]*metrics.MetricSet{
+		Sets: map[metrics.ResourceKey]*metrics.Set{
 			metrics.PodKey("ns1", "pod1"): {
 				Labels: map[string]string{
 					metrics.LabelMetricSetType.Key: metrics.MetricSetTypeNamespace,
 					metrics.LabelNamespaceName.Key: "ns1",
 				},
-				MetricValues: map[string]metrics.MetricValue{
+				Values: map[string]metrics.Value{
 					"m1": {
 						ValueType: metrics.ValueInt64,
 						IntValue:  10,
@@ -52,7 +52,7 @@ func TestClusterAggregate(t *testing.T) {
 					metrics.LabelMetricSetType.Key: metrics.MetricSetTypeNamespace,
 					metrics.LabelNamespaceName.Key: "ns1",
 				},
-				MetricValues: map[string]metrics.MetricValue{
+				Values: map[string]metrics.Value{
 					"m1": {
 						ValueType: metrics.ValueInt64,
 						IntValue:  100,
@@ -70,14 +70,14 @@ func TestClusterAggregate(t *testing.T) {
 	}
 	result, err := processor.Process(&batch)
 	assert.NoError(t, err)
-	cluster, found := result.MetricSets[metrics.ClusterKey()]
+	cluster, found := result.Sets[metrics.ClusterKey()]
 	assert.True(t, found)
 
-	m1, found := cluster.MetricValues["m1"]
+	m1, found := cluster.Values["m1"]
 	assert.True(t, found)
 	assert.Equal(t, int64(110), m1.IntValue)
 
-	m3, found := cluster.MetricValues["m3"]
+	m3, found := cluster.Values["m3"]
 	assert.True(t, found)
 	assert.Equal(t, int64(30), m3.IntValue)
 }

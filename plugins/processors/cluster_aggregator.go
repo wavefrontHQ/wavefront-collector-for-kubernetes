@@ -29,10 +29,10 @@ func (aggregator *ClusterAggregator) Name() string {
 	return "cluster_aggregator"
 }
 
-func (aggregator *ClusterAggregator) Process(batch *metrics.DataBatch) (*metrics.DataBatch, error) {
+func (aggregator *ClusterAggregator) Process(batch *metrics.Batch) (*metrics.Batch, error) {
 	clusterKey := metrics.ClusterKey()
 	cluster := clusterMetricSet()
-	for _, metricSet := range batch.MetricSets {
+	for _, metricSet := range batch.Sets {
 		if metricSetType, found := metricSet.Labels[metrics.LabelMetricSetType.Key]; found &&
 			metricSetType == metrics.MetricSetTypeNamespace {
 			if err := aggregate(metricSet, cluster, aggregator.MetricsToAggregate); err != nil {
@@ -43,13 +43,13 @@ func (aggregator *ClusterAggregator) Process(batch *metrics.DataBatch) (*metrics
 		}
 	}
 
-	batch.MetricSets[clusterKey] = cluster
+	batch.Sets[clusterKey] = cluster
 	return batch, nil
 }
 
-func clusterMetricSet() *metrics.MetricSet {
-	return &metrics.MetricSet{
-		MetricValues: make(map[string]metrics.MetricValue),
+func clusterMetricSet() *metrics.Set {
+	return &metrics.Set{
+		Values: make(map[string]metrics.Value),
 		Labels: map[string]string{
 			metrics.LabelMetricSetType.Key: metrics.MetricSetTypeCluster,
 		},

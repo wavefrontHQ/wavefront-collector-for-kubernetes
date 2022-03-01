@@ -42,12 +42,12 @@ func (aggregator *PodAggregator) Name() string {
 	return "pod_aggregator"
 }
 
-func (aggregator *PodAggregator) Process(batch *metrics.DataBatch) (*metrics.DataBatch, error) {
-	newPods := make(map[string]*metrics.MetricSet)
+func (aggregator *PodAggregator) Process(batch *metrics.Batch) (*metrics.Batch, error) {
+	newPods := make(map[metrics.ResourceKey]*metrics.Set)
 
 	// If pod already has pod-level metrics, it no longer needs to aggregates its container's metrics.
 	requireAggregate := make(map[string]bool)
-	for key, metricSet := range batch.MetricSets {
+	for key, metricSet := range batch.Sets {
 		if metricSetType, found := metricSet.Labels[metrics.LabelMetricSetType.Key]; !found || metricSetType != metrics.MetricSetTypePodContainer {
 			continue
 		}
@@ -61,7 +61,7 @@ func (aggregator *PodAggregator) Process(batch *metrics.DataBatch) (*metrics.Dat
 		}
 
 		podKey := metrics.PodKey(ns, podName)
-		pod, found := batch.MetricSets[podKey]
+		pod, found := batch.Sets[podKey]
 		if !found {
 			pod, found = newPods[podKey]
 			if !found {
@@ -71,17 +71,17 @@ func (aggregator *PodAggregator) Process(batch *metrics.DataBatch) (*metrics.Dat
 			}
 		}
 
-		for metricName, metricValue := range metricSet.MetricValues {
+		for metricName, metricValue := range metricSet.Values {
 			if _, found := aggregator.skippedMetrics[metricName]; found {
 				continue
 			}
 
-			aggregatedValue, found := pod.MetricValues[metricName]
+			aggregatedValue, found := pod.Values[metricName]
 			if !found {
-				requireAggregate[podKey+metricName] = true
+				requireAggregate[podKey.String()+metricName] = true
 				aggregatedValue = metricValue
 			} else {
-				if requireAggregate[podKey+metricName] {
+				if requireAggregate[podKey.String()+metricName] {
 					if aggregatedValue.ValueType != metricValue.ValueType {
 						log.Errorf("PodAggregator: inconsistent type in %s", metricName)
 						continue
@@ -98,16 +98,16 @@ func (aggregator *PodAggregator) Process(batch *metrics.DataBatch) (*metrics.Dat
 				}
 			}
 
-			pod.MetricValues[metricName] = aggregatedValue
+			pod.Values[metricName] = aggregatedValue
 		}
 	}
 	for key, val := range newPods {
-		batch.MetricSets[key] = val
+		batch.Sets[key] = val
 	}
 	return batch, nil
 }
 
-func (aggregator *PodAggregator) podMetricSet(labels map[string]string) *metrics.MetricSet {
+func (aggregator *PodAggregator) podMetricSet(labels map[string]string) *metrics.Set {
 	newLabels := map[string]string{
 		metrics.LabelMetricSetType.Key: metrics.MetricSetTypePod,
 	}
@@ -116,17 +116,17 @@ func (aggregator *PodAggregator) podMetricSet(labels map[string]string) *metrics
 			newLabels[l.Key] = val
 		}
 	}
-	return &metrics.MetricSet{
-		MetricValues: make(map[string]metrics.MetricValue),
-		Labels:       newLabels,
+	return &metrics.Set{
+		Values: make(map[string]metrics.Value),
+		Labels: newLabels,
 	}
 }
 
 func NewPodAggregator() *PodAggregator {
 	skipped := make(map[string]struct{})
 	for _, metric := range metrics.StandardMetrics {
-		if metric.MetricDescriptor.Type == metrics.MetricCumulative ||
-			metric.MetricDescriptor.Type == metrics.MetricDelta {
+		if metric.MetricDescriptor.Type == metrics.Cumulative ||
+			metric.MetricDescriptor.Type == metrics.Delta {
 			skipped[metric.MetricDescriptor.Name] = struct{}{}
 		}
 	}

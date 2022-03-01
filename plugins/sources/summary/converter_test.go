@@ -44,7 +44,7 @@ func TestNewMetricName(t *testing.T) {
 func TestStoreTimeseriesMultipleTimeseriesInput(t *testing.T) {
 	fakeConverter := fakeWavefrontConverter(t, configuration.SummarySourceConfig{})
 	batch := generateFakeBatch()
-	count := len(batch.MetricSets)
+	count := len(batch.Sets)
 	data, err := fakeConverter.Process(batch)
 	if err != nil {
 		t.Error(err)
@@ -65,7 +65,7 @@ func TestFiltering(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	assert.Equal(t, 8, len(data.MetricSets))
+	assert.Equal(t, 8, len(data.Sets))
 	assert.Equal(t, 2, len(data.Points))
 
 	fakeConverter = fakeWavefrontConverter(t, configuration.SummarySourceConfig{
@@ -80,7 +80,7 @@ func TestFiltering(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	assert.Equal(t, 8, len(data.MetricSets))
+	assert.Equal(t, 8, len(data.Sets))
 	assert.Equal(t, 6, len(data.Points))
 }
 
@@ -94,27 +94,27 @@ func TestPrefix(t *testing.T) {
 	assert.Equal(t, "k8s.pod.cpu.usage", newName)
 }
 
-func generateFakeBatch() *metrics.DataBatch {
-	batch := metrics.DataBatch{
-		Timestamp:  time.Now(),
-		MetricSets: map[string]*metrics.MetricSet{},
+func generateFakeBatch() *metrics.Batch {
+	batch := metrics.Batch{
+		Timestamp: time.Now(),
+		Sets:      map[metrics.ResourceKey]*metrics.Set{},
 	}
 
-	batch.MetricSets["m1"] = generateMetricSet("cpu/limit", metrics.MetricGauge, 1000)
-	batch.MetricSets["m2"] = generateMetricSet("cpu/usage", metrics.MetricCumulative, 43363664)
-	batch.MetricSets["m3"] = generateMetricSet("filesystem/limit", metrics.MetricGauge, 42241163264)
-	batch.MetricSets["m4"] = generateMetricSet("filesystem/usage", metrics.MetricGauge, 32768)
-	batch.MetricSets["m5"] = generateMetricSet("memory/limit", metrics.MetricGauge, -1)
-	batch.MetricSets["m6"] = generateMetricSet("memory/usage", metrics.MetricGauge, 487424)
-	batch.MetricSets["m7"] = generateMetricSet("memory/working_set", metrics.MetricGauge, 491520)
-	batch.MetricSets["m8"] = generateMetricSet("uptime", metrics.MetricCumulative, 910823)
+	batch.Sets["m1"] = generateMetricSet("cpu/limit", metrics.Gauge, 1000)
+	batch.Sets["m2"] = generateMetricSet("cpu/usage", metrics.Cumulative, 43363664)
+	batch.Sets["m3"] = generateMetricSet("filesystem/limit", metrics.Gauge, 42241163264)
+	batch.Sets["m4"] = generateMetricSet("filesystem/usage", metrics.Gauge, 32768)
+	batch.Sets["m5"] = generateMetricSet("memory/limit", metrics.Gauge, -1)
+	batch.Sets["m6"] = generateMetricSet("memory/usage", metrics.Gauge, 487424)
+	batch.Sets["m7"] = generateMetricSet("memory/working_set", metrics.Gauge, 491520)
+	batch.Sets["m8"] = generateMetricSet("uptime", metrics.Cumulative, 910823)
 	return &batch
 }
 
-func generateMetricSet(name string, metricType metrics.MetricType, value int64) *metrics.MetricSet {
-	set := &metrics.MetricSet{
+func generateMetricSet(name string, metricType metrics.Type, value int64) *metrics.Set {
+	set := &metrics.Set{
 		Labels: fakeLabel,
-		MetricValues: map[string]metrics.MetricValue{
+		Values: map[string]metrics.Value{
 			name: {
 				ValueType: metrics.ValueInt64,
 				IntValue:  value,
@@ -124,7 +124,7 @@ func generateMetricSet(name string, metricType metrics.MetricType, value int64) 
 	return set
 }
 
-func fakeWavefrontConverter(t *testing.T, cfg configuration.SummarySourceConfig) metrics.DataProcessor {
+func fakeWavefrontConverter(t *testing.T, cfg configuration.SummarySourceConfig) metrics.Processor {
 	converter, err := NewPointConverter(cfg, "k8s-cluster")
 	if err != nil {
 		t.Error(err)

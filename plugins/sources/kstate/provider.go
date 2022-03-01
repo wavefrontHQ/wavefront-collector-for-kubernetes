@@ -36,7 +36,7 @@ type stateMetricsSource struct {
 	fps gometrics.Counter
 }
 
-func NewStateMetricsSource(lister *lister, transforms configuration.Transforms) (metrics.MetricsSource, error) {
+func NewStateMetricsSource(lister *lister, transforms configuration.Transforms) (metrics.Source, error) {
 	pt := map[string]string{"type": "kubernetes.state"}
 	ppsKey := reporting.EncodeKey("source.points.collected", pt)
 	epsKey := reporting.EncodeKey("source.collect.errors", pt)
@@ -84,8 +84,8 @@ func (src *stateMetricsSource) Name() string {
 
 func (src *stateMetricsSource) Cleanup() {}
 
-func (src *stateMetricsSource) ScrapeMetrics() (*metrics.DataBatch, error) {
-	result := &metrics.DataBatch{
+func (src *stateMetricsSource) Scrape() (*metrics.Batch, error) {
+	result := &metrics.Batch{
 		Timestamp: time.Now(),
 	}
 
@@ -124,11 +124,11 @@ func (src *stateMetricsSource) pointsForResource(resType string) []*wf.Point {
 }
 
 type stateProvider struct {
-	metrics.DefaultMetricsSourceProvider
-	sources []metrics.MetricsSource
+	metrics.DefaultSourceProvider
+	sources []metrics.Source
 }
 
-func (p *stateProvider) GetMetricsSources() []metrics.MetricsSource {
+func (p *stateProvider) GetMetricsSources() []metrics.Source {
 	if !leadership.Leading() {
 		log.Infof("not scraping sources from: %s. current leader: %s", providerName, leadership.Leader())
 		return nil
@@ -142,12 +142,12 @@ func (p *stateProvider) Name() string {
 
 const providerName = "kstate_metrics_provider"
 
-func NewStateProvider(cfg configuration.KubernetesStateSourceConfig) (metrics.MetricsSourceProvider, error) {
+func NewStateProvider(cfg configuration.KubernetesStateSourceConfig) (metrics.SourceProvider, error) {
 	if cfg.KubeClient == nil {
 		return nil, fmt.Errorf("kubeclient not initialized")
 	}
 
-	var sources []metrics.MetricsSource
+	var sources []metrics.Source
 	metricsSource, err := NewStateMetricsSource(newLister(cfg.KubeClient), cfg.Transforms)
 	if err == nil {
 		sources = append(sources, metricsSource)

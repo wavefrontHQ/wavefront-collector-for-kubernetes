@@ -1,6 +1,4 @@
 // Based on https://github.com/kubernetes-retired/heapster/blob/master/metrics/core/types.go
-// Diff against master for changes to the original code.
-
 // Copyright 2015 Google Inc. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,26 +24,51 @@ import (
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
 )
 
-type MetricType int8
+type Type int8
 
 const (
-	MetricCumulative MetricType = iota
-	MetricGauge
-	MetricDelta
+	Cumulative Type = iota
+	Gauge
+	Delta
 )
 
-func (self *MetricType) String() string {
-	switch *self {
-	case MetricCumulative:
+func (t *Type) String() string {
+	switch *t {
+	case Cumulative:
 		return "cumulative"
-	case MetricGauge:
+	case Gauge:
 		return "gauge"
-	case MetricDelta:
+	case Delta:
 		return "delta"
 	}
 	return ""
 }
 
+type Unit int8
+
+const (
+	Count Unit = iota
+	Bytes
+	Milliseconds
+	Nanoseconds
+	Millicores
+)
+
+func (u Unit) String() string {
+	switch u {
+	case Bytes:
+		return "bytes"
+	case Milliseconds:
+		return "ms"
+	case Nanoseconds:
+		return "ns"
+	case Millicores:
+		return "millicores"
+	}
+	return ""
+}
+
+// ValueType is used to discriminate whether a Value is an int64 or a float64
 type ValueType int8
 
 const (
@@ -63,68 +86,42 @@ func (valueType *ValueType) String() string {
 	return ""
 }
 
-type UnitsType int8
-
-const (
-	// A counter metric.
-	UnitsCount UnitsType = iota
-	// A metric in bytes.
-	UnitsBytes
-	// A metric in milliseconds.
-	UnitsMilliseconds
-	// A metric in nanoseconds.
-	UnitsNanoseconds
-	// A metric in millicores.
-	UnitsMillicores
-)
-
-func (unitsType *UnitsType) String() string {
-	switch *unitsType {
-	case UnitsBytes:
-		return "bytes"
-	case UnitsMilliseconds:
-		return "ms"
-	case UnitsNanoseconds:
-		return "ns"
-	case UnitsMillicores:
-		return "millicores"
-	}
-	return ""
-}
-
-type MetricValue struct {
+// Value represents a metric value that is either a float64 or an int64
+type Value struct {
 	IntValue   int64
 	FloatValue float64
 	ValueType  ValueType
 }
 
-func (metricValue *MetricValue) GetValue() interface{} {
-	if ValueInt64 == metricValue.ValueType {
-		return metricValue.IntValue
-	} else if ValueFloat == metricValue.ValueType {
-		return metricValue.FloatValue
+func (v *Value) GetValue() interface{} {
+	if ValueInt64 == v.ValueType {
+		return v.IntValue
+	} else if ValueFloat == v.ValueType {
+		return v.FloatValue
 	} else {
 		return nil
 	}
 }
 
-type LabeledMetric struct {
+// LabeledValue is a metric value that is either a float64 or an int64 and that has it's own name and values
+type LabeledValue struct {
 	Name   string
 	Labels map[string]string
-	MetricValue
+	Value
 }
 
-func (labeledMetric *LabeledMetric) GetValue() interface{} {
-	if ValueInt64 == labeledMetric.ValueType {
-		return labeledMetric.IntValue
-	} else if ValueFloat == labeledMetric.ValueType {
-		return labeledMetric.FloatValue
+func (l *LabeledValue) GetValue() interface{} {
+	if ValueInt64 == l.ValueType {
+		return l.IntValue
+	} else if ValueFloat == l.ValueType {
+		return l.FloatValue
 	} else {
 		return nil
 	}
 }
 
-type MetricSet struct {
+// Set is a collection of metrics tied to a specific resource
+type Set struct {
 	// CollectionStartTime is a time since when the metrics are collected for this entity.
 	// It is affected by events like entity (e.g. pod) creation, entity restart (e.g. for container),
 	// Kubelet restart.
@@ -133,82 +130,83 @@ type MetricSet struct {
 	// Kubelet restarts.
 	EntityCreateTime time.Time
 	ScrapeTime       time.Time
-	MetricValues     map[string]MetricValue
+	Values           map[string]Value
 	Labels           map[string]string
-	LabeledMetrics   []LabeledMetric
+	LabeledValues    []LabeledValue
 }
 
-type DataBatch struct {
+// Batch contains sets of metrics tied to specific k8s resources and other more general wavefront points
+type Batch struct {
 	Timestamp time.Time
-	// Should use key functions from ms_keys.go
-	MetricSets map[string]*MetricSet
-	Points     []*wf.Point
+	Sets      map[ResourceKey]*Set
+	Points    []*wf.Point
 }
 
-// A place from where the metrics should be scraped.
-type MetricsSource interface {
+// Source produces metric batches
+type Source interface {
 	AutoDiscovered() bool
 	Name() string
-	ScrapeMetrics() (*DataBatch, error)
+	Scrape() (*Batch, error)
 	Cleanup()
 }
 
-// Provider of list of sources to be scraped.
-type MetricsSourceProvider interface {
-	GetMetricsSources() []MetricsSource
+// SourceProvider produces metric sources
+type SourceProvider interface {
+	GetMetricsSources() []Source
 	Name() string
 	CollectionInterval() time.Duration
 	Timeout() time.Duration
 }
 
-type DataSink interface {
-	// Exports data to the external storage. The function should be synchronous/blocking and finish only
-	// after the given DataBatch was written. This will allow sink manager to push data only to these
+// Sink exports metric batches
+type Sink interface {
+	// Export data to the external storage. The function should be synchronous/blocking and finish only
+	// after the given Batch was written. This will allow sink manager to push data only to these
 	// sinks that finished writing the previous data.
-	ExportData(*DataBatch)
+	Export(*Batch)
 }
 
-type DataProcessor interface {
+type Processor interface {
 	Name() string
-	Process(*DataBatch) (*DataBatch, error)
+	Process(*Batch) (*Batch, error)
 }
 
 // ProviderHandler is an interface for dynamically adding and removing MetricSourceProviders
 type ProviderHandler interface {
-	AddProvider(provider MetricsSourceProvider)
+	AddProvider(provider SourceProvider)
 	DeleteProvider(name string)
 }
 
 type ProviderFactory interface {
 	Name() string
-	Build(cfg interface{}) (MetricsSourceProvider, error)
+	Build(cfg interface{}) (SourceProvider, error)
 }
 
-type ConfigurableMetricsSourceProvider interface {
+type ConfigurableSourceProvider interface {
 	Configure(interval, timeout time.Duration)
 }
 
-//DefaultMetricsSourceProvider handle the common providers configuration
-type DefaultMetricsSourceProvider struct {
+//DefaultSourceProvider handle the common providers configuration
+type DefaultSourceProvider struct {
 	collectionInterval time.Duration
 	timeout            time.Duration
 }
 
 // CollectionInterval return the provider collection interval configuration
-func (dp *DefaultMetricsSourceProvider) CollectionInterval() time.Duration {
-	return dp.collectionInterval
+func (sp *DefaultSourceProvider) CollectionInterval() time.Duration {
+	return sp.collectionInterval
 }
 
 // Timeout return the provider timeout configuration
-func (dp *DefaultMetricsSourceProvider) Timeout() time.Duration {
-	return dp.timeout
+func (sp *DefaultSourceProvider) Timeout() time.Duration {
+	return sp.timeout
 }
 
 // Configure the 'collectionInterval' and 'timeout' values
-func (dp *DefaultMetricsSourceProvider) Configure(interval, timeout time.Duration) {
-	dp.collectionInterval = interval // forces default collection interval if zero
-	dp.timeout = timeout
-	if dp.timeout == 0 {
-		dp.timeout = 30 * time.Second
+func (sp *DefaultSourceProvider) Configure(interval, timeout time.Duration) {
+	sp.collectionInterval = interval // forces default collection interval if zero
+	sp.timeout = timeout
+	if sp.timeout == 0 {
+		sp.timeout = 30 * time.Second
 	}
 }

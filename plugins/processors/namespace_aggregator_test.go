@@ -27,15 +27,15 @@ import (
 )
 
 func TestNamespaceAggregate(t *testing.T) {
-	batch := metrics.DataBatch{
+	batch := metrics.Batch{
 		Timestamp: time.Now(),
-		MetricSets: map[string]*metrics.MetricSet{
+		Sets: map[metrics.ResourceKey]*metrics.Set{
 			metrics.PodKey("ns1", "pod1"): {
 				Labels: map[string]string{
 					metrics.LabelMetricSetType.Key: metrics.MetricSetTypePod,
 					metrics.LabelNamespaceName.Key: "ns1",
 				},
-				MetricValues: map[string]metrics.MetricValue{
+				Values: map[string]metrics.Value{
 					"m1": {
 						ValueType: metrics.ValueInt64,
 						IntValue:  10,
@@ -52,7 +52,7 @@ func TestNamespaceAggregate(t *testing.T) {
 					metrics.LabelMetricSetType.Key: metrics.MetricSetTypePod,
 					metrics.LabelNamespaceName.Key: "ns1",
 				},
-				MetricValues: map[string]metrics.MetricValue{
+				Values: map[string]metrics.Value{
 					"m1": {
 						ValueType: metrics.ValueInt64,
 						IntValue:  100,
@@ -70,14 +70,14 @@ func TestNamespaceAggregate(t *testing.T) {
 	}
 	result, err := processor.Process(&batch)
 	assert.NoError(t, err)
-	namespace, found := result.MetricSets[metrics.NamespaceKey("ns1")]
+	namespace, found := result.Sets[metrics.NamespaceKey("ns1")]
 	assert.True(t, found)
 
-	m1, found := namespace.MetricValues["m1"]
+	m1, found := namespace.Values["m1"]
 	assert.True(t, found)
 	assert.Equal(t, int64(110), m1.IntValue)
 
-	m3, found := namespace.MetricValues["m3"]
+	m3, found := namespace.Values["m3"]
 	assert.True(t, found)
 	assert.Equal(t, int64(30), m3.IntValue)
 }

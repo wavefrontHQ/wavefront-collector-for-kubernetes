@@ -27,16 +27,16 @@ import (
 )
 
 func TestPodAggregator(t *testing.T) {
-	batch := metrics.DataBatch{
+	batch := metrics.Batch{
 		Timestamp: time.Now(),
-		MetricSets: map[string]*metrics.MetricSet{
+		Sets: map[metrics.ResourceKey]*metrics.Set{
 			metrics.PodContainerKey("ns1", "pod1", "c1"): {
 				Labels: map[string]string{
 					metrics.LabelMetricSetType.Key: metrics.MetricSetTypePodContainer,
 					metrics.LabelPodName.Key:       "pod1",
 					metrics.LabelNamespaceName.Key: "ns1",
 				},
-				MetricValues: map[string]metrics.MetricValue{
+				Values: map[string]metrics.Value{
 					"m1": {
 						ValueType: metrics.ValueInt64,
 						IntValue:  10,
@@ -54,7 +54,7 @@ func TestPodAggregator(t *testing.T) {
 					metrics.LabelPodName.Key:       "pod1",
 					metrics.LabelNamespaceName.Key: "ns1",
 				},
-				MetricValues: map[string]metrics.MetricValue{
+				Values: map[string]metrics.Value{
 					"m1": {
 						ValueType: metrics.ValueInt64,
 						IntValue:  100,
@@ -72,7 +72,7 @@ func TestPodAggregator(t *testing.T) {
 					metrics.LabelPodName.Key:       "pod2",
 					metrics.LabelNamespaceName.Key: "ns1",
 				},
-				MetricValues: map[string]metrics.MetricValue{
+				Values: map[string]metrics.Value{
 					"m1": {
 						ValueType: metrics.ValueInt64,
 						IntValue:  100,
@@ -86,7 +86,7 @@ func TestPodAggregator(t *testing.T) {
 					metrics.LabelPodName.Key:       "pod2",
 					metrics.LabelNamespaceName.Key: "ns1",
 				},
-				MetricValues: map[string]metrics.MetricValue{
+				Values: map[string]metrics.Value{
 					"m1": {
 						ValueType: metrics.ValueInt64,
 						IntValue:  10,
@@ -102,18 +102,18 @@ func TestPodAggregator(t *testing.T) {
 	processor := PodAggregator{}
 	result, err := processor.Process(&batch)
 	assert.NoError(t, err)
-	pod, found := result.MetricSets[metrics.PodKey("ns1", "pod1")]
+	pod, found := result.Sets[metrics.PodKey("ns1", "pod1")]
 	assert.True(t, found)
 
-	m1, found := pod.MetricValues["m1"]
+	m1, found := pod.Values["m1"]
 	assert.True(t, found)
 	assert.Equal(t, int64(110), m1.IntValue)
 
-	m2, found := pod.MetricValues["m2"]
+	m2, found := pod.Values["m2"]
 	assert.True(t, found)
 	assert.Equal(t, int64(222), m2.IntValue)
 
-	m3, found := pod.MetricValues["m3"]
+	m3, found := pod.Values["m3"]
 	assert.True(t, found)
 	assert.Equal(t, int64(30), m3.IntValue)
 
@@ -125,14 +125,14 @@ func TestPodAggregator(t *testing.T) {
 	assert.True(t, found)
 	assert.Equal(t, "ns1", labelNsName)
 
-	pod, found = result.MetricSets[metrics.PodKey("ns1", "pod2")]
+	pod, found = result.Sets[metrics.PodKey("ns1", "pod2")]
 	assert.True(t, found)
 
-	m1, found = pod.MetricValues["m1"]
+	m1, found = pod.Values["m1"]
 	assert.True(t, found)
 	assert.Equal(t, int64(100), m1.IntValue)
 
-	m2, found = pod.MetricValues["m2"]
+	m2, found = pod.Values["m2"]
 	assert.True(t, found)
 	assert.Equal(t, int64(20), m2.IntValue)
 

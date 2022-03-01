@@ -18,7 +18,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// converts MetricSets to Points.
+// converts Sets to Points.
 type pointConverter struct {
 	cluster string
 	prefix  string
@@ -30,7 +30,7 @@ type pointConverter struct {
 }
 
 // NewPointConverter creates a new processor that converts summary stats data into the Wavefront point format
-func NewPointConverter(cfg configuration.SummarySourceConfig, cluster string) (metrics.DataProcessor, error) {
+func NewPointConverter(cfg configuration.SummarySourceConfig, cluster string) (metrics.Processor, error) {
 	cluster = strings.TrimSpace(cluster)
 	if cluster == "" {
 		cluster = "k8s-cluster"
@@ -51,12 +51,12 @@ func (converter *pointConverter) Name() string {
 	return "wavefront_point_converter"
 }
 
-func (converter *pointConverter) Process(batch *metrics.DataBatch) (*metrics.DataBatch, error) {
-	if len(batch.MetricSets) == 0 {
+func (converter *pointConverter) Process(batch *metrics.Batch) (*metrics.Batch, error) {
+	if len(batch.Sets) == 0 {
 		return batch, nil
 	}
 
-	metricSets := batch.MetricSets
+	metricSets := batch.Sets
 	nodeName := util.GetNodeName()
 	ts := batch.Timestamp
 
@@ -76,8 +76,8 @@ func (converter *pointConverter) Process(batch *metrics.DataBatch) (*metrics.Dat
 			//don't send system subcontainers
 			continue
 		}
-		for _, metricName := range sortedMetricValueKeys(ms.MetricValues) {
-			metricValue := ms.MetricValues[metricName]
+		for _, metricName := range sortedMetricValueKeys(ms.Values) {
+			metricValue := ms.Values[metricName]
 			var value float64
 			if metrics.ValueInt64 == metricValue.ValueType {
 				value = float64(metricValue.IntValue)
@@ -104,7 +104,7 @@ func (converter *pointConverter) Process(batch *metrics.DataBatch) (*metrics.Dat
 			batch.Points = wf.FilterAppend(converter.filters, converter.filteredPoints, batch.Points, point)
 			converter.collectedPoints.Inc(1)
 		}
-		for _, metric := range ms.LabeledMetrics {
+		for _, metric := range ms.LabeledValues {
 			var value float64
 			if metrics.ValueInt64 == metric.ValueType {
 				value = float64(metric.IntValue)
@@ -136,7 +136,7 @@ func (converter *pointConverter) Process(batch *metrics.DataBatch) (*metrics.Dat
 	return batch, nil
 }
 
-func (converter *pointConverter) addLabelTags(ms *metrics.MetricSet, tags map[string]string) {
+func (converter *pointConverter) addLabelTags(ms *metrics.Set, tags map[string]string) {
 	for _, labelName := range sortedLabelKeys(ms.Labels) {
 		labelValue := ms.Labels[labelName]
 		if labelName == "labels" {

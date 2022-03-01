@@ -40,7 +40,7 @@ type DummySink struct {
 func (dummy *DummySink) Name() string {
 	return dummy.name
 }
-func (dummy *DummySink) ExportData(*metrics.DataBatch) {
+func (dummy *DummySink) Export(*metrics.Batch) {
 	dummy.mutex.Lock()
 	dummy.exportCount++
 	dummy.mutex.Unlock()
@@ -82,7 +82,7 @@ func NewDummySink(name string, latency time.Duration) *DummySink {
 
 type DummyMetricsSource struct {
 	latency          time.Duration
-	metricSet        metrics.MetricSet
+	metricSet        metrics.Set
 	name             string
 	autoDiscovered   bool
 	raiseScrapeError bool
@@ -98,7 +98,7 @@ func (dummy *DummyMetricsSource) Name() string {
 
 func (src *DummyMetricsSource) Cleanup() {}
 
-func (dummy *DummyMetricsSource) ScrapeMetrics() (*metrics.DataBatch, error) {
+func (dummy *DummyMetricsSource) Scrape() (*metrics.Batch, error) {
 	time.Sleep(dummy.latency)
 
 	if dummy.raiseScrapeError {
@@ -113,16 +113,16 @@ func (dummy *DummyMetricsSource) ScrapeMetrics() (*metrics.DataBatch, error) {
 		map[string]string{"tag": "tag"},
 	)
 
-	res := &metrics.DataBatch{
+	res := &metrics.Batch{
 		Timestamp: time.Now(),
 	}
 	res.Points = append(res.Points, point)
 	return res, nil
 }
 
-func newDummyMetricSet(name string) metrics.MetricSet {
-	return metrics.MetricSet{
-		MetricValues: map[string]metrics.MetricValue{},
+func newDummyMetricSet(name string) metrics.Set {
+	return metrics.Set{
+		Values: map[string]metrics.Value{},
 		Labels: map[string]string{
 			"name": name,
 		},
@@ -150,13 +150,13 @@ func NewDummyMetricsSourceWithError(name string, latency time.Duration, autoDisc
 }
 
 type DummyMetricsSourceProvider struct {
-	sources           []metrics.MetricsSource
+	sources           []metrics.Source
 	collectionIterval time.Duration
 	timeout           time.Duration
 	name              string
 }
 
-func (dummy *DummyMetricsSourceProvider) GetMetricsSources() []metrics.MetricsSource {
+func (dummy *DummyMetricsSourceProvider) GetMetricsSources() []metrics.Source {
 	return dummy.sources
 }
 
@@ -172,7 +172,7 @@ func (dummy *DummyMetricsSourceProvider) Timeout() time.Duration {
 	return dummy.timeout
 }
 
-func NewDummyMetricsSourceProvider(name string, collectionIterval, timeout time.Duration, sources ...metrics.MetricsSource) metrics.MetricsSourceProvider {
+func NewDummyMetricsSourceProvider(name string, collectionIterval, timeout time.Duration, sources ...metrics.Source) metrics.SourceProvider {
 	return &DummyMetricsSourceProvider{
 		sources:           sources,
 		collectionIterval: collectionIterval,
@@ -189,7 +189,7 @@ func (dummy *DummyDataProcessor) Name() string {
 	return "dummy"
 }
 
-func (dummy *DummyDataProcessor) Process(data *metrics.DataBatch) (*metrics.DataBatch, error) {
+func (dummy *DummyDataProcessor) Process(data *metrics.Batch) (*metrics.Batch, error) {
 	time.Sleep(dummy.latency)
 	return data, nil
 }
@@ -210,7 +210,7 @@ type DummyProviderHandler struct {
 	count int
 }
 
-func (d *DummyProviderHandler) AddProvider(provider metrics.MetricsSourceProvider) {
+func (d *DummyProviderHandler) AddProvider(provider metrics.SourceProvider) {
 	d.count += 1
 }
 

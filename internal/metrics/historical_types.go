@@ -60,15 +60,15 @@ var AllAggregations = map[AggregationType]bool{
 
 // TimestampedMetricValue is a metric value with an associated timestamp
 type TimestampedMetricValue struct {
-	MetricValue
+	Value
 	Timestamp time.Time
 }
 
-// AggregationValue is a description of aggregated MetricValues over time
+// AggregationValue is a description of aggregated Values over time
 type AggregationValue struct {
 	Count *uint64
 
-	Aggregations map[AggregationType]MetricValue
+	Aggregations map[AggregationType]Value
 }
 
 // TimestampedAggregationValue is an aggregation value with an associated timestamp

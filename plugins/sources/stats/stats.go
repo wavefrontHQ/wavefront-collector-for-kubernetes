@@ -22,7 +22,7 @@ import (
 )
 
 type internalMetricsSource struct {
-	metrics.DefaultMetricsSourceProvider
+	metrics.DefaultSourceProvider
 	prefix  string
 	tags    map[string]string
 	filters filter.Filter
@@ -33,7 +33,7 @@ type internalMetricsSource struct {
 	fps         gometrics.Counter
 }
 
-func newInternalMetricsSource(prefix string, tags map[string]string, filters filter.Filter) (metrics.MetricsSource, error) {
+func newInternalMetricsSource(prefix string, tags map[string]string, filters filter.Filter) (metrics.Source, error) {
 	ppsKey := reporting.EncodeKey("source.points.collected", map[string]string{"type": "internal"})
 	fpsKey := reporting.EncodeKey("source.points.filtered", map[string]string{"type": "internal"})
 
@@ -77,13 +77,13 @@ func (src *internalMetricsSource) Name() string {
 
 func (src *internalMetricsSource) Cleanup() {}
 
-func (src *internalMetricsSource) ScrapeMetrics() (*metrics.DataBatch, error) {
+func (src *internalMetricsSource) Scrape() (*metrics.Batch, error) {
 	return src.internalStats()
 }
 
-func (src *internalMetricsSource) internalStats() (*metrics.DataBatch, error) {
+func (src *internalMetricsSource) internalStats() (*metrics.Batch, error) {
 	now := time.Now()
-	result := &metrics.DataBatch{
+	result := &metrics.Batch{
 		Timestamp: now,
 	}
 	var points []*wf.Point

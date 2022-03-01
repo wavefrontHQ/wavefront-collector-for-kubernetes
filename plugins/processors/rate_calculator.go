@@ -30,7 +30,7 @@ type RateCalculator struct {
 	rateMetricsMapping map[string]metrics.Metric
 
 	lock               sync.Mutex
-	previousMetricSets map[string]*metrics.MetricSet
+	previousMetricSets map[metrics.ResourceKey]*metrics.Set
 	cachePruneInterval time.Duration
 	lastPruneTime      time.Time
 }
@@ -39,11 +39,11 @@ func (rc *RateCalculator) Name() string {
 	return "rate calculator"
 }
 
-func (rc *RateCalculator) Process(batch *metrics.DataBatch) (*metrics.DataBatch, error) {
+func (rc *RateCalculator) Process(batch *metrics.Batch) (*metrics.Batch, error) {
 	rc.lock.Lock()
 	defer rc.lock.Unlock()
 
-	for key, newMs := range batch.MetricSets {
+	for key, newMs := range batch.Sets {
 		oldMs, found := rc.previousMetricSets[key]
 		if !found {
 			log.Debugf("Skipping rates for '%s' - no previous batch found", key)
@@ -62,19 +62,19 @@ func (rc *RateCalculator) Process(batch *metrics.DataBatch) (*metrics.DataBatch,
 			continue
 		}
 
-		var metricValNew, metricValOld metrics.MetricValue
+		var metricValNew, metricValOld metrics.Value
 		var foundNew, foundOld bool
 
 		for metricName, targetMetric := range rc.rateMetricsMapping {
 			if metricName == metrics.MetricDiskIORead.MetricDescriptor.Name || metricName == metrics.MetricDiskIOWrite.MetricDescriptor.Name {
-				for _, itemNew := range newMs.LabeledMetrics {
+				for _, itemNew := range newMs.LabeledValues {
 					foundNew, foundOld = false, false
 					if itemNew.Name == metricName {
-						metricValNew, foundNew = itemNew.MetricValue, true
-						for _, itemOld := range oldMs.LabeledMetrics {
+						metricValNew, foundNew = itemNew.Value, true
+						for _, itemOld := range oldMs.LabeledValues {
 							// Fix negative value on "disk/io_read_bytes_rate" and "disk/io_write_bytes_rate" when multiple disk devices are available
 							if itemOld.Name == metricName && itemOld.Labels[metrics.LabelResourceID.Key] == itemNew.Labels[metrics.LabelResourceID.Key] {
-								metricValOld, foundOld = itemOld.MetricValue, true
+								metricValOld, foundOld = itemOld.Value, true
 								break
 							}
 						}
@@ -85,10 +85,10 @@ func (rc *RateCalculator) Process(batch *metrics.DataBatch) (*metrics.DataBatch,
 							newVal := 1e9 * float64(metricValNew.IntValue-metricValOld.IntValue) /
 								float64(newMs.ScrapeTime.UnixNano()-oldMs.ScrapeTime.UnixNano())
 
-							newMs.LabeledMetrics = append(newMs.LabeledMetrics, metrics.LabeledMetric{
+							newMs.LabeledValues = append(newMs.LabeledValues, metrics.LabeledValue{
 								Name:   targetMetric.MetricDescriptor.Name,
 								Labels: itemNew.Labels,
-								MetricValue: metrics.MetricValue{
+								Value: metrics.Value{
 									ValueType:  metrics.ValueFloat,
 									FloatValue: newVal,
 								},
@@ -99,15 +99,15 @@ func (rc *RateCalculator) Process(batch *metrics.DataBatch) (*metrics.DataBatch,
 					}
 				}
 			} else {
-				metricValNew, foundNew = newMs.MetricValues[metricName]
-				metricValOld, foundOld = oldMs.MetricValues[metricName]
+				metricValNew, foundNew = newMs.Values[metricName]
+				metricValOld, foundOld = oldMs.Values[metricName]
 
 				if foundNew && foundOld && metricName == metrics.MetricCpuUsage.MetricDescriptor.Name {
 					// cpu/usage values are in nanoseconds; we want to have it in millicores (that's why constant 1000 is here).
 					newVal := 1000 * (metricValNew.IntValue - metricValOld.IntValue) /
 						(newMs.ScrapeTime.UnixNano() - oldMs.ScrapeTime.UnixNano())
 
-					newMs.MetricValues[targetMetric.MetricDescriptor.Name] = metrics.MetricValue{
+					newMs.Values[targetMetric.MetricDescriptor.Name] = metrics.Value{
 						ValueType: metrics.ValueInt64,
 						IntValue:  newVal,
 					}
@@ -116,7 +116,7 @@ func (rc *RateCalculator) Process(batch *metrics.DataBatch) (*metrics.DataBatch,
 					newVal := 1e9 * float64(metricValNew.IntValue-metricValOld.IntValue) /
 						float64(newMs.ScrapeTime.UnixNano()-oldMs.ScrapeTime.UnixNano())
 
-					newMs.MetricValues[targetMetric.MetricDescriptor.Name] = metrics.MetricValue{
+					newMs.Values[targetMetric.MetricDescriptor.Name] = metrics.Value{
 						ValueType:  metrics.ValueFloat,
 						FloatValue: newVal,
 					}
@@ -133,7 +133,7 @@ func (rc *RateCalculator) Process(batch *metrics.DataBatch) (*metrics.DataBatch,
 	if rc.lastPruneTime.Before(time.Now().Add(-1 * rc.cachePruneInterval)) {
 		log.Infof("pruning rate cache. cache size: %d lastPruneTime: %v", len(rc.previousMetricSets), rc.lastPruneTime)
 		for key := range rc.previousMetricSets {
-			if _, found := batch.MetricSets[key]; !found {
+			if _, found := batch.Sets[key]; !found {
 				log.Debugf("removing key %s from rate cache", key)
 				delete(rc.previousMetricSets, key)
 			}
@@ -147,7 +147,7 @@ func (rc *RateCalculator) Process(batch *metrics.DataBatch) (*metrics.DataBatch,
 func NewRateCalculator(rateMetricsMapping map[string]metrics.Metric) *RateCalculator {
 	return &RateCalculator{
 		rateMetricsMapping: rateMetricsMapping,
-		previousMetricSets: make(map[string]*metrics.MetricSet, 256),
+		previousMetricSets: make(map[metrics.ResourceKey]*metrics.Set, 256),
 		cachePruneInterval: 5 * time.Minute,
 		lastPruneTime:      time.Now(),
 	}

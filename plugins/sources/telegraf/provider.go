@@ -97,10 +97,10 @@ func (t *telegrafPluginSource) Name() string {
 	return "telegraf_" + t.name + "_source"
 }
 
-func (t *telegrafPluginSource) ScrapeMetrics() (*metrics.DataBatch, error) {
+func (t *telegrafPluginSource) Scrape() (*metrics.Batch, error) {
 	result := &telegrafDataBatch{
-		DataBatch: metrics.DataBatch{Timestamp: time.Now()},
-		source:    t,
+		Batch:  metrics.Batch{Timestamp: time.Now()},
+		source: t,
 	}
 
 	// Gather invokes callbacks on telegrafDataBatch
@@ -123,18 +123,18 @@ func (t *telegrafPluginSource) ScrapeMetrics() (*metrics.DataBatch, error) {
 	if t.targetPPS != nil {
 		t.targetPPS.Inc(int64(count))
 	}
-	return &result.DataBatch, nil
+	return &result.Batch, nil
 }
 
 // Telegraf provider
 type telegrafProvider struct {
-	metrics.DefaultMetricsSourceProvider
+	metrics.DefaultSourceProvider
 	name              string
 	useLeaderElection bool
-	sources           []metrics.MetricsSource
+	sources           []metrics.Source
 }
 
-func (p telegrafProvider) GetMetricsSources() []metrics.MetricsSource {
+func (p telegrafProvider) GetMetricsSources() []metrics.Source {
 	// only the leader will collect from a static source (not auto-discovered) that is not a host plugin
 	if p.useLeaderElection && !leadership.Leading() {
 		log.Infof("not scraping sources from: %s. current leader: %s", p.name, leadership.Leader())
@@ -152,7 +152,7 @@ const providerName = "telegraf_provider"
 var hostPlugins = []string{"mem", "net", "netstat", "linux_sysctl_fs", "swap", "cpu", "disk", "diskio", "system", "kernel", "processes"}
 
 // NewProvider creates a Telegraf source
-func NewProvider(cfg configuration.TelegrafSourceConfig) (metrics.MetricsSourceProvider, error) {
+func NewProvider(cfg configuration.TelegrafSourceConfig) (metrics.SourceProvider, error) {
 	prefix := configuration.GetStringValue(cfg.Prefix, "")
 	if len(prefix) > 0 {
 		prefix = strings.Trim(prefix, ".")
@@ -168,7 +168,7 @@ func NewProvider(cfg configuration.TelegrafSourceConfig) (metrics.MetricsSourceP
 	discovered := cfg.Discovered
 	hostPlugin := true
 
-	var sources []metrics.MetricsSource
+	var sources []metrics.Source
 	for _, name := range plugins {
 		creator := telegrafPlugins.Inputs[strings.Trim(name, " ")]
 		if creator != nil {

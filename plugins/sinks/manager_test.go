@@ -37,13 +37,13 @@ func TestAllExportsInTime(t *testing.T) {
 	manager, _ := NewSinkManager([]wavefront.WavefrontSink{sink1, sink2}, timeout, timeout)
 
 	now := time.Now()
-	batch := metrics.DataBatch{
+	batch := metrics.Batch{
 		Timestamp: now,
 	}
 
-	manager.ExportData(&batch)
-	manager.ExportData(&batch)
-	manager.ExportData(&batch)
+	manager.Export(&batch)
+	manager.Export(&batch)
+	manager.Export(&batch)
 
 	elapsed := time.Now().Sub(now)
 	if elapsed > 3*timeout+2*time.Second {
@@ -63,13 +63,13 @@ func TestOneExportInTime(t *testing.T) {
 	manager, _ := NewSinkManager([]wavefront.WavefrontSink{sink1, sink2}, timeout, timeout)
 
 	now := time.Now()
-	batch := metrics.DataBatch{
+	batch := metrics.Batch{
 		Timestamp: now,
 	}
 
-	manager.ExportData(&batch)
-	manager.ExportData(&batch)
-	manager.ExportData(&batch)
+	manager.Export(&batch)
+	manager.Export(&batch)
+	manager.Export(&batch)
 
 	elapsed := time.Now().Sub(now)
 	if elapsed > 2*timeout+2*time.Second {
@@ -92,13 +92,13 @@ func TestNoExportInTime(t *testing.T) {
 	manager, _ := NewSinkManager([]wavefront.WavefrontSink{sink1, sink2}, timeout, timeout)
 
 	now := time.Now()
-	batch := metrics.DataBatch{
+	batch := metrics.Batch{
 		Timestamp: now,
 	}
 
-	manager.ExportData(&batch)
-	manager.ExportData(&batch)
-	manager.ExportData(&batch)
+	manager.Export(&batch)
+	manager.Export(&batch)
+	manager.Export(&batch)
 
 	elapsed := time.Now().Sub(now)
 	if elapsed > 2*timeout+2*time.Second {

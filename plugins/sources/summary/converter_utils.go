@@ -13,18 +13,18 @@ const (
 	sysSubContainerName = "system.slice/"
 )
 
-func sortedMetricSetKeys(m map[string]*metrics.MetricSet) []string {
-	keys := make([]string, len(m))
+func sortedMetricSetKeys(m map[metrics.ResourceKey]*metrics.Set) []metrics.ResourceKey {
+	keys := make([]metrics.ResourceKey, len(m))
 	i := 0
 	for k := range m {
 		keys[i] = k
 		i++
 	}
-	sort.Strings(keys)
+	sort.Sort(metrics.SetKeys(keys))
 	return keys
 }
 
-func sortedMetricValueKeys(m map[string]metrics.MetricValue) []string {
+func sortedMetricValueKeys(m map[string]metrics.Value) []string {
 	keys := make([]string, len(m))
 	i := 0
 	for k := range m {

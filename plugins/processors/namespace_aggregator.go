@@ -31,9 +31,9 @@ func (aggregator *NamespaceAggregator) Name() string {
 	return "namespace_aggregator"
 }
 
-func (aggregator *NamespaceAggregator) Process(batch *metrics.DataBatch) (*metrics.DataBatch, error) {
-	namespaces := make(map[string]*metrics.MetricSet)
-	for key, metricSet := range batch.MetricSets {
+func (aggregator *NamespaceAggregator) Process(batch *metrics.Batch) (*metrics.Batch, error) {
+	namespaces := make(map[metrics.ResourceKey]*metrics.Set)
+	for key, metricSet := range batch.Sets {
 		metricSetType, found := metricSet.Labels[metrics.LabelMetricSetType.Key]
 		if !found || (metricSetType != metrics.MetricSetTypePod && metricSetType != metrics.MetricSetTypePodContainer) {
 			continue
@@ -48,7 +48,7 @@ func (aggregator *NamespaceAggregator) Process(batch *metrics.DataBatch) (*metri
 		namespaceKey := metrics.NamespaceKey(namespaceName)
 		namespace, found := namespaces[namespaceKey]
 		if !found {
-			if nsFromBatch, found := batch.MetricSets[namespaceKey]; found {
+			if nsFromBatch, found := batch.Sets[namespaceKey]; found {
 				namespace = nsFromBatch
 			} else {
 				namespace = namespaceMetricSet(namespaceName, metricSet.Labels[metrics.LabelPodNamespaceUID.Key])
@@ -70,14 +70,14 @@ func (aggregator *NamespaceAggregator) Process(batch *metrics.DataBatch) (*metri
 		}
 	}
 	for key, val := range namespaces {
-		batch.MetricSets[key] = val
+		batch.Sets[key] = val
 	}
 	return batch, nil
 }
 
-func namespaceMetricSet(namespaceName, uid string) *metrics.MetricSet {
-	return &metrics.MetricSet{
-		MetricValues: make(map[string]metrics.MetricValue),
+func namespaceMetricSet(namespaceName, uid string) *metrics.Set {
+	return &metrics.Set{
+		Values: make(map[string]metrics.Value),
 		Labels: map[string]string{
 			metrics.LabelMetricSetType.Key:   metrics.MetricSetTypeNamespace,
 			metrics.LabelNamespaceName.Key:   namespaceName,

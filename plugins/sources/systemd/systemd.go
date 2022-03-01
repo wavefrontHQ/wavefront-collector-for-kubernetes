@@ -68,7 +68,7 @@ func (src *systemdMetricsSource) Name() string {
 
 func (src *systemdMetricsSource) Cleanup() {}
 
-func (src *systemdMetricsSource) ScrapeMetrics() (*DataBatch, error) {
+func (src *systemdMetricsSource) Scrape() (*Batch, error) {
 	// gathers metrics from systemd using dbus. collection is done in parallel to reduce wait time for responses.
 	conn, err := dbus.New()
 	if err != nil {
@@ -84,7 +84,7 @@ func (src *systemdMetricsSource) ScrapeMetrics() (*DataBatch, error) {
 	}
 
 	now := time.Now().Unix()
-	result := &DataBatch{
+	result := &Batch{
 		Timestamp: time.Now(),
 	}
 
@@ -399,11 +399,11 @@ func (src *systemdMetricsSource) metricPoint(name string, value float64, ts int6
 }
 
 type systemdProvider struct {
-	metrics.DefaultMetricsSourceProvider
-	sources []MetricsSource
+	metrics.DefaultSourceProvider
+	sources []Source
 }
 
-func (sp *systemdProvider) GetMetricsSources() []MetricsSource {
+func (sp *systemdProvider) GetMetricsSources() []Source {
 	return sp.sources
 }
 
@@ -411,7 +411,7 @@ func (sp *systemdProvider) Name() string {
 	return "systemd_provider"
 }
 
-func NewProvider(cfg configuration.SystemdSourceConfig) (MetricsSourceProvider, error) {
+func NewProvider(cfg configuration.SystemdSourceConfig) (SourceProvider, error) {
 	prefix := configuration.GetStringValue(cfg.Prefix, "kubernetes.systemd.")
 	source := configuration.GetStringValue(cfg.Source, util.GetNodeName())
 
@@ -434,7 +434,7 @@ func NewProvider(cfg configuration.SystemdSourceConfig) (MetricsSourceProvider, 
 	fpsKey := reporting.EncodeKey("source.points.filtered", pt)
 	epsKey := reporting.EncodeKey("source.collect.errors", pt)
 
-	sources := make([]MetricsSource, 1)
+	sources := make([]Source, 1)
 	sources[0] = &systemdMetricsSource{
 		prefix:                  prefix,
 		source:                  source,

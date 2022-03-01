@@ -30,9 +30,9 @@ func TestRateCalculator(t *testing.T) {
 	key := metrics.PodContainerKey("ns1", "pod1", "c")
 	now := time.Now()
 
-	prev := &metrics.DataBatch{
+	prev := &metrics.Batch{
 		Timestamp: now.Add(-time.Minute),
-		MetricSets: map[string]*metrics.MetricSet{
+		Sets: map[metrics.ResourceKey]*metrics.Set{
 			key: {
 				CollectionStartTime: now.Add(-time.Hour),
 				ScrapeTime:          now.Add(-60 * time.Second),
@@ -40,7 +40,7 @@ func TestRateCalculator(t *testing.T) {
 				Labels: map[string]string{
 					metrics.LabelMetricSetType.Key: metrics.MetricSetTypePodContainer,
 				},
-				MetricValues: map[string]metrics.MetricValue{
+				Values: map[string]metrics.Value{
 					metrics.MetricCpuUsage.MetricDescriptor.Name: {
 						ValueType: metrics.ValueInt64,
 						IntValue:  947130377781,
@@ -54,10 +54,9 @@ func TestRateCalculator(t *testing.T) {
 		},
 	}
 
-	current := &metrics.DataBatch{
+	current := &metrics.Batch{
 		Timestamp: now,
-		MetricSets: map[string]*metrics.MetricSet{
-
+		Sets: map[metrics.ResourceKey]*metrics.Set{
 			key: {
 				CollectionStartTime: now.Add(-time.Hour),
 				ScrapeTime:          now,
@@ -65,7 +64,7 @@ func TestRateCalculator(t *testing.T) {
 				Labels: map[string]string{
 					metrics.LabelMetricSetType.Key: metrics.MetricSetTypePodContainer,
 				},
-				MetricValues: map[string]metrics.MetricValue{
+				Values: map[string]metrics.Value{
 					metrics.MetricCpuUsage.MetricDescriptor.Name: {
 						ValueType: metrics.ValueInt64,
 						IntValue:  948071062732,
@@ -83,9 +82,9 @@ func TestRateCalculator(t *testing.T) {
 	procesor.Process(prev)
 	procesor.Process(current)
 
-	ms := current.MetricSets[key]
-	cpuRate := ms.MetricValues[metrics.MetricCpuUsageRate.Name]
-	txeRate := ms.MetricValues[metrics.MetricNetworkTxErrorsRate.Name]
+	ms := current.Sets[key]
+	cpuRate := ms.Values[metrics.MetricCpuUsageRate.Name]
+	txeRate := ms.Values[metrics.MetricNetworkTxErrorsRate.Name]
 
 	assert.InEpsilon(t, 13, cpuRate.IntValue, 2)
 	assert.InEpsilon(t, 2, txeRate.FloatValue, 0.1)

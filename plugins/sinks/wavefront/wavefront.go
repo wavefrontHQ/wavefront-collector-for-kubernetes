@@ -59,7 +59,7 @@ func init() {
 type WavefrontSink interface {
 	Name() string
 	Stop()
-	metrics.DataSink
+	metrics.Sink
 	events.EventSink
 }
 
@@ -176,7 +176,7 @@ func (sink *wavefrontSink) logVerboseError(f log.Fields, msg string) {
 	}
 }
 
-func (sink *wavefrontSink) send(batch *metrics.DataBatch) {
+func (sink *wavefrontSink) send(batch *metrics.Batch) {
 	log.Debugf("received metric points: %d", len(batch.Points))
 
 	before := errPoints.Count()
@@ -196,7 +196,7 @@ func (sink *wavefrontSink) send(batch *metrics.DataBatch) {
 	}
 
 	// This seems like an odd place for this considering that we still have references to the big
-	// memory user, the DataBatch. However, moving it until that reference was released actually
+	// memory user, the Batch. However, moving it until that reference was released actually
 	// reduced the effectiveness of this flag. The garbage collector has some interesting ideas about
 	// what to clean and when.
 	if sink.forceGC {
@@ -205,7 +205,7 @@ func (sink *wavefrontSink) send(batch *metrics.DataBatch) {
 	}
 }
 
-func (sink *wavefrontSink) ExportData(batch *metrics.DataBatch) {
+func (sink *wavefrontSink) Export(batch *metrics.Batch) {
 	sink.send(batch)
 }
 

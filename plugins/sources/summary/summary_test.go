@@ -146,9 +146,9 @@ func TestScrapeSummaryMetrics(t *testing.T) {
 	ms := testingSummaryMetricsSource(uint(port))
 	ms.node.IP = ip
 
-	res, err := ms.ScrapeMetrics()
+	res, err := ms.Scrape()
 	assert.Nil(t, err, "scrape error")
-	assert.Equal(t, res.MetricSets["node:test"].Labels[core.LabelMetricSetType.Key], core.MetricSetTypeNode)
+	assert.Equal(t, res.Sets["node:test"].Labels[core.LabelMetricSetType.Key], core.MetricSetTypeNode)
 }
 
 func TestAddSummaryMetrics(t *testing.T) {
@@ -157,13 +157,13 @@ func TestAddSummaryMetrics(t *testing.T) {
 	summary := getTestStatsSummary()
 
 	expectations := getTestSummaryExpectations()
-	dataBatch := &core.DataBatch{
-		Timestamp:  time.Now(),
-		MetricSets: map[string]*core.MetricSet{},
+	dataBatch := &core.Batch{
+		Timestamp: time.Now(),
+		Sets:      map[core.ResourceKey]*core.Set{},
 	}
 
 	ms.addSummaryMetricSets(dataBatch, &summary)
-	metrics := dataBatch.MetricSets
+	metrics := dataBatch.Sets
 	for _, e := range expectations {
 		m, ok := metrics[e.key]
 		if !assert.True(t, ok, "missing metric %q", e.key) {
@@ -210,7 +210,7 @@ func TestAddSummaryMetrics(t *testing.T) {
 	// Verify volume information labeled metrics
 	var volumeInformationMetricsKey = core.PodKey(namespace0, pName3)
 	var mappedVolumeStats = map[string]int64{}
-	for _, labeledMetric := range metrics[volumeInformationMetricsKey].LabeledMetrics {
+	for _, labeledMetric := range metrics[volumeInformationMetricsKey].LabeledValues {
 		assert.True(t, strings.HasPrefix("Volume:C", labeledMetric.Labels["resource_id"]))
 		mappedVolumeStats[labeledMetric.Name] = labeledMetric.IntValue
 	}
@@ -274,9 +274,9 @@ func TestAddCompletedPodMetricSets(t *testing.T) {
 	}
 
 	ms := testingSummaryMetricsSource(1234)
-	dataBatch := &core.DataBatch{
-		Timestamp:  time.Now(),
-		MetricSets: map[string]*core.MetricSet{},
+	dataBatch := &core.Batch{
+		Timestamp: time.Now(),
+		Sets:      map[core.ResourceKey]*core.Set{},
 	}
 
 	t.Run("handles empty pod list", func(t *testing.T) {
@@ -284,28 +284,28 @@ func TestAddCompletedPodMetricSets(t *testing.T) {
 			Items: []v1.Pod{},
 		}
 		ms.addCompletedPodMetricSets(dataBatch, &emptyPodList)
-		assert.Equal(t, 0, len(dataBatch.MetricSets))
+		assert.Equal(t, 0, len(dataBatch.Sets))
 	})
 
 	t.Run("adds failed or succeeded pods", func(t *testing.T) {
 		ms.addCompletedPodMetricSets(dataBatch, &podList)
-		assert.Equal(t, 3, len(dataBatch.MetricSets))
+		assert.Equal(t, 3, len(dataBatch.Sets))
 	})
 
 	t.Run("only adds missing failed or succeeded pods", func(t *testing.T) {
 		addFakePodMetric(dataBatch, ms, podList.Items[3])
 		addFakePodMetric(dataBatch, ms, podList.Items[2])
 		ms.addCompletedPodMetricSets(dataBatch, &podList)
-		assert.Equal(t, 4, len(dataBatch.MetricSets))
+		assert.Equal(t, 4, len(dataBatch.Sets))
 
-		podMetrics := dataBatch.MetricSets[core.PodKey(namespace0, "just-completed-pod")]
-		assert.NotNil(t, podMetrics.MetricValues[core.MetricUptime.Name], "expected to not override uptime metric")
-		assert.NotNil(t, podMetrics.MetricValues[core.MetricCpuUsage.Name], "expected to not override cpu usage metric")
+		podMetrics := dataBatch.Sets[core.PodKey(namespace0, "just-completed-pod")]
+		assert.NotNil(t, podMetrics.Values[core.MetricUptime.Name], "expected to not override uptime metric")
+		assert.NotNil(t, podMetrics.Values[core.MetricCpuUsage.Name], "expected to not override cpu usage metric")
 	})
 
 	t.Run("pod metrics values", func(t *testing.T) {
 		ms.addCompletedPodMetricSets(dataBatch, &podList)
-		podMetrics := dataBatch.MetricSets[core.PodKey(namespace0, "failed-pod")]
+		podMetrics := dataBatch.Sets[core.PodKey(namespace0, "failed-pod")]
 		pod := podList.Items[0]
 
 		assert.Equal(t, core.MetricSetTypePod, podMetrics.Labels[core.LabelMetricSetType.Key])
@@ -329,7 +329,7 @@ func TestDecodeEphemeralStorageStatsForContainer(t *testing.T) {
 // test support functions
 func (f *fakeSource) Name() string { return "fake" }
 
-func (f *fakeSource) ScrapeMetrics() (*core.DataBatch, error) {
+func (f *fakeSource) ScrapeMetrics() (*core.Batch, error) {
 	f.scraped = true
 	return nil, nil
 }
@@ -343,7 +343,7 @@ func testingSummaryMetricsSource(port uint) *summaryMetricsSource {
 }
 
 func getTestSummaryExpectations() []struct {
-	key                       string
+	key                       core.ResourceKey
 	setType                   string
 	seed                      int64
 	cpu                       bool
@@ -356,7 +356,7 @@ func getTestSummaryExpectations() []struct {
 } {
 	containerFs := []string{"/", "logs"}
 	expectations := []struct {
-		key                       string
+		key                       core.ResourceKey
 		setType                   string
 		seed                      int64
 		cpu                       bool
@@ -727,16 +727,16 @@ func uint64Val(seed, offset int) *uint64 {
 	return &val
 }
 
-func checkIntMetric(t *testing.T, metrics *core.MetricSet, key string, metric core.Metric, value int64) {
-	m, ok := metrics.MetricValues[metric.Name]
+func checkIntMetric(t *testing.T, metrics *core.Set, key core.ResourceKey, metric core.Metric, value int64) {
+	m, ok := metrics.Values[metric.Name]
 	if !assert.True(t, ok, "missing %q:%q", key, metric.Name) {
 		return
 	}
 	assert.Equal(t, value, m.IntValue, "%q:%q", key, metric.Name)
 }
 
-func checkFsMetric(t *testing.T, metrics *core.MetricSet, key, label string, metric core.Metric, value int64) {
-	for _, m := range metrics.LabeledMetrics {
+func checkFsMetric(t *testing.T, metrics *core.Set, key core.ResourceKey, label string, metric core.Metric, value int64) {
+	for _, m := range metrics.LabeledValues {
 		if m.Name == metric.Name && m.Labels[core.LabelResourceID.Key] == label {
 			assert.Equal(t, value, m.IntValue, "%q:%q[%s]", key, metric.Name, label)
 			return
@@ -745,8 +745,8 @@ func checkFsMetric(t *testing.T, metrics *core.MetricSet, key, label string, met
 	assert.Fail(t, "missing filesystem metric", "%q:[%q]:%q", key, metric.Name, label)
 }
 
-func checkAcceleratorMetric(t *testing.T, metrics *core.MetricSet, key string, metric core.Metric, value int64) {
-	for _, m := range metrics.LabeledMetrics {
+func checkAcceleratorMetric(t *testing.T, metrics *core.Set, key core.ResourceKey, metric core.Metric, value int64) {
+	for _, m := range metrics.LabeledValues {
 		if m.Name == metric.Name {
 			assert.Equal(t, value, m.IntValue, "%q:%q", key, metric.Name)
 			return
@@ -755,11 +755,11 @@ func checkAcceleratorMetric(t *testing.T, metrics *core.MetricSet, key string, m
 	assert.Fail(t, "missing accelerator metric", "%q:[%q]", key, metric.Name)
 }
 
-func addFakePodMetric(dataBatch *core.DataBatch, ms *summaryMetricsSource, pod v1.Pod) {
-	podMetrics := &core.MetricSet{
+func addFakePodMetric(dataBatch *core.Batch, ms *summaryMetricsSource, pod v1.Pod) {
+	podMetrics := &core.Set{
 		Labels:              map[string]string{},
-		MetricValues:        map[string]core.MetricValue{},
-		LabeledMetrics:      []core.LabeledMetric{},
+		Values:              map[string]core.Value{},
+		LabeledValues:       []core.LabeledValue{},
 		CollectionStartTime: pod.Status.StartTime.Time,
 		ScrapeTime:          dataBatch.Timestamp,
 	}
@@ -769,7 +769,7 @@ func addFakePodMetric(dataBatch *core.DataBatch, ms *summaryMetricsSource, pod v
 	podMetrics.Labels[core.LabelPodName.Key] = pod.Name
 	podMetrics.Labels[core.LabelNamespaceName.Key] = pod.Namespace
 
-	dataBatch.MetricSets[core.PodKey(pod.Namespace, pod.Name)] = podMetrics
+	dataBatch.Sets[core.PodKey(pod.Namespace, pod.Name)] = podMetrics
 	uptime := uint64(time.Since(startTime).Nanoseconds() / time.Millisecond.Nanoseconds())
 	cpu := uint64(1000)
 	ms.addIntMetric(podMetrics, &core.MetricUptime, &uptime)

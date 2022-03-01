@@ -1,7 +1,7 @@
 package metrics
 
 type errorSourceDecorator struct {
-	src     MetricsSource
+	src     Source
 	errFunc func(err error) error
 }
 
@@ -10,11 +10,11 @@ func (c *errorSourceDecorator) Name() string {
 }
 
 func (c *errorSourceDecorator) AutoDiscovered() bool {
-	return false
+	return c.src.AutoDiscovered()
 }
 
-func (c *errorSourceDecorator) ScrapeMetrics() (*DataBatch, error) {
-	dataBatch, err := c.src.ScrapeMetrics()
+func (c *errorSourceDecorator) Scrape() (*Batch, error) {
+	dataBatch, err := c.src.Scrape()
 	return dataBatch, c.errFunc(err)
 }
 
@@ -22,7 +22,7 @@ func (c *errorSourceDecorator) Cleanup() {
 	c.src.Cleanup()
 }
 
-// NewErrorDecorator creates a MetricSource that transforms ScrapeMetrics errors
-func NewErrorDecorator(src MetricsSource, errFunc func(err error) error) MetricsSource {
+// NewErrorDecorator creates a MetricSource that transforms Scrape errors
+func NewErrorDecorator(src Source, errFunc func(err error) error) Source {
 	return &errorSourceDecorator{src: src, errFunc: errFunc}
 }

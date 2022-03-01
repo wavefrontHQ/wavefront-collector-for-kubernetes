@@ -32,8 +32,8 @@ func (aggregator *NodeAggregator) Name() string {
 	return "node_aggregator"
 }
 
-func (aggregator *NodeAggregator) Process(batch *metrics.DataBatch) (*metrics.DataBatch, error) {
-	for key, metricSet := range batch.MetricSets {
+func (aggregator *NodeAggregator) Process(batch *metrics.Batch) (*metrics.Batch, error) {
+	for key, metricSet := range batch.Sets {
 		metricSetType, found := metricSet.Labels[metrics.LabelMetricSetType.Key]
 		if !found || (metricSetType != metrics.MetricSetTypePod && metricSetType != metrics.MetricSetTypePodContainer) {
 			continue
@@ -50,7 +50,7 @@ func (aggregator *NodeAggregator) Process(batch *metrics.DataBatch) (*metrics.Da
 			continue
 		}
 		nodeKey := metrics.NodeKey(nodeName)
-		node, found := batch.MetricSets[nodeKey]
+		node, found := batch.Sets[nodeKey]
 		if !found {
 			log.Infof("No metric for node %s, cannot perform node level aggregation.", nodeKey)
 		} else {

@@ -38,13 +38,13 @@ func (nae *NodeAutoscalingEnricher) Name() string {
 	return "node_autoscaling_enricher"
 }
 
-func (nae *NodeAutoscalingEnricher) Process(batch *metrics.DataBatch) (*metrics.DataBatch, error) {
+func (nae *NodeAutoscalingEnricher) Process(batch *metrics.Batch) (*metrics.Batch, error) {
 	nodes, err := nae.nodeLister.List(labels.Everything())
 	if err != nil {
 		return nil, err
 	}
 	for _, node := range nodes {
-		if metricSet, found := batch.MetricSets[metrics.NodeKey(node.Name)]; found {
+		if metricSet, found := batch.Sets[metrics.NodeKey(node.Name)]; found {
 			nae.labelCopier.Copy(node.Labels, metricSet.Labels)
 			metricSet.Labels[metrics.LabelNodeRole.Key] = util.GetNodeRole(node)
 			capacityCpu, _ := node.Status.Capacity[kube_api.ResourceCPU]
@@ -88,15 +88,15 @@ func (nae *NodeAutoscalingEnricher) Process(batch *metrics.DataBatch) (*metrics.
 	return batch, nil
 }
 
-func getInt(metricSet *metrics.MetricSet, metric *metrics.Metric) int64 {
-	if value, found := metricSet.MetricValues[metric.MetricDescriptor.Name]; found {
+func getInt(metricSet *metrics.Set, metric *metrics.Metric) int64 {
+	if value, found := metricSet.Values[metric.MetricDescriptor.Name]; found {
 		return value.IntValue
 	}
 	return 0
 }
 
-func setFloat(metricSet *metrics.MetricSet, metric *metrics.Metric, value float64) {
-	metricSet.MetricValues[metric.MetricDescriptor.Name] = metrics.MetricValue{
+func setFloat(metricSet *metrics.Set, metric *metrics.Metric, value float64) {
+	metricSet.Values[metric.MetricDescriptor.Name] = metrics.Value{
 		ValueType:  metrics.ValueFloat,
 		FloatValue: value,
 	}
