@@ -20,7 +20,7 @@ func sortedMetricSetKeys(m map[metrics.ResourceKey]*metrics.Set) []metrics.Resou
 		keys[i] = k
 		i++
 	}
-	sort.Sort(metrics.SetKeys(keys))
+	sort.Sort(metrics.ResourceKeys(keys))
 	return keys
 }
 

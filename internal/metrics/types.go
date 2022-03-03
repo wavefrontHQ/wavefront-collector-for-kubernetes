@@ -120,21 +120,6 @@ func (l *LabeledValue) GetValue() interface{} {
 	}
 }
 
-// Set is a collection of metrics tied to a specific resource
-type Set struct {
-	// CollectionStartTime is a time since when the metrics are collected for this entity.
-	// It is affected by events like entity (e.g. pod) creation, entity restart (e.g. for container),
-	// Kubelet restart.
-	CollectionStartTime time.Time
-	// EntityCreateTime is a time of entity creation and persists through entity restarts and
-	// Kubelet restarts.
-	EntityCreateTime time.Time
-	ScrapeTime       time.Time
-	Values           map[string]Value
-	Labels           map[string]string
-	LabeledValues    []LabeledValue
-}
-
 // Batch contains sets of metrics tied to specific k8s resources and other more general wavefront points
 type Batch struct {
 	Timestamp time.Time

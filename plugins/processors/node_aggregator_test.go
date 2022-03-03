@@ -24,6 +24,8 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
+
+	corev1 "k8s.io/api/core/v1"
 )
 
 func TestNodeAggregate(t *testing.T) {
@@ -46,6 +48,44 @@ func TestNodeAggregate(t *testing.T) {
 						IntValue:  222,
 					},
 				},
+				LabeledValues: []metrics.LabeledValue{
+					{
+						Name:   metrics.MetricPodPhase.Name,
+						Labels: map[string]string{"phase": string(corev1.PodSucceeded)},
+						Value: metrics.Value{
+							ValueType: metrics.ValueInt64,
+							IntValue:  convertPhase(corev1.PodSucceeded),
+						},
+					},
+				},
+			},
+
+			metrics.PodContainerKey("ns1", "pod1", "container1"): {
+				Labels: map[string]string{
+					metrics.LabelMetricSetType.Key: metrics.MetricSetTypePodContainer,
+					metrics.LabelNamespaceName.Key: "ns1",
+					metrics.LabelNodename.Key:      "h1",
+				},
+				Values: map[string]metrics.Value{
+					"m1": {
+						ValueType: metrics.ValueInt64,
+						IntValue:  10,
+					},
+					"m2": {
+						ValueType: metrics.ValueInt64,
+						IntValue:  222,
+					},
+				},
+				LabeledValues: []metrics.LabeledValue{
+					{
+						Name:   metrics.MetricContainerStatus.Name,
+						Labels: map[string]string{"state": "terminated"},
+						Value: metrics.Value{
+							ValueType: metrics.ValueInt64,
+							IntValue:  3,
+						},
+					},
+				},
 			},
 
 			metrics.PodKey("ns1", "pod2"): {
@@ -62,6 +102,24 @@ func TestNodeAggregate(t *testing.T) {
 					"m3": {
 						ValueType: metrics.ValueInt64,
 						IntValue:  30,
+					},
+				},
+			},
+
+			metrics.PodContainerKey("ns1", "pod2", "container2"): {
+				Labels: map[string]string{
+					metrics.LabelMetricSetType.Key: metrics.MetricSetTypePodContainer,
+					metrics.LabelNamespaceName.Key: "ns1",
+					metrics.LabelNodename.Key:      "h1",
+				},
+				Values: map[string]metrics.Value{
+					"m1": {
+						ValueType: metrics.ValueInt64,
+						IntValue:  10,
+					},
+					"m2": {
+						ValueType: metrics.ValueInt64,
+						IntValue:  222,
 					},
 				},
 			},
@@ -85,9 +143,17 @@ func TestNodeAggregate(t *testing.T) {
 
 	m1, found := node.Values["m1"]
 	assert.True(t, found)
-	assert.Equal(t, int64(110), m1.IntValue)
+	assert.Equal(t, int64(100), m1.IntValue)
 
 	m3, found := node.Values["m3"]
 	assert.True(t, found)
 	assert.Equal(t, int64(30), m3.IntValue)
+
+	podCount, found := node.Values[metrics.MetricPodCount.Name]
+	assert.True(t, found)
+	assert.Equal(t, int64(1), podCount.IntValue)
+
+	podContainerCount, found := node.Values[metrics.MetricPodContainerCount.Name]
+	assert.True(t, found)
+	assert.Equal(t, int64(1), podContainerCount.IntValue)
 }
