@@ -25,13 +25,13 @@ func (s *Set) FindLabels(name string) (map[string]string, bool) {
 	}
 	for _, labeledValue := range s.LabeledValues {
 		if labeledValue.Name == name {
-            labels := make(map[string]string, len(s.Labels) + len(labeledValue.Labels))
-            for k, v := range labeledValue.Labels {
-                labels[k] = v
-            }
-            for k, v := range s.Labels {
-                labels[k] = v
-            }
+			labels := make(map[string]string, len(s.Labels)+len(labeledValue.Labels))
+			for k, v := range labeledValue.Labels {
+				labels[k] = v
+			}
+			for k, v := range s.Labels {
+				labels[k] = v
+			}
 			return labels, true
 		}
 	}

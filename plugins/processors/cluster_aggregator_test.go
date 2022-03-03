@@ -44,14 +44,14 @@ func TestClusterAggregate(t *testing.T) {
 						ValueType: metrics.ValueInt64,
 						IntValue:  222,
 					},
-                    metrics.MetricPodCount.Name: {
-                        ValueType: metrics.ValueInt64,
-                        IntValue: 1,
-                    },
-                    metrics.MetricPodContainerCount.Name: {
-                        ValueType: metrics.ValueInt64,
-                        IntValue: 1,
-                    },
+					metrics.MetricPodCount.Name: {
+						ValueType: metrics.ValueInt64,
+						IntValue:  1,
+					},
+					metrics.MetricPodContainerCount.Name: {
+						ValueType: metrics.ValueInt64,
+						IntValue:  1,
+					},
 				},
 			},
 
@@ -69,14 +69,14 @@ func TestClusterAggregate(t *testing.T) {
 						ValueType: metrics.ValueInt64,
 						IntValue:  30,
 					},
-                    metrics.MetricPodCount.Name: {
-                        ValueType: metrics.ValueInt64,
-                        IntValue: 2,
-                    },
-                    metrics.MetricPodContainerCount.Name: {
-                        ValueType: metrics.ValueInt64,
-                        IntValue: 2,
-                    },
+					metrics.MetricPodCount.Name: {
+						ValueType: metrics.ValueInt64,
+						IntValue:  2,
+					},
+					metrics.MetricPodContainerCount.Name: {
+						ValueType: metrics.ValueInt64,
+						IntValue:  2,
+					},
 				},
 			},
 		},
@@ -97,11 +97,11 @@ func TestClusterAggregate(t *testing.T) {
 	assert.True(t, found)
 	assert.Equal(t, int64(30), m3.IntValue)
 
-    podCount, found := cluster.Values[metrics.MetricPodCount.Name]
-    assert.True(t, found)
-    assert.Equal(t, int64(3), podCount.IntValue)
+	podCount, found := cluster.Values[metrics.MetricPodCount.Name]
+	assert.True(t, found)
+	assert.Equal(t, int64(3), podCount.IntValue)
 
-    podContainerCount, found := cluster.Values[metrics.MetricPodContainerCount.Name]
-    assert.True(t, found)
-    assert.Equal(t, int64(3), podContainerCount.IntValue)
+	podContainerCount, found := cluster.Values[metrics.MetricPodContainerCount.Name]
+	assert.True(t, found)
+	assert.Equal(t, int64(3), podContainerCount.IntValue)
 }

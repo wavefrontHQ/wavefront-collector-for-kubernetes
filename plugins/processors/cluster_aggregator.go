@@ -18,7 +18,7 @@
 package processors
 
 import (
-    "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 )
 
 type ClusterAggregator struct {
@@ -30,15 +30,15 @@ func (aggregator *ClusterAggregator) Name() string {
 }
 
 func (aggregator *ClusterAggregator) Process(batch *metrics.Batch) (*metrics.Batch, error) {
-    err := aggregateByGroup(batch, groupByCluster, isType(metrics.MetricSetTypeNamespace), &metrics.MetricPodCount, aggregator.MetricsToAggregate)
-    if err != nil {
-        return nil, err
-    }
-    err = aggregateByGroup(batch, groupByCluster, isType(metrics.MetricSetTypeNamespace), &metrics.MetricPodContainerCount, []string{})
-    if err != nil {
-        return nil, err
-    }
-    return batch, nil
+	err := aggregateByGroup(batch, groupByCluster, isType(metrics.MetricSetTypeNamespace), &metrics.MetricPodCount, aggregator.MetricsToAggregate)
+	if err != nil {
+		return nil, err
+	}
+	err = aggregateByGroup(batch, groupByCluster, isType(metrics.MetricSetTypeNamespace), &metrics.MetricPodContainerCount, []string{})
+	if err != nil {
+		return nil, err
+	}
+	return batch, nil
 	//clusterKey := metrics.ClusterKey()
 	//cluster := clusterMetricSet()
 	//for _, metricSet := range batch.Sets {
@@ -51,17 +51,17 @@ func (aggregator *ClusterAggregator) Process(batch *metrics.Batch) (*metrics.Bat
 	//		aggregateCount(metricSet, cluster, metrics.MetricPodContainerCount.Name)
 	//	}
 	//}
-    //
+	//
 	//batch.Sets[clusterKey] = cluster
 	//return batch, nil
 }
 
 func groupByCluster(batch *metrics.Batch, resourceKey metrics.ResourceKey, resourceSet *metrics.Set) (metrics.ResourceKey, *metrics.Set, error) {
-    clusterSet := batch.Sets[metrics.ClusterKey()]
-    if clusterSet == nil {
-        clusterSet = clusterMetricSet()
-    }
-    return metrics.ClusterKey(), clusterSet, nil
+	clusterSet := batch.Sets[metrics.ClusterKey()]
+	if clusterSet == nil {
+		clusterSet = clusterMetricSet()
+	}
+	return metrics.ClusterKey(), clusterSet, nil
 }
 
 func clusterMetricSet() *metrics.Set {
