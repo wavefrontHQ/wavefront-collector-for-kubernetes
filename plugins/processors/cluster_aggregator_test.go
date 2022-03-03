@@ -30,7 +30,7 @@ func TestClusterAggregate(t *testing.T) {
 	batch := metrics.Batch{
 		Timestamp: time.Now(),
 		Sets: map[metrics.ResourceKey]*metrics.Set{
-			metrics.PodKey("ns1", "pod1"): {
+			metrics.NamespaceKey("ns1"): {
 				Labels: map[string]string{
 					metrics.LabelMetricSetType.Key: metrics.MetricSetTypeNamespace,
 					metrics.LabelNamespaceName.Key: "ns1",
@@ -44,10 +44,18 @@ func TestClusterAggregate(t *testing.T) {
 						ValueType: metrics.ValueInt64,
 						IntValue:  222,
 					},
+                    metrics.MetricPodCount.Name: {
+                        ValueType: metrics.ValueInt64,
+                        IntValue: 1,
+                    },
+                    metrics.MetricPodContainerCount.Name: {
+                        ValueType: metrics.ValueInt64,
+                        IntValue: 1,
+                    },
 				},
 			},
 
-			metrics.PodKey("ns1", "pod2"): {
+			metrics.NamespaceKey("ns2"): {
 				Labels: map[string]string{
 					metrics.LabelMetricSetType.Key: metrics.MetricSetTypeNamespace,
 					metrics.LabelNamespaceName.Key: "ns1",
@@ -61,6 +69,14 @@ func TestClusterAggregate(t *testing.T) {
 						ValueType: metrics.ValueInt64,
 						IntValue:  30,
 					},
+                    metrics.MetricPodCount.Name: {
+                        ValueType: metrics.ValueInt64,
+                        IntValue: 2,
+                    },
+                    metrics.MetricPodContainerCount.Name: {
+                        ValueType: metrics.ValueInt64,
+                        IntValue: 2,
+                    },
 				},
 			},
 		},
@@ -80,4 +96,12 @@ func TestClusterAggregate(t *testing.T) {
 	m3, found := cluster.Values["m3"]
 	assert.True(t, found)
 	assert.Equal(t, int64(30), m3.IntValue)
+
+    podCount, found := cluster.Values[metrics.MetricPodCount.Name]
+    assert.True(t, found)
+    assert.Equal(t, int64(3), podCount.IntValue)
+
+    podContainerCount, found := cluster.Values[metrics.MetricPodContainerCount.Name]
+    assert.True(t, found)
+    assert.Equal(t, int64(3), podContainerCount.IntValue)
 }
