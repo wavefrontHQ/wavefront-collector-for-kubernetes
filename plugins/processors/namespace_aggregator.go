@@ -18,9 +18,8 @@
 package processors
 
 import (
-	log "github.com/sirupsen/logrus"
-
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
+    "fmt"
+    "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 )
 
 type NamespaceAggregator struct {
@@ -32,47 +31,28 @@ func (aggregator *NamespaceAggregator) Name() string {
 }
 
 func (aggregator *NamespaceAggregator) Process(batch *metrics.Batch) (*metrics.Batch, error) {
-	namespaces := make(map[metrics.ResourceKey]*metrics.Set)
-	for key, metricSet := range batch.Sets {
-		metricSetType, found := metricSet.Labels[metrics.LabelMetricSetType.Key]
-		if !found || (metricSetType != metrics.MetricSetTypePod && metricSetType != metrics.MetricSetTypePodContainer) {
-			continue
-		}
+    err := aggregateByGroup(batch, groupByNamespace, isAggregatablePod, &metrics.MetricPodCount, aggregator.MetricsToAggregate)
+    if err != nil {
+        return nil, err
+    }
+    err = aggregateByGroup(batch, groupByNamespace, isAggregatablePodContainer, &metrics.MetricPodContainerCount, []string{})
+    if err != nil {
+        return nil, err
+    }
+    return batch, err
+}
 
-		namespaceName, found := metricSet.Labels[metrics.LabelNamespaceName.Key]
-		if !found {
-			log.Errorf("No namespace info in pod %s: %v", key, metricSet.Labels)
-			continue
-		}
-
-		namespaceKey := metrics.NamespaceKey(namespaceName)
-		namespace, found := namespaces[namespaceKey]
-		if !found {
-			if nsFromBatch, found := batch.Sets[namespaceKey]; found {
-				namespace = nsFromBatch
-			} else {
-				namespace = namespaceMetricSet(namespaceName, metricSet.Labels[metrics.LabelPodNamespaceUID.Key])
-				namespaces[namespaceKey] = namespace
-			}
-		}
-
-		if metricSetType == metrics.MetricSetTypePodContainer {
-			// aggregate container counts and continue to top of the loop
-			aggregateCount(metricSet, namespace, metrics.MetricPodContainerCount.Name)
-			continue
-		} else {
-			// aggregate pod counts
-			aggregateCount(metricSet, namespace, metrics.MetricPodCount.Name)
-		}
-
-		if err := aggregate(metricSet, namespace, aggregator.MetricsToAggregate); err != nil {
-			return nil, err
-		}
-	}
-	for key, val := range namespaces {
-		batch.Sets[key] = val
-	}
-	return batch, nil
+func groupByNamespace(batch *metrics.Batch, resourceKey metrics.ResourceKey, resourceSet *metrics.Set) (metrics.ResourceKey, *metrics.Set, error) {
+    namespaceName, found := resourceSet.Labels[metrics.LabelNamespaceName.Key]
+    if !found {
+        return "", nil, fmt.Errorf("no namespace info in pod %s: %v", resourceKey, resourceSet.Labels)
+    }
+    namespaceKey := metrics.NamespaceKey(namespaceName)
+    namespaceSet := batch.Sets[namespaceKey]
+    if namespaceSet == nil {
+        namespaceSet = namespaceMetricSet(namespaceName, resourceSet.Labels[metrics.LabelPodNamespaceUID.Key])
+    }
+    return namespaceKey, namespaceSet, nil
 }
 
 func namespaceMetricSet(namespaceName, uid string) *metrics.Set {

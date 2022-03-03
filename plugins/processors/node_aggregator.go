@@ -18,7 +18,8 @@
 package processors
 
 import (
-	log "github.com/sirupsen/logrus"
+    "fmt"
+    log "github.com/sirupsen/logrus"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -33,51 +34,57 @@ func (aggregator *NodeAggregator) Name() string {
 }
 
 func (aggregator *NodeAggregator) Process(batch *metrics.Batch) (*metrics.Batch, error) {
-	err := aggregateByNode(batch, isAggregatablePod, &metrics.MetricPodCount, aggregator.MetricsToAggregate)
+	err := aggregateByGroup(batch, groupByNode, isAggregatablePod, &metrics.MetricPodCount, aggregator.MetricsToAggregate)
 	if err != nil {
 		return nil, err
 	}
-	err = aggregateByNode(batch, isAggregatablePodContainer, &metrics.MetricPodContainerCount, []string{})
+	err = aggregateByGroup(batch, groupByNode, isAggregatablePodContainer, &metrics.MetricPodContainerCount, []string{})
 	if err != nil {
 		return nil, err
 	}
 	return batch, err
 }
 
-func aggregateByNode(batch *metrics.Batch, shouldAggregate func(*metrics.Set) bool, count *metrics.Metric, metricsToAggregate []string) error {
+func aggregateByGroup(batch *metrics.Batch, extractGroupSet func(batch *metrics.Batch, resourceKey metrics.ResourceKey, resourceSet *metrics.Set) (metrics.ResourceKey, *metrics.Set, error), shouldAggregate func(*metrics.Set) bool, count *metrics.Metric, metricsToAggregate []string) error {
 	for resourceKey, resourceSet := range batch.Sets {
 		if !shouldAggregate(resourceSet) {
 			continue
 		}
-		nodeName, _ := resourceSet.Labels[metrics.LabelNodename.Key]
-		if nodeName == "" {
-			log.Errorf("No node info for resource %s: %v", resourceKey, resourceSet.Labels)
-			continue
-		}
-		nodeKey := metrics.NodeKey(nodeName)
-		node := batch.Sets[nodeKey]
-		if node == nil {
-			log.Infof("No metric for node %s, cannot perform node level aggregation.", nodeKey)
-			continue
-		}
-		aggregateCount(resourceSet, node, count.Name)
-		if err := aggregate(resourceSet, node, metricsToAggregate); err != nil {
+        groupKey, groupSet, err := extractGroupSet(batch, resourceKey, resourceSet)
+        if err != nil {
+            log.Errorf(err.Error())
+            continue
+        }
+		aggregateCount(resourceSet, groupSet, count.Name)
+		if err := aggregate(resourceSet, groupSet, metricsToAggregate); err != nil {
 			return err
 		}
+        batch.Sets[groupKey] = groupSet
 	}
 	return nil
 }
 
+func groupByNode(batch *metrics.Batch, resourceKey metrics.ResourceKey, resourceSet *metrics.Set) (metrics.ResourceKey, *metrics.Set, error) {
+    nodeName := resourceSet.Labels[metrics.LabelNodename.Key]
+    if nodeName == "" {
+        return "", nil, fmt.Errorf("no node info for resource %s: %v", resourceKey, resourceSet.Labels)
+    }
+    nodeKey := metrics.NodeKey(nodeName)
+    return nodeKey, batch.Sets[nodeKey], nil
+}
+
 func isAggregatablePod(set *metrics.Set) bool {
-	return isType(set, metrics.MetricSetTypePod) && podTakesUpResources(set)
+	return isType(metrics.MetricSetTypePod)(set) && podTakesUpResources(set)
 }
 
 func isAggregatablePodContainer(set *metrics.Set) bool {
-	return isType(set, metrics.MetricSetTypePodContainer) && podContainerTakesUpResources(set)
+	return isType(metrics.MetricSetTypePodContainer)(set) && podContainerTakesUpResources(set)
 }
 
-func isType(set *metrics.Set, matchType string) bool {
-	return set.Labels[metrics.LabelMetricSetType.Key] == matchType
+func isType(matchType string) func(*metrics.Set) bool {
+    return func(set *metrics.Set) bool {
+        return set.Labels[metrics.LabelMetricSetType.Key] == matchType
+    }
 }
 
 func podTakesUpResources(set *metrics.Set) bool {
