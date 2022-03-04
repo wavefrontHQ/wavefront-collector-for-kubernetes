@@ -37,55 +37,37 @@ func TestNamespaceAggregate(t *testing.T) {
 					metrics.LabelMetricSetType.Key: metrics.MetricSetTypePod,
 					metrics.LabelNamespaceName.Key: "ns1",
 				},
-				Values: map[string]metrics.Value{
-					"m1": {
+				Values: map[string]metrics.Value{"m1": {
+					ValueType: metrics.ValueInt64,
+					IntValue:  10,
+				}},
+				LabeledValues: []metrics.LabeledValue{{
+					Name:   metrics.MetricPodPhase.Name,
+					Labels: map[string]string{"phase": string(corev1.PodSucceeded)},
+					Value: metrics.Value{
 						ValueType: metrics.ValueInt64,
-						IntValue:  10,
+						IntValue:  convertPhase(corev1.PodSucceeded),
 					},
-					"m2": {
-						ValueType: metrics.ValueInt64,
-						IntValue:  222,
-					},
-				},
-				LabeledValues: []metrics.LabeledValue{
-					{
-						Name:   metrics.MetricPodPhase.Name,
-						Labels: map[string]string{"phase": string(corev1.PodSucceeded)},
-						Value: metrics.Value{
-							ValueType: metrics.ValueInt64,
-							IntValue:  convertPhase(corev1.PodSucceeded),
-						},
-					},
-				},
+				}},
 			},
-
 			metrics.PodContainerKey("ns1", "pod1", "container1"): {
 				Labels: map[string]string{
 					metrics.LabelMetricSetType.Key: metrics.MetricSetTypePodContainer,
 					metrics.LabelNamespaceName.Key: "ns1",
 				},
-				Values: map[string]metrics.Value{
-					"m1": {
+				Values: map[string]metrics.Value{"m1": {
+					ValueType: metrics.ValueInt64,
+					IntValue:  10,
+				}},
+				LabeledValues: []metrics.LabeledValue{{
+					Name:   metrics.MetricContainerStatus.Name,
+					Labels: map[string]string{"state": "terminated"},
+					Value: metrics.Value{
 						ValueType: metrics.ValueInt64,
-						IntValue:  10,
+						IntValue:  3,
 					},
-					"m2": {
-						ValueType: metrics.ValueInt64,
-						IntValue:  222,
-					},
-				},
-				LabeledValues: []metrics.LabeledValue{
-					{
-						Name:   metrics.MetricContainerStatus.Name,
-						Labels: map[string]string{"state": "terminated"},
-						Value: metrics.Value{
-							ValueType: metrics.ValueInt64,
-							IntValue:  3,
-						},
-					},
-				},
+				}},
 			},
-
 			metrics.PodKey("ns1", "pod2"): {
 				Labels: map[string]string{
 					metrics.LabelMetricSetType.Key: metrics.MetricSetTypePod,
@@ -102,46 +84,28 @@ func TestNamespaceAggregate(t *testing.T) {
 					},
 				},
 			},
-
 			metrics.PodContainerKey("ns1", "pod2", "container2"): {
 				Labels: map[string]string{
 					metrics.LabelMetricSetType.Key: metrics.MetricSetTypePodContainer,
 					metrics.LabelNamespaceName.Key: "ns1",
 				},
-				Values: map[string]metrics.Value{
-					"m1": {
-						ValueType: metrics.ValueInt64,
-						IntValue:  100,
-					},
-					"m3": {
-						ValueType: metrics.ValueInt64,
-						IntValue:  30,
-					},
-				},
+				Values: map[string]metrics.Value{"m1": {
+					ValueType: metrics.ValueInt64,
+					IntValue:  10,
+				}},
 			},
 		},
 	}
-	processor := NamespaceAggregator{
-		MetricsToAggregate: []string{"m1", "m3"},
-	}
+	processor := NewNamespaceAggregator([]string{"m1", "m3"})
+
 	result, err := processor.Process(&batch)
 	assert.NoError(t, err)
-	namespace, found := result.Sets[metrics.NamespaceKey("ns1")]
-	assert.True(t, found)
 
-	m1, found := namespace.Values["m1"]
-	assert.True(t, found)
-	assert.Equal(t, int64(100), m1.IntValue)
+	namespace := result.Sets[metrics.NamespaceKey("ns1")]
+	assert.NotNil(t, namespace)
 
-	m3, found := namespace.Values["m3"]
-	assert.True(t, found)
-	assert.Equal(t, int64(30), m3.IntValue)
-
-	podCount, found := namespace.Values[metrics.MetricPodCount.Name]
-	assert.True(t, found)
-	assert.Equal(t, int64(1), podCount.IntValue)
-
-	podContainerCount, found := namespace.Values[metrics.MetricPodContainerCount.Name]
-	assert.True(t, found)
-	assert.Equal(t, int64(1), podContainerCount.IntValue)
+	assert.Equal(t, int64(100), namespace.Values["m1"].IntValue)
+	assert.Equal(t, int64(30), namespace.Values["m3"].IntValue)
+	assert.Equal(t, int64(1), namespace.Values[metrics.MetricPodCount.Name].IntValue)
+	assert.Equal(t, int64(1), namespace.Values[metrics.MetricPodContainerCount.Name].IntValue)
 }

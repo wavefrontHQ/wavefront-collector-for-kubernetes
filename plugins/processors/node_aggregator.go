@@ -20,49 +20,24 @@ package processors
 import (
 	"fmt"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
-	corev1 "k8s.io/api/core/v1"
 )
 
-// NodeAggregator aggregates MetricsToAggregate for pods by nodes. It produces by-node counts for pods and pod containers.
-type NodeAggregator struct {
-	MetricsToAggregate []string
-}
-
-func (aggregator *NodeAggregator) Name() string {
-	return "node_aggregator"
-}
-
-func (aggregator *NodeAggregator) Process(batch *metrics.Batch) (*metrics.Batch, error) {
-	err := aggregateByGroup(batch, groupByNode, isAggregatablePod, &metrics.MetricPodCount, aggregator.MetricsToAggregate)
-	if err != nil {
-		return nil, err
-	}
-	err = aggregateByGroup(batch, groupByNode, isAggregatablePodContainer, &metrics.MetricPodContainerCount, []string{})
-	if err != nil {
-		return nil, err
-	}
-	return batch, err
-}
-
-func aggregateByGroup(batch *metrics.Batch, extractGroupSet func(batch *metrics.Batch, resourceKey metrics.ResourceKey, resourceSet *metrics.Set) (metrics.ResourceKey, *metrics.Set, error), shouldAggregate func(*metrics.Set) bool, count *metrics.Metric, metricsToAggregate []string) error {
-	for resourceKey, resourceSet := range batch.Sets {
-		if !shouldAggregate(resourceSet) {
-			continue
-		}
-		groupKey, groupSet, err := extractGroupSet(batch, resourceKey, resourceSet)
-		if err != nil {
-			log.Errorf(err.Error())
-			continue
-		}
-		aggregateCount(resourceSet, groupSet, count.Name)
-		if err := aggregate(resourceSet, groupSet, metricsToAggregate); err != nil {
-			return err
-		}
-		batch.Sets[groupKey] = groupSet
-	}
-	return nil
+func NewNodeAggregator(metricsToAggregate []string) metrics.Processor {
+	return NewSumCountAggregator("node", []SumCountAggregateSpec{
+		{
+			ResourceSumMetrics:  metricsToAggregate,
+			ResourceCountMetric: metrics.MetricPodCount.Name,
+			ShouldAggregate:     isAggregatablePod,
+			ExtractGroup:        groupByNode,
+		},
+		{
+			ResourceSumMetrics:  []string{},
+			ResourceCountMetric: metrics.MetricPodContainerCount.Name,
+			ShouldAggregate:     isAggregatablePodContainer,
+			ExtractGroup:        groupByNode,
+		},
+	})
 }
 
 func groupByNode(batch *metrics.Batch, resourceKey metrics.ResourceKey, resourceSet *metrics.Set) (metrics.ResourceKey, *metrics.Set, error) {
@@ -72,28 +47,4 @@ func groupByNode(batch *metrics.Batch, resourceKey metrics.ResourceKey, resource
 	}
 	nodeKey := metrics.NodeKey(nodeName)
 	return nodeKey, batch.Sets[nodeKey], nil
-}
-
-func isAggregatablePod(set *metrics.Set) bool {
-	return isType(metrics.MetricSetTypePod)(set) && podTakesUpResources(set)
-}
-
-func isAggregatablePodContainer(set *metrics.Set) bool {
-	return isType(metrics.MetricSetTypePodContainer)(set) && podContainerTakesUpResources(set)
-}
-
-func isType(matchType string) func(*metrics.Set) bool {
-	return func(set *metrics.Set) bool {
-		return set.Labels[metrics.LabelMetricSetType.Key] == matchType
-	}
-}
-
-func podTakesUpResources(set *metrics.Set) bool {
-	labels, _ := set.FindLabels(metrics.MetricPodPhase.Name)
-	return labels["phase"] != string(corev1.PodSucceeded) && labels["phase"] != string(corev1.PodFailed)
-}
-
-func podContainerTakesUpResources(set *metrics.Set) bool {
-	labels, _ := set.FindLabels(metrics.MetricContainerStatus.Name)
-	return labels["state"] != "terminated"
 }

@@ -21,42 +21,24 @@ import (
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 )
 
-type ClusterAggregator struct {
-	MetricsToAggregate []string
+func NewClusterAggregator(metricsToAggregate []string) metrics.Processor {
+	return NewSumCountAggregator("cluster", []SumCountAggregateSpec{
+		{
+			ResourceSumMetrics:  metricsToAggregate,
+			ResourceCountMetric: metrics.MetricPodCount.Name,
+			ShouldAggregate:     isType(metrics.MetricSetTypeNamespace),
+			ExtractGroup:        groupByCluster,
+		},
+		{
+			ResourceSumMetrics:  []string{},
+			ResourceCountMetric: metrics.MetricPodContainerCount.Name,
+			ShouldAggregate:     isType(metrics.MetricSetTypeNamespace),
+			ExtractGroup:        groupByCluster,
+		},
+	})
 }
 
-func (aggregator *ClusterAggregator) Name() string {
-	return "cluster_aggregator"
-}
-
-func (aggregator *ClusterAggregator) Process(batch *metrics.Batch) (*metrics.Batch, error) {
-	err := aggregateByGroup(batch, groupByCluster, isType(metrics.MetricSetTypeNamespace), &metrics.MetricPodCount, aggregator.MetricsToAggregate)
-	if err != nil {
-		return nil, err
-	}
-	err = aggregateByGroup(batch, groupByCluster, isType(metrics.MetricSetTypeNamespace), &metrics.MetricPodContainerCount, []string{})
-	if err != nil {
-		return nil, err
-	}
-	return batch, nil
-	//clusterKey := metrics.ClusterKey()
-	//cluster := clusterMetricSet()
-	//for _, metricSet := range batch.Sets {
-	//	if metricSetType, found := metricSet.Labels[metrics.LabelMetricSetType.Key]; found &&
-	//		metricSetType == metrics.MetricSetTypeNamespace {
-	//		if err := aggregate(metricSet, cluster, aggregator.MetricsToAggregate); err != nil {
-	//			return nil, err
-	//		}
-	//		aggregateCount(metricSet, cluster, metrics.MetricPodCount.Name)
-	//		aggregateCount(metricSet, cluster, metrics.MetricPodContainerCount.Name)
-	//	}
-	//}
-	//
-	//batch.Sets[clusterKey] = cluster
-	//return batch, nil
-}
-
-func groupByCluster(batch *metrics.Batch, resourceKey metrics.ResourceKey, resourceSet *metrics.Set) (metrics.ResourceKey, *metrics.Set, error) {
+func groupByCluster(batch *metrics.Batch, _ metrics.ResourceKey, _ *metrics.Set) (metrics.ResourceKey, *metrics.Set, error) {
 	clusterSet := batch.Sets[metrics.ClusterKey()]
 	if clusterSet == nil {
 		clusterSet = clusterMetricSet()

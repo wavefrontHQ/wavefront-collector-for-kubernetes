@@ -23,24 +23,21 @@ import (
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 )
 
-type NamespaceAggregator struct {
-	MetricsToAggregate []string
-}
-
-func (aggregator *NamespaceAggregator) Name() string {
-	return "namespace_aggregator"
-}
-
-func (aggregator *NamespaceAggregator) Process(batch *metrics.Batch) (*metrics.Batch, error) {
-	err := aggregateByGroup(batch, groupByNamespace, isAggregatablePod, &metrics.MetricPodCount, aggregator.MetricsToAggregate)
-	if err != nil {
-		return nil, err
-	}
-	err = aggregateByGroup(batch, groupByNamespace, isAggregatablePodContainer, &metrics.MetricPodContainerCount, []string{})
-	if err != nil {
-		return nil, err
-	}
-	return batch, err
+func NewNamespaceAggregator(metricsToAggregate []string) metrics.Processor {
+	return NewSumCountAggregator("namespace", []SumCountAggregateSpec{
+		{
+			ResourceSumMetrics:  metricsToAggregate,
+			ResourceCountMetric: metrics.MetricPodCount.Name,
+			ShouldAggregate:     isAggregatablePod,
+			ExtractGroup:        groupByNamespace,
+		},
+		{
+			ResourceSumMetrics:  []string{},
+			ResourceCountMetric: metrics.MetricPodContainerCount.Name,
+			ShouldAggregate:     isAggregatablePodContainer,
+			ExtractGroup:        groupByNamespace,
+		},
+	})
 }
 
 func groupByNamespace(batch *metrics.Batch, resourceKey metrics.ResourceKey, resourceSet *metrics.Set) (metrics.ResourceKey, *metrics.Set, error) {

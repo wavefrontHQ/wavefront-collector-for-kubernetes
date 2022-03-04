@@ -38,56 +38,38 @@ func TestNodeAggregate(t *testing.T) {
 					metrics.LabelNamespaceName.Key: "ns1",
 					metrics.LabelNodename.Key:      "h1",
 				},
-				Values: map[string]metrics.Value{
-					"m1": {
+				Values: map[string]metrics.Value{"m1": {
+					ValueType: metrics.ValueInt64,
+					IntValue:  10,
+				}},
+				LabeledValues: []metrics.LabeledValue{{
+					Name:   metrics.MetricPodPhase.Name,
+					Labels: map[string]string{"phase": string(corev1.PodSucceeded)},
+					Value: metrics.Value{
 						ValueType: metrics.ValueInt64,
-						IntValue:  10,
+						IntValue:  convertPhase(corev1.PodSucceeded),
 					},
-					"m2": {
-						ValueType: metrics.ValueInt64,
-						IntValue:  222,
-					},
-				},
-				LabeledValues: []metrics.LabeledValue{
-					{
-						Name:   metrics.MetricPodPhase.Name,
-						Labels: map[string]string{"phase": string(corev1.PodSucceeded)},
-						Value: metrics.Value{
-							ValueType: metrics.ValueInt64,
-							IntValue:  convertPhase(corev1.PodSucceeded),
-						},
-					},
-				},
+				}},
 			},
-
 			metrics.PodContainerKey("ns1", "pod1", "container1"): {
 				Labels: map[string]string{
 					metrics.LabelMetricSetType.Key: metrics.MetricSetTypePodContainer,
 					metrics.LabelNamespaceName.Key: "ns1",
 					metrics.LabelNodename.Key:      "h1",
 				},
-				Values: map[string]metrics.Value{
-					"m1": {
+				Values: map[string]metrics.Value{"m1": {
+					ValueType: metrics.ValueInt64,
+					IntValue:  10,
+				}},
+				LabeledValues: []metrics.LabeledValue{{
+					Name:   metrics.MetricContainerStatus.Name,
+					Labels: map[string]string{"state": "terminated"},
+					Value: metrics.Value{
 						ValueType: metrics.ValueInt64,
-						IntValue:  10,
+						IntValue:  3,
 					},
-					"m2": {
-						ValueType: metrics.ValueInt64,
-						IntValue:  222,
-					},
-				},
-				LabeledValues: []metrics.LabeledValue{
-					{
-						Name:   metrics.MetricContainerStatus.Name,
-						Labels: map[string]string{"state": "terminated"},
-						Value: metrics.Value{
-							ValueType: metrics.ValueInt64,
-							IntValue:  3,
-						},
-					},
-				},
+				}},
 			},
-
 			metrics.PodKey("ns1", "pod2"): {
 				Labels: map[string]string{
 					metrics.LabelMetricSetType.Key: metrics.MetricSetTypePod,
@@ -105,25 +87,17 @@ func TestNodeAggregate(t *testing.T) {
 					},
 				},
 			},
-
 			metrics.PodContainerKey("ns1", "pod2", "container2"): {
 				Labels: map[string]string{
 					metrics.LabelMetricSetType.Key: metrics.MetricSetTypePodContainer,
 					metrics.LabelNamespaceName.Key: "ns1",
 					metrics.LabelNodename.Key:      "h1",
 				},
-				Values: map[string]metrics.Value{
-					"m1": {
-						ValueType: metrics.ValueInt64,
-						IntValue:  10,
-					},
-					"m2": {
-						ValueType: metrics.ValueInt64,
-						IntValue:  222,
-					},
-				},
+				Values: map[string]metrics.Value{"m1": {
+					ValueType: metrics.ValueInt64,
+					IntValue:  10,
+				}},
 			},
-
 			metrics.NodeKey("h1"): {
 				Labels: map[string]string{
 					metrics.LabelMetricSetType.Key: metrics.MetricSetTypeNode,
@@ -133,27 +107,15 @@ func TestNodeAggregate(t *testing.T) {
 			},
 		},
 	}
-	processor := NodeAggregator{
-		MetricsToAggregate: []string{"m1", "m3"},
-	}
+	processor := NewNodeAggregator([]string{"m1", "m3"})
 	result, err := processor.Process(&batch)
 	assert.NoError(t, err)
-	node, found := result.Sets[metrics.NodeKey("h1")]
-	assert.True(t, found)
 
-	m1, found := node.Values["m1"]
-	assert.True(t, found)
-	assert.Equal(t, int64(100), m1.IntValue)
+	node := result.Sets[metrics.NodeKey("h1")]
+	assert.NotNil(t, node)
 
-	m3, found := node.Values["m3"]
-	assert.True(t, found)
-	assert.Equal(t, int64(30), m3.IntValue)
-
-	podCount, found := node.Values[metrics.MetricPodCount.Name]
-	assert.True(t, found)
-	assert.Equal(t, int64(1), podCount.IntValue)
-
-	podContainerCount, found := node.Values[metrics.MetricPodContainerCount.Name]
-	assert.True(t, found)
-	assert.Equal(t, int64(1), podContainerCount.IntValue)
+	assert.Equal(t, int64(100), node.Values["m1"].IntValue)
+	assert.Equal(t, int64(30), node.Values["m3"].IntValue)
+	assert.Equal(t, int64(1), node.Values[metrics.MetricPodCount.Name].IntValue)
+	assert.Equal(t, int64(1), node.Values[metrics.MetricPodContainerCount.Name].IntValue)
 }

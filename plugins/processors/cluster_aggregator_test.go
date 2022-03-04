@@ -81,9 +81,7 @@ func TestClusterAggregate(t *testing.T) {
 			},
 		},
 	}
-	processor := ClusterAggregator{
-		MetricsToAggregate: []string{"m1", "m3"},
-	}
+	processor := NewClusterAggregator([]string{"m1", "m3"})
 	result, err := processor.Process(&batch)
 	assert.NoError(t, err)
 	cluster, found := result.Sets[metrics.ClusterKey()]
