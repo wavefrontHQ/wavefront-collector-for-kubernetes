@@ -26,13 +26,13 @@ func NewClusterAggregator(metricsToAggregate []string) metrics.Processor {
 		{
 			ResourceSumMetrics:  metricsToAggregate,
 			ResourceCountMetric: metrics.MetricPodCount.Name,
-			isPartOfGroup:       isType(metrics.MetricSetTypeNamespace),
+			IsPartOfGroup:       isType(metrics.MetricSetTypeNamespace),
 			Group:               clusterGroup,
 		},
 		{
 			ResourceSumMetrics:  []string{},
 			ResourceCountMetric: metrics.MetricPodContainerCount.Name,
-			isPartOfGroup:       isType(metrics.MetricSetTypeNamespace),
+			IsPartOfGroup:       isType(metrics.MetricSetTypeNamespace),
 			Group:               clusterGroup,
 		},
 	})

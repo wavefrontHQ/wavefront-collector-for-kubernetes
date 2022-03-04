@@ -28,13 +28,13 @@ func NewNodeAggregator(metricsToAggregate []string) metrics.Processor {
 		{
 			ResourceSumMetrics:  metricsToAggregate,
 			ResourceCountMetric: metrics.MetricPodCount.Name,
-			isPartOfGroup:       isAggregatablePod,
+			IsPartOfGroup:       isAggregatablePod,
 			Group:               nodeGroup,
 		},
 		{
 			ResourceSumMetrics:  []string{},
 			ResourceCountMetric: metrics.MetricPodContainerCount.Name,
-			isPartOfGroup:       isAggregatablePodContainer,
+			IsPartOfGroup:       isAggregatablePodContainer,
 			Group:               nodeGroup,
 		},
 	})

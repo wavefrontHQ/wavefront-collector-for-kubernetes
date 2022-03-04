@@ -28,13 +28,13 @@ func NewNamespaceAggregator(metricsToAggregate []string) metrics.Processor {
 		{
 			ResourceSumMetrics:  metricsToAggregate,
 			ResourceCountMetric: metrics.MetricPodCount.Name,
-			isPartOfGroup:       isAggregatablePod,
+			IsPartOfGroup:       isAggregatablePod,
 			Group:               namespaceGroup,
 		},
 		{
 			ResourceSumMetrics:  []string{},
 			ResourceCountMetric: metrics.MetricPodContainerCount.Name,
-			isPartOfGroup:       isAggregatablePodContainer,
+			IsPartOfGroup:       isAggregatablePodContainer,
 			Group:               namespaceGroup,
 		},
 	})

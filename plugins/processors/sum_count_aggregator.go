@@ -15,7 +15,7 @@ type SumCountAggregator struct {
 type SumCountAggregateSpec struct {
 	ResourceSumMetrics  []string
 	ResourceCountMetric string
-	isPartOfGroup       func(*metrics.Set) bool
+	IsPartOfGroup       func(*metrics.Set) bool
 	Group               func(batch *metrics.Batch, resourceKey metrics.ResourceKey, resourceSet *metrics.Set) (metrics.ResourceKey, *metrics.Set)
 }
 
@@ -30,7 +30,7 @@ func (a *SumCountAggregator) Name() string {
 func (a *SumCountAggregator) Process(batch *metrics.Batch) (*metrics.Batch, error) {
 	for _, spec := range a.specs {
 		for resourceKey, resourceSet := range batch.Sets {
-			if !spec.isPartOfGroup(resourceSet) {
+			if !spec.IsPartOfGroup(resourceSet) {
 				continue
 			}
 			groupKey, groupSet := spec.Group(batch, resourceKey, resourceSet)

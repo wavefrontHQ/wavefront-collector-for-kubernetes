@@ -19,7 +19,7 @@ func TestSumCountAggregator(t *testing.T) {
 		groupKey := metrics.ResourceKey("group")
 		sca := NewSumCountAggregator("my_resource", []SumCountAggregateSpec{{
 			ResourceSumMetrics: []string{},
-			isPartOfGroup: func(_ *metrics.Set) bool {
+			IsPartOfGroup: func(_ *metrics.Set) bool {
 				return true
 			},
 			Group: func(batch *metrics.Batch, resourceKey metrics.ResourceKey, resourceSet *metrics.Set) (metrics.ResourceKey, *metrics.Set) {
@@ -50,7 +50,7 @@ func TestSumCountAggregator(t *testing.T) {
 		groupKey := metrics.ResourceKey("group")
 		sca := NewSumCountAggregator("my_resource", []SumCountAggregateSpec{{
 			ResourceSumMetrics: []string{},
-			isPartOfGroup: func(_ *metrics.Set) bool {
+			IsPartOfGroup: func(_ *metrics.Set) bool {
 				return true
 			},
 			Group: func(batch *metrics.Batch, resourceKey metrics.ResourceKey, resourceSet *metrics.Set) (metrics.ResourceKey, *metrics.Set) {
@@ -78,7 +78,7 @@ func TestSumCountAggregator(t *testing.T) {
 		groupKey := metrics.ResourceKey("group")
 		sca := NewSumCountAggregator("my_resource", []SumCountAggregateSpec{{
 			ResourceSumMetrics: []string{"m1"},
-			isPartOfGroup: func(resourceSet *metrics.Set) bool {
+			IsPartOfGroup: func(resourceSet *metrics.Set) bool {
 				return resourceSet.Labels["type"] == "pod"
 			},
 			Group: func(batch *metrics.Batch, resourceKey metrics.ResourceKey, resourceSet *metrics.Set) (metrics.ResourceKey, *metrics.Set) {
@@ -132,7 +132,7 @@ func TestSumCountAggregator(t *testing.T) {
 		sca := NewSumCountAggregator("my_resource", []SumCountAggregateSpec{{
 			ResourceSumMetrics:  []string{"m1"},
 			ResourceCountMetric: "c1",
-			isPartOfGroup: func(resourceSet *metrics.Set) bool {
+			IsPartOfGroup: func(resourceSet *metrics.Set) bool {
 				return resourceSet.Labels["type"] == "pod"
 			},
 			Group: func(batch *metrics.Batch, resourceKey metrics.ResourceKey, resourceSet *metrics.Set) (metrics.ResourceKey, *metrics.Set) {
@@ -180,7 +180,7 @@ func TestSumCountAggregator(t *testing.T) {
 		sca := NewSumCountAggregator("my_resource", []SumCountAggregateSpec{{
 			ResourceSumMetrics:  []string{"m1"},
 			ResourceCountMetric: "c1",
-			isPartOfGroup: func(resourceSet *metrics.Set) bool {
+			IsPartOfGroup: func(resourceSet *metrics.Set) bool {
 				return resourceSet.Labels["type"] == "pod"
 			},
 			Group: func(batch *metrics.Batch, resourceKey metrics.ResourceKey, resourceSet *metrics.Set) (metrics.ResourceKey, *metrics.Set) {
@@ -241,7 +241,7 @@ func TestSumCountAggregator(t *testing.T) {
 			{
 				ResourceSumMetrics:  []string{"m1"},
 				ResourceCountMetric: "c1",
-				isPartOfGroup: func(resourceSet *metrics.Set) bool {
+				IsPartOfGroup: func(resourceSet *metrics.Set) bool {
 					return resourceSet.Labels["type"] == "pod"
 				},
 				Group: func(batch *metrics.Batch, resourceKey metrics.ResourceKey, resourceSet *metrics.Set) (metrics.ResourceKey, *metrics.Set) {
@@ -258,7 +258,7 @@ func TestSumCountAggregator(t *testing.T) {
 			{
 				ResourceSumMetrics:  []string{"m2"},
 				ResourceCountMetric: "c2",
-				isPartOfGroup: func(resourceSet *metrics.Set) bool {
+				IsPartOfGroup: func(resourceSet *metrics.Set) bool {
 					return resourceSet.Labels["type"] == "pod_container"
 				},
 				Group: func(batch *metrics.Batch, resourceKey metrics.ResourceKey, resourceSet *metrics.Set) (metrics.ResourceKey, *metrics.Set) {
