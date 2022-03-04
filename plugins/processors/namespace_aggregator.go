@@ -18,7 +18,7 @@
 package processors
 
 import (
-	"fmt"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 )
@@ -28,29 +28,30 @@ func NewNamespaceAggregator(metricsToAggregate []string) metrics.Processor {
 		{
 			ResourceSumMetrics:  metricsToAggregate,
 			ResourceCountMetric: metrics.MetricPodCount.Name,
-			ShouldAggregate:     isAggregatablePod,
-			ExtractGroup:        groupByNamespace,
+			isPartOfGroup:       isAggregatablePod,
+			Group:               namespaceGroup,
 		},
 		{
 			ResourceSumMetrics:  []string{},
 			ResourceCountMetric: metrics.MetricPodContainerCount.Name,
-			ShouldAggregate:     isAggregatablePodContainer,
-			ExtractGroup:        groupByNamespace,
+			isPartOfGroup:       isAggregatablePodContainer,
+			Group:               namespaceGroup,
 		},
 	})
 }
 
-func groupByNamespace(batch *metrics.Batch, resourceKey metrics.ResourceKey, resourceSet *metrics.Set) (metrics.ResourceKey, *metrics.Set, error) {
+func namespaceGroup(batch *metrics.Batch, resourceKey metrics.ResourceKey, resourceSet *metrics.Set) (metrics.ResourceKey, *metrics.Set) {
 	namespaceName, found := resourceSet.Labels[metrics.LabelNamespaceName.Key]
 	if !found {
-		return "", nil, fmt.Errorf("no namespace info in pod %s: %v", resourceKey, resourceSet.Labels)
+		log.Errorf("no namespace info in pod %s: %v", resourceKey, resourceSet.Labels)
+		return "", nil
 	}
 	namespaceKey := metrics.NamespaceKey(namespaceName)
 	namespaceSet := batch.Sets[namespaceKey]
 	if namespaceSet == nil {
 		namespaceSet = namespaceMetricSet(namespaceName, resourceSet.Labels[metrics.LabelPodNamespaceUID.Key])
 	}
-	return namespaceKey, namespaceSet, nil
+	return namespaceKey, namespaceSet
 }
 
 func namespaceMetricSet(namespaceName, uid string) *metrics.Set {

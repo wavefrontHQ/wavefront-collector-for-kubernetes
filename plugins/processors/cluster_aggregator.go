@@ -26,24 +26,24 @@ func NewClusterAggregator(metricsToAggregate []string) metrics.Processor {
 		{
 			ResourceSumMetrics:  metricsToAggregate,
 			ResourceCountMetric: metrics.MetricPodCount.Name,
-			ShouldAggregate:     isType(metrics.MetricSetTypeNamespace),
-			ExtractGroup:        groupByCluster,
+			isPartOfGroup:       isType(metrics.MetricSetTypeNamespace),
+			Group:               clusterGroup,
 		},
 		{
 			ResourceSumMetrics:  []string{},
 			ResourceCountMetric: metrics.MetricPodContainerCount.Name,
-			ShouldAggregate:     isType(metrics.MetricSetTypeNamespace),
-			ExtractGroup:        groupByCluster,
+			isPartOfGroup:       isType(metrics.MetricSetTypeNamespace),
+			Group:               clusterGroup,
 		},
 	})
 }
 
-func groupByCluster(batch *metrics.Batch, _ metrics.ResourceKey, _ *metrics.Set) (metrics.ResourceKey, *metrics.Set, error) {
+func clusterGroup(batch *metrics.Batch, _ metrics.ResourceKey, _ *metrics.Set) (metrics.ResourceKey, *metrics.Set) {
 	clusterSet := batch.Sets[metrics.ClusterKey()]
 	if clusterSet == nil {
 		clusterSet = clusterMetricSet()
 	}
-	return metrics.ClusterKey(), clusterSet, nil
+	return metrics.ClusterKey(), clusterSet
 }
 
 func clusterMetricSet() *metrics.Set {

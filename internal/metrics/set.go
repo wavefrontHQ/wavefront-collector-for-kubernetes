@@ -26,14 +26,16 @@ func (s *Set) FindLabels(name string) (map[string]string, bool) {
 	for _, labeledValue := range s.LabeledValues {
 		if labeledValue.Name == name {
 			labels := make(map[string]string, len(s.Labels)+len(labeledValue.Labels))
-			for k, v := range labeledValue.Labels {
-				labels[k] = v
-			}
-			for k, v := range s.Labels {
-				labels[k] = v
-			}
+			copyLabels(labels, labeledValue.Labels)
+			copyLabels(labels, s.Labels)
 			return labels, true
 		}
 	}
 	return map[string]string{}, false
+}
+
+func copyLabels(dst, src map[string]string) {
+	for k, v := range src {
+		dst[k] = v
+	}
 }

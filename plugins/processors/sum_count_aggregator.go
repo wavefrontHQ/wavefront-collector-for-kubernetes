@@ -3,7 +3,6 @@ package processors
 import (
 	"fmt"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -16,8 +15,8 @@ type SumCountAggregator struct {
 type SumCountAggregateSpec struct {
 	ResourceSumMetrics  []string
 	ResourceCountMetric string
-	ShouldAggregate     func(*metrics.Set) bool
-	ExtractGroup        func(batch *metrics.Batch, resourceKey metrics.ResourceKey, resourceSet *metrics.Set) (metrics.ResourceKey, *metrics.Set, error)
+	isPartOfGroup       func(*metrics.Set) bool
+	Group               func(batch *metrics.Batch, resourceKey metrics.ResourceKey, resourceSet *metrics.Set) (metrics.ResourceKey, *metrics.Set)
 }
 
 func NewSumCountAggregator(name string, specs []SumCountAggregateSpec) *SumCountAggregator {
@@ -31,14 +30,10 @@ func (a *SumCountAggregator) Name() string {
 func (a *SumCountAggregator) Process(batch *metrics.Batch) (*metrics.Batch, error) {
 	for _, spec := range a.specs {
 		for resourceKey, resourceSet := range batch.Sets {
-			if !spec.ShouldAggregate(resourceSet) {
+			if !spec.isPartOfGroup(resourceSet) {
 				continue
 			}
-			groupKey, groupSet, err := spec.ExtractGroup(batch, resourceKey, resourceSet)
-			if err != nil {
-				log.Errorf(err.Error())
-				continue
-			}
+			groupKey, groupSet := spec.Group(batch, resourceKey, resourceSet)
 			if groupSet == nil {
 				continue
 			}

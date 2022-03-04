@@ -19,14 +19,14 @@ func TestSumCountAggregator(t *testing.T) {
 		groupKey := metrics.ResourceKey("group")
 		sca := NewSumCountAggregator("my_resource", []SumCountAggregateSpec{{
 			ResourceSumMetrics: []string{},
-			ShouldAggregate: func(_ *metrics.Set) bool {
+			isPartOfGroup: func(_ *metrics.Set) bool {
 				return true
 			},
-			ExtractGroup: func(batch *metrics.Batch, resourceKey metrics.ResourceKey, resourceSet *metrics.Set) (metrics.ResourceKey, *metrics.Set, error) {
+			Group: func(batch *metrics.Batch, resourceKey metrics.ResourceKey, resourceSet *metrics.Set) (metrics.ResourceKey, *metrics.Set) {
 				return groupKey, &metrics.Set{
 					Labels: map[string]string{},
 					Values: map[string]metrics.Value{},
-				}, nil
+				}
 			},
 		}})
 		inputBatch := &metrics.Batch{
@@ -50,11 +50,11 @@ func TestSumCountAggregator(t *testing.T) {
 		groupKey := metrics.ResourceKey("group")
 		sca := NewSumCountAggregator("my_resource", []SumCountAggregateSpec{{
 			ResourceSumMetrics: []string{},
-			ShouldAggregate: func(_ *metrics.Set) bool {
+			isPartOfGroup: func(_ *metrics.Set) bool {
 				return true
 			},
-			ExtractGroup: func(batch *metrics.Batch, resourceKey metrics.ResourceKey, resourceSet *metrics.Set) (metrics.ResourceKey, *metrics.Set, error) {
-				return groupKey, nil, nil
+			Group: func(batch *metrics.Batch, resourceKey metrics.ResourceKey, resourceSet *metrics.Set) (metrics.ResourceKey, *metrics.Set) {
+				return groupKey, nil
 			},
 		}})
 		inputBatch := &metrics.Batch{
@@ -78,10 +78,10 @@ func TestSumCountAggregator(t *testing.T) {
 		groupKey := metrics.ResourceKey("group")
 		sca := NewSumCountAggregator("my_resource", []SumCountAggregateSpec{{
 			ResourceSumMetrics: []string{"m1"},
-			ShouldAggregate: func(resourceSet *metrics.Set) bool {
+			isPartOfGroup: func(resourceSet *metrics.Set) bool {
 				return resourceSet.Labels["type"] == "pod"
 			},
-			ExtractGroup: func(batch *metrics.Batch, resourceKey metrics.ResourceKey, resourceSet *metrics.Set) (metrics.ResourceKey, *metrics.Set, error) {
+			Group: func(batch *metrics.Batch, resourceKey metrics.ResourceKey, resourceSet *metrics.Set) (metrics.ResourceKey, *metrics.Set) {
 				groupSet := batch.Sets[groupKey]
 				if groupSet == nil {
 					groupSet = &metrics.Set{
@@ -89,7 +89,7 @@ func TestSumCountAggregator(t *testing.T) {
 						Values: map[string]metrics.Value{},
 					}
 				}
-				return groupKey, groupSet, nil
+				return groupKey, groupSet
 			},
 		}})
 		inputBatch := &metrics.Batch{
@@ -132,10 +132,10 @@ func TestSumCountAggregator(t *testing.T) {
 		sca := NewSumCountAggregator("my_resource", []SumCountAggregateSpec{{
 			ResourceSumMetrics:  []string{"m1"},
 			ResourceCountMetric: "c1",
-			ShouldAggregate: func(resourceSet *metrics.Set) bool {
+			isPartOfGroup: func(resourceSet *metrics.Set) bool {
 				return resourceSet.Labels["type"] == "pod"
 			},
-			ExtractGroup: func(batch *metrics.Batch, resourceKey metrics.ResourceKey, resourceSet *metrics.Set) (metrics.ResourceKey, *metrics.Set, error) {
+			Group: func(batch *metrics.Batch, resourceKey metrics.ResourceKey, resourceSet *metrics.Set) (metrics.ResourceKey, *metrics.Set) {
 				groupSet := batch.Sets[groupKey]
 				if groupSet == nil {
 					groupSet = &metrics.Set{
@@ -143,7 +143,7 @@ func TestSumCountAggregator(t *testing.T) {
 						Values: map[string]metrics.Value{},
 					}
 				}
-				return groupKey, groupSet, nil
+				return groupKey, groupSet
 			},
 		}})
 		inputBatch := &metrics.Batch{
@@ -180,10 +180,10 @@ func TestSumCountAggregator(t *testing.T) {
 		sca := NewSumCountAggregator("my_resource", []SumCountAggregateSpec{{
 			ResourceSumMetrics:  []string{"m1"},
 			ResourceCountMetric: "c1",
-			ShouldAggregate: func(resourceSet *metrics.Set) bool {
+			isPartOfGroup: func(resourceSet *metrics.Set) bool {
 				return resourceSet.Labels["type"] == "pod"
 			},
-			ExtractGroup: func(batch *metrics.Batch, resourceKey metrics.ResourceKey, resourceSet *metrics.Set) (metrics.ResourceKey, *metrics.Set, error) {
+			Group: func(batch *metrics.Batch, resourceKey metrics.ResourceKey, resourceSet *metrics.Set) (metrics.ResourceKey, *metrics.Set) {
 				groupSet := batch.Sets[groupKey]
 				if groupSet == nil {
 					groupSet = &metrics.Set{
@@ -191,7 +191,7 @@ func TestSumCountAggregator(t *testing.T) {
 						Values: map[string]metrics.Value{},
 					}
 				}
-				return groupKey, groupSet, nil
+				return groupKey, groupSet
 			},
 		}})
 		inputBatch := &metrics.Batch{
@@ -241,10 +241,10 @@ func TestSumCountAggregator(t *testing.T) {
 			{
 				ResourceSumMetrics:  []string{"m1"},
 				ResourceCountMetric: "c1",
-				ShouldAggregate: func(resourceSet *metrics.Set) bool {
+				isPartOfGroup: func(resourceSet *metrics.Set) bool {
 					return resourceSet.Labels["type"] == "pod"
 				},
-				ExtractGroup: func(batch *metrics.Batch, resourceKey metrics.ResourceKey, resourceSet *metrics.Set) (metrics.ResourceKey, *metrics.Set, error) {
+				Group: func(batch *metrics.Batch, resourceKey metrics.ResourceKey, resourceSet *metrics.Set) (metrics.ResourceKey, *metrics.Set) {
 					groupSet := batch.Sets[groupKey]
 					if groupSet == nil {
 						groupSet = &metrics.Set{
@@ -252,16 +252,16 @@ func TestSumCountAggregator(t *testing.T) {
 							Values: map[string]metrics.Value{},
 						}
 					}
-					return groupKey, groupSet, nil
+					return groupKey, groupSet
 				},
 			},
 			{
 				ResourceSumMetrics:  []string{"m2"},
 				ResourceCountMetric: "c2",
-				ShouldAggregate: func(resourceSet *metrics.Set) bool {
+				isPartOfGroup: func(resourceSet *metrics.Set) bool {
 					return resourceSet.Labels["type"] == "pod_container"
 				},
-				ExtractGroup: func(batch *metrics.Batch, resourceKey metrics.ResourceKey, resourceSet *metrics.Set) (metrics.ResourceKey, *metrics.Set, error) {
+				Group: func(batch *metrics.Batch, resourceKey metrics.ResourceKey, resourceSet *metrics.Set) (metrics.ResourceKey, *metrics.Set) {
 					groupSet := batch.Sets[groupKey]
 					if groupSet == nil {
 						groupSet = &metrics.Set{
@@ -269,7 +269,7 @@ func TestSumCountAggregator(t *testing.T) {
 							Values: map[string]metrics.Value{},
 						}
 					}
-					return groupKey, groupSet, nil
+					return groupKey, groupSet
 				},
 			},
 		})

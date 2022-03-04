@@ -18,7 +18,7 @@
 package processors
 
 import (
-	"fmt"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 )
@@ -28,23 +28,24 @@ func NewNodeAggregator(metricsToAggregate []string) metrics.Processor {
 		{
 			ResourceSumMetrics:  metricsToAggregate,
 			ResourceCountMetric: metrics.MetricPodCount.Name,
-			ShouldAggregate:     isAggregatablePod,
-			ExtractGroup:        groupByNode,
+			isPartOfGroup:       isAggregatablePod,
+			Group:               nodeGroup,
 		},
 		{
 			ResourceSumMetrics:  []string{},
 			ResourceCountMetric: metrics.MetricPodContainerCount.Name,
-			ShouldAggregate:     isAggregatablePodContainer,
-			ExtractGroup:        groupByNode,
+			isPartOfGroup:       isAggregatablePodContainer,
+			Group:               nodeGroup,
 		},
 	})
 }
 
-func groupByNode(batch *metrics.Batch, resourceKey metrics.ResourceKey, resourceSet *metrics.Set) (metrics.ResourceKey, *metrics.Set, error) {
+func nodeGroup(batch *metrics.Batch, resourceKey metrics.ResourceKey, resourceSet *metrics.Set) (metrics.ResourceKey, *metrics.Set) {
 	nodeName := resourceSet.Labels[metrics.LabelNodename.Key]
 	if nodeName == "" {
-		return "", nil, fmt.Errorf("no node info for resource %s: %v", resourceKey, resourceSet.Labels)
+		log.Errorf("no node info for resource %s: %v", resourceKey, resourceSet.Labels)
+		return "", nil
 	}
 	nodeKey := metrics.NodeKey(nodeName)
-	return nodeKey, batch.Sets[nodeKey], nil
+	return nodeKey, batch.Sets[nodeKey]
 }
