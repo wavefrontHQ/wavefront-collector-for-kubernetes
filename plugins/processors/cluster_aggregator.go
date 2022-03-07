@@ -21,30 +21,29 @@ import (
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 )
 
-type ClusterAggregator struct {
-	MetricsToAggregate []string
+func NewClusterAggregator(metricsToAggregate []string) metrics.Processor {
+	return NewSumCountAggregator("cluster", []SumCountAggregateSpec{
+		{
+			ResourceSumMetrics:  metricsToAggregate,
+			ResourceCountMetric: metrics.MetricPodCount.Name,
+			IsPartOfGroup:       isType(metrics.MetricSetTypeNamespace),
+			Group:               clusterGroup,
+		},
+		{
+			ResourceSumMetrics:  []string{},
+			ResourceCountMetric: metrics.MetricPodContainerCount.Name,
+			IsPartOfGroup:       isType(metrics.MetricSetTypeNamespace),
+			Group:               clusterGroup,
+		},
+	})
 }
 
-func (aggregator *ClusterAggregator) Name() string {
-	return "cluster_aggregator"
-}
-
-func (aggregator *ClusterAggregator) Process(batch *metrics.Batch) (*metrics.Batch, error) {
-	clusterKey := metrics.ClusterKey()
-	cluster := clusterMetricSet()
-	for _, metricSet := range batch.Sets {
-		if metricSetType, found := metricSet.Labels[metrics.LabelMetricSetType.Key]; found &&
-			metricSetType == metrics.MetricSetTypeNamespace {
-			if err := aggregate(metricSet, cluster, aggregator.MetricsToAggregate); err != nil {
-				return nil, err
-			}
-			aggregateCount(metricSet, cluster, metrics.MetricPodCount.Name)
-			aggregateCount(metricSet, cluster, metrics.MetricPodContainerCount.Name)
-		}
+func clusterGroup(batch *metrics.Batch, _ metrics.ResourceKey, _ *metrics.Set) (metrics.ResourceKey, *metrics.Set) {
+	clusterSet := batch.Sets[metrics.ClusterKey()]
+	if clusterSet == nil {
+		clusterSet = clusterMetricSet()
 	}
-
-	batch.Sets[clusterKey] = cluster
-	return batch, nil
+	return metrics.ClusterKey(), clusterSet
 }
 
 func clusterMetricSet() *metrics.Set {

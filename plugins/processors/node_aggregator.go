@@ -23,50 +23,29 @@ import (
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 )
 
-// Does not add any nodes.
-type NodeAggregator struct {
-	MetricsToAggregate []string
+func NewNodeAggregator(metricsToAggregate []string) metrics.Processor {
+	return NewSumCountAggregator("node", []SumCountAggregateSpec{
+		{
+			ResourceSumMetrics:  metricsToAggregate,
+			ResourceCountMetric: metrics.MetricPodCount.Name,
+			IsPartOfGroup:       isAggregatablePod,
+			Group:               nodeGroup,
+		},
+		{
+			ResourceSumMetrics:  []string{},
+			ResourceCountMetric: metrics.MetricPodContainerCount.Name,
+			IsPartOfGroup:       isAggregatablePodContainer,
+			Group:               nodeGroup,
+		},
+	})
 }
 
-func (aggregator *NodeAggregator) Name() string {
-	return "node_aggregator"
-}
-
-func (aggregator *NodeAggregator) Process(batch *metrics.Batch) (*metrics.Batch, error) {
-	for key, metricSet := range batch.Sets {
-		metricSetType, found := metricSet.Labels[metrics.LabelMetricSetType.Key]
-		if !found || (metricSetType != metrics.MetricSetTypePod && metricSetType != metrics.MetricSetTypePodContainer) {
-			continue
-		}
-
-		// Aggregating pods
-		nodeName, found := metricSet.Labels[metrics.LabelNodename.Key]
-		if nodeName == "" {
-			log.Debugf("Skipping pod %s: no node info", key)
-			continue
-		}
-		if !found {
-			log.Errorf("No node info in pod %s: %v", key, metricSet.Labels)
-			continue
-		}
-		nodeKey := metrics.NodeKey(nodeName)
-		node, found := batch.Sets[nodeKey]
-		if !found {
-			log.Infof("No metric for node %s, cannot perform node level aggregation.", nodeKey)
-		} else {
-			if metricSetType == metrics.MetricSetTypePodContainer {
-				// aggregate container counts and continue to top of the loop
-				aggregateCount(metricSet, node, metrics.MetricPodContainerCount.Name)
-				continue
-			} else {
-				// aggregate pod counts
-				aggregateCount(metricSet, node, metrics.MetricPodCount.Name)
-			}
-
-			if err := aggregate(metricSet, node, aggregator.MetricsToAggregate); err != nil {
-				return nil, err
-			}
-		}
+func nodeGroup(batch *metrics.Batch, resourceKey metrics.ResourceKey, resourceSet *metrics.Set) (metrics.ResourceKey, *metrics.Set) {
+	nodeName := resourceSet.Labels[metrics.LabelNodename.Key]
+	if nodeName == "" {
+		log.Errorf("no node info for resource %s: %v", resourceKey, resourceSet.Labels)
+		return "", nil
 	}
-	return batch, nil
+	nodeKey := metrics.NodeKey(nodeName)
+	return nodeKey, batch.Sets[nodeKey]
 }

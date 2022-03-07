@@ -58,16 +58,16 @@ func ClusterKey() ResourceKey {
 	return "cluster"
 }
 
-type SetKeys []ResourceKey
+type ResourceKeys []ResourceKey
 
-func (s SetKeys) Len() int {
+func (s ResourceKeys) Len() int {
 	return len(s)
 }
 
-func (s SetKeys) Less(i, j int) bool {
+func (s ResourceKeys) Less(i, j int) bool {
 	return string(s[i]) < string(s[j])
 }
 
-func (s SetKeys) Swap(i, j int) {
+func (s ResourceKeys) Swap(i, j int) {
 	s[i], s[j] = s[j], s[i]
 }

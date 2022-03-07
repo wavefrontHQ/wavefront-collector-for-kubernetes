@@ -345,15 +345,10 @@ func createDataProcessorsOrDie(kubeClient *kube_client.Clientset, cluster string
 
 	dataProcessors = append(dataProcessors,
 		processors.NewPodAggregator(),
-		&processors.NamespaceAggregator{
-			MetricsToAggregate: metricsToAggregate,
-		},
-		&processors.NodeAggregator{
-			MetricsToAggregate: metricsToAggregateForNode,
-		},
-		&processors.ClusterAggregator{
-			MetricsToAggregate: metricsToAggregate,
-		})
+		processors.NewNamespaceAggregator(metricsToAggregate),
+		processors.NewNodeAggregator(metricsToAggregateForNode),
+		processors.NewClusterAggregator(metricsToAggregate),
+	)
 
 	nodeAutoscalingEnricher, err := processors.NewNodeAutoscalingEnricher(kubeClient, labelCopier)
 	if err != nil {
