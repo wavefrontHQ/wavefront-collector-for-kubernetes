@@ -215,7 +215,7 @@ These are metrics for the health of the Kubernetes Control Plane.
 
 Metrics collected per type:
 
-| Metric Name                                              | Description                                                                                         | K8s environment unavailability  |
+| Metric Name                                              | Description                                                                                         | K8s environment exceptions      |
 |----------------------------------------------------------|-----------------------------------------------------------------------------------------------------|---------------------------------|
 | kube.apiserver.etcd.request.duration.seconds.bucket      | Histogram buckets for etcd request latency                                                          | -                               |
 | kube.apiserver.etcd.object.counts.gauge                  | etcd object counts                                                                                  | -                               |
