@@ -231,9 +231,9 @@
 {"Name":"kubernetes.ns.memory.usage","Tags":{"cluster":"","namespace_name":"wavefront-collector","source":"","type":"ns"}}
 {"Name":"kubernetes.ns.memory.usage","Tags":{"cluster":"","namespace_name": "collector-targets","source":"","type":"ns"}}
 {"Name":"kubernetes.ns.pod.count","Tags":{"cluster":"","namespace_name":"wavefront-collector","source":"","type":"ns"}}
-{"Name":"kubernetes.ns.pod.count","Tags":{"cluster":"","namespace_name": "collector-targets","source":"","type":"ns"},"Value": "5"}
+{"Name":"kubernetes.ns.pod.count","Tags":{"cluster":"","namespace_name": "collector-targets","source":"","type":"ns"}}
 {"Name":"kubernetes.ns.pod_container.count","Tags":{"cluster":"","namespace_name":"wavefront-collector","source":"","type":"ns"}}
-{"Name":"kubernetes.ns.pod_container.count","Tags":{"cluster":"","namespace_name": "collector-targets","source":"","type":"ns"},"Value": "9"}
+{"Name":"kubernetes.ns.pod_container.count","Tags":{"cluster":"","namespace_name": "collector-targets","source":"","type":"ns"}}
 {"Name":"kubernetes.pod.cpu.limit","Tags":{"cluster":"","label.app":"wavefront-proxy","namespace_name":"wavefront-collector","nodename":"","pod_name":"","source":"","type":"pod"}}
 {"Name":"kubernetes.pod.cpu.limit","Tags":{"cluster":"","label.app.kubernetes.io/component":"primary","label.app.kubernetes.io/instance":"mysql-release","label.app.kubernetes.io/managed-by":"Helm","label.app.kubernetes.io/name":"mysql","label.helm.sh/chart":"","label.statefulset.kubernetes.io/pod-name":"mysql-release-0","namespace_name": "collector-targets","nodename":"","pod_name":"","source":"","type":"pod"}}
 {"Name":"kubernetes.pod.cpu.limit","Tags":{"cluster":"","label.app.kubernetes.io/instance":"memcached-release","label.app.kubernetes.io/managed-by":"Helm","label.app.kubernetes.io/name":"memcached","label.helm.sh/chart":"","namespace_name": "collector-targets","nodename":"","pod_name":"","source":"","type":"pod"}}
