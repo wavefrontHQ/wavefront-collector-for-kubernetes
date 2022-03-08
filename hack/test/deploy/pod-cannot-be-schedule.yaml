@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    name: pod-cannot-be-scheduled
+    exclude-me: "true"
+  name: pod-cannot-be-scheduled
+  namespace: collector-targets
+spec:
+  containers:
+  - name: pod-cannot-be-scheduled
+    image: busybox
+    resources:
+      requests:
+        cpu: 100m
+        memory: 50G

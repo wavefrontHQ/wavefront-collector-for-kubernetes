@@ -55,6 +55,7 @@ func NewStateMetricsSource(lister *lister, transforms configuration.Transforms) 
 	funcs[statefulSets] = pointsForStatefulSet
 	funcs[horizontalPodAutoscalers] = pointsForHPA
 	funcs[nodes] = pointsForNode
+	funcs[nonRunningPods] = pointsForNonRunningPods
 
 	return &stateMetricsSource{
 		lister:     lister,

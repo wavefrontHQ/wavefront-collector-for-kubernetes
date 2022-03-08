@@ -139,13 +139,11 @@ func (src *summaryMetricsSource) addCompletedPodMetricSets(dataBatch *Batch, pod
 		LabelHostID.Key:   src.node.HostID,
 	}
 	for _, pod := range podList.Items {
-        podKey := PodKey(pod.Namespace, pod.Name)
-
-        if pod.Status.Phase != kube_api.PodSucceeded && pod.Status.Phase != kube_api.PodFailed && pod.Status.Phase != kube_api.PodPending {
-            log.Debugf("Skipping - Added Set for key: %s, status: %s", podKey, pod.Status.Phase)
-            continue
+		if pod.Status.Phase != kube_api.PodSucceeded && pod.Status.Phase != kube_api.PodFailed {
+			continue
 		}
 
+		podKey := PodKey(pod.Namespace, pod.Name)
 		if dataBatch.Sets[podKey] != nil {
 			continue
 		}
