@@ -51,11 +51,11 @@ spec:
         - name: say-something
           image: busybox
           command: ["echo", "Running a job"]
-        resources:
-          requests:
-            cpu: 50m
-            memory: 20Mi
-          limits:
-            cpu: 200m
-            memory: 200Mi
+          resources:
+            requests:
+              cpu: 50m
+              memory: 20Mi
+            limits:
+              cpu: 200m
+              memory: 200Mi
       restartPolicy: OnFailure
