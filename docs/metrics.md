@@ -226,8 +226,3 @@ Metrics collected per type:
 | kube.apiserver.workqueue.queue.duration.seconds.bucket   | Histogram buckets for workqueue latency                                                             | -                               |
  | kube.coredns.coredns.dns.request.duration.seconds.bucket | Histogram buckets for CoreDNS request latency                                                       | Not available in GKE, OpenShift |
  | kube.coredns.coredns.dns.responses.total.counter         | CoreDNS total response count                                                                        | Not available in GKE, OpenShift |
-| kubernetes.node.memory.node_allocatable                  | Memory allocatable of a node.                                                                       | Not available in GKE, EKS, AKS  |
-| kubernetes.node.memory.working_set                       | Total working set usage. Working set is the memory being used and not easily dropped by the kernel. | Not available in GKE, EKS, AKS  |
-| kubernetes.node.cpu.node_utilization                     | CPU utilization as a share of node allocatable in millicores.                                       | Not available in GKE, EKS, AKS  |
-| kubernetes.node.filesystem.usage                         | Total number of bytes consumed on a filesystem.                                                     | Not available in GKE, EKS, AKS  |
-| kubernetes.node.filesystem.limit                         | The total size of filesystem in bytes.                                                              | Not available in GKE, EKS, AKS  |
