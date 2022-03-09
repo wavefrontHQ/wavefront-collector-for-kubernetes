@@ -75,7 +75,7 @@ func buildInformers(kubeClient kubernetes.Interface) map[string]cache.SharedInfo
 	m[horizontalPodAutoscalers] = buildInformer(horizontalPodAutoscalers, &v2beta1.HorizontalPodAutoscaler{}, kubeClient.AutoscalingV2beta1().RESTClient())
 	m[nodes] = buildInformer(nodes, &v1.Node{}, kubeClient.CoreV1().RESTClient())
 	m[replicationControllers] = buildInformer(replicationControllers, &v1.ReplicationController{}, kubeClient.CoreV1().RESTClient())
-	m[nonRunningPods] = buildInformerWithFieldsSelector(nonRunningPods, &v1.Pod{}, kubeClient.CoreV1().RESTClient(), fields.OneTermEqualSelector("status.phase" , "Pending"))
+	m[nonRunningPods] = buildInformerWithFieldsSelector(nonRunningPods, &v1.Pod{}, kubeClient.CoreV1().RESTClient(), fields.OneTermNotEqualSelector("status.phase", "Running"))
 	return m
 }
 
