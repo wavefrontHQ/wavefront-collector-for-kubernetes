@@ -86,6 +86,14 @@ func TestNodeAggregate(t *testing.T) {
 						IntValue:  30,
 					},
 				},
+                LabeledValues: []metrics.LabeledValue{{
+                    Name:   metrics.MetricPodPhase.Name,
+                    Labels: map[string]string{"phase": string(corev1.PodRunning)},
+                    Value: metrics.Value{
+                        ValueType: metrics.ValueInt64,
+                        IntValue:  convertPhase(corev1.PodRunning),
+                    },
+                }},
 			},
 			metrics.PodContainerKey("ns1", "pod2", "container2"): {
 				Labels: map[string]string{
@@ -97,6 +105,14 @@ func TestNodeAggregate(t *testing.T) {
 					ValueType: metrics.ValueInt64,
 					IntValue:  10,
 				}},
+                LabeledValues: []metrics.LabeledValue{{
+                    Name:   metrics.MetricContainerStatus.Name,
+                    Labels: map[string]string{"state": "running"},
+                    Value: metrics.Value{
+                        ValueType: metrics.ValueInt64,
+                        IntValue:  1,
+                    },
+                }},
 			},
 			metrics.NodeKey("h1"): {
 				Labels: map[string]string{
