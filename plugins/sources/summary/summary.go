@@ -105,11 +105,11 @@ func (src *summaryMetricsSource) Scrape() (*Batch, error) {
 	}
 
 	src.addSummaryMetricSets(result, summary)
-    //
+	//
 	//podList, err := func() (*kube_api.PodList, error) {
 	//	return src.kubeletClient.GetPods(src.node.IP)
 	//}()
-    //
+	//
 	//if err != nil {
 	//	collectErrors.Inc(1)
 	//	return nil, err

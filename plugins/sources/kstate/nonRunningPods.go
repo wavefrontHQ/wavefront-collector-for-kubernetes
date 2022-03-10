@@ -24,32 +24,49 @@ func pointsForNonRunningPods(item interface{}, transforms configuration.Transfor
 		return nil
 	}
 
-    sharedTags :=  make(map[string]string, len(pod.GetLabels())+1)
-    copyLabels(pod.GetLabels(), sharedTags)
-    now := time.Now().Unix()
+	sharedTags := make(map[string]string, len(pod.GetLabels())+1)
+	copyLabels(pod.GetLabels(), sharedTags)
+	now := time.Now().Unix()
 
-    points := buildPodPhaseMetrics(pod, transforms, sharedTags, now)
+	points := buildPodPhaseMetrics(pod, transforms, sharedTags, now)
 
-    points = append(points, buildContainerStatusMetrics(pod, sharedTags, transforms, now)...)
-    return points
+	points = append(points, buildContainerStatusMetrics(pod, sharedTags, transforms, now)...)
+	return points
 }
 
 func buildPodPhaseMetrics(pod *v1.Pod, transforms configuration.Transforms, sharedTags map[string]string, now int64) []*wf.Point {
-    tags := buildTags("pod_name", pod.Name, pod.Namespace, transforms.Tags)
-    tags[metrics.LabelMetricSetType.Key] = metrics.MetricSetTypePod
-    tags[metrics.LabelPodId.Key] = string(pod.UID)
-    tags["phase"] = string(pod.Status.Phase)
+	tags := buildTags("pod_name", pod.Name, pod.Namespace, transforms.Tags)
+	tags[metrics.LabelMetricSetType.Key] = metrics.MetricSetTypePod
+	tags[metrics.LabelPodId.Key] = string(pod.UID)
+	tags["phase"] = string(pod.Status.Phase)
 
-    phaseValue := convertPhase(pod.Status.Phase)
-    nodeName := pod.Spec.NodeName
-    if len(nodeName) > 0 {
-        sharedTags[metrics.LabelNodename.Key] = nodeName
-    }
-    copyTags(sharedTags, tags)
-    points := []*wf.Point{
-        metricPoint(transforms.Prefix, "pod.status.phase", float64(phaseValue), now, transforms.Source, tags),
-    }
-    return points
+	phaseValue := convertPhase(pod.Status.Phase)
+	if phaseValue == 1 {
+		for _, condition := range pod.Status.Conditions {
+			if condition.Type == v1.PodScheduled {
+				tags["reason"] = condition.Reason
+			}
+		}
+	}
+
+	if phaseValue == 4 {
+        log.Infof("failed phase")
+		for _, condition := range pod.Status.Conditions {
+            if condition.Type == v1.PodReady {
+				tags["reason"] = condition.Reason
+			}
+		}
+	}
+
+	nodeName := pod.Spec.NodeName
+	if len(nodeName) > 0 {
+		sharedTags[metrics.LabelNodename.Key] = nodeName
+	}
+	copyTags(sharedTags, tags)
+	points := []*wf.Point{
+		metricPoint(transforms.Prefix, "pod.status.phase", float64(phaseValue), now, transforms.Source, tags),
+	}
+	return points
 }
 
 func convertPhase(phase v1.PodPhase) int64 {
@@ -69,20 +86,20 @@ func convertPhase(phase v1.PodPhase) int64 {
 	}
 }
 
-func buildContainerStatusMetrics(pod *v1.Pod, sharedTags map[string]string,transforms configuration.Transforms, now int64) []*wf.Point {
+func buildContainerStatusMetrics(pod *v1.Pod, sharedTags map[string]string, transforms configuration.Transforms, now int64) []*wf.Point {
 	statuses := pod.Status.ContainerStatuses
 	if len(statuses) == 0 {
 		return []*wf.Point{}
 	}
 
-    //container_base_image
+	//container_base_image
 	points := make([]*wf.Point, len(statuses))
 	for _, status := range statuses {
 		stateInt, state, reason, exitCode := convertContainerState(status.State)
 		tags := buildTags("pod_name", pod.Name, pod.Namespace, transforms.Tags)
-        tags[metrics.LabelMetricSetType.Key] = metrics.MetricSetTypePodContainer
-        tags[metrics.LabelContainerName.Key] =  status.Name
-        tags[metrics.LabelContainerBaseImage.Key] =  status.Image
+		tags[metrics.LabelMetricSetType.Key] = metrics.MetricSetTypePodContainer
+		tags[metrics.LabelContainerName.Key] = status.Name
+		tags[metrics.LabelContainerBaseImage.Key] = status.Image
 
 		copyTags(sharedTags, tags)
 		if stateInt > 0 {
