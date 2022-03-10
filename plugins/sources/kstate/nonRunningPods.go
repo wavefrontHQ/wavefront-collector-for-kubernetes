@@ -24,30 +24,32 @@ func pointsForNonRunningPods(item interface{}, transforms configuration.Transfor
 		return nil
 	}
 
-	tags := buildTags("pod", pod.Name, pod.Namespace, transforms.Tags)
-	tags[metrics.LabelMetricSetType.Key] = metrics.MetricSetTypePod
-	tags[metrics.LabelPodId.Key] = string(pod.UID)
-	tags[metrics.LabelPodName.Key] = pod.Name
-	tags["phase"] = string(pod.Status.Phase)
-
     sharedTags :=  make(map[string]string, len(pod.GetLabels())+1)
     copyLabels(pod.GetLabels(), sharedTags)
+    now := time.Now().Unix()
 
-	now := time.Now().Unix()
+    points := buildPodPhaseMetrics(pod, transforms, sharedTags, now)
 
-	phaseValue := convertPhase(pod.Status.Phase)
+    points = append(points, buildContainerStatusMetrics(pod, sharedTags, transforms, now)...)
+    return points
+}
+
+func buildPodPhaseMetrics(pod *v1.Pod, transforms configuration.Transforms, sharedTags map[string]string, now int64) []*wf.Point {
+    tags := buildTags("pod_name", pod.Name, pod.Namespace, transforms.Tags)
+    tags[metrics.LabelMetricSetType.Key] = metrics.MetricSetTypePod
+    tags[metrics.LabelPodId.Key] = string(pod.UID)
+    tags["phase"] = string(pod.Status.Phase)
+
+    phaseValue := convertPhase(pod.Status.Phase)
     nodeName := pod.Spec.NodeName
-    if len(nodeName) > 0  {
+    if len(nodeName) > 0 {
         sharedTags[metrics.LabelNodename.Key] = nodeName
     }
-
     copyTags(sharedTags, tags)
-	points := []*wf.Point{
-		metricPoint(transforms.Prefix, "pod.status.phase", float64(phaseValue), now, transforms.Source, tags),
-	}
-
-	points = append(points, buildContainterStatusMetrics(pod, sharedTags, transforms, now)...)
-	return points
+    points := []*wf.Point{
+        metricPoint(transforms.Prefix, "pod.status.phase", float64(phaseValue), now, transforms.Source, tags),
+    }
+    return points
 }
 
 func convertPhase(phase v1.PodPhase) int64 {
@@ -67,7 +69,7 @@ func convertPhase(phase v1.PodPhase) int64 {
 	}
 }
 
-func buildContainterStatusMetrics(pod *v1.Pod, sharedTags map[string]string,transforms configuration.Transforms, now int64) []*wf.Point {
+func buildContainerStatusMetrics(pod *v1.Pod, sharedTags map[string]string,transforms configuration.Transforms, now int64) []*wf.Point {
 	statuses := pod.Status.ContainerStatuses
 	if len(statuses) == 0 {
 		return []*wf.Point{}
