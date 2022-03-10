@@ -43,9 +43,11 @@ func buildPodPhaseMetrics(pod *v1.Pod, transforms configuration.Transforms, shar
 	phaseValue := convertPhase(pod.Status.Phase)
 	if phaseValue == 1 {
 		for _, condition := range pod.Status.Conditions {
-			if condition.Type == v1.PodScheduled {
+			if condition.Type == v1.PodScheduled && condition.Status == "False" {
 				tags["reason"] = condition.Reason
-			}
+			} else if condition.Type == v1.ContainersReady && condition.Status == "False" {
+                tags["reason"] = condition.Reason
+            }
 		}
 	}
 
@@ -94,7 +96,7 @@ func buildContainerStatusMetrics(pod *v1.Pod, sharedTags map[string]string, tran
 
 	//container_base_image
 	points := make([]*wf.Point, len(statuses))
-	for _, status := range statuses {
+	for i, status := range statuses {
 		stateInt, state, reason, exitCode := convertContainerState(status.State)
 		tags := buildTags("pod_name", pod.Name, pod.Namespace, transforms.Tags)
 		tags[metrics.LabelMetricSetType.Key] = metrics.MetricSetTypePodContainer
@@ -109,7 +111,7 @@ func buildContainerStatusMetrics(pod *v1.Pod, sharedTags map[string]string, tran
 				tags["exit_code"] = fmt.Sprint(exitCode)
 			}
 		}
-		points = append(points, metricPoint(transforms.Prefix, "pod_container.status", float64(stateInt), now, transforms.Source, tags))
+		points[i] = metricPoint(transforms.Prefix, "pod_container.status", float64(stateInt), now, transforms.Source, tags)
 	}
 	return points
 }
