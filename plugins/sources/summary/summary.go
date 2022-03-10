@@ -105,16 +105,6 @@ func (src *summaryMetricsSource) Scrape() (*Batch, error) {
 	}
 
 	src.addSummaryMetricSets(result, summary)
-	//
-	//podList, err := func() (*kube_api.PodList, error) {
-	//	return src.kubeletClient.GetPods(src.node.IP)
-	//}()
-	//
-	//if err != nil {
-	//	collectErrors.Inc(1)
-	//	return nil, err
-	//}
-	//src.addCompletedPodMetricSets(result, podList)
 
 	return result, nil
 }
@@ -130,40 +120,6 @@ const (
 var systemNameMap = map[string]string{
 	stats.SystemContainerRuntime: "docker-daemon",
 	stats.SystemContainerMisc:    "system",
-}
-
-func (src *summaryMetricsSource) addCompletedPodMetricSets(dataBatch *Batch, podList *kube_api.PodList) {
-	nodeLabels := map[string]string{
-		LabelNodename.Key: src.node.NodeName,
-		LabelHostname.Key: src.node.HostName,
-		LabelHostID.Key:   src.node.HostID,
-	}
-	for _, pod := range podList.Items {
-		if pod.Status.Phase != kube_api.PodSucceeded && pod.Status.Phase != kube_api.PodFailed {
-			continue
-		}
-
-		podKey := PodKey(pod.Namespace, pod.Name)
-		if dataBatch.Sets[podKey] != nil {
-			continue
-		}
-
-		podMetrics := &Set{
-			Labels:              src.cloneLabels(nodeLabels),
-			Values:              map[string]Value{},
-			LabeledValues:       []LabeledValue{},
-			CollectionStartTime: pod.Status.StartTime.Time,
-			ScrapeTime:          dataBatch.Timestamp,
-		}
-
-		podMetrics.Labels[LabelMetricSetType.Key] = MetricSetTypePod
-		podMetrics.Labels[LabelPodId.Key] = string(pod.UID)
-		podMetrics.Labels[LabelPodName.Key] = pod.Name
-		podMetrics.Labels[LabelNamespaceName.Key] = pod.Namespace
-
-		dataBatch.Sets[podKey] = podMetrics
-		log.Debugf("Added Set for key: %s, status: %s", podKey, pod.Status.Phase)
-	}
 }
 
 // decodeSummary translates the kubelet statsSummary API into the flattened Set API.

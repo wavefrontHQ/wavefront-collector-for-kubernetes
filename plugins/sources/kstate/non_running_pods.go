@@ -34,6 +34,14 @@ func pointsForNonRunningPods(item interface{}, transforms configuration.Transfor
 	return points
 }
 
+func truncateMessage(message string) string {
+    maxPointTagLength := 255-len("=")-len("message")
+    if len(message) >= maxPointTagLength {
+        return message[0 : maxPointTagLength]
+    }
+    return message
+}
+
 func buildPodPhaseMetrics(pod *v1.Pod, transforms configuration.Transforms, sharedTags map[string]string, now int64) []*wf.Point {
 	tags := buildTags("pod_name", pod.Name, pod.Namespace, transforms.Tags)
 	tags[metrics.LabelMetricSetType.Key] = metrics.MetricSetTypePod
@@ -45,10 +53,12 @@ func buildPodPhaseMetrics(pod *v1.Pod, transforms configuration.Transforms, shar
 		for _, condition := range pod.Status.Conditions {
 			if condition.Type == v1.PodScheduled && condition.Status == "False" {
 				tags["reason"] = condition.Reason
-			} else if condition.Type == v1.ContainersReady && condition.Status == "False" {
+                tags["message"] = truncateMessage(condition.Message)
+            } else if condition.Type == v1.ContainersReady && condition.Status == "False" {
                 tags["reason"] = condition.Reason
+                tags["message"] = truncateMessage(condition.Message)
             }
-		}
+        }
 	}
 
 	if phaseValue == 4 {
@@ -56,6 +66,7 @@ func buildPodPhaseMetrics(pod *v1.Pod, transforms configuration.Transforms, shar
 		for _, condition := range pod.Status.Conditions {
             if condition.Type == v1.PodReady {
 				tags["reason"] = condition.Reason
+                tags["message"] = truncateMessage(condition.Message)
 			}
 		}
 	}

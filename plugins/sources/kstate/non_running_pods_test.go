@@ -141,13 +141,13 @@ func setupFailedPod() *v1.Pod {
                 Type: "Ready",
                 Status: "False",
                 Reason: "ContainersNotReady",
-                Message: "containers with unready status: [hello]",
+                Message: "containers with unready status: [hello], and this message exceeds 255 characters point tag. Maximum allowed length for a combination of a point tag key and value is 254 characters (255 including the = separating key and value). If the value is longer, the point is rejected and logged. Keep the number of distinct time series per metric and host to under 1000.",
             },
             {
                 Type: "ContainersReady",
                 Status: "False",
                 Reason: "ContainersNotReady",
-                Message: "containers with unready status: [hello]",
+                Message: "containers with unready status: [hello], and this message exceeds 255 characters point tag. Maximum allowed length for a combination of a point tag key and value is 254 characters (255 including the = separating key and value). If the value is longer, the point is rejected and logged. Keep the number of distinct time series per metric and host to under 1000.",
             },
             {
                 Type: "PodScheduled",
@@ -194,6 +194,7 @@ func TestPointsForNonRunningPods(t *testing.T) {
         assert.Equal(t, string(v1.PodPending), actualWFPoints[0].Tags()["phase"])
         assert.Equal(t, "testLabelName", actualWFPoints[0].Tags()["label.name"])
         assert.Equal(t, "Unschedulable", actualWFPoints[0].Tags()["reason"])
+        assert.Equal(t, "0/1 nodes are available: 1 Insufficient memory.", actualWFPoints[0].Tags()["message"])
     })
 
     t.Run("test for completed pod", func(t *testing.T) {
@@ -222,6 +223,8 @@ func TestPointsForNonRunningPods(t *testing.T) {
         assert.Equal(t, float64(4), actualWFPoints[0].Value)
         assert.Equal(t, string(v1.PodFailed), actualWFPoints[0].Tags()["phase"])
         assert.Equal(t, "ContainersNotReady", actualWFPoints[0].Tags()["reason"])
+        assert.Equal(t, 255, len(actualWFPoints[0].Tags()["message"])+len("message")+len("="))
+        assert.Contains(t, actualWFPoints[0].Tags()["message"], "containers with unready status: [hello]")
 
         // check for container metrics
         assert.Equal(t, float64(3), actualWFPoints[1].Value)
@@ -239,6 +242,7 @@ func TestPointsForNonRunningPods(t *testing.T) {
         assert.Equal(t, float64(1), actualWFPoints[0].Value)
         assert.Equal(t, string(v1.PodPending), actualWFPoints[0].Tags()["phase"])
         assert.Equal(t, "ContainersNotReady", actualWFPoints[0].Tags()["reason"])
+        assert.Equal(t, "containers with unready status: [wavefront-proxy]", actualWFPoints[0].Tags()["message"])
 
         // check for container metrics
         assert.Equal(t, float64(2), actualWFPoints[1].Value)

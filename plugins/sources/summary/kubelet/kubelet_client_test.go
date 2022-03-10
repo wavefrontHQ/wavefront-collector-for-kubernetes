@@ -18,49 +18,16 @@
 package kubelet
 
 import (
-	"io/ioutil"
-	"net"
-	"net/http"
-	"net/http/httptest"
-	"net/url"
-	"strconv"
-	"testing"
+    "io/ioutil"
+    "net"
+    "net/http/httptest"
+    "net/url"
+    "strconv"
+    "testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/kubernetes"
-	kube_api "k8s.io/api/core/v1"
-	util "k8s.io/client-go/util/testing"
+    "github.com/stretchr/testify/require"
+    util "k8s.io/client-go/util/testing"
 )
-
-func TestGetPods(t *testing.T) {
-
-	t.Run("success", func(t *testing.T) {
-		ip, port, close := setupTestServer(t, http.StatusOK)
-		defer close()
-
-		kubeletClient := KubeletClient{config: &KubeletClientConfig{Port: port}}
-		pods, err := kubeletClient.GetPods(ip)
-
-		require.NoError(t, err)
-		require.Len(t, pods.Items, 7)
-		assert.Equal(t, pods.Items[0].Status.Phase, kube_api.PodSucceeded, "Expected Pod status phase to be succeeded")
-		assert.Equal(t, pods.Items[5].Status.Phase, kube_api.PodFailed, "Expected Pod status phase to be failed")
-
-	})
-
-	t.Run("forbidden", func(t *testing.T) {
-		kubernetes.UseTerminateTestMode()
-		ip, port, close := setupTestServer(t, http.StatusForbidden)
-		defer close()
-
-		kubeletClient := KubeletClient{config: &KubeletClientConfig{Port: port}}
-		kubeletClient.GetPods(ip)
-
-		assert.Equal(t, "Missing ClusterRole resource nodes/stats or nodes/proxy, see https://docs.wavefront.com/kubernetes.html#kubernetes-manual-install", kubernetes.TerminationMessage)
-	})
-
-}
 
 func setupTestServer(t *testing.T, status int) (net.IP, uint, func()) {
 	content, err := ioutil.ReadFile("k8s_api_pods.json")
