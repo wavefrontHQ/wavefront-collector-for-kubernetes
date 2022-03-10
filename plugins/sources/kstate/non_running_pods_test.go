@@ -89,10 +89,6 @@ func setupCompletedPod() *v1.Pod {
         Phase: v1.PodSucceeded,
         Conditions: []v1.PodCondition{
             {
-                Type:    "Initialized",
-                Status:  "True",
-            },
-            {
                 Type: "Initialized",
                 Status: "True",
                 Reason: "PodCompleted",
@@ -138,13 +134,8 @@ func setupFailedPod() *v1.Pod {
         Phase: v1.PodFailed,
         Conditions: []v1.PodCondition{
             {
-                Type:    "Initialized",
-                Status:  "True",
-            },
-            {
                 Type: "Initialized",
                 Status: "True",
-                Reason: "ContainersNotReady",
             },
             {
                 Type: "Ready",
