@@ -5,7 +5,8 @@ package kstate
 
 import (
 	"fmt"
-	"reflect"
+    "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
+    "reflect"
 	"time"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
@@ -35,11 +36,11 @@ func pointsForNonRunningPods(item interface{}, transforms configuration.Transfor
 }
 
 func truncateMessage(message string) string {
-    maxPointTagLength := 255-len("=")-len("message")
-    if len(message) >= maxPointTagLength {
-        return message[0 : maxPointTagLength]
-    }
-    return message
+	maxPointTagLength := 255 - len("=") - len("message")
+	if len(message) >= maxPointTagLength {
+		return message[0:maxPointTagLength]
+	}
+	return message
 }
 
 func buildPodPhaseMetrics(pod *v1.Pod, transforms configuration.Transforms, sharedTags map[string]string, now int64) []*wf.Point {
@@ -48,25 +49,25 @@ func buildPodPhaseMetrics(pod *v1.Pod, transforms configuration.Transforms, shar
 	tags[metrics.LabelPodId.Key] = string(pod.UID)
 	tags["phase"] = string(pod.Status.Phase)
 
-	phaseValue := convertPhase(pod.Status.Phase)
+	phaseValue := util.ConvertPodPhase(pod.Status.Phase)
 	if phaseValue == 1 {
 		for _, condition := range pod.Status.Conditions {
 			if condition.Type == v1.PodScheduled && condition.Status == "False" {
 				tags["reason"] = condition.Reason
-                tags["message"] = truncateMessage(condition.Message)
-            } else if condition.Type == v1.ContainersReady && condition.Status == "False" {
-                tags["reason"] = condition.Reason
-                tags["message"] = truncateMessage(condition.Message)
-            }
-        }
+				tags["message"] = truncateMessage(condition.Message)
+			} else if condition.Type == v1.ContainersReady && condition.Status == "False" {
+				tags["reason"] = condition.Reason
+				tags["message"] = truncateMessage(condition.Message)
+			}
+		}
 	}
 
 	if phaseValue == 4 {
-        log.Infof("failed phase")
+		log.Infof("failed phase")
 		for _, condition := range pod.Status.Conditions {
-            if condition.Type == v1.PodReady {
+			if condition.Type == v1.PodReady {
 				tags["reason"] = condition.Reason
-                tags["message"] = truncateMessage(condition.Message)
+				tags["message"] = truncateMessage(condition.Message)
 			}
 		}
 	}
@@ -82,23 +83,6 @@ func buildPodPhaseMetrics(pod *v1.Pod, transforms configuration.Transforms, shar
 	return points
 }
 
-func convertPhase(phase v1.PodPhase) int64 {
-	switch phase {
-	case v1.PodPending:
-		return 1
-	case v1.PodRunning:
-		return 2
-	case v1.PodSucceeded:
-		return 3
-	case v1.PodFailed:
-		return 4
-	case v1.PodUnknown:
-		return 5
-	default:
-		return 5
-	}
-}
-
 func buildContainerStatusMetrics(pod *v1.Pod, sharedTags map[string]string, transforms configuration.Transforms, now int64) []*wf.Point {
 	statuses := pod.Status.ContainerStatuses
 	if len(statuses) == 0 {
@@ -108,7 +92,7 @@ func buildContainerStatusMetrics(pod *v1.Pod, sharedTags map[string]string, tran
 	//container_base_image
 	points := make([]*wf.Point, len(statuses))
 	for i, status := range statuses {
-		stateInt, state, reason, exitCode := convertContainerState(status.State)
+		stateInt, state, reason, exitCode := util.ConvertContainerState(status.State)
 		tags := buildTags("pod_name", pod.Name, pod.Namespace, transforms.Tags)
 		tags[metrics.LabelMetricSetType.Key] = metrics.MetricSetTypePodContainer
 		tags[metrics.LabelContainerName.Key] = status.Name
@@ -125,17 +109,4 @@ func buildContainerStatusMetrics(pod *v1.Pod, sharedTags map[string]string, tran
 		points[i] = metricPoint(transforms.Prefix, "pod_container.status", float64(stateInt), now, transforms.Source, tags)
 	}
 	return points
-}
-
-func convertContainerState(state v1.ContainerState) (int64, string, string, int32) {
-	if state.Running != nil {
-		return 1, "running", "", 0
-	}
-	if state.Waiting != nil {
-		return 2, "waiting", state.Waiting.Reason, 0
-	}
-	if state.Terminated != nil {
-		return 3, "terminated", state.Terminated.Reason, state.Terminated.ExitCode
-	}
-	return 0, "", "", 0
 }

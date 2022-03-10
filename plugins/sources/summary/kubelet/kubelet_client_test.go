@@ -18,15 +18,15 @@
 package kubelet
 
 import (
-    "io/ioutil"
-    "net"
-    "net/http/httptest"
-    "net/url"
-    "strconv"
-    "testing"
+	"io/ioutil"
+	"net"
+	"net/http/httptest"
+	"net/url"
+	"strconv"
+	"testing"
 
-    "github.com/stretchr/testify/require"
-    util "k8s.io/client-go/util/testing"
+	"github.com/stretchr/testify/require"
+	util "k8s.io/client-go/util/testing"
 )
 
 func setupTestServer(t *testing.T, status int) (net.IP, uint, func()) {

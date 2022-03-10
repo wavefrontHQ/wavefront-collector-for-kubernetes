@@ -18,7 +18,8 @@
 package processors
 
 import (
-	"testing"
+    "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
+    "testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
@@ -47,7 +48,7 @@ func TestNodeAggregate(t *testing.T) {
 					Labels: map[string]string{"phase": string(corev1.PodSucceeded)},
 					Value: metrics.Value{
 						ValueType: metrics.ValueInt64,
-						IntValue:  convertPhase(corev1.PodSucceeded),
+						IntValue:  util.ConvertPodPhase(corev1.PodSucceeded),
 					},
 				}},
 			},
@@ -86,14 +87,14 @@ func TestNodeAggregate(t *testing.T) {
 						IntValue:  30,
 					},
 				},
-                LabeledValues: []metrics.LabeledValue{{
-                    Name:   metrics.MetricPodPhase.Name,
-                    Labels: map[string]string{"phase": string(corev1.PodRunning)},
-                    Value: metrics.Value{
-                        ValueType: metrics.ValueInt64,
-                        IntValue:  convertPhase(corev1.PodRunning),
-                    },
-                }},
+				LabeledValues: []metrics.LabeledValue{{
+					Name:   metrics.MetricPodPhase.Name,
+					Labels: map[string]string{"phase": string(corev1.PodRunning)},
+					Value: metrics.Value{
+						ValueType: metrics.ValueInt64,
+						IntValue:  util.ConvertPodPhase(corev1.PodRunning),
+					},
+				}},
 			},
 			metrics.PodContainerKey("ns1", "pod2", "container2"): {
 				Labels: map[string]string{
@@ -105,14 +106,14 @@ func TestNodeAggregate(t *testing.T) {
 					ValueType: metrics.ValueInt64,
 					IntValue:  10,
 				}},
-                LabeledValues: []metrics.LabeledValue{{
-                    Name:   metrics.MetricContainerStatus.Name,
-                    Labels: map[string]string{"state": "running"},
-                    Value: metrics.Value{
-                        ValueType: metrics.ValueInt64,
-                        IntValue:  1,
-                    },
-                }},
+				LabeledValues: []metrics.LabeledValue{{
+					Name:   metrics.MetricContainerStatus.Name,
+					Labels: map[string]string{"state": "running"},
+					Value: metrics.Value{
+						ValueType: metrics.ValueInt64,
+						IntValue:  1,
+					},
+				}},
 			},
 			metrics.NodeKey("h1"): {
 				Labels: map[string]string{

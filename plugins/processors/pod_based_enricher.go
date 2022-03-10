@@ -146,7 +146,7 @@ func (pbe *PodBasedEnricher) addPodInfo(podMs *metrics.Set, pod *kube_api.Pod, b
 	pbe.labelCopier.Copy(pod.Labels, podMs.Labels)
 
 	// Add pod phase
-	addLabeledIntMetric(podMs, &metrics.MetricPodPhase, map[string]string{"phase": string(pod.Status.Phase)}, convertPhase(pod.Status.Phase))
+	addLabeledIntMetric(podMs, &metrics.MetricPodPhase, map[string]string{"phase": string(pod.Status.Phase)}, util.ConvertPodPhase(pod.Status.Phase))
 
 	// Add cpu/mem requests and limits to containers
 	for _, container := range pod.Spec.Containers {
@@ -255,16 +255,16 @@ func (pbe *PodBasedEnricher) addContainerStatus(collectionTime time.Time, contai
 
 func (pbe *PodBasedEnricher) findContainerState(collectionTime time.Time, status kube_api.ContainerStatus) (int64, string, string, int32) {
 	if status.LastTerminationState.Terminated == nil {
-		return convertContainerState(status.State)
+		return util.ConvertContainerState(status.State)
 	}
 
 	lastTerminationTime := status.LastTerminationState.Terminated.FinishedAt.Time
 	lastCollectionTime := collectionTime.Add(-1 * pbe.collectionInterval)
 	if lastCollectionTime.After(lastTerminationTime) {
-		return convertContainerState(status.State)
+		return util.ConvertContainerState(status.State)
 	}
 
-	return convertContainerState(status.LastTerminationState)
+	return util.ConvertContainerState(status.LastTerminationState)
 }
 
 func (pbe *PodBasedEnricher) updateContainerStatus(metricSets map[metrics.ResourceKey]*metrics.Set, pod *kube_api.Pod, statuses []kube_api.ContainerStatus, collectionTime time.Time) {
@@ -280,36 +280,6 @@ func (pbe *PodBasedEnricher) updateContainerStatus(metricSets map[metrics.Resour
 		}
 		pbe.addContainerStatus(collectionTime, containerMs, &metrics.MetricContainerStatus, status)
 	}
-}
-
-func convertPhase(phase kube_api.PodPhase) int64 {
-	switch phase {
-	case kube_api.PodPending:
-		return 1
-	case kube_api.PodRunning:
-		return 2
-	case kube_api.PodSucceeded:
-		return 3
-	case kube_api.PodFailed:
-		return 4
-	case kube_api.PodUnknown:
-		return 5
-	default:
-		return 5
-	}
-}
-
-func convertContainerState(state kube_api.ContainerState) (int64, string, string, int32) {
-	if state.Running != nil {
-		return 1, "running", "", 0
-	}
-	if state.Waiting != nil {
-		return 2, "waiting", state.Waiting.Reason, 0
-	}
-	if state.Terminated != nil {
-		return 3, "terminated", state.Terminated.Reason, state.Terminated.ExitCode
-	}
-	return 0, "", "", 0
 }
 
 // addLabeledIntMetric is a convenience method for adding the labeled metric and value to the metric set.

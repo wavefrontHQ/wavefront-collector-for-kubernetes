@@ -24,17 +24,17 @@
 package kubelet
 
 import (
-    "fmt"
-    "io/ioutil"
-    "net"
-    "net/http"
+	"fmt"
+	"io/ioutil"
+	"net"
+	"net/http"
 
-    "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/kubernetes"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/kubernetes"
 
-    cadvisor "github.com/google/cadvisor/info/v1"
-    jsoniter "github.com/json-iterator/go"
-    log "github.com/sirupsen/logrus"
-    stats "k8s.io/kubelet/pkg/apis/stats/v1alpha1"
+	cadvisor "github.com/google/cadvisor/info/v1"
+	jsoniter "github.com/json-iterator/go"
+	log "github.com/sirupsen/logrus"
+	stats "k8s.io/kubelet/pkg/apis/stats/v1alpha1"
 )
 
 type KubeletClient struct {
@@ -118,7 +118,6 @@ func (kc *KubeletClient) GetSummary(ip net.IP) (*stats.Summary, error) {
 	err = kc.postRequestAndGetValue(client, req, summary)
 	return summary, err
 }
-
 
 func (kc *KubeletClient) GetPort() uint {
 	return kc.config.Port

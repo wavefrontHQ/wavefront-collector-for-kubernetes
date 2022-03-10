@@ -4,20 +4,20 @@
 package util
 
 import (
-	"fmt"
-	"net"
-	"os"
-	"sync"
-	"time"
+    "fmt"
+    "net"
+    "os"
+    "sync"
+    "time"
 
-	log "github.com/sirupsen/logrus"
+    log "github.com/sirupsen/logrus"
 
-	kube_api "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/fields"
-	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/client-go/kubernetes"
-	v1listers "k8s.io/client-go/listers/core/v1"
-	"k8s.io/client-go/tools/cache"
+    kube_api "k8s.io/api/core/v1"
+    "k8s.io/apimachinery/pkg/fields"
+    "k8s.io/apimachinery/pkg/util/wait"
+    "k8s.io/client-go/kubernetes"
+    v1listers "k8s.io/client-go/listers/core/v1"
+    "k8s.io/client-go/tools/cache"
 )
 
 const (
@@ -173,4 +173,35 @@ func GetNodeRole(node *kube_api.Node) string {
 		return "control-plane"
 	}
 	return "worker"
+}
+
+func ConvertContainerState(state kube_api.ContainerState) (int64, string, string, int32) {
+    if state.Running != nil {
+        return 1, "running", "", 0
+    }
+    if state.Waiting != nil {
+        return 2, "waiting", state.Waiting.Reason, 0
+    }
+    if state.Terminated != nil {
+        return 3, "terminated", state.Terminated.Reason, state.Terminated.ExitCode
+    }
+    return 0, "", "", 0
+}
+
+
+func ConvertPodPhase(phase kube_api.PodPhase) int64 {
+    switch phase {
+    case kube_api.PodPending:
+        return 1
+    case kube_api.PodRunning:
+        return 2
+    case kube_api.PodSucceeded:
+        return 3
+    case kube_api.PodFailed:
+        return 4
+    case kube_api.PodUnknown:
+        return 5
+    default:
+        return 5
+    }
 }
