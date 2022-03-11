@@ -14,8 +14,8 @@ kubectl create namespace collector-targets &> /dev/null || true
 kubectl apply -f prom-example.yaml &>/dev/null || true
 kubectl apply -f exclude-prom-example.yaml &>/dev/null || true
 kubectl apply -f cpu-throttled-prom-example.yaml &>/dev/null || true
-kubectl apply -f pod-cannot-be-scheduled.yaml &>/dev/null || true
-kubectl apply -f pod-image-cannot-be-loaded.yaml &>/dev/null || true
+kubectl apply -f pending-pod-cannot-be-scheduled.yaml &>/dev/null || true
+kubectl apply -f pending-pod-image-cannot-be-loaded.yaml &>/dev/null || true
 
 kubectl delete -f jobs.yaml &>/dev/null || true
 kubectl apply -f jobs.yaml &>/dev/null || true
