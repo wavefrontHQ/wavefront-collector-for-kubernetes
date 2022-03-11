@@ -10,3 +10,7 @@ spec:
   containers:
   - name: pod-image-cannot-be-loaded
     image: busybox123
+    resources:
+      requests:
+        cpu: 100m
+        memory: 200Mi

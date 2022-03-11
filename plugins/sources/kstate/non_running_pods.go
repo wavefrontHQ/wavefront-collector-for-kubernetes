@@ -5,9 +5,10 @@ package kstate
 
 import (
 	"fmt"
-    "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
-    "reflect"
+	"reflect"
 	"time"
+
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"

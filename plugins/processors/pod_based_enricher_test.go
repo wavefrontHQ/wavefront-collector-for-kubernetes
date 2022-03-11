@@ -22,7 +22,6 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 
@@ -99,6 +98,43 @@ func TestDropsPodMetricWhenPodMissing(t *testing.T) {
 	assert.Equal(t, 0, len(batch.Sets))
 	_, found := batch.Sets[metrics.PodKey("ns1", "pod1")]
 	assert.False(t, found)
+}
+
+func TestPodNotRunning(t *testing.T) {
+	tc := setup()
+	tc.batch = createPodBatch()
+
+	t.Run("test for succeeded pod", func(t *testing.T) {
+		tc.pod.Status = kube_api.PodStatus{
+			Phase: kube_api.PodSucceeded,
+		}
+		runAndCheckNoEnrichedMetrics(t, tc)
+	})
+
+	t.Run("test for pending pod", func(t *testing.T) {
+		tc.pod.Status = kube_api.PodStatus{
+			Phase: kube_api.PodPending,
+		}
+		runAndCheckNoEnrichedMetrics(t, tc)
+	})
+
+	t.Run("test for failed pod", func(t *testing.T) {
+		tc.pod.Status = kube_api.PodStatus{
+			Phase: kube_api.PodFailed,
+		}
+		runAndCheckNoEnrichedMetrics(t, tc)
+	})
+}
+
+func runAndCheckNoEnrichedMetrics(t *testing.T, tc *enricherTestContext) {
+	podBasedEnricher := createEnricher(t, tc)
+
+	batch, err := podBasedEnricher.Process(tc.batch)
+	assert.NoError(t, err)
+
+	assert.Equal(t, 1, len(batch.Sets))
+	podMetric, _ := batch.Sets[metrics.PodKey("ns1", "pod1")]
+	assert.Nil(t, podMetric.LabeledValues)
 }
 
 func TestMultiplePodsWithOneMissing(t *testing.T) {
@@ -308,6 +344,9 @@ func setup() *enricherTestContext {
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "pod1",
 				Namespace: "ns1",
+			},
+			Status: kube_api.PodStatus{
+				Phase: kube_api.PodRunning,
 			},
 			Spec: kube_api.PodSpec{
 				NodeName: "node1",

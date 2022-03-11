@@ -18,9 +18,10 @@
 package processors
 
 import (
-    "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
-    "testing"
+	"testing"
 	"time"
+
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 
 	"github.com/stretchr/testify/assert"
 
