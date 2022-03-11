@@ -29,6 +29,14 @@ func copyLabels(in map[string]string, out map[string]string) {
 	}
 }
 
+func copyTags(in map[string]string, out map[string]string) {
+	for key, value := range in {
+		if len(key) > 0 && len(value) > 0 {
+			out[key] = value
+		}
+	}
+}
+
 func metricPoint(prefix, name string, value float64, ts int64, source string, tags map[string]string) *wf.Point {
 	return wf.NewPoint(
 		prefix+name,

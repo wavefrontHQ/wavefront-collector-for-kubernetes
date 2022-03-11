@@ -21,6 +21,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
+
 	"github.com/stretchr/testify/assert"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
@@ -46,7 +48,7 @@ func TestNamespaceAggregate(t *testing.T) {
 					Labels: map[string]string{"phase": string(corev1.PodSucceeded)},
 					Value: metrics.Value{
 						ValueType: metrics.ValueInt64,
-						IntValue:  convertPhase(corev1.PodSucceeded),
+						IntValue:  util.ConvertPodPhase(corev1.PodSucceeded),
 					},
 				}},
 			},
@@ -83,6 +85,14 @@ func TestNamespaceAggregate(t *testing.T) {
 						IntValue:  30,
 					},
 				},
+				LabeledValues: []metrics.LabeledValue{{
+					Name:   metrics.MetricPodPhase.Name,
+					Labels: map[string]string{"phase": string(corev1.PodRunning)},
+					Value: metrics.Value{
+						ValueType: metrics.ValueInt64,
+						IntValue:  util.ConvertPodPhase(corev1.PodRunning),
+					},
+				}},
 			},
 			metrics.PodContainerKey("ns1", "pod2", "container2"): {
 				Labels: map[string]string{

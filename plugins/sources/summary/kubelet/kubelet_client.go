@@ -34,7 +34,6 @@ import (
 	cadvisor "github.com/google/cadvisor/info/v1"
 	jsoniter "github.com/json-iterator/go"
 	log "github.com/sirupsen/logrus"
-	v1 "k8s.io/api/core/v1"
 	stats "k8s.io/kubelet/pkg/apis/stats/v1alpha1"
 )
 
@@ -118,23 +117,6 @@ func (kc *KubeletClient) GetSummary(ip net.IP) (*stats.Summary, error) {
 	}
 	err = kc.postRequestAndGetValue(client, req, summary)
 	return summary, err
-}
-
-func (kc *KubeletClient) GetPods(ip net.IP) (*v1.PodList, error) {
-	u := kc.config.BaseURL(ip, "/pods/").String()
-
-	req, err := http.NewRequest("GET", u, nil)
-	if err != nil {
-		return nil, err
-	}
-	pods := &v1.PodList{}
-	client := kc.client
-	if client == nil {
-		client = http.DefaultClient
-	}
-	err = kc.postRequestAndGetValue(client, req, pods)
-
-	return pods, err
 }
 
 func (kc *KubeletClient) GetPort() uint {

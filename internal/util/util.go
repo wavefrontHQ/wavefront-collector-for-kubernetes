@@ -28,6 +28,20 @@ const (
 	ForceGC                  = "FORCE_GC"
 )
 
+const (
+	POD_PHASE_PENDING = iota + 1
+	POD_PHASE_RUNNING
+	POD_PHASE_SUCCEEDED
+	POD_PHASE_FAILED
+	POD_PHASE_UNKNOWN
+)
+
+const (
+	CONTAINER_STATE_RUNNING = iota + 1
+	CONTAINER_STATE_WAITING
+	CONTAINER_STATE_TERMINATED
+)
+
 var (
 	lock       sync.Mutex
 	nodeLister v1listers.NodeLister
@@ -173,4 +187,75 @@ func GetNodeRole(node *kube_api.Node) string {
 		return "control-plane"
 	}
 	return "worker"
+}
+
+type ContainerStateInfo struct {
+	Value    int
+	State    string
+	Reason   string
+	ExitCode int32
+}
+
+func (csi ContainerStateInfo) IsKnownState() bool {
+	return csi.Value > 0
+}
+
+func (csi ContainerStateInfo) AddMetricTags(tags map[string]string) {
+	if csi.IsKnownState() {
+		tags["status"] = csi.State
+		if csi.Reason != "" {
+			tags["reason"] = csi.Reason
+			tags["exit_code"] = fmt.Sprint(csi.ExitCode)
+		}
+	}
+}
+
+func NewContainerStateInfo(state kube_api.ContainerState) ContainerStateInfo {
+	if state.Running != nil {
+		return ContainerStateInfo{
+			Value:    CONTAINER_STATE_RUNNING,
+			State:    "running",
+			Reason:   "",
+			ExitCode: 0,
+		}
+	}
+	if state.Waiting != nil {
+		return ContainerStateInfo{
+			Value:    CONTAINER_STATE_WAITING,
+			State:    "waiting",
+			Reason:   state.Waiting.Reason,
+			ExitCode: 0,
+		}
+	}
+	if state.Terminated != nil {
+		return ContainerStateInfo{
+			Value:    CONTAINER_STATE_TERMINATED,
+			State:    "terminated",
+			Reason:   state.Terminated.Reason,
+			ExitCode: state.Terminated.ExitCode,
+		}
+	}
+	return ContainerStateInfo{
+		Value:    0,
+		State:    "unknown",
+		Reason:   "",
+		ExitCode: 0,
+	}
+}
+
+func ConvertPodPhase(phase kube_api.PodPhase) int64 {
+	switch phase {
+	case kube_api.PodPending:
+		return POD_PHASE_PENDING
+	case kube_api.PodRunning:
+		return POD_PHASE_RUNNING
+	case kube_api.PodSucceeded:
+		return POD_PHASE_SUCCEEDED
+	case kube_api.PodFailed:
+		return POD_PHASE_FAILED
+	case kube_api.PodUnknown:
+		return POD_PHASE_UNKNOWN
+	default:
+		return POD_PHASE_UNKNOWN
+	}
 }

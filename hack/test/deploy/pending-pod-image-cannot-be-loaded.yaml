@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    name: pod-image-cannot-be-loaded
+    exclude-me: "true"
+  name: pod-image-cannot-be-loaded
+  namespace: collector-targets
+spec:
+  containers:
+  - name: pod-image-cannot-be-loaded
+    image: busybox123
+    resources:
+      requests:
+        cpu: 100m
+        memory: 200Mi
