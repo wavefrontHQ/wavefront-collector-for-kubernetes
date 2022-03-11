@@ -189,17 +189,58 @@ func GetNodeRole(node *kube_api.Node) string {
 	return "worker"
 }
 
-func ConvertContainerState(state kube_api.ContainerState) (int64, string, string, int32) {
+type ContainerStateInfo struct {
+    Value  int
+    State    string
+    Reason   string
+    ExitCode int32
+}
+
+func (csi ContainerStateInfo) IsKnownState() bool {
+    return csi.Value > 0
+}
+
+func (csi ContainerStateInfo) AddMetricTags(tags map[string]string) {
+    if csi.IsKnownState() {
+        tags["status"] = csi.State
+        if csi.Reason != "" {
+            tags["reason"] = csi.Reason
+            tags["exit_code"] = fmt.Sprint(csi.ExitCode)
+        }
+    }
+}
+
+func NewContainerStateInfo(state kube_api.ContainerState) ContainerStateInfo {
 	if state.Running != nil {
-		return CONTAINER_STATE_RUNNING, "running", "", 0
+		return ContainerStateInfo{
+            Value:    CONTAINER_STATE_RUNNING,
+            State:    "running",
+            Reason:   "",
+            ExitCode: 0,
+        }
 	}
 	if state.Waiting != nil {
-		return CONTAINER_STATE_WAITING, "waiting", state.Waiting.Reason, 0
+        return ContainerStateInfo{
+            Value:    CONTAINER_STATE_WAITING,
+            State:    "waiting",
+            Reason:   state.Waiting.Reason,
+            ExitCode: 0,
+        }
 	}
 	if state.Terminated != nil {
-		return CONTAINER_STATE_TERMINATED, "terminated", state.Terminated.Reason, state.Terminated.ExitCode
+        return ContainerStateInfo{
+            Value:    CONTAINER_STATE_TERMINATED,
+            State:    "terminated",
+            Reason:   state.Terminated.Reason,
+            ExitCode: state.Terminated.ExitCode,
+        }
 	}
-	return 0, "", "", 0
+	return ContainerStateInfo{
+        Value:    0,
+        State:    "unknown",
+        Reason:   "",
+        ExitCode: 0,
+    }
 }
 
 func ConvertPodPhase(phase kube_api.PodPhase) int64 {

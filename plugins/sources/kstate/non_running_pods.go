@@ -4,19 +4,18 @@
 package kstate
 
 import (
-	"fmt"
-	"reflect"
-	"time"
+    "reflect"
+    "time"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
+    "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
-	v1 "k8s.io/api/core/v1"
+    "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
+    "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
+    v1 "k8s.io/api/core/v1"
 
-	log "github.com/sirupsen/logrus"
+    log "github.com/sirupsen/logrus"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
+    "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
 )
 
 func pointsForNonRunningPods(item interface{}, transforms configuration.Transforms) []*wf.Point {
@@ -93,21 +92,16 @@ func buildContainerStatusMetrics(pod *v1.Pod, sharedTags map[string]string, tran
 	//container_base_image
 	points := make([]*wf.Point, len(statuses))
 	for i, status := range statuses {
-		stateInt, state, reason, exitCode := util.ConvertContainerState(status.State)
+	    containerStateInfo := util.NewContainerStateInfo(status.State)
 		tags := buildTags("pod_name", pod.Name, pod.Namespace, transforms.Tags)
 		tags[metrics.LabelMetricSetType.Key] = metrics.MetricSetTypePodContainer
 		tags[metrics.LabelContainerName.Key] = status.Name
 		tags[metrics.LabelContainerBaseImage.Key] = status.Image
 
 		copyTags(sharedTags, tags)
-		if stateInt > 0 {
-			tags["status"] = state
-			if reason != "" {
-				tags["reason"] = reason
-				tags["exit_code"] = fmt.Sprint(exitCode)
-			}
-		}
-		points[i] = metricPoint(transforms.Prefix, "pod_container.status", float64(stateInt), now, transforms.Source, tags)
+		containerStateInfo.AddMetricTags(tags)
+
+		points[i] = metricPoint(transforms.Prefix, "pod_container.status", float64(containerStateInfo.Value), now, transforms.Source, tags)
 	}
 	return points
 }

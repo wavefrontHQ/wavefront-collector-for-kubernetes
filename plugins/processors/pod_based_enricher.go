@@ -246,30 +246,24 @@ func updateContainerResourcesAndLimits(metricSet *metrics.Set, container kube_ap
 func (pbe *PodBasedEnricher) addContainerStatus(collectionTime time.Time, containerMs *metrics.Set, metric *metrics.Metric, status kube_api.ContainerStatus) {
 	labels := make(map[string]string, 2)
 
-	stateInt, state, reason, exitCode := pbe.findContainerState(collectionTime, status)
+	containerStateInfo := pbe.findContainerState(collectionTime, status)
+    containerStateInfo.AddMetricTags(labels)
 
-	if stateInt > 0 {
-		labels["status"] = state
-		if reason != "" {
-			labels["reason"] = reason
-			labels["exit_code"] = fmt.Sprint(exitCode)
-		}
-	}
-	addLabeledIntMetric(containerMs, metric, labels, stateInt)
+	addLabeledIntMetric(containerMs, metric, labels, int64(containerStateInfo.Value))
 }
 
-func (pbe *PodBasedEnricher) findContainerState(collectionTime time.Time, status kube_api.ContainerStatus) (int64, string, string, int32) {
+func (pbe *PodBasedEnricher) findContainerState(collectionTime time.Time, status kube_api.ContainerStatus) util.ContainerStateInfo {
 	if status.LastTerminationState.Terminated == nil {
-		return util.ConvertContainerState(status.State)
+		return util.NewContainerStateInfo(status.State)
 	}
 
 	lastTerminationTime := status.LastTerminationState.Terminated.FinishedAt.Time
 	lastCollectionTime := collectionTime.Add(-1 * pbe.collectionInterval)
 	if lastCollectionTime.After(lastTerminationTime) {
-		return util.ConvertContainerState(status.State)
+		return util.NewContainerStateInfo(status.State)
 	}
 
-	return util.ConvertContainerState(status.LastTerminationState)
+	return util.NewContainerStateInfo(status.LastTerminationState)
 }
 
 func (pbe *PodBasedEnricher) updateContainerStatus(metricSets map[metrics.ResourceKey]*metrics.Set, pod *kube_api.Pod, statuses []kube_api.ContainerStatus, collectionTime time.Time) {
