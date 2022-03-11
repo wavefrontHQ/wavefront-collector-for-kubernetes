@@ -1,8 +1,9 @@
 package kstate
 
 import (
-    "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
-    "testing"
+	"testing"
+
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"

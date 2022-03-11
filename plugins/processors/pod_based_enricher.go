@@ -139,8 +139,8 @@ func (pbe *PodBasedEnricher) addContainerInfo(key metrics.ResourceKey, container
 
 func (pbe *PodBasedEnricher) addPodInfo(podMs *metrics.Set, pod *kube_api.Pod, batch *metrics.Batch, newMs map[metrics.ResourceKey]*metrics.Set) {
 	// Pod based enricher only adds metrics for pods that are in running state
-    // Pods that are in other states will be processed by kstate/non_running_pods
-    if pod.Status.Phase != kube_api.PodRunning {
+	// Pods that are in other states will be processed by kstate/non_running_pods
+	if pod.Status.Phase != kube_api.PodRunning {
 		return
 	}
 	// Add UID and create time to pod
@@ -247,7 +247,7 @@ func (pbe *PodBasedEnricher) addContainerStatus(collectionTime time.Time, contai
 	labels := make(map[string]string, 2)
 
 	containerStateInfo := pbe.findContainerState(collectionTime, status)
-    containerStateInfo.AddMetricTags(labels)
+	containerStateInfo.AddMetricTags(labels)
 
 	addLabeledIntMetric(containerMs, metric, labels, int64(containerStateInfo.Value))
 }
