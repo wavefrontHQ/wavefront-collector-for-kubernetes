@@ -88,7 +88,6 @@ func buildContainerStatusMetrics(pod *v1.Pod, sharedTags map[string]string, tran
 		return []*wf.Point{}
 	}
 
-	//container_base_image
 	points := make([]*wf.Point, len(statuses))
 	for i, status := range statuses {
 	    containerStateInfo := util.NewContainerStateInfo(status.State)
