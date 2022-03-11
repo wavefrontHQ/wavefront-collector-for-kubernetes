@@ -1,7 +1,8 @@
 package kstate
 
 import (
-	"testing"
+    "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
+    "testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
@@ -188,7 +189,7 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		testPod := setupPendingPod()
 		actualWFPoints := pointsForNonRunningPods(testPod, testTransform)
 		assert.Equal(t, 1, len(actualWFPoints))
-		assert.Equal(t, float64(1), actualWFPoints[0].Value)
+		assert.Equal(t, float64(util.POD_PHASE_PENDING), actualWFPoints[0].Value)
 		assert.Equal(t, "pod1", actualWFPoints[0].Tags()["pod_name"])
 		assert.Equal(t, string(v1.PodPending), actualWFPoints[0].Tags()["phase"])
 		assert.Equal(t, "testLabelName", actualWFPoints[0].Tags()["label.name"])
@@ -202,12 +203,12 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		assert.Equal(t, 2, len(actualWFPoints))
 
 		// check for pod metrics
-		assert.Equal(t, float64(3), actualWFPoints[0].Value)
+		assert.Equal(t, float64(util.POD_PHASE_SUCCEEDED), actualWFPoints[0].Value)
 		assert.Equal(t, string(v1.PodSucceeded), actualWFPoints[0].Tags()["phase"])
 		assert.Equal(t, "", actualWFPoints[0].Tags()["reason"])
 
 		// check for container metrics
-		assert.Equal(t, float64(3), actualWFPoints[1].Value)
+		assert.Equal(t, float64(util.CONTAINER_STATE_TERMINATED), actualWFPoints[1].Value)
 		assert.Equal(t, "0", actualWFPoints[1].Tags()["exit_code"])
 		assert.Equal(t, "Completed", actualWFPoints[1].Tags()["reason"])
 		assert.Equal(t, "terminated", actualWFPoints[1].Tags()["status"])
@@ -219,14 +220,14 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		assert.Equal(t, 2, len(actualWFPoints))
 
 		// check for pod metrics
-		assert.Equal(t, float64(4), actualWFPoints[0].Value)
+		assert.Equal(t, float64(util.POD_PHASE_FAILED), actualWFPoints[0].Value)
 		assert.Equal(t, string(v1.PodFailed), actualWFPoints[0].Tags()["phase"])
 		assert.Equal(t, "ContainersNotReady", actualWFPoints[0].Tags()["reason"])
 		assert.Equal(t, 255, len(actualWFPoints[0].Tags()["message"])+len("message")+len("="))
 		assert.Contains(t, actualWFPoints[0].Tags()["message"], "containers with unready status: [hello]")
 
 		// check for container metrics
-		assert.Equal(t, float64(3), actualWFPoints[1].Value)
+		assert.Equal(t, float64(util.CONTAINER_STATE_TERMINATED), actualWFPoints[1].Value)
 		assert.Equal(t, "1", actualWFPoints[1].Tags()["exit_code"])
 		assert.Equal(t, "Error", actualWFPoints[1].Tags()["reason"])
 		assert.Equal(t, "terminated", actualWFPoints[1].Tags()["status"])
@@ -238,13 +239,13 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		assert.Equal(t, 2, len(actualWFPoints))
 
 		// check for pod metrics
-		assert.Equal(t, float64(1), actualWFPoints[0].Value)
+		assert.Equal(t, float64(util.POD_PHASE_PENDING), actualWFPoints[0].Value)
 		assert.Equal(t, string(v1.PodPending), actualWFPoints[0].Tags()["phase"])
 		assert.Equal(t, "ContainersNotReady", actualWFPoints[0].Tags()["reason"])
 		assert.Equal(t, "containers with unready status: [wavefront-proxy]", actualWFPoints[0].Tags()["message"])
 
 		// check for container metrics
-		assert.Equal(t, float64(2), actualWFPoints[1].Value)
+		assert.Equal(t, float64(util.CONTAINER_STATE_WAITING), actualWFPoints[1].Value)
 		assert.Equal(t, "ContainerCreating", actualWFPoints[1].Tags()["reason"])
 		assert.Equal(t, "waiting", actualWFPoints[1].Tags()["status"])
 	})

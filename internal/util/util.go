@@ -28,6 +28,20 @@ const (
 	ForceGC                  = "FORCE_GC"
 )
 
+const (
+    POD_PHASE_PENDING = iota + 1
+    POD_PHASE_RUNNING
+    POD_PHASE_SUCCEEDED
+    POD_PHASE_FAILED
+    POD_PHASE_UNKNOWN
+)
+
+const (
+    CONTAINER_STATE_RUNNING = iota + 1
+    CONTAINER_STATE_WAITING
+    CONTAINER_STATE_TERMINATED
+)
+
 var (
 	lock       sync.Mutex
 	nodeLister v1listers.NodeLister
@@ -177,13 +191,13 @@ func GetNodeRole(node *kube_api.Node) string {
 
 func ConvertContainerState(state kube_api.ContainerState) (int64, string, string, int32) {
 	if state.Running != nil {
-		return 1, "running", "", 0
+		return CONTAINER_STATE_RUNNING, "running", "", 0
 	}
 	if state.Waiting != nil {
-		return 2, "waiting", state.Waiting.Reason, 0
+		return CONTAINER_STATE_WAITING, "waiting", state.Waiting.Reason, 0
 	}
 	if state.Terminated != nil {
-		return 3, "terminated", state.Terminated.Reason, state.Terminated.ExitCode
+		return CONTAINER_STATE_TERMINATED, "terminated", state.Terminated.Reason, state.Terminated.ExitCode
 	}
 	return 0, "", "", 0
 }
@@ -191,16 +205,17 @@ func ConvertContainerState(state kube_api.ContainerState) (int64, string, string
 func ConvertPodPhase(phase kube_api.PodPhase) int64 {
 	switch phase {
 	case kube_api.PodPending:
-		return 1
+		return POD_PHASE_PENDING
 	case kube_api.PodRunning:
-		return 2
+		return POD_PHASE_RUNNING
 	case kube_api.PodSucceeded:
-		return 3
+		return POD_PHASE_SUCCEEDED
 	case kube_api.PodFailed:
-		return 4
+		return POD_PHASE_FAILED
 	case kube_api.PodUnknown:
-		return 5
+		return POD_PHASE_UNKNOWN
 	default:
-		return 5
+		return POD_PHASE_UNKNOWN
 	}
 }
+

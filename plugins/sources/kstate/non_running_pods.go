@@ -51,7 +51,7 @@ func buildPodPhaseMetrics(pod *v1.Pod, transforms configuration.Transforms, shar
 	tags["phase"] = string(pod.Status.Phase)
 
 	phaseValue := util.ConvertPodPhase(pod.Status.Phase)
-	if phaseValue == 1 {
+	if phaseValue == util.POD_PHASE_PENDING {
 		for _, condition := range pod.Status.Conditions {
 			if condition.Type == v1.PodScheduled && condition.Status == "False" {
 				tags["reason"] = condition.Reason
@@ -63,7 +63,7 @@ func buildPodPhaseMetrics(pod *v1.Pod, transforms configuration.Transforms, shar
 		}
 	}
 
-	if phaseValue == 4 {
+	if phaseValue == util.POD_PHASE_FAILED {
 		log.Infof("failed phase")
 		for _, condition := range pod.Status.Conditions {
 			if condition.Type == v1.PodReady {
