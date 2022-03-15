@@ -13,17 +13,23 @@ import (
 
 var proxyAddr = ":7777"
 var controlAddr = ":8888"
+var logLevel = log.InfoLevel.String()
 
 func init() {
 	flag.StringVar(&proxyAddr, "proxy", proxyAddr, "host and port for the test \"wavefront proxy\" to listen on")
 	flag.StringVar(&controlAddr, "control", controlAddr, "host and port for the http control server to listen on")
+	flag.StringVar(&logLevel, "logLevel", logLevel, "change based on what log level is needed for debugging")
 }
 
 func main() {
 	flag.Parse()
 
 	log.SetFormatter(&log.TextFormatter{})
-	log.SetLevel(log.InfoLevel)
+	if level, err := log.ParseLevel(logLevel); err == nil {
+		log.SetLevel(level)
+	} else {
+		log.SetLevel(log.InfoLevel)
+	}
 	log.SetOutput(os.Stdout)
 
 	store := NewMetricStore()
@@ -70,6 +76,7 @@ func HandleIncomingMetrics(store *MetricStore, conn net.Conn) {
 			store.LogBadMetric(lines.Text())
 			continue
 		}
+		log.Debugf("%#v", metric)
 		store.LogMetric(metric)
 	}
 	if err := lines.Err(); err != nil {
