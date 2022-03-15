@@ -18,7 +18,7 @@ var logLevel = log.InfoLevel.String()
 func init() {
 	flag.StringVar(&proxyAddr, "proxy", proxyAddr, "host and port for the test \"wavefront proxy\" to listen on")
 	flag.StringVar(&controlAddr, "control", controlAddr, "host and port for the http control server to listen on")
-	flag.StringVar(&logLevel, "logLevel", logLevel, "change based on what log level is needed for debugging")
+	flag.StringVar(&logLevel, "logLevel", logLevel, "change log level. Default is \"info\", use \"debug\" for metric logging")
 }
 
 func main() {
