@@ -1,2 +1,3 @@
 {"Name":"kubernetes.pod.status.phase","Value":"1","Tags":{"cluster":"","label.name":"pod-cannot-be-scheduled","message":"0/3 nodes are available: 3 Insufficient memory.","namespace_name":"collector-targets","phase":"Pending","pod_name":"pod-cannot-be-scheduled","reason":"Unschedulable","source":"","type":"pod"}}
 {"Name":"kubernetes.node.info","Tags":{"cluster":"","container_runtime_version":"","internal_ip":"","kernel_version":"","kubelet_version":"","label.kubernetes.io/os":"linux","nodename":"","os_image":"","provider_id":"","source":"","node_role":"worker"}}
+{"Name":"kube.apiserver.etcd.object.counts.gauge","Tags":{"cluster":"","resource":"","source":""}}
