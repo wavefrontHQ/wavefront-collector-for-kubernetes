@@ -53,7 +53,7 @@ func buildPodPhaseMetrics(pod *v1.Pod, transforms configuration.Transforms, shar
 	if phaseValue == util.POD_PHASE_PENDING {
 		for _, condition := range pod.Status.Conditions {
 			if condition.Type == v1.PodScheduled && condition.Status == "False" {
-                tags[metrics.LabelNodename.Key] = "none"
+				tags[metrics.LabelNodename.Key] = "none"
 				tags["reason"] = condition.Reason
 				tags["message"] = truncateMessage(condition.Message)
 			} else if condition.Type == v1.ContainersReady && condition.Status == "False" {
