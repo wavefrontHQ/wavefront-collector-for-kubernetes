@@ -144,7 +144,7 @@ proxy-test: token-check $(SEMVER_CLI_BIN)
 deploy-test: token-check k8s-env clean-deployment deploy-targets proxy-test
 
 #Testing code, configuration and deployment changes
-integration-test: token-check k8s-env clean-deployment deploy-targets container delete-images push-images proxy-test
+integration-test: token-check k8s-env clean-deployment deploy-targets delete-images push-images proxy-test
 
 # creating this as separate and distinct for now,
 # but would like to recombine as a flag on integration-test
