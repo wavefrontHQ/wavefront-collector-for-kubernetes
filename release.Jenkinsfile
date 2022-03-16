@@ -131,9 +131,6 @@ pipeline {
         slackSend (channel: '#tobs-k8s-assist', color: '#008000', message: "Success!! `wavefront-collector-for-kubernetes:v${BUILD_VERSION}` released!")
       }
     }
-    always {
-      cleanWs()
-    }
   }
 }
 
