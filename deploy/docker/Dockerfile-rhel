@@ -7,7 +7,7 @@ COPY . .
 
 RUN /bin/bash -c "go version"
 
-RUN /bin/bash -c "CGO_ENABLED=0 go build -ldflags '-w -X main.version=1.9.0' -o ./wavefront-collector ./cmd/wavefront-collector/"
+RUN /bin/bash -c "CGO_ENABLED=0 go build -ldflags '-w -X main.version=1.10.0' -o ./wavefront-collector ./cmd/wavefront-collector/"
 
 #Using ubi8 minimal image
 FROM registry.access.redhat.com/ubi8-minimal:latest
@@ -17,8 +17,8 @@ MAINTAINER wavefront@vmware.com
 LABEL name="Wavefront Collector" \
       maintainer="wavefront@vmware.com" \
       vendor="Wavefront by VMware" \
-      version="v1.9.0" \
-      release="v1.9.0" \
+      version="v1.10.0" \
+      release="v1.10.0" \
       summary="The Wavefront Collector for Kubernetes enables monitoring Kubernetes clusters and sending metrics to Wavefront." \
       description="The Wavefront Collector collects real-time metrics from all layers of a Kubernetes environment and Auto discovery of pods and services based on annotation and configuration."
 
@@ -32,8 +32,6 @@ RUN mkdir /licenses
 COPY LICENSE /licenses/license.txt
 
 RUN mkdir -p /etc/collector
-
-#COPY deploy/examples/openshift-config.yaml /etc/collector/collector.yaml
 
 COPY --from=builder /workspace/wavefront-collector /
 
