@@ -28,6 +28,7 @@ func setupBasicPod() *v1.Pod {
 
 func setupPendingPod() *v1.Pod {
 	pendingPod := setupBasicPod()
+    pendingPod.Spec.NodeName = ""
 	pendingPod.Status = v1.PodStatus{
 		Phase: v1.PodPending,
 		Conditions: []v1.PodCondition{
@@ -195,6 +196,7 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		assert.Equal(t, string(v1.PodPending), actualWFPoints[0].Tags()["phase"])
 		assert.Equal(t, "testLabelName", actualWFPoints[0].Tags()["label.name"])
 		assert.Equal(t, "Unschedulable", actualWFPoints[0].Tags()["reason"])
+		assert.Equal(t, "none", actualWFPoints[0].Tags()["nodename"])
 		assert.Equal(t, "0/1 nodes are available: 1 Insufficient memory.", actualWFPoints[0].Tags()["message"])
 	})
 
@@ -207,6 +209,7 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		assert.Equal(t, float64(util.POD_PHASE_SUCCEEDED), actualWFPoints[0].Value)
 		assert.Equal(t, string(v1.PodSucceeded), actualWFPoints[0].Tags()["phase"])
 		assert.Equal(t, "", actualWFPoints[0].Tags()["reason"])
+        assert.Equal(t, "node1", actualWFPoints[0].Tags()["nodename"])
 
 		// check for container metrics
 		assert.Equal(t, float64(util.CONTAINER_STATE_TERMINATED), actualWFPoints[1].Value)
@@ -226,6 +229,7 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		assert.Equal(t, "ContainersNotReady", actualWFPoints[0].Tags()["reason"])
 		assert.Equal(t, 255, len(actualWFPoints[0].Tags()["message"])+len("message")+len("="))
 		assert.Contains(t, actualWFPoints[0].Tags()["message"], "containers with unready status: [hello]")
+        assert.Equal(t, "node1", actualWFPoints[0].Tags()["nodename"])
 
 		// check for container metrics
 		assert.Equal(t, float64(util.CONTAINER_STATE_TERMINATED), actualWFPoints[1].Value)
@@ -244,6 +248,7 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		assert.Equal(t, string(v1.PodPending), actualWFPoints[0].Tags()["phase"])
 		assert.Equal(t, "ContainersNotReady", actualWFPoints[0].Tags()["reason"])
 		assert.Equal(t, "containers with unready status: [wavefront-proxy]", actualWFPoints[0].Tags()["message"])
+        assert.Equal(t, "node1", actualWFPoints[0].Tags()["nodename"])
 
 		// check for container metrics
 		assert.Equal(t, float64(util.CONTAINER_STATE_WAITING), actualWFPoints[1].Value)
