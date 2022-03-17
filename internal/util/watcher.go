@@ -8,8 +8,6 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-
-	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 type FileListener interface {
@@ -46,7 +44,7 @@ func NewFileWatcher(file string, listener FileListener, initialDelay time.Durati
 func (fw *fileWatcher) Watch() {
 	fw.stopCh = make(chan struct{})
 	initial := true
-	go wait.Until(func() {
+	go Retry(func() {
 		if initial {
 			time.Sleep(fw.delay)
 		}
