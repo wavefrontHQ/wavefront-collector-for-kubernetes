@@ -40,6 +40,11 @@ all: container
 fmt: $(GO_IMPORTS_BIN)
 	find . -type f -name "*.go" | grep -v "./vendor*" | xargs goimports -w
 
+sort-integrations-keys:
+	# TODO: uncomment to run this on all of our dashboards when we're comfortable
+	@#$(REPO_DIR)/hack/sort-json-keys-inplace.sh $(HOME)/workspace/integrations/kubernetes/dashboards/*.json
+	@$(REPO_DIR)/hack/sort-json-keys-inplace.sh $(HOME)/workspace/integrations/kubernetes/dashboards/integration-kubernetes-control-plane.json
+
 checkfmt: $(GO_IMPORTS_BIN)
 	@if [ $$(goimports -d $$(find . -type f -name '*.go' -not -path "./vendor/*") | wc -l) -gt 0 ]; then \
 		echo $$'\e[31mgoimports FAILED!!!\e[0m'; \
