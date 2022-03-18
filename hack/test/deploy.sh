@@ -45,12 +45,7 @@ if [[ -z ${VERSION} ]] ; then
 fi
 
 NS=wavefront-collector
-echo  "deploy:48"
 
 env USE_TEST_PROXY="$USE_TEST_PROXY" ./generate.sh -c "$WF_CLUSTER" -t "$WAVEFRONT_TOKEN" -v $VERSION  -k $K8S_ENV
 
-echo  "deploy:52"
-
 kustomize build overlays/test-$K8S_ENV | kubectl apply -f -
-
-echo  "deploy:54"

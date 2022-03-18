@@ -1,7 +1,8 @@
-#!/usr/bin/env bash
-set -e
+#!/bin/bash -e
+source ./deploy/k8s-utils.sh
 
-DEFAULT_VERSION="1.7.4"
+
+DEFAULT_VERSION="1.10.0"
 USE_TEST_PROXY="${USE_TEST_PROXY:-false}"
 
 if [ "$USE_TEST_PROXY" = true ] ;
@@ -48,8 +49,6 @@ while getopts "c:t:v:d:k:" opt; do
   esac
 done
 
-echo "$WF_CLUSTER $VERSION $IMAGE"
-
 if [[ -z ${WF_CLUSTER} || -z ${WAVEFRONT_TOKEN} ]] ; then
     #TODO: source these from environment variables if not provided
     print_usage_and_exit "wavefront instance and token required"
@@ -61,7 +60,7 @@ if [[ -z ${VERSION} ]] ; then
 fi
 
 NS=wavefront-collector
-
+WF_CLUSTER_NAME=$(whoami)-${K8S_ENV}-$(date +"%y%m%d")
 
 if $USE_TEST_PROXY ; then
   cp base/test-proxy.yaml base/proxy.yaml
@@ -71,8 +70,13 @@ fi
 
  sed "s/YOUR_IMAGE_TAG/${VERSION}/g" base/kustomization.template.yaml  > base/kustomization.yaml
 
-sed "s/YOUR_CLUSTER_NAME/$(whoami)-${K8S_ENV}-${VERSION}/g"  base/collector.template.yaml  |
+sed "s/YOUR_CLUSTER_NAME/${WF_CLUSTER_NAME}/g"  base/collector.template.yaml  |
   sed "s/NAMESPACE/${NS}/g" |
   sed "s/FLUSH_INTERVAL/${FLUSH_INTERVAL}/g" |
   sed  "s/COLLECTION_INTERVAL/${COLLECTION_INTERVAL}/g" > base/collector.yaml
 
+
+if  [ ${USE_TEST_PROXY} == false ] && [ "${VERSION}" != "fake" ]; then
+  echo "IMAGE TAG: ${VERSION}"
+  green "WF Cluster Name: ${WF_CLUSTER_NAME}"
+fi
