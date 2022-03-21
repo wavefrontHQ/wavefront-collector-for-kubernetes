@@ -1,8 +1,9 @@
 package util
 
 import (
-	"k8s.io/apimachinery/pkg/util/runtime"
 	"time"
+
+	"k8s.io/apimachinery/pkg/util/runtime"
 )
 
 // NeverStop may be passed to make it never stop
