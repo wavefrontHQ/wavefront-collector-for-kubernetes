@@ -5,6 +5,7 @@ package discovery
 
 import (
 	log "github.com/sirupsen/logrus"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/leadership"
@@ -12,7 +13,6 @@ import (
 
 	gm "github.com/rcrowley/go-metrics"
 
-	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -128,7 +128,7 @@ func (dm *Manager) startResyncConfig() {
 	interval := dm.runConfig.DiscoveryConfig.DiscoveryInterval
 	log.Infof("discovery config interval: %v", interval)
 
-	go wait.Until(func() {
+	go util.Retry(func() {
 		log.Info("checking for runtime plugin changes")
 		_, changed := dm.configListener.Config()
 		if changed {

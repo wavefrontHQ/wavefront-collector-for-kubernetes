@@ -14,7 +14,6 @@ import (
 
 	kube_api "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/fields"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 	v1listers "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/tools/cache"
@@ -64,7 +63,7 @@ func GetNodeLister(kubeClient kubernetes.Interface) (v1listers.NodeLister, *cach
 	store := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc})
 	nodeLister = v1listers.NewNodeLister(store)
 	reflector = cache.NewReflector(lw, &kube_api.Node{}, store, time.Hour)
-	go reflector.Run(wait.NeverStop)
+	go reflector.Run(NeverStop)
 	return nodeLister, reflector, nil
 }
 
@@ -82,7 +81,7 @@ func GetPodLister(kubeClient kubernetes.Interface) (v1listers.PodLister, error) 
 	store := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc})
 	podLister = v1listers.NewPodLister(store)
 	reflector := cache.NewReflector(lw, &kube_api.Pod{}, store, time.Hour)
-	go reflector.Run(wait.NeverStop)
+	go reflector.Run(NeverStop)
 	return podLister, nil
 }
 
@@ -91,7 +90,7 @@ func GetServiceLister(kubeClient kubernetes.Interface) (v1listers.ServiceLister,
 	store := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc})
 	serviceLister := v1listers.NewServiceLister(store)
 	reflector := cache.NewReflector(lw, &kube_api.Service{}, store, time.Hour)
-	go reflector.Run(wait.NeverStop)
+	go reflector.Run(NeverStop)
 	return serviceLister, nil
 }
 
@@ -107,7 +106,7 @@ func GetNamespaceStore(kubeClient kubernetes.Interface) cache.Store {
 	lw := cache.NewListWatchFromClient(kubeClient.CoreV1().RESTClient(), "namespaces", kube_api.NamespaceAll, fields.Everything())
 	nsStore = cache.NewStore(cache.MetaNamespaceKeyFunc)
 	reflector := cache.NewReflector(lw, &kube_api.Namespace{}, nsStore, time.Hour)
-	go reflector.Run(wait.NeverStop)
+	go reflector.Run(NeverStop)
 	return nsStore
 }
 
