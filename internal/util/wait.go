@@ -1,8 +1,8 @@
 package util
 
 import (
-    "k8s.io/apimachinery/pkg/util/runtime"
-    "time"
+	"k8s.io/apimachinery/pkg/util/runtime"
+	"time"
 )
 
 // NeverStop may be passed to make it never stop
@@ -25,5 +25,5 @@ func Retry(f func(), duration time.Duration, stopCh <-chan struct{}) {
             defer runtime.HandleCrash()
             f()
         }()
-    }
+	}
 }

@@ -4,16 +4,16 @@
 package discovery
 
 import (
-    log "github.com/sirupsen/logrus"
-    "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
+	log "github.com/sirupsen/logrus"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 
-    "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
-    "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/leadership"
-    "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/leadership"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 
-    gm "github.com/rcrowley/go-metrics"
+	gm "github.com/rcrowley/go-metrics"
 
-    "k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes"
 )
 
 const (
