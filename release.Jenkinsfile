@@ -97,6 +97,20 @@ pipeline {
         sh 'make publish'
       }
     }
+    stage("Push Openshift Image to Partner Scan") {
+      when{ environment name: 'RELEASE_TYPE', value: 'release' }
+      environment {
+        REDHAT_CREDS=credentials('scan-redhat-connect')
+        RELEASE_TYPE = 'release'
+        REDHAT_OSPID=credentials("redhat-ospid")
+        PREFIX = "scan.connect.redhat.com/#{env.REDHAT_OSPID}"
+        DOCKER_IMAGE = 'kubernetes-collector'
+      }
+      steps {
+        sh 'echo $REDHAT_CREDS_PSW | docker login -u $REDHAT_CREDS_USR --password-stdin'
+        sh 'make push_rhel'
+      }
+    }
     stage("Create and Merge Bump Version Pull Request") {
       steps {
         sh './hack/jenkins/create-and-merge-pull-request.sh'

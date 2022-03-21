@@ -129,6 +129,11 @@ ifneq ($(OVERRIDE_IMAGE_NAME),)
 	sudo docker tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OVERRIDE_IMAGE_NAME)
 endif
 
+push_rhel:
+	docker build --push\
+		-f $(REPO_DIR)/deploy/docker/Dockerfile-rhel \
+		--build-arg COLLECTOR_VERSION=$(RELEASE_VERSION) --build-arg LDFLAGS="$(LDFLAGS)" \
+		-t $(PREFIX)/$(DOCKER_IMAGE):$(RELEASE_VERSION) .
 clean:
 	@rm -f $(OUT_DIR)/$(ARCH)/$(BINARY_NAME)
 	@rm -f $(OUT_DIR)/$(ARCH)/$(BINARY_NAME)-test
