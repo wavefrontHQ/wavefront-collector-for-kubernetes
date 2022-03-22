@@ -107,8 +107,10 @@ pipeline {
         DOCKER_IMAGE = 'wavefront'
       }
       steps {
-        sh 'echo $REDHAT_CREDS_PSW | docker login -u $REDHAT_CREDS_USR --password-stdin'
-        sh 'make push_rhel_redhat_connect'
+        withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
+          sh 'echo $REDHAT_CREDS_PSW | docker login -u $REDHAT_CREDS_USR $PREFIX --password-stdin'
+          sh 'make push_rhel_redhat_connect'
+        }
       }
     }
 //     stage("Create and Merge Bump Version Pull Request") {
