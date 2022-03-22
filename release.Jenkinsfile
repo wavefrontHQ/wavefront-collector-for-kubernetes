@@ -103,7 +103,7 @@ pipeline {
         REDHAT_CREDS=credentials('redhat-connect-wf-collector-creds')
         RELEASE_TYPE = 'release'
         REDHAT_OSPID=credentials("redhat-connect-ospid-wf-collector")
-        PREFIX = "scan.connect.redhat.com/#{env.REDHAT_OSPID}"
+        PREFIX = "scan.connect.redhat.com/${env.REDHAT_OSPID}"
         DOCKER_IMAGE = 'wavefront'
       }
       steps {
