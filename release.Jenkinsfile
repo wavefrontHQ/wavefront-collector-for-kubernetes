@@ -103,13 +103,15 @@ pipeline {
         REDHAT_CREDS=credentials('redhat-connect-wf-collector-creds')
         RELEASE_TYPE = 'release'
         REDHAT_OSPID=credentials("redhat-connect-ospid-wf-collector")
-        PREFIX = "scan.connect.redhat.com"
         DOCKER_IMAGE = 'wavefront'
       }
       steps {
+        script {
+          env.PREFIX = "scan.connect.redhat.com/${env.REDHAT_OSPID}"
+        }
         withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
-          sh 'echo $REDHAT_CREDS_PSW | docker login -u $REDHAT_CREDS_USR $PREFIX/$REDHAT_OSPID --password-stdin'
-          sh 'PREFIX=$PREFIX/$REDHAT_OSPID make push_rhel_redhat_connect'
+          sh 'echo $REDHAT_CREDS_PSW | docker login -u $REDHAT_CREDS_USR $PREFIX --password-stdin'
+          sh 'make push_rhel_redhat_connect'
         }
       }
     }
