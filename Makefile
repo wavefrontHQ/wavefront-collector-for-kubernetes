@@ -119,21 +119,19 @@ $(SEMVER_CLI_BIN):
 %.peg.go: %.peg
 	peg -switch -inline $<
 
-#This rule need to be run on RHEL with podman installed.
 container_rhel: $(SEMVER_CLI_BIN)
 	docker build \
 		-f $(REPO_DIR)/deploy/docker/Dockerfile-rhel \
-		--build-arg COLLECTOR_VERSION=$(VERSION) --build-arg LDFLAGS="$(LDFLAGS)" \
+		--build-arg COLLECTOR_VERSION=$(RELEASE_VERSION) --build-arg LDFLAGS="$(LDFLAGS)" \
 		-t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) .
 ifneq ($(OVERRIDE_IMAGE_NAME),)
 	sudo docker tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OVERRIDE_IMAGE_NAME)
 endif
 
-push_rhel:
-	docker build --push\
-		-f $(REPO_DIR)/deploy/docker/Dockerfile-rhel \
-		--build-arg COLLECTOR_VERSION=$(RELEASE_VERSION) --build-arg LDFLAGS="$(LDFLAGS)" \
-		-t $(PREFIX)/$(DOCKER_IMAGE):$(RELEASE_VERSION) .
+push_rhel_redhat_connect: container_rhel
+	docker tag  $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(PREFIX)/$(DOCKER_IMAGE):$(RELEASE_VERSION)-rc
+	docker push $(PREFIX)/$(DOCKER_IMAGE):$(RELEASE_VERSION)-rc
+
 clean:
 	@rm -f $(OUT_DIR)/$(ARCH)/$(BINARY_NAME)
 	@rm -f $(OUT_DIR)/$(ARCH)/$(BINARY_NAME)-test

@@ -100,15 +100,15 @@ pipeline {
     stage("Push Openshift Image to Partner Scan") {
       when{ environment name: 'RELEASE_TYPE', value: 'release' }
       environment {
-        REDHAT_CREDS=credentials('scan-redhat-connect')
+        REDHAT_CREDS=credentials('redhat-connect-wf-collector-creds')
         RELEASE_TYPE = 'release'
-        REDHAT_OSPID=credentials("redhat-ospid")
+        REDHAT_OSPID=credentials("redhat-connect-ospid-wf-collector")
         PREFIX = "scan.connect.redhat.com/#{env.REDHAT_OSPID}"
-        DOCKER_IMAGE = 'kubernetes-collector'
+        DOCKER_IMAGE = 'wavefront'
       }
       steps {
         sh 'echo $REDHAT_CREDS_PSW | docker login -u $REDHAT_CREDS_USR --password-stdin'
-        sh 'make push_rhel'
+        sh 'make push_rhel_redhat_connect'
       }
     }
     stage("Create and Merge Bump Version Pull Request") {
