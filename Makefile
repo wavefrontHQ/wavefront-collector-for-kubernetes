@@ -129,8 +129,8 @@ ifneq ($(OVERRIDE_IMAGE_NAME),)
 endif
 
 push_rhel_redhat_connect: container_rhel
-	docker tag  $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(PREFIX)/$(DOCKER_IMAGE):$(RELEASE_VERSION)-rc
-	docker push $(PREFIX)/$(DOCKER_IMAGE):$(RELEASE_VERSION)-rc
+	docker tag  $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(PREFIX)/$(DOCKER_IMAGE):$(RELEASE_VERSION)-rc-test1
+	docker push $(PREFIX)/$(DOCKER_IMAGE):$(RELEASE_VERSION)-rc-test1
 
 clean:
 	@rm -f $(OUT_DIR)/$(ARCH)/$(BINARY_NAME)
