@@ -108,8 +108,8 @@ pipeline {
       }
       steps {
         withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
-          sh 'echo $REDHAT_CREDS_PSW | docker login -u $REDHAT_CREDS_USR $PREFIX/${env.REDHAT_OSPID} --password-stdin'
-          sh 'PREFIX=$PREFIX/${env.REDHAT_OSPID} make push_rhel_redhat_connect'
+          sh 'echo $REDHAT_CREDS_PSW | docker login -u $REDHAT_CREDS_USR $PREFIX/$REDHAT_OSPID --password-stdin'
+          sh 'PREFIX=$PREFIX/$REDHAT_OSPID make push_rhel_redhat_connect'
         }
       }
     }
