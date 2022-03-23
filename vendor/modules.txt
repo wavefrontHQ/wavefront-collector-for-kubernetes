@@ -272,8 +272,8 @@ github.com/tklauser/numcpus
 # github.com/wavefronthq/go-metrics-wavefront v1.0.3
 ## explicit; go 1.13
 github.com/wavefronthq/go-metrics-wavefront/reporting
-# github.com/wavefronthq/wavefront-sdk-go v0.9.9
-## explicit; go 1.13
+# github.com/wavefronthq/wavefront-sdk-go v0.9.10
+## explicit; go 1.17
 github.com/wavefronthq/wavefront-sdk-go/application
 github.com/wavefronthq/wavefront-sdk-go/event
 github.com/wavefronthq/wavefront-sdk-go/histogram

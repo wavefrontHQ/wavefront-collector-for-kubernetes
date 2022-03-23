@@ -44,4 +44,5 @@ type ProxyConfiguration struct {
 	EventsPort       int // events port on which the proxy is listening on.
 
 	FlushIntervalSeconds int // defaults to 1 second
+	SDKMetricsTags       map[string]string
 }

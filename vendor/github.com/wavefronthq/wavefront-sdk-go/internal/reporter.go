@@ -17,7 +17,7 @@ type reporter struct {
 	client    *http.Client
 }
 
-// Newreporter create a metrics Reporter
+// NewReporter create a metrics Reporter
 func NewReporter(server string, token string) Reporter {
 	return &reporter{
 		serverURL: server,
@@ -26,6 +26,7 @@ func NewReporter(server string, token string) Reporter {
 	}
 }
 
+// Report creates and sends a POST to the reportEndpoint with the given pointLines
 func (reporter reporter) Report(format string, pointLines string) (*http.Response, error) {
 	if format == "" || pointLines == "" {
 		return nil, formatError

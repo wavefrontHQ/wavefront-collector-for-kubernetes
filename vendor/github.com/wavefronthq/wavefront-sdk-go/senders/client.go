@@ -2,8 +2,6 @@ package senders
 
 import (
 	"fmt"
-	"os"
-	"strconv"
 	"time"
 
 	"github.com/wavefronthq/wavefront-sdk-go/event"
@@ -52,59 +50,6 @@ type wavefrontSender struct {
 	eventsDropped *internal.DeltaCounter
 
 	proxy bool
-}
-
-// newWavefrontClient creates and returns a Wavefront Client instance
-func newWavefrontClient(cfg *configuration) (Sender, error) {
-	if cfg.BatchSize == 0 {
-		cfg.BatchSize = defaultBatchSize
-	}
-	if cfg.MaxBufferSize == 0 {
-		cfg.MaxBufferSize = defaultBufferSize
-	}
-	if cfg.FlushIntervalSeconds == 0 {
-		cfg.FlushIntervalSeconds = defaultFlushInterval
-	}
-
-	reporter := internal.NewReporter(cfg.Server, cfg.Token)
-
-	sender := &wavefrontSender{
-		defaultSource: internal.GetHostname("wavefront_direct_sender"),
-		proxy:         len(cfg.Token) == 0,
-	}
-	sender.internalRegistry = internal.NewMetricRegistry(
-		sender,
-		internal.SetPrefix("~sdk.go.core.sender.direct"),
-		internal.SetTag("pid", strconv.Itoa(os.Getpid())),
-	)
-	sender.pointHandler = newLineHandler(reporter, cfg, internal.MetricFormat, "points", sender.internalRegistry)
-	sender.histoHandler = newLineHandler(reporter, cfg, internal.HistogramFormat, "histograms", sender.internalRegistry)
-	sender.spanHandler = newLineHandler(reporter, cfg, internal.TraceFormat, "spans", sender.internalRegistry)
-	sender.spanLogHandler = newLineHandler(reporter, cfg, internal.SpanLogsFormat, "span_logs", sender.internalRegistry)
-	sender.eventHandler = newLineHandler(reporter, cfg, internal.EventFormat, "events", sender.internalRegistry)
-
-	sender.pointsValid = sender.internalRegistry.NewDeltaCounter("points.valid")
-	sender.pointsInvalid = sender.internalRegistry.NewDeltaCounter("points.invalid")
-	sender.pointsDropped = sender.internalRegistry.NewDeltaCounter("points.dropped")
-
-	sender.histogramsValid = sender.internalRegistry.NewDeltaCounter("histograms.valid")
-	sender.histogramsInvalid = sender.internalRegistry.NewDeltaCounter("histograms.invalid")
-	sender.histogramsDropped = sender.internalRegistry.NewDeltaCounter("histograms.dropped")
-
-	sender.spansValid = sender.internalRegistry.NewDeltaCounter("spans.valid")
-	sender.spansInvalid = sender.internalRegistry.NewDeltaCounter("spans.invalid")
-	sender.spansDropped = sender.internalRegistry.NewDeltaCounter("spans.dropped")
-
-	sender.spanLogsValid = sender.internalRegistry.NewDeltaCounter("span_logs.valid")
-	sender.spanLogsInvalid = sender.internalRegistry.NewDeltaCounter("span_logs.invalid")
-	sender.spanLogsDropped = sender.internalRegistry.NewDeltaCounter("span_logs.dropped")
-
-	sender.eventsValid = sender.internalRegistry.NewDeltaCounter("events.valid")
-	sender.eventsInvalid = sender.internalRegistry.NewDeltaCounter("events.invalid")
-	sender.eventsDropped = sender.internalRegistry.NewDeltaCounter("events.dropped")
-
-	sender.Start()
-	return sender, nil
 }
 
 func newLineHandler(reporter internal.Reporter, cfg *configuration, format, prefix string, registry *internal.MetricRegistry) *internal.LineHandler {

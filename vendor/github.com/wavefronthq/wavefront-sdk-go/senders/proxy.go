@@ -60,10 +60,17 @@ func NewProxySender(cfg *ProxyConfiguration) (Sender, error) {
 		handlers:      make([]internal.ConnectionHandler, handlersCount),
 	}
 
+	var setters []internal.RegistryOption
+	setters = append(setters, internal.SetPrefix("~sdk.go.core.sender.proxy"))
+	setters = append(setters, internal.SetTag("pid", strconv.Itoa(os.Getpid())))
+
+	for key, value := range cfg.SDKMetricsTags {
+		setters = append(setters, internal.SetTag(key, value))
+	}
+
 	sender.internalRegistry = internal.NewMetricRegistry(
 		sender,
-		internal.SetPrefix("~sdk.go.core.sender.proxy"),
-		internal.SetTag("pid", strconv.Itoa(os.Getpid())),
+		setters...,
 	)
 
 	if sdkVersion, e := internal.GetSemVer(version.Version); e == nil {
