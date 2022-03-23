@@ -66,7 +66,6 @@ pipeline {
           lock("collector-integration-test") {
             sh './hack/jenkins/setup-for-integration-test.sh'
             sh 'make gke-connect-to-cluster'
-            sh 'make clean-cluster'
             sh 'VERSION_POSTFIX=$VERSION_POSTFIX make deploy-test'
           }
         }
