@@ -43,7 +43,7 @@ type LineHandler struct {
 	done   chan struct{}
 }
 
-var throttledSleepDuration = time.Duration(time.Second * 30)
+var throttledSleepDuration = time.Second * 30
 var errThrottled = errors.New("error: throttled event creation")
 
 type LineHandlerOption func(*LineHandler)
