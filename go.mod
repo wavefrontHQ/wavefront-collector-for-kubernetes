@@ -15,7 +15,7 @@ require (
 	github.com/shirou/gopsutil v3.21.10+incompatible
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/pflag v1.0.5
-	github.com/stretchr/testify v1.7.0
+	github.com/stretchr/testify v1.7.1
 	github.com/wavefronthq/go-metrics-wavefront v1.0.3
 	github.com/wavefronthq/wavefront-sdk-go v0.9.9
 	gopkg.in/yaml.v2 v2.4.0
