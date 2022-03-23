@@ -97,6 +97,24 @@ pipeline {
         sh 'make publish'
       }
     }
+    stage("Push Openshift Image to RedHat Connect") {
+      when{ environment name: 'RELEASE_TYPE', value: 'release' }
+      environment {
+        REDHAT_CREDS=credentials('redhat-connect-wf-collector-creds')
+        RELEASE_TYPE = 'release'
+        REDHAT_OSPID=credentials("redhat-connect-ospid-wf-collector")
+        DOCKER_IMAGE = 'wavefront'
+      }
+      steps {
+        script {
+          env.PREFIX = "scan.connect.redhat.com/${env.REDHAT_OSPID}"
+        }
+        withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
+          sh 'echo $REDHAT_CREDS_PSW | docker login -u $REDHAT_CREDS_USR $PREFIX --password-stdin'
+          sh 'make push_rhel_redhat_connect'
+        }
+      }
+    }
     stage("Create and Merge Bump Version Pull Request") {
       steps {
         sh './hack/jenkins/create-and-merge-pull-request.sh'
