@@ -12,39 +12,7 @@ import (
 var (
 	// panicHandlers is a list of functions which will be invoked when a panic happens.
 	panicHandlers = []func(interface{}){logPanic}
-
-	// errorHandlers is a list of functions which will be invoked when a nonreturnable
-	// error occurs.
-	errorHandlers = []func(error){
-		logError,
-		(&rudimentaryErrorBackoff{
-			lastErrorTime: time.Now(),
-			// 1ms was the number folks were able to stomach as a global rate limit.
-			// If you need to log errors more than 1000 times a second you
-			// should probably consider fixing your code instead. :)
-			minPeriod: time.Millisecond,
-		}).onError,
-	}
 )
-
-type rudimentaryErrorBackoff struct {
-	minPeriod         time.Duration // immutable
-	lastErrorTimeLock sync.Mutex
-	lastErrorTime     time.Time
-}
-
-// OnError will block if it is called more often than the embedded period time.
-// This will prevent overly tight hot error loops.
-func (r *rudimentaryErrorBackoff) onError(error) {
-	r.lastErrorTimeLock.Lock()
-	defer r.lastErrorTimeLock.Unlock()
-	d := time.Since(r.lastErrorTime)
-	if d < r.minPeriod {
-		// If the time moves backwards for any reason, do nothing
-		time.Sleep(r.minPeriod - d)
-	}
-	r.lastErrorTime = time.Now()
-}
 
 func HandleCrash(additionalHandlers ...func(interface{})) {
 	if r := recover(); r != nil {
@@ -80,16 +48,40 @@ func logPanic(r interface{}) {
 	}
 }
 
-// HandleError is a method to invoke when a non-user facing piece of code cannot
-// return an error and needs to indicate it has been ignored. Invoking this method
-// is preferable to logging the error - the default behavior is to log but the
-// errors may be sent to a remote server for analysis.
+// errorHandlers is a list of functions which will be invoked when a nonreturnable
+// error occurs.
+var errorHandlers = []func(error){
+	logError,
+	(&rudimentaryErrorBackoff{
+		lastErrorTime: time.Now(),
+		minPeriod:     time.Millisecond,
+	}).onError,
+}
+
+type rudimentaryErrorBackoff struct {
+	minPeriod         time.Duration
+	lastErrorTimeLock sync.Mutex
+	lastErrorTime     time.Time
+}
+
+// onError will block if it is called more often than the embedded period time.
+// This will prevent overly tight hot error loops.
+func (r *rudimentaryErrorBackoff) onError(error) {
+	r.lastErrorTimeLock.Lock()
+	defer r.lastErrorTimeLock.Unlock()
+	d := time.Since(r.lastErrorTime)
+	if d < r.minPeriod {
+		// If the time moves backwards for any reason, do nothing
+		time.Sleep(r.minPeriod - d)
+	}
+	r.lastErrorTime = time.Now()
+}
+
+// HandleError handles log on a backoff loop
 func HandleError(err error) {
-	// this is sometimes called with a nil error.  We probably shouldn't fail and should do nothing instead
 	if err == nil {
 		return
 	}
-
 	for _, fn := range errorHandlers {
 		fn(err)
 	}
