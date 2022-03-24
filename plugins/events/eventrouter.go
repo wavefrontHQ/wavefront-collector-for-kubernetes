@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
+
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/events"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/leadership"
@@ -17,8 +19,6 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	v1 "k8s.io/api/core/v1"
-
-	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
@@ -78,7 +78,7 @@ func (er *EventRouter) Start() {
 
 func (er *EventRouter) Resume() {
 	er.stop = make(chan struct{})
-	defer utilruntime.HandleCrash()
+	defer util.HandleCrash()
 
 	Log.Infof("Starting EventRouter")
 
@@ -86,7 +86,7 @@ func (er *EventRouter) Resume() {
 
 	// here is where we kick the caches into gear
 	if !cache.WaitForCacheSync(er.stop, er.eListerSynced) {
-		utilruntime.HandleError(fmt.Errorf("timed out waiting for caches to sync"))
+		util.HandleError(fmt.Errorf("timed out waiting for caches to sync"))
 		return
 	}
 	<-er.stop
