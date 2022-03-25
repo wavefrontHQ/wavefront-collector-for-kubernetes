@@ -3,11 +3,8 @@
 package events
 
 import (
-	"fmt"
 	"strings"
 	"time"
-
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/events"
@@ -78,7 +75,6 @@ func (er *EventRouter) Start() {
 
 func (er *EventRouter) Resume() {
 	er.stop = make(chan struct{})
-	defer util.HandleCrash()
 
 	Log.Infof("Starting EventRouter")
 
@@ -86,7 +82,7 @@ func (er *EventRouter) Resume() {
 
 	// here is where we kick the caches into gear
 	if !cache.WaitForCacheSync(er.stop, er.eListerSynced) {
-		util.HandleError(fmt.Errorf("timed out waiting for caches to sync"))
+		log.Error("timed out waiting for caches to sync")
 		return
 	}
 	<-er.stop
