@@ -6,16 +6,6 @@ pipeline {
   }
 
   stages {
-    stage("Test with Go 1.16") {
-      tools {
-        go 'Go 1.16'
-      }
-      steps {
-        withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
-          sh 'make checkfmt vet tests'
-        }
-      }
-    }
     stage("Test with Go 1.17") {
       tools {
         go 'Go 1.17'
@@ -26,9 +16,19 @@ pipeline {
         }
       }
     }
+    stage("Test with Go 1.18") {
+      tools {
+        go 'Go 1.18'
+      }
+      steps {
+        withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
+          sh 'make checkfmt vet tests'
+        }
+      }
+    }
     stage("Publish") {
       tools {
-        go 'Go 1.17'
+        go 'Go 1.18'
       }
       environment {
         RELEASE_TYPE = "alpha"
@@ -51,7 +51,7 @@ pipeline {
         timeout(time: 10, unit: 'MINUTES')
       }
       tools {
-        go 'Go 1.17'
+        go 'Go 1.18'
       }
       environment {
         GCP_CREDS = credentials("GCP_CREDS")
