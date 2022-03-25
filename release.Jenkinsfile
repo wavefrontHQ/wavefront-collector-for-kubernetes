@@ -6,7 +6,7 @@ pipeline {
   }
 
   environment {
-    RELEASE_TYPE = "${params.RELEASE_TYPE}"
+    RELEASE_TYPE = 'release'
     RC_NUMBER = "1"
     BUMP_COMPONENT = "${params.BUMP_COMPONENT}"
     GIT_BRANCH = getCurrentBranchName()
@@ -72,7 +72,6 @@ pipeline {
       }
     }
     stage("Publish GA Harbor Image") {
-      when{ environment name: 'RELEASE_TYPE', value: 'release' }
       environment {
         HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability-robot")
         RELEASE_TYPE = 'release'
@@ -85,7 +84,6 @@ pipeline {
       }
     }
     stage("Publish GA Docker Hub") {
-      when{ environment name: 'RELEASE_TYPE', value: 'release' }
       environment {
         DOCKERHUB_CREDS=credentials('Dockerhub_svcwfjenkins')
         RELEASE_TYPE = 'release'
@@ -98,7 +96,6 @@ pipeline {
       }
     }
     stage("Push Openshift Image to RedHat Connect") {
-      when{ environment name: 'RELEASE_TYPE', value: 'release' }
       environment {
         REDHAT_CREDS=credentials('redhat-connect-wf-collector-creds')
         RELEASE_TYPE = 'release'
@@ -124,7 +121,6 @@ pipeline {
       environment {
         GITHUB_CREDS_PSW = credentials("GITHUB_TOKEN")
       }
-      when{ environment name: 'RELEASE_TYPE', value: 'release' }
       steps {
         sh './hack/jenkins/generate_github_release.sh'
       }
