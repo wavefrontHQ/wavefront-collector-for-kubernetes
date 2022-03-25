@@ -250,6 +250,8 @@ func (sink *wavefrontSink) emitHeartbeat(sender senders.Sender, cfg configuratio
 		"cluster":             cfg.ClusterName,
 		"stats_prefix":        configuration.GetStringValue(cfg.Prefix, "kubernetes."),
 		"installation_method": util.GetInstallationMethod(),
+        "k8s_version": getKubernetesVersion(),
+        "provider": getProviderId(),
 	}
 
 	eventsEnabled := 0.0
@@ -276,6 +278,20 @@ func (sink *wavefrontSink) emitHeartbeat(sender senders.Sender, cfg configuratio
 			}
 		}
 	}()
+}
+
+func getKubernetesVersion() string{
+    // Extracted from spec.ProviderId via kubectl get --raw /api/v1/nodes/
+
+    version := "fake_version"
+    return version
+}
+
+func getProviderId() string{
+    // Extracted from spec.ProviderId via kubectl get --raw /api/v1/nodes/
+
+    providerId := "fake_kind"
+    return providerId
 }
 
 func (sink *wavefrontSink) logStatus() {
