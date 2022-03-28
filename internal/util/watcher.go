@@ -45,9 +45,6 @@ func (fw *fileWatcher) Watch() {
 	fw.stopCh = make(chan struct{})
 	initial := true
 	go Retry(func() {
-		if initial {
-			time.Sleep(fw.delay)
-		}
 		fileInfo, err := os.Stat(fw.file)
 		if err != nil {
 			log.Errorf("error retrieving file stats: %v", err)
