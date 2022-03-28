@@ -1,6 +1,7 @@
 // Copyright 2021 VMware, Inc. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-//+build !race
+//go:build !race
+// +build !race
 
 package util
 
