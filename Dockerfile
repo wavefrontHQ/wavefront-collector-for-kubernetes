@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM harbor-repo.vmware.com/dockerhub-proxy-cache/bitnami/golang:1.17 as builder
+FROM --platform=$BUILDPLATFORM harbor-repo.vmware.com/dockerhub-proxy-cache/bitnami/golang:1.18 as builder
 ARG TARGETPLATFORM
 ARG BUILDPLATFORM
 # Base Setup
