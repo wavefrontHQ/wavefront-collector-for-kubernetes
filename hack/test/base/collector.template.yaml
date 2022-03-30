@@ -71,6 +71,8 @@ sources:
       - 'kube.apiserver.workqueue.queue.duration.seconds.bucket'
       tagExclude:
       - version
+    tags:
+      control_plane_alert: true
 
   telegraf_sources:
   # enable all telegraf plugins
@@ -118,3 +120,5 @@ discovery:
       - 'kube.coredns.process.*'
       - 'kube.coredns.coredns.dns.request.duration.seconds.bucket'
       - 'kube.coredns.coredns.dns.responses.total.counter'
+    tags:
+      control_plane_alert: true
