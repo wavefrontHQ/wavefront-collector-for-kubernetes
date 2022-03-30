@@ -58,7 +58,6 @@ type NodeInfo struct {
 	HostName       string
 	HostID         string
 	KubeletVersion string
-	ProviderID     string
 	NodeRole       string
 	IP             net.IP
 }
@@ -448,6 +447,10 @@ func (sp *summaryProvider) getNodeInfo(node *kube_api.Node) (NodeInfo, error) {
 	if sp.hostIDAnnotation != "" {
 		hostID = node.Annotations[sp.hostIDAnnotation]
 	}
+
+    util.SetKubernetesVersion(node.Status.NodeInfo.KubeletVersion)
+    util.SetKubernetesProviderID(node.Spec.ProviderID)
+
 	info := NodeInfo{
 		NodeName:       node.Name,
 		HostName:       hostname,
@@ -455,11 +458,7 @@ func (sp *summaryProvider) getNodeInfo(node *kube_api.Node) (NodeInfo, error) {
 		IP:             ip,
 		KubeletVersion: node.Status.NodeInfo.KubeletVersion,
 		NodeRole:       util.GetNodeRole(node),
-		ProviderID:     node.Spec.ProviderID,
 	}
-
-	util.SetKubernetesVersion(info.KubeletVersion)
-	util.SetKubernetesProviderID(info.ProviderID)
 
 	log.WithFields(log.Fields{
 		"name":      node.Name,

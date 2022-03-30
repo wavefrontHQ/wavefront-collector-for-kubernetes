@@ -251,8 +251,8 @@ func (sink *wavefrontSink) emitHeartbeat(sender senders.Sender, cfg configuratio
 		"stats_prefix":        configuration.GetStringValue(cfg.Prefix, "kubernetes."),
 		"installation_method": util.GetInstallationMethod(),
 		"k8s_version":         util.GetKubernetesVersion(),
-		"provider_id":         util.GetKubernetesProviderID(),
-		"provider":            util.GetKubernetesProvider(),
+		"k8s_provider_id":     util.GetKubernetesProviderID(),
+		"k8s_provider":        util.GetKubernetesProvider(),
 	}
 
 	eventsEnabled := 0.0

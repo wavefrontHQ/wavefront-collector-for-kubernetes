@@ -28,6 +28,7 @@ const (
 	ForceGC                    = "FORCE_GC"
 	KubernetesVersionEnvVar    = "KUBERNETES_VERSION"
 	KubernetesProviderIDEnvVar = "KUBERNETES_PROVIDER_ID"
+    KubernetesProviderEnvVar   = "KUBERNETES_PROVIDER"
 )
 
 const (
@@ -156,12 +157,7 @@ func GetInstallationMethod() string {
 }
 
 func GetKubernetesProvider() string {
-	provider := strings.Split(GetKubernetesProviderID(), ":")
-	if len(provider[0]) > 0 {
-		return provider[0]
-	} else {
-		return "Unknown"
-	}
+    return os.Getenv(KubernetesProviderEnvVar)
 }
 
 func SetKubernetesVersion(version string) {
@@ -174,7 +170,14 @@ func GetKubernetesVersion() string {
 
 func SetKubernetesProviderID(providerID string) {
 	os.Setenv(KubernetesProviderIDEnvVar, providerID)
+    provider := strings.Split(providerID, ":")
+    if len(provider[0]) > 0 {
+        os.Setenv(KubernetesProviderEnvVar, provider[0])
+    } else {
+        os.Setenv(KubernetesProviderEnvVar, "Unknown")
+    }
 }
+
 func GetKubernetesProviderID() string {
 	return os.Getenv(KubernetesProviderIDEnvVar)
 }
