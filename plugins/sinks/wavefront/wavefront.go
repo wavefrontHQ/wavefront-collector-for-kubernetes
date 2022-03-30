@@ -281,20 +281,6 @@ func (sink *wavefrontSink) emitHeartbeat(sender senders.Sender, cfg configuratio
 	}()
 }
 
-func getKubernetesVersion() string{
-    // Extracted from spec.ProviderId via kubectl get --raw /api/v1/nodes/
-
-    version := "fake_version"
-    return version
-}
-
-func getProviderId() string{
-    // Extracted from spec.ProviderId via kubectl get --raw /api/v1/nodes/
-
-    providerId := "fake_kind"
-    return providerId
-}
-
 func (sink *wavefrontSink) logStatus() {
 	// # events can be large in volume. log a status message periodically
 	sent := sentEvents.Count()
