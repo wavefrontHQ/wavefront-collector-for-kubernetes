@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -20,11 +21,13 @@ import (
 )
 
 const (
-	NodeNameEnvVar           = "POD_NODE_NAME"
-	NamespaceNameEnvVar      = "POD_NAMESPACE_NAME"
-	DaemonModeEnvVar         = "DAEMON_MODE"
-	InstallationMethodEnvVar = "INSTALLATION_METHOD"
-	ForceGC                  = "FORCE_GC"
+	NodeNameEnvVar             = "POD_NODE_NAME"
+	NamespaceNameEnvVar        = "POD_NAMESPACE_NAME"
+	DaemonModeEnvVar           = "DAEMON_MODE"
+	InstallationMethodEnvVar   = "INSTALLATION_METHOD"
+	ForceGC                    = "FORCE_GC"
+	KubernetesVersionEnvVar    = "KUBERNETES_VERSION"
+	KubernetesProviderIDEnvVar = "KUBERNETES_PROVIDER_ID"
 )
 
 const (
@@ -150,6 +153,30 @@ func GetInstallationMethod() string {
 		return "unknown"
 	}
 	return installationMethod
+}
+
+func GetKubernetesProvider() string {
+	provider := strings.Split(GetKubernetesProviderID(), ":")
+	if len(provider[0]) > 0 {
+		return provider[0]
+	} else {
+		return "Unknown"
+	}
+}
+
+func SetKubernetesVersion(version string) {
+	os.Setenv(KubernetesVersionEnvVar, version)
+}
+
+func GetKubernetesVersion() string {
+	return os.Getenv(KubernetesVersionEnvVar)
+}
+
+func SetKubernetesProviderID(providerID string) {
+	os.Setenv(KubernetesProviderIDEnvVar, providerID)
+}
+func GetKubernetesProviderID() string {
+	return os.Getenv(KubernetesProviderIDEnvVar)
 }
 
 func GetNodeHostnameAndIP(node *kube_api.Node) (string, net.IP, error) {

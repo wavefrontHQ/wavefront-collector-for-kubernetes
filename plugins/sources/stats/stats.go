@@ -90,6 +90,9 @@ func (src *internalMetricsSource) internalStats() (*metrics.Batch, error) {
 
 	src.tags["leading"] = strconv.FormatBool(leadership.Leading())
 	src.tags["installation_method"] = util.GetInstallationMethod()
+	src.tags["k8s_version"] = util.GetKubernetesVersion()
+	src.tags["provider_id"] = util.GetKubernetesProviderID()
+	src.tags["provider"] = util.GetKubernetesProvider()
 
 	// update GC and memory stats before populating the map
 	gometrics.CaptureRuntimeMemStatsOnce(gometrics.DefaultRegistry)
