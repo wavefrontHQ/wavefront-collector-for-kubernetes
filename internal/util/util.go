@@ -21,13 +21,13 @@ import (
 )
 
 const (
-	NodeNameEnvVar             = "POD_NODE_NAME"
-	NamespaceNameEnvVar        = "POD_NAMESPACE_NAME"
-	DaemonModeEnvVar           = "DAEMON_MODE"
-	InstallationMethodEnvVar   = "INSTALLATION_METHOD"
-	ForceGC                    = "FORCE_GC"
-	KubernetesVersionEnvVar    = "KUBERNETES_VERSION"
-	KubernetesProviderEnvVar   = "KUBERNETES_PROVIDER"
+	NodeNameEnvVar           = "POD_NODE_NAME"
+	NamespaceNameEnvVar      = "POD_NAMESPACE_NAME"
+	DaemonModeEnvVar         = "DAEMON_MODE"
+	InstallationMethodEnvVar = "INSTALLATION_METHOD"
+	ForceGC                  = "FORCE_GC"
+	KubernetesVersionEnvVar  = "KUBERNETES_VERSION"
+	KubernetesProviderEnvVar = "KUBERNETES_PROVIDER"
 )
 
 const (
@@ -171,7 +171,9 @@ func SetKubernetesProvider(providerID string) {
 	provider := strings.Split(providerID, ":")
 	if len(provider[0]) > 0 {
 		os.Setenv(KubernetesProviderEnvVar, provider[0])
-	}
+	} else {
+        os.Setenv(KubernetesProviderEnvVar, "unknown")
+    }
 }
 
 func AddK8sTags(tags map[string]string) {
