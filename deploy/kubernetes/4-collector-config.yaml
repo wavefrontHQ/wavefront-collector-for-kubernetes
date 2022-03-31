@@ -80,31 +80,33 @@ data:
       #    - "kubernetes.cadvisor.container.cpu.cfs.throttled.periods.total.counter"
 
 
-      prometheus_sources:
+      # prometheus_sources:
 
       ##########################################################################
       # Static source to collect control plane metrics from the API Server
       ##########################################################################
-      - url: 'https://kubernetes.default.svc.cluster.local:443/metrics'
-        httpConfig:
-          bearer_token_file: '/var/run/secrets/kubernetes.io/serviceaccount/token'
-          tls_config:
-            ca_file: '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
-            insecure_skip_verify: true
-        prefix: 'kube.apiserver.'
-
-        filters:
-          metricAllowList:
-          - 'kube.apiserver.etcd.request.duration.seconds.bucket'
-          - 'kube.apiserver.etcd.object.counts.gauge'
-          - 'kube.apiserver.etcd.db.total.size.in.bytes.gauge'
-          - 'kube.apiserver.apiserver.request.duration.seconds.bucket'
-          - 'kube.apiserver.apiserver.request.total.counter'
-          - 'kube.apiserver.workqueue.adds.total.counter'
-          - 'kube.apiserver.workqueue.queue.duration.seconds.bucket'
-        tags:
-          control_plane_alert: true
-
+      # - url: 'https://kubernetes.default.svc.cluster.local:443/metrics'
+      #   httpConfig:
+      #     bearer_token_file: '/var/run/secrets/kubernetes.io/serviceaccount/token'
+      #     tls_config:
+      #       ca_file: '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
+      #       insecure_skip_verify: true
+      #   prefix: 'kube.apiserver.'
+      #
+      #   filters:
+      #     metricAllowList:
+      #     - 'kube.apiserver.apiserver.*'
+      #     - 'kube.apiserver.etcd.*'
+      #     - 'kube.apiserver.process.*'
+      #     - 'kube.apiserver.etcd.request.duration.seconds.bucket'
+      #     - 'kube.apiserver.etcd.object.counts.gauge'
+      #     - 'kube.apiserver.etcd.db.total.size.in.bytes.gauge'
+      #     - 'kube.apiserver.apiserver.request.duration.seconds.bucket'
+      #     - 'kube.apiserver.apiserver.request.total.counter'
+      #     - 'kube.apiserver.workqueue.adds.total.counter'
+      #     - 'kube.apiserver.workqueue.queue.duration.seconds.bucket'
+      #   tags:
+      #     control_plane_alert: true
     # discovery rules for auto-discovery of pods and services
     discovery:
       enable_runtime_plugins: true
