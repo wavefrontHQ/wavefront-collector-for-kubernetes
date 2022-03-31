@@ -90,6 +90,7 @@ func (src *internalMetricsSource) internalStats() (*metrics.Batch, error) {
 
 	src.tags["leading"] = strconv.FormatBool(leadership.Leading())
 	src.tags["installation_method"] = util.GetInstallationMethod()
+	util.AddK8sTags(src.tags)
 
 	// update GC and memory stats before populating the map
 	gometrics.CaptureRuntimeMemStatsOnce(gometrics.DefaultRegistry)
