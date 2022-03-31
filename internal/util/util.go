@@ -171,8 +171,6 @@ func SetKubernetesProvider(providerID string) {
 	provider := strings.Split(providerID, ":")
 	if len(provider[0]) > 0 {
 		os.Setenv(KubernetesProviderEnvVar, provider[0])
-	} else {
-		os.Setenv(KubernetesProviderEnvVar, "Unknown")
 	}
 }
 
