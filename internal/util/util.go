@@ -172,8 +172,8 @@ func SetKubernetesProvider(providerID string) {
 	if len(provider[0]) > 0 {
 		os.Setenv(KubernetesProviderEnvVar, provider[0])
 	} else {
-        os.Setenv(KubernetesProviderEnvVar, "unknown")
-    }
+		os.Setenv(KubernetesProviderEnvVar, "unknown")
+	}
 }
 
 func AddK8sTags(tags map[string]string) {
