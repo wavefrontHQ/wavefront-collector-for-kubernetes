@@ -27,8 +27,7 @@ const (
 	InstallationMethodEnvVar   = "INSTALLATION_METHOD"
 	ForceGC                    = "FORCE_GC"
 	KubernetesVersionEnvVar    = "KUBERNETES_VERSION"
-	KubernetesProviderIDEnvVar = "KUBERNETES_PROVIDER_ID"
-    KubernetesProviderEnvVar   = "KUBERNETES_PROVIDER"
+	KubernetesProviderEnvVar   = "KUBERNETES_PROVIDER"
 )
 
 const (
@@ -157,7 +156,7 @@ func GetInstallationMethod() string {
 }
 
 func GetKubernetesProvider() string {
-    return os.Getenv(KubernetesProviderEnvVar)
+	return os.Getenv(KubernetesProviderEnvVar)
 }
 
 func SetKubernetesVersion(version string) {
@@ -168,18 +167,23 @@ func GetKubernetesVersion() string {
 	return os.Getenv(KubernetesVersionEnvVar)
 }
 
-func SetKubernetesProviderID(providerID string) {
-	os.Setenv(KubernetesProviderIDEnvVar, providerID)
-    provider := strings.Split(providerID, ":")
-    if len(provider[0]) > 0 {
-        os.Setenv(KubernetesProviderEnvVar, provider[0])
-    } else {
-        os.Setenv(KubernetesProviderEnvVar, "Unknown")
-    }
+func SetKubernetesProvider(providerID string) {
+	provider := strings.Split(providerID, ":")
+	if len(provider[0]) > 0 {
+		os.Setenv(KubernetesProviderEnvVar, provider[0])
+	} else {
+		os.Setenv(KubernetesProviderEnvVar, "Unknown")
+	}
 }
 
-func GetKubernetesProviderID() string {
-	return os.Getenv(KubernetesProviderIDEnvVar)
+func AddK8sTags(tags map[string]string) {
+	// Use separate function to add K8s tags since the Env variables are set via summary source
+	if len(tags["k8s_version"]) == 0 && len(GetKubernetesVersion()) > 0 {
+		tags["k8s_version"] = GetKubernetesVersion()
+	}
+	if len(tags["k8s_provider"]) == 0 && len(GetKubernetesProvider()) > 0 {
+		tags["k8s_provider"] = GetKubernetesProvider()
+	}
 }
 
 func GetNodeHostnameAndIP(node *kube_api.Node) (string, net.IP, error) {

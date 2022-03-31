@@ -250,9 +250,6 @@ func (sink *wavefrontSink) emitHeartbeat(sender senders.Sender, cfg configuratio
 		"cluster":             cfg.ClusterName,
 		"stats_prefix":        configuration.GetStringValue(cfg.Prefix, "kubernetes."),
 		"installation_method": util.GetInstallationMethod(),
-		"k8s_version":         util.GetKubernetesVersion(),
-		"k8s_provider_id":     util.GetKubernetesProviderID(),
-		"k8s_provider":        util.GetKubernetesProvider(),
 	}
 
 	eventsEnabled := 0.0
@@ -262,6 +259,7 @@ func (sink *wavefrontSink) emitHeartbeat(sender senders.Sender, cfg configuratio
 
 	go func() {
 		log.Debug("emitting heartbeat metric")
+		util.AddK8sTags(tags)
 		err := sender.SendMetric("~wavefront.kubernetes.collector.version", cfg.Version, 0, source, tags)
 		if err != nil {
 			log.Debugf("error emitting heartbeat metric :%v", err)
@@ -269,6 +267,7 @@ func (sink *wavefrontSink) emitHeartbeat(sender senders.Sender, cfg configuratio
 		for {
 			select {
 			case <-ticker.C:
+				util.AddK8sTags(tags)
 				_ = sender.SendMetric("~wavefront.kubernetes.collector.version", cfg.Version, 0, source, tags)
 				_ = sender.SendMetric("~wavefront.kubernetes.collector.config.events.enabled", eventsEnabled, 0, source, tags)
 				sink.logStatus()

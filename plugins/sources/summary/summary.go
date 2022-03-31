@@ -448,8 +448,8 @@ func (sp *summaryProvider) getNodeInfo(node *kube_api.Node) (NodeInfo, error) {
 		hostID = node.Annotations[sp.hostIDAnnotation]
 	}
 
-    util.SetKubernetesVersion(node.Status.NodeInfo.KubeletVersion)
-    util.SetKubernetesProviderID(node.Spec.ProviderID)
+	util.SetKubernetesVersion(node.Status.NodeInfo.KubeletVersion)
+	util.SetKubernetesProvider(node.Spec.ProviderID)
 
 	info := NodeInfo{
 		NodeName:       node.Name,
