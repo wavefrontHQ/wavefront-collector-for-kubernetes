@@ -41,11 +41,11 @@
 {"Name":"kernel.entropy.avail","Tags":{"cluster":"","source":""}}
 {"Name":"kernel.interrupts","Tags":{"cluster":"","source":""}}
 {"Name":"kernel.processes.forked","Tags":{"cluster":"","source":""}}
-{"Name":"kube.apiserver.apiserver.request.duration.seconds.bucket","Tags":{"cluster":"","le":"","resource":"","scope":"","source":"","verb":"","control_plane_alert":"true"}}
-{"Name":"kube.apiserver.apiserver.request.total.counter","Tags":{"cluster":"","code":"","group":"","resource":"","scope":"","source":"","verb":"","control_plane_alert":"true"}}
-{"Name":"kube.apiserver.etcd.db.total.size.in.bytes.gauge","Tags":{"cluster":"","endpoint":"","source":"","control_plane_alert":"true"}}
-{"Name":"kube.apiserver.etcd.request.duration.seconds.bucket","Tags":{"cluster":"","operation":"","source":"","type":"","control_plane_alert":"true"}}
-{"Name":"kube.apiserver.workqueue.queue.duration.seconds.bucket","Tags":{"cluster":"","le":"","name":"","source":"","control_plane_alert":"true"}}
+{"Name":"kube.apiserver.apiserver.request.duration.seconds.bucket","Tags":{"cluster":"","le":"","resource":"","scope":"","source":"","verb":""}}
+{"Name":"kube.apiserver.apiserver.request.total.counter","Tags":{"cluster":"","code":"","group":"","resource":"","scope":"","source":"","verb":""}}
+{"Name":"kube.apiserver.etcd.db.total.size.in.bytes.gauge","Tags":{"cluster":"","endpoint":"","source":""}}
+{"Name":"kube.apiserver.etcd.request.duration.seconds.bucket","Tags":{"cluster":"","operation":"","source":"","type":""}}
+{"Name":"kube.apiserver.workqueue.queue.duration.seconds.bucket","Tags":{"cluster":"","le":"","name":"","source":""}}
 {"Name":"kubernetes.cadvisor.container.cpu.cfs.throttled.periods.total.counter","Tags":{"cluster":"","container":"","id":"","image":"","name":"","namespace":"","pod":"","source":""}}
 {"Name":"kubernetes.cadvisor.container.cpu.cfs.throttled.periods.total.counter","Tags":{"cluster":"","id":"","namespace":"","pod":"","source":""}}
 {"Name":"kubernetes.cadvisor.container.cpu.cfs.throttled.seconds.total.counter","Tags":{"cluster":"","container":"","id":"","image":"","name":"","namespace":"","pod":"","source":""}}
