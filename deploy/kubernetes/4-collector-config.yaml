@@ -85,7 +85,7 @@ data:
       ##########################################################################
       # Static source to collect control plane metrics from the API Server
       ##########################################################################
-      # - url: 'https://kubernetes.default.svc.cluster.local:443/metrics'
+      # - url: 'https://kubernetes.default.svc:443/metrics'
       #   httpConfig:
       #     bearer_token_file: '/var/run/secrets/kubernetes.io/serviceaccount/token'
       #     tls_config:
