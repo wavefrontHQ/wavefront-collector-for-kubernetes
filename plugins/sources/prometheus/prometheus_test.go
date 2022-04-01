@@ -6,8 +6,10 @@ package prometheus
 import (
 	"bytes"
 	"testing"
+	"time"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/httputil"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -18,8 +20,11 @@ import (
 
 func TestNoFilters(t *testing.T) {
 	src := &prometheusMetricsSource{}
+	batch := metrics.Batch{
+		Timestamp: time.Now(),
+	}
 
-	points, err := src.parseMetrics(testMetricReader())
+	points, err := src.parseMetrics(testMetricReader(), batch)
 	require.NoError(t, err, "parsing metrics")
 	assert.Equal(t, 8, len(points), "wrong number of points")
 }
@@ -33,8 +38,11 @@ func TestMetricAllowList(t *testing.T) {
 	src := &prometheusMetricsSource{
 		filters: f,
 	}
+	batch := metrics.Batch{
+		Timestamp: time.Now(),
+	}
 
-	points, err := src.parseMetrics(testMetricReader())
+	points, err := src.parseMetrics(testMetricReader(), batch)
 	require.NoError(t, err, "parsing metrics")
 	assert.Equal(t, 1, len(points), "wrong number of points")
 }
@@ -48,8 +56,11 @@ func TestMetricDenyList(t *testing.T) {
 	src := &prometheusMetricsSource{
 		filters: f,
 	}
+	batch := metrics.Batch{
+		Timestamp: time.Now(),
+	}
 
-	points, err := src.parseMetrics(testMetricReader())
+	points, err := src.parseMetrics(testMetricReader(), batch)
 	require.NoError(t, err, "parsing metrics")
 	assert.Equal(t, 7, len(points), "wrong number of points")
 }
@@ -63,8 +74,11 @@ func TestMetricTagAllowList(t *testing.T) {
 	src := &prometheusMetricsSource{
 		filters: f,
 	}
+	batch := metrics.Batch{
+		Timestamp: time.Now(),
+	}
 
-	points, err := src.parseMetrics(testMetricReader())
+	points, err := src.parseMetrics(testMetricReader(), batch)
 	require.NoError(t, err, "parsing metrics")
 	assert.Equal(t, 1, len(points), "wrong number of points")
 }
@@ -78,8 +92,11 @@ func TestMetricTagDenyList(t *testing.T) {
 	src := &prometheusMetricsSource{
 		filters: f,
 	}
+	batch := metrics.Batch{
+		Timestamp: time.Now(),
+	}
 
-	points, err := src.parseMetrics(testMetricReader())
+	points, err := src.parseMetrics(testMetricReader(), batch)
 	require.NoError(t, err, "parsing metrics")
 	assert.Equal(t, 7, len(points), "wrong number of points")
 }
@@ -90,8 +107,11 @@ func TestTagInclude(t *testing.T) {
 			TagInclude: []string{"label"},
 		}),
 	}
+	batch := metrics.Batch{
+		Timestamp: time.Now(),
+	}
 
-	points, err := src.parseMetrics(testMetricReader())
+	points, err := src.parseMetrics(testMetricReader(), batch)
 	require.NoError(t, err, "parsing metrics")
 	assert.Equal(t, 8, len(points), "wrong number of points")
 
@@ -113,7 +133,11 @@ func TestTagExclude(t *testing.T) {
 		}),
 	}
 
-	points, err := src.parseMetrics(testMetricReader())
+	batch := metrics.Batch{
+		Timestamp: time.Now(),
+	}
+
+	points, err := src.parseMetrics(testMetricReader(), batch)
 	require.NoError(t, err, "parsing metrics")
 	assert.Equal(t, 8, len(points), "wrong number of points")
 

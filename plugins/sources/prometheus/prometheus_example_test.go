@@ -7,7 +7,9 @@ import (
 	"bytes"
 	"sort"
 	"testing"
+	"time"
 
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
 
 	"github.com/stretchr/testify/assert"
@@ -156,7 +158,11 @@ rpc_duration_seconds_count 2693
 }
 
 func parseMetrics(t *testing.T, src *prometheusMetricsSource, metricsString string) []*wf.Point {
-	points, err := src.parseMetrics(bytes.NewReader([]byte(metricsString)))
+	batch := metrics.Batch{
+		Timestamp: time.Now(),
+	}
+
+	points, err := src.parseMetrics(bytes.NewReader([]byte(metricsString)), batch)
 	require.NoError(t, err, "parsing metrics")
 
 	sort.Sort(byKeyValue(points))

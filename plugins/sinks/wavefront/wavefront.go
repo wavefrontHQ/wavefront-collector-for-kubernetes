@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
+	"github.com/wavefronthq/wavefront-sdk-go/histogram"
 
 	"github.com/wavefronthq/wavefront-sdk-go/event"
 
@@ -168,6 +169,38 @@ func (sink *wavefrontSink) sendPoint(metricName string, value float64, timestamp
 	}
 }
 
+func (sink *wavefrontSink) sendDistribution(distribution wf.Distribution) {
+	metricName := sanitizedChars.Replace(distribution.Metric)
+	if len(sink.Prefix) > 0 {
+		metricName = sink.Prefix + "." + metricName
+	}
+	tags := distribution.Tags()
+	logTagCleaningReasons(metricName, cleanTags(tags, maxWavefrontTags))
+	hgs := map[histogram.Granularity]bool{
+		histogram.MINUTE: true,
+		histogram.HOUR:   true,
+		histogram.DAY:    true,
+	}
+	wf_centroids := make([]histogram.Centroid, len(distribution.Centroids))
+	for _, centriod := range distribution.Centroids {
+		wf_centroids = append(wf_centroids, histogram.Centroid{
+			Value: centriod.Value,
+			Count: centriod.Count,
+		})
+	}
+
+	err := sink.WavefrontClient.SendDistribution(metricName, wf_centroids, hgs, distribution.Timestamp, distribution.Source, tags)
+	if err != nil {
+		errPoints.Inc(1)
+		sink.logVerboseError(log.Fields{
+			"name":  metricName,
+			"error": err,
+		}, "error sending metric")
+	} else {
+		sentPoints.Inc(1)
+	}
+}
+
 func (sink *wavefrontSink) logVerboseError(f log.Fields, msg string) {
 	if log.IsLevelEnabled(log.DebugLevel) {
 		log.WithFields(f).Error(msg)
@@ -193,6 +226,18 @@ func (sink *wavefrontSink) send(batch *metrics.Batch) {
 	after := errPoints.Count()
 	if after > before {
 		log.WithField("count", after).Warning("Error sending one or more points")
+	}
+    log.Infof("*******************# of distribitions: %d", len(batch.Distributions))
+
+	for _, distribution := range batch.Distributions {
+        log.Infof("*******************sending distribution: %v",*distribution)
+		distribution.OverrideTag("cluster", sink.ClusterName)
+		distribution.AddTags(sink.globalTags)
+		//point = wf.Filter(sink.filters, filteredPoints, point)
+		//if point == nil {
+		//    continue
+		//}
+		sink.sendDistribution(*distribution)
 	}
 
 	// This seems like an odd place for this considering that we still have references to the big

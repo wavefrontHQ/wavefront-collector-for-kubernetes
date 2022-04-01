@@ -122,9 +122,10 @@ func (l *LabeledValue) GetValue() interface{} {
 
 // Batch contains sets of metrics tied to specific k8s resources and other more general wavefront points
 type Batch struct {
-	Timestamp time.Time
-	Sets      map[ResourceKey]*Set
-	Points    []*wf.Point
+	Timestamp     time.Time
+	Sets          map[ResourceKey]*Set
+	Points        []*wf.Point
+	Distributions []*wf.Distribution
 }
 
 // Source produces metric batches
