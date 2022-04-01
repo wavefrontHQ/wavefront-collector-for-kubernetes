@@ -164,7 +164,7 @@ func (src *prometheusMetricsSource) Scrape() (*metrics.Batch, error) {
 		return nil, &HTTPError{MetricsURL: src.metricsURL, Status: resp.Status, StatusCode: resp.StatusCode}
 	}
 
-	points, err := src.parseMetrics(resp.Body, *result)
+	points, err := src.parseMetrics(resp.Body, result)
 	if err != nil {
 		collectErrors.Inc(1)
 		src.eps.Inc(1)
@@ -173,13 +173,13 @@ func (src *prometheusMetricsSource) Scrape() (*metrics.Batch, error) {
 	result.Points = points
 	collectedPoints.Inc(int64(len(points)))
 	src.pps.Inc(int64(len(points)))
-
+    log.Infof("**prometheus#Scrape:distribution size: %d", len(result.Distributions))
 	return result, nil
 }
 
 // parseMetrics converts serialized prometheus metrics to wavefront points
 // parseMetrics returns an error when IO or parsing fails
-func (src *prometheusMetricsSource) parseMetrics(reader io.Reader, result metrics.Batch) ([]*wf.Point, error) {
+func (src *prometheusMetricsSource) parseMetrics(reader io.Reader, result *metrics.Batch) ([]*wf.Point, error) {
 	metricReader := NewMetricReader(reader)
 	pointBuilder := NewPointBuilder(src, filteredPoints)
 	var points = make([]*wf.Point, 0)
@@ -194,7 +194,9 @@ func (src *prometheusMetricsSource) parseMetrics(reader io.Reader, result metric
 		batch, err := pointBuilder.build(metricFamilies, result)
 		points = append(points, batch...)
 	}
-	return points, err
+    log.Infof("**prometheus.go:distribution size: %d", len(result.Distributions))
+
+    return points, err
 }
 
 type prometheusProvider struct {

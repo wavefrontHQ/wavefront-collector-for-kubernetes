@@ -9,7 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
+    log "github.com/sirupsen/logrus"
+    "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
@@ -45,7 +46,7 @@ func NewPointBuilder(src *prometheusMetricsSource, filtered gometrics.Counter) *
 
 // build converts a map of prometheus metric families by metric name to a collection of wavefront points
 // build actually never returns an error
-func (builder *pointBuilder) build(metricFamilies map[string]*prom.MetricFamily, batch metrics.Batch) ([]*wf.Point, error) {
+func (builder *pointBuilder) build(metricFamilies map[string]*prom.MetricFamily, batch *metrics.Batch) ([]*wf.Point, error) {
 	now := time.Now().Unix()
 	var result []*wf.Point
 
@@ -66,6 +67,7 @@ func (builder *pointBuilder) build(metricFamilies map[string]*prom.MetricFamily,
 			}
 		}
 	}
+    log.Infof("**pointbuilder:build size: %d", len(batch.Distributions))
 	return result, nil
 }
 
@@ -123,7 +125,7 @@ func (builder *pointBuilder) buildSummaryPoints(name string, m *prom.Metric, now
 }
 
 // Get Buckets from histogram metric
-func (builder *pointBuilder) buildHistogramPoints(name string, m *prom.Metric, now int64, tags map[string]string, batch metrics.Batch) []*wf.Point {
+func (builder *pointBuilder) buildHistogramPoints(name string, m *prom.Metric, now int64, tags map[string]string, batch *metrics.Batch) []*wf.Point {
 	var result []*wf.Point
 	histName := builder.histogramName(name)
 	centroids := make([]wf.Centroid, len(m.GetHistogram().Bucket))
@@ -138,6 +140,7 @@ func (builder *pointBuilder) buildHistogramPoints(name string, m *prom.Metric, n
 		})
 	}
 	batch.Distributions = append(batch.Distributions, wf.NewDistribution(histName, centroids, now, builder.source, tags))
+    log.Infof("**pointbuilder:distribution size: %d", len(batch.Distributions))
 	point := builder.point(name+".count", float64(m.GetHistogram().GetSampleCount()), now, builder.source, tags)
 	result = wf.FilterAppend(builder.filters, builder.filtered, result, point)
 	point = builder.point(name+".sum", m.GetHistogram().GetSampleSum(), now, builder.source, tags)

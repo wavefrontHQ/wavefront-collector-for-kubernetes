@@ -20,7 +20,7 @@ import (
 
 func TestNoFilters(t *testing.T) {
 	src := &prometheusMetricsSource{}
-	batch := metrics.Batch{
+	batch := &metrics.Batch{
 		Timestamp: time.Now(),
 	}
 
@@ -38,7 +38,7 @@ func TestMetricAllowList(t *testing.T) {
 	src := &prometheusMetricsSource{
 		filters: f,
 	}
-	batch := metrics.Batch{
+	batch := &metrics.Batch{
 		Timestamp: time.Now(),
 	}
 
@@ -56,7 +56,7 @@ func TestMetricDenyList(t *testing.T) {
 	src := &prometheusMetricsSource{
 		filters: f,
 	}
-	batch := metrics.Batch{
+	batch := &metrics.Batch{
 		Timestamp: time.Now(),
 	}
 
@@ -74,7 +74,7 @@ func TestMetricTagAllowList(t *testing.T) {
 	src := &prometheusMetricsSource{
 		filters: f,
 	}
-	batch := metrics.Batch{
+	batch := &metrics.Batch{
 		Timestamp: time.Now(),
 	}
 
@@ -92,7 +92,7 @@ func TestMetricTagDenyList(t *testing.T) {
 	src := &prometheusMetricsSource{
 		filters: f,
 	}
-	batch := metrics.Batch{
+	batch := &metrics.Batch{
 		Timestamp: time.Now(),
 	}
 
@@ -107,7 +107,7 @@ func TestTagInclude(t *testing.T) {
 			TagInclude: []string{"label"},
 		}),
 	}
-	batch := metrics.Batch{
+	batch := &metrics.Batch{
 		Timestamp: time.Now(),
 	}
 
@@ -133,7 +133,7 @@ func TestTagExclude(t *testing.T) {
 		}),
 	}
 
-	batch := metrics.Batch{
+	batch := &metrics.Batch{
 		Timestamp: time.Now(),
 	}
 

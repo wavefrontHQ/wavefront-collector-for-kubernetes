@@ -158,7 +158,7 @@ rpc_duration_seconds_count 2693
 }
 
 func parseMetrics(t *testing.T, src *prometheusMetricsSource, metricsString string) []*wf.Point {
-	batch := metrics.Batch{
+	batch := &metrics.Batch{
 		Timestamp: time.Now(),
 	}
 
