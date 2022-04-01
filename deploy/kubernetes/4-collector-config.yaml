@@ -105,8 +105,7 @@ data:
       #     - 'kube.apiserver.apiserver.request.total.counter'
       #     - 'kube.apiserver.workqueue.adds.total.counter'
       #     - 'kube.apiserver.workqueue.queue.duration.seconds.bucket'
-      #   tags:
-      #     control_plane_alert: true
+
     # discovery rules for auto-discovery of pods and services
     discovery:
       enable_runtime_plugins: true
@@ -357,5 +356,3 @@ data:
           - 'kube.coredns.process.*'
           - 'kube.coredns.coredns.dns.request.duration.seconds.bucket'
           - 'kube.coredns.coredns.dns.responses.total.counter'
-        tags:
-          control_plane_alert: true
