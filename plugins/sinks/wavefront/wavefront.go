@@ -96,6 +96,7 @@ func NewWavefrontSink(cfg configuration.WavefrontSinkConfig) (WavefrontSink, err
 			Host:        host,
 			MetricsPort: port,
 			EventsPort:  port,
+			DistributionPort:  port,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("error creating proxy sender: %s", err.Error())
@@ -189,24 +190,27 @@ func (sink *wavefrontSink) sendDistribution(distribution wf.Distribution) {
 		})
 	}
 
+    log.Infof("***sending distro: %s", metricName)
 	err := sink.WavefrontClient.SendDistribution(metricName, wf_centroids, hgs, distribution.Timestamp, distribution.Source, tags)
 	if err != nil {
+        log.Infof("***failed sending distro: %s", metricName)
 		errPoints.Inc(1)
 		sink.logVerboseError(log.Fields{
 			"name":  metricName,
 			"error": err,
-		}, "error sending metric")
+		}, "error sending histo")
 	} else {
-		sentPoints.Inc(1)
+        log.Infof("***suceeded sending distro: %s", metricName)
+        sentPoints.Inc(1)
 	}
 }
 
 func (sink *wavefrontSink) logVerboseError(f log.Fields, msg string) {
-	if log.IsLevelEnabled(log.DebugLevel) {
+	//if log.IsLevelEnabled(log.DebugLevel) {
 		log.WithFields(f).Error(msg)
-	} else if sink.loggingAllowed() {
-		log.WithFields(f).Errorf("%s %s", "[sampled error]", msg)
-	}
+	//} else if sink.loggingAllowed() {
+	//	log.WithFields(f).Errorf("%s %s", "[sampled error]", msg)
+	//}
 }
 
 func (sink *wavefrontSink) send(batch *metrics.Batch) {

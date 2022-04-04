@@ -134,9 +134,15 @@ func (builder *pointBuilder) buildHistogramPoints(name string, m *prom.Metric, n
 		newTags["le"] = fmt.Sprintf("%v", b.GetUpperBound())
 		point := builder.point(histName, float64(b.GetCumulativeCount()), now, builder.source, newTags)
 		result = wf.FilterAppend(builder.filters, builder.filtered, result, point)
+        var value float64
+        if b.GetUpperBound() == math.Inf(0) {
+            value = float64(m.GetHistogram().GetSampleCount())
+        } else {
+            value = b.GetUpperBound()
+        }
 		centroids = append(centroids, wf.Centroid{
-			Value: b.GetUpperBound(),
-			Count: int(b.GetCumulativeCount()),
+			Value: value,
+			Count: int(float64(b.GetCumulativeCount())),
 		})
 	}
 	batch.Distributions = append(batch.Distributions, wf.NewDistribution(histName, centroids, now, builder.source, tags))
