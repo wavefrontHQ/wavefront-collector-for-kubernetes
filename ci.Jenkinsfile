@@ -47,6 +47,9 @@ pipeline {
       }
     }
     stage("Setup Integration Test") {
+        tools {
+            go 'Go 1.18'
+        }
         environment {
             GCP_CREDS = credentials("GCP_CREDS")
             GKE_CLUSTER_NAME = "k8po-jenkins-ci"
