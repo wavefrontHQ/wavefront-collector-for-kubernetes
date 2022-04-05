@@ -13,6 +13,18 @@ gcloud auth activate-service-account --key-file "$GCP_CREDS"
 gcloud config set project wavefront-gcp-dev
 
 #
+# aws
+#
+if ! [ -x "$(command -v aws)" ]; then
+  curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+  unzip awscliv2.zip
+  sudo ./aws/install >/dev/null;
+fi
+
+gcloud auth activate-service-account --key-file "$GCP_CREDS"
+gcloud config set project wavefront-gcp-dev
+
+#
 # docker-credential-gcr
 #
 curl -fsSL "https://github.com/GoogleCloudPlatform/docker-credential-gcr/releases/download/v2.0.0/docker-credential-gcr_linux_amd64-2.0.0.tar.gz" \
