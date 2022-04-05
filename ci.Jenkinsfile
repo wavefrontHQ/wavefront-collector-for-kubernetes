@@ -56,7 +56,9 @@ pipeline {
             DOCKER_IMAGE = "kubernetes-collector-snapshot"
           }
         steps {
-            sh './hack/jenkins/setup-for-integration-test.sh'
+            withEnv(["PATH+GO=${HOME}/go/bin", "PATH+GCLOUD=${HOME}/google-cloud-sdk/bin"]) {
+                sh './hack/jenkins/setup-for-integration-test.sh'
+            }
         }
     }
     stage("GKE Integration Test") {
