@@ -14,3 +14,9 @@ docker-login-eks:
 
 target-eks: docker-login-eks
 	@aws eks --region $(AWS_REGION) update-kubeconfig --name k8s-saas-team-dev --profile $(AWS_PROFILE)
+
+docker-login-eks-ci:
+	@aws ecr get-login-password --region $(AWS_REGION) |  docker login --username AWS -p $(aws ecr get-login-password --region $(AWS_REGION)) $(ECR_ENDPOINT)
+
+taget-eks-ci: docker-login-eks-ci
+	@aws eks --region $(AWS_REGION) update-kubeconfig --name k8s-saas-team-dev --profile $(AWS_PROFILE)
