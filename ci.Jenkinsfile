@@ -106,6 +106,7 @@ pipeline {
           lock("collector-integration-test-eks") {
             sh 'make target-eks'
             sh 'VERSION_POSTFIX=$VERSION_POSTFIX make deploy-test'
+            sh './hack/test/test-wavefront-metrics.sh -t $WAVEFRONT_TOKEN'
           }
         }
       }
