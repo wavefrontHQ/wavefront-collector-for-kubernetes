@@ -102,7 +102,7 @@ pipeline {
       steps {
         withEnv(["PATH+GO=${HOME}/go/bin"]) {
           lock("collector-integration-test-eks") {
-            sh 'AWS_ACCESS_KEY_ID=$(AWS_CREDS_USR) AWS_SECRET_ACCESS_KEY=$(AWS_CREDS_PSW) make target-eks'
+            sh 'AWS_ACCESS_KEY_ID=$AWS_CREDS_USR AWS_SECRET_ACCESS_KEY=$AWS_CREDS_PSW make target-eks'
             sh 'VERSION_POSTFIX=$VERSION_POSTFIX make deploy-test'
           }
         }
