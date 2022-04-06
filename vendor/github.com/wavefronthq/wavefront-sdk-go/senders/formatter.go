@@ -46,7 +46,7 @@ func MetricLine(name string, value float64, ts int64, source string, tags map[st
 
 	for k, v := range tags {
 		if v == "" {
-			return "", errors.New("metric point tag value cannot be blank")
+			return "", fmt.Errorf("tag values cannot be empty: metric=%s tag=%s", name, k)
 		}
 		sb.WriteString(" ")
 		sb.WriteString(strconv.Quote(sanitizeInternal(k)))
@@ -66,11 +66,11 @@ func HistoLine(name string, centroids histogram.Centroids, hgs map[histogram.Gra
 	}
 
 	if len(centroids) == 0 {
-		return "", errors.New("distribution should have at least one centroid")
+		return "", fmt.Errorf("distribution should have at least one centroid: histogram=%s", name)
 	}
 
 	if len(hgs) == 0 {
-		return "", errors.New("histogram granularities cannot be empty")
+		return "", fmt.Errorf("histogram granularities cannot be empty: histogram=%s", name)
 	}
 
 	if source == "" {
@@ -98,7 +98,7 @@ func HistoLine(name string, centroids histogram.Centroids, hgs map[histogram.Gra
 
 	for k, v := range tags {
 		if v == "" {
-			return "", errors.New("histogram tag value cannot be blank")
+			return "", fmt.Errorf("tag values cannot be empty: histogram=%s tag=%s", name, k)
 		}
 		sb.WriteString(" ")
 		sb.WriteString(strconv.Quote(sanitizeInternal(k)))
@@ -125,7 +125,7 @@ func HistoLine(name string, centroids histogram.Centroids, hgs map[histogram.Gra
 //    parent=2f64e538-9457-11e8-9eb6-529269fb1459 application=Wavefront http.method=GET 1533531013 343500"
 func SpanLine(name string, startMillis, durationMillis int64, source, traceId, spanId string, parents, followsFrom []string, tags []SpanTag, spanLogs []SpanLog, defaultSource string) (string, error) {
 	if name == "" {
-		return "", errors.New("empty span name")
+		return "", errors.New("span name cannot be empty")
 	}
 
 	if source == "" {
@@ -133,10 +133,10 @@ func SpanLine(name string, startMillis, durationMillis int64, source, traceId, s
 	}
 
 	if !isUUIDFormat(traceId) {
-		return "", errors.New("traceId is not in UUID format")
+		return "", fmt.Errorf("traceId is not in UUID format: span=%s traceId=%s", name, traceId)
 	}
 	if !isUUIDFormat(spanId) {
-		return "", errors.New("spanId is not in UUID format")
+		return "", fmt.Errorf("spanId is not in UUID format: span=%s spanId=%s", name, spanId)
 	}
 
 	sb := internal.GetBuffer()
@@ -168,8 +168,11 @@ func SpanLine(name string, startMillis, durationMillis int64, source, traceId, s
 	}
 
 	for _, tag := range tags {
-		if tag.Key == "" || tag.Value == "" {
-			return "", errors.New("span tag key/value cannot be blank")
+		if tag.Key == "" {
+			return "", fmt.Errorf("tag keys cannot be empty: span=%s", name)
+		}
+		if tag.Value == "" {
+			return "", fmt.Errorf("tag values cannot be empty: span=%s tag=%s", name, tag.Key)
 		}
 		sb.WriteString(" ")
 		sb.WriteString(strconv.Quote(sanitizeInternal(tag.Key)))
