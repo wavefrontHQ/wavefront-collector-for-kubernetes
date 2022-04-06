@@ -97,13 +97,13 @@ pipeline {
         VERSION_POSTFIX = "-alpha-${GIT_COMMIT.substring(0, 8)}"
         PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
         DOCKER_IMAGE = "kubernetes-collector-snapshot"
-        AWS_CREDS = credentials("k8po-ci-aws-creds")
+        AWS_SHARED_CREDENTIALS_FILE = credentials("k8po-ci-aws-creds")
         AWS_CONFIG_FILE = credentials("k8po-ci-aws-profile")
       }
       steps {
         withEnv(["PATH+GO=${HOME}/go/bin"]) {
           lock("collector-integration-test-eks") {
-            sh 'AWS_ACCESS_KEY_ID=$AWS_CREDS_USR AWS_SECRET_ACCESS_KEY=$AWS_CREDS_PSW make target-eks'
+            sh 'make target-eks'
             sh 'VERSION_POSTFIX=$VERSION_POSTFIX make deploy-test'
           }
         }
