@@ -98,6 +98,7 @@ pipeline {
         PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
         DOCKER_IMAGE = "kubernetes-collector-snapshot"
         AWS_CREDS = credentials("k8po-ci-aws-creds")
+        AWS_CONFIG_FILE = credentials("k8po-ci-aws-profile")
       }
       steps {
         withEnv(["PATH+GO=${HOME}/go/bin"]) {
