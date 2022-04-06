@@ -76,6 +76,7 @@ pipeline {
         VERSION_POSTFIX = "-alpha-${GIT_COMMIT.substring(0, 8)}"
         PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
         DOCKER_IMAGE = "kubernetes-collector-snapshot"
+        WAVEFRONT_TOKEN = credentials("WAVEFRONT_TOKEN_NIMBA")
       }
       steps {
         withEnv(["PATH+GO=${HOME}/go/bin", "PATH+GCLOUD=${HOME}/google-cloud-sdk/bin"]) {
