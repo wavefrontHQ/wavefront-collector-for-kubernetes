@@ -6,26 +6,26 @@ pipeline {
   }
 
   stages {
-//     stage("Test with Go 1.17") {
-//       tools {
-//         go 'Go 1.17'
-//       }
-//       steps {
-//         withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
-//           sh 'make checkfmt vet tests'
-//         }
-//       }
-//     }
-//     stage("Test with Go 1.18") {
-//       tools {
-//         go 'Go 1.18'
-//       }
-//       steps {
-//         withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
-//           sh 'make checkfmt vet tests'
-//         }
-//       }
-//     }
+    stage("Test with Go 1.17") {
+      tools {
+        go 'Go 1.17'
+      }
+      steps {
+        withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
+          sh 'make checkfmt vet tests'
+        }
+      }
+    }
+    stage("Test with Go 1.18") {
+      tools {
+        go 'Go 1.18'
+      }
+      steps {
+        withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
+          sh 'make checkfmt vet tests'
+        }
+      }
+    }
     stage("Publish") {
       tools {
         go 'Go 1.18'
@@ -64,28 +64,28 @@ pipeline {
             }
         }
     }
-//     stage("GKE Integration Test") {
-//       options {
-//         timeout(time: 10, unit: 'MINUTES')
-//       }
-//       tools {
-//         go 'Go 1.18'
-//       }
-//       environment {
-//         GKE_CLUSTER_NAME = "k8po-jenkins-ci"
-//         VERSION_POSTFIX = "-alpha-${GIT_COMMIT.substring(0, 8)}"
-//         PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
-//         DOCKER_IMAGE = "kubernetes-collector-snapshot"
-//       }
-//       steps {
-//         withEnv(["PATH+GO=${HOME}/go/bin", "PATH+GCLOUD=${HOME}/google-cloud-sdk/bin"]) {
-//           lock("collector-integration-test-gke") {
-//             sh 'make gke-connect-to-cluster'
-//             sh 'VERSION_POSTFIX=$VERSION_POSTFIX make deploy-test'
-//           }
-//         }
-//       }
-//     }
+    stage("GKE Integration Test") {
+      options {
+        timeout(time: 10, unit: 'MINUTES')
+      }
+      tools {
+        go 'Go 1.18'
+      }
+      environment {
+        GKE_CLUSTER_NAME = "k8po-jenkins-ci"
+        VERSION_POSTFIX = "-alpha-${GIT_COMMIT.substring(0, 8)}"
+        PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
+        DOCKER_IMAGE = "kubernetes-collector-snapshot"
+      }
+      steps {
+        withEnv(["PATH+GO=${HOME}/go/bin", "PATH+GCLOUD=${HOME}/google-cloud-sdk/bin"]) {
+          lock("collector-integration-test-gke") {
+            sh 'make gke-connect-to-cluster'
+            sh 'VERSION_POSTFIX=$VERSION_POSTFIX make deploy-test'
+          }
+        }
+      }
+    }
     stage("EKS Integration Test") {
       options {
         timeout(time: 10, unit: 'MINUTES')
