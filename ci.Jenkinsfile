@@ -80,7 +80,7 @@ pipeline {
       }
       steps {
         withEnv(["PATH+GO=${HOME}/go/bin", "PATH+GCLOUD=${HOME}/google-cloud-sdk/bin"]) {
-          lock("collector-integration-test-gke") {
+          lock("integration-test-gke") {
             sh 'make gke-connect-to-cluster'
             sh 'VERSION_POSTFIX=$VERSION_POSTFIX make deploy-test'
           }
@@ -104,7 +104,7 @@ pipeline {
       }
       steps {
         withEnv(["PATH+GO=${HOME}/go/bin"]) {
-          lock("collector-integration-test-eks") {
+          lock("integration-test-eks") {
             sh 'make target-eks'
             sh 'VERSION_POSTFIX=$VERSION_POSTFIX make deploy-test'
             sh './hack/test/test-wavefront-metrics.sh -t $WAVEFRONT_TOKEN'
