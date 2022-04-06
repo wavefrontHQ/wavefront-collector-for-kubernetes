@@ -99,6 +99,7 @@ pipeline {
         DOCKER_IMAGE = "kubernetes-collector-snapshot"
         AWS_SHARED_CREDENTIALS_FILE = credentials("k8po-ci-aws-creds")
         AWS_CONFIG_FILE = credentials("k8po-ci-aws-profile")
+        WAVEFRONT_TOKEN = credentials("WAVEFRONT_TOKEN_NIMBA")
       }
       steps {
         withEnv(["PATH+GO=${HOME}/go/bin"]) {
