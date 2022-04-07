@@ -89,7 +89,8 @@ function main() {
 
   local WF_CLUSTER=nimba
   local VERSION="$(cat ../../release/VERSION)"
-  local CONFIG_CLUSTER_NAME=$(whoami)-${VERSION}-release-test
+  local K8S_ENV=$(./deploy/get-k8s-cluster-env.sh | awk '{print tolower($0)}' )
+  local CONFIG_CLUSTER_NAME=$(whoami)-${K8S_ENV}-$(date +"%y%m%d")
 
   while getopts ":c:t:n:v:" opt; do
     case $opt in
