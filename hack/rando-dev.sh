@@ -1,4 +1,4 @@
-#!/bin/bash -eou pipefail
+#!/bin/bash -e
 
 curl 'https://www.random.org/lists/?mode=advanced' \
   -H 'authority: www.random.org' \
