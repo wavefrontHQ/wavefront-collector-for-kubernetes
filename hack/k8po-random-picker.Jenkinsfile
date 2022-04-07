@@ -4,7 +4,7 @@ pipeline {
     stages {
         stage ("SSH into dev env") {
             steps {
-                sh './rando-dev.sh'
+                sh './hack/rando-dev.sh'
             }
         }
     }
