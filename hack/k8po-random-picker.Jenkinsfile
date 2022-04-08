@@ -10,7 +10,9 @@ pipeline {
                     returnStdout: true
                   ).trim()
                 }
-                slackSend (channel: '#open-channel', color: '#FF0000', message: "Today's random order run by <${env.BUILD_URL}> is ${ORDER_PICKED}")
+                slackSend (channel: '#tobs-k8po-team', color: '#008000', message: """Today's random order run results from <${env.BUILD_URL}> is:
+                ${ORDER_PICKED}
+                """)
 
             }
         }
