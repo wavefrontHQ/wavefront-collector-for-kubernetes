@@ -4,9 +4,8 @@ pipeline {
     stages {
         stage ("SSH into dev env") {
             steps {
-                sh """
-                ./hack/rando-dev.sh
-                """
+                ORDER_PICKED = sh './hack/rando-dev.sh'
+                slackSend (channel: '#open-channel', color: '#FF0000', message: "Today's random order run by <${env.BUILD_URL}> is ${ORDER_PICKED}")
             }
         }
     }
