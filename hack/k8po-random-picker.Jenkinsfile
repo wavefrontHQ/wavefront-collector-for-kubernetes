@@ -1,7 +1,8 @@
 pipeline {
     agent any
     triggers {
-        cron('12 0 * * *')
+        // Every weekday MST 8:30 AM converted to UTC
+        cron('30 15 * * 1-5')
     }
     stages {
         stage ("SSH into dev env") {
