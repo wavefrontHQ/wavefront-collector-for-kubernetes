@@ -5,7 +5,7 @@ pipeline {
         cron('30 15 * * 1-5')
     }
     stages {
-        stage ("SSH into dev env") {
+        stage ("Slack message rando-dev results") {
             steps {
                 script {
                   ORDER_PICKED = sh (
@@ -13,12 +13,11 @@ pipeline {
                     returnStdout: true
                   ).trim()
                 }
-                slackSend (channel: '#open-channel', message:
+                slackSend (channel: '#tobs-k8po-team', message:
                 """
 Today's random generator results from <${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]> is:
 ${ORDER_PICKED}
                 """)
-
             }
         }
     }
