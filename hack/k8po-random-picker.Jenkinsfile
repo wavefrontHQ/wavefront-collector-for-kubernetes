@@ -1,7 +1,7 @@
 pipeline {
     agent any
     triggers {
-        cron('10 0 * * 1-5')
+        cron('12 0 * * *')
     }
     stages {
         stage ("SSH into dev env") {
