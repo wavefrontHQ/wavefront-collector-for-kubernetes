@@ -53,8 +53,37 @@ func (c controlPlaneSourceProvider) GetMetricsSources() []metrics.Source {
 		nil,
 		controlPlaneFilters,
 		httpCfg)
+
 	if err == nil {
 		sources = append(sources, metricsSource)
+	} else {
+		return nil
+	}
+
+	controlPlaneApiserverFilters := filter.NewGlobFilter(filter.Config{
+		MetricAllowList: []string{
+			"kubernetes.controlplane.apiserver.request.duration.seconds.bucket",
+			"kubernetes.controlplane.apiserver.request.total.counter",
+		},
+		MetricDenyList: nil,
+		MetricTagAllowList: map[string][]string{
+			"resource": {"customresourcedefinitions", "namespaces", "lease", "nodes", "pods", "tokenreviews", "subjectaccessreviews"},
+		},
+		MetricTagDenyList: nil,
+		TagInclude:        nil,
+		TagExclude:        nil,
+	})
+	metricsApiserverSource, err := prometheus.NewPrometheusMetricsSource(
+		"https://kubernetes.default.svc:443/metrics",
+		"kubernetes.controlplane.",
+		"control_plane_source",
+		"",
+		nil,
+		controlPlaneApiserverFilters,
+		httpCfg)
+
+	if err == nil {
+		sources = append(sources, metricsApiserverSource)
 	} else {
 		return nil
 	}
@@ -62,7 +91,7 @@ func (c controlPlaneSourceProvider) GetMetricsSources() []metrics.Source {
 }
 
 func (c controlPlaneSourceProvider) Name() string {
-    return "control_plane_metrics_provider"
+	return "control_plane_metrics_provider"
 }
 
 func NewProvider(
