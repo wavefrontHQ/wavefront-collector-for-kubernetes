@@ -290,8 +290,8 @@ func buildProviders(cfg configuration.SourceConfig) []metrics.SourceProvider {
 			result = appendProvider(result, provider, err, cfg.CadvisorConfig.Collection)
 		}
 		if cfg.ControlPlaneConfig != nil {
-			provider, err := control_plane.NewProvider(*cfg.ControlPlaneConfig, *cfg.SummaryConfig)
-			result = appendProvider(result, provider, err, cfg.ControlPlaneConfig.Collection)
+			cpProvider, err := control_plane.NewProvider(*cfg.ControlPlaneConfig, *cfg.SummaryConfig)
+			result = appendProvider(result, cpProvider, err, cfg.ControlPlaneConfig.Collection)
 		}
 	}
 	if cfg.SystemdConfig != nil {

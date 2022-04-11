@@ -33,11 +33,11 @@ func (c controlPlaneSourceProvider) GetMetricsSources() []metrics.Source {
 
 	controlPlaneFilters := filter.NewGlobFilter(filter.Config{
 		MetricAllowList: []string{
-			"kubernertes.controlplane.etcd.request.duration.seconds.bucket",
-			"kubernertes.controlplane.etcd.object.counts.gauge",
-			"kubernertes.controlplane.etcd.db.total.size.in.bytes.gauge",
-			"kubernertes.controlplane.workqueue.adds.total.counter",
-			"kubernertes.controlplane.workqueue.queue.duration.seconds.bucket",
+			"kubernetes.controlplane.etcd.request.duration.seconds.bucket",
+			"kubernetes.controlplane.etcd.object.counts.gauge",
+			"kubernetes.controlplane.etcd.db.total.size.in.bytes.gauge",
+			"kubernetes.controlplane.workqueue.adds.total.counter",
+			"kubernetes.controlplane.workqueue.queue.duration.seconds.bucket",
 		},
 		MetricDenyList:     nil,
 		MetricTagAllowList: nil,
@@ -47,7 +47,7 @@ func (c controlPlaneSourceProvider) GetMetricsSources() []metrics.Source {
 	})
 	metricsSource, err := prometheus.NewPrometheusMetricsSource(
 		"https://kubernetes.default.svc:443/metrics",
-		"kubernertes.controlplane.",
+		"kubernetes.controlplane.",
 		"control_plane_source",
 		"",
 		nil,
