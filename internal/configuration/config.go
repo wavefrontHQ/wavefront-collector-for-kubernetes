@@ -73,13 +73,14 @@ type EventsFilter struct {
 
 // SourceConfig contains configuration for various sources
 type SourceConfig struct {
-	SummaryConfig     *SummarySourceConfig         `yaml:"kubernetes_source"`
-	CadvisorConfig    *CadvisorSourceConfig        `yaml:"kubernetes_cadvisor_source"`
-	PrometheusConfigs []*PrometheusSourceConfig    `yaml:"prometheus_sources"`
-	TelegrafConfigs   []*TelegrafSourceConfig      `yaml:"telegraf_sources"`
-	SystemdConfig     *SystemdSourceConfig         `yaml:"systemd_source"`
-	StatsConfig       *StatsSourceConfig           `yaml:"internal_stats_source"`
-	StateConfig       *KubernetesStateSourceConfig `yaml:"kubernetes_state_source"`
+	SummaryConfig      *SummarySourceConfig         `yaml:"kubernetes_source"`
+	CadvisorConfig     *CadvisorSourceConfig        `yaml:"kubernetes_cadvisor_source"`
+	ControlPlaneConfig *ControlPlaneSourceConfig    `yaml:"kubernetes_control_plane_source"`
+	PrometheusConfigs  []*PrometheusSourceConfig    `yaml:"prometheus_sources"`
+	TelegrafConfigs    []*TelegrafSourceConfig      `yaml:"telegraf_sources"`
+	SystemdConfig      *SystemdSourceConfig         `yaml:"systemd_source"`
+	StatsConfig        *StatsSourceConfig           `yaml:"internal_stats_source"`
+	StateConfig        *KubernetesStateSourceConfig `yaml:"kubernetes_state_source"`
 }
 
 // Transforms represents transformations that can be applied to metrics at sources or sinks
@@ -175,6 +176,10 @@ type SummarySourceConfig struct {
 type CadvisorSourceConfig struct {
 	Transforms `yaml:",inline"`
 
+	Collection CollectionConfig `yaml:"collection"`
+}
+
+type ControlPlaneSourceConfig struct {
 	Collection CollectionConfig `yaml:"collection"`
 }
 

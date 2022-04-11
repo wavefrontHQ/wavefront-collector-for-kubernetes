@@ -24,6 +24,8 @@ import (
 	"sync"
 	"time"
 
+	control_plane "github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources/control-plane"
+
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources/cadvisor"
 
 	log "github.com/sirupsen/logrus"
@@ -286,6 +288,10 @@ func buildProviders(cfg configuration.SourceConfig) []metrics.SourceProvider {
 		if cfg.CadvisorConfig != nil {
 			provider, err = cadvisor.NewProvider(*cfg.CadvisorConfig, *cfg.SummaryConfig)
 			result = appendProvider(result, provider, err, cfg.CadvisorConfig.Collection)
+		}
+		if cfg.ControlPlaneConfig != nil {
+			provider, err := control_plane.NewProvider(*cfg.ControlPlaneConfig, *cfg.SummaryConfig)
+			result = appendProvider(result, provider, err, cfg.ControlPlaneConfig.Collection)
 		}
 	}
 	if cfg.SystemdConfig != nil {
