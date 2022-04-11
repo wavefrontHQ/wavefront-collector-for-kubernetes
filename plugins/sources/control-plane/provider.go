@@ -16,9 +16,13 @@ type controlPlaneSourceProvider struct {
 	kubeConfig *rest.Config
 }
 
-func (c controlPlaneSourceProvider) GetMetricsSources() []metrics.Source {
-	var sources []metrics.Source
+const (
+	metricsURL    = "https://kubernetes.default.svc:443/metrics"
+	metricsPrefix = "kubernetes.controlplane."
+	metricsSource = "control_plane_source"
+)
 
+func (c controlPlaneSourceProvider) newPrometheusMetricSource(metricAllowList []string, metricTagAllowList map[string][]string) (metrics.Source, error) {
 	httpCfg := httputil.ClientConfig{
 		BearerTokenFile: c.kubeConfig.BearerTokenFile,
 		BearerToken:     c.kubeConfig.BearerToken,
@@ -32,61 +36,56 @@ func (c controlPlaneSourceProvider) GetMetricsSources() []metrics.Source {
 	}
 
 	controlPlaneFilters := filter.NewGlobFilter(filter.Config{
-		MetricAllowList: []string{
-			"kubernetes.controlplane.etcd.request.duration.seconds.bucket",
-			"kubernetes.controlplane.etcd.object.counts.gauge",
-			"kubernetes.controlplane.etcd.db.total.size.in.bytes.gauge",
-			"kubernetes.controlplane.workqueue.adds.total.counter",
-			"kubernetes.controlplane.workqueue.queue.duration.seconds.bucket",
-		},
+		MetricAllowList:    metricAllowList,
 		MetricDenyList:     nil,
-		MetricTagAllowList: nil,
+		MetricTagAllowList: metricTagAllowList,
 		MetricTagDenyList:  nil,
 		TagInclude:         nil,
 		TagExclude:         nil,
 	})
 	metricsSource, err := prometheus.NewPrometheusMetricsSource(
-		"https://kubernetes.default.svc:443/metrics",
-		"kubernetes.controlplane.",
-		"control_plane_source",
+		metricsURL,
+		metricsPrefix,
+		metricsSource,
 		"",
 		nil,
 		controlPlaneFilters,
 		httpCfg)
 
+	return metricsSource, err
+}
+
+func (c controlPlaneSourceProvider) GetMetricsSources() []metrics.Source {
+	var sources []metrics.Source
+
+	metricAllowList := []string{
+		"kubernetes.controlplane.etcd.request.duration.seconds.bucket",
+		"kubernetes.controlplane.etcd.object.counts.gauge",
+		"kubernetes.controlplane.etcd.db.total.size.in.bytes.gauge",
+		"kubernetes.controlplane.workqueue.adds.total.counter",
+		"kubernetes.controlplane.workqueue.queue.duration.seconds.bucket",
+	}
+	metricsSource, err := c.newPrometheusMetricSource(metricAllowList, nil)
 	if err == nil {
 		sources = append(sources, metricsSource)
 	} else {
 		return nil
 	}
 
-	controlPlaneApiserverFilters := filter.NewGlobFilter(filter.Config{
-		MetricAllowList: []string{
-			"kubernetes.controlplane.apiserver.request.duration.seconds.bucket",
-			"kubernetes.controlplane.apiserver.request.total.counter",
-		},
-		MetricDenyList: nil,
-		MetricTagAllowList: map[string][]string{
-			"resource": {"customresourcedefinitions", "namespaces", "lease", "nodes", "pods", "tokenreviews", "subjectaccessreviews"},
-		},
-		MetricTagDenyList: nil,
-		TagInclude:        nil,
-		TagExclude:        nil,
-	})
-	metricsApiserverSource, err := prometheus.NewPrometheusMetricsSource(
-		"https://kubernetes.default.svc:443/metrics",
-		"kubernetes.controlplane.",
-		"control_plane_source",
-		"",
-		nil,
-		controlPlaneApiserverFilters,
-		httpCfg)
-
+	apiServerAllowList := []string{
+		"kubernetes.controlplane.apiserver.request.duration.seconds.bucket",
+		"kubernetes.controlplane.apiserver.request.total.counter",
+	}
+	apiServerTagAllowList := map[string][]string{
+		"resource": {"customresourcedefinitions", "namespaces", "lease", "nodes", "pods", "tokenreviews", "subjectaccessreviews"},
+	}
+	apiServerSource, err := c.newPrometheusMetricSource(apiServerAllowList, apiServerTagAllowList)
 	if err == nil {
-		sources = append(sources, metricsApiserverSource)
+		sources = append(sources, apiServerSource)
 	} else {
 		return nil
 	}
+
 	return sources
 }
 
