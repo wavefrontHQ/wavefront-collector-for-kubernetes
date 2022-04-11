@@ -1,8 +1,9 @@
 package control_plane
 
 import (
-    log "github.com/sirupsen/logrus"
-    "time"
+	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
@@ -14,22 +15,24 @@ const (
 	metricsURL    = "https://kubernetes.default.svc:443/metrics"
 	metricsPrefix = "kubernetes.controlplane."
 	metricsSource = "control_plane_source"
+	jitterTime    = time.Second * 40
 )
 
 type factory struct{}
 
-// Returns a new prometheus provider factory
 func NewFactory() factory {
 	return factory{}
 }
+
+var getKubeConfigs = kubelet.GetKubeConfigs
 
 func (p factory) Build(cfg configuration.ControlPlaneSourceConfig,
 	summaryConfig configuration.SummarySourceConfig) []configuration.PrometheusSourceConfig {
 	var prometheusSourceConfigs []configuration.PrometheusSourceConfig
 
-	kubeConfig, _, err := kubelet.GetKubeConfigs(summaryConfig)
+	kubeConfig, _, err := getKubeConfigs(summaryConfig)
 	if err != nil {
-	    log.Infof("control-plane/factory/Build: error %s", err.Error())
+		log.Infof("control-plane/factory/Build: error %v", err)
 		return nil
 	}
 	httpClientConfig := httputil.ClientConfig{
@@ -51,7 +54,7 @@ func (p factory) Build(cfg configuration.ControlPlaneSourceConfig,
 		"kubernetes.controlplane.workqueue.queue.duration.seconds.bucket",
 	}
 
-	promSourceConfig := p.createPrometheusSourceConfig(httpClientConfig, metricAllowList, nil, cfg.Collection.Interval+40*time.Second)
+	promSourceConfig := p.createPrometheusSourceConfig(httpClientConfig, metricAllowList, nil, cfg.Collection.Interval+jitterTime)
 	prometheusSourceConfigs = append(prometheusSourceConfigs, promSourceConfig)
 
 	apiServerAllowList := []string{

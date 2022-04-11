@@ -292,8 +292,8 @@ func buildProviders(cfg configuration.SourceConfig) []metrics.SourceProvider {
 		if cfg.ControlPlaneConfig != nil {
 			promConfigs := control_plane.NewFactory().Build(*cfg.ControlPlaneConfig, *cfg.SummaryConfig)
 			for _, srcCfg := range promConfigs {
-			    provider, err := prometheus.NewPrometheusProvider(srcCfg)
-			    result = appendProvider(result, provider, err, srcCfg.Collection)
+				provider, err := prometheus.NewPrometheusProvider(srcCfg)
+				result = appendProvider(result, provider, err, srcCfg.Collection)
 			}
 		}
 	}
