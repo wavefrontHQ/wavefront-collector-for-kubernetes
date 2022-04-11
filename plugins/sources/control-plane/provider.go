@@ -62,7 +62,7 @@ func (c controlPlaneSourceProvider) GetMetricsSources() []metrics.Source {
 }
 
 func (c controlPlaneSourceProvider) Name() string {
-	panic("control_plane_metrics_provider")
+    return "control_plane_metrics_provider"
 }
 
 func NewProvider(
