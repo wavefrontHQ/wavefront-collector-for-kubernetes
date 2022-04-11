@@ -290,14 +290,10 @@ func buildProviders(cfg configuration.SourceConfig) []metrics.SourceProvider {
 			result = appendProvider(result, provider, err, cfg.CadvisorConfig.Collection)
 		}
 		if cfg.ControlPlaneConfig != nil {
-			promConfigs, err := control_plane.NewFactory().Build(*cfg.ControlPlaneConfig, *cfg.SummaryConfig)
-			if err == nil {
-                for _, srcCfg := range promConfigs {
-					provider, err := prometheus.NewPrometheusProvider(srcCfg)
-					result = appendProvider(result, provider, err, srcCfg.Collection)
-				}
-			} else {
-				log.Infof("buildProviders: failed to build control plane configs, %v", err)
+			promConfigs := control_plane.NewFactory().Build(*cfg.ControlPlaneConfig, *cfg.SummaryConfig)
+			for _, srcCfg := range promConfigs {
+			    provider, err := prometheus.NewPrometheusProvider(srcCfg)
+			    result = appendProvider(result, provider, err, srcCfg.Collection)
 			}
 		}
 	}

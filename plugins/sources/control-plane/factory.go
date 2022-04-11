@@ -1,7 +1,8 @@
 package control_plane
 
 import (
-	"time"
+    log "github.com/sirupsen/logrus"
+    "time"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
@@ -23,12 +24,13 @@ func NewFactory() factory {
 }
 
 func (p factory) Build(cfg configuration.ControlPlaneSourceConfig,
-	summaryConfig configuration.SummarySourceConfig) ([]configuration.PrometheusSourceConfig, error) {
+	summaryConfig configuration.SummarySourceConfig) []configuration.PrometheusSourceConfig {
 	var prometheusSourceConfigs []configuration.PrometheusSourceConfig
 
 	kubeConfig, _, err := kubelet.GetKubeConfigs(summaryConfig)
 	if err != nil {
-		return nil, err
+	    log.Infof("control-plane/factory/Build: error %s", err.Error())
+		return nil
 	}
 	httpClientConfig := httputil.ClientConfig{
 		BearerTokenFile: kubeConfig.BearerTokenFile,
@@ -62,7 +64,7 @@ func (p factory) Build(cfg configuration.ControlPlaneSourceConfig,
 	promApiServerSourceConfig := p.createPrometheusSourceConfig(httpClientConfig, apiServerAllowList, apiServerTagAllowList, cfg.Collection.Interval)
 	prometheusSourceConfigs = append(prometheusSourceConfigs, promApiServerSourceConfig)
 
-	return prometheusSourceConfigs, nil
+	return prometheusSourceConfigs
 }
 
 func (p factory) createPrometheusSourceConfig(httpClientConfig httputil.ClientConfig, metricAllowList []string,
