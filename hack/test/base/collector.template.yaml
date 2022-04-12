@@ -51,7 +51,7 @@ sources:
 
   kubernetes_control_plane_source:
     collection:
-      interval: "120s"
+      interval: "10s"
 
 #  prometheus_sources:
 #  ##########################################################################
@@ -120,5 +120,3 @@ discovery:
       - 'kube.coredns.coredns.dns.response.rcode.count.total.counter'
       - 'kube.coredns.coredns.dns.response.size.bytes'
       - 'kube.coredns.process.*'
-      - 'kube.coredns.coredns.dns.request.duration.seconds.bucket'
-      - 'kube.coredns.coredns.dns.responses.total.counter'

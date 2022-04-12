@@ -28,6 +28,7 @@ const (
 	ForceGC                  = "FORCE_GC"
 	KubernetesVersionEnvVar  = "KUBERNETES_VERSION"
 	KubernetesProviderEnvVar = "KUBERNETES_PROVIDER"
+	ControlplaneMetricsPrefix = "kubernetes.controlplane."
 )
 
 const (

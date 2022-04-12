@@ -1,6 +1,7 @@
 package control_plane
 
 import (
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -13,7 +14,6 @@ import (
 
 const (
 	metricsURL    = "https://kubernetes.default.svc:443/metrics"
-	metricsPrefix = "kubernetes.controlplane."
 	metricsSource = "control_plane_source"
 	jitterTime    = time.Second * 40
 )
@@ -47,19 +47,19 @@ func (p factory) Build(cfg configuration.ControlPlaneSourceConfig,
 		},
 	}
 	metricAllowList := []string{
-		"kubernetes.controlplane.etcd.request.duration.seconds.bucket",
-		"kubernetes.controlplane.etcd.object.counts.gauge",
-		"kubernetes.controlplane.etcd.db.total.size.in.bytes.gauge",
-		"kubernetes.controlplane.workqueue.adds.total.counter",
-		"kubernetes.controlplane.workqueue.queue.duration.seconds.bucket",
+		util.ControlplaneMetricsPrefix + "etcd.request.duration.seconds.bucket",
+		util.ControlplaneMetricsPrefix + "etcd.object.counts.gauge",
+		util.ControlplaneMetricsPrefix + "etcd.db.total.size.in.bytes.gauge",
+		util.ControlplaneMetricsPrefix + "workqueue.adds.total.counter",
+		util.ControlplaneMetricsPrefix + "workqueue.queue.duration.seconds.bucket",
 	}
 
 	promSourceConfig := p.createPrometheusSourceConfig("etcd-workqueue", httpClientConfig, metricAllowList, nil, cfg.Collection.Interval+jitterTime)
 	prometheusSourceConfigs = append(prometheusSourceConfigs, promSourceConfig)
 
 	apiServerAllowList := []string{
-		"kubernetes.controlplane.apiserver.request.duration.seconds.bucket",
-		"kubernetes.controlplane.apiserver.request.total.counter",
+		util.ControlplaneMetricsPrefix + "apiserver.request.duration.seconds.bucket",
+		util.ControlplaneMetricsPrefix + "apiserver.request.total.counter",
 	}
 	apiServerTagAllowList := map[string][]string{
 		"resource": {"customresourcedefinitions", "namespaces", "lease", "nodes", "pods", "tokenreviews", "subjectaccessreviews"},
@@ -75,7 +75,7 @@ func (p factory) createPrometheusSourceConfig(name string, httpClientConfig http
 
 	controlPlaneTransform := configuration.Transforms{
 		Source: metricsSource,
-		Prefix: metricsPrefix,
+		Prefix: util.ControlplaneMetricsPrefix,
 		Tags:   nil,
 		Filters: filter.Config{
 			MetricAllowList:    metricAllowList,
