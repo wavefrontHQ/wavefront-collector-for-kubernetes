@@ -48,7 +48,7 @@ func (p factory) Build(cfg configuration.ControlPlaneSourceConfig,
 	}
 	metricAllowList := []string{
 		"kubernetes.controlplane.etcd.request.duration.seconds.bucket",
-		"kubernetes.controlplane.etcd.object.counts.gauge",
+		"kubernetes.controlplane.etcd.*",
 		"kubernetes.controlplane.etcd.db.total.size.in.bytes.gauge",
 		"kubernetes.controlplane.workqueue.adds.total.counter",
 		"kubernetes.controlplane.workqueue.queue.duration.seconds.bucket",
