@@ -54,7 +54,7 @@ func (p factory) Build(cfg configuration.ControlPlaneSourceConfig,
 		"kubernetes.controlplane.workqueue.queue.duration.seconds.bucket",
 	}
 
-	promSourceConfig := p.createPrometheusSourceConfig(httpClientConfig, metricAllowList, nil, cfg.Collection.Interval+jitterTime)
+	promSourceConfig := p.createPrometheusSourceConfig("etcd-workqueue", httpClientConfig, metricAllowList, nil, cfg.Collection.Interval+jitterTime)
 	prometheusSourceConfigs = append(prometheusSourceConfigs, promSourceConfig)
 
 	apiServerAllowList := []string{
@@ -64,13 +64,13 @@ func (p factory) Build(cfg configuration.ControlPlaneSourceConfig,
 	apiServerTagAllowList := map[string][]string{
 		"resource": {"customresourcedefinitions", "namespaces", "lease", "nodes", "pods", "tokenreviews", "subjectaccessreviews"},
 	}
-	promApiServerSourceConfig := p.createPrometheusSourceConfig(httpClientConfig, apiServerAllowList, apiServerTagAllowList, cfg.Collection.Interval)
+	promApiServerSourceConfig := p.createPrometheusSourceConfig("apiserver", httpClientConfig, apiServerAllowList, apiServerTagAllowList, cfg.Collection.Interval)
 	prometheusSourceConfigs = append(prometheusSourceConfigs, promApiServerSourceConfig)
 
 	return prometheusSourceConfigs
 }
 
-func (p factory) createPrometheusSourceConfig(httpClientConfig httputil.ClientConfig, metricAllowList []string,
+func (p factory) createPrometheusSourceConfig(name string, httpClientConfig httputil.ClientConfig, metricAllowList []string,
 	metricTagAllowList map[string][]string, collectionInterval time.Duration) configuration.PrometheusSourceConfig {
 
 	controlPlaneTransform := configuration.Transforms{
@@ -96,7 +96,7 @@ func (p factory) createPrometheusSourceConfig(httpClientConfig httputil.ClientCo
 		URL:               metricsURL,
 		HTTPClientConfig:  httpClientConfig,
 		Discovered:        "",
-		Name:              "",
+		Name:              name,
 		UseLeaderElection: false,
 	}
 	return sourceConfig
