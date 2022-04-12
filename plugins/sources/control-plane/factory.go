@@ -97,7 +97,7 @@ func (p factory) createPrometheusSourceConfig(name string, httpClientConfig http
 		HTTPClientConfig:  httpClientConfig,
 		Discovered:        "",
 		Name:              name,
-		UseLeaderElection: false,
+		UseLeaderElection: true,
 	}
 	return sourceConfig
 }
