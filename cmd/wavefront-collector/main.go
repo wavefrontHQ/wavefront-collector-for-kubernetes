@@ -264,7 +264,8 @@ func createDiscoveryManagerOrDie(client *kube_client.Clientset, cfg *configurati
 			Filters: filter.Config{
 				MetricAllowList: []string{
 					"kubernetes.controlplane.coredns.dns.request.duration.seconds.bucket",
-					"kubernetes.controlplane.dns.responses.total.counter"},
+					"kubernetes.controlplane.coredns.dns.responses.total.counter",
+				},
 			},
 			Collection: internal_discovery.CollectionConfig{},
 		})
