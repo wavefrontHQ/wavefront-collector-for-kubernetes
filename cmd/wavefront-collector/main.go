@@ -14,6 +14,9 @@ import (
 	"sync"
 	"time"
 
+	internal_discovery "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
+
 	gm "github.com/rcrowley/go-metrics"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
@@ -244,6 +247,27 @@ func createDiscoveryManagerOrDie(client *kube_client.Clientset, cfg *configurati
 	if cfg.EnableDiscovery {
 		serviceLister := getServiceListerOrDie(client)
 		nodeLister := getNodeListerOrDie(client)
+
+		cfg.DiscoveryConfig.PluginConfigs = append(cfg.DiscoveryConfig.PluginConfigs, internal_discovery.PluginConfig{
+			Name: "coredns-discovery-controlplane",
+			Type: "prometheus",
+			Selectors: internal_discovery.Selectors{
+				Images: []string{"*coredns:*"},
+				Labels: map[string][]string{
+					"k8s-app": {"kube-dns"},
+				},
+			},
+			Port:   "9153",
+			Scheme: "http",
+			Path:   "/metrics",
+			Prefix: "kubernetes.controlplane.",
+			Filters: filter.Config{
+				MetricAllowList: []string{
+					"kubernetes.controlplane.coredns.dns.request.duration.seconds.bucket",
+					"kubernetes.controlplane.dns.responses.total.counter"},
+			},
+			Collection: internal_discovery.CollectionConfig{},
+		})
 
 		return discovery.NewDiscoveryManager(discovery.RunConfig{
 			KubeClient:      client,
