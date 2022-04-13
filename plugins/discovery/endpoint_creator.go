@@ -60,6 +60,7 @@ func (e *endpointCreator) makeEndpoint(resource discovery.Resource, plugin disco
 	return nil
 }
 
+// TODO add to arch retro it sure would be nice to name our return variables
 func (e *endpointCreator) Encode(resource discovery.Resource, rule discovery.PluginConfig) (string, interface{}, bool) {
 	kind := resource.Kind
 	ip := resource.IP
@@ -73,6 +74,7 @@ func (e *endpointCreator) Encode(resource discovery.Resource, rule discovery.Plu
 		}).Debug("handling resource")
 	}
 
+	log.Printf("pluginType(rule) inside Encode: %s", pluginType(rule))
 	if delegate, ok := e.providers[pluginType(rule)]; ok {
 		return delegate.Encoder.Encode(ip, kind, meta, rule)
 	}

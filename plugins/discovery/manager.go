@@ -54,6 +54,8 @@ func NewDiscoveryManager(cfg RunConfig) *Manager {
 		runConfig: cfg,
 		stopCh:    make(chan struct{}),
 	}
+	log.Infof("cfg plugins inside NewDiscoveryManager: %+v\n", cfg.DiscoveryConfig.PluginConfigs)
+
 	mgr.leadershipMgr = leadership.NewManager(mgr, subscriberName, cfg.KubeClient)
 	return mgr
 }
@@ -66,6 +68,7 @@ func (dm *Manager) Start() {
 
 	// init configuration file and discoverer
 	cfg := dm.runConfig.DiscoveryConfig
+	log.Infof("cfg inside Start(): %+v", cfg)
 	if cfg.EnableRuntimePlugins {
 		log.Info("runtime plugins enabled")
 		dm.configListener = newConfigHandler(dm.runConfig.KubeClient, dm.runConfig.DiscoveryConfig)

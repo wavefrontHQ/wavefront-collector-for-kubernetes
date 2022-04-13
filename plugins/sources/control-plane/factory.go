@@ -1,8 +1,9 @@
 package control_plane
 
 import (
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 	"time"
+
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 
 	log "github.com/sirupsen/logrus"
 

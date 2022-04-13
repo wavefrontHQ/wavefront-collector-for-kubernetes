@@ -5,8 +5,6 @@ package main
 
 import (
 	"fmt"
-	internal_discovery "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
@@ -246,33 +244,6 @@ func createDiscoveryManagerOrDie(client *kube_client.Clientset, cfg *configurati
 	if cfg.EnableDiscovery {
 		serviceLister := getServiceListerOrDie(client)
 		nodeLister := getNodeListerOrDie(client)
-
-		// TODO: make sure control plane config exists
-		cfg.DiscoveryConfig.PluginConfigs = append(cfg.DiscoveryConfig.PluginConfigs, internal_discovery.PluginConfig{
-			Name: "coredns-discovery-controlplane",
-			Type: "prometheus",
-			Selectors: internal_discovery.Selectors{
-				Images: []string{"*coredns:*"},
-				Labels: map[string][]string{
-					"k8s-app": {"kube-dns"},
-				},
-			},
-			Port:   "9153",
-			Scheme: "http",
-			Path:   "/metrics",
-			Prefix: util.ControlplaneMetricsPrefix,
-			Filters: filter.Config{
-				MetricAllowList: []string{
-					util.ControlplaneMetricsPrefix + "coredns.dns.request.duration.seconds.bucket",
-					util.ControlplaneMetricsPrefix + "coredns.dns.responses.total.counter",
-				},
-			},
-			Collection: internal_discovery.CollectionConfig{
-				// TODO: check if interval and timeout exist on config first; have a default
-				Interval: cfg.Sources.ControlPlaneConfig.Collection.Interval,
-				Timeout:  cfg.Sources.ControlPlaneConfig.Collection.Timeout,
-			},
-		})
 
 		return discovery.NewDiscoveryManager(discovery.RunConfig{
 			KubeClient:      client,

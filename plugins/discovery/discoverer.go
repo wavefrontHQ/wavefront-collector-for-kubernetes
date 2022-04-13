@@ -248,6 +248,8 @@ func (d *discoverer) discoverNodeEndpoint(plugin discovery.PluginConfig) error {
 
 	if ep := d.endpointCreator.makeEndpoint(resource, plugin); ep != nil {
 		name := discovery.ResourceName(resource.Kind, resource.Meta)
+		log.Printf("Name inside discoverNodeEndpoint: %s", name)
+		log.Printf("Endpoints inside discoverNodeEndpoint before append: %+v", d.endpoints)
 		var eps []*discovery.Endpoint
 		if val, ok := d.endpoints[name]; ok {
 			eps = val
@@ -255,6 +257,7 @@ func (d *discoverer) discoverNodeEndpoint(plugin discovery.PluginConfig) error {
 		eps = append(eps, ep)
 		d.endpoints[name] = eps
 		d.endpointHandler.Add(ep)
+		log.Printf("Endpoints inside discoverNodeEndpoint after append: %+v", d.endpoints)
 	}
 	return nil
 }
