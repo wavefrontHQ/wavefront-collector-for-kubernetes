@@ -34,11 +34,12 @@ type configHandler struct {
 	configMapInformer cache.SharedInformer
 	secretInformer    cache.SharedInformer
 
-	mtx         sync.RWMutex
-	cfg         discovery.Config            // main configuration obtained by combining wired and dynamic configuration
-	wiredCfg    discovery.Config            // wired configuration
-	runtimeCfgs map[string]discovery.Config // dynamic runtime configurations
-	changed     bool                        // flag for tracking runtime cfg changes
+	mtx          sync.RWMutex
+	cfg          discovery.Config            // main configuration obtained by combining wired and dynamic configuration
+	wiredCfg     discovery.Config            // wired configuration
+	runtimeCfgs  map[string]discovery.Config // dynamic runtime configurations
+	changed      bool                        // flag for tracking runtime cfg changes
+	internalCfgs map[string]discovery.Config
 }
 
 type configResource struct {
@@ -95,7 +96,8 @@ func newConfigHandler(kubeClient kubernetes.Interface, cfg discovery.Config) *co
 	handler := &configHandler{
 		cfg:         cfg,
 		wiredCfg:    cfg,
-		runtimeCfgs: baseRuntimeCfgs,
+		runtimeCfgs: make(map[string]discovery.Config),
+		internalCfgs: baseRuntimeCfgs,
 	}
 
 	ns := util.GetNamespaceName()
@@ -219,7 +221,7 @@ func (handler *configHandler) Config() (discovery.Config, bool) {
 	}
 	handler.changed = false
 
-	newCfg := combine(handler.wiredCfg, handler.runtimeCfgs)
+	newCfg := combine(handler.wiredCfg, handler.internalCfgs, handler.runtimeCfgs)
 	if !reflect.DeepEqual(handler.cfg, newCfg) {
 		// update the main combined config
 		handler.cfg = newCfg
@@ -280,23 +282,27 @@ func load(data map[string]string) (discovery.Config, error) {
 	return *cfg, nil
 }
 
-func combine(cfg discovery.Config, cfgs map[string]discovery.Config) discovery.Config {
+func combine(wiredCfg discovery.Config, internalCfgs map[string]discovery.Config, runtimeCfgs map[string]discovery.Config) discovery.Config {
 	runCfg := &discovery.Config{
-		DiscoveryInterval:          cfg.DiscoveryInterval,
-		AnnotationPrefix:           cfg.AnnotationPrefix,
-		AnnotationExcludes:         cfg.AnnotationExcludes,
-		PluginConfigs:              cfg.PluginConfigs,
-		DisableAnnotationDiscovery: cfg.DisableAnnotationDiscovery,
+		DiscoveryInterval:          wiredCfg.DiscoveryInterval,
+		AnnotationPrefix:           wiredCfg.AnnotationPrefix,
+		AnnotationExcludes:         wiredCfg.AnnotationExcludes,
+		PluginConfigs:              wiredCfg.PluginConfigs,
+		DisableAnnotationDiscovery: wiredCfg.DisableAnnotationDiscovery,
 	}
 
 	for _, pc := range runCfg.PluginConfigs {
 		log.Infof("key and pc inside combine plugin loop before any nonsense: %s -> %+v", pc.Name, pc)
 	}
 
+	for k, v := range internalCfgs {
+		runtimeCfgs[k] = v
+	}
+
 	// build a sorted slice of map keys for consistent iteration order
-	keys := make([]string, len(cfgs))
+	keys := make([]string, len(runtimeCfgs))
 	i := 0
-	for k := range cfgs {
+	for k := range runtimeCfgs {
 		keys[i] = k
 		i++
 	}
@@ -304,7 +310,7 @@ func combine(cfg discovery.Config, cfgs map[string]discovery.Config) discovery.C
 
 	log.Debug("combining discovery configurations")
 	for _, key := range keys {
-		c := cfgs[key]
+		c := runtimeCfgs[key]
 		//log.Infof("key and cfg inside combine: %s -> %+v", key, c)
 		if len(c.PluginConfigs) > 0 {
 			runCfg.PluginConfigs = append(runCfg.PluginConfigs, c.PluginConfigs...)

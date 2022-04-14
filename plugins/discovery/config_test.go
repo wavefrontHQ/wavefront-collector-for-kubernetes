@@ -87,15 +87,15 @@ func TestCombine(t *testing.T) {
 		"redis":     {PluginConfigs: makePlugins(2, "redis")},
 	}
 
-	result := combine(*cfg, plugins)
+	result := combine(*cfg, nil, plugins)
 	assert.Equal(t, 8, len(result.PluginConfigs))
 	assert.True(t, result.DisableAnnotationDiscovery)
 
-	result = combine(*cfg, nil)
+	result = combine(*cfg, nil, nil)
 	assert.Equal(t, 3, len(result.PluginConfigs))
 
 	cfg.PluginConfigs = nil
-	result = combine(*cfg, plugins)
+	result = combine(*cfg, nil, plugins)
 	assert.Equal(t, 5, len(result.PluginConfigs))
 }
 
