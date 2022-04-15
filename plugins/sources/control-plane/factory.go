@@ -1,6 +1,7 @@
 package control_plane
 
 import (
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
 	"time"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
@@ -101,4 +102,33 @@ func (p factory) createPrometheusSourceConfig(name string, httpClientConfig http
 		UseLeaderElection: true,
 	}
 	return sourceConfig
+}
+
+func (p factory) BuildRuntimeConfigs(config configuration.ControlPlaneSourceConfig) []discovery.PluginConfig {
+	return []discovery.PluginConfig{
+		{
+			Name: "coredns-discovery-controlplane",
+			Type: "prometheus",
+			Selectors: discovery.Selectors{
+				Images: []string{"*coredns:*"},
+				Labels: map[string][]string{
+					"k8s-app": {"kube-dns"},
+				},
+			},
+			Port:   "9153",
+			Scheme: "http",
+			Path:   "/metrics",
+			Prefix: util.ControlplaneMetricsPrefix,
+			Filters: filter.Config{
+				MetricAllowList: []string{
+					util.ControlplaneMetricsPrefix + "coredns.dns.request.duration.seconds.bucket",
+					util.ControlplaneMetricsPrefix + "coredns.dns.responses.total.counter",
+				},
+			},
+			Collection: discovery.CollectionConfig{
+				Interval: config.Collection.Interval,
+				Timeout:  config.Collection.Timeout,
+			},
+		},
+	}
 }

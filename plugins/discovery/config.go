@@ -11,8 +11,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
-
 	log "github.com/sirupsen/logrus"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
@@ -47,57 +45,12 @@ type configResource struct {
 	data map[string]string
 }
 
-var testEnableControlPlane = true
 func newConfigHandler(kubeClient kubernetes.Interface, cfg discovery.Config) *configHandler {
-	var baseRuntimeCfgs map[string]discovery.Config
-	if testEnableControlPlane {
-		baseRuntimeCfgs = map[string]discovery.Config{
-			"coredns-discovery-controlplane": {
-				DiscoveryInterval:          0,
-				AnnotationPrefix:           util.ControlplaneMetricsPrefix,
-				AnnotationExcludes:         nil,
-				EnableRuntimePlugins:       false,
-				DisableAnnotationDiscovery: false,
-				PluginConfigs: []discovery.PluginConfig{
-					{
-						Name: "coredns-discovery-controlplane",
-						Type: "prometheus",
-						Selectors: discovery.Selectors{
-							Images: []string{"*coredns:*"},
-							Labels: map[string][]string{
-								"k8s-app": {"kube-dns"},
-							},
-						},
-						Port:   "9153",
-						Scheme: "http",
-						Path:   "/metrics",
-						Prefix: util.ControlplaneMetricsPrefix,
-						Filters: filter.Config{
-							MetricAllowList: []string{
-								util.ControlplaneMetricsPrefix + "coredns.dns.request.duration.seconds.bucket",
-								util.ControlplaneMetricsPrefix + "coredns.dns.responses.total.counter",
-							},
-						},
-						Collection: discovery.CollectionConfig{
-							// TODO: where to get these?!
-							Interval: 0,
-							Timeout:  0,
-							//Interval: cfg.Sources.ControlPlaneConfig.Collection.Interval,
-							//Timeout:  cfg.Sources.ControlPlaneConfig.Collection.Timeout,
-						},
-					},
-				},
-			},
-		}
-	} else {
-		baseRuntimeCfgs = make(map[string]discovery.Config)
-	}
-
 	handler := &configHandler{
 		cfg:         cfg,
 		wiredCfg:    cfg,
 		runtimeCfgs: make(map[string]discovery.Config),
-		internalCfgs: baseRuntimeCfgs,
+		internalCfgs: cfg.InternalPluginConfigs,
 	}
 
 	ns := util.GetNamespaceName()
@@ -291,20 +244,17 @@ func combine(wiredCfg discovery.Config, internalCfgs map[string]discovery.Config
 		DisableAnnotationDiscovery: wiredCfg.DisableAnnotationDiscovery,
 	}
 
-	for _, pc := range runCfg.PluginConfigs {
-		log.Infof("key and pc inside combine plugin loop before any nonsense: %s -> %+v", pc.Name, pc)
-	}
-
-	for k, v := range internalCfgs {
-		runtimeCfgs[k] = v
-	}
-
 	// build a sorted slice of map keys for consistent iteration order
 	keys := make([]string, len(runtimeCfgs))
 	i := 0
 	for k := range runtimeCfgs {
 		keys[i] = k
 		i++
+	}
+
+	// TODO: test this
+	for k, v := range internalCfgs {
+		runtimeCfgs[k] = v
 	}
 	sort.Strings(keys)
 

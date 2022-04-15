@@ -32,6 +32,8 @@ type Config struct {
 	// list of discovery rules
 	PluginConfigs []PluginConfig `yaml:"plugins"`
 
+	InternalPluginConfigs map[string]PluginConfig
+
 	// Deprecated: ignored. Use top level configuration properties.
 	Global GlobalConfig `yaml:"global"`
 

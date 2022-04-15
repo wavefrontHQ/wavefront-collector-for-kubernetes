@@ -19,6 +19,7 @@ package sources
 
 import (
 	"fmt"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
 	"math/rand"
 	"sort"
 	"sync"
@@ -74,7 +75,7 @@ type SourceManager interface {
 	StopProviders()
 	GetPendingMetrics() []*metrics.Batch
 	SetDefaultCollectionInterval(time.Duration)
-	BuildProviders(config configuration.SourceConfig) error
+	BuildProviders(config configuration.SourceConfig) ([]discovery.PluginConfig, error)
 }
 
 type sourceManagerImpl struct {
@@ -107,15 +108,15 @@ func Manager() SourceManager {
 }
 
 // BuildProviders creates a new source manager with the configured MetricsSourceProviders
-func (sm *sourceManagerImpl) BuildProviders(cfg configuration.SourceConfig) error {
-	sources := buildProviders(cfg)
+func (sm *sourceManagerImpl) BuildProviders(cfg configuration.SourceConfig) ([]discovery.PluginConfig, error) {
+	sources, internalPluginConfigs := buildProviders(cfg)
 	for _, runtime := range sources {
 		sm.AddProvider(runtime)
 	}
 	if len(sm.metricsSourceProviders) == 0 {
-		return fmt.Errorf("no available sources to use")
+		return nil, fmt.Errorf("no available sources to use")
 	}
-	return nil
+	return internalPluginConfigs, nil
 }
 
 func (sm *sourceManagerImpl) SetDefaultCollectionInterval(defaultCollectionInterval time.Duration) {
@@ -278,9 +279,7 @@ func (sm *sourceManagerImpl) GetPendingMetrics() []*metrics.Batch {
 	return response
 }
 
-func buildProviders(cfg configuration.SourceConfig) []metrics.SourceProvider {
-	result := make([]metrics.SourceProvider, 0)
-
+func buildProviders(cfg configuration.SourceConfig) (result []metrics.SourceProvider, internalRuntimeConfigs []discovery.PluginConfig) {
 	if cfg.SummaryConfig != nil {
 		provider, err := summary.NewSummaryProvider(*cfg.SummaryConfig)
 		result = appendProvider(result, provider, err, cfg.SummaryConfig.Collection)
@@ -290,11 +289,14 @@ func buildProviders(cfg configuration.SourceConfig) []metrics.SourceProvider {
 			result = appendProvider(result, provider, err, cfg.CadvisorConfig.Collection)
 		}
 		if cfg.ControlPlaneConfig != nil {
-			promConfigs := control_plane.NewFactory().Build(*cfg.ControlPlaneConfig, *cfg.SummaryConfig)
+			controlPlaneFactory := control_plane.NewFactory()
+			promConfigs := controlPlaneFactory.Build(*cfg.ControlPlaneConfig, *cfg.SummaryConfig)
 			for _, srcCfg := range promConfigs {
 				provider, err := prometheus.NewPrometheusProvider(srcCfg)
 				result = appendProvider(result, provider, err, srcCfg.Collection)
 			}
+
+			internalRuntimeConfigs = append(internalRuntimeConfigs, controlPlaneFactory.BuildRuntimeConfigs(*cfg.ControlPlaneConfig)...)
 		}
 	}
 	if cfg.SystemdConfig != nil {
@@ -321,7 +323,7 @@ func buildProviders(cfg configuration.SourceConfig) []metrics.SourceProvider {
 	if len(result) == 0 {
 		log.Fatal("No available source to use")
 	}
-	return result
+	return result, internalRuntimeConfigs
 }
 
 func appendProvider(
