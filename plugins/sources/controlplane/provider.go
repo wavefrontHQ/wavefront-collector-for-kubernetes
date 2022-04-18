@@ -53,7 +53,7 @@ func (p *provider) Name() string {
 	return metricsSource
 }
 
-func (p *provider) PluginConfigs() []discovery.PluginConfig {
+func (p *provider) DiscoveryConfigs() []discovery.PluginConfig {
 	return []discovery.PluginConfig{
 		{
 			Name: "coredns-discovery-controlplane",

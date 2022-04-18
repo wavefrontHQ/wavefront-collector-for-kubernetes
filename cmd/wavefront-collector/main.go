@@ -114,8 +114,7 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 	// create sources manager
 	sourceManager := sources.Manager()
 	sourceManager.SetDefaultCollectionInterval(cfg.DefaultCollectionInterval)
-	// TODO: wire up to discovery
-	_, err := sourceManager.BuildProviders(*cfg.Sources)
+	err := sourceManager.BuildProviders(*cfg.Sources)
 	if err != nil {
 		log.Fatalf("Failed to create source manager: %v", err)
 	}
@@ -139,6 +138,7 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 
 	// create discovery manager
 	handler := sourceManager.(metrics.ProviderHandler)
+    // TODO: wire up to discovery
 	dm := createDiscoveryManagerOrDie(kubeClient, cfg, handler, podLister)
 
 	// create uber manager

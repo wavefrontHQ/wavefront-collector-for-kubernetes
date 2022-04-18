@@ -1,5 +1,5 @@
 package discovery
 
-type PluginConfigProvider interface {
-	PluginConfigs() []PluginConfig
+type ConfigProvider interface {
+	DiscoveryConfigs() []PluginConfig
 }
