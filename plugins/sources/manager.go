@@ -72,7 +72,7 @@ func init() {
 // SourceManager ProviderHandler with metrics gathering support
 type SourceManager interface {
 	metrics.ProviderHandler
-	discovery.ConfigProvider
+	discovery.PluginProvider
 
 	StopProviders()
 	GetPendingMetrics() []*metrics.Batch
@@ -109,11 +109,11 @@ func Manager() SourceManager {
 	return singleton
 }
 
-func (sm *sourceManagerImpl) DiscoveryConfigs() []discovery.PluginConfig {
+func (sm *sourceManagerImpl) DiscoveryPluginConfigs() []discovery.PluginConfig {
 	var pluginConfigs []discovery.PluginConfig
 	for _, provider := range sm.metricsSourceProviders {
-		if pluginProvider, ok := provider.(discovery.ConfigProvider); ok {
-			pluginConfigs = append(pluginConfigs, pluginProvider.DiscoveryConfigs()...)
+		if pluginProvider, ok := provider.(discovery.PluginProvider); ok {
+			pluginConfigs = append(pluginConfigs, pluginProvider.DiscoveryPluginConfigs()...)
 		}
 	}
 	return pluginConfigs

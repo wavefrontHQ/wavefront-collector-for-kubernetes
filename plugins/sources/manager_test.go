@@ -195,7 +195,7 @@ func TestPluginConfigProvider(t *testing.T) {
 		Manager().AddProvider(pluginConfigProvider)
 		Manager().AddProvider(regularProvider)
 
-		discoveryConfigs := Manager().DiscoveryConfigs()
+		discoveryConfigs := Manager().DiscoveryPluginConfigs()
 
 		if assert.Equal(t, 1, len(discoveryConfigs)) {
 			assert.Equal(t, "testDiscoveryConfig", discoveryConfigs[0].Name)
@@ -222,7 +222,7 @@ type testPluginProvider struct {
 	metrics.DefaultSourceProvider
 }
 
-func (p *testPluginProvider) DiscoveryConfigs() []discovery.PluginConfig {
+func (p *testPluginProvider) DiscoveryPluginConfigs() []discovery.PluginConfig {
 	return []discovery.PluginConfig{{Name: "testDiscoveryConfig"}}
 }
 

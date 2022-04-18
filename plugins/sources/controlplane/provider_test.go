@@ -66,18 +66,18 @@ func TestProvider(t *testing.T) {
 		assert.Equal(t, 2, len(provider.GetMetricsSources()))
 	})
 
-	t.Run("implements discovery.ConfigProvider", func(t *testing.T) {
+	t.Run("implements discovery.PluginProvider", func(t *testing.T) {
 		provider, _ := NewProvider(configuration.ControlPlaneSourceConfig{}, configuration.SummarySourceConfig{URL: "https://kube", InClusterConfig: "false"})
 
-		assert.Implements(t, (*discovery.ConfigProvider)(nil), provider)
+		assert.Implements(t, (*discovery.PluginProvider)(nil), provider)
 	})
 
 	t.Run("provides one discovery plugin config for core dns", func(t *testing.T) {
 		provider, _ := NewProvider(configuration.ControlPlaneSourceConfig{}, configuration.SummarySourceConfig{URL: "https://kube", InClusterConfig: "false"})
-		pluginConfigProvider := provider.(discovery.ConfigProvider)
+		pluginConfigProvider := provider.(discovery.PluginProvider)
 
-		if assert.Equal(t, 1, len(pluginConfigProvider.DiscoveryConfigs())) {
-			pluginConfig := pluginConfigProvider.DiscoveryConfigs()[0]
+		if assert.Equal(t, 1, len(pluginConfigProvider.DiscoveryPluginConfigs())) {
+			pluginConfig := pluginConfigProvider.DiscoveryPluginConfigs()[0]
 			assert.Equal(t, "coredns-discovery-controlplane", pluginConfig.Name)
 			assert.Equal(t, "prometheus", pluginConfig.Type)
 			assert.Equal(t, util.ControlplaneMetricsPrefix, pluginConfig.Prefix)

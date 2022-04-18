@@ -54,33 +54,31 @@ func (p *provider) Name() string {
 	return metricsSource
 }
 
-func (p *provider) DiscoveryConfigs() []discovery.PluginConfig {
-	return []discovery.PluginConfig{
-		{
-			Name: "coredns-discovery-controlplane",
-			Type: "prometheus",
-			Selectors: discovery.Selectors{
-				Images: []string{"*coredns:*"},
-				Labels: map[string][]string{
-					"k8s-app": {"kube-dns"},
-				},
-			},
-			Port:   "9153",
-			Scheme: "http",
-			Path:   "/metrics",
-			Prefix: util.ControlplaneMetricsPrefix,
-			Filters: filter.Config{
-				MetricAllowList: []string{
-					util.ControlplaneMetricsPrefix + "coredns.dns.request.duration.seconds.bucket",
-					util.ControlplaneMetricsPrefix + "coredns.dns.responses.total.counter",
-				},
-			},
-			Collection: discovery.CollectionConfig{
-				Interval: p.CollectionInterval(),
-				Timeout:  p.Timeout(),
+func (p *provider) DiscoveryPluginConfigs() []discovery.PluginConfig {
+	return []discovery.PluginConfig{{
+		Name: "coredns-discovery-controlplane",
+		Type: "prometheus",
+		Selectors: discovery.Selectors{
+			Images: []string{"*coredns:*"},
+			Labels: map[string][]string{
+				"k8s-app": {"kube-dns"},
 			},
 		},
-	}
+		Port:   "9153",
+		Scheme: "http",
+		Path:   "/metrics",
+		Prefix: util.ControlplaneMetricsPrefix,
+		Filters: filter.Config{
+			MetricAllowList: []string{
+				util.ControlplaneMetricsPrefix + "coredns.dns.request.duration.seconds.bucket",
+				util.ControlplaneMetricsPrefix + "coredns.dns.responses.total.counter",
+			},
+		},
+		Collection: discovery.CollectionConfig{
+			Interval: p.CollectionInterval(),
+			Timeout:  p.Timeout(),
+		},
+	}}
 }
 
 func buildPromConfigs(cfg configuration.ControlPlaneSourceConfig, summaryCfg configuration.SummarySourceConfig) []configuration.PrometheusSourceConfig {

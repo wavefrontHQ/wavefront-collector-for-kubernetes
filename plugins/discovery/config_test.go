@@ -87,7 +87,7 @@ func TestCombine(t *testing.T) {
 		"redis":     {PluginConfigs: makePlugins(2, "redis")},
 	}
 
-	result := combine(*cfg, nil, plugins)
+	result := combine(*cfg, plugins, nil)
 	assert.Equal(t, 8, len(result.PluginConfigs))
 	assert.True(t, result.DisableAnnotationDiscovery)
 
@@ -95,8 +95,12 @@ func TestCombine(t *testing.T) {
 	assert.Equal(t, 3, len(result.PluginConfigs))
 
 	cfg.PluginConfigs = nil
-	result = combine(*cfg, nil, plugins)
+	result = combine(*cfg, plugins, nil)
 	assert.Equal(t, 5, len(result.PluginConfigs))
+
+	cfg.PluginConfigs = nil
+	result = combine(*cfg, plugins, FakePluginProvider(makePlugins(2, "prometheus")))
+	assert.Equal(t, 7, len(result.PluginConfigs))
 }
 
 func TestAdd(t *testing.T) {
@@ -219,4 +223,10 @@ func makeSecret(name string, data map[string]string) *v1.Secret {
 		},
 		StringData: data,
 	}
+}
+
+type FakePluginProvider []discovery.PluginConfig
+
+func (f FakePluginProvider) DiscoveryPluginConfigs() []discovery.PluginConfig {
+	return f
 }

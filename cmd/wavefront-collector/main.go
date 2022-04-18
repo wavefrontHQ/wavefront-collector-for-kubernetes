@@ -14,6 +14,8 @@ import (
 	"sync"
 	"time"
 
+	intdiscovery "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
+
 	gm "github.com/rcrowley/go-metrics"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
@@ -132,16 +134,11 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 		events.Log.Info("Events collection disabled")
 	}
 
-	// create data processors
 	podLister := getPodListerOrDie(kubeClient)
+
+	dm := createDiscoveryManagerOrDie(kubeClient, cfg, sourceManager, sourceManager, podLister)
+
 	dataProcessors := createDataProcessorsOrDie(kubeClient, clusterName, podLister, cfg)
-
-	// create discovery manager
-	handler := sourceManager.(metrics.ProviderHandler)
-	// TODO: wire up to discovery
-	dm := createDiscoveryManagerOrDie(kubeClient, cfg, handler, podLister)
-
-	// create uber manager
 	man, err := manager.NewFlushManager(dataProcessors, sinkManager, cfg.FlushInterval)
 	if err != nil {
 		log.Fatalf("Failed to create main manager: %v", err)
@@ -239,19 +236,24 @@ func registerListeners(ag *agent.Agent, opt *options.CollectorRunOptions) {
 	}
 }
 
-func createDiscoveryManagerOrDie(client *kube_client.Clientset, cfg *configuration.Config,
-	handler metrics.ProviderHandler, podLister v1listers.PodLister) *discovery.Manager {
-
+func createDiscoveryManagerOrDie(
+	client *kube_client.Clientset,
+	cfg *configuration.Config,
+	handler metrics.ProviderHandler,
+	internalPluginConfigProvider intdiscovery.PluginProvider,
+	podLister v1listers.PodLister,
+) *discovery.Manager {
 	if cfg.EnableDiscovery {
 		serviceLister := getServiceListerOrDie(client)
 		nodeLister := getNodeListerOrDie(client)
 
 		return discovery.NewDiscoveryManager(discovery.RunConfig{
-			KubeClient:      client,
-			DiscoveryConfig: cfg.DiscoveryConfig,
-			Handler:         handler,
-			Daemon:          cfg.Daemon,
-			Lister:          discovery.NewResourceLister(podLister, serviceLister, nodeLister),
+			KubeClient:             client,
+			DiscoveryConfig:        cfg.DiscoveryConfig,
+			Handler:                handler,
+			InternalPluginProvider: internalPluginConfigProvider,
+			Daemon:                 cfg.Daemon,
+			Lister:                 discovery.NewResourceLister(podLister, serviceLister, nodeLister),
 		})
 	}
 	return nil
