@@ -1,7 +1,10 @@
-package control_plane
+package controlplane
 
 import (
+	"fmt"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources/prometheus"
 	"time"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
@@ -20,21 +23,71 @@ const (
 	jitterTime    = time.Second * 40
 )
 
-type factory struct{}
+type provider struct {
+	metrics.DefaultSourceProvider
 
-func NewFactory() factory {
-	return factory{}
+	providers []metrics.SourceProvider
 }
 
-var getKubeConfigs = kubelet.GetKubeConfigs
+func NewProvider(cfg configuration.ControlPlaneSourceConfig, summaryCfg configuration.SummarySourceConfig) (metrics.SourceProvider, error) {
+	var providers []metrics.SourceProvider
+	for _, promCfg := range buildPromConfigs(cfg, summaryCfg) {
+		provider, err := prometheus.NewPrometheusProvider(promCfg)
+		if err != nil {
+			return nil, fmt.Errorf("error building prometheus sources for control plane: %s", err.Error())
+		}
+		providers = append(providers, provider)
+	}
+	return &provider{providers: providers}, nil
+}
 
-func (p factory) Build(cfg configuration.ControlPlaneSourceConfig,
-	summaryConfig configuration.SummarySourceConfig) []configuration.PrometheusSourceConfig {
+func (p *provider) GetMetricsSources() []metrics.Source {
+	var sources []metrics.Source
+	for _, provider := range p.providers {
+		sources = append(sources, provider.GetMetricsSources()...)
+	}
+	return sources
+}
+
+func (p *provider) Name() string {
+	return metricsSource
+}
+
+func (p *provider) PluginConfigs() []discovery.PluginConfig {
+	return []discovery.PluginConfig{
+		{
+			Name: "coredns-discovery-controlplane",
+			Type: "prometheus",
+			Selectors: discovery.Selectors{
+				Images: []string{"*coredns:*"},
+				Labels: map[string][]string{
+					"k8s-app": {"kube-dns"},
+				},
+			},
+			Port:   "9153",
+			Scheme: "http",
+			Path:   "/metrics",
+			Prefix: util.ControlplaneMetricsPrefix,
+			Filters: filter.Config{
+				MetricAllowList: []string{
+					util.ControlplaneMetricsPrefix + "coredns.dns.request.duration.seconds.bucket",
+					util.ControlplaneMetricsPrefix + "coredns.dns.responses.total.counter",
+				},
+			},
+			Collection: discovery.CollectionConfig{
+				Interval: p.CollectionInterval(),
+				Timeout:  p.Timeout(),
+			},
+		},
+	}
+}
+
+func buildPromConfigs(cfg configuration.ControlPlaneSourceConfig, summaryCfg configuration.SummarySourceConfig) []configuration.PrometheusSourceConfig {
 	var prometheusSourceConfigs []configuration.PrometheusSourceConfig
 
-	kubeConfig, _, err := getKubeConfigs(summaryConfig)
+	kubeConfig, _, err := kubelet.GetKubeConfigs(summaryCfg)
 	if err != nil {
-		log.Infof("control-plane/factory/Build: error %v", err)
+		log.Infof("error %v", err)
 		return nil
 	}
 	httpClientConfig := httputil.ClientConfig{
@@ -56,7 +109,7 @@ func (p factory) Build(cfg configuration.ControlPlaneSourceConfig,
 		util.ControlplaneMetricsPrefix + "workqueue.queue.duration.seconds.bucket",
 	}
 
-	promSourceConfig := p.createPrometheusSourceConfig("etcd-workqueue", httpClientConfig, metricAllowList, nil, cfg.Collection.Interval+jitterTime)
+	promSourceConfig := createPrometheusSourceConfig("etcd-workqueue", httpClientConfig, metricAllowList, nil, cfg.Collection.Interval+jitterTime)
 	prometheusSourceConfigs = append(prometheusSourceConfigs, promSourceConfig)
 
 	apiServerAllowList := []string{
@@ -66,13 +119,13 @@ func (p factory) Build(cfg configuration.ControlPlaneSourceConfig,
 	apiServerTagAllowList := map[string][]string{
 		"resource": {"customresourcedefinitions", "namespaces", "lease", "nodes", "pods", "tokenreviews", "subjectaccessreviews"},
 	}
-	promApiServerSourceConfig := p.createPrometheusSourceConfig("apiserver", httpClientConfig, apiServerAllowList, apiServerTagAllowList, cfg.Collection.Interval)
+	promApiServerSourceConfig := createPrometheusSourceConfig("apiserver", httpClientConfig, apiServerAllowList, apiServerTagAllowList, cfg.Collection.Interval)
 	prometheusSourceConfigs = append(prometheusSourceConfigs, promApiServerSourceConfig)
 
 	return prometheusSourceConfigs
 }
 
-func (p factory) createPrometheusSourceConfig(name string, httpClientConfig httputil.ClientConfig, metricAllowList []string,
+func createPrometheusSourceConfig(name string, httpClientConfig httputil.ClientConfig, metricAllowList []string,
 	metricTagAllowList map[string][]string, collectionInterval time.Duration) configuration.PrometheusSourceConfig {
 
 	controlPlaneTransform := configuration.Transforms{
@@ -102,33 +155,4 @@ func (p factory) createPrometheusSourceConfig(name string, httpClientConfig http
 		UseLeaderElection: true,
 	}
 	return sourceConfig
-}
-
-func (p factory) BuildRuntimeConfigs(config configuration.ControlPlaneSourceConfig) []discovery.PluginConfig {
-	return []discovery.PluginConfig{
-		{
-			Name: "coredns-discovery-controlplane",
-			Type: "prometheus",
-			Selectors: discovery.Selectors{
-				Images: []string{"*coredns:*"},
-				Labels: map[string][]string{
-					"k8s-app": {"kube-dns"},
-				},
-			},
-			Port:   "9153",
-			Scheme: "http",
-			Path:   "/metrics",
-			Prefix: util.ControlplaneMetricsPrefix,
-			Filters: filter.Config{
-				MetricAllowList: []string{
-					util.ControlplaneMetricsPrefix + "coredns.dns.request.duration.seconds.bucket",
-					util.ControlplaneMetricsPrefix + "coredns.dns.responses.total.counter",
-				},
-			},
-			Collection: discovery.CollectionConfig{
-				Interval: config.Collection.Interval,
-				Timeout:  config.Collection.Timeout,
-			},
-		},
-	}
 }
