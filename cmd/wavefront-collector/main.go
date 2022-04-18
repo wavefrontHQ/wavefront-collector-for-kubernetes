@@ -138,7 +138,7 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 
 	// create discovery manager
 	handler := sourceManager.(metrics.ProviderHandler)
-    // TODO: wire up to discovery
+	// TODO: wire up to discovery
 	dm := createDiscoveryManagerOrDie(kubeClient, cfg, handler, podLister)
 
 	// create uber manager

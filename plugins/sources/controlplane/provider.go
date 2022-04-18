@@ -2,10 +2,11 @@ package controlplane
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources/prometheus"
-	"time"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 

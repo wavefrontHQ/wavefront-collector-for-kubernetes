@@ -1,12 +1,13 @@
 package controlplane
 
 import (
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
-    "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
-    "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
-    "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
-    "testing"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 )
 
 //func mockGetKubeConfigs(cfg configuration.SummarySourceConfig) (*kube_client.Config, *kubelet.KubeletClientConfig, error) {
@@ -56,39 +57,39 @@ func TestProvider(t *testing.T) {
 	t.Run("is identified as the correct provider", func(t *testing.T) {
 		provider, _ := NewProvider(configuration.ControlPlaneSourceConfig{}, configuration.SummarySourceConfig{})
 
-        assert.Equal(t, "control_plane_source", provider.Name())
+		assert.Equal(t, "control_plane_source", provider.Name())
 	})
 
-    t.Run("has two prometheus sources", func(t *testing.T) {
-        provider, _ := NewProvider(configuration.ControlPlaneSourceConfig{}, configuration.SummarySourceConfig{URL: "https://kube", InClusterConfig: "false"})
+	t.Run("has two prometheus sources", func(t *testing.T) {
+		provider, _ := NewProvider(configuration.ControlPlaneSourceConfig{}, configuration.SummarySourceConfig{URL: "https://kube", InClusterConfig: "false"})
 
-        assert.Equal(t, 2, len(provider.GetMetricsSources()))
-    })
+		assert.Equal(t, 2, len(provider.GetMetricsSources()))
+	})
 
-    t.Run("implements discovery.ConfigProvider", func(t *testing.T) {
-        provider, _ := NewProvider(configuration.ControlPlaneSourceConfig{}, configuration.SummarySourceConfig{URL: "https://kube", InClusterConfig: "false"})
+	t.Run("implements discovery.ConfigProvider", func(t *testing.T) {
+		provider, _ := NewProvider(configuration.ControlPlaneSourceConfig{}, configuration.SummarySourceConfig{URL: "https://kube", InClusterConfig: "false"})
 
-        assert.Implements(t, (*discovery.ConfigProvider)(nil), provider)
-    })
+		assert.Implements(t, (*discovery.ConfigProvider)(nil), provider)
+	})
 
-    t.Run("provides one discovery plugin config for core dns", func(t *testing.T) {
-        provider, _ := NewProvider(configuration.ControlPlaneSourceConfig{}, configuration.SummarySourceConfig{URL: "https://kube", InClusterConfig: "false"})
-        pluginConfigProvider := provider.(discovery.ConfigProvider)
+	t.Run("provides one discovery plugin config for core dns", func(t *testing.T) {
+		provider, _ := NewProvider(configuration.ControlPlaneSourceConfig{}, configuration.SummarySourceConfig{URL: "https://kube", InClusterConfig: "false"})
+		pluginConfigProvider := provider.(discovery.ConfigProvider)
 
-        if assert.Equal(t, 1, len(pluginConfigProvider.DiscoveryConfigs())) {
-            pluginConfig := pluginConfigProvider.DiscoveryConfigs()[0]
-            assert.Equal(t, "coredns-discovery-controlplane", pluginConfig.Name)
-            assert.Equal(t, "prometheus", pluginConfig.Type)
-            assert.Equal(t, util.ControlplaneMetricsPrefix, pluginConfig.Prefix)
-        }
+		if assert.Equal(t, 1, len(pluginConfigProvider.DiscoveryConfigs())) {
+			pluginConfig := pluginConfigProvider.DiscoveryConfigs()[0]
+			assert.Equal(t, "coredns-discovery-controlplane", pluginConfig.Name)
+			assert.Equal(t, "prometheus", pluginConfig.Type)
+			assert.Equal(t, util.ControlplaneMetricsPrefix, pluginConfig.Prefix)
+		}
 
-    })
+	})
 }
 
 func sourceNames(sources []metrics.Source) []string {
-    var names []string
-    for _, source := range sources {
-        names = append(names, source.Name())
-    }
-    return names
+	var names []string
+	for _, source := range sources {
+		names = append(names, source.Name())
+	}
+	return names
 }

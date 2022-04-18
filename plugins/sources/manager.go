@@ -19,13 +19,14 @@ package sources
 
 import (
 	"fmt"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
 	"math/rand"
 	"sort"
 	"sync"
 	"time"
 
-    "github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources/controlplane"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
+
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources/controlplane"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources/cadvisor"
 
@@ -71,7 +72,7 @@ func init() {
 // SourceManager ProviderHandler with metrics gathering support
 type SourceManager interface {
 	metrics.ProviderHandler
-    discovery.ConfigProvider
+	discovery.ConfigProvider
 
 	StopProviders()
 	GetPendingMetrics() []*metrics.Batch
@@ -109,13 +110,13 @@ func Manager() SourceManager {
 }
 
 func (sm *sourceManagerImpl) DiscoveryConfigs() []discovery.PluginConfig {
-    var pluginConfigs []discovery.PluginConfig
-    for _, provider := range sm.metricsSourceProviders{
-        if pluginProvider, ok := provider.(discovery.ConfigProvider); ok {
-            pluginConfigs = append(pluginConfigs, pluginProvider.DiscoveryConfigs()...)
-        }
-    }
-    return pluginConfigs
+	var pluginConfigs []discovery.PluginConfig
+	for _, provider := range sm.metricsSourceProviders {
+		if pluginProvider, ok := provider.(discovery.ConfigProvider); ok {
+			pluginConfigs = append(pluginConfigs, pluginProvider.DiscoveryConfigs()...)
+		}
+	}
+	return pluginConfigs
 }
 
 // BuildProviders creates a new source manager with the configured MetricsSourceProviders
@@ -301,7 +302,7 @@ func buildProviders(cfg configuration.SourceConfig) (result []metrics.SourceProv
 		}
 		if cfg.ControlPlaneConfig != nil {
 			provider, err = controlplane.NewProvider(*cfg.ControlPlaneConfig, *cfg.SummaryConfig)
-            result = appendProvider(result, provider, err, cfg.ControlPlaneConfig.Collection)
+			result = appendProvider(result, provider, err, cfg.ControlPlaneConfig.Collection)
 		}
 	}
 	if cfg.SystemdConfig != nil {

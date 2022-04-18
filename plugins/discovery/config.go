@@ -47,9 +47,9 @@ type configResource struct {
 
 func newConfigHandler(kubeClient kubernetes.Interface, cfg discovery.Config) *configHandler {
 	handler := &configHandler{
-		cfg:         cfg,
-		wiredCfg:    cfg,
-		runtimeCfgs: make(map[string]discovery.Config),
+		cfg:          cfg,
+		wiredCfg:     cfg,
+		runtimeCfgs:  make(map[string]discovery.Config),
 		internalCfgs: cfg.InternalPluginConfigs,
 	}
 

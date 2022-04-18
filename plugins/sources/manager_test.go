@@ -18,9 +18,10 @@
 package sources
 
 import (
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
 	"testing"
 	"time"
+
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
 
 	log "github.com/sirupsen/logrus"
 
