@@ -5,4 +5,4 @@ resources:
 - 2-collector-rbac.yaml
 - 3-collector-service-account.yaml
 - 4-collector-config.yaml
-- 5-collector-daemonset.yaml
+- 5-collector-leader-deployment.yaml

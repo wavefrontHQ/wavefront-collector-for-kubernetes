@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+#  leaderElection: default
+  #      leaderElection: forceLeader
+  #      leaderElection: forceFollower
+  name: wavefront-collector
+  namespace: wavefront-collector
+  labels:
+    k8s-app: wavefront-collector
+    name: wavefront-collector
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: wavefront-collector
+  template:
+    metadata:
+      labels:
+        k8s-app: wavefront-collector
+    spec:
+      serviceAccountName: wavefront-collector
+      containers:
+      - name: wavefront-collector
+        image: projects.registry.vmware.com/tanzu_observability/kubernetes-collector:1.10.0
+        imagePullPolicy: Always
+        command:
+        - /wavefront-collector
+        - --config-file=/etc/collector/collector.yaml
+        volumeMounts:
+        - mountPath: /etc/collector/
+          name: collector-config
+          readOnly: true
+        env:
+        - name: POD_NAMESPACE_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+      volumes:
+      - name: collector-config
+        configMap:
+          name: collector-config
