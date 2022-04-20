@@ -35,8 +35,6 @@ spec:
         - /wavefront-collector
         - --daemon=true
         - --config-file=/etc/collector/collector.yaml
-        - --log-level=debug
-        # TODO debug level as env var to make
         volumeMounts:
         - name: procfs
           mountPath: /host/proc

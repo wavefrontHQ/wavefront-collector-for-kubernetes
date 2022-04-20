@@ -8,8 +8,6 @@ import (
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources/prometheus"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
-
 	log "github.com/sirupsen/logrus"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
@@ -22,6 +20,7 @@ const (
 	metricsURL    = "https://kubernetes.default.svc:443/metrics"
 	metricsSource = "control_plane_source"
 	jitterTime    = time.Second * 40
+	metricsPrefix = "kubernetes.controlplane."
 )
 
 type provider struct {
@@ -67,11 +66,11 @@ func (p *provider) DiscoveryPluginConfigs() []discovery.PluginConfig {
 		Port:   "9153",
 		Scheme: "http",
 		Path:   "/metrics",
-		Prefix: util.ControlplaneMetricsPrefix,
+		Prefix: metricsPrefix,
 		Filters: filter.Config{
 			MetricAllowList: []string{
-				util.ControlplaneMetricsPrefix + "coredns.dns.request.duration.seconds.bucket",
-				util.ControlplaneMetricsPrefix + "coredns.dns.responses.total.counter",
+				metricsPrefix + "coredns.dns.request.duration.seconds.bucket",
+				metricsPrefix + "coredns.dns.responses.total.counter",
 			},
 		},
 		Collection: discovery.CollectionConfig{
@@ -101,19 +100,19 @@ func buildPromConfigs(cfg configuration.ControlPlaneSourceConfig, summaryCfg con
 		},
 	}
 	metricAllowList := []string{
-		util.ControlplaneMetricsPrefix + "etcd.request.duration.seconds.bucket",
-		util.ControlplaneMetricsPrefix + "etcd.object.counts.gauge",
-		util.ControlplaneMetricsPrefix + "etcd.db.total.size.in.bytes.gauge",
-		util.ControlplaneMetricsPrefix + "workqueue.adds.total.counter",
-		util.ControlplaneMetricsPrefix + "workqueue.queue.duration.seconds.bucket",
+		metricsPrefix + "etcd.request.duration.seconds.bucket",
+		metricsPrefix + "etcd.object.counts.gauge",
+		metricsPrefix + "etcd.db.total.size.in.bytes.gauge",
+		metricsPrefix + "workqueue.adds.total.counter",
+		metricsPrefix + "workqueue.queue.duration.seconds.bucket",
 	}
 
 	promSourceConfig := createPrometheusSourceConfig("etcd-workqueue", httpClientConfig, metricAllowList, nil, cfg.Collection.Interval+jitterTime)
 	prometheusSourceConfigs = append(prometheusSourceConfigs, promSourceConfig)
 
 	apiServerAllowList := []string{
-		util.ControlplaneMetricsPrefix + "apiserver.request.duration.seconds.bucket",
-		util.ControlplaneMetricsPrefix + "apiserver.request.total.counter",
+		metricsPrefix + "apiserver.request.duration.seconds.bucket",
+		metricsPrefix + "apiserver.request.total.counter",
 	}
 	apiServerTagAllowList := map[string][]string{
 		"resource": {"customresourcedefinitions", "namespaces", "lease", "nodes", "pods", "tokenreviews", "subjectaccessreviews"},
@@ -129,7 +128,7 @@ func createPrometheusSourceConfig(name string, httpClientConfig httputil.ClientC
 
 	controlPlaneTransform := configuration.Transforms{
 		Source: metricsSource,
-		Prefix: util.ControlplaneMetricsPrefix,
+		Prefix: metricsPrefix,
 		Tags:   nil,
 		Filters: filter.Config{
 			MetricAllowList:    metricAllowList,

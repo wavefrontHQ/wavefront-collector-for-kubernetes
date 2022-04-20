@@ -21,14 +21,13 @@ import (
 )
 
 const (
-	NodeNameEnvVar            = "POD_NODE_NAME"
-	NamespaceNameEnvVar       = "POD_NAMESPACE_NAME"
-	DaemonModeEnvVar          = "DAEMON_MODE"
-	InstallationMethodEnvVar  = "INSTALLATION_METHOD"
-	ForceGC                   = "FORCE_GC"
-	KubernetesVersionEnvVar   = "KUBERNETES_VERSION"
-	KubernetesProviderEnvVar  = "KUBERNETES_PROVIDER"
-	ControlplaneMetricsPrefix = "kubernetes.controlplane."
+	NodeNameEnvVar           = "POD_NODE_NAME"
+	NamespaceNameEnvVar      = "POD_NAMESPACE_NAME"
+	DaemonModeEnvVar         = "DAEMON_MODE"
+	InstallationMethodEnvVar = "INSTALLATION_METHOD"
+	ForceGC                  = "FORCE_GC"
+	KubernetesVersionEnvVar  = "KUBERNETES_VERSION"
+	KubernetesProviderEnvVar = "KUBERNETES_PROVIDER"
 )
 
 const (
