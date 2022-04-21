@@ -248,7 +248,7 @@ func createDiscoveryManagerOrDie(
 		nodeLister := getNodeListerOrDie(client)
 
 		return discovery.NewDiscoveryManager(discovery.RunConfig{
-			KubeClient:             client,
+			Client:                 client,
 			DiscoveryConfig:        cfg.DiscoveryConfig,
 			Handler:                handler,
 			InternalPluginProvider: internalPluginConfigProvider,
