@@ -5,8 +5,6 @@ package discovery
 
 import (
 	log "github.com/sirupsen/logrus"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
-
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/leadership"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
@@ -77,7 +75,7 @@ func (dm *Manager) Start() {
 		if !dm.configListener.start() {
 			log.Error("timed out waiting for configmap caches to sync")
 		}
-		cfg, _ = dm.configListener.Config()
+		cfg = dm.configListener.Config()
 	}
 	dm.discoverer = newDiscoverer(dm.runConfig.Handler, cfg, dm.runConfig.Lister)
 	dm.startResyncConfig()
@@ -133,13 +131,14 @@ func (dm *Manager) startResyncConfig() {
 	interval := dm.runConfig.DiscoveryConfig.DiscoveryInterval
 	log.Infof("discovery config interval: %v", interval)
 
-	go util.Retry(func() {
-		log.Info("checking for runtime plugin changes")
-		_, changed := dm.configListener.Config()
-		if changed {
-			log.Info("found new runtime plugins")
-			dm.Stop()
-			dm.Start()
-		}
-	}, interval, dm.stopCh)
+	// TODO: test
+	//go util.Retry(func() {
+	//	log.Info("checking for runtime plugin changes")
+	//	_ := dm.configListener.Config()
+	//	if changed {
+	//		log.Info("found new runtime plugins")
+	//		dm.Stop()
+	//		dm.Start()
+	//	}
+	//}, interval, dm.stopCh)
 }

@@ -6,7 +6,6 @@ package discovery
 import (
 	"context"
 	"io/ioutil"
-	"reflect"
 	"sort"
 	"sync"
 	"time"
@@ -33,10 +32,8 @@ type configHandler struct {
 	secretInformer    cache.SharedInformer
 
 	mtx                    sync.RWMutex
-	cfg                    discovery.Config            // main configuration obtained by combining wired and dynamic configuration
 	wiredCfg               discovery.Config            // wired configuration
 	runtimeCfgs            map[string]discovery.Config // dynamic runtime configurations
-	changed                bool                        // flag for tracking runtime cfg changes
 	internalPluginProvider discovery.PluginProvider
 }
 
@@ -47,7 +44,6 @@ type configResource struct {
 
 func newConfigHandler(kubeClient kubernetes.Interface, cfg discovery.Config, internalPluginProvider discovery.PluginProvider) *configHandler {
 	handler := &configHandler{
-		cfg:                    cfg,
 		wiredCfg:               cfg,
 		runtimeCfgs:            make(map[string]discovery.Config),
 		internalPluginProvider: internalPluginProvider,
@@ -165,22 +161,11 @@ func updateSecretIfValid(obj interface{}, handler *configHandler) {
 
 // Config gets the combined discovery configuration and a boolean indicating whether
 // the configuration has changed since the last call to this function
-func (handler *configHandler) Config() (discovery.Config, bool) {
+func (handler *configHandler) Config() discovery.Config {
 	handler.mtx.Lock()
 	defer handler.mtx.Unlock()
 
-	if !handler.changed {
-		return handler.cfg, false
-	}
-	handler.changed = false
-
-	newCfg := combine(handler.wiredCfg, handler.runtimeCfgs, handler.internalPluginProvider)
-	if !reflect.DeepEqual(handler.cfg, newCfg) {
-		// update the main combined config
-		handler.cfg = newCfg
-		return handler.cfg, true
-	}
-	return handler.cfg, false
+	return combine(handler.wiredCfg, handler.runtimeCfgs, handler.internalPluginProvider)
 }
 
 func (handler *configHandler) updated(configResource *configResource) {
@@ -203,7 +188,6 @@ func (handler *configHandler) updated(configResource *configResource) {
 
 	// update the internal map entry
 	handler.runtimeCfgs[configResource.meta.Name] = loaded
-	handler.changed = true
 }
 
 func (handler *configHandler) deleted(name string) {
@@ -212,7 +196,6 @@ func (handler *configHandler) deleted(name string) {
 	if _, found := handler.runtimeCfgs[name]; found {
 		log.Infof("deleted discovery configuration from %s", name)
 		delete(handler.runtimeCfgs, name)
-		handler.changed = true
 	}
 }
 

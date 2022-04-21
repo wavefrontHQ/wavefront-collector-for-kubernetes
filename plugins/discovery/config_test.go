@@ -105,20 +105,17 @@ func TestCombine(t *testing.T) {
 
 func TestAdd(t *testing.T) {
 	ch := makeFakeConfigHandler(discovery.Config{PluginConfigs: makePlugins(2, "main")})
-	configResource := makeConfigResource("test", map[string]string{"plugins": sampleConfigString})
 
 	// no changes as missing annotation on configResource
+	configResource := makeConfigResource("test", map[string]string{"plugins": sampleConfigString})
+
 	ch.updated(configResource)
-	assert.True(t, ch.changed == false)
+	assert.Equal(t, 2, len(ch.Config().PluginConfigs))
 
 	// changes when annotation is present
 	configResource.meta.SetAnnotations(map[string]string{discoveryAnnotation: "true"})
 	ch.updated(configResource)
-	assert.True(t, ch.changed)
-
-	cfg, changed := ch.Config()
-	assert.True(t, changed)
-	assert.Equal(t, 5, len(cfg.PluginConfigs))
+	assert.Equal(t, 5, len(ch.Config().PluginConfigs))
 }
 
 func TestDelete(t *testing.T) {
@@ -127,14 +124,12 @@ func TestDelete(t *testing.T) {
 	configResource.meta.SetAnnotations(map[string]string{discoveryAnnotation: "true"})
 	ch.updated(configResource)
 
-	cfg, changed := ch.Config()
-	assert.True(t, changed)
+	cfg := ch.Config()
 	assert.Equal(t, 5, len(cfg.PluginConfigs))
 
 	// delete the config map and validate the plugins are removed
 	ch.deleted(configResource.meta.Name)
-	cfg, changed = ch.Config()
-	assert.True(t, changed)
+	cfg = ch.Config()
 	assert.Equal(t, 2, len(cfg.PluginConfigs))
 }
 
