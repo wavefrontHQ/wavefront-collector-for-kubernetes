@@ -36,6 +36,7 @@ func TestProvider(t *testing.T) {
 			assert.Equal(t, "coredns-discovery-controlplane", pluginConfig.Name)
 			assert.Equal(t, "prometheus", pluginConfig.Type)
 			assert.Equal(t, metricsPrefix, pluginConfig.Prefix)
+			assert.True(t, pluginConfig.Internal, "should be marked internal")
 		}
 
 	})

@@ -138,7 +138,7 @@ func (e prometheusEncoder) Encode(ip, kind string, meta metav1.ObjectMeta, cfg i
 	}
 	name := discovery.ResourceName(kind, meta)
 	port = sanitizePort(meta.Name, port)
-	name = uniqueName(name, port, path, prefix)
+	name = uniqueName(name, port, path, rule.Internal)
 
 	encodeBase(&result, scheme, ip, port, path, name, source, prefix)
 	utils.EncodeMeta(result.Tags, kind, meta)
@@ -201,7 +201,7 @@ func customAnnotation(annotationFormat, prefix string) string {
 	return fmt.Sprintf(annotationFormat, prefix)
 }
 
-func uniqueName(name, port, path, prefix string) string {
+func uniqueName(name, port, path string, internal bool) string {
 	out := name
 	if port != "" {
 		out = fmt.Sprintf("%s:%s", out, port)
@@ -209,8 +209,8 @@ func uniqueName(name, port, path, prefix string) string {
 	if path != "" {
 		out = fmt.Sprintf("%s%s", out, path)
 	}
-	if prefix != "" {
-		out = fmt.Sprintf("%s%s", out, prefix)
+	if internal {
+		out = out + ".internal"
 	}
 	return out
 }
