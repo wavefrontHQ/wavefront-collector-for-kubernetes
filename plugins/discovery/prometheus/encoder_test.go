@@ -113,7 +113,7 @@ tls_config:
  ca_file: '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
  insecure_skip_verify: true
 `,
-        Internal: true,
+		Internal: true,
 	}
 	pod.Annotations = map[string]string{}
 

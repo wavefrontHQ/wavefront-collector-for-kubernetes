@@ -51,7 +51,7 @@ sources:
 
   kubernetes_control_plane_source:
     collection:
-      interval: "10s"
+      interval: COLLECTION_INTERVALs
 
   telegraf_sources:
   # enable all telegraf plugins

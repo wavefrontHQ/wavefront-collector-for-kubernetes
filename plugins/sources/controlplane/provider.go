@@ -77,7 +77,7 @@ func (p *provider) DiscoveryPluginConfigs() []discovery.PluginConfig {
 			Interval: p.CollectionInterval(),
 			Timeout:  p.Timeout(),
 		},
-        Internal: true,
+		Internal: true,
 	}}
 }
 

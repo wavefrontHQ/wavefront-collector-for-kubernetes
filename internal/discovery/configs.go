@@ -87,8 +87,8 @@ type PluginConfig struct {
 	Filters    filter.Config    `yaml:"filters"`
 	Collection CollectionConfig `yaml:"collection"`
 
-    // Internal: whether this plugin config was produced internally
-    Internal bool `yaml:"-"`
+	// Internal: whether this plugin config was produced internally
+	Internal bool `yaml:"-"`
 }
 
 type CollectionConfig struct {
