@@ -69,11 +69,11 @@ sources:
 
 
 # discovery rules for auto-discovery of pods and services
-#discovery:
-#  enable_runtime_plugins: true
-#  annotation_excludes:
-#  - labels:
-#      please-exclude-from-discovery: ['true']
+discovery:
+  enable_runtime_plugins: true
+  annotation_excludes:
+  - labels:
+      please-exclude-from-discovery: ['true']
 #  plugins:
 #  - name: coredns-discovery
 #    type: prometheus
