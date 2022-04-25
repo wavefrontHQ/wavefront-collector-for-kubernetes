@@ -8,8 +8,10 @@ import (
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/leadership"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
+    "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
+    "reflect"
 
-	gm "github.com/rcrowley/go-metrics"
+    gm "github.com/rcrowley/go-metrics"
 
 	"k8s.io/client-go/kubernetes"
 )
@@ -131,14 +133,14 @@ func (dm *Manager) startResyncConfig() {
 	interval := dm.runConfig.DiscoveryConfig.DiscoveryInterval
 	log.Infof("discovery config interval: %v", interval)
 
-	// TODO: test
-	//go util.Retry(func() {
-	//	log.Info("checking for runtime plugin changes")
-	//	_ := dm.configListener.Config()
-	//	if changed {
-	//		log.Info("found new runtime plugins")
-	//		dm.Stop()
-	//		dm.Start()
-	//	}
-	//}, interval, dm.stopCh)
+    prevConfig := dm.configListener.Config()
+	go util.Retry(func() {
+		log.Info("checking for runtime plugin changes")
+		config := dm.configListener.Config()
+		if !reflect.DeepEqual(prevConfig, config) {
+			log.Info("found new runtime plugins")
+			dm.Stop()
+			dm.Start()
+		}
+	}, interval, dm.stopCh)
 }
