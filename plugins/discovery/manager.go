@@ -137,7 +137,6 @@ func (dm *Manager) startResyncConfig() {
 	NotifyOfChanges(func() discovery.Config {
 		log.Info("checking for runtime plugin changes")
 		return dm.configListener.Config()
-
 	}, func() {
 		log.Info("found new runtime plugins")
 		dm.Stop()
@@ -146,7 +145,6 @@ func (dm *Manager) startResyncConfig() {
 	}, interval, dm.stopCh)
 }
 
-// TODO implement as a generic
 func NotifyOfChanges(get func() discovery.Config, notify func(), interval time.Duration, stopCh chan struct{}) {
 	prevVal := get()
 	util.Retry(func() {
