@@ -4,13 +4,13 @@
 package discovery
 
 import (
-	"reflect"
-
 	log "github.com/sirupsen/logrus"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/leadership"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
+	"reflect"
+	"time"
 
 	gm "github.com/rcrowley/go-metrics"
 
@@ -134,14 +134,25 @@ func (dm *Manager) startResyncConfig() {
 	interval := dm.runConfig.DiscoveryConfig.DiscoveryInterval
 	log.Infof("discovery config interval: %v", interval)
 
-	prevConfig := dm.configListener.Config()
-	go util.Retry(func() {
+	NotifyOfChanges(func() discovery.Config {
 		log.Info("checking for runtime plugin changes")
-		config := dm.configListener.Config()
-		if !reflect.DeepEqual(prevConfig, config) {
-			log.Info("found new runtime plugins")
-			dm.Stop()
-			dm.Start()
-		}
+		return dm.configListener.Config()
+
+	}, func() {
+		log.Info("found new runtime plugins")
+		dm.Stop()
+		dm.Start()
+
 	}, interval, dm.stopCh)
+}
+
+// TODO implement as a generic
+func NotifyOfChanges(get func() discovery.Config, notify func(), interval time.Duration, stopCh chan struct{}) {
+	prevVal := get()
+	util.Retry(func() {
+		val := get()
+		if !reflect.DeepEqual(val, prevVal) {
+			notify()
+		}
+	}, interval, stopCh)
 }

@@ -15,7 +15,11 @@ func Retry(f func(), duration time.Duration, stopCh <-chan struct{}) {
 	t := time.NewTicker(duration)
 
 	for {
-		<-t.C
+		select {
+		case <-stopCh:
+			return
+		case <-t.C:
+		}
 
 		select {
 		case <-stopCh:
@@ -23,8 +27,6 @@ func Retry(f func(), duration time.Duration, stopCh <-chan struct{}) {
 		default:
 		}
 
-		func() {
-			f()
-		}()
+		f()
 	}
 }
