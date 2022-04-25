@@ -49,28 +49,9 @@ sources:
       - "kubernetes.cadvisor.container.cpu.cfs.throttled.seconds.total.counter"
       - "kubernetes.cadvisor.container.cpu.cfs.throttled.periods.total.counter"
 
-  prometheus_sources:
-  ##########################################################################
-  # Static source to collect control plane metrics from the API Server
-  ##########################################################################
-  - url: 'https://kubernetes.default.svc:443/metrics'
-    httpConfig:
-      bearer_token_file: '/var/run/secrets/kubernetes.io/serviceaccount/token'
-      tls_config:
-        ca_file: '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
-        insecure_skip_verify: true
-    prefix: 'kube.apiserver.'
-    filters:
-      metricAllowList:
-      - 'kube.apiserver.etcd.request.duration.seconds.bucket'
-      - 'kube.apiserver.etcd.object.counts.gauge'
-      - 'kube.apiserver.etcd.db.total.size.in.bytes.gauge'
-      - 'kube.apiserver.apiserver.request.duration.seconds.bucket'
-      - 'kube.apiserver.apiserver.request.total.counter'
-      - 'kube.apiserver.workqueue.adds.total.counter'
-      - 'kube.apiserver.workqueue.queue.duration.seconds.bucket'
-      tagExclude:
-      - version
+  kubernetes_control_plane_source:
+    collection:
+      interval: COLLECTION_INTERVALs
 
   telegraf_sources:
   # enable all telegraf plugins
@@ -116,5 +97,3 @@ discovery:
       - 'kube.coredns.coredns.dns.response.rcode.count.total.counter'
       - 'kube.coredns.coredns.dns.response.size.bytes'
       - 'kube.coredns.process.*'
-      - 'kube.coredns.coredns.dns.request.duration.seconds.bucket'
-      - 'kube.coredns.coredns.dns.responses.total.counter'

@@ -87,34 +87,35 @@ func TestCombine(t *testing.T) {
 		"redis":     {PluginConfigs: makePlugins(2, "redis")},
 	}
 
-	result := combine(*cfg, plugins)
+	result := combine(*cfg, plugins, nil)
 	assert.Equal(t, 8, len(result.PluginConfigs))
 	assert.True(t, result.DisableAnnotationDiscovery)
 
-	result = combine(*cfg, nil)
+	result = combine(*cfg, nil, nil)
 	assert.Equal(t, 3, len(result.PluginConfigs))
 
 	cfg.PluginConfigs = nil
-	result = combine(*cfg, plugins)
+	result = combine(*cfg, plugins, nil)
 	assert.Equal(t, 5, len(result.PluginConfigs))
+
+	cfg.PluginConfigs = nil
+	result = combine(*cfg, plugins, FakePluginProvider(makePlugins(2, "prometheus")))
+	assert.Equal(t, 7, len(result.PluginConfigs))
 }
 
 func TestAdd(t *testing.T) {
 	ch := makeFakeConfigHandler(discovery.Config{PluginConfigs: makePlugins(2, "main")})
-	configResource := makeConfigResource("test", map[string]string{"plugins": sampleConfigString})
 
 	// no changes as missing annotation on configResource
+	configResource := makeConfigResource("test", map[string]string{"plugins": sampleConfigString})
+
 	ch.updated(configResource)
-	assert.True(t, ch.changed == false)
+	assert.Equal(t, 2, len(ch.Config().PluginConfigs))
 
 	// changes when annotation is present
 	configResource.meta.SetAnnotations(map[string]string{discoveryAnnotation: "true"})
 	ch.updated(configResource)
-	assert.True(t, ch.changed)
-
-	cfg, changed := ch.Config()
-	assert.True(t, changed)
-	assert.Equal(t, 5, len(cfg.PluginConfigs))
+	assert.Equal(t, 5, len(ch.Config().PluginConfigs))
 }
 
 func TestDelete(t *testing.T) {
@@ -123,14 +124,12 @@ func TestDelete(t *testing.T) {
 	configResource.meta.SetAnnotations(map[string]string{discoveryAnnotation: "true"})
 	ch.updated(configResource)
 
-	cfg, changed := ch.Config()
-	assert.True(t, changed)
+	cfg := ch.Config()
 	assert.Equal(t, 5, len(cfg.PluginConfigs))
 
 	// delete the config map and validate the plugins are removed
 	ch.deleted(configResource.meta.Name)
-	cfg, changed = ch.Config()
-	assert.True(t, changed)
+	cfg = ch.Config()
 	assert.Equal(t, 2, len(cfg.PluginConfigs))
 }
 
@@ -219,4 +218,10 @@ func makeSecret(name string, data map[string]string) *v1.Secret {
 		},
 		StringData: data,
 	}
+}
+
+type FakePluginProvider []discovery.PluginConfig
+
+func (f FakePluginProvider) DiscoveryPluginConfigs() []discovery.PluginConfig {
+	return f
 }

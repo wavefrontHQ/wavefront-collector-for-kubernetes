@@ -113,6 +113,7 @@ tls_config:
  ca_file: '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
  insecure_skip_verify: true
 `,
+		Internal: true,
 	}
 	pod.Annotations = map[string]string{}
 
@@ -120,7 +121,7 @@ tls_config:
 	pcfg = promCfg.(configuration.PrometheusSourceConfig)
 
 	assert.Equal(t, fmt.Sprintf("https://%s:9103/path", pod.Status.PodIP), pcfg.URL)
-	assert.Equal(t, resName+":9103/path", pcfg.Name)
+	assert.Equal(t, resName+":9103/path.internal", pcfg.Name)
 	assert.Equal(t, "rule", pcfg.Discovered)
 	assert.Equal(t, "test", pcfg.Source)
 	assert.Equal(t, "foo.", pcfg.Prefix)

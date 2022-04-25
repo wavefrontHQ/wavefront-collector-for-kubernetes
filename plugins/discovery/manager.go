@@ -4,12 +4,14 @@
 package discovery
 
 import (
-	log "github.com/sirupsen/logrus"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
+	"reflect"
+	"time"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/leadership"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 
 	gm "github.com/rcrowley/go-metrics"
 
@@ -30,11 +32,12 @@ func init() {
 
 // RunConfig encapsulates the runtime configuration required for a discovery manager
 type RunConfig struct {
-	KubeClient      kubernetes.Interface
-	DiscoveryConfig discovery.Config
-	Handler         metrics.ProviderHandler
-	Lister          discovery.ResourceLister
-	Daemon          bool
+	KubeClient             kubernetes.Interface
+	DiscoveryConfig        discovery.Config
+	Handler                metrics.ProviderHandler
+	InternalPluginProvider discovery.PluginProvider
+	Lister                 discovery.ResourceLister
+	Daemon                 bool
 }
 
 // Manager manages the discovery of kubernetes targets based on annotations or configuration rules.
@@ -68,11 +71,15 @@ func (dm *Manager) Start() {
 	cfg := dm.runConfig.DiscoveryConfig
 	if cfg.EnableRuntimePlugins {
 		log.Info("runtime plugins enabled")
-		dm.configListener = newConfigHandler(dm.runConfig.KubeClient, dm.runConfig.DiscoveryConfig)
+		dm.configListener = newConfigHandler(
+			dm.runConfig.KubeClient,
+			dm.runConfig.DiscoveryConfig,
+			dm.runConfig.InternalPluginProvider,
+		)
 		if !dm.configListener.start() {
 			log.Error("timed out waiting for configmap caches to sync")
 		}
-		cfg, _ = dm.configListener.Config()
+		cfg = dm.configListener.Config()
 	}
 	dm.discoverer = newDiscoverer(dm.runConfig.Handler, cfg, dm.runConfig.Lister)
 	dm.startResyncConfig()
@@ -128,13 +135,23 @@ func (dm *Manager) startResyncConfig() {
 	interval := dm.runConfig.DiscoveryConfig.DiscoveryInterval
 	log.Infof("discovery config interval: %v", interval)
 
-	go util.Retry(func() {
+	go NotifyOfChanges(func() discovery.Config {
 		log.Info("checking for runtime plugin changes")
-		_, changed := dm.configListener.Config()
-		if changed {
-			log.Info("found new runtime plugins")
-			dm.Stop()
-			dm.Start()
-		}
+		return dm.configListener.Config()
+	}, func() {
+		log.Info("found new runtime plugins")
+		dm.Stop()
+		dm.Start()
+
 	}, interval, dm.stopCh)
+}
+
+func NotifyOfChanges(get func() discovery.Config, notify func(), interval time.Duration, stopCh chan struct{}) {
+	prevVal := get()
+	util.Retry(func() {
+		val := get()
+		if !reflect.DeepEqual(val, prevVal) {
+			notify()
+		}
+	}, interval, stopCh)
 }

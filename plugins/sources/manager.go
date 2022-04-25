@@ -24,6 +24,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
+
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources/controlplane"
+
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources/cadvisor"
 
 	log "github.com/sirupsen/logrus"
@@ -68,6 +72,7 @@ func init() {
 // SourceManager ProviderHandler with metrics gathering support
 type SourceManager interface {
 	metrics.ProviderHandler
+	discovery.PluginProvider
 
 	StopProviders()
 	GetPendingMetrics() []*metrics.Batch
@@ -102,6 +107,16 @@ func Manager() SourceManager {
 		go singleton.run()
 	})
 	return singleton
+}
+
+func (sm *sourceManagerImpl) DiscoveryPluginConfigs() []discovery.PluginConfig {
+	var pluginConfigs []discovery.PluginConfig
+	for _, provider := range sm.metricsSourceProviders {
+		if pluginProvider, ok := provider.(discovery.PluginProvider); ok {
+			pluginConfigs = append(pluginConfigs, pluginProvider.DiscoveryPluginConfigs()...)
+		}
+	}
+	return pluginConfigs
 }
 
 // BuildProviders creates a new source manager with the configured MetricsSourceProviders
@@ -276,9 +291,7 @@ func (sm *sourceManagerImpl) GetPendingMetrics() []*metrics.Batch {
 	return response
 }
 
-func buildProviders(cfg configuration.SourceConfig) []metrics.SourceProvider {
-	result := make([]metrics.SourceProvider, 0)
-
+func buildProviders(cfg configuration.SourceConfig) (result []metrics.SourceProvider) {
 	if cfg.SummaryConfig != nil {
 		provider, err := summary.NewSummaryProvider(*cfg.SummaryConfig)
 		result = appendProvider(result, provider, err, cfg.SummaryConfig.Collection)
@@ -286,6 +299,10 @@ func buildProviders(cfg configuration.SourceConfig) []metrics.SourceProvider {
 		if cfg.CadvisorConfig != nil {
 			provider, err = cadvisor.NewProvider(*cfg.CadvisorConfig, *cfg.SummaryConfig)
 			result = appendProvider(result, provider, err, cfg.CadvisorConfig.Collection)
+		}
+		if cfg.ControlPlaneConfig != nil {
+			provider, err = controlplane.NewProvider(*cfg.ControlPlaneConfig, *cfg.SummaryConfig)
+			result = appendProvider(result, provider, err, cfg.ControlPlaneConfig.Collection)
 		}
 	}
 	if cfg.SystemdConfig != nil {

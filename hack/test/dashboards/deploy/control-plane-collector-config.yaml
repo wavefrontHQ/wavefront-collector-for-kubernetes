@@ -10,6 +10,9 @@ data:
     enableDiscovery: true
     flushInterval: 30s
 
+    # Metric collection interval for wavefront collector, set to "60s" by default
+    # defaultCollectionInterval: 120s
+
     # sample configuration to filter events
     # events:
     #   filters:
@@ -76,29 +79,35 @@ data:
       #    - "kubernetes.cadvisor.container.cpu.cfs.throttled.seconds.total.counter"
       #    - "kubernetes.cadvisor.container.cpu.cfs.throttled.periods.total.counter"
 
+      kubernetes_control_plane_source:
+        collection:
+          interval: "120s"
 
-      prometheus_sources:
+      # prometheus_sources:
 
       ##########################################################################
       # Static source to collect control plane metrics from the API Server
       ##########################################################################
-       - url: 'https://kubernetes.default.svc.cluster.local:443/metrics'
-         httpConfig:
-           bearer_token_file: '/var/run/secrets/kubernetes.io/serviceaccount/token'
-           tls_config:
-             ca_file: '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
-             insecure_skip_verify: true
-         prefix: 'kube.apiserver.'
-
-         filters:
-           metricAllowList:
-           - 'kube.apiserver.etcd.request.duration.seconds.bucket'
-           - 'kube.apiserver.etcd.object.counts.gauge'
-           - 'kube.apiserver.etcd.db.total.size.in.bytes.gauge'
-           - 'kube.apiserver.apiserver.request.duration.seconds.bucket'
-           - 'kube.apiserver.apiserver.request.total.counter'
-           - 'kube.apiserver.workqueue.adds.total.counter'
-           - 'kube.apiserver.workqueue.queue.duration.seconds.bucket'
+      # - url: 'https://kubernetes.default.svc:443/metrics'
+      #   httpConfig:
+      #     bearer_token_file: '/var/run/secrets/kubernetes.io/serviceaccount/token'
+      #     tls_config:
+      #       ca_file: '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
+      #       insecure_skip_verify: true
+      #   prefix: 'kube.apiserver.'
+      #
+      #   filters:
+      #     metricAllowList:
+      #     - 'kube.apiserver.apiserver.*'
+      #     - 'kube.apiserver.etcd.*'
+      #     - 'kube.apiserver.process.*'
+      #     - 'kube.apiserver.etcd.request.duration.seconds.bucket'
+      #     - 'kube.apiserver.etcd.object.counts.gauge'
+      #     - 'kube.apiserver.etcd.db.total.size.in.bytes.gauge'
+      #     - 'kube.apiserver.apiserver.request.duration.seconds.bucket'
+      #     - 'kube.apiserver.apiserver.request.total.counter'
+      #     - 'kube.apiserver.workqueue.adds.total.counter'
+      #     - 'kube.apiserver.workqueue.queue.duration.seconds.bucket'
 
     # discovery rules for auto-discovery of pods and services
     discovery:
@@ -324,29 +333,27 @@ data:
           - 'kube.dns.http.response.size.bytes'
           - 'kube.dns.kubedns.dnsmasq.*'
           - 'kube.dns.process.*'
-
-      # auto-discover coredns
-      - name: coredns-discovery
-        type: prometheus
-        selectors:
-          images:
-          - '*coredns:*'
-          labels:
-            k8s-app:
-            - kube-dns
-        port: 9153
-        path: /metrics
-        scheme: http
-        prefix: kube.coredns.
-        filters:
-          metricAllowList:
-          - 'kube.coredns.coredns.cache.*'
-          - 'kube.coredns.coredns.dns.request.count.total.counter'
-          - 'kube.coredns.coredns.dns.request.duration.seconds'
-          - 'kube.coredns.coredns.dns.request.size.bytes'
-          - 'kube.coredns.coredns.dns.request.type.count.total.counter'
-          - 'kube.coredns.coredns.dns.response.rcode.count.total.counter'
-          - 'kube.coredns.coredns.dns.response.size.bytes'
-          - 'kube.coredns.process.*'
-          - 'kube.coredns.coredns.dns.request.duration.seconds.bucket'
-          - 'kube.coredns.coredns.dns.responses.total.counter'
+#
+#      # auto-discover coredns
+#      - name: coredns-discovery
+#        type: prometheus
+#        selectors:
+#          images:
+#          - '*coredns:*'
+#          labels:
+#            k8s-app:
+#            - kube-dns
+#        port: 9153
+#        path: /metrics
+#        scheme: http
+#        prefix: kube.coredns.
+#        filters:
+#          metricAllowList:
+#          - 'kube.coredns.coredns.cache.*'
+#          - 'kube.coredns.coredns.dns.request.count.total.counter'
+#          - 'kube.coredns.coredns.dns.request.duration.seconds'
+#          - 'kube.coredns.coredns.dns.request.size.bytes'
+#          - 'kube.coredns.coredns.dns.request.type.count.total.counter'
+#          - 'kube.coredns.coredns.dns.response.rcode.count.total.counter'
+#          - 'kube.coredns.coredns.dns.response.size.bytes'
+#          - 'kube.coredns.process.*'

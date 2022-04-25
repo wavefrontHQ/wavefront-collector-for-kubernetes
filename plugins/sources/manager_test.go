@@ -21,6 +21,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
+
 	log "github.com/sirupsen/logrus"
 
 	"github.com/stretchr/testify/assert"
@@ -186,6 +188,24 @@ func TestConfig(t *testing.T) {
 	assert.Equal(t, time.Minute, provider.Timeout(), "incorrect Timeout")
 }
 
+func TestPluginConfigProvider(t *testing.T) {
+	t.Run("provides plugin configs for source providers that offer them", func(t *testing.T) {
+		pluginConfigProvider := &testPluginProvider{}
+		regularProvider := &testProvider{}
+		Manager().AddProvider(pluginConfigProvider)
+		Manager().AddProvider(regularProvider)
+
+		discoveryConfigs := Manager().DiscoveryPluginConfigs()
+
+		if assert.Equal(t, 1, len(discoveryConfigs)) {
+			assert.Equal(t, "testDiscoveryConfig", discoveryConfigs[0].Name)
+		}
+
+		Manager().DeleteProvider("testPluginProvider")
+		Manager().DeleteProvider("testProvider")
+	})
+}
+
 type testProvider struct {
 	metrics.DefaultSourceProvider
 }
@@ -196,4 +216,20 @@ func (p *testProvider) GetMetricsSources() []metrics.Source {
 
 func (p *testProvider) Name() string {
 	return "testProvider"
+}
+
+type testPluginProvider struct {
+	metrics.DefaultSourceProvider
+}
+
+func (p *testPluginProvider) DiscoveryPluginConfigs() []discovery.PluginConfig {
+	return []discovery.PluginConfig{{Name: "testDiscoveryConfig"}}
+}
+
+func (p *testPluginProvider) GetMetricsSources() []metrics.Source {
+	return make([]metrics.Source, 0)
+}
+
+func (p *testPluginProvider) Name() string {
+	return "testPluginProvider"
 }

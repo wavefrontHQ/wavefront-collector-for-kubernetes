@@ -6,7 +6,6 @@ package discovery
 import (
 	"context"
 	"io/ioutil"
-	"reflect"
 	"sort"
 	"sync"
 	"time"
@@ -32,11 +31,10 @@ type configHandler struct {
 	configMapInformer cache.SharedInformer
 	secretInformer    cache.SharedInformer
 
-	mtx         sync.RWMutex
-	cfg         discovery.Config            // main configuration obtained by combining wired and dynamic configuration
-	wiredCfg    discovery.Config            // wired configuration
-	runtimeCfgs map[string]discovery.Config // dynamic runtime configurations
-	changed     bool                        // flag for tracking runtime cfg changes
+	mtx                    sync.RWMutex
+	wiredCfg               discovery.Config            // wired configuration
+	runtimeCfgs            map[string]discovery.Config // dynamic runtime configurations
+	internalPluginProvider discovery.PluginProvider
 }
 
 type configResource struct {
@@ -44,11 +42,11 @@ type configResource struct {
 	data map[string]string
 }
 
-func newConfigHandler(kubeClient kubernetes.Interface, cfg discovery.Config) *configHandler {
+func newConfigHandler(kubeClient kubernetes.Interface, cfg discovery.Config, internalPluginProvider discovery.PluginProvider) *configHandler {
 	handler := &configHandler{
-		cfg:         cfg,
-		wiredCfg:    cfg,
-		runtimeCfgs: make(map[string]discovery.Config),
+		wiredCfg:               cfg,
+		runtimeCfgs:            make(map[string]discovery.Config),
+		internalPluginProvider: internalPluginProvider,
 	}
 
 	ns := util.GetNamespaceName()
@@ -163,22 +161,11 @@ func updateSecretIfValid(obj interface{}, handler *configHandler) {
 
 // Config gets the combined discovery configuration and a boolean indicating whether
 // the configuration has changed since the last call to this function
-func (handler *configHandler) Config() (discovery.Config, bool) {
+func (handler *configHandler) Config() discovery.Config {
 	handler.mtx.Lock()
 	defer handler.mtx.Unlock()
 
-	if !handler.changed {
-		return handler.cfg, false
-	}
-	handler.changed = false
-
-	newCfg := combine(handler.wiredCfg, handler.runtimeCfgs)
-	if !reflect.DeepEqual(handler.cfg, newCfg) {
-		// update the main combined config
-		handler.cfg = newCfg
-		return handler.cfg, true
-	}
-	return handler.cfg, false
+	return combine(handler.wiredCfg, handler.runtimeCfgs, handler.internalPluginProvider)
 }
 
 func (handler *configHandler) updated(configResource *configResource) {
@@ -201,7 +188,6 @@ func (handler *configHandler) updated(configResource *configResource) {
 
 	// update the internal map entry
 	handler.runtimeCfgs[configResource.meta.Name] = loaded
-	handler.changed = true
 }
 
 func (handler *configHandler) deleted(name string) {
@@ -210,7 +196,6 @@ func (handler *configHandler) deleted(name string) {
 	if _, found := handler.runtimeCfgs[name]; found {
 		log.Infof("deleted discovery configuration from %s", name)
 		delete(handler.runtimeCfgs, name)
-		handler.changed = true
 	}
 }
 
@@ -233,31 +218,37 @@ func load(data map[string]string) (discovery.Config, error) {
 	return *cfg, nil
 }
 
-func combine(cfg discovery.Config, cfgs map[string]discovery.Config) discovery.Config {
+func combine(wiredCfg discovery.Config, runtimeCfgs map[string]discovery.Config, internalPluginProvider discovery.PluginProvider) discovery.Config {
 	runCfg := &discovery.Config{
-		DiscoveryInterval:          cfg.DiscoveryInterval,
-		AnnotationPrefix:           cfg.AnnotationPrefix,
-		AnnotationExcludes:         cfg.AnnotationExcludes,
-		PluginConfigs:              cfg.PluginConfigs,
-		DisableAnnotationDiscovery: cfg.DisableAnnotationDiscovery,
+		DiscoveryInterval:          wiredCfg.DiscoveryInterval,
+		AnnotationPrefix:           wiredCfg.AnnotationPrefix,
+		AnnotationExcludes:         wiredCfg.AnnotationExcludes,
+		PluginConfigs:              wiredCfg.PluginConfigs,
+		DisableAnnotationDiscovery: wiredCfg.DisableAnnotationDiscovery,
 	}
 
 	// build a sorted slice of map keys for consistent iteration order
-	keys := make([]string, len(cfgs))
+	keys := make([]string, len(runtimeCfgs))
 	i := 0
-	for k := range cfgs {
+	for k := range runtimeCfgs {
 		keys[i] = k
 		i++
 	}
+
 	sort.Strings(keys)
 
 	log.Debug("combining discovery configurations")
 	for _, key := range keys {
-		c := cfgs[key]
+		c := runtimeCfgs[key]
 		if len(c.PluginConfigs) > 0 {
 			runCfg.PluginConfigs = append(runCfg.PluginConfigs, c.PluginConfigs...)
 		}
 	}
+
+	if internalPluginProvider != nil {
+		runCfg.PluginConfigs = append(runCfg.PluginConfigs, internalPluginProvider.DiscoveryPluginConfigs()...)
+	}
+
 	log.Debugf("total plugin configs: %d", len(runCfg.PluginConfigs))
 	return *runCfg
 }
