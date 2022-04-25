@@ -245,9 +245,7 @@ func combine(wiredCfg discovery.Config, runtimeCfgs map[string]discovery.Config,
 		}
 	}
 
-	log.Infof("++++++++++ just before internalPluginProvider print")
 	if internalPluginProvider != nil {
-		log.Infof("****************** internalPluginProvider configs: %+v", internalPluginProvider.DiscoveryPluginConfigs())
 		runCfg.PluginConfigs = append(runCfg.PluginConfigs, internalPluginProvider.DiscoveryPluginConfigs()...)
 	}
 

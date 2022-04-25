@@ -1,22 +1,23 @@
 package discovery
 
 import (
+	"testing"
+	"time"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 	apicorev1 "k8s.io/api/core/v1"
-	"testing"
-	"time"
 )
 
 func TestNotifyOfChanges(t *testing.T) {
 	t.Run("calls notify", func(t *testing.T) {
 		stopCh := make(chan struct{})
-		discoveryCount := 0 * time.Second
+		discoveryCount := 0 * time.Millisecond
 		get := func() discovery.Config {
 			discoveryCount++
 			return discovery.Config{
-				DiscoveryInterval: discoveryCount * time.Second,
+				DiscoveryInterval: discoveryCount * time.Millisecond,
 			}
 		}
 
@@ -26,7 +27,7 @@ func TestNotifyOfChanges(t *testing.T) {
 			close(stopCh)
 		}
 
-		NotifyOfChanges(get, notify, 3*time.Second, stopCh)
+		NotifyOfChanges(get, notify, 3*time.Millisecond, stopCh)
 
 		assert.True(t, testSucceeded)
 	})
@@ -45,17 +46,17 @@ func TestNotifyOfChanges(t *testing.T) {
 			close(stopCh)
 		}
 
-		time.AfterFunc(15*time.Second, func() {
+		time.AfterFunc(15*time.Millisecond, func() {
 			close(stopCh)
 		})
-		NotifyOfChanges(get, notify, 3*time.Second, stopCh)
+		NotifyOfChanges(get, notify, 3*time.Millisecond, stopCh)
 
 		assert.False(t, testSucceeded)
 	})
 
 	t.Run("retries until successful", func(t *testing.T) {
 		stopCh := make(chan struct{})
-		discoveryCount := 0 * time.Second
+		discoveryCount := 0 * time.Millisecond
 		get := func() discovery.Config {
 			discoveryCount++
 			if discoveryCount >= 4 {
@@ -75,7 +76,7 @@ func TestNotifyOfChanges(t *testing.T) {
 			close(stopCh)
 		}
 
-		NotifyOfChanges(get, notify, 3*time.Second, stopCh)
+		NotifyOfChanges(get, notify, 3*time.Millisecond, stopCh)
 
 		assert.True(t, testSucceeded)
 	})

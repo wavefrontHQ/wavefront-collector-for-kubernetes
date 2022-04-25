@@ -4,13 +4,14 @@
 package discovery
 
 import (
+	"reflect"
+	"time"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/leadership"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
-	"reflect"
-	"time"
 
 	gm "github.com/rcrowley/go-metrics"
 
@@ -134,7 +135,7 @@ func (dm *Manager) startResyncConfig() {
 	interval := dm.runConfig.DiscoveryConfig.DiscoveryInterval
 	log.Infof("discovery config interval: %v", interval)
 
-	NotifyOfChanges(func() discovery.Config {
+	go NotifyOfChanges(func() discovery.Config {
 		log.Info("checking for runtime plugin changes")
 		return dm.configListener.Config()
 	}, func() {
