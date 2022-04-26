@@ -168,7 +168,7 @@ prefix: <string>
 For more information on control plane metrics, see [reference](https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes/blob/master/docs/metrics.md#control-plane-metrics).
 
 ```yaml
-# We recommend using`120s`
+# We recommend using `120s`
 collection:
     interval: "120s"
 ```
