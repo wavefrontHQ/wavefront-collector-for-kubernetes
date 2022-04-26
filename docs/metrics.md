@@ -216,13 +216,13 @@ These are metrics for the health of the Kubernetes Control Plane.
 Metrics collected per type:
 
 | Metric Name                                              | Description                                                                                         | K8s environment exceptions      |
-|----------------------------------------------------------|-----------------------------------------------------------------------------------------------------|---------------------------------|
-| kube.apiserver.etcd.request.duration.seconds.bucket      | Histogram buckets for etcd request latency                                                          | -                               |
-| kube.apiserver.etcd.object.counts.gauge                  | etcd object counts                                                                                  | -                               |
- | kube.apiserver.etcd.db.total.size.in.bytes.gauge         | etcd database size                                                                                  | -                               |
- | kube.apiserver.apiserver.request.duration.seconds.bucket | Histogram buckets for API server request latency                                                    | -                               |
- | kube.apiserver.apiserver.request.total.counter           | API server total request count                                                                      | -                               |
- | kube.apiserver.workqueue.adds.total.counter              | Current depth of API server workqueue                                                               | -                               |
-| kube.apiserver.workqueue.queue.duration.seconds.bucket   | Histogram buckets for workqueue latency                                                             | -                               |
- | kube.coredns.coredns.dns.request.duration.seconds.bucket | Histogram buckets for CoreDNS request latency                                                       | Not available in GKE, OpenShift |
- | kube.coredns.coredns.dns.responses.total.counter         | CoreDNS total response count                                                                        | Not available in GKE, OpenShift |
+|---------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------|---------------------------------|
+| kubernetes.controlplane.etcd.request.duration.seconds.bucket        | Histogram buckets for etcd request latency                                                          | -                               |
+| kubernetes.controlplane.etcd.object.counts.gauge                    | etcd object counts                                                                                  | -                               |
+| kubernetes.controlplane.etcd.db.total.size.in.bytes.gauge           | etcd database size                                                                                  | -                               |
+| kubernetes.controlplane.apiserver.request.duration.seconds.bucket   | Histogram buckets for API server request latency                                                    | -                               |
+| kubernetes.controlplane.apiserver.request.total.counter             | API server total request count                                                                      | -                               |
+| kubernetes.controlplane.workqueue.adds.total.counter                | Current depth of API server workqueue                                                               | -                               |
+| kubernetes.controlplane.workqueue.queue.duration.seconds.bucket     | Histogram buckets for workqueue latency                                                             | -                               |
+| kubernetes.controlplane.coredns.dns.request.duration.seconds.bucket | Histogram buckets for CoreDNS request latency                                                       | Not available in GKE, OpenShift |
+| kubernetes.controlplane.coredns.dns.responses.total.counter         | CoreDNS total response count                                                                        | Not available in GKE, OpenShift |

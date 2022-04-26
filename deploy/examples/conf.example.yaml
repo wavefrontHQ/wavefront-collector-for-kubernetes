@@ -76,6 +76,17 @@ data:
       kubernetes_state_source:
         prefix: 'kubernetes.'
 
+      kubernetes_cadvisor_source:
+        prefix: 'kubernetes.cadvisor.'
+        filters:
+          metricAllowList:
+          - "kubernetes.cadvisor.container.cpu.cfs.throttled.seconds.total.counter"
+          - "kubernetes.cadvisor.container.cpu.cfs.throttled.periods.total.counter"
+
+      kubernetes_control_plane_source:
+        collection:
+          interval: "120s"
+
       telegraf_sources:
       # empty list enables all host level telegraf plugins
       - plugins: []
@@ -104,13 +115,6 @@ data:
           - 'kube.apiserver.apiserver.*'
           - 'kube.apiserver.etcd.*'
           - 'kube.apiserver.process.*'
-          - 'kube.apiserver.etcd.request.duration.seconds.bucket'
-          - 'kube.apiserver.etcd.object.counts.gauge'
-          - 'kube.apiserver.etcd.db.total.size.in.bytes.gauge'
-          - 'kube.apiserver.apiserver.request.duration.seconds.bucket'
-          - 'kube.apiserver.apiserver.request.total.counter'
-          - 'kube.apiserver.workqueue.adds.total.counter'
-          - 'kube.apiserver.workqueue.queue.duration.seconds.bucket'
 
     # discovery rules for auto-discovery of pods and services
     discovery:
@@ -355,5 +359,3 @@ data:
           - 'kube.coredns.coredns.dns.response.rcode.count.total.counter'
           - 'kube.coredns.coredns.dns.response.size.bytes'
           - 'kube.coredns.process.*'
-          - 'kube.coredns.coredns.dns.request.duration.seconds.bucket'
-          - 'kube.coredns.coredns.dns.responses.total.counter'
