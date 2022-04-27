@@ -66,6 +66,10 @@ sources:
   kubernetes_cadvisor_source:
     # see kubernetes_cadvisor_source for details
 
+  # Optional source for collecting control plane metrics
+  kubernetes_control_plane_source:
+    # see kubernetes_control_plane_source for details
+
   # Optional source for emitting internal collector stats.
   internal_stats_source:
     # see internal_stats_source for details
