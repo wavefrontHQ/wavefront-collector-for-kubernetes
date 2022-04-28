@@ -66,6 +66,10 @@ sources:
   kubernetes_cadvisor_source:
     # see kubernetes_cadvisor_source for details
 
+  # Optional source for collecting control plane metrics
+  kubernetes_control_plane_source:
+    # see kubernetes_control_plane_source for details
+
   # Optional source for emitting internal collector stats.
   internal_stats_source:
     # see internal_stats_source for details
@@ -162,6 +166,15 @@ prefix: <string>
 ```yaml
 # We recommend using `kubernetes.cadvisor.` Defaults to empty string.
 prefix: <string>
+```
+
+### kubernetes_control_plane_source
+For more information on control plane metrics, see [reference](https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes/blob/master/docs/metrics.md#control-plane-metrics).
+
+```yaml
+# We recommend using `120s`
+collection:
+    interval: "120s"
 ```
 
 ### prometheus_source
@@ -278,62 +291,6 @@ collection:
 
   # Duration type specified as [0-9]+(ms|[smhdwy])
   timeout: 20s
-```
-
-#### Custom configurations
-
-##### Control Plane Metric configuration
-
-For more information on control plane metrics, see [reference](https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes/blob/master/docs/metrics.md#control-plane-metrics).  
-
-Add the following to calculate API server and etcd SLIs and SLOs.
-```yaml
-prometheus_sources:
-
-##########################################################################
-# Static source to collect control plane metrics from the API Server
-##########################################################################
-- url: 'https://kubernetes.default.svc.cluster.local:443/metrics'
-  httpConfig:
-    bearer_token_file: '/var/run/secrets/kubernetes.io/serviceaccount/token'
-    tls_config:
-      ca_file: '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
-      insecure_skip_verify: true
-  prefix: 'kube.apiserver.'
-
-  filters:
-    metricAllowList:
-    - 'kube.apiserver.apiserver.*'
-    - 'kube.apiserver.etcd.*'
-    - 'kube.apiserver.process.*'
-    - 'kube.apiserver.etcd.request.duration.seconds.bucket'
-    - 'kube.apiserver.etcd.object.counts.gauge'
-    - 'kube.apiserver.etcd.db.total.size.in.bytes.gauge'
-    - 'kube.apiserver.apiserver.request.duration.seconds.bucket'
-    - 'kube.apiserver.apiserver.request.total.counter'
-    - 'kube.apiserver.workqueue.adds.total.counter'
-    - 'kube.apiserver.workqueue.queue.duration.seconds.bucket'
-```
-Add the following to calculate CoreDNS SLIs and SLOs.
-```yaml
-discovery:
-  plugins:
-  - name: coredns-discovery
-    type: prometheus
-    selectors:
-      images:
-      - '*coredns:*'
-      labels:
-        k8s-app:
-        - kube-dns
-    port: 9153
-    path: /metrics
-    scheme: http
-    prefix: kube.coredns.
-    filters:
-      metricAllowList:
-      - 'kube.coredns.coredns.dns.request.duration.seconds.bucket'
-      - 'kube.coredns.coredns.dns.responses.total.counter'
 ```
 
 ##### CA cert configuration
