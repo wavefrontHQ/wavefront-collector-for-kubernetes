@@ -1,4 +1,4 @@
-#!/bin/bash -eou pipefail
+#!/bin/bash -e
 
 curl 'https://www.random.org/lists/?mode=advanced' \
   -H 'authority: www.random.org' \
@@ -9,5 +9,5 @@ curl 'https://www.random.org/lists/?mode=advanced' \
   -H 'sec-fetch-user: ?1' \
   -H 'sec-fetch-dest: document' \
   -H 'referer: https://www.random.org/lists/?mode=advanced' \
-  --data-raw 'list=Anil%0D%0AMark%0D%0APriya%0D%0AMatt%0D%0AJohn%0D%0AHelen%0D%0AJoe&format=plain&rnd=new' \
+  --data 'list=Anil%0D%0AMark%0D%0APriya%0D%0AMatt%0D%0AJohn%0D%0AHelen%0D%0AJoe&format=plain&rnd=new' \
   --compressed
