@@ -81,7 +81,7 @@ function main() {
   cd "$(dirname "$0")" # hack/test
 
   local AFTER_UNIX_TS="$(date '+%s')000"
-  local MAX_QUERY_TIMES=20
+  local MAX_QUERY_TIMES=30
   local CURL_WAIT=15
 
   # REQUIRED
