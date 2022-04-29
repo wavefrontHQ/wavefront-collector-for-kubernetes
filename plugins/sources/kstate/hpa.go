@@ -8,15 +8,15 @@ import (
 	"time"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
+	"k8s.io/api/autoscaling/v2beta2"
 
 	log "github.com/sirupsen/logrus"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
-	"k8s.io/api/autoscaling/v2beta1"
 )
 
 func pointsForHPA(item interface{}, transforms configuration.Transforms) []*wf.Point {
-	hpa, ok := item.(*v2beta1.HorizontalPodAutoscaler)
+	hpa, ok := item.(*v2beta2.HorizontalPodAutoscaler)
 	if !ok {
 		log.Errorf("invalid type: %s", reflect.TypeOf(item).String())
 		return nil
