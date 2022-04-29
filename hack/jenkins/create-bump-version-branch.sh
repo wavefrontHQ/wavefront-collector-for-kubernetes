@@ -20,10 +20,11 @@ NEW_VERSION=$(semver-cli inc "$BUMP_COMPONENT" "$OLD_VERSION")
 echo "$NEW_VERSION" >../../release/VERSION
 
 GIT_BUMP_BRANCH_NAME="bump-${NEW_VERSION}"
+git branch -D "$GIT_BUMP_BRANCH_NAME" &>/dev/null || true
 git checkout -b "$GIT_BUMP_BRANCH_NAME"
 
 echo "Bumping ${OLD_VERSION} to ${NEW_VERSION} in ../../deploy/kubernetes/5-collector-daemonset.yaml"
 sed -i "s/${OLD_VERSION}/${NEW_VERSION}/g" "../../deploy/kubernetes/5-collector-daemonset.yaml"
 git commit -am "bump version to ${NEW_VERSION}"
 
-git push --set-upstream origin "${GIT_BUMP_BRANCH_NAME}"
+git push --force --set-upstream origin "${GIT_BUMP_BRANCH_NAME}"
