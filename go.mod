@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/coreos/go-systemd/v22 v22.3.2
 	github.com/gobwas/glob v0.2.3
-	github.com/google/cadvisor v0.35.0
+	github.com/google/cadvisor v0.44.1
 	github.com/influxdata/telegraf v0.10.2-0.20191023195903-9a4f08e94774
 	github.com/influxdata/toml v0.0.0-20190415235208-270119a8ce65
 	github.com/json-iterator/go v1.1.12
@@ -40,7 +40,7 @@ require (
 	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/go-redis/redis v6.15.6+incompatible // indirect
 	github.com/go-sql-driver/mysql v1.4.1 // indirect
-	github.com/godbus/dbus/v5 v5.0.4 // indirect
+	github.com/godbus/dbus/v5 v5.0.6 // indirect
 	github.com/gofrs/uuid v3.3.0+incompatible // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
