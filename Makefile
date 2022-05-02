@@ -40,6 +40,8 @@ all: container
 fmt: $(GO_IMPORTS_BIN)
 	find . -type f -name "*.go" | grep -v "./vendor*" | xargs goimports -w
 
+# TODO: exclude certain keys from sorting
+# because we want them to be at the top and visible when we open the file!
 sort-integrations-keys:
 	# TODO: uncomment to run this on all of our dashboards when we're comfortable
 	@#$(REPO_DIR)/hack/sort-json-keys-inplace.sh $(HOME)/workspace/integrations/kubernetes/dashboards/*.json
