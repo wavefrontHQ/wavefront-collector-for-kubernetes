@@ -8,7 +8,8 @@ pipeline {
   stages {
     stage("Push Openshift Image to RedHat Connect") {
         environment {
-          REDHAT_CREDS=credentials('redhat-connect-wf-collector-creds')
+//           REDHAT_CREDS=credentials('redhat-connect-wf-collector-creds')
+          REDHAT_CREDS=credentials('projects-registry-vmware-tanzu_observability_keights_saas-robot')
           RELEASE_TYPE = 'rc'
           REDHAT_OSPID=credentials("redhat-connect-ospid-wf-collector")
           REDHAT_API_KEY=credentials("redhat-connect-api-key")
@@ -17,11 +18,12 @@ pipeline {
         }
         steps {
           script {
-            env.PREFIX = "scan.connect.redhat.com/${env.REDHAT_OSPID}"
+//             env.PREFIX = "scan.connect.redhat.com/${env.REDHAT_OSPID}"
+            env.PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-collector-snapshot"
           }
           withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
             sh '''
-            docker login scan.connect.redhat.com -u ${REDHAT_CREDS_USR} -p ${REDHAT_CREDS_PSW}
+            docker login ${PREFIX} -u ${REDHAT_CREDS_USR} -p ${REDHAT_CREDS_PSW}
             docker build -f deploy/docker/Dockerfile-rhel --build-arg=COLLECTOR_VERSION=1.11.0 -t ${PREFIX}/wavefront:1.11.0-rc8 .
             docker push ${PREFIX}/wavefront:1.11.0-rc8
             export PFLT_DOCKERCONFIG=${XDG_RUNTIME_DIR}/containers/auth.json
