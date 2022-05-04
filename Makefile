@@ -135,6 +135,21 @@ ifneq ($(OVERRIDE_IMAGE_NAME),)
 	sudo docker tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OVERRIDE_IMAGE_NAME)
 endif
 
+#RC_SCAN_URL?=scan.connect.redhat.com
+#RC_SCAN_USER?=unused
+#RC_REGISTRY_KEY=
+#certify_redhat_connect:
+#	podman login $(RC_SCAN_URL) -u $(RC_SCAN_USER) -p $(RC_REGISTRY_KEY) # <"View Registry Key" on https://connect.redhat.com/projects/5e605047fe2231a0c2860243/setup-preflight >
+#    export PFLT_DOCKERCONFIG=${XDG_RUNTIME_DIR}/containers/auth.json
+#    podman build -f deploy/docker/Dockerfile-rhel --build-arg=COLLECTOR_VERSION=1.11.0 -t scan.connect.redhat.com/ospid-26e333ec-47a6-42bc-a525-8144325af717/wavefront:1.11.0-rc7 .
+#    podman push scan.connect.redhat.com/ospid-26e333ec-47a6-42bc-a525-8144325af717/wavefront:1.11.0-rc7
+#    # see that check passes
+#    preflight check container scan.connect.redhat.com/ospid-26e333ec-47a6-42bc-a525-8144325af717/wavefront:1.11.0-rc7 --pyxis-api-token=17c0iljpajssu7txveb1c8poi68mnpgt
+#
+#    # certification-project-id comes from URL of project ( https://connect.redhat.com/projects/<certification-project-id> )
+#    # how to get the API token: https://github.com/redhat-openshift-ecosystem/certification-releases/blob/main/4.9/ga/operator-cert-workflow.md#step-b---get-api-key
+#    preflight check container scan.connect.redhat.com/ospid-26e333ec-47a6-42bc-a525-8144325af717/wavefront:1.11.0-rc7 --pyxis-api-token=17c0iljpajssu7txveb1c8poi68mnpgt --submit --certification-project-id=5e605047fe2231a0c2860243
+
 push_rhel_redhat_connect: container_rhel
 	docker tag  $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(PREFIX)/$(DOCKER_IMAGE):$(RELEASE_VERSION)-rc
 	docker push $(PREFIX)/$(DOCKER_IMAGE):$(RELEASE_VERSION)-rc
