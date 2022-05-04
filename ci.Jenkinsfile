@@ -121,7 +121,7 @@ pipeline {
     }
     success {
       script {
-        if (env.BRANCH_NAME == 'master') {
+        if (env.BRANCH_NAME == 'main') {
           sh './hack/jenkins/update_github_status.sh'
         }
       }
