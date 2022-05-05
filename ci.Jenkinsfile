@@ -25,12 +25,12 @@ pipeline {
             sh '''
             ./hack/jenkins/setup-for-openshift-release.sh
             docker login ${PREFIX} -u ${REDHAT_CREDS_USR} -p ${REDHAT_CREDS_PSW}
-//             docker build -f deploy/docker/Dockerfile-rhel --build-arg=COLLECTOR_VERSION=1.11.0 -t ${PREFIX}/wavefront:1.11.0-rc8 .
             preflight --help
-//             docker push ${PREFIX}/wavefront:1.11.0-rc8
-//             export PFLT_DOCKERCONFIG=${XDG_RUNTIME_DIR}/containers/auth.json
-//             preflight check container ${PREFIX}/wavefront:1.11.0-rc8 --pyxis-api-token=${REDHAT_API_KEY}
-//             preflight check container ${PREFIX}/wavefront:1.11.0-rc8 --pyxis-api-token=${REDHAT_API_KEY} --submit --certification-project-id=${REDHAT_PROJECT_ID}
+#           docker build -f deploy/docker/Dockerfile-rhel --build-arg=COLLECTOR_VERSION=1.11.0 -t ${PREFIX}/wavefront:1.11.0-rc8 .
+ #           docker push ${PREFIX}/wavefront:1.11.0-rc8
+ #           export PFLT_DOCKERCONFIG=${XDG_RUNTIME_DIR}/containers/auth.json
+ #          preflight check container ${PREFIX}/wavefront:1.11.0-rc8 --pyxis-api-token=${REDHAT_API_KEY}
+ #           preflight check container ${PREFIX}/wavefront:1.11.0-rc8 --pyxis-api-token=${REDHAT_API_KEY} --submit --certification-project-id=${REDHAT_PROJECT_ID}
             '''
           }
         }
