@@ -66,13 +66,13 @@ The following tables lists the configurable parameters of the Wavefront chart an
 | `collector.useProxy` | Use a Wavefront Proxy to send metrics through | `true` |
 | `collector.proxyAddress` | Non-default Wavefront Proxy address to use, should only be set when `proxy.enabled` is false | `nil` |
 | `collector.apiServerMetrics` | Collect metrics about Kubernetes API server | `false` |
-| `collector.kubernetesState` | Collect metrics about Kubernetes resource states [see more](https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes/blob/master/docs/metrics.md#kubernetes-state-source) | `true` |
+| `collector.kubernetesState` | Collect metrics about Kubernetes resource states [see more](https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes/blob/main/docs/metrics.md#kubernetes-state-source) | `true` |
 | `collector.filters` | Filters to apply towards all collected metrics | See values.yaml |
 | `collector.tags` | Map of tags (key/value) to add to all metrics collected | `nil` |
 | `collector.discovery.enabled` | Rules based and Prometheus endpoints auto-discovery  | `true` |
 | `collector.discovery.annotationPrefix` | Replaces `prometheus.io` as prefix for annotations of auto-discovered Prometheus endpoints | `prometheus.io` |
-| `collector.discovery.enableRuntimeConfigs` | Enable runtime discovery rules [see more](https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes/blob/master/docs/discovery.md#runtime-configurations) | `true` |
-| `collector.discovery.config` | Configuration for rules based auto-discovery [see more](https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes/blob/master/docs/discovery.md) | `nil` |
+| `collector.discovery.enableRuntimeConfigs` | Enable runtime discovery rules [see more](https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes/blob/main/docs/discovery.md#runtime-configurations) | `true` |
+| `collector.discovery.config` | Configuration for rules based auto-discovery [see more](https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes/blob/main/docs/discovery.md) | `nil` |
 | `collector.resources` | CPU/Memory resource requests/limits | CPU: `200m`/`200m`, Memory: `10Mi`/`256Mi` |
 | `proxy.enabled` | Setup and enable Wavefront proxy to send metrics through | `true` |
 | `proxy.image.repository` | Wavefront proxy image registry and name | `wavefronthq/proxy` |
@@ -106,6 +106,6 @@ The following tables lists the configurable parameters of the Wavefront chart an
 
 ## Upgrading
 ### Upgrading from 1.0
-Openshift support has been removed from the helm chart.  Use the Wavefront Openshift operator available [here](https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes/tree/master/deploy/openshift) instead.
+Openshift support has been removed from the helm chart.  Use the Wavefront Openshift operator available [here](https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes/tree/main/deploy/openshift) instead.
 
 The `collector.kubernetesSource` parameter has been replaced with the `collector.useReadOnlyPort` option.
