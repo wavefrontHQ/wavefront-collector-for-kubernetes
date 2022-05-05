@@ -1,4 +1,4 @@
-# Need to change YOUR_CLUSTER, YOUR_API_TOKEN, YOUR_HTTP_PROXY_HOST, YOUR_HTTP_PROXY_PORT and YOUR_CA_CERT accordingly
+# Need to change YOUR_CLUSTER, YOUR_API_TOKEN, YOUR_HTTP_PROXY_HOST, and YOUR_HTTP_PROXY_PORT accordingly
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -60,13 +60,3 @@ spec:
   selector:
     app: wavefront-proxy
 ---
-# Secret for http proxy CA cert
-apiVersion: v1
-kind: Secret
-metadata:
-  name: http-proxy-secret
-  namespace: default
-type: Opaque
-stringData:
-  tls-root-ca-bundle: |
-    YOUR_CA_CERT

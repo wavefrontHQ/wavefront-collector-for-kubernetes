@@ -295,4 +295,10 @@ collection:
 
 ##### CA cert configuration
 
-To enable the HTTP proxy with CA cert see this proxy [example](https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes/blob/master/deploy/examples/6-wavefront-proxy-with-http-proxy.yaml).
+To enable the HTTP proxy with CA cert, you will need to create a Kubernetes secret with your CA cert file:
+
+```kubectl create secret generic http-proxy-secret -n wavefront --from-file=tls-root-ca-bundle=<YOUR_CA_CERT_FILE>```
+
+Then use this [example](https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes/blob/master/deploy/examples/6-wavefront-proxy-with-http-proxy.yaml) to deploy proxy. 
+
+**Note:** You will need to change YOUR_CLUSTER, YOUR_API_TOKEN, YOUR_HTTP_PROXY_HOST, and YOUR_HTTP_PROXY_PORT in the above example.
