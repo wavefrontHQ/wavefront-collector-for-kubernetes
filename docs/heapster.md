@@ -8,4 +8,4 @@ Additionally, the wavefront-kubernetes-collector includes the following enhancem
 1. Support for multiple sources
 2. A prometheus source plugin for scraping prometheus metrics endpoints
 3. Enhancements to the `Wavefront` sink plugin to support [direct ingestion](https://docs.wavefront.com/direct_ingestion.html)
-4. A framework for [auto discovering](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/docs/discovery.md) pods and services that expose prometheus scrape targets.
+4. A framework for [auto discovering](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/main/docs/discovery.md) pods and services that expose prometheus scrape targets.

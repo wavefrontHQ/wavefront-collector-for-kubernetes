@@ -28,7 +28,7 @@ Additional annotations that apply:
 - `prometheus.io/insecureSkipVerify`: Whether to skip https cert validation. Defaults to true.
 - `prometheus.io/serverName`: The cert hostname to verify for the discovered targets.
 
-See an [example](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/deploy/examples/prometheus-annotations-example.yaml) for how to annotate a pod with the above annotations.
+See an [example](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/main/deploy/examples/prometheus-annotations-example.yaml) for how to annotate a pod with the above annotations.
 
 ### Disabling annotation discovery
 Discovery based on annotations is enabled by default, but can be disabled by setting the `disable_annotation_discovery` configuration option to `true`:
@@ -78,7 +78,7 @@ The rules can be supplied under the `discovery` section within the top-level `--
 The collector fetches all the pods/services on startup. It also listens for runtime changes. The rules that match a pod/service are used to collect metrics from the matching targets.
 
 ### Configuration file
-Source: [configs.go](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/internal/discovery/configs.go)
+Source: [configs.go](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/main/internal/discovery/configs.go)
 
 The configuration file is YAML based. Each rule has the following structure:
 ```yaml
@@ -138,7 +138,7 @@ includeLabels: <true|false>
 # filters applied towards the collected metrics before emitting them.
 filters:
   # see the filtering documentation:
-  # https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/docs/filtering.md
+  # https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/main/docs/filtering.md
 
 # custom collection interval for this rule
 collection:
@@ -148,12 +148,12 @@ collection:
   # Duration type specified as [0-9]+(ms|[smhdwy])
   timeout: 20s
 ```
-See the reference [example](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/deploy/examples/conf.example.yaml) for details on how to specify the discovery rules.
+See the reference [example](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/main/deploy/examples/conf.example.yaml) for details on how to specify the discovery rules.
 
 ### Plugin Types
 The supported plugin types are:
 - **prometheus**: For collecting metrics from prometheus metric endpoints.
-- **telegraf/pluginName**: For collecting metrics from applications that are supported by telegraf. See [here](https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes/blob/master/docs/metrics.md#telegraf-source) for the list of supported applications.
+- **telegraf/pluginName**: For collecting metrics from applications that are supported by telegraf. See [here](https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes/blob/main/docs/metrics.md#telegraf-source) for the list of supported applications.
 
   **Note:** The version of telegraf embedded within the collector is 1.10.x.
 
@@ -175,7 +175,7 @@ Discovery rules specified in the main config and via runtime configs are combine
 
 The `discovery_interval` controls how often runtime config changes are evaluated. This is pertinent as runtime changes requires the collector to re-evaluate all pods/services for discovery/data collection.
 
-See the reference [configmap example](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/deploy/examples/runtime/memcached-runtime-config.yaml) or [secret example](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/master/deploy/examples/runtime/memcached-runtime-secret-config.yaml) for details.
+See the reference [configmap example](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/main/deploy/examples/runtime/memcached-runtime-config.yaml) or [secret example](https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/main/deploy/examples/runtime/memcached-runtime-secret-config.yaml) for details.
 
 ## Use Cases
 Together, annotation and rule based discovery can be used to easily collect metrics from the Kubernetes control plane (apiserver, etcd, dns etc), NGINX ingresses, and any application that exposes a Prometheus scrape endpoint.
