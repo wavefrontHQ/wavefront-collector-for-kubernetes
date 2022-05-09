@@ -19,16 +19,16 @@ pwd
 ls -la
 echo GIT_BRANCH is ${GIT_BRANCH}
 
-cd workspace/wavefront-collector-for-kubernetes/
-git clean -dfx
-git checkout ${GIT_BRANCH}
-git pull
-
-VERSION=1.11.0-rc8
-
-podman login ${PREFIX} -u ${REDHAT_CREDS_USR} -p ${REDHAT_CREDS_PSW}
-podman build -f deploy/docker/Dockerfile-rhel --build-arg=COLLECTOR_VERSION=${VERSION} -t ${PREFIX}/wavefront:${VERSION} .
-podman push ${PREFIX}/wavefront:${VERSION}
-export PFLT_DOCKERCONFIG=${XDG_RUNTIME_DIR}/containers/auth.json
-preflight check container ${PREFIX}/wavefront:${VERSION} --pyxis-api-token=${REDHAT_API_KEY}
-preflight check container ${PREFIX}/wavefront:${VERSION} --pyxis-api-token=${REDHAT_API_KEY} --submit --certification-project-id=${REDHAT_PROJECT_ID}
+#cd workspace/wavefront-collector-for-kubernetes/
+#git clean -dfx
+#git checkout ${GIT_BRANCH}
+#git pull
+#
+#VERSION=1.11.0-rc8
+#
+#podman login ${PREFIX} -u ${REDHAT_CREDS_USR} -p ${REDHAT_CREDS_PSW}
+#podman build -f deploy/docker/Dockerfile-rhel --build-arg=COLLECTOR_VERSION=${VERSION} -t ${PREFIX}/wavefront:${VERSION} .
+#podman push ${PREFIX}/wavefront:${VERSION}
+#export PFLT_DOCKERCONFIG=${XDG_RUNTIME_DIR}/containers/auth.json
+#preflight check container ${PREFIX}/wavefront:${VERSION} --pyxis-api-token=${REDHAT_API_KEY}
+#preflight check container ${PREFIX}/wavefront:${VERSION} --pyxis-api-token=${REDHAT_API_KEY} --submit --certification-project-id=${REDHAT_PROJECT_ID}
