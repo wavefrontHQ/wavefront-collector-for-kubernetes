@@ -19,10 +19,10 @@ require (
 	github.com/wavefronthq/go-metrics-wavefront v1.0.3
 	github.com/wavefronthq/wavefront-sdk-go v0.9.11
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/api v0.23.6
-	k8s.io/apimachinery v0.23.6
-	k8s.io/client-go v0.23.6
-	k8s.io/kubelet v0.23.6
+	k8s.io/api v0.21.9
+	k8s.io/apimachinery v0.21.9
+	k8s.io/client-go v0.21.9
+	k8s.io/kubelet v0.21.9
 )
 
 require (
@@ -94,7 +94,6 @@ require (
 	k8s.io/klog/v2 v2.30.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20211115234752-e816edb12b65 // indirect
 	k8s.io/utils v0.0.0-20211116205334-6203023598ed // indirect
-	sigs.k8s.io/json v0.0.0-20211020170558-c049b76a60c6 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.1 // indirect
 	sigs.k8s.io/yaml v1.2.0 // indirect
 )
