@@ -16,7 +16,8 @@ if ! [ -x "$(command -v preflight)" ]; then
 fi
 
 pwd
-echo GIT_BRANCH is $GIT_BRANCH
+ls -la
+echo GIT_BRANCH is ${GIT_BRANCH}
 
 cd workspace/wavefront-collector-for-kubernetes/
 git clean -dfx
