@@ -37,6 +37,7 @@ type RunConfig struct {
 	Handler                metrics.ProviderHandler
 	InternalPluginProvider discovery.PluginProvider
 	Lister                 discovery.ResourceLister
+	ScrapeCluster          bool
 }
 
 // Manager manages the discovery of kubernetes targets based on annotations or configuration rules.
@@ -88,7 +89,9 @@ func (dm *Manager) Start() {
 	dm.serviceListener = newServiceHandler(dm.runConfig.KubeClient, dm.discoverer)
 	dm.podListener.start()
 
-	dm.leadershipMgr.Start()
+    if dm.runConfig.ScrapeCluster {
+        dm.leadershipMgr.Start()
+    }
 }
 
 func (dm *Manager) Stop() {

@@ -84,7 +84,7 @@ func TestDaemonFlag(t *testing.T) {
 		opts := NewCollectorRunOptions()
 
 		expectedErrMsg := "cannot set daemon with either scrape-nodes or scrape-cluster"
-		testCases := [][]string{
+		flagCombos := [][]string{
 			{"--daemon=true", "--scrape-nodes=all"},
 			{"--daemon=true", "--scrape-nodes=own"},
 			{"--daemon=true", "--scrape-nodes=none"},
@@ -96,8 +96,8 @@ func TestDaemonFlag(t *testing.T) {
 			{"--daemon=false", "--scrape-cluster=true"},
 			{"--daemon=false", "--scrape-cluster=false"},
 		}
-		for _, testCase := range testCases {
-			assert.Errorf(t, opts.Parse(pflag.NewFlagSet("fake-collector", pflag.ContinueOnError), testCase), expectedErrMsg)
+		for _, flagCombo := range flagCombos {
+			assert.Errorf(t, opts.Parse(pflag.NewFlagSet("fake-collector", pflag.ContinueOnError), flagCombo), expectedErrMsg)
 		}
 	})
 }

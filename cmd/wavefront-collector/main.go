@@ -79,26 +79,21 @@ func main() {
 }
 
 func preRegister(opt *options.CollectorRunOptions) {
-	if opt.Daemon {
-		nodeName := util.GetNodeName()
-		if nodeName == "" {
-			log.Fatalf("missing environment variable %s", util.NodeNameEnvVar)
-		}
-		err := os.Setenv(util.DaemonModeEnvVar, "true")
-		if err != nil {
-			log.Fatalf("error setting environment variable %s", util.DaemonModeEnvVar)
-		}
-		log.Infof("%s: %s", util.NodeNameEnvVar, nodeName)
+	if err := util.SetScrapeCluster(opt.ScrapeCluster); err != nil {
+		log.Fatalf("error setting environment variable %s", util.ScrapeClusterEnvVar)
 	}
+	if err := util.SetScrapeNodes(opt.ScrapeNodes); err != nil {
+		log.Fatalf("error setting environment variable %s", util.ScrapeNodesEnvVar)
+	}
+	if util.GetNodeName() != "" {
+		log.Infof("%s: %s", util.NodeNameEnvVar, util.GetNodeName())
+	}
+
 	setMaxProcs(opt)
 	registerVersion()
 }
 
 func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
-	// when invoked from cfg reloads original command flags will be missing
-	// always read from the environment variable
-	cfg.Daemon = os.Getenv(util.DaemonModeEnvVar) != ""
-
 	// backwards compat: used by prometheus sources to format histogram metric names
 	setEnvVar("omitBucketSuffix", strconv.FormatBool(cfg.OmitBucketSuffix))
 
@@ -125,7 +120,7 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 	var eventRouter *events.EventRouter
 	if cfg.EnableEvents {
 		events.Log.Info("Events collection enabled")
-		eventRouter = events.NewEventRouter(kubeClient, cfg.EventsConfig, sinkManager, cfg.Daemon)
+		eventRouter = events.NewEventRouter(kubeClient, cfg.EventsConfig, sinkManager, cfg.ScrapeCluster)
 	} else {
 		events.Log.Info("Events collection disabled")
 	}
@@ -247,6 +242,7 @@ func createDiscoveryManagerOrDie(
 			Handler:                handler,
 			InternalPluginProvider: internalPluginConfigProvider,
 			Lister:                 discovery.NewResourceLister(podLister, serviceLister, nodeLister),
+			ScrapeCluster:          cfg.ScrapeCluster,
 		})
 	}
 	return nil
@@ -455,6 +451,7 @@ func waitForStop() {
 type reloader struct {
 	mtx sync.Mutex
 	ag  *agent.Agent
+	opt *options.CollectorRunOptions
 }
 
 // Handles changes to collector or discovery configuration
@@ -470,10 +467,7 @@ func (r *reloader) Handle(cfg interface{}) {
 
 func (r *reloader) handleCollectorCfg(cfg *configuration.Config) {
 	log.Infof("collector configuration changed")
-
-	fillDefaults(cfg)
-
-	// stop the previous agent and start a new agent
+	cfg = convertOrDie(r.opt, cfg)
 	r.ag.Stop()
 	r.ag = createAgentOrDie(cfg)
 }

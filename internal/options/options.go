@@ -18,7 +18,7 @@ type CollectorRunOptions struct {
 	// supported flags
 	Version         bool
 	EnableProfiling bool
-	Daemon          bool
+	daemon          bool
 	ScrapeCluster   bool
 	ScrapeNodes     string
 	ConfigFile      string
@@ -54,7 +54,7 @@ func (opts *CollectorRunOptions) Parse(fs *pflag.FlagSet, args []string) error {
 	// supported flags
 	fs.BoolVar(&opts.Version, "version", false, "print version info and exit")
 	fs.BoolVar(&opts.EnableProfiling, "profile", false, "enable pprof")
-	fs.BoolVar(&opts.Daemon, "daemon", false, "enable daemon mode")
+	fs.BoolVar(&opts.daemon, "daemon", false, "enable daemon mode")
 	fs.BoolVar(&opts.ScrapeCluster, "scrape-cluster", true, "whether to participate in scraping cluster metrics (uses leader election)")
 	fs.StringVar(&opts.ScrapeNodes, "scrape-nodes", "all", "which nodes to scrape (all, own, node)")
 	fs.StringVar(&opts.ConfigFile, "config-file", "", "required configuration file")
@@ -88,37 +88,37 @@ func (opts *CollectorRunOptions) Parse(fs *pflag.FlagSet, args []string) error {
 		return err
 	}
 
-    if err := opts.verifyFlagCombos(fs); err != nil {
-        return err
-    }
+	if err := opts.verifyFlagCombos(fs); err != nil {
+		return err
+	}
 
-	if opts.Daemon {
+	if opts.daemon {
 		opts.ScrapeCluster = true
 		opts.ScrapeNodes = "own"
 	}
 
-    return nil
+	return nil
 }
 
 func (opts *CollectorRunOptions) verifyFlagCombos(fs *pflag.FlagSet) error {
-    var daemonSpecified bool
-    var scrapeNodesSpecified bool
-    var scrapeClusterSpecified bool
-    fs.Visit(func(flag *pflag.Flag) {
-        switch flag.Name {
-        case "daemon":
-            daemonSpecified = flag.Changed
-        case "scrape-nodes":
-            scrapeNodesSpecified = flag.Changed
-        case "scrape-cluster":
-            scrapeClusterSpecified = flag.Changed
-        }
-    })
+	var daemonSpecified bool
+	var scrapeNodesSpecified bool
+	var scrapeClusterSpecified bool
+	fs.Visit(func(flag *pflag.Flag) {
+		switch flag.Name {
+		case "daemon":
+			daemonSpecified = flag.Changed
+		case "scrape-nodes":
+			scrapeNodesSpecified = flag.Changed
+		case "scrape-cluster":
+			scrapeClusterSpecified = flag.Changed
+		}
+	})
 
-    if daemonSpecified && (scrapeNodesSpecified || scrapeClusterSpecified) {
-        return errors.New("cannot set daemon with either scrape-nodes or scrape-cluster")
-    }
-    return nil
+	if daemonSpecified && (scrapeNodesSpecified || scrapeClusterSpecified) {
+		return errors.New("cannot set daemon with either scrape-nodes or scrape-cluster")
+	}
+	return nil
 }
 
 func Parse() *CollectorRunOptions {

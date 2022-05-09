@@ -36,19 +36,19 @@ type EventRouter struct {
 	sink              wavefront.WavefrontSink
 	sharedInformers   informers.SharedInformerFactory
 	stop              chan struct{}
-	daemon            bool
+	scrapeCluster     bool
 	leadershipManager *leadership.Manager
 	filters           eventFilter
 }
 
-func NewEventRouter(clientset kubernetes.Interface, cfg configuration.EventsConfig, sink wavefront.WavefrontSink, daemon bool) *EventRouter {
+func NewEventRouter(clientset kubernetes.Interface, cfg configuration.EventsConfig, sink wavefront.WavefrontSink, scrapeCluster bool) *EventRouter {
 	sharedInformers := informers.NewSharedInformerFactory(clientset, time.Minute)
 	eventsInformer := sharedInformers.Core().V1().Events()
 
 	er := &EventRouter{
 		kubeClient:      clientset,
 		sink:            sink,
-		daemon:          daemon,
+		scrapeCluster:   scrapeCluster,
 		sharedInformers: sharedInformers,
 		filters:         newEventFilter(cfg.Filters),
 	}
@@ -64,10 +64,8 @@ func NewEventRouter(clientset kubernetes.Interface, cfg configuration.EventsConf
 }
 
 func (er *EventRouter) Start() {
-	if er.daemon {
+	if er.scrapeCluster {
 		er.leadershipManager.Start()
-	} else {
-		go func() { er.Resume() }()
 	}
 }
 
@@ -95,7 +93,7 @@ func (er *EventRouter) Pause() {
 }
 
 func (er *EventRouter) Stop() {
-	if er.daemon {
+	if er.scrapeCluster {
 		er.leadershipManager.Stop()
 	}
 	er.Pause()

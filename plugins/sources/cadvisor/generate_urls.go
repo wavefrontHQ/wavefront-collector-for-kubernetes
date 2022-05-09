@@ -17,7 +17,7 @@ type NodeLister interface {
 const cAdvisorEndpoint = "/metrics/cadvisor"
 
 // GenerateURLs generates cAdvisor prometheus urls to be queried by THIS collector instance
-func GenerateURLs(lister NodeLister, myNode string, daemonMode bool, kubeletURL func(ip net.IP, path string) *url.URL) ([]*url.URL, error) {
+func GenerateURLs(lister NodeLister, myNode string, scrapeOwnNode bool, kubeletURL func(ip net.IP, path string) *url.URL) ([]*url.URL, error) {
 	nodeList, err := lister.List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
@@ -29,7 +29,7 @@ func GenerateURLs(lister NodeLister, myNode string, daemonMode bool, kubeletURL 
 			return nil, err
 		}
 		kubeletURL := kubeletURL(ip, cAdvisorEndpoint)
-		if daemonMode {
+		if scrapeOwnNode {
 			if node.Name == myNode {
 				urls = append(urls, kubeletURL)
 				break
