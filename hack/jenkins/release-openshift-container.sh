@@ -16,16 +16,12 @@ if ! [ -x "$(command -v preflight)" ]; then
     sudo mv ./preflight-linux-amd64 /usr/local/bin/preflight
 fi
 
-pwd
-ls -la
-echo GIT_BRANCH is ${GIT_BRANCH}
-
 cd workspace/wavefront-collector-for-kubernetes/
 git clean -dfx
 git checkout ${GIT_BRANCH}
 git pull
 
-VERSION=1.11.0-rc8
+VERSION=$(cat ../../release/VERSION)
 
 podman login ${PREFIX} -u ${REDHAT_CREDS_USR} -p ${REDHAT_CREDS_PSW}
 podman build -f deploy/docker/Dockerfile-rhel --build-arg=COLLECTOR_VERSION=${VERSION} -t ${PREFIX}/wavefront:${VERSION} .
