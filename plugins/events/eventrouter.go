@@ -58,7 +58,7 @@ func NewEventRouter(clientset kubernetes.Interface, cfg configuration.EventsConf
 	})
 	er.eLister = eventsInformer.Lister()
 	er.eListerSynced = eventsInformer.Informer().HasSynced
-    er.leadershipManager = leadership.NewManager(er, leadershipName, clientset)
+	er.leadershipManager = leadership.NewManager(er, leadershipName, clientset)
 
 	return er
 }

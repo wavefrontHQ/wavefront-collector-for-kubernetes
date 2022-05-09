@@ -4,22 +4,22 @@
 package kstate
 
 import (
-    "fmt"
-    "sync"
-    "time"
+	"fmt"
+	"sync"
+	"time"
 
-    log "github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 
-    "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/leadership"
-    appsv1 "k8s.io/api/apps/v1"
-    "k8s.io/api/autoscaling/v2beta1"
-    batchv1 "k8s.io/api/batch/v1"
-    batchv1beta1 "k8s.io/api/batch/v1beta1"
-    v1 "k8s.io/api/core/v1"
-    "k8s.io/apimachinery/pkg/fields"
-    "k8s.io/apimachinery/pkg/runtime"
-    "k8s.io/client-go/kubernetes"
-    "k8s.io/client-go/tools/cache"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/leadership"
+	appsv1 "k8s.io/api/apps/v1"
+	"k8s.io/api/autoscaling/v2beta1"
+	batchv1 "k8s.io/api/batch/v1"
+	batchv1beta1 "k8s.io/api/batch/v1beta1"
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/cache"
 )
 
 const (
@@ -52,7 +52,7 @@ func newLister(kubeClient kubernetes.Interface) *lister {
 			kubeClient: kubeClient,
 			informers:  buildInformers(kubeClient),
 		}
-        leadership.NewManager(singleton, "kstate", kubeClient).Start()
+		leadership.NewManager(singleton, "kstate", kubeClient).Start()
 	})
 	return singleton
 }

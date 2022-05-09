@@ -18,8 +18,6 @@ import (
 
 	gm "github.com/rcrowley/go-metrics"
 	log "github.com/sirupsen/logrus"
-	"github.com/spf13/pflag"
-
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/agent"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
 	kube_config "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/kubernetes"
@@ -51,9 +49,7 @@ func main() {
 	log.SetLevel(log.InfoLevel)
 	log.SetOutput(os.Stdout)
 
-	opt := options.NewCollectorRunOptions()
-	opt.AddFlags(pflag.CommandLine)
-	pflag.Parse()
+	opt := options.Parse()
 
 	if opt.Version {
 		fmt.Println(fmt.Sprintf("version: %s\ncommit: %s", version, commit))
