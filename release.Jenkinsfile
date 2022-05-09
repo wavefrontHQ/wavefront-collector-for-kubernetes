@@ -110,13 +110,13 @@ pipeline {
           env.PREFIX = "scan.connect.redhat.com/${env.REDHAT_OSPID}"
         }
         sh """
-        PREFIX=${PREFIX} \
-        REDHAT_CREDS_USR=${REDHAT_CREDS_USR} \
-        REDHAT_CREDS_PSW=${REDHAT_CREDS_PSW }\
-        REDHAT_API_KEY=${REDHAT_API_KEY} \
-        REDHAT_PROJECT_ID=${REDHAT_PROJECT_ID} \
-        GIT_BRANCH=${GIT_BRANCH} \
-        sshpass -p "${OPENSHIFT_CREDS_PSW}" ssh -o StrictHostKeyChecking=no root@${OPENSHIFT_VM} "bash -s" < hack/jenkins/release-openshift-container.sh
+        sshpass -p "${OPENSHIFT_CREDS_PSW}" ssh -o StrictHostKeyChecking=no root@${OPENSHIFT_VM} "bash -s" < hack/jenkins/release-openshift-container.sh \
+                                                                                                                     ${PREFIX} \
+                                                                                                                     ${REDHAT_CREDS_USR} \
+                                                                                                                     ${REDHAT_CREDS_PSW }\
+                                                                                                                     ${REDHAT_API_KEY} \
+                                                                                                                     ${REDHAT_PROJECT_ID} \
+                                                                                                                     ${GIT_BRANCH}
         """
       }
     }
