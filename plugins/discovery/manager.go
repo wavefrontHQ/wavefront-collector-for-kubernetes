@@ -37,7 +37,6 @@ type RunConfig struct {
 	Handler                metrics.ProviderHandler
 	InternalPluginProvider discovery.PluginProvider
 	Lister                 discovery.ResourceLister
-	Daemon                 bool
 }
 
 // Manager manages the discovery of kubernetes targets based on annotations or configuration rules.
@@ -89,13 +88,7 @@ func (dm *Manager) Start() {
 	dm.serviceListener = newServiceHandler(dm.runConfig.KubeClient, dm.discoverer)
 	dm.podListener.start()
 
-	if dm.runConfig.Daemon {
-		// in daemon mode, service discovery is performed by only one collector agent in a cluster
-		// kick off leader election to determine if this agent should handle it
-		dm.leadershipMgr.Start()
-	} else {
-		dm.serviceListener.start()
-	}
+	dm.leadershipMgr.Start()
 }
 
 func (dm *Manager) Stop() {

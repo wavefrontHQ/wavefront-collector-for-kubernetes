@@ -144,12 +144,10 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 		log.Fatalf("Failed to create main manager: %v", err)
 	}
 
-	// start leader-election if daemon mode
-	if cfg.Daemon {
-		_, err := leadership.Subscribe(kubeClient.CoreV1(), "agent")
-		if err != nil {
-			log.Fatalf("Failed to start leader election: %v", err)
-		}
+	// start leader-election
+	_, err = leadership.Subscribe(kubeClient.CoreV1(), "agent")
+	if err != nil {
+		log.Fatalf("Failed to start leader election: %v", err)
 	}
 
 	// create and start agent
@@ -252,7 +250,6 @@ func createDiscoveryManagerOrDie(
 			DiscoveryConfig:        cfg.DiscoveryConfig,
 			Handler:                handler,
 			InternalPluginProvider: internalPluginConfigProvider,
-			Daemon:                 cfg.Daemon,
 			Lister:                 discovery.NewResourceLister(podLister, serviceLister, nodeLister),
 		})
 	}
