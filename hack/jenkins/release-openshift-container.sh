@@ -15,6 +15,9 @@ if ! [ -x "$(command -v preflight)" ]; then
     sudo mv ./preflight-linux-amd64 /usr/local/bin/preflight
 fi
 
+pwd
+echo GIT_BRANCH is $GIT_BRANCH
+
 cd workspace/wavefront-collector-for-kubernetes/
 git clean -dfx
 git checkout ${GIT_BRANCH}
