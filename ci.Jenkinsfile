@@ -16,6 +16,11 @@ pipeline {
         }
       }
     }
+    stage("Build Openshift") {
+      steps {
+          sh 'docker build -f deploy/docker/Dockerfile-rhel .'
+      }
+    }
     stage("Publish") {
       tools {
         go 'Go 1.18'
