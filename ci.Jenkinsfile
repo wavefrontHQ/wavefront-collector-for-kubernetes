@@ -9,23 +9,18 @@ pipeline {
     stage("Push Openshift Image to RedHat Connect") {
         environment {
           REDHAT_CREDS=credentials('redhat-connect-wf-collector-creds')
-//           REDHAT_CREDS=credentials('projects-registry-vmware-tanzu_observability_keights_saas-robot')
-          RELEASE_TYPE = 'rc'
+          RELEASE_TYPE='rc'
           REDHAT_OSPID=credentials("redhat-connect-ospid-wf-collector")
           REDHAT_API_KEY=credentials("redhat-connect-api-key")
           REDHAT_PROJECT_ID=credentials("redhat-connect-collector-project-id")
-          DOCKER_IMAGE = 'wavefront'
+          DOCKER_IMAGE='wavefront'
         }
         steps {
           script {
             env.PREFIX = "scan.connect.redhat.com/${env.REDHAT_OSPID}"
-//             env.PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-collector-snapshot"
           }
           withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
-            sh '''
-
-            ./hack/jenkins/setup-for-openshift-release.sh
-            preflight --help'''
+            sh 'sshpass -p "${OPENSHIFT_CREDS_PSW}" ssh -o StrictHostKeyChecking=no root@${OPENSHIFT_VM} 'bash -s' < release-openshift-container.sh'
           }
         }
     }
