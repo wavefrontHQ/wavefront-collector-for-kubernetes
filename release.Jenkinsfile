@@ -110,6 +110,7 @@ pipeline {
           env.PREFIX = "scan.connect.redhat.com/${env.REDHAT_OSPID}"
         }
         sh """
+        echo "**${GIT_BUMP_BRANCH_NAME}**"
         sshpass -p "${OPENSHIFT_CREDS_PSW}" ssh -o StrictHostKeyChecking=no root@${OPENSHIFT_VM} "bash -s" < hack/jenkins/release-openshift-container.sh \
                                                                                                                      ${PREFIX} \
                                                                                                                      ${REDHAT_CREDS_USR} \
