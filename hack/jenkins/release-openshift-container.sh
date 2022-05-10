@@ -8,8 +8,6 @@ REDHAT_PROJECT_ID=$5
 GIT_BUMP_BRANCH_NAME=$6
 RC_NUMBER=$7
 
-echo "rc number:: ${RC_NUMBER}"
-
 if ! [ -x "$(command -v preflight)" ]; then
     curl -LO https://github.com/redhat-openshift-ecosystem/openshift-preflight/releases/download/1.1.1/preflight-linux-amd64
     chmod +x ./preflight-linux-amd64
@@ -24,7 +22,6 @@ git pull
 git checkout ${GIT_BUMP_BRANCH_NAME}
 VERSION=$(cat release/VERSION)
 TAG_VERSION=${VERSION}-rc${RC_NUMBER}
-echo "Tag version:: ${TAG_VERSION}"
 
 podman login ${PREFIX} -u ${REDHAT_CREDS_USR} -p ${REDHAT_CREDS_PSW}
 podman build -f deploy/docker/Dockerfile-rhel --build-arg=COLLECTOR_VERSION=${VERSION} -t ${PREFIX}/wavefront:${TAG_VERSION} .
