@@ -161,7 +161,7 @@ func Leader() string {
 }
 
 func SetLeading(leading bool) {
-    isLeader = leading
+	isLeader = leading
 }
 
 func Leading() bool {

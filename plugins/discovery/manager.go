@@ -89,9 +89,9 @@ func (dm *Manager) Start() {
 	dm.serviceListener = newServiceHandler(dm.runConfig.KubeClient, dm.discoverer)
 	dm.podListener.start()
 
-    if dm.runConfig.ScrapeCluster {
-        dm.leadershipMgr.Start()
-    }
+	if dm.runConfig.ScrapeCluster {
+		dm.leadershipMgr.Start()
+	}
 }
 
 func (dm *Manager) Stop() {
