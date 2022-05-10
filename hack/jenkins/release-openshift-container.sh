@@ -9,6 +9,7 @@ GIT_BRANCH=$6
 VERSION=$7
 RC_NUMBER=$8
 
+echo "rc num:: ${RC_NUMBER}"
 #
 # preflight
 #
@@ -26,7 +27,7 @@ git pull
 git checkout ${GIT_BRANCH}
 
 TAG_VERSION=${VERSION}-rc${RC_NUMBER}
-
+echo "tag version:: ${TAG_VERSION}"
 podman login ${PREFIX} -u ${REDHAT_CREDS_USR} -p ${REDHAT_CREDS_PSW}
 podman build -f deploy/docker/Dockerfile-rhel --build-arg=COLLECTOR_VERSION=${VERSION} -t ${PREFIX}/wavefront:${TAG_VERSION} .
 podman push ${PREFIX}/wavefront:${TAG_VERSION}
