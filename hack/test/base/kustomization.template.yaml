@@ -3,6 +3,20 @@ bases:
 
 resources:
 - proxy.yaml
+- leader-deployment.yaml
+
+patchesStrategicMerge:
+- |-
+  apiVersion: apps/v1
+  kind: DaemonSet
+  metadata:
+    name: wavefront-collector
+    namespace: wavefront-collector
+    labels:
+      k8s-app: wavefront-collector
+      name: wavefront-collector
+  $patch: delete
+
 
 images:
 - name: projects.registry.vmware.com/tanzu_observability/kubernetes-collector

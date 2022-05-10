@@ -19,11 +19,12 @@ spec:
       serviceAccountName: wavefront-collector
       containers:
       - name: wavefront-collector
-        image: wavefronthq/wavefront-kubernetes-collector:1.11.0
+        image: projects.registry.vmware.com/tanzu_observability/kubernetes-collector
         imagePullPolicy: Always
         command:
         - /wavefront-collector
-        - --daemon=false
+        - --scrape-cluster=true
+        - --scrape-nodes=none
         - --config-file=/etc/collector/collector.yaml
         volumeMounts:
         - name: procfs
@@ -40,6 +41,11 @@ spec:
             fieldRef:
               apiVersion: v1
               fieldPath: metadata.namespace
+        - name: POD_NODE_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: spec.nodeName
         - name: INSTALLATION_METHOD
           valueFrom:
             fieldRef:
