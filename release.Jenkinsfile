@@ -98,7 +98,6 @@ pipeline {
     stage("Push Openshift Image to RedHat Connect") {
       environment {
         REDHAT_CREDS=credentials('redhat-connect-wf-collector-creds')
-        RELEASE_TYPE = 'release'
         REDHAT_OSPID=credentials("redhat-connect-ospid-wf-collector")
         REDHAT_API_KEY=credentials("redhat-connect-api-key")
         REDHAT_PROJECT_ID=credentials("redhat-connect-collector-project-id")
@@ -116,7 +115,8 @@ pipeline {
                                                                                                                      ${REDHAT_CREDS_PSW }\
                                                                                                                      ${REDHAT_API_KEY} \
                                                                                                                      ${REDHAT_PROJECT_ID} \
-                                                                                                                     ${GIT_BRANCH}
+                                                                                                                     ${GIT_BRANCH} \
+                                                                                                                     ${RC_NUMBER}
         """
       }
     }
