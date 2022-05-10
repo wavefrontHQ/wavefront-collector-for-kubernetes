@@ -1,19 +1,20 @@
 package controlplane
 
 import (
-	"fmt"
-	"time"
+    "fmt"
+    "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
+    "time"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources/prometheus"
+    "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
+    "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
+    "github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources/prometheus"
 
-	log "github.com/sirupsen/logrus"
+    log "github.com/sirupsen/logrus"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/httputil"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources/summary/kubelet"
+    "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
+    "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
+    "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/httputil"
+    "github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources/summary/kubelet"
 )
 
 const (
@@ -54,6 +55,9 @@ func (p *provider) Name() string {
 }
 
 func (p *provider) DiscoveryPluginConfigs() []discovery.PluginConfig {
+    if !util.ShouldScrapeNodeMetrics() {
+       return nil
+    }
 	return []discovery.PluginConfig{{
 		Name: "coredns-discovery-controlplane",
 		Type: "prometheus",

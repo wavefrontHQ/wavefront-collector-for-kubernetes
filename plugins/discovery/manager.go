@@ -86,8 +86,10 @@ func (dm *Manager) Start() {
 
 	// init discovery handlers
 	dm.podListener = newPodHandler(dm.runConfig.KubeClient, dm.discoverer)
-	dm.serviceListener = newServiceHandler(dm.runConfig.KubeClient, dm.discoverer)
-	dm.podListener.start()
+    if util.ShouldScrapeNodeMetrics() {
+        dm.podListener.start()
+    }
+    dm.serviceListener = newServiceHandler(dm.runConfig.KubeClient, dm.discoverer)
 
 	if dm.runConfig.ScrapeCluster {
 		dm.leadershipMgr.Start()

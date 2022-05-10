@@ -147,6 +147,10 @@ func ScrapeNodes() string {
 	return os.Getenv(ScrapeNodesEnvVar)
 }
 
+func ShouldScrapeNodeMetrics() bool {
+    return ScrapeNodes() != "none"
+}
+
 func SetScrapeNodes(scrapeNodes string) error {
 	if scrapeNodes == "" {
 		return os.Unsetenv(ScrapeNodesEnvVar)
