@@ -103,7 +103,7 @@ pipeline {
         REDHAT_PROJECT_ID=credentials("redhat-connect-collector-project-id")
         OPENSHIFT_CREDS_PSW=credentials('OPENSHIFT_CREDS_PSW')
         OPENSHIFT_VM=credentials('OPENSHIFT_VM')
-//         GIT_BUMP_BRANCH_NAME = "${sh(script:'git name-rev --name-only HEAD', returnStdout: true)}"
+        GIT_BUMP_BRANCH_NAME = "${sh(script:'git name-rev --name-only HEAD', returnStdout: true)}"
       }
       steps {
         script {
