@@ -20,6 +20,8 @@ fi
 
 cd /root/workspace/wavefront-collector-for-kubernetes/
 git clean -dfx
+git checkout -- .
+git checkout main
 git pull
 git checkout ${GIT_BRANCH}
 
