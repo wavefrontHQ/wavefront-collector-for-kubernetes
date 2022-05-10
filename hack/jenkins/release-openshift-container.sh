@@ -18,10 +18,10 @@ if ! [ -x "$(command -v preflight)" ]; then
     sudo mv ./preflight-linux-amd64 /usr/local/bin/preflight
 fi
 
-cd workspace/wavefront-collector-for-kubernetes/
+cd /root/workspace/wavefront-collector-for-kubernetes/
 git clean -dfx
-git checkout ${GIT_BRANCH}
 git pull
+git checkout ${GIT_BRANCH}
 
 TAG_VERSION=${VERSION}-rc${RC_NUMBER}
 
@@ -31,3 +31,7 @@ podman push ${PREFIX}/wavefront:${TAG_VERSION}
 export PFLT_DOCKERCONFIG=${XDG_RUNTIME_DIR}/containers/auth.json
 preflight check container ${PREFIX}/wavefront:${TAG_VERSION} --pyxis-api-token=${REDHAT_API_KEY}
 preflight check container ${PREFIX}/wavefront:${TAG_VERSION} --pyxis-api-token=${REDHAT_API_KEY} --submit --certification-project-id=${REDHAT_PROJECT_ID}
+
+# At wrap up, delete local bump branch to keep Openshift VM clean
+git checkout main
+git branch -D ${GIT_BRANCH}
