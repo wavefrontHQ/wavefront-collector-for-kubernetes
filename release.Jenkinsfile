@@ -103,12 +103,11 @@ pipeline {
         REDHAT_PROJECT_ID=credentials("redhat-connect-collector-project-id")
         OPENSHIFT_CREDS_PSW=credentials('OPENSHIFT_CREDS_PSW')
         OPENSHIFT_VM=credentials('OPENSHIFT_VM')
+        GIT_BUMP_BRANCH_NAME = "${sh(script:'git name-rev --name-only HEAD', returnStdout: true)}"
       }
       steps {
         script {
           env.PREFIX = "scan.connect.redhat.com/${env.REDHAT_OSPID}"
-          env.VERSION = readFile('./release/VERSION').trim()
-          env.GIT_BUMP_BRANCH_NAME = "bump-${VERSION}"
         }
         sh """
         sshpass -p "${OPENSHIFT_CREDS_PSW}" ssh -o StrictHostKeyChecking=no root@${OPENSHIFT_VM} "bash -s" < hack/jenkins/release-openshift-container.sh \
@@ -118,7 +117,6 @@ pipeline {
                                                                                                                      ${REDHAT_API_KEY} \
                                                                                                                      ${REDHAT_PROJECT_ID} \
                                                                                                                      ${GIT_BUMP_BRANCH_NAME} \
-                                                                                                                     ${VERSION} \
                                                                                                                      ${RC_NUMBER}
         """
       }
