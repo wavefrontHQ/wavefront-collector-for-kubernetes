@@ -25,9 +25,9 @@ git pull
 pwd
 VERSION=$(cat release/VERSION)-rc${RC_NUMBER}
 echo VERSION is ${VERSION}
-#podman login ${PREFIX} -u ${REDHAT_CREDS_USR} -p ${REDHAT_CREDS_PSW}
-#podman build -f deploy/docker/Dockerfile-rhel --build-arg=COLLECTOR_VERSION=${VERSION} -t ${PREFIX}/wavefront:${VERSION} .
-#podman push ${PREFIX}/wavefront:${VERSION}
-#export PFLT_DOCKERCONFIG=${XDG_RUNTIME_DIR}/containers/auth.json
-#preflight check container ${PREFIX}/wavefront:${VERSION} --pyxis-api-token=${REDHAT_API_KEY}
-#preflight check container ${PREFIX}/wavefront:${VERSION} --pyxis-api-token=${REDHAT_API_KEY} --submit --certification-project-id=${REDHAT_PROJECT_ID}
+podman login ${PREFIX} -u ${REDHAT_CREDS_USR} -p ${REDHAT_CREDS_PSW}
+podman build -f deploy/docker/Dockerfile-rhel --build-arg=COLLECTOR_VERSION=${VERSION} -t ${PREFIX}/wavefront:${VERSION} .
+podman push ${PREFIX}/wavefront:${VERSION}
+export PFLT_DOCKERCONFIG=${XDG_RUNTIME_DIR}/containers/auth.json
+preflight check container ${PREFIX}/wavefront:${VERSION} --pyxis-api-token=${REDHAT_API_KEY}
+preflight check container ${PREFIX}/wavefront:${VERSION} --pyxis-api-token=${REDHAT_API_KEY} --submit --certification-project-id=${REDHAT_PROJECT_ID}
