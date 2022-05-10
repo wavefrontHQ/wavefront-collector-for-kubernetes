@@ -6,7 +6,8 @@ REDHAT_CREDS_PSW=$3
 REDHAT_API_KEY=$4
 REDHAT_PROJECT_ID=$5
 GIT_BRANCH=$6
-RC_NUMBER=$7
+VERSION=$7
+RC_NUMBER=$8
 
 #
 # preflight
@@ -22,7 +23,6 @@ git clean -dfx
 git checkout ${GIT_BRANCH}
 git pull
 
-VERSION=$(cat release/VERSION)
 TAG_VERSION=${VERSION}-rc${RC_NUMBER}
 
 podman login ${PREFIX} -u ${REDHAT_CREDS_USR} -p ${REDHAT_CREDS_PSW}

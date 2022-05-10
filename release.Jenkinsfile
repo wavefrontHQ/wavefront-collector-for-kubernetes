@@ -107,6 +107,8 @@ pipeline {
       steps {
         script {
           env.PREFIX = "scan.connect.redhat.com/${env.REDHAT_OSPID}"
+          env.VERSION = readFile('./release/VERSION').trim()
+          env.GIT_BUMP_BRANCH_NAME = "bump-${VERSION}"
         }
         sh """
         sshpass -p "${OPENSHIFT_CREDS_PSW}" ssh -o StrictHostKeyChecking=no root@${OPENSHIFT_VM} "bash -s" < hack/jenkins/release-openshift-container.sh \
@@ -115,7 +117,8 @@ pipeline {
                                                                                                                      ${REDHAT_CREDS_PSW }\
                                                                                                                      ${REDHAT_API_KEY} \
                                                                                                                      ${REDHAT_PROJECT_ID} \
-                                                                                                                     ${GIT_BRANCH} \
+                                                                                                                     ${GIT_BUMP_BRANCH_NAME} \
+                                                                                                                     ${VERSION} \
                                                                                                                      ${RC_NUMBER}
         """
       }
@@ -133,8 +136,8 @@ pipeline {
 //         sh './hack/jenkins/generate_github_release.sh'
 //       }
 //     }
-  }
-
+//   }
+//
 //   post {
 //     // Notify only on null->failure or success->failure or any->success
 //     failure {
@@ -153,7 +156,7 @@ pipeline {
 //         slackSend (channel: '#tobs-k8s-assist', color: '#008000', message: "Success!! `wavefront-collector-for-kubernetes:v${BUILD_VERSION}` released!")
 //       }
 //     }
-//   }
+  }
 }
 
 def getCurrentBranchName() {
