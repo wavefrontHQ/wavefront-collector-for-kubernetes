@@ -1,34 +1,16 @@
-bases:
-  - ../../../deploy/kubernetes
-
 resources:
-- proxy.yaml
-- leader-deployment.yaml
-
-patchesStrategicMerge:
-- |-
-  apiVersion: apps/v1
-  kind: DaemonSet
-  metadata:
-    name: wavefront-collector
-    namespace: wavefront-collector
-    labels:
-      k8s-app: wavefront-collector
-      name: wavefront-collector
-  $patch: delete
-
+- deploy/0-collector-namespace.yaml
+- deploy/1-collector-cluster-role.yaml
+- deploy/2-collector-rbac.yaml
+- deploy/3-collector-service-account.yaml
+- deploy/4-collector-config.yaml
+- deploy/5-wavefront-collector.yaml
+- deploy/6-wavefront-proxy.yaml
 
 images:
 - name: projects.registry.vmware.com/tanzu_observability/kubernetes-collector
   newName: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-collector-snapshot
   newTag: YOUR_IMAGE_TAG
 
-generatorOptions:
-  disableNameSuffixHash: true
-
-configMapGenerator:
-  - name: collector-config
-    namespace: wavefront-collector
-    behavior: replace
-    files:
-      - collector.yaml
+#generatorOptions:
+#  disableNameSuffixHash: true

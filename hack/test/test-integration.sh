@@ -8,6 +8,7 @@ DEFAULT_VERSION=$(semver-cli inc patch "$(cat ../../release/VERSION)")
 WAVEFRONT_CLUSTER=$1
 API_TOKEN=$2
 VERSION=$3
+COLLECTOR_TEST_TYPE=$4
 
 K8S_ENV=$(./deploy/get-k8s-cluster-env.sh | awk '{print tolower($0)}' )
 
@@ -15,6 +16,12 @@ if [[ -z ${VERSION} ]] ; then
     VERSION=${DEFAULT_VERSION}
 fi
 
+METRICS_JSONL="files/metrics.jsonl"
+COLLECTOR_YAML=
+if [[ "${COLLECTOR_TEST_TYPE}" -eq "leader-only" ]]; then
+  METRICS_JSONL="files/leader-only-metrics.jsonl"
+  COLLECTOR_YAML="base/leader-only-collector.yaml"
+fi
 
 NS=wavefront-collector
 
@@ -28,7 +35,7 @@ kubectl config set-context --current --namespace=default
 
 echo "deploying collector $IMAGE_NAME $VERSION"
 
-env USE_TEST_PROXY=true ./deploy.sh -c "$WAVEFRONT_CLUSTER" -t "$API_TOKEN" -v $VERSION  -k $K8S_ENV
+env USE_TEST_PROXY=true ./deploy.sh -c "$WAVEFRONT_CLUSTER" -t "$API_TOKEN" -v "$VERSION"  -k "$K8S_ENV" -y "$COLLECTOR_YAML"
 
 wait_for_cluster_ready
 
@@ -41,7 +48,8 @@ sleep 70
 DIR=$(dirname "$0")
 RES=$(mktemp)
 
-cat files/metrics.jsonl  overlays/test-$K8S_ENV/metrics/additional.jsonl  > files/combined-metrics.jsonl
+# TODO: copy a different metrics file for each collector deploy mode
+cat "${METRICS_JSONL}"  overlays/test-$K8S_ENV/metrics/additional.jsonl  > files/combined-metrics.jsonl
 
 while true ; do # wait until we get a good connection
   RES_CODE=$(curl --silent --output "$RES" --write-out "%{http_code}" --data-binary "@$DIR/files/combined-metrics.jsonl" "http://localhost:8888/metrics/diff")
@@ -81,6 +89,6 @@ else
   green "SUCCEEDED"
 fi
 
-env USE_TEST_PROXY=false ./deploy.sh -c "$WAVEFRONT_CLUSTER" -t "$API_TOKEN" -v $VERSION  -k $K8S_ENV
+env USE_TEST_PROXY=false ./deploy.sh -c "$WAVEFRONT_CLUSTER" -t "$API_TOKEN" -v "$VERSION"  -k "$K8S_ENV" -y "$COLLECTOR_YAML"
 
 exit "$EXIT_CODE"

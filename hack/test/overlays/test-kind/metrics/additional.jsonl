@@ -1,3 +1,3 @@
-~{"Name":"kubernetes.controlplane.coredns.dns.request.duration.seconds.bucket","Tags":{"cluster":"","le":"","namespace":"kube-system","source":"","zone":""}}
+{"Name":"kubernetes.controlplane.coredns.dns.request.duration.seconds.bucket","Tags":{"cluster":"","le":"","namespace":"kube-system","source":"","zone":""}}
 {"Name":"kubernetes.node.info","Tags":{"cluster":"","container_runtime_version":"","internal_ip":"","kernel_version":"","kubelet_version":"","label.kubernetes.io/os":"linux","nodename":"","os_image":"","provider_id":"","source":"","node_role":"control-plane"}}
 {"Name":"kubernetes.pod.status.phase","Value":"1","Tags":{"cluster":"","label.name":"pod-cannot-be-scheduled","message":"0/1 nodes are available: 1 Insufficient memory.","namespace_name":"collector-targets","nodename":"none","phase":"Pending","pod_name":"pod-cannot-be-scheduled","reason":"Unschedulable","source":"","type":"pod"}}
