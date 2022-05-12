@@ -55,8 +55,8 @@ func (p *provider) Name() string {
 	return metricsSource
 }
 
-func (p *provider) DiscoveryPluginConfigs(scrapeNodes util.ScrapeNodes) []discovery.PluginConfig {
-	if !scrapeNodes.ScrapeNodeMetrics() {
+func (p *provider) DiscoveryPluginConfigs() []discovery.PluginConfig {
+	if !util.ShouldScrapeNodeMetrics() {
 		return nil
 	}
 	return []discovery.PluginConfig{{

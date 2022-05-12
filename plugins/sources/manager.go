@@ -24,8 +24,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
-
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources/controlplane"
@@ -111,11 +109,11 @@ func Manager() SourceManager {
 	return singleton
 }
 
-func (sm *sourceManagerImpl) DiscoveryPluginConfigs(scrapeNodes util.ScrapeNodes) []discovery.PluginConfig {
+func (sm *sourceManagerImpl) DiscoveryPluginConfigs() []discovery.PluginConfig {
 	var pluginConfigs []discovery.PluginConfig
 	for _, provider := range sm.metricsSourceProviders {
 		if pluginProvider, ok := provider.(discovery.PluginProvider); ok {
-			pluginConfigs = append(pluginConfigs, pluginProvider.DiscoveryPluginConfigs(scrapeNodes)...)
+			pluginConfigs = append(pluginConfigs, pluginProvider.DiscoveryPluginConfigs()...)
 		}
 	}
 	return pluginConfigs

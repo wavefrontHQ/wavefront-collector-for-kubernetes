@@ -6,8 +6,6 @@ package configuration
 import (
 	"time"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
-
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/httputil"
@@ -50,8 +48,8 @@ type Config struct {
 	OmitBucketSuffix bool `yaml:"omitBucketSuffix"`
 
 	// Internal use only
-	ScrapeCluster bool             `yaml:"-"`
-	ScrapeNodes   util.ScrapeNodes `yaml:"-"`
+	ScrapeCluster bool   `yaml:"-"`
+	ScrapeNodes   string `yaml:"-"`
 }
 
 type EventsConfig struct {
@@ -172,16 +170,14 @@ type SummarySourceConfig struct {
 	Insecure string `yaml:"insecure"`
 
 	// If not using inClusterConfig, this can be set to a valid kubeConfig file provided using a config map.
-	Auth        string           `yaml:"auth"`
-	ScrapeNodes util.ScrapeNodes `yaml:"-"`
+	Auth string `yaml:"auth"`
 }
 
 // Configuration options for a cAdvisor source
 type CadvisorSourceConfig struct {
 	Transforms `yaml:",inline"`
 
-	Collection  CollectionConfig `yaml:"collection"`
-	ScrapeNodes util.ScrapeNodes `yaml:"-"`
+	Collection CollectionConfig `yaml:"collection"`
 }
 
 type ControlPlaneSourceConfig struct {
@@ -220,10 +216,9 @@ type TelegrafSourceConfig struct {
 	Conf string `yaml:"conf"`
 
 	// internal use only
-	Discovered        string           `yaml:"-"`
-	Name              string           `yaml:"-"`
-	UseLeaderElection bool             `yaml:"-"`
-	ScrapeNodes       util.ScrapeNodes `yaml:"-"`
+	Discovered        string `yaml:"-"`
+	Name              string `yaml:"-"`
+	UseLeaderElection bool   `yaml:"-"`
 }
 
 type SystemdSourceConfig struct {

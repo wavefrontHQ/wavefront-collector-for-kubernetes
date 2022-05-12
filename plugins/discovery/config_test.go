@@ -8,8 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
-
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/tools/cache"
 
@@ -224,6 +222,6 @@ func makeSecret(name string, data map[string]string) *v1.Secret {
 
 type FakePluginProvider []discovery.PluginConfig
 
-func (f FakePluginProvider) DiscoveryPluginConfigs(nodes util.ScrapeNodes) []discovery.PluginConfig {
+func (f FakePluginProvider) DiscoveryPluginConfigs() []discovery.PluginConfig {
 	return f
 }

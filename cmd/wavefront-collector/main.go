@@ -243,7 +243,6 @@ func createDiscoveryManagerOrDie(
 			InternalPluginProvider: internalPluginConfigProvider,
 			Lister:                 discovery.NewResourceLister(podLister, serviceLister, nodeLister),
 			ScrapeCluster:          cfg.ScrapeCluster,
-			ScrapeNodes:            cfg.ScrapeNodes,
 		})
 	}
 	return nil

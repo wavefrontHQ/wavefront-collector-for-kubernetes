@@ -6,8 +6,6 @@ package discovery
 import (
 	"time"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
-
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
 )
 
@@ -39,7 +37,6 @@ type Config struct {
 
 	// Deprecated: Use PluginConfigs instead.
 	PromConfigs []PrometheusConfig `yaml:"prom_configs"`
-	ScrapeNodes util.ScrapeNodes   `yaml:"-"`
 }
 
 // Describes global rules that define the default discovery behavior
@@ -91,8 +88,7 @@ type PluginConfig struct {
 	Collection CollectionConfig `yaml:"collection"`
 
 	// Internal: whether this plugin config was produced internally
-	Internal    bool             `yaml:"-"`
-	ScrapeNodes util.ScrapeNodes `yaml:"-"`
+	Internal bool `yaml:"-"`
 }
 
 type CollectionConfig struct {

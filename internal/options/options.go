@@ -105,14 +105,14 @@ func (opts *CollectorRunOptions) verifyFlagCombos(fs *pflag.FlagSet) error {
 	var scrapeNodesSpecified bool
 	var scrapeClusterSpecified bool
 	var scrapeNodesValue string
-    var scrapeClusterValue bool
-    fs.Visit(func(flag *pflag.Flag) {
+	var scrapeClusterValue bool
+	fs.Visit(func(flag *pflag.Flag) {
 		switch flag.Name {
 		case "daemon":
 			daemonSpecified = flag.Changed
 		case "scrape-nodes":
 			scrapeNodesSpecified = flag.Changed
-            scrapeNodesValue = flag.Value.String()
+			scrapeNodesValue = flag.Value.String()
 		case "scrape-cluster":
 			scrapeClusterSpecified = flag.Changed
 			scrapeClusterValue = flag.Value.String() == "true"
@@ -122,9 +122,9 @@ func (opts *CollectorRunOptions) verifyFlagCombos(fs *pflag.FlagSet) error {
 	if daemonSpecified && (scrapeNodesSpecified || scrapeClusterSpecified) {
 		return errors.New("cannot set daemon with either scrape-nodes or scrape-cluster")
 	}
-    if scrapeNodesValue == "none" && !scrapeClusterValue {
-        return errors.New("cannot set scrape-nodes to none with scrape-cluster false")
-    }
+	if scrapeNodesValue == "none" && !scrapeClusterValue {
+		return errors.New("cannot set scrape-nodes to none with scrape-cluster false")
+	}
 	return nil
 }
 
