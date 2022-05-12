@@ -85,9 +85,9 @@ func preRegister(opt *options.CollectorRunOptions) {
 	if err := util.SetScrapeNodes(opt.ScrapeNodes); err != nil {
 		log.Fatalf("error setting environment variable %s", util.ScrapeNodesEnvVar)
 	}
-	if util.GetNodeName() != "" {
-		log.Infof("%s: %s", util.NodeNameEnvVar, util.GetNodeName())
-	}
+	if util.GetNodeName() == "" && opt.ScrapeNodes == "own" {
+        log.Fatalf("missing environment variable %s", util.NodeNameEnvVar)
+    }
 
 	setMaxProcs(opt)
 	registerVersion()
