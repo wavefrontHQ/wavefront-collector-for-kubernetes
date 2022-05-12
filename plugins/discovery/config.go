@@ -225,6 +225,7 @@ func combine(wiredCfg discovery.Config, runtimeCfgs map[string]discovery.Config,
 		AnnotationExcludes:         wiredCfg.AnnotationExcludes,
 		PluginConfigs:              wiredCfg.PluginConfigs,
 		DisableAnnotationDiscovery: wiredCfg.DisableAnnotationDiscovery,
+		ScrapeNodes:                wiredCfg.ScrapeNodes,
 	}
 
 	// build a sorted slice of map keys for consistent iteration order
@@ -246,7 +247,7 @@ func combine(wiredCfg discovery.Config, runtimeCfgs map[string]discovery.Config,
 	}
 
 	if internalPluginProvider != nil {
-		runCfg.PluginConfigs = append(runCfg.PluginConfigs, internalPluginProvider.DiscoveryPluginConfigs()...)
+		runCfg.PluginConfigs = append(runCfg.PluginConfigs, internalPluginProvider.DiscoveryPluginConfigs(runCfg.ScrapeNodes)...)
 	}
 
 	log.Debugf("total plugin configs: %d", len(runCfg.PluginConfigs))

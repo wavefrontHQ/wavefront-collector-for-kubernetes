@@ -5,7 +5,7 @@ metadata:
   namespace: wavefront-collector
 data:
   collector.yaml: |
-    clusterName: mamichael-kind-220512
+    clusterName: shaoh-gke-220512
     enableEvents: false
     enableDiscovery: true
     flushInterval: 30s

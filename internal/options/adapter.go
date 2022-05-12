@@ -24,7 +24,7 @@ func (opts *CollectorRunOptions) Convert() (*configuration.Config, error) {
 	cfg.SinkExportDataTimeout = opts.SinkExportDataTimeout
 	cfg.EnableDiscovery = opts.EnableDiscovery
 	cfg.ScrapeCluster = opts.ScrapeCluster
-	cfg.ScrapeNodes = opts.ScrapeNodes
+	cfg.ScrapeNodes.Value = opts.ScrapeNodes
 
 	if len(opts.Sources) == 0 {
 		return nil, fmt.Errorf("missing sources")
@@ -113,6 +113,7 @@ func addSummarySource(cfg *configuration.Config, uri flags.Uri) {
 		Insecure:          flags.DecodeValue(vals, "insecure"),
 		Auth:              flags.DecodeValue(vals, "auth"),
 		Transforms:        getTransforms(vals),
+		ScrapeNodes:       cfg.ScrapeNodes,
 	}
 	if uri.Val.Scheme != "" {
 		u := uri.Val
@@ -141,7 +142,8 @@ func addPrometheusSource(cfg *configuration.Config, uri flags.Uri) {
 func addCadvisorSource(cfg *configuration.Config, uri flags.Uri) {
 	vals := uri.Val.Query()
 	cadvisor := &configuration.CadvisorSourceConfig{
-		Transforms: getTransforms(vals),
+		Transforms:  getTransforms(vals),
+		ScrapeNodes: cfg.ScrapeNodes,
 	}
 	cfg.Sources.CadvisorConfig = cadvisor
 }
@@ -149,7 +151,8 @@ func addCadvisorSource(cfg *configuration.Config, uri flags.Uri) {
 func addTelegrafSource(cfg *configuration.Config, uri flags.Uri) {
 	vals := uri.Val.Query()
 	tel := &configuration.TelegrafSourceConfig{
-		Transforms: getTransforms(vals),
+		Transforms:  getTransforms(vals),
+		ScrapeNodes: cfg.ScrapeNodes,
 	}
 	plugins := flags.DecodeValue(vals, "plugins")
 	if len(plugins) > 0 {

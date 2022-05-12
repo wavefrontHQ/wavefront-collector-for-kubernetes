@@ -409,16 +409,17 @@ func (src *summaryMetricsSource) getSystemContainerName(c *stats.ContainerStats)
 
 type summaryProvider struct {
 	metrics.DefaultSourceProvider
-	nodeLister       v1listers.NodeLister
-	reflector        *cache.Reflector
-	kubeletClient    *kubelet.KubeletClient
-	hostIDAnnotation string
+	nodeLister          v1listers.NodeLister
+	reflector           *cache.Reflector
+	kubeletClient       *kubelet.KubeletClient
+	hostIDAnnotation    string
+	summarySourceConfig configuration.SummarySourceConfig
 }
 
 func (sp *summaryProvider) GetMetricsSources() []Source {
-    if !util.ShouldScrapeNodeMetrics() {
-        return nil
-    }
+	if !sp.summarySourceConfig.ScrapeNodes.ScrapeNodeMetrics() {
+		return nil
+	}
 	var sources []Source
 	nodes, err := sp.nodeLister.List(labels.Everything())
 	if err != nil {
@@ -490,9 +491,10 @@ func NewSummaryProvider(cfg configuration.SummarySourceConfig) (SourceProvider, 
 	nodeLister, reflector, _ := util.GetNodeLister(kubeClient)
 
 	return &summaryProvider{
-		nodeLister:       nodeLister,
-		reflector:        reflector,
-		kubeletClient:    kubeletClient,
-		hostIDAnnotation: hostIDAnnotation,
+		nodeLister:          nodeLister,
+		reflector:           reflector,
+		kubeletClient:       kubeletClient,
+		hostIDAnnotation:    hostIDAnnotation,
+		summarySourceConfig: cfg,
 	}, nil
 }

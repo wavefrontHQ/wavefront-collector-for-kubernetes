@@ -8,7 +8,7 @@ DEFAULT_VERSION=$(semver-cli inc patch "$(cat ../../release/VERSION)")
 WAVEFRONT_CLUSTER=$1
 API_TOKEN=$2
 VERSION=$3
-COLLECTOR_TEST_TYPE=$4
+PROXY_TEST_TYPE=$4
 
 K8S_ENV=$(./deploy/get-k8s-cluster-env.sh | awk '{print tolower($0)}' )
 
@@ -20,7 +20,7 @@ METRICS_FILE_PREFIX=
 COLLECTOR_YAML=
 SLEEP_TIME=70
 
-if [[ "${COLLECTOR_TEST_TYPE}" == "leader-only" ]]; then
+if [[ "${PROXY_TEST_TYPE}" == "leader-only" ]]; then
   SLEEP_TIME=40
   METRICS_FILE_PREFIX="leader-only-"
   COLLECTOR_YAML="base/leader-only-collector.yaml"

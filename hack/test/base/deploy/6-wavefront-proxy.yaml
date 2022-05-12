@@ -32,9 +32,9 @@ spec:
         imagePullPolicy: Always
         env:
           - name: WAVEFRONT_URL
-            value: https://nimba.wavefront.com/api/
+            value: https://fake.wavefront.com/api/
           - name: WAVEFRONT_TOKEN
-            value: f69f2511-e9d3-4479-800a-27db490758a0
+            value: fake
         ports:
         - containerPort: 2878
           protocol: TCP

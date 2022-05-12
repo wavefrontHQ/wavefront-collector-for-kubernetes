@@ -56,7 +56,7 @@ func (opts *CollectorRunOptions) Parse(fs *pflag.FlagSet, args []string) error {
 	fs.BoolVar(&opts.EnableProfiling, "profile", false, "enable pprof")
 	fs.BoolVar(&opts.daemon, "daemon", false, "enable daemon mode")
 	fs.BoolVar(&opts.ScrapeCluster, "scrape-cluster", true, "whether to participate in scraping cluster metrics (uses leader election)")
-	fs.StringVar(&opts.ScrapeNodes, "scrape-nodes", "all", "which nodes to scrape (all, own, node)")
+	fs.StringVar(&opts.ScrapeNodes, "scrape-nodes", "all", "which nodes to scrape (all, own, none)")
 	fs.StringVar(&opts.ConfigFile, "config-file", "", "required configuration file")
 	fs.StringVar(&opts.LogLevel, "log-level", "info", "one of info, debug or trace")
 	fs.IntVar(&opts.MaxProcs, "max-procs", 0, "max number of CPUs that can be used simultaneously. Less than 1 for default (number of cores)")

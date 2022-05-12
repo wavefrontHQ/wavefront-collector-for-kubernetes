@@ -45,6 +45,18 @@ const (
 	CONTAINER_STATE_TERMINATED
 )
 
+type ScrapeNodes struct {
+	Value string
+}
+
+func (s ScrapeNodes) ScrapeOwnNode() bool {
+	return s.Value == "own"
+}
+
+func (s ScrapeNodes) ScrapeNodeMetrics() bool {
+	return s.Value != "none"
+}
+
 var (
 	lock       sync.Mutex
 	nodeLister v1listers.NodeLister
@@ -117,7 +129,7 @@ func GetNamespaceStore(kubeClient kubernetes.Interface) cache.Store {
 func GetFieldSelector(resourceType string) fields.Selector {
 	fieldSelector := fields.Everything()
 	nodeName := GetNodeName()
-	if ScrapeNodes() == "own" && nodeName != "" {
+	if scrapeNodes() == "own" && nodeName != "" {
 		switch resourceType {
 		case "pods":
 			fieldSelector = fields.ParseSelectorOrDie("spec.nodeName=" + nodeName)
@@ -143,12 +155,8 @@ func SetScrapeCluster(scrapeCluster bool) error {
 	}
 }
 
-func ScrapeNodes() string {
+func scrapeNodes() string {
 	return os.Getenv(ScrapeNodesEnvVar)
-}
-
-func ShouldScrapeNodeMetrics() bool {
-    return ScrapeNodes() != "none"
 }
 
 func SetScrapeNodes(scrapeNodes string) error {

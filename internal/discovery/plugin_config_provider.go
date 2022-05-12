@@ -1,5 +1,9 @@
 package discovery
 
+import (
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
+)
+
 type PluginProvider interface {
-	DiscoveryPluginConfigs() []PluginConfig
+	DiscoveryPluginConfigs(nodes util.ScrapeNodes) []PluginConfig
 }

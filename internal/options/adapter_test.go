@@ -166,7 +166,7 @@ func TestConvert(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.True(t, cfg.ScrapeCluster)
-	assert.Equal(t, "all", cfg.ScrapeNodes)
+	assert.Equal(t, "all", cfg.ScrapeNodes.Value)
 	assert.True(t, cfg.EnableDiscovery)
 	assert.Equal(t, 120*time.Second, cfg.DefaultCollectionInterval)
 	assert.Equal(t, 120*time.Second, cfg.FlushInterval)

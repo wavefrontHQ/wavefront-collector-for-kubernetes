@@ -170,9 +170,9 @@ func NewProvider(cfg configuration.TelegrafSourceConfig) (metrics.SourceProvider
 
 	var sources []metrics.Source
 	for _, name := range plugins {
-        if !util.ShouldScrapeNodeMetrics() && pluginType(name) == "telegraf_host" {
-            continue
-        }
+		if !cfg.ScrapeNodes.ScrapeNodeMetrics() && pluginType(name) == "telegraf_host" {
+			continue
+		}
 		creator := telegrafPlugins.Inputs[strings.Trim(name, " ")]
 		if creator != nil {
 			plugin := creator()

@@ -37,8 +37,8 @@ func TestProvider(t *testing.T) {
 		provider, _ := NewProvider(configuration.ControlPlaneSourceConfig{}, configuration.SummarySourceConfig{URL: "https://kube", InClusterConfig: "false"})
 		pluginConfigProvider := provider.(discovery.PluginProvider)
 
-		if assert.Equal(t, 1, len(pluginConfigProvider.DiscoveryPluginConfigs())) {
-			pluginConfig := pluginConfigProvider.DiscoveryPluginConfigs()[0]
+		if assert.Equal(t, 1, len(pluginConfigProvider.DiscoveryPluginConfigs(util.ScrapeNodes{Value: "own"}))) {
+			pluginConfig := pluginConfigProvider.DiscoveryPluginConfigs(util.ScrapeNodes{Value: "own"})[0]
 			assert.Equal(t, "coredns-discovery-controlplane", pluginConfig.Name)
 			assert.Equal(t, "prometheus", pluginConfig.Type)
 			assert.Equal(t, metricsPrefix, pluginConfig.Prefix)
