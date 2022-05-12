@@ -21,7 +21,7 @@ COLLECTOR_YAML=
 SLEEP_TIME=70
 
 if [[ "${PROXY_TEST_TYPE}" == "leader-only" ]]; then
-  SLEEP_TIME=40
+  SLEEP_TIME=70
   METRICS_FILE_PREFIX="leader-only-"
   COLLECTOR_YAML="base/leader-only-collector.yaml"
 fi
