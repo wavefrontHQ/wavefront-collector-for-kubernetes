@@ -99,5 +99,3 @@ if  [ ${USE_TEST_PROXY} == false ] && [ "${VERSION}" != "fake" ]; then
   echo "IMAGE TAG: ${VERSION}"
   green "WF Cluster Name: ${WF_CLUSTER_NAME}"
 fi
-
-# TODO: only have top-level gitignore

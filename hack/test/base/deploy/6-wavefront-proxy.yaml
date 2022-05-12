@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: wavefront-proxy
+    name: wavefront-proxy
+  name: wavefront-proxy
+  namespace: wavefront-collector
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wavefront-proxy
+  template:
+    metadata:
+      labels:
+        app: wavefront-proxy
+    spec:
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              preference:
+                matchExpressions:
+                  - key: kubernetes.io/arch
+                    operator: In
+                    values:
+                      - amd64
+      containers:
+      - name: wavefront-proxy
+        image: projects.registry.vmware.com/tanzu_observability/proxy:11.0
+        imagePullPolicy: Always
+        env:
+          - name: WAVEFRONT_URL
+            value: https://nimba.wavefront.com/api/
+          - name: WAVEFRONT_TOKEN
+            value: f69f2511-e9d3-4479-800a-27db490758a0
+        ports:
+        - containerPort: 2878
+          protocol: TCP
+        securityContext:
+          privileged: false
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wavefront-proxy
+  labels:
+    app: wavefront-proxy
+  namespace: wavefront-collector
+spec:
+  ports:
+  - name: wavefront
+    port: 2878
+    protocol: TCP
+  selector:
+    app: wavefront-proxy

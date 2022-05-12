@@ -16,10 +16,13 @@ if [[ -z ${VERSION} ]] ; then
     VERSION=${DEFAULT_VERSION}
 fi
 
-METRICS_JSONL="files/metrics.jsonl"
+METRICS_FILE_PREFIX=
 COLLECTOR_YAML=
-if [[ "${COLLECTOR_TEST_TYPE}" -eq "leader-only" ]]; then
-  METRICS_JSONL="files/leader-only-metrics.jsonl"
+SLEEP_TIME=70
+
+if [[ "${COLLECTOR_TEST_TYPE}" == "leader-only" ]]; then
+  SLEEP_TIME=40
+  METRICS_FILE_PREFIX="leader-only-"
   COLLECTOR_YAML="base/leader-only-collector.yaml"
 fi
 
@@ -43,13 +46,12 @@ kubectl --namespace "$NS" port-forward deploy/wavefront-proxy 8888 &
 trap 'kill $(jobs -p)' EXIT
 
 echo "waiting for logs..."
-sleep 70
+sleep ${SLEEP_TIME}
 
 DIR=$(dirname "$0")
 RES=$(mktemp)
 
-# TODO: copy a different metrics file for each collector deploy mode
-cat "${METRICS_JSONL}"  overlays/test-$K8S_ENV/metrics/additional.jsonl  > files/combined-metrics.jsonl
+cat "files/${METRICS_FILE_PREFIX}metrics.jsonl"  overlays/test-$K8S_ENV/metrics/${METRICS_FILE_PREFIX}additional.jsonl  > files/combined-metrics.jsonl
 
 while true ; do # wait until we get a good connection
   RES_CODE=$(curl --silent --output "$RES" --write-out "%{http_code}" --data-binary "@$DIR/files/combined-metrics.jsonl" "http://localhost:8888/metrics/diff")

@@ -11,6 +11,3 @@ images:
 - name: projects.registry.vmware.com/tanzu_observability/kubernetes-collector
   newName: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-collector-snapshot
   newTag: YOUR_IMAGE_TAG
-
-#generatorOptions:
-#  disableNameSuffixHash: true
