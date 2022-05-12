@@ -4,3 +4,4 @@ test/missing.jsonl
 test/unwanted.jsonl
 test/base/collector.yaml
 test/files/combined-metrics.jsonl
+test/base/deploy/*
