@@ -100,4 +100,14 @@ func TestDaemonFlag(t *testing.T) {
 			assert.Errorf(t, opts.Parse(pflag.NewFlagSet("fake-collector", pflag.ContinueOnError), flagCombo), expectedErrMsg)
 		}
 	})
+
+    t.Run("when scrape-cluster is set to false and scrape-nodes is set to none, returns an error", func(t *testing.T) {
+        opts := NewCollectorRunOptions()
+
+        expectedErrMsg := "cannot set scrape-nodes to none with scrape-cluster false"
+        flagCombo := []string{"--scrape-cluster=false", "--scrape-nodes=none"}
+
+        assert.Errorf(t, opts.Parse(pflag.NewFlagSet("fake-collector", pflag.ContinueOnError), flagCombo), expectedErrMsg)
+
+    })
 }
