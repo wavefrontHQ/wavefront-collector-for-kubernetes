@@ -186,6 +186,9 @@ func fillDefaults(cfg *configuration.Config) {
 	if cfg.DiscoveryConfig.DiscoveryInterval == 0 {
 		cfg.DiscoveryConfig.DiscoveryInterval = 5 * time.Minute
 	}
+
+    cfg.ScrapeCluster = util.ScrapeCluster()
+    cfg.ScrapeNodes = util.ScrapeNodes()
 }
 
 // converts flags to configuration for backwards compatibility support
@@ -469,7 +472,10 @@ func (r *reloader) Handle(cfg interface{}) {
 
 func (r *reloader) handleCollectorCfg(cfg *configuration.Config) {
 	log.Infof("collector configuration changed")
-	cfg = convertOrDie(r.opt, cfg)
+
+	fillDefaults(cfg)
+
+	// stop the previous agent and start a new agent
 	r.ag.Stop()
 	r.ag = createAgentOrDie(cfg)
 }
