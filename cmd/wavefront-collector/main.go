@@ -187,8 +187,8 @@ func fillDefaults(cfg *configuration.Config) {
 		cfg.DiscoveryConfig.DiscoveryInterval = 5 * time.Minute
 	}
 
-    cfg.ScrapeCluster = util.ScrapeCluster()
-    cfg.ScrapeNodes = util.ScrapeNodes()
+	cfg.ScrapeCluster = util.ScrapeCluster()
+	cfg.ScrapeNodes = util.ScrapeNodes()
 }
 
 // converts flags to configuration for backwards compatibility support
