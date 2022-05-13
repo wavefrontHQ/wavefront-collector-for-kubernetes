@@ -15,13 +15,13 @@ import (
 	"time"
 
 	intdiscovery "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/leadership"
 
 	gm "github.com/rcrowley/go-metrics"
 	log "github.com/sirupsen/logrus"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/agent"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
 	kube_config "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/kubernetes"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/leadership"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/options"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
@@ -86,8 +86,8 @@ func preRegister(opt *options.CollectorRunOptions) {
 		log.Fatalf("error setting environment variable %s", util.ScrapeNodesEnvVar)
 	}
 	if util.GetNodeName() == "" && opt.ScrapeNodes == "own" {
-        log.Fatalf("missing environment variable %s", util.NodeNameEnvVar)
-    }
+		log.Fatalf("missing environment variable %s", util.NodeNameEnvVar)
+	}
 
 	setMaxProcs(opt)
 	registerVersion()
@@ -136,7 +136,9 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 	}
 
 	// start leader-election
-	_, err = leadership.Subscribe(kubeClient.CoreV1(), "agent")
+	if cfg.ScrapeCluster {
+		_, err = leadership.Subscribe(kubeClient.CoreV1(), "agent")
+	}
 	if err != nil {
 		log.Fatalf("Failed to start leader election: %v", err)
 	}
