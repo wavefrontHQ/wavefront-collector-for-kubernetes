@@ -28,6 +28,9 @@ if [[ "${INTEGRATION_TEST_TYPE}" == "node-metrics-only" ]]; then
   METRICS_FILE_NAME="node-metrics-only"
   COLLECTOR_YAML="base/alternate-deployments/node-metrics-only-collector.yaml"
 fi
+if [[ "${INTEGRATION_TEST_TYPE}" == "combined" ]]; then
+  COLLECTOR_YAML="base/alternate-deployments/combined-collector.yaml"
+fi
 
 NS=wavefront-collector
 
