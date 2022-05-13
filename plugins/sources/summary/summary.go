@@ -416,6 +416,9 @@ type summaryProvider struct {
 }
 
 func (sp *summaryProvider) GetMetricsSources() []Source {
+	if !util.ShouldScrapeNodeMetrics() {
+		return nil
+	}
 	var sources []Source
 	nodes, err := sp.nodeLister.List(labels.Everything())
 	if err != nil {

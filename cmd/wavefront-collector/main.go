@@ -15,15 +15,13 @@ import (
 	"time"
 
 	intdiscovery "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/leadership"
 
 	gm "github.com/rcrowley/go-metrics"
 	log "github.com/sirupsen/logrus"
-	"github.com/spf13/pflag"
-
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/agent"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
 	kube_config "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/kubernetes"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/leadership"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/options"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
@@ -51,9 +49,7 @@ func main() {
 	log.SetLevel(log.InfoLevel)
 	log.SetOutput(os.Stdout)
 
-	opt := options.NewCollectorRunOptions()
-	opt.AddFlags(pflag.CommandLine)
-	pflag.Parse()
+	opt := options.Parse()
 
 	if opt.Version {
 		fmt.Println(fmt.Sprintf("version: %s\ncommit: %s", version, commit))
@@ -83,26 +79,21 @@ func main() {
 }
 
 func preRegister(opt *options.CollectorRunOptions) {
-	if opt.Daemon {
-		nodeName := util.GetNodeName()
-		if nodeName == "" {
-			log.Fatalf("missing environment variable %s", util.NodeNameEnvVar)
-		}
-		err := os.Setenv(util.DaemonModeEnvVar, "true")
-		if err != nil {
-			log.Fatalf("error setting environment variable %s", util.DaemonModeEnvVar)
-		}
-		log.Infof("%s: %s", util.NodeNameEnvVar, nodeName)
+	if err := util.SetScrapeCluster(opt.ScrapeCluster); err != nil {
+		log.Fatalf("error setting environment variable %s", util.ScrapeClusterEnvVar)
 	}
+	if err := util.SetScrapeNodes(opt.ScrapeNodes); err != nil {
+		log.Fatalf("error setting environment variable %s", util.ScrapeNodesEnvVar)
+	}
+	if util.GetNodeName() == "" && opt.ScrapeNodes == "own" {
+		log.Fatalf("missing environment variable %s", util.NodeNameEnvVar)
+	}
+
 	setMaxProcs(opt)
 	registerVersion()
 }
 
 func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
-	// when invoked from cfg reloads original command flags will be missing
-	// always read from the environment variable
-	cfg.Daemon = os.Getenv(util.DaemonModeEnvVar) != ""
-
 	// backwards compat: used by prometheus sources to format histogram metric names
 	setEnvVar("omitBucketSuffix", strconv.FormatBool(cfg.OmitBucketSuffix))
 
@@ -129,7 +120,7 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 	var eventRouter *events.EventRouter
 	if cfg.EnableEvents {
 		events.Log.Info("Events collection enabled")
-		eventRouter = events.NewEventRouter(kubeClient, cfg.EventsConfig, sinkManager, cfg.Daemon)
+		eventRouter = events.NewEventRouter(kubeClient, cfg.EventsConfig, sinkManager, cfg.ScrapeCluster)
 	} else {
 		events.Log.Info("Events collection disabled")
 	}
@@ -144,12 +135,12 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 		log.Fatalf("Failed to create main manager: %v", err)
 	}
 
-	// start leader-election if daemon mode
-	if cfg.Daemon {
-		_, err := leadership.Subscribe(kubeClient.CoreV1(), "agent")
-		if err != nil {
-			log.Fatalf("Failed to start leader election: %v", err)
-		}
+	// start leader-election
+	if cfg.ScrapeCluster {
+		_, err = leadership.Subscribe(kubeClient.CoreV1(), "agent")
+	}
+	if err != nil {
+		log.Fatalf("Failed to start leader election: %v", err)
 	}
 
 	// create and start agent
@@ -195,6 +186,9 @@ func fillDefaults(cfg *configuration.Config) {
 	if cfg.DiscoveryConfig.DiscoveryInterval == 0 {
 		cfg.DiscoveryConfig.DiscoveryInterval = 5 * time.Minute
 	}
+
+	cfg.ScrapeCluster = util.ScrapeCluster()
+	cfg.ScrapeNodes = util.ScrapeNodes()
 }
 
 // converts flags to configuration for backwards compatibility support
@@ -252,8 +246,8 @@ func createDiscoveryManagerOrDie(
 			DiscoveryConfig:        cfg.DiscoveryConfig,
 			Handler:                handler,
 			InternalPluginProvider: internalPluginConfigProvider,
-			Daemon:                 cfg.Daemon,
 			Lister:                 discovery.NewResourceLister(podLister, serviceLister, nodeLister),
+			ScrapeCluster:          cfg.ScrapeCluster,
 		})
 	}
 	return nil
@@ -462,6 +456,7 @@ func waitForStop() {
 type reloader struct {
 	mtx sync.Mutex
 	ag  *agent.Agent
+	opt *options.CollectorRunOptions
 }
 
 // Handles changes to collector or discovery configuration

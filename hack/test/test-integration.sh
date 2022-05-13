@@ -8,6 +8,7 @@ DEFAULT_VERSION=$(semver-cli inc patch "$(cat ../../release/VERSION)")
 WAVEFRONT_CLUSTER=$1
 API_TOKEN=$2
 VERSION=$3
+INTEGRATION_TEST_TYPE=$4
 
 K8S_ENV=$(./deploy/get-k8s-cluster-env.sh | awk '{print tolower($0)}' )
 
@@ -15,6 +16,21 @@ if [[ -z ${VERSION} ]] ; then
     VERSION=${DEFAULT_VERSION}
 fi
 
+METRICS_FILE_NAME=metrics
+COLLECTOR_YAML=
+SLEEP_TIME=70
+
+if [[ "${INTEGRATION_TEST_TYPE}" == "cluster-metrics-only" ]]; then
+  METRICS_FILE_NAME="cluster-metrics-only"
+  COLLECTOR_YAML="base/alternate-deployments/cluster-metrics-only-collector.yaml"
+fi
+if [[ "${INTEGRATION_TEST_TYPE}" == "node-metrics-only" ]]; then
+  METRICS_FILE_NAME="node-metrics-only"
+  COLLECTOR_YAML="base/alternate-deployments/node-metrics-only-collector.yaml"
+fi
+if [[ "${INTEGRATION_TEST_TYPE}" == "combined" ]]; then
+  COLLECTOR_YAML="base/alternate-deployments/combined-collector.yaml"
+fi
 
 NS=wavefront-collector
 
@@ -28,7 +44,7 @@ kubectl config set-context --current --namespace=default
 
 echo "deploying collector $IMAGE_NAME $VERSION"
 
-env USE_TEST_PROXY=true ./deploy.sh -c "$WAVEFRONT_CLUSTER" -t "$API_TOKEN" -v $VERSION  -k $K8S_ENV
+env USE_TEST_PROXY=true ./deploy.sh -c "$WAVEFRONT_CLUSTER" -t "$API_TOKEN" -v "$VERSION"  -k "$K8S_ENV" -y "$COLLECTOR_YAML"
 
 wait_for_cluster_ready
 
@@ -36,12 +52,12 @@ kubectl --namespace "$NS" port-forward deploy/wavefront-proxy 8888 &
 trap 'kill $(jobs -p)' EXIT
 
 echo "waiting for logs..."
-sleep 70
+sleep ${SLEEP_TIME}
 
 DIR=$(dirname "$0")
 RES=$(mktemp)
 
-cat files/metrics.jsonl  overlays/test-$K8S_ENV/metrics/additional.jsonl  > files/combined-metrics.jsonl
+cat "files/${METRICS_FILE_NAME}.jsonl"  overlays/test-$K8S_ENV/metrics/${METRICS_FILE_NAME}.jsonl  > files/combined-metrics.jsonl
 
 while true ; do # wait until we get a good connection
   RES_CODE=$(curl --silent --output "$RES" --write-out "%{http_code}" --data-binary "@$DIR/files/combined-metrics.jsonl" "http://localhost:8888/metrics/diff")
@@ -81,6 +97,6 @@ else
   green "SUCCEEDED"
 fi
 
-env USE_TEST_PROXY=false ./deploy.sh -c "$WAVEFRONT_CLUSTER" -t "$API_TOKEN" -v $VERSION  -k $K8S_ENV
+env USE_TEST_PROXY=false ./deploy.sh -c "$WAVEFRONT_CLUSTER" -t "$API_TOKEN" -v "$VERSION"  -k "$K8S_ENV" -y "$COLLECTOR_YAML"
 
 exit "$EXIT_CODE"

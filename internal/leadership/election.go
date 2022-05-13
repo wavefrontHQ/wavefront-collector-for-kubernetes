@@ -160,8 +160,12 @@ func Leader() string {
 	return leaderId
 }
 
+func SetLeading(leading bool) {
+	isLeader = leading
+}
+
 func Leading() bool {
 	lock.RLock()
 	defer lock.RUnlock()
-	return !util.IsDaemonMode() || isLeader
+	return util.ScrapeCluster() && isLeader
 }

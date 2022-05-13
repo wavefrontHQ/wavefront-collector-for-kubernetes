@@ -23,7 +23,8 @@ func (opts *CollectorRunOptions) Convert() (*configuration.Config, error) {
 	cfg.FlushInterval = opts.MetricResolution
 	cfg.SinkExportDataTimeout = opts.SinkExportDataTimeout
 	cfg.EnableDiscovery = opts.EnableDiscovery
-	cfg.Daemon = opts.Daemon
+	cfg.ScrapeCluster = opts.ScrapeCluster
+	cfg.ScrapeNodes = opts.ScrapeNodes
 
 	if len(opts.Sources) == 0 {
 		return nil, fmt.Errorf("missing sources")

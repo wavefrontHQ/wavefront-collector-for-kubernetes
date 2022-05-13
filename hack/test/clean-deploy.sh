@@ -9,3 +9,4 @@ if [ -z ${NS} ]; then exit 0; fi
 
 echo "deleting wavefront collector deployment"
 kustomize build base | kubectl delete -f - || true
+kubectl delete namespace ${NS} || true

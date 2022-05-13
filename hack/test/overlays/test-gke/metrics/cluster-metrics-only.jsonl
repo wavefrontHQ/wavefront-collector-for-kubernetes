@@ -1,0 +1,3 @@
+{"Name":"kubernetes.pod.status.phase"}
+{"Name":"kubernetes.node.info"}
+{"Name":"kubernetes.controlplane.etcd.object.counts.gauge"}

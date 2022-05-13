@@ -23,7 +23,8 @@ import (
 const (
 	NodeNameEnvVar           = "POD_NODE_NAME"
 	NamespaceNameEnvVar      = "POD_NAMESPACE_NAME"
-	DaemonModeEnvVar         = "DAEMON_MODE"
+	ScrapeClusterEnvVar      = "SCRAPE_CLUSTER"
+	ScrapeNodesEnvVar        = "SCRAPE_NODES"
 	InstallationMethodEnvVar = "INSTALLATION_METHOD"
 	ForceGC                  = "FORCE_GC"
 	KubernetesVersionEnvVar  = "KUBERNETES_VERSION"
@@ -116,7 +117,7 @@ func GetNamespaceStore(kubeClient kubernetes.Interface) cache.Store {
 func GetFieldSelector(resourceType string) fields.Selector {
 	fieldSelector := fields.Everything()
 	nodeName := GetNodeName()
-	if os.Getenv(DaemonModeEnvVar) != "" && nodeName != "" {
+	if ScrapeNodes() == "own" && nodeName != "" {
 		switch resourceType {
 		case "pods":
 			fieldSelector = fields.ParseSelectorOrDie("spec.nodeName=" + nodeName)
@@ -130,12 +131,32 @@ func GetFieldSelector(resourceType string) fields.Selector {
 	return fieldSelector
 }
 
-func GetDaemonMode() string {
-	return os.Getenv(DaemonModeEnvVar)
+func ScrapeCluster() bool {
+	return os.Getenv(ScrapeClusterEnvVar) == "true"
 }
 
-func IsDaemonMode() bool {
-	return GetDaemonMode() != ""
+func SetScrapeCluster(scrapeCluster bool) error {
+	if scrapeCluster {
+		return os.Setenv(ScrapeClusterEnvVar, "true")
+	} else {
+		return os.Unsetenv(ScrapeClusterEnvVar)
+	}
+}
+
+func ScrapeNodes() string {
+	return os.Getenv(ScrapeNodesEnvVar)
+}
+
+func ShouldScrapeNodeMetrics() bool {
+	return ScrapeNodes() != "none"
+}
+
+func SetScrapeNodes(scrapeNodes string) error {
+	if scrapeNodes == "" {
+		return os.Unsetenv(ScrapeNodesEnvVar)
+	} else {
+		return os.Setenv(ScrapeNodesEnvVar, scrapeNodes)
+	}
 }
 
 func GetNodeName() string {
