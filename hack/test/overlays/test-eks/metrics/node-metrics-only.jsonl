@@ -2,4 +2,3 @@
 ~{"Name":"kubernetes.controlplane.etcd.object.counts.gauge"}
 {"Name":"kube.coredns.coredns.cache.hits.total.counter"}
 ~{"Name":"kubernetes.node.info"}
-~{"Name":"kubernetes.pod.status.phase"}
