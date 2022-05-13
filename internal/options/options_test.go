@@ -75,7 +75,7 @@ func TestDaemonFlag(t *testing.T) {
 		fs := pflag.NewFlagSet("fake-collector", pflag.ContinueOnError)
 		opts := NewCollectorRunOptions()
 
-		assert.Nil(t, opts.Parse(fs, []string{"--scrape-nodes=none"}))
+		assert.Nil(t, opts.Parse(fs, []string{"--scrape-cluster=true", "--scrape-nodes=none"}))
 		assert.Equal(t, opts.ScrapeCluster, true)
 		assert.Equal(t, opts.ScrapeNodes, "none")
 	})
