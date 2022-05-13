@@ -8,7 +8,7 @@ DEFAULT_VERSION=$(semver-cli inc patch "$(cat ../../release/VERSION)")
 WAVEFRONT_CLUSTER=$1
 API_TOKEN=$2
 VERSION=$3
-PROXY_TEST_TYPE=$4
+INTEGRATION_TEST_TYPE=$4
 
 K8S_ENV=$(./deploy/get-k8s-cluster-env.sh | awk '{print tolower($0)}' )
 
@@ -16,14 +16,17 @@ if [[ -z ${VERSION} ]] ; then
     VERSION=${DEFAULT_VERSION}
 fi
 
-METRICS_FILE_PREFIX=
+METRICS_FILE_NAME=metrics
 COLLECTOR_YAML=
 SLEEP_TIME=70
 
-if [[ "${PROXY_TEST_TYPE}" == "leader-only" ]]; then
-  SLEEP_TIME=70
-  METRICS_FILE_PREFIX="leader-only-"
-  COLLECTOR_YAML="base/leader-only-collector.yaml"
+if [[ "${INTEGRATION_TEST_TYPE}" == "cluster-metrics-only" ]]; then
+  METRICS_FILE_NAME="cluster-metrics-only"
+  COLLECTOR_YAML="base/alternate-deployments/cluster-metrics-only-collector.yaml"
+fi
+if [[ "${INTEGRATION_TEST_TYPE}" == "node-metrics-only" ]]; then
+  METRICS_FILE_NAME="node-metrics-only"
+  COLLECTOR_YAML="base/alternate-deployments/node-metrics-only-collector.yaml"
 fi
 
 NS=wavefront-collector
@@ -51,7 +54,7 @@ sleep ${SLEEP_TIME}
 DIR=$(dirname "$0")
 RES=$(mktemp)
 
-cat "files/${METRICS_FILE_PREFIX}metrics.jsonl"  overlays/test-$K8S_ENV/metrics/${METRICS_FILE_PREFIX}additional.jsonl  > files/combined-metrics.jsonl
+cat "files/${METRICS_FILE_NAME}.jsonl"  overlays/test-$K8S_ENV/metrics/${METRICS_FILE_NAME}.jsonl  > files/combined-metrics.jsonl
 
 while true ; do # wait until we get a good connection
   RES_CODE=$(curl --silent --output "$RES" --write-out "%{http_code}" --data-binary "@$DIR/files/combined-metrics.jsonl" "http://localhost:8888/metrics/diff")
