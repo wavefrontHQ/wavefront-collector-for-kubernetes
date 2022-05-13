@@ -6,7 +6,7 @@ REPO_DIR=$(shell git rev-parse --show-toplevel)
 TEST_DIR=$(REPO_DIR)/hack/test
 DEPLOY_DIR=$(REPO_DIR)/hack/test/deploy
 OUT_DIR?=$(REPO_DIR)/_output
-PROXY_TEST_TYPE?=default
+INTEGRATION_TEST_TYPE?=default
 
 BINARY_NAME=wavefront-collector
 
@@ -149,7 +149,7 @@ token-check:
 	@if [ -z ${WAVEFRONT_TOKEN} ]; then echo "Need to set WAVEFRONT_TOKEN" && exit 1; fi
 
 proxy-test: token-check $(SEMVER_CLI_BIN)
-	(cd $(TEST_DIR) && ./test-integration.sh nimba $(WAVEFRONT_TOKEN) $(VERSION) $(PROXY_TEST_TYPE))
+	(cd $(TEST_DIR) && ./test-integration.sh nimba $(WAVEFRONT_TOKEN) $(VERSION) $(INTEGRATION_TEST_TYPE))
 
 #Testing deployment and configuration changes, no code changes
 deploy-test: token-check k8s-env clean-deployment deploy-targets proxy-test
