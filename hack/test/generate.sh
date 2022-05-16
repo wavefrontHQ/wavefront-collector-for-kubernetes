@@ -3,6 +3,8 @@ source ./deploy/k8s-utils.sh
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
 
+cd "$(dirname "$0")" # hack/test
+
 DEFAULT_VERSION="1.10.0"
 USE_TEST_PROXY="${USE_TEST_PROXY:-false}"
 
@@ -73,6 +75,9 @@ cp "${REPO_ROOT}/deploy/kubernetes/0-collector-namespace.yaml" base/deploy/0-col
 cp "${REPO_ROOT}/deploy/kubernetes/1-collector-cluster-role.yaml" base/deploy/1-collector-cluster-role.yaml
 cp "${REPO_ROOT}/deploy/kubernetes/2-collector-rbac.yaml" base/deploy/2-collector-rbac.yaml
 cp "${REPO_ROOT}/deploy/kubernetes/3-collector-service-account.yaml" base/deploy/3-collector-service-account.yaml
+cp "${REPO_ROOT}/deploy/kubernetes/5-collector-daemonset.yaml" base/deploy/collector-deployments/5-collector-daemonset.yaml
+cp "${REPO_ROOT}/deploy/kubernetes/alternate-collector-deployments/5-collector-single-deployment.yaml" base/deploy/collector-deployments/5-collector-single-deployment.yaml
+cp "${REPO_ROOT}/deploy/kubernetes/alternate-collector-deployments/5-collector-combined.yaml" base/deploy/collector-deployments/5-collector-collector-combined.yaml
 
 cp "${COLLECTOR_YAML}" base/deploy/5-wavefront-collector.yaml
 
