@@ -33,6 +33,11 @@ pipeline {
         }
       }
     }
+    stage("Update version in License file") {
+      steps {
+        sh './hack/jenkins/update-version-in-osl.sh'
+      }
+    }
     stage("Publish RC Release") {
       environment {
         HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability-robot")
