@@ -36,6 +36,10 @@ NS=wavefront-collector
 
 echo "deploying configuration for additional targets"
 
+while kubectl get namespace/$NS &> /dev/null; do
+    echo "waiting for namespace/$NS to be deleted"
+    sleep 1
+done
 kubectl create namespace $NS
 kubectl config set-context --current --namespace="$NS"
 kubectl apply -f ./deploy/mysql-config.yaml

@@ -34,5 +34,4 @@ helm upgrade --install mysql-release bitnami/mysql \
 --set primary.persistence.size=200Mi \
 --namespace collector-targets >/dev/null
 
-wait_for_cluster_ready
 echo "Finished deploying targets"
