@@ -7,7 +7,7 @@ cd "$SCRIPT_DIR"
 
 echo "Deploying targets..."
 
-kubectl create namespace collector-targets > /dev/null
+kubectl create namespace collector-targets &> /dev/null || true
 
 while ! kubectl get --namespace collector-targets serviceaccount/default  &> /dev/null; do
     echo "Waiting for namespace service account to be created'"
