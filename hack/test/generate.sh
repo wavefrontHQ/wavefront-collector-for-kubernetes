@@ -77,7 +77,11 @@ cp "${REPO_ROOT}/deploy/kubernetes/2-collector-rbac.yaml" base/deploy/2-collecto
 cp "${REPO_ROOT}/deploy/kubernetes/3-collector-service-account.yaml" base/deploy/3-collector-service-account.yaml
 cp "${REPO_ROOT}/deploy/kubernetes/5-collector-daemonset.yaml" base/deploy/collector-deployments/5-collector-daemonset.yaml
 cp "${REPO_ROOT}/deploy/kubernetes/alternate-collector-deployments/5-collector-single-deployment.yaml" base/deploy/collector-deployments/5-collector-single-deployment.yaml
-cp "${REPO_ROOT}/deploy/kubernetes/alternate-collector-deployments/5-collector-combined.yaml" base/deploy/collector-deployments/5-collector-collector-combined.yaml
+cp "${REPO_ROOT}/deploy/kubernetes/alternate-collector-deployments/5-collector-combined.yaml" base/deploy/collector-deployments/5-collector-combined.yaml
+
+csplit base/deploy/collector-deployments/5-collector-combined.yaml '/^---$/'
+mv xx00 base/deploy/collector-deployments/5-collector-node-metrics-only.yaml
+mv xx01 base/deploy/collector-deployments/5-collector-cluster-metrics-only.yaml
 
 cp "${COLLECTOR_YAML}" base/deploy/5-wavefront-collector.yaml
 
