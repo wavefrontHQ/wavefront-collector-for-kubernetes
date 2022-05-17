@@ -9,10 +9,7 @@ echo "Deploying targets..."
 
 kubectl create namespace collector-targets &> /dev/null || true
 
-while ! kubectl get --namespace collector-targets serviceaccount/default  &> /dev/null; do
-    echo "Waiting for namespace service account to be created'"
-    sleep 1
-done
+wait_for_namespaced_resource_created collector-targets serviceaccount/default
 
 kubectl apply -f prom-example.yaml >/dev/null
 kubectl apply -f exclude-prom-example.yaml >/dev/null
