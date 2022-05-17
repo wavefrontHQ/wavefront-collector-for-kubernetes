@@ -16,7 +16,7 @@ if [[ -z ${VERSION} ]] ; then
     VERSION=${DEFAULT_VERSION}
 fi
 
-METRICS_FILE_NAME=metrics
+METRICS_FILE_NAME=all-metrics
 COLLECTOR_YAML=
 SLEEP_TIME=70
 

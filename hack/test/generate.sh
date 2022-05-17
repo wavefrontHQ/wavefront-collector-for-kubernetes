@@ -79,7 +79,7 @@ cp "${REPO_ROOT}/deploy/kubernetes/5-collector-daemonset.yaml" base/deploy/colle
 cp "${REPO_ROOT}/deploy/kubernetes/alternate-collector-deployments/5-collector-single-deployment.yaml" base/deploy/collector-deployments/5-collector-single-deployment.yaml
 cp "${REPO_ROOT}/deploy/kubernetes/alternate-collector-deployments/5-collector-combined.yaml" base/deploy/collector-deployments/5-collector-combined.yaml
 
-csplit base/deploy/collector-deployments/5-collector-combined.yaml '/^---$/'
+csplit base/deploy/collector-deployments/5-collector-combined.yaml '/^---$/' &>/dev/null
 mv xx00 base/deploy/collector-deployments/5-collector-node-metrics-only.yaml
 mv xx01 base/deploy/collector-deployments/5-collector-cluster-metrics-only.yaml
 

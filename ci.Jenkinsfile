@@ -77,6 +77,9 @@ pipeline {
         withEnv(["PATH+GO=${HOME}/go/bin", "PATH+GCLOUD=${HOME}/google-cloud-sdk/bin"]) {
           lock("integration-test-gke") {
             sh 'make gke-connect-to-cluster'
+            sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=cluster-metrics-only make deploy-test'
+            sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=node-metrics-only make deploy-test'
+            sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=combined make deploy-test'
             sh 'VERSION_POSTFIX=$VERSION_POSTFIX make deploy-test'
           }
         }
@@ -101,6 +104,9 @@ pipeline {
         withEnv(["PATH+GO=${HOME}/go/bin"]) {
           lock("integration-test-eks") {
             sh 'make target-eks'
+            sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=cluster-metrics-only make deploy-test'
+            sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=node-metrics-only make deploy-test'
+            sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=combined make deploy-test'
             sh 'VERSION_POSTFIX=$VERSION_POSTFIX make deploy-test'
             sh './hack/test/test-wavefront-metrics.sh -t $WAVEFRONT_TOKEN'
           }
