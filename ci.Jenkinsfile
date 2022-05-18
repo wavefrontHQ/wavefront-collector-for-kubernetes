@@ -61,7 +61,7 @@ pipeline {
     }
     stage("GKE Integration Test") {
       options {
-        timeout(time: 10, unit: 'MINUTES')
+        timeout(time: 15, unit: 'MINUTES')
       }
       tools {
         go 'Go 1.18'
@@ -80,6 +80,7 @@ pipeline {
             sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=cluster-metrics-only make deploy-test'
             sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=node-metrics-only make deploy-test'
             sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=combined make deploy-test'
+            sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=single-deployment make deploy-test'
             sh 'VERSION_POSTFIX=$VERSION_POSTFIX make deploy-test'
           }
         }
