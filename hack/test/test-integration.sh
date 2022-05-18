@@ -1,4 +1,4 @@
-#!/bin/bash -ex
+#!/bin/bash -e
 source ./deploy/k8s-utils.sh
 
 # This script automates the functional testing of the collector
