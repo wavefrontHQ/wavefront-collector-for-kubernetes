@@ -51,8 +51,6 @@ env USE_TEST_PROXY=true ./deploy.sh -c "$WAVEFRONT_CLUSTER" -t "$API_TOKEN" -v "
 
 wait_for_cluster_ready
 
-echo Namespace is $NS
-
 kubectl --namespace "$NS" port-forward deploy/wavefront-proxy 8888 &
 trap 'kill $(jobs -p)' EXIT
 

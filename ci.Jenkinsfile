@@ -6,21 +6,21 @@ pipeline {
   }
 
   stages {
-//     stage("Test with Go 1.18") {
-//       tools {
-//         go 'Go 1.18'
-//       }
-//       steps {
-//         withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
-//           sh 'make checkfmt vet tests'
-//         }
-//       }
-//     }
-//     stage("Build Openshift") {
-//       steps {
-//           sh 'docker build -f deploy/docker/Dockerfile-rhel .'
-//       }
-//     }
+    stage("Test with Go 1.18") {
+      tools {
+        go 'Go 1.18'
+      }
+      steps {
+        withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
+          sh 'make checkfmt vet tests'
+        }
+      }
+    }
+    stage("Build Openshift") {
+      steps {
+          sh 'docker build -f deploy/docker/Dockerfile-rhel .'
+      }
+    }
     stage("Publish") {
       tools {
         go 'Go 1.18'
@@ -77,9 +77,9 @@ pipeline {
         withEnv(["PATH+GO=${HOME}/go/bin", "PATH+GCLOUD=${HOME}/google-cloud-sdk/bin"]) {
           lock("integration-test-gke") {
             sh 'make gke-connect-to-cluster'
-//             sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=cluster-metrics-only make deploy-test'
-//             sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=node-metrics-only make deploy-test'
-//             sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=combined make deploy-test'
+            sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=cluster-metrics-only make deploy-test'
+            sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=node-metrics-only make deploy-test'
+            sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=combined make deploy-test'
             sh 'VERSION_POSTFIX=$VERSION_POSTFIX make deploy-test'
           }
         }
