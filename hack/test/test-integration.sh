@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash -ex
 source ./deploy/k8s-utils.sh
 
 # This script automates the functional testing of the collector
@@ -50,6 +50,8 @@ echo "deploying collector $IMAGE_NAME $VERSION"
 env USE_TEST_PROXY=true ./deploy.sh -c "$WAVEFRONT_CLUSTER" -t "$API_TOKEN" -v "$VERSION"  -k "$K8S_ENV" -y "$COLLECTOR_YAML"
 
 wait_for_cluster_ready
+
+echo Namespace is $NS
 
 kubectl --namespace "$NS" port-forward deploy/wavefront-proxy 8888 &
 trap 'kill $(jobs -p)' EXIT
