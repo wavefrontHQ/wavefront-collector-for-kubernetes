@@ -88,7 +88,7 @@ pipeline {
     }
     stage("EKS Integration Test") {
       options {
-        timeout(time: 30, unit: 'MINUTES')
+        timeout(time: 20, unit: 'MINUTES')
       }
       tools {
         go 'Go 1.18'
