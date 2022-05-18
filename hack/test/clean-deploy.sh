@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -e
+set -ex
 
 NS=$(kubectl get namespaces | awk '/wavefront-collector/ {print $1}')
 
