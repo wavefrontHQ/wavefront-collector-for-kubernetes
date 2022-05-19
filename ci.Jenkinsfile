@@ -57,9 +57,6 @@ pipeline {
           options {
             timeout(time: 20, unit: 'MINUTES')
           }
-          tools {
-            go 'Go 1.18'
-          }
           environment {
             GCP_CREDS = credentials("GCP_CREDS")
             GKE_CLUSTER_NAME = "k8po-jenkins-ci-collector"
@@ -88,9 +85,6 @@ pipeline {
           }
           options {
             timeout(time: 20, unit: 'MINUTES')
-          }
-          tools {
-            go 'Go 1.18'
           }
           environment {
             VERSION_POSTFIX = "-alpha-${GIT_COMMIT.substring(0, 8)}"
