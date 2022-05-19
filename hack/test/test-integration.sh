@@ -16,20 +16,23 @@ if [[ -z ${VERSION} ]] ; then
     VERSION=${DEFAULT_VERSION}
 fi
 
-METRICS_FILE_NAME=metrics
+METRICS_FILE_NAME=all-metrics
 COLLECTOR_YAML=
 SLEEP_TIME=70
 
 if [[ "${INTEGRATION_TEST_TYPE}" == "cluster-metrics-only" ]]; then
   METRICS_FILE_NAME="cluster-metrics-only"
-  COLLECTOR_YAML="base/alternate-deployments/cluster-metrics-only-collector.yaml"
+  COLLECTOR_YAML="base/deploy/collector-deployments/5-collector-cluster-metrics-only.yaml"
 fi
 if [[ "${INTEGRATION_TEST_TYPE}" == "node-metrics-only" ]]; then
   METRICS_FILE_NAME="node-metrics-only"
-  COLLECTOR_YAML="base/alternate-deployments/node-metrics-only-collector.yaml"
+  COLLECTOR_YAML="base/deploy/collector-deployments/5-collector-node-metrics-only.yaml"
 fi
 if [[ "${INTEGRATION_TEST_TYPE}" == "combined" ]]; then
-  COLLECTOR_YAML="base/alternate-deployments/combined-collector.yaml"
+  COLLECTOR_YAML="base/deploy/collector-deployments/5-collector-combined.yaml"
+fi
+if [[ "${INTEGRATION_TEST_TYPE}" == "single-deployment" ]]; then
+  COLLECTOR_YAML="base/deploy/collector-deployments/5-collector-single-deployment.yaml"
 fi
 
 NS=wavefront-collector
