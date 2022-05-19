@@ -49,6 +49,8 @@ pipeline {
     }
 
     stage('Run Integration Tests') {
+      // To save time, the integration tests and wavefront-metrics tests are split up between gke and eks
+      // But we want to make sure that the combined and default integration tests are run on both
       parallel {
         stage("GKE Integration Test") {
           agent {
@@ -73,7 +75,6 @@ pipeline {
                 sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=cluster-metrics-only make deploy-test'
                 sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=node-metrics-only make deploy-test'
                 sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=combined make deploy-test'
-//                 sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=single-deployment make deploy-test'
                 sh 'VERSION_POSTFIX=$VERSION_POSTFIX make deploy-test'
               }
             }
@@ -98,12 +99,9 @@ pipeline {
             withEnv(["PATH+GO=${HOME}/go/bin"]) {
               lock("integration-test-eks") {
                 sh './hack/jenkins/setup-for-integration-test.sh -k eks'
-
                 sh 'make target-eks'
-//                 sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=cluster-metrics-only make deploy-test'
-//                 sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=node-metrics-only make deploy-test'
-                sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=combined make deploy-test'
                 sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=single-deployment make deploy-test'
+                sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=combined make deploy-test'
                 sh 'VERSION_POSTFIX=$VERSION_POSTFIX make deploy-test'
                 sh './hack/test/test-wavefront-metrics.sh -t $WAVEFRONT_TOKEN'
               }
