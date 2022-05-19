@@ -41,25 +41,28 @@ pipeline {
         }
       }
     }
-    stage("Setup Integration Test") {
-        tools {
-            go 'Go 1.18'
-        }
-        environment {
-            GCP_CREDS = credentials("GCP_CREDS")
-            GKE_CLUSTER_NAME = "k8po-jenkins-ci"
-            WAVEFRONT_TOKEN = credentials("WAVEFRONT_TOKEN_NIMBA")
-            VERSION_POSTFIX = "-alpha-${GIT_COMMIT.substring(0, 8)}"
-            PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
-            DOCKER_IMAGE = "kubernetes-collector-snapshot"
-          }
-        steps {
-            withEnv(["PATH+GO=${HOME}/go/bin", "PATH+GCLOUD=${HOME}/google-cloud-sdk/bin"]) {
-                sh './hack/jenkins/setup-for-integration-test.sh'
-            }
-        }
-    }
+//     stage("Setup Integration Test") {
+//         tools {
+//             go 'Go 1.18'
+//         }
+//         environment {
+//             GCP_CREDS = credentials("GCP_CREDS")
+//             GKE_CLUSTER_NAME = "k8po-jenkins-ci"
+//             WAVEFRONT_TOKEN = credentials("WAVEFRONT_TOKEN_NIMBA")
+//             VERSION_POSTFIX = "-alpha-${GIT_COMMIT.substring(0, 8)}"
+//             PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
+//             DOCKER_IMAGE = "kubernetes-collector-snapshot"
+//           }
+//         steps {
+//             withEnv(["PATH+GO=${HOME}/go/bin", "PATH+GCLOUD=${HOME}/google-cloud-sdk/bin"]) {
+//                 sh './hack/jenkins/setup-for-integration-test.sh'
+//             }
+//         }
+//     }
     stage("GKE Integration Test") {
+      agent {
+        label "gke"
+      }
       options {
         timeout(time: 20, unit: 'MINUTES')
       }
@@ -67,6 +70,7 @@ pipeline {
         go 'Go 1.18'
       }
       environment {
+        GCP_CREDS = credentials("GCP_CREDS")
         GKE_CLUSTER_NAME = "k8po-jenkins-ci"
         VERSION_POSTFIX = "-alpha-${GIT_COMMIT.substring(0, 8)}"
         PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
@@ -76,6 +80,7 @@ pipeline {
       steps {
         withEnv(["PATH+GO=${HOME}/go/bin", "PATH+GCLOUD=${HOME}/google-cloud-sdk/bin"]) {
           lock("integration-test-gke") {
+            sh './hack/jenkins/setup-for-integration-test.sh -k gke'
             sh 'make gke-connect-to-cluster'
             sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=cluster-metrics-only make deploy-test'
             sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=node-metrics-only make deploy-test'
@@ -87,6 +92,9 @@ pipeline {
       }
     }
     stage("EKS Integration Test") {
+      agent {
+        label "eks"
+      }
       options {
         timeout(time: 20, unit: 'MINUTES')
       }
@@ -104,6 +112,7 @@ pipeline {
       steps {
         withEnv(["PATH+GO=${HOME}/go/bin"]) {
           lock("integration-test-eks") {
+            sh './hack/jenkins/setup-for-integration-test.sh -k eks'
             sh 'make target-eks'
             sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=cluster-metrics-only make deploy-test'
             sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=node-metrics-only make deploy-test'
