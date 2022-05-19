@@ -49,14 +49,14 @@ pipeline {
             label "gke"
           }
           options {
-            timeout(time: 30, unit: 'MINUTES')
+            timeout(time: 20, unit: 'MINUTES')
           }
           tools {
             go 'Go 1.18'
           }
           environment {
             GCP_CREDS = credentials("GCP_CREDS")
-            GKE_CLUSTER_NAME = "k8po-jenkins-ci"
+            GKE_CLUSTER_NAME = "k8po-jenkins-ci-collector"
             VERSION_POSTFIX = "-alpha-${GIT_COMMIT.substring(0, 8)}"
             PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
             DOCKER_IMAGE = "kubernetes-collector-snapshot"
@@ -64,7 +64,7 @@ pipeline {
           }
           steps {
             withEnv(["PATH+GO=${HOME}/go/bin", "PATH+GCLOUD=${HOME}/google-cloud-sdk/bin"]) {
-              lock("integration-test-gke") {
+              lock("integration-test-gke-collector") {
                 sh './hack/jenkins/setup-for-integration-test.sh -k gke'
                 sh 'make gke-connect-to-cluster'
                 sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=cluster-metrics-only make deploy-test'
