@@ -150,16 +150,12 @@
 {"Name":"kubernetes.collector.wavefront.sender.type","Tags":{"cluster":"","leading":"","source":""}}
 {"Name":"kubernetes.daemonset.current_scheduled","Tags":{"cluster":"","daemonset":"","namespace_name":"kube-system","source":""}}
 {"Name":"kubernetes.daemonset.current_scheduled","Tags":{"cluster":"","daemonset":"kube-proxy","namespace_name":"kube-system","source":""}}
-{"Name":"kubernetes.daemonset.current_scheduled","Tags":{"cluster":"","daemonset":"wavefront-collector","namespace_name":"wavefront-collector","source":""}}
 {"Name":"kubernetes.daemonset.desired_scheduled","Tags":{"cluster":"","daemonset":"","namespace_name":"kube-system","source":""}}
 {"Name":"kubernetes.daemonset.desired_scheduled","Tags":{"cluster":"","daemonset":"kube-proxy","namespace_name":"kube-system","source":""}}
-{"Name":"kubernetes.daemonset.desired_scheduled","Tags":{"cluster":"","daemonset":"wavefront-collector","namespace_name":"wavefront-collector","source":""}}
 {"Name":"kubernetes.daemonset.misscheduled","Tags":{"cluster":"","daemonset":"","namespace_name":"kube-system","source":""}}
 {"Name":"kubernetes.daemonset.misscheduled","Tags":{"cluster":"","daemonset":"kube-proxy","namespace_name":"kube-system","source":""}}
-{"Name":"kubernetes.daemonset.misscheduled","Tags":{"cluster":"","daemonset":"wavefront-collector","namespace_name":"wavefront-collector","source":""}}
 {"Name":"kubernetes.daemonset.ready","Tags":{"cluster":"","daemonset":"","namespace_name":"kube-system","source":""}}
 {"Name":"kubernetes.daemonset.ready","Tags":{"cluster":"","daemonset":"kube-proxy","namespace_name":"kube-system","source":""}}
-{"Name":"kubernetes.daemonset.ready","Tags":{"cluster":"","daemonset":"wavefront-collector","namespace_name":"wavefront-collector","source":""}}
 {"Name":"kubernetes.deployment.available_replicas","Tags":{"cluster":"","deployment":"memcached-release","namespace_name": "collector-targets","source":""}}
 {"Name":"kubernetes.deployment.available_replicas","Tags":{"cluster":"","deployment":"wavefront-proxy","namespace_name":"wavefront-collector","source":""}}
 {"Name":"kubernetes.deployment.available_replicas","Tags":{"cluster":"","deployment":"","namespace_name":"","source":""}}

@@ -32,7 +32,6 @@ if [[ "${INTEGRATION_TEST_TYPE}" == "combined" ]]; then
   COLLECTOR_YAML="base/deploy/collector-deployments/5-collector-combined.yaml"
 fi
 if [[ "${INTEGRATION_TEST_TYPE}" == "single-deployment" ]]; then
-  METRICS_FILE_NAME="legacy-deployment"
   COLLECTOR_YAML="base/deploy/collector-deployments/5-collector-single-deployment.yaml"
 fi
 
