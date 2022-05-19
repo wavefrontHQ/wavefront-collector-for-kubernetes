@@ -1,6 +1,7 @@
 pipeline {
-  agent any
-
+  agent {
+    label 'nimbus-cloud'
+  }
   environment {
     GITHUB_CREDS_PSW = credentials("GITHUB_TOKEN")
   }
@@ -41,24 +42,6 @@ pipeline {
         }
       }
     }
-//     stage("Setup Integration Test") {
-//         tools {
-//             go 'Go 1.18'
-//         }
-//         environment {
-//             GCP_CREDS = credentials("GCP_CREDS")
-//             GKE_CLUSTER_NAME = "k8po-jenkins-ci"
-//             WAVEFRONT_TOKEN = credentials("WAVEFRONT_TOKEN_NIMBA")
-//             VERSION_POSTFIX = "-alpha-${GIT_COMMIT.substring(0, 8)}"
-//             PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
-//             DOCKER_IMAGE = "kubernetes-collector-snapshot"
-//           }
-//         steps {
-//             withEnv(["PATH+GO=${HOME}/go/bin", "PATH+GCLOUD=${HOME}/google-cloud-sdk/bin"]) {
-//                 sh './hack/jenkins/setup-for-integration-test.sh'
-//             }
-//         }
-//     }
     stage('Run Integration Tests') {
       parallel {
         stage("GKE Integration Test") {
@@ -66,7 +49,7 @@ pipeline {
             label "gke"
           }
           options {
-            timeout(time: 20, unit: 'MINUTES')
+            timeout(time: 30, unit: 'MINUTES')
           }
           tools {
             go 'Go 1.18'
