@@ -146,8 +146,8 @@ Host metrics:
 | Metric Prefix | Metrics Collected |
 |------------|-------------|
 | mem. | [metrics list](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/mem#metrics) |
-| net. | [metrics list](https://github.com/influxdata/telegraf/blob/master/plugins/inputs/net/NET_README.md#measurements--fields) |
-| netstat. | [metrics list](https://github.com/influxdata/telegraf/blob/master/plugins/inputs/net/NETSTAT_README.md#measurements) |
+| net. | [metrics list](https://github.com/influxdata/telegraf/blob/master/plugins/inputs/net/README.md#measurements--fields) |
+| netstat. | [metrics list](https://github.com/influxdata/telegraf/blob/master/plugins/inputs/netstat/README.md#measurements) |
 | linux.sysctl.fs. | [metrics list](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/linux_sysctl_fs#linux-sysctl-fs-input) |
 | swap. | [metrics list](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/swap#metrics) |
 | cpu. | [metrics list](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/cpu#measurements) |
