@@ -4,15 +4,35 @@
 package options
 
 import (
-	"errors"
-	"fmt"
-	"os"
-	"time"
+    "errors"
+    "fmt"
+    "os"
+    "time"
 
-	"github.com/spf13/pflag"
+    "github.com/spf13/pflag"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/flags"
+    "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/flags"
 )
+
+type AgentType string
+
+func (a AgentType) String() string {
+    return string(a)
+}
+
+func (a *AgentType) Set(s string) error {
+    //notValid := false
+    //if(s == "")
+    //if notValid {
+    //    return someError
+    //}
+    //*a = AgentType(s)
+    return nil
+}
+
+func (a AgentType) Type() string {
+    panic("implement me")
+}
 
 type CollectorRunOptions struct {
 	// supported flags
@@ -21,6 +41,7 @@ type CollectorRunOptions struct {
 	daemon          bool
 	ScrapeCluster   bool
 	ScrapeNodes     string
+    agentType       AgentType
 	ConfigFile      string
 	LogLevel        string
 	MaxProcs        int
@@ -55,6 +76,7 @@ func (opts *CollectorRunOptions) Parse(fs *pflag.FlagSet, args []string) error {
 	fs.BoolVar(&opts.Version, "version", false, "print version info and exit")
 	fs.BoolVar(&opts.EnableProfiling, "profile", false, "enable pprof")
 	fs.BoolVar(&opts.daemon, "daemon", false, "enable daemon mode")
+    fs.Var(&opts.agentType, "agent", "the agent type (node, cluster, all, legacy)" )
 	fs.BoolVar(&opts.ScrapeCluster, "scrape-cluster", true, "whether to participate in scraping cluster metrics (uses leader election)")
 	fs.StringVar(&opts.ScrapeNodes, "scrape-nodes", "all", "which nodes to scrape (all, own, none)")
 	fs.StringVar(&opts.ConfigFile, "config-file", "", "required configuration file")

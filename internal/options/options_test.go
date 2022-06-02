@@ -8,106 +8,72 @@ import (
 )
 
 func TestDaemonFlag(t *testing.T) {
-	t.Run("when all flags are omitted, sets the the options to the defaults", func(t *testing.T) {
+	t.Run("when all flags are omitted, defaults to agentType=all (deployement)", func(t *testing.T) {
 		fs := pflag.NewFlagSet("fake-collector", pflag.ContinueOnError)
 		opts := NewCollectorRunOptions()
 
 		assert.Nil(t, opts.Parse(fs, []string{}))
-		assert.Equal(t, opts.ScrapeCluster, true)
-		assert.Equal(t, opts.ScrapeNodes, "all")
+		assert.Equal(t, "all",  opts.agentType.String())
 	})
 
-	t.Run("when all daemon is true, scrapes the cluster and scrapes its own node", func(t *testing.T) {
+	t.Run("when only daemon is true, deploy agentType=legacy (daemonset with leader)", func(t *testing.T) {
 		fs := pflag.NewFlagSet("fake-collector", pflag.ContinueOnError)
 		opts := NewCollectorRunOptions()
 
 		assert.Nil(t, opts.Parse(fs, []string{"--daemon=true"}))
-		assert.Equal(t, opts.ScrapeCluster, true)
-		assert.Equal(t, opts.ScrapeNodes, "own")
+		assert.Equal(t, opts.agentType.String(), "legacy")
 	})
 
-	t.Run("when all daemon is explicitly false, scrapes the cluster and scrapes all nodes", func(t *testing.T) {
+	t.Run("when daemon is explicitly false, deploy agentType=all (deployment)", func(t *testing.T) {
 		fs := pflag.NewFlagSet("fake-collector", pflag.ContinueOnError)
 		opts := NewCollectorRunOptions()
 
 		assert.Nil(t, opts.Parse(fs, []string{"--daemon=false"}))
-		assert.Equal(t, opts.ScrapeCluster, true)
-		assert.Equal(t, opts.ScrapeNodes, "all")
+        assert.Equal(t, opts.agentType.String(), "all")
 	})
 
-	t.Run("when all scrape-cluster is true, scrapes the cluster and scrapes all nodes", func(t *testing.T) {
+    t.Run("--agent=all is a valid option", func(t *testing.T) {
+        fs := pflag.NewFlagSet("fake-collector", pflag.ContinueOnError)
+        opts := NewCollectorRunOptions()
+
+        assert.Nil(t, opts.Parse(fs, []string{"--agent=all"}))
+        assert.Equal(t, opts.agentType.String(), "all")
+    })
+
+    t.Run("--agent=legacy is a valid option", func(t *testing.T) {
+        fs := pflag.NewFlagSet("fake-collector", pflag.ContinueOnError)
+        opts := NewCollectorRunOptions()
+
+        assert.Nil(t, opts.Parse(fs, []string{"--agent=legacy"}))
+        assert.Equal(t, opts.agentType.String(), "legacy")
+    })
+
+	t.Run("--agent=node is a valid option", func(t *testing.T) {
 		fs := pflag.NewFlagSet("fake-collector", pflag.ContinueOnError)
 		opts := NewCollectorRunOptions()
 
-		assert.Nil(t, opts.Parse(fs, []string{"--scrape-cluster=true"}))
-		assert.Equal(t, opts.ScrapeCluster, true)
-		assert.Equal(t, opts.ScrapeNodes, "all")
+		assert.Nil(t, opts.Parse(fs, []string{"--agent=node"}))
+		assert.Equal(t, opts.agentType.String(), "node")
 	})
 
-	t.Run("when all scrape-cluster is false, does not scrape the cluster and scrapes all nodes", func(t *testing.T) {
-		fs := pflag.NewFlagSet("fake-collector", pflag.ContinueOnError)
+    t.Run("--agent=cluster is a valid option", func(t *testing.T) {
+        fs := pflag.NewFlagSet("fake-collector", pflag.ContinueOnError)
+        opts := NewCollectorRunOptions()
+
+        assert.Nil(t, opts.Parse(fs, []string{"--agent=cluster"}))
+        assert.Equal(t, opts.agentType.String(), "cluster")
+    })
+
+	t.Run("When both --daemon and --agent are set, returns an error", func(t *testing.T) {
 		opts := NewCollectorRunOptions()
 
-		assert.Nil(t, opts.Parse(fs, []string{"--scrape-cluster=false"}))
-		assert.Equal(t, opts.ScrapeCluster, false)
-		assert.Equal(t, opts.ScrapeNodes, "all")
-	})
-
-	t.Run("when all scrape-nodes is all, scrapes the cluster and scrapes all nodes", func(t *testing.T) {
-		fs := pflag.NewFlagSet("fake-collector", pflag.ContinueOnError)
-		opts := NewCollectorRunOptions()
-
-		assert.Nil(t, opts.Parse(fs, []string{"--scrape-nodes=all"}))
-		assert.Equal(t, opts.ScrapeCluster, true)
-		assert.Equal(t, opts.ScrapeNodes, "all")
-	})
-
-	t.Run("when all scrape-nodes is all, scrapes the cluster and scrapes all nodes", func(t *testing.T) {
-		fs := pflag.NewFlagSet("fake-collector", pflag.ContinueOnError)
-		opts := NewCollectorRunOptions()
-
-		assert.Nil(t, opts.Parse(fs, []string{"--scrape-nodes=own"}))
-		assert.Equal(t, opts.ScrapeCluster, true)
-		assert.Equal(t, opts.ScrapeNodes, "own")
-	})
-
-	t.Run("when all scrape-nodes is all, scrapes the cluster and scrapes all nodes", func(t *testing.T) {
-		fs := pflag.NewFlagSet("fake-collector", pflag.ContinueOnError)
-		opts := NewCollectorRunOptions()
-
-		assert.Nil(t, opts.Parse(fs, []string{"--scrape-cluster=true", "--scrape-nodes=none"}))
-		assert.Equal(t, opts.ScrapeCluster, true)
-		assert.Equal(t, opts.ScrapeNodes, "none")
-	})
-
-	t.Run("when daemon is set with scrape-nodes or scrape-cluster, returns an error", func(t *testing.T) {
-		opts := NewCollectorRunOptions()
-
-		expectedErrMsg := "cannot set daemon with either scrape-nodes or scrape-cluster"
+		expectedErrMsg := "cannot set --daemon with --agent"
 		flagCombos := [][]string{
-			{"--daemon=true", "--scrape-nodes=all"},
-			{"--daemon=true", "--scrape-nodes=own"},
-			{"--daemon=true", "--scrape-nodes=none"},
-			{"--daemon=true", "--scrape-cluster=true"},
-			{"--daemon=true", "--scrape-cluster=false"},
-			{"--daemon=false", "--scrape-nodes=none"},
-			{"--daemon=false", "--scrape-nodes=own"},
-			{"--daemon=false", "--scrape-nodes=all"},
-			{"--daemon=false", "--scrape-cluster=true"},
-			{"--daemon=false", "--scrape-cluster=false"},
+			{"--daemon=true", "--agent=legacy"},
+			{"--daemon=false", "--agent=node"},
 		}
 		for _, flagCombo := range flagCombos {
 			assert.Errorf(t, opts.Parse(pflag.NewFlagSet("fake-collector", pflag.ContinueOnError), flagCombo), expectedErrMsg)
 		}
-	})
-
-	t.Run("when scrape-cluster is set to false and scrape-nodes is set to none, returns an error", func(t *testing.T) {
-		opts := NewCollectorRunOptions()
-
-		expectedErrMsg := "cannot set scrape-nodes to none with scrape-cluster false"
-		flagCombo := []string{"--scrape-cluster=false", "--scrape-nodes=none"}
-
-		assert.Errorf(t, opts.Parse(pflag.NewFlagSet("fake-collector", pflag.ContinueOnError), flagCombo), expectedErrMsg)
-
 	})
 }
