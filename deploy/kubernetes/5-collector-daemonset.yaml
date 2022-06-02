@@ -33,7 +33,7 @@ spec:
         imagePullPolicy: IfNotPresent
         command:
         - /wavefront-collector
-        - --daemon=true
+        - --agent=legacy
         - --config-file=/etc/collector/collector.yaml
         volumeMounts:
         - name: procfs

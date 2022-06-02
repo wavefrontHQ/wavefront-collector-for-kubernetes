@@ -34,8 +34,7 @@ spec:
         imagePullPolicy: IfNotPresent
         command:
         - /wavefront-collector
-        - --scrape-cluster=false
-        - --scrape-nodes=own
+        - --agent=node
         - --config-file=/etc/collector/collector.yaml
         volumeMounts:
         - name: procfs
@@ -95,8 +94,7 @@ spec:
         imagePullPolicy: Always
         command:
         - /wavefront-collector
-        - --scrape-cluster=true
-        - --scrape-nodes=none
+        - --agent=cluster
         - --config-file=/etc/collector/collector.yaml
         volumeMounts:
         - name: procfs

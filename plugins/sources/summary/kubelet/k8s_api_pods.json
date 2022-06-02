@@ -1224,7 +1224,7 @@
             "image": "wavefronthq/wavefront-kubernetes-collector:1.4.1-pods2",
             "command": [
               "/wavefront-collector",
-              "--daemon=true",
+              "--agent=legacy",
               "--config-file=/etc/collector/collector.yaml"
             ],
             "env": [
