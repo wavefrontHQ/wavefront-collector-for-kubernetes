@@ -11,7 +11,7 @@ func TestAgentType(t *testing.T) {
 		assert.True(t, AllAgentType.ScrapeCluster())
 		assert.True(t, LegacyAgentType.ScrapeCluster())
 		assert.False(t, NodeAgentType.ScrapeCluster())
-		assert.False(t, ClusterAgentType.ScrapeCluster())
+		assert.True(t, ClusterAgentType.ScrapeCluster())
 	})
 
 	t.Run("ScrapeNodes", func(t *testing.T) {

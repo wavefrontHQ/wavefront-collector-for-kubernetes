@@ -42,7 +42,7 @@ func (a AgentType) Type() string {
 }
 
 func (a AgentType) ScrapeCluster() bool {
-	return a == AllAgentType || a == LegacyAgentType
+	return a == AllAgentType || a == LegacyAgentType || a == ClusterAgentType
 }
 
 func (a AgentType) ScrapeNodes() string {
