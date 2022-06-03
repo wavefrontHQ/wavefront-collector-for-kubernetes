@@ -1,6 +1,9 @@
 package options
 
-import "errors"
+import (
+    "errors"
+    "k8s.io/apimachinery/pkg/fields"
+)
 
 type AgentType string
 
@@ -60,4 +63,43 @@ func (a AgentType) ScrapeNodes() string {
 	default:
 		return "none"
 	}
+}
+
+func (a AgentType) ShouldScrapeAnyNodes() bool {
+    return a != ClusterAgentType
+}
+
+func (a AgentType) PodFieldSelector(nodeName string) fields.Selector {
+    switch a {
+    case AllAgentType:
+        return fields.Everything()
+
+    case LegacyAgentType:
+        fallthrough
+    case NodeAgentType:
+        return fields.OneTermEqualSelector("spec.nodeName", nodeName)
+
+    case ClusterAgentType:
+        fallthrough
+    default:
+        return fields.Nothing()
+    }
+}
+
+func (a AgentType) NodeFieldSelector(nodeName string) fields.Selector {
+    switch a {
+    case AllAgentType:
+        return fields.Everything()
+
+    case LegacyAgentType:
+        fallthrough
+    case NodeAgentType:
+        return fields.OneTermEqualSelector("metadata.name", nodeName)
+
+    case ClusterAgentType:
+        fallthrough
+    default:
+        return fields.Nothing()
+    }
+
 }
