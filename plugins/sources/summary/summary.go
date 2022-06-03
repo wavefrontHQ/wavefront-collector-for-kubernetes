@@ -416,7 +416,7 @@ type summaryProvider struct {
 }
 
 func (sp *summaryProvider) GetMetricsSources() []Source {
-	if !util.ShouldScrapeNodeMetrics() {
+	if !util.ScrapeAnyNodes() {
 		return nil
 	}
 	var sources []Source

@@ -48,8 +48,7 @@ type Config struct {
 	OmitBucketSuffix bool `yaml:"omitBucketSuffix"`
 
 	// Internal use only
-	ScrapeCluster bool   `yaml:"-"`
-	ScrapeNodes   string `yaml:"-"`
+	ScrapeCluster bool `yaml:"-"`
 }
 
 type EventsConfig struct {

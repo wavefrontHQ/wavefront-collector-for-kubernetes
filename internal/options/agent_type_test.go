@@ -14,10 +14,17 @@ func TestAgentType(t *testing.T) {
 		assert.True(t, ClusterAgentType.ScrapeCluster())
 	})
 
-	t.Run("ScrapeNodes", func(t *testing.T) {
-		assert.Equal(t, "all", AllAgentType.ScrapeNodes())
-		assert.Equal(t, "own", LegacyAgentType.ScrapeNodes())
-		assert.Equal(t, "own", NodeAgentType.ScrapeNodes())
-		assert.Equal(t, "none", ClusterAgentType.ScrapeNodes())
+	t.Run("ScrapeAnyNodes", func(t *testing.T) {
+		assert.True(t, AllAgentType.ScrapeAnyNodes())
+		assert.True(t, LegacyAgentType.ScrapeAnyNodes())
+		assert.True(t, NodeAgentType.ScrapeAnyNodes())
+		assert.False(t, ClusterAgentType.ScrapeAnyNodes())
+	})
+
+	t.Run("ScrapeOnlyOwnNode", func(t *testing.T) {
+		assert.False(t, AllAgentType.ScrapeOnlyOwnNode())
+		assert.True(t, LegacyAgentType.ScrapeOnlyOwnNode())
+		assert.True(t, NodeAgentType.ScrapeOnlyOwnNode())
+		assert.False(t, ClusterAgentType.ScrapeOnlyOwnNode())
 	})
 }

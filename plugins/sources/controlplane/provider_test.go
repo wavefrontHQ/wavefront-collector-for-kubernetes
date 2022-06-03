@@ -3,6 +3,8 @@ package controlplane
 import (
 	"testing"
 
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/options"
+
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/leadership"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 
@@ -13,7 +15,7 @@ import (
 
 func TestProvider(t *testing.T) {
 	leadership.SetLeading(true)
-	_ = util.SetScrapeCluster(true)
+	util.SetAgentType(options.AllAgentType)
 
 	t.Run("is identified as the correct provider", func(t *testing.T) {
 		provider, _ := NewProvider(configuration.ControlPlaneSourceConfig{}, configuration.SummarySourceConfig{})
