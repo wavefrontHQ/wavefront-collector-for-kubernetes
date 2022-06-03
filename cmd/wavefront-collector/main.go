@@ -79,13 +79,8 @@ func main() {
 }
 
 func preRegister(opt *options.CollectorRunOptions) {
-	if err := util.SetScrapeCluster(opt.AgentType.ScrapeCluster()); err != nil {
-		log.Fatalf("error setting environment variable %s", util.ScrapeClusterEnvVar)
-	}
-	if err := util.SetScrapeNodes(opt.AgentType.ScrapeNodes()); err != nil {
-		log.Fatalf("error setting environment variable %s", util.ScrapeNodesEnvVar)
-	}
-	if util.GetNodeName() == "" && opt.AgentType.ScrapeNodes() == "own" {
+	util.SetAgentType(opt.AgentType)
+	if util.GetNodeName() == "" && util.ScrapeOnlyOwnNode() {
 		log.Fatalf("missing environment variable %s", util.NodeNameEnvVar)
 	}
 
@@ -188,7 +183,6 @@ func fillDefaults(cfg *configuration.Config) {
 	}
 
 	cfg.ScrapeCluster = util.ScrapeCluster()
-	cfg.ScrapeNodes = util.ScrapeNodes()
 }
 
 // converts flags to configuration for backwards compatibility support

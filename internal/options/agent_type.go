@@ -61,3 +61,11 @@ func (a AgentType) ScrapeNodes() string {
 		return "none"
 	}
 }
+
+func (a AgentType) ScrapeAnyNodes() bool {
+	return a != ClusterAgentType
+}
+
+func (a AgentType) ScrapeOnlyOwnNode() bool {
+	return a == LegacyAgentType || a == NodeAgentType
+}

@@ -23,8 +23,6 @@ import (
 const (
 	NodeNameEnvVar           = "POD_NODE_NAME"
 	NamespaceNameEnvVar      = "POD_NAMESPACE_NAME"
-	ScrapeClusterEnvVar      = "SCRAPE_CLUSTER"
-	ScrapeNodesEnvVar        = "SCRAPE_NODES"
 	InstallationMethodEnvVar = "INSTALLATION_METHOD"
 	ForceGC                  = "FORCE_GC"
 	KubernetesVersionEnvVar  = "KUBERNETES_VERSION"
@@ -51,7 +49,14 @@ var (
 	reflector  *cache.Reflector
 	podLister  v1listers.PodLister
 	nsStore    cache.Store
+	agentType  AgentType
 )
+
+type AgentType interface {
+	ScrapeCluster() bool
+	ScrapeAnyNodes() bool
+	ScrapeOnlyOwnNode() bool
+}
 
 func GetNodeLister(kubeClient kubernetes.Interface) (v1listers.NodeLister, *cache.Reflector, error) {
 	lock.Lock()
@@ -117,7 +122,7 @@ func GetNamespaceStore(kubeClient kubernetes.Interface) cache.Store {
 func GetFieldSelector(resourceType string) fields.Selector {
 	fieldSelector := fields.Everything()
 	nodeName := GetNodeName()
-	if ScrapeNodes() == "own" && nodeName != "" {
+	if ScrapeOnlyOwnNode() && nodeName != "" {
 		switch resourceType {
 		case "pods":
 			fieldSelector = fields.ParseSelectorOrDie("spec.nodeName=" + nodeName)
@@ -132,31 +137,19 @@ func GetFieldSelector(resourceType string) fields.Selector {
 }
 
 func ScrapeCluster() bool {
-	return os.Getenv(ScrapeClusterEnvVar) == "true"
+	return agentType.ScrapeCluster()
 }
 
-func SetScrapeCluster(scrapeCluster bool) error {
-	if scrapeCluster {
-		return os.Setenv(ScrapeClusterEnvVar, "true")
-	} else {
-		return os.Unsetenv(ScrapeClusterEnvVar)
-	}
+func SetAgentType(value AgentType) {
+	agentType = value
 }
 
-func ScrapeNodes() string {
-	return os.Getenv(ScrapeNodesEnvVar)
+func ScrapeAnyNodes() bool {
+	return agentType.ScrapeAnyNodes()
 }
 
-func ShouldScrapeNodeMetrics() bool {
-	return ScrapeNodes() != "none"
-}
-
-func SetScrapeNodes(scrapeNodes string) error {
-	if scrapeNodes == "" {
-		return os.Unsetenv(ScrapeNodesEnvVar)
-	} else {
-		return os.Setenv(ScrapeNodesEnvVar, scrapeNodes)
-	}
+func ScrapeOnlyOwnNode() bool {
+	return agentType.ScrapeOnlyOwnNode()
 }
 
 func GetNodeName() string {

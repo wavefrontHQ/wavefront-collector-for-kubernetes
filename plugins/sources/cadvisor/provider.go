@@ -42,10 +42,10 @@ func NewProvider(
 }
 
 func (c *cadvisorSourceProvider) GetMetricsSources() []metrics.Source {
-	if !util.ShouldScrapeNodeMetrics() {
+	if !util.ScrapeAnyNodes() {
 		return nil
 	}
-	promURLs, err := GenerateURLs(c.kubeClient.CoreV1().Nodes(), util.GetNodeName(), util.ScrapeNodes() == "own", c.kubeletConfig.BaseURL)
+	promURLs, err := GenerateURLs(c.kubeClient.CoreV1().Nodes(), util.GetNodeName(), util.ScrapeOnlyOwnNode(), c.kubeletConfig.BaseURL)
 	if err != nil {
 		log.Errorf("error getting sources for cAdvisor: %s", err.Error())
 		return nil
