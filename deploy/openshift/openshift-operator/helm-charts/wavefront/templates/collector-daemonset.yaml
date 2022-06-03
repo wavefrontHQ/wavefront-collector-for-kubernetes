@@ -41,7 +41,7 @@ spec:
         imagePullPolicy: {{ .Values.collector.image.pullPolicy }}
         command:
         - /wavefront-collector
-        - --daemon=true
+        - --agent=legacy
         - --config-file=/etc/collector/config.yaml
         {{- if .Values.collector.maxProcs }}
         - --max-procs={{ .Values.collector.maxProcs }}

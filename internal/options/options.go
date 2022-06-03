@@ -14,13 +14,14 @@ import (
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/flags"
 )
 
+var DaemonAndAgentErr = errors.New("cannot set --daemon with --agent")
+
 type CollectorRunOptions struct {
 	// supported flags
 	Version         bool
 	EnableProfiling bool
 	daemon          bool
-	ScrapeCluster   bool
-	ScrapeNodes     string
+	AgentType       AgentType
 	ConfigFile      string
 	LogLevel        string
 	MaxProcs        int
@@ -47,7 +48,9 @@ type CollectorRunOptions struct {
 }
 
 func NewCollectorRunOptions() *CollectorRunOptions {
-	return &CollectorRunOptions{}
+	return &CollectorRunOptions{
+		AgentType: AllAgentType,
+	}
 }
 
 func (opts *CollectorRunOptions) Parse(fs *pflag.FlagSet, args []string) error {
@@ -55,8 +58,7 @@ func (opts *CollectorRunOptions) Parse(fs *pflag.FlagSet, args []string) error {
 	fs.BoolVar(&opts.Version, "version", false, "print version info and exit")
 	fs.BoolVar(&opts.EnableProfiling, "profile", false, "enable pprof")
 	fs.BoolVar(&opts.daemon, "daemon", false, "enable daemon mode")
-	fs.BoolVar(&opts.ScrapeCluster, "scrape-cluster", true, "whether to participate in scraping cluster metrics (uses leader election)")
-	fs.StringVar(&opts.ScrapeNodes, "scrape-nodes", "all", "which nodes to scrape (all, own, none)")
+	fs.Var(&opts.AgentType, "agent", "the agent type (node, cluster, all, legacy)")
 	fs.StringVar(&opts.ConfigFile, "config-file", "", "required configuration file")
 	fs.StringVar(&opts.LogLevel, "log-level", "info", "one of info, debug or trace")
 	fs.IntVar(&opts.MaxProcs, "max-procs", 0, "max number of CPUs that can be used simultaneously. Less than 1 for default (number of cores)")
@@ -88,43 +90,26 @@ func (opts *CollectorRunOptions) Parse(fs *pflag.FlagSet, args []string) error {
 		return err
 	}
 
-	if err := opts.verifyFlagCombos(fs); err != nil {
+	if err := opts.handleDaemonFlag(fs); err != nil {
 		return err
-	}
-
-	if opts.daemon {
-		opts.ScrapeCluster = true
-		opts.ScrapeNodes = "own"
 	}
 
 	return nil
 }
 
-func (opts *CollectorRunOptions) verifyFlagCombos(fs *pflag.FlagSet) error {
-	var daemonSpecified bool
-	var scrapeNodesSpecified bool
-	var scrapeClusterSpecified bool
-	var scrapeNodesValue string
-	var scrapeClusterValue bool
-	fs.Visit(func(flag *pflag.Flag) {
-		switch flag.Name {
-		case "daemon":
-			daemonSpecified = flag.Changed
-		case "scrape-nodes":
-			scrapeNodesSpecified = flag.Changed
-			scrapeNodesValue = flag.Value.String()
-		case "scrape-cluster":
-			scrapeClusterSpecified = flag.Changed
-			scrapeClusterValue = flag.Value.String() == "true"
-		}
-	})
+func (opts *CollectorRunOptions) handleDaemonFlag(fs *pflag.FlagSet) error {
+	if fs.Changed("daemon") && fs.Changed("agent") {
+		return DaemonAndAgentErr
+	}
 
-	if daemonSpecified && (scrapeNodesSpecified || scrapeClusterSpecified) {
-		return errors.New("cannot set daemon with either scrape-nodes or scrape-cluster")
+	if fs.Changed("daemon") {
+		if opts.daemon {
+			opts.AgentType = LegacyAgentType
+		} else {
+			opts.AgentType = AllAgentType
+		}
 	}
-	if scrapeNodesValue == "none" && !scrapeClusterValue {
-		return errors.New("cannot set scrape-nodes to none with scrape-cluster false")
-	}
+
 	return nil
 }
 

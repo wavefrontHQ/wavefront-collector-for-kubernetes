@@ -24,8 +24,7 @@ spec:
         imagePullPolicy: Always
         command:
         - /wavefront-collector
-        - --scrape-cluster=true
-        - --scrape-nodes=all
+        - --agent=all
         - --config-file=/etc/collector/collector.yaml
         volumeMounts:
         - name: procfs

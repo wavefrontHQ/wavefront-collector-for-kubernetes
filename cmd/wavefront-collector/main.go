@@ -79,13 +79,13 @@ func main() {
 }
 
 func preRegister(opt *options.CollectorRunOptions) {
-	if err := util.SetScrapeCluster(opt.ScrapeCluster); err != nil {
+	if err := util.SetScrapeCluster(opt.AgentType.ScrapeCluster()); err != nil {
 		log.Fatalf("error setting environment variable %s", util.ScrapeClusterEnvVar)
 	}
-	if err := util.SetScrapeNodes(opt.ScrapeNodes); err != nil {
+	if err := util.SetScrapeNodes(opt.AgentType.ScrapeNodes()); err != nil {
 		log.Fatalf("error setting environment variable %s", util.ScrapeNodesEnvVar)
 	}
-	if util.GetNodeName() == "" && opt.ScrapeNodes == "own" {
+	if util.GetNodeName() == "" && opt.AgentType.ScrapeNodes() == "own" {
 		log.Fatalf("missing environment variable %s", util.NodeNameEnvVar)
 	}
 
