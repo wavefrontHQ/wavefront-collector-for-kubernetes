@@ -1,5 +1,5 @@
-PREFIX?=projects.registry.vmware.com/tanzu_observability_keights_saas
-DOCKER_IMAGE?=kubernetes-collector-snapshot
+PREFIX?=projects.registry.vmware.com/tanzu_observability
+DOCKER_IMAGE?=kubernetes-collector
 ARCH?=amd64
 
 REPO_DIR=$(shell git rev-parse --show-toplevel)
@@ -10,8 +10,8 @@ INTEGRATION_TEST_TYPE?=default
 
 BINARY_NAME=wavefront-collector
 
-RELEASE_TYPE?=dev
-RC_NUMBER?=1
+RELEASE_TYPE?=rc
+RC_NUMBER?=3
 GIT_BRANCH=$(shell git rev-parse --abbrev-ref HEAD)
 GIT_HUB_REPO=wavefrontHQ/wavefront-collector-for-kubernetes
 
