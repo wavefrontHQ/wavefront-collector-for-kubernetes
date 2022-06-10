@@ -11,4 +11,5 @@ function main() {
     diff -u /tmp/from_go_mod.txt /tmp/from_open_source_licenses.txt
 }
 
+
 main "$@"
