@@ -4,10 +4,10 @@ pipeline {
   }
 
   stages {
-    tools {
-        go 'Go 1.18'
-    }
     stage("Check for go.sum changed") {
+        tools {
+            go 'Go 1.18'
+        }
         steps {
             sh "./hack/diff_dependencies.sh"
         }
