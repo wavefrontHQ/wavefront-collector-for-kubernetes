@@ -6,12 +6,7 @@ pipeline {
   stages {
     stage("Check for go.sum changed") {
         steps {
-            def prevCommit = env.GIT_PREVIOUS_COMMIT ?: "HEAD~1"
-            def currentCommit = env.GIT_COMMIT
-            def statusCode = sh "./hack/diff_dependencies.sh -p ${prevCommit} -c ${currentCommit}", returnStatus: true
-            if (statusCode == 1) {
-
-            }
+            sh "./hack/diff_dependencies.sh"
         }
     }
   }
