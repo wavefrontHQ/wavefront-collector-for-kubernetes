@@ -18,15 +18,15 @@ pipeline {
     failure {
       script {
         if(currentBuild.previousBuild == null) {
-          slackSend (channel: '#open-channel', message: "Collector dependencies changed: please remember to create a ticket in selected for development according to the instructions in <https://confluence.eng.vmware.com/display/CNA/Release+Process|\"Collector Repo Licensing\" (under step 2)> (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
+          slackSend (channel: '#open-channel', message: "Collector dependencies changed: remember to create a placeholder ticket to file a OSM ticket before release, <https://confluence.eng.vmware.com/display/CNA/Release+Process|see \"Collector Repo Licensing\" for more information> (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
         }
       }
     }
     regression {
-      slackSend (channel: '#open-channel', message: "Collector dependencies changed: please remember to create a ticket in selected for development according to the instructions in <https://confluence.eng.vmware.com/display/CNA/Release+Process|\"Collector Repo Licensing\" (under step 2)> (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
+      slackSend (channel: '#open-channel', message: "Collector dependencies changed: remember to create a placeholder ticket to file a OSM ticket before release, <https://confluence.eng.vmware.com/display/CNA/Release+Process|see \"Collector Repo Licensing\" for more information> (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
     }
     fixed {
-      slackSend (channel: '#open-channel', message: "Collector osl dependencies synced (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
+      slackSend (channel: '#open-channel', message: "Collector OSL dependencies in-sync (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
     }
   }
 }
