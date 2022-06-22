@@ -15,6 +15,7 @@ type SpanLog struct {
 	Fields    map[string]string `json:"fields"`
 }
 
+// SpanLogs is for internal use only.
 type SpanLogs struct {
 	TraceId string    `json:"traceId"`
 	SpanId  string    `json:"spanId"`
