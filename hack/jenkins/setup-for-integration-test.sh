@@ -92,3 +92,8 @@ fi
 git config --global http.sslVerify false
 make semver-cli
 git config --global http.sslVerify true
+
+#
+# k8po-cli
+#
+RUN_CHECKS=ci bash -c "$(curl https://raw.githubusercontent.com/johncornish/k8po-cli/main/install.sh)"

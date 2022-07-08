@@ -102,14 +102,14 @@ pipeline {
             WAVEFRONT_TOKEN = credentials("WAVEFRONT_TOKEN_NIMBA")
           }
           steps {
-            withEnv(["PATH+GO=${HOME}/go/bin"]) {
+            withEnv(["PATH+GO=${HOME}/go/bin", "PATH+K8PO=${HOME}/workspace/k8po-cli"]) {
               lock("integration-test-eks") {
                 sh './hack/jenkins/setup-for-integration-test.sh -k eks'
                 sh 'make target-eks'
                 sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=single-deployment make deploy-test'
                 sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=combined make deploy-test'
                 sh 'VERSION_POSTFIX=$VERSION_POSTFIX make deploy-test'
-                sh './hack/test/test-wavefront-metrics.sh -t $WAVEFRONT_TOKEN'
+                sh 'RUN_CHECKS=ci k8po test-wavefront-metrics -t $WAVEFRONT_TOKEN'
               }
             }
           }
