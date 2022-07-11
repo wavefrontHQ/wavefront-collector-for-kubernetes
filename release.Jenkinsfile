@@ -62,7 +62,7 @@ pipeline {
           env.CONFIG_CLUSTER_NAME = "jenkins-${env.CURRENT_VERSION}-test"
         }
         withCredentials([string(credentialsId: 'nimba-wavefront-token', variable: 'WAVEFRONT_TOKEN')]) {
-          withEnv(["PATH+GCLOUD=${HOME}/google-cloud-sdk/bin", "PATH+K8PO=${HOME}/workspace/k8po-cli"]) {
+          withEnv(["PATH+GCLOUD=${HOME}/google-cloud-sdk/bin", "PATH+K8PO=${HOME}/workspace/k8po-cli/bin"]) {
             sh './hack/jenkins/setup-for-integration-test.sh'
             sh 'make gke-connect-to-cluster'
             sh './hack/test/deploy/deploy-local-linux.sh'

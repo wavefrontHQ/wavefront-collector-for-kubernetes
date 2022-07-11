@@ -102,7 +102,7 @@ pipeline {
             WAVEFRONT_TOKEN = credentials("WAVEFRONT_TOKEN_NIMBA")
           }
           steps {
-            withEnv(["PATH+GO=${HOME}/go/bin", "PATH+K8PO=${HOME}/workspace/k8po-cli"]) {
+            withEnv(["PATH+GO=${HOME}/go/bin", "PATH+K8PO=${HOME}/workspace/k8po-cli/bin"]) {
               lock("integration-test-eks") {
                 sh './hack/jenkins/setup-for-integration-test.sh -k eks'
                 sh 'make target-eks'
