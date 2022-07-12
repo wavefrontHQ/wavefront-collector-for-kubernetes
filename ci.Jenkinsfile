@@ -109,6 +109,9 @@ pipeline {
                 sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=single-deployment make deploy-test'
                 sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=combined make deploy-test'
                 sh 'VERSION_POSTFIX=$VERSION_POSTFIX make deploy-test'
+
+                sh 'echo why you not work'
+                sh 'echo $PATH'
                 sh 'RUN_CHECKS=ci k8po test-wavefront-metrics -t $WAVEFRONT_TOKEN'
               }
             }
