@@ -1,11 +1,14 @@
 function do_request() {
     local name=$1
     local url=$2
+    mkdir -p /tmp/high-cardinality
     curl "$url" \
         -H 'Accept: text/event-stream' \
         -H "Authorization: Bearer $WAVEFRONT_TOKEN" \
-        -w "$name[%{http_code}]: %{time_total}s\n" \
-        -s -o /dev/null
+        -w "$name [%{http_code}]: %{time_total}s\n" \
+        -s -o "/tmp/high-cardinality/$name.dat"
+    local stats=$(grep -A1 "event: stats" "/tmp/high-cardinality/$name.dat" | tail -n 1 | awk '{print $2}' | jq -r '"cardinality=" + (.stats.keys | tostring) + ", scanned=" + (.stats.points | tostring)')
+    echo "$name: $stats"
 }
 
 WAVEFRONT_CLUSTER="nimba"
