@@ -96,6 +96,4 @@ git config --global http.sslVerify true
 #
 # k8po-cli
 #
-if ! [ -x "$(command -v k8po)" ]; then
-  NON_INTERACTIVE=y bash -c "$(curl https://raw.githubusercontent.com/johncornish/k8po-cli/main/install.sh)"
-fi
+NON_INTERACTIVE=y bash -c "$(curl https://raw.githubusercontent.com/johncornish/k8po-cli/main/install.sh)"
