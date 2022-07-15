@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
+
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources/prometheus"
@@ -54,6 +56,9 @@ func (p *provider) Name() string {
 }
 
 func (p *provider) DiscoveryPluginConfigs() []discovery.PluginConfig {
+	if !util.ScrapeAnyNodes() {
+		return nil
+	}
 	return []discovery.PluginConfig{{
 		Name: "coredns-discovery-controlplane",
 		Type: "prometheus",

@@ -149,7 +149,7 @@ func buildWavefrontSink() (flags.Uri, error) {
 
 func TestConvert(t *testing.T) {
 	opts := &CollectorRunOptions{
-		Daemon:                true,
+		AgentType:             AllAgentType,
 		MetricResolution:      120 * time.Second,
 		SinkExportDataTimeout: 130 * time.Second,
 		EnableDiscovery:       true,
@@ -164,7 +164,7 @@ func TestConvert(t *testing.T) {
 	cfg, err := opts.Convert()
 	assert.NoError(t, err)
 
-	assert.True(t, cfg.Daemon)
+	assert.True(t, cfg.ScrapeCluster)
 	assert.True(t, cfg.EnableDiscovery)
 	assert.Equal(t, 120*time.Second, cfg.DefaultCollectionInterval)
 	assert.Equal(t, 120*time.Second, cfg.FlushInterval)

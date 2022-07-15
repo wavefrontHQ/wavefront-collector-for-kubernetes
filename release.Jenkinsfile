@@ -98,18 +98,27 @@ pipeline {
     stage("Push Openshift Image to RedHat Connect") {
       environment {
         REDHAT_CREDS=credentials('redhat-connect-wf-collector-creds')
-        RELEASE_TYPE = 'release'
         REDHAT_OSPID=credentials("redhat-connect-ospid-wf-collector")
-        DOCKER_IMAGE = 'wavefront'
+        REDHAT_API_KEY=credentials("redhat-connect-api-key")
+        REDHAT_PROJECT_ID=credentials("redhat-connect-collector-project-id")
+        OPENSHIFT_CREDS_PSW=credentials('OPENSHIFT_CREDS_PSW')
+        OPENSHIFT_VM=credentials('OPENSHIFT_VM')
+        GIT_BUMP_BRANCH_NAME = "${sh(script:'git name-rev --name-only HEAD', returnStdout: true).trim()}"
       }
       steps {
         script {
           env.PREFIX = "scan.connect.redhat.com/${env.REDHAT_OSPID}"
         }
-        withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
-          sh 'echo $REDHAT_CREDS_PSW | docker login -u $REDHAT_CREDS_USR $PREFIX --password-stdin'
-          sh 'make push_rhel_redhat_connect'
-        }
+        sh """
+        sshpass -p "${OPENSHIFT_CREDS_PSW}" ssh -o StrictHostKeyChecking=no root@${OPENSHIFT_VM} "bash -s" < hack/jenkins/release-openshift-container.sh \
+                                                                                                                     ${PREFIX} \
+                                                                                                                     ${REDHAT_CREDS_USR} \
+                                                                                                                     ${REDHAT_CREDS_PSW} \
+                                                                                                                     ${REDHAT_API_KEY} \
+                                                                                                                     ${REDHAT_PROJECT_ID} \
+                                                                                                                     ${GIT_BUMP_BRANCH_NAME} \
+                                                                                                                     ${RC_NUMBER}
+        """
       }
     }
     stage("Create and Merge Bump Version Pull Request") {

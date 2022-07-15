@@ -8,4 +8,5 @@ if [ -z ${NS} ]; then exit 0; fi
 ./generate.sh -c "fake" -t "fake" -v "fake" -d "fake"
 
 echo "deleting wavefront collector deployment"
-kustomize build base | kubectl delete -f - || true
+kustomize build base | kubectl delete --wait=false -f - || true
+kubectl delete --wait=false namespace ${NS} || true

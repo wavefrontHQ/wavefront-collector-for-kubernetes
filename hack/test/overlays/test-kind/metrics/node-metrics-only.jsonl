@@ -1,0 +1,2 @@
+{"Name":"kubernetes.controlplane.coredns.dns.request.duration.seconds.bucket"}
+~{"Name":"kubernetes.node.info"}

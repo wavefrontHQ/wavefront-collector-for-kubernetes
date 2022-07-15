@@ -15,15 +15,15 @@ oc login -u <ADMIN_USER>
 ```
 4. Create Wavefront Collector Operator CRD:
 ```
- oc create -f https://raw.githubusercontent.com/wavefrontHQ/wavefront-kubernetes-collector/master/deploy/openshift/openshift-operator/deploy/crds/wavefront-collector-operator_v1beta1_crd.yaml
+ oc create -f https://raw.githubusercontent.com/wavefrontHQ/wavefront-kubernetes-collector/main/deploy/openshift/openshift-operator/deploy/crds/wavefront-collector-operator_v1beta1_crd.yaml
 ```
 5. Install the operator:
 ```
-oc create -f https://raw.githubusercontent.com/wavefrontHQ/wavefront-kubernetes-collector/master/deploy/openshift/openshift-operator/deploy/operator.yaml
+oc create -f https://raw.githubusercontent.com/wavefrontHQ/wavefront-kubernetes-collector/main/deploy/openshift/openshift-operator/deploy/operator.yaml
 ```
 6. Download the Custom Resource (CR) YAML file that can be customized and used as a blueprint to deploy the collector.
 ```
-curl -O https://raw.githubusercontent.com/wavefrontHQ/wavefront-kubernetes-collector/master/deploy/openshift/openshift-operator/deploy/crds/wavefront-collector-operator_v1beta1_cr.yaml 
+curl -O https://raw.githubusercontent.com/wavefrontHQ/wavefront-kubernetes-collector/main/deploy/openshift/openshift-operator/deploy/crds/wavefront-collector-operator_v1beta1_cr.yaml 
 ```
 
 7. Configure Wavefront Proxy:
@@ -78,8 +78,8 @@ spec:
 ```
 oc delete -f wavefront-collector-operator_v1beta1_cr.yaml -n wavefront-collector
 oc delete -f pvc.xml -n wavefront-collector
-oc delete -f https://raw.githubusercontent.com/wavefrontHQ/wavefront-kubernetes-collector/master/deploy/openshift/openshift-operator/deploy/operator.yaml
-oc delete -f https://raw.githubusercontent.com/wavefrontHQ/wavefront-kubernetes-collector/master/deploy/openshift/openshift-operator/deploy/crds/wavefront-collector-operator_v1beta1_crd.yaml
+oc delete -f https://raw.githubusercontent.com/wavefrontHQ/wavefront-kubernetes-collector/main/deploy/openshift/openshift-operator/deploy/operator.yaml
+oc delete -f https://raw.githubusercontent.com/wavefrontHQ/wavefront-kubernetes-collector/main/deploy/openshift/openshift-operator/deploy/crds/wavefront-collector-operator_v1beta1_crd.yaml
 
 ```
 

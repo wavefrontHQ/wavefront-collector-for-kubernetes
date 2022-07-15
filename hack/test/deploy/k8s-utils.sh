@@ -28,3 +28,20 @@ function wait_for_cluster_ready() {
     sleep 5
   done
 }
+
+function wait_for_namespaced_resource_created() {
+    local namespace=$1
+    local resource=$2
+    while ! kubectl get --namespace $namespace $resource > /dev/null; do
+        echo "Waiting for $resource in $namespace to be created"
+        sleep 1
+    done
+}
+
+function wait_for_cluster_resource_deleted() {
+    local resource=$1
+    while kubectl get $resource &> /dev/null; do
+        echo "Waiting for $resource to be deleted"
+        sleep 1
+    done
+}

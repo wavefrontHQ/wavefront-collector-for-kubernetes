@@ -11,8 +11,6 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/leadership"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
-
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/api/autoscaling/v2beta1"
 	batchv1 "k8s.io/api/batch/v1"
@@ -54,12 +52,7 @@ func newLister(kubeClient kubernetes.Interface) *lister {
 			kubeClient: kubeClient,
 			informers:  buildInformers(kubeClient),
 		}
-		if !util.IsDaemonMode() {
-			singleton.Resume()
-		} else {
-			// start the informers only for the leader
-			leadership.NewManager(singleton, "kstate", kubeClient).Start()
-		}
+		leadership.NewManager(singleton, "kstate", kubeClient).Start()
 	})
 	return singleton
 }

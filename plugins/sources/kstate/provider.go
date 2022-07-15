@@ -144,6 +144,10 @@ func (p *stateProvider) Name() string {
 const providerName = "kstate_metrics_provider"
 
 func NewStateProvider(cfg configuration.KubernetesStateSourceConfig) (metrics.SourceProvider, error) {
+	if !util.ScrapeCluster() {
+		return &stateProvider{}, nil
+	}
+
 	if cfg.KubeClient == nil {
 		return nil, fmt.Errorf("kubeclient not initialized")
 	}

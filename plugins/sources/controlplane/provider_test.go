@@ -3,12 +3,20 @@ package controlplane
 import (
 	"testing"
 
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/options"
+
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/leadership"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
 )
 
 func TestProvider(t *testing.T) {
+	leadership.SetLeading(true)
+	util.SetAgentType(options.AllAgentType)
+
 	t.Run("is identified as the correct provider", func(t *testing.T) {
 		provider, _ := NewProvider(configuration.ControlPlaneSourceConfig{}, configuration.SummarySourceConfig{})
 

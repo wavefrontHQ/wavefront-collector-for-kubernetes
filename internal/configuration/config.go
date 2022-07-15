@@ -48,7 +48,7 @@ type Config struct {
 	OmitBucketSuffix bool `yaml:"omitBucketSuffix"`
 
 	// Internal use only
-	Daemon bool `yaml:"-"`
+	ScrapeCluster bool `yaml:"-"`
 }
 
 type EventsConfig struct {

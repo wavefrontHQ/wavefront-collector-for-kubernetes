@@ -23,7 +23,6 @@ import (
 const (
 	NodeNameEnvVar           = "POD_NODE_NAME"
 	NamespaceNameEnvVar      = "POD_NAMESPACE_NAME"
-	DaemonModeEnvVar         = "DAEMON_MODE"
 	InstallationMethodEnvVar = "INSTALLATION_METHOD"
 	ForceGC                  = "FORCE_GC"
 	KubernetesVersionEnvVar  = "KUBERNETES_VERSION"
@@ -50,7 +49,14 @@ var (
 	reflector  *cache.Reflector
 	podLister  v1listers.PodLister
 	nsStore    cache.Store
+	agentType  AgentType
 )
+
+type AgentType interface {
+	ScrapeCluster() bool
+	ScrapeAnyNodes() bool
+	ScrapeOnlyOwnNode() bool
+}
 
 func GetNodeLister(kubeClient kubernetes.Interface) (v1listers.NodeLister, *cache.Reflector, error) {
 	lock.Lock()
@@ -116,7 +122,7 @@ func GetNamespaceStore(kubeClient kubernetes.Interface) cache.Store {
 func GetFieldSelector(resourceType string) fields.Selector {
 	fieldSelector := fields.Everything()
 	nodeName := GetNodeName()
-	if os.Getenv(DaemonModeEnvVar) != "" && nodeName != "" {
+	if ScrapeOnlyOwnNode() && nodeName != "" {
 		switch resourceType {
 		case "pods":
 			fieldSelector = fields.ParseSelectorOrDie("spec.nodeName=" + nodeName)
@@ -130,12 +136,20 @@ func GetFieldSelector(resourceType string) fields.Selector {
 	return fieldSelector
 }
 
-func GetDaemonMode() string {
-	return os.Getenv(DaemonModeEnvVar)
+func ScrapeCluster() bool {
+	return agentType.ScrapeCluster()
 }
 
-func IsDaemonMode() bool {
-	return GetDaemonMode() != ""
+func SetAgentType(value AgentType) {
+	agentType = value
+}
+
+func ScrapeAnyNodes() bool {
+	return agentType.ScrapeAnyNodes()
+}
+
+func ScrapeOnlyOwnNode() bool {
+	return agentType.ScrapeOnlyOwnNode()
 }
 
 func GetNodeName() string {

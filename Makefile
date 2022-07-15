@@ -7,6 +7,7 @@ REPO_DIR=$(shell git rev-parse --show-toplevel)
 TEST_DIR=$(REPO_DIR)/hack/test
 DEPLOY_DIR=$(REPO_DIR)/hack/test/deploy
 OUT_DIR?=$(REPO_DIR)/_output
+INTEGRATION_TEST_TYPE?=default
 
 BINARY_NAME=wavefront-collector
 
@@ -40,6 +41,13 @@ all: container
 
 fmt: $(GO_IMPORTS_BIN)
 	find . -type f -name "*.go" | grep -v "./vendor*" | xargs goimports -w
+
+# TODO: exclude certain keys from sorting
+# because we want them to be at the top and visible when we open the file!
+sort-integrations-keys:
+	# TODO: uncomment to run this on all of our dashboards when we're comfortable
+	@#$(REPO_DIR)/hack/sort-json-keys-inplace.sh $(HOME)/workspace/integrations/kubernetes/dashboards/*.json
+	@$(REPO_DIR)/hack/sort-json-keys-inplace.sh $(HOME)/workspace/integrations/kubernetes/dashboards/integration-kubernetes-control-plane.json
 
 checkfmt: $(GO_IMPORTS_BIN)
 	@if [ $$(goimports -d $$(find . -type f -name '*.go' -not -path "./vendor/*") | wc -l) -gt 0 ]; then \
@@ -142,7 +150,7 @@ token-check:
 	@if [ -z ${WAVEFRONT_TOKEN} ]; then echo "Need to set WAVEFRONT_TOKEN" && exit 1; fi
 
 proxy-test: token-check $(SEMVER_CLI_BIN)
-	(cd $(TEST_DIR) && ./test-integration.sh $(WAVEFRONT_CLUSTER) $(WAVEFRONT_TOKEN) $(VERSION) "$(shell  sed 's:/:\\/:g'  <<<"${PREFIX}")")
+	(cd $(TEST_DIR) && ./test-integration.sh $(WAVEFRONT_CLUSTER) $(WAVEFRONT_TOKEN) $(VERSION) $(INTEGRATION_TEST_TYPE))
 
 #Testing deployment and configuration changes, no code changes
 deploy-test: token-check k8s-env clean-deployment deploy-targets proxy-test
