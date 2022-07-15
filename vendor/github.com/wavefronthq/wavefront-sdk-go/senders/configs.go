@@ -8,6 +8,7 @@ const (
 )
 
 // Configuration for the direct ingestion sender
+//
 // Deprecated: Use 'senders.NewSender(url)'
 type DirectConfiguration struct {
 	Server string // Wavefront URL of the form https://<INSTANCE>.wavefront.com
@@ -32,6 +33,7 @@ type DirectConfiguration struct {
 }
 
 // Configuration for the proxy sender
+//
 // Deprecated: Use 'senders.NewSender(url)'
 type ProxyConfiguration struct {
 	Host string // the hostname of the Wavefront proxy

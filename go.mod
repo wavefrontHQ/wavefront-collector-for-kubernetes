@@ -17,7 +17,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.8.0
 	github.com/wavefronthq/go-metrics-wavefront v1.0.3
-	github.com/wavefronthq/wavefront-sdk-go v0.9.11
+	github.com/wavefronthq/wavefront-sdk-go v0.10.1
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.21.9
 	k8s.io/apimachinery v0.21.9

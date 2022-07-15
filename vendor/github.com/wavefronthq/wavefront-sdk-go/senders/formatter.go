@@ -17,6 +17,8 @@ import (
 var /* const */ quotation = regexp.MustCompile("\"")
 var /* const */ lineBreak = regexp.MustCompile("\\n")
 
+// MetricLine is for internal use only.
+//
 // Gets a metric line in the Wavefront metrics data format:
 // <metricName> <metricValue> [<timestamp>] source=<source> [pointTags]
 // Example: "new-york.power.usage 42422.0 1533531013 source=localhost datacenter=dc1"
@@ -57,6 +59,8 @@ func MetricLine(name string, value float64, ts int64, source string, tags map[st
 	return sb.String(), nil
 }
 
+// HistoLine is for internal use only.
+//
 // Gets a histogram line in the Wavefront histogram data format:
 // {!M | !H | !D} [<timestamp>] #<count> <mean> [centroids] <histogramName> source=<source> [pointTags]
 // Example: "!M 1533531013 #20 30.0 #10 5.1 request.latency source=appServer1 region=us-west"
@@ -118,6 +122,8 @@ func HistoLine(name string, centroids histogram.Centroids, hgs map[histogram.Gra
 	return sbg.String(), nil
 }
 
+// SpanLine is for internal use only.
+//
 // Gets a span line in the Wavefront span data format:
 // <tracingSpanName> source=<source> [pointTags] <start_millis> <duration_milli_seconds>
 // Example:
@@ -188,6 +194,7 @@ func SpanLine(name string, startMillis, durationMillis int64, source, traceId, s
 	return sb.String(), nil
 }
 
+// SpanLogJSON is for internal use only.
 func SpanLogJSON(traceId, spanId string, spanLogs []SpanLog) (string, error) {
 	l := SpanLogs{
 		TraceId: traceId,
@@ -201,6 +208,8 @@ func SpanLogJSON(traceId, spanId string, spanLogs []SpanLog) (string, error) {
 	return string(out[:]) + "\n", nil
 }
 
+// EventLine is for internal use only.
+//
 // EventLine encode the event to a wf proxy format
 // set endMillis to 0 for a 'Instantaneous' event
 func EventLine(name string, startMillis, endMillis int64, source string, tags map[string]string, setters ...event.Option) (string, error) {
@@ -248,8 +257,7 @@ func EventLine(name string, startMillis, endMillis int64, source string, tags ma
 	return sb.String(), nil
 }
 
-// EventLine encode the event to a wf API format
-// set endMillis to 0 for a 'Instantaneous' event
+// EventLineJSON is for internal use only.
 func EventLineJSON(name string, startMillis, endMillis int64, source string, tags map[string]string, setters ...event.Option) (string, error) {
 	annotations := map[string]string{}
 	l := map[string]interface{}{

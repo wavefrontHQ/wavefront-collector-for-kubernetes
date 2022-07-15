@@ -45,6 +45,7 @@ type directSender struct {
 }
 
 // NewDirectSender creates and returns a Wavefront Direct Ingestion Sender instance
+//
 // Deprecated: Use 'senders.NewSender(url)'
 func NewDirectSender(cfg *DirectConfiguration) (Sender, error) {
 	if cfg.Server == "" || cfg.Token == "" {
