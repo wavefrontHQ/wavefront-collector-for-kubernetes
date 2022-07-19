@@ -22,7 +22,7 @@ require (
 	k8s.io/api v0.21.14
 	k8s.io/apimachinery v0.21.14
 	k8s.io/client-go v0.21.14
-	k8s.io/kubelet v0.21.9
+	k8s.io/kubelet v0.21.14
 )
 
 require (
