@@ -144,7 +144,7 @@
 {"Name":"kubernetes.collector.source.points.collected","Tags":{"cluster":"","leading":"","source":"","type":"telegraf_host.system"}}
 {"Name":"kubernetes.collector.target.points.collected","Tags":{"cluster":"","discovered":"","leading":"","namespace":"","pod":"","source":"","type":""}}
 {"Name":"kubernetes.collector.target.points.collected","Tags":{"cluster":"","discovered":"","leading":"","source":"","type":"prometheus","!service":"","!url":""}}
-{"Name":"kubernetes.collector.version","Tags":{"cluster":"","leading":"","source":"","k8s_provider":"","k8s_version":"","installation_method":""}}
+{"Name":"kubernetes.collector.version","Tags":{"cluster":"","leading":"","source":"","installation_method":""}}
 {"Name":"kubernetes.collector.wavefront.events.sent.count","Tags":{"cluster":"","leading":"","source":""}}
 {"Name":"kubernetes.collector.wavefront.points.sent.count","Tags":{"cluster":"","leading":"","source":""}}
 {"Name":"kubernetes.collector.wavefront.sender.type","Tags":{"cluster":"","leading":"","source":""}}
@@ -4011,4 +4011,4 @@
 {"Name":"system.load5","Tags":{"cluster":"","source":""}}
 {"Name":"system.n.cpus","Tags":{"cluster":"","source":""}}
 {"Name":"system.uptime","Tags":{"cluster":"","source":""}}
-{"Name":"~wavefront.kubernetes.collector.version","Tags":{"cluster":"","source":"","k8s_provider":"","k8s_version":"","installation_method":"","stats_prefix":""}}
+{"Name":"~wavefront.kubernetes.collector.version","Tags":{"cluster":"","source":"","installation_method":"","stats_prefix":""}}
