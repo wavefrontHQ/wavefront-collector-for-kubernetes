@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"strings"
 	"sync"
 	"time"
 
@@ -26,8 +25,6 @@ const (
 	DaemonModeEnvVar         = "DAEMON_MODE"
 	InstallationMethodEnvVar = "INSTALLATION_METHOD"
 	ForceGC                  = "FORCE_GC"
-	KubernetesVersionEnvVar  = "KUBERNETES_VERSION"
-	KubernetesProviderEnvVar = "KUBERNETES_PROVIDER"
 )
 
 const (
@@ -153,37 +150,6 @@ func GetInstallationMethod() string {
 		return "unknown"
 	}
 	return installationMethod
-}
-
-func GetKubernetesProvider() string {
-	return os.Getenv(KubernetesProviderEnvVar)
-}
-
-func SetKubernetesVersion(version string) {
-	os.Setenv(KubernetesVersionEnvVar, version)
-}
-
-func GetKubernetesVersion() string {
-	return os.Getenv(KubernetesVersionEnvVar)
-}
-
-func SetKubernetesProvider(providerID string) {
-	provider := strings.Split(providerID, ":")
-	if len(provider[0]) > 0 {
-		os.Setenv(KubernetesProviderEnvVar, provider[0])
-	} else {
-		os.Setenv(KubernetesProviderEnvVar, "unknown")
-	}
-}
-
-func AddK8sTags(tags map[string]string) {
-	// Use separate function to add K8s tags since the Env variables are set via summary source
-	if len(tags["k8s_version"]) == 0 && len(GetKubernetesVersion()) > 0 {
-		tags["k8s_version"] = GetKubernetesVersion()
-	}
-	if len(tags["k8s_provider"]) == 0 && len(GetKubernetesProvider()) > 0 {
-		tags["k8s_provider"] = GetKubernetesProvider()
-	}
 }
 
 func GetNodeHostnameAndIP(node *kube_api.Node) (string, net.IP, error) {

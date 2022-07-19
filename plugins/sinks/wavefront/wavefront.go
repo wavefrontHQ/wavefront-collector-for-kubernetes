@@ -93,10 +93,10 @@ func NewWavefrontSink(cfg configuration.WavefrontSinkConfig) (WavefrontSink, err
 			return nil, fmt.Errorf("error parsing proxy port: %s", err.Error())
 		}
 		storage.WavefrontClient, err = senders.NewProxySender(&senders.ProxyConfiguration{
-			Host:        host,
-			MetricsPort: port,
-			EventsPort:  port,
-			DistributionPort:  port,
+			Host:             host,
+			MetricsPort:      port,
+			EventsPort:       port,
+			DistributionPort: port,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("error creating proxy sender: %s", err.Error())
@@ -190,24 +190,24 @@ func (sink *wavefrontSink) sendDistribution(distribution wf.Distribution) {
 		})
 	}
 
-    log.Infof("***sending distro: %s", metricName)
+	log.Infof("***sending distro: %s", metricName)
 	err := sink.WavefrontClient.SendDistribution(metricName, wf_centroids, hgs, distribution.Timestamp, distribution.Source, tags)
 	if err != nil {
-        log.Infof("***failed sending distro: %s", metricName)
+		log.Infof("***failed sending distro: %s", metricName)
 		errPoints.Inc(1)
 		sink.logVerboseError(log.Fields{
 			"name":  metricName,
 			"error": err,
 		}, "error sending histo")
 	} else {
-        log.Infof("***suceeded sending distro: %s", metricName)
-        sentPoints.Inc(1)
+		log.Infof("***suceeded sending distro: %s", metricName)
+		sentPoints.Inc(1)
 	}
 }
 
 func (sink *wavefrontSink) logVerboseError(f log.Fields, msg string) {
 	//if log.IsLevelEnabled(log.DebugLevel) {
-		log.WithFields(f).Error(msg)
+	log.WithFields(f).Error(msg)
 	//} else if sink.loggingAllowed() {
 	//	log.WithFields(f).Errorf("%s %s", "[sampled error]", msg)
 	//}
@@ -231,10 +231,10 @@ func (sink *wavefrontSink) send(batch *metrics.Batch) {
 	if after > before {
 		log.WithField("count", after).Warning("Error sending one or more points")
 	}
-    log.Infof("*******************# of distribitions: %d", len(batch.Distributions))
+	log.Infof("*******************# of distribitions: %d", len(batch.Distributions))
 
 	for _, distribution := range batch.Distributions {
-        log.Infof("*******************sending distribution: %v",*distribution)
+		log.Infof("*******************sending distribution: %v", *distribution)
 		distribution.OverrideTag("cluster", sink.ClusterName)
 		distribution.AddTags(sink.globalTags)
 		//point = wf.Filter(sink.filters, filteredPoints, point)
@@ -308,7 +308,6 @@ func (sink *wavefrontSink) emitHeartbeat(sender senders.Sender, cfg configuratio
 
 	go func() {
 		log.Debug("emitting heartbeat metric")
-		util.AddK8sTags(tags)
 		err := sender.SendMetric("~wavefront.kubernetes.collector.version", cfg.Version, 0, source, tags)
 		if err != nil {
 			log.Debugf("error emitting heartbeat metric :%v", err)
@@ -316,7 +315,6 @@ func (sink *wavefrontSink) emitHeartbeat(sender senders.Sender, cfg configuratio
 		for {
 			select {
 			case <-ticker.C:
-				util.AddK8sTags(tags)
 				_ = sender.SendMetric("~wavefront.kubernetes.collector.version", cfg.Version, 0, source, tags)
 				_ = sender.SendMetric("~wavefront.kubernetes.collector.config.events.enabled", eventsEnabled, 0, source, tags)
 				sink.logStatus()

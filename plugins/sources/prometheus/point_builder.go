@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-    log "github.com/sirupsen/logrus"
-    "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
+	log "github.com/sirupsen/logrus"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
@@ -67,7 +67,7 @@ func (builder *pointBuilder) build(metricFamilies map[string]*prom.MetricFamily,
 			}
 		}
 	}
-    log.Infof("**pointbuilder:build size: %d", len(batch.Distributions))
+	log.Infof("**pointbuilder:build size: %d", len(batch.Distributions))
 	return result, nil
 }
 
@@ -134,19 +134,19 @@ func (builder *pointBuilder) buildHistogramPoints(name string, m *prom.Metric, n
 		newTags["le"] = fmt.Sprintf("%v", b.GetUpperBound())
 		point := builder.point(histName, float64(b.GetCumulativeCount()), now, builder.source, newTags)
 		result = wf.FilterAppend(builder.filters, builder.filtered, result, point)
-        var value float64
-        if b.GetUpperBound() == math.Inf(0) {
-            value = float64(m.GetHistogram().GetSampleCount())
-        } else {
-            value = b.GetUpperBound()
-        }
+		var value float64
+		if b.GetUpperBound() == math.Inf(0) {
+			value = float64(m.GetHistogram().GetSampleCount())
+		} else {
+			value = b.GetUpperBound()
+		}
 		centroids = append(centroids, wf.Centroid{
 			Value: value,
 			Count: int(float64(b.GetCumulativeCount())),
 		})
 	}
 	batch.Distributions = append(batch.Distributions, wf.NewDistribution(histName, centroids, now, builder.source, tags))
-    log.Infof("**pointbuilder:distribution size: %d", len(batch.Distributions))
+	log.Infof("**pointbuilder:distribution size: %d", len(batch.Distributions))
 	point := builder.point(name+".count", float64(m.GetHistogram().GetSampleCount()), now, builder.source, tags)
 	result = wf.FilterAppend(builder.filters, builder.filtered, result, point)
 	point = builder.point(name+".sum", m.GetHistogram().GetSampleSum(), now, builder.source, tags)

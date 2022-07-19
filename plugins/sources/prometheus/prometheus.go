@@ -173,7 +173,7 @@ func (src *prometheusMetricsSource) Scrape() (*metrics.Batch, error) {
 	result.Points = points
 	collectedPoints.Inc(int64(len(points)))
 	src.pps.Inc(int64(len(points)))
-    log.Infof("**prometheus#Scrape:distribution size: %d", len(result.Distributions))
+	log.Infof("**prometheus#Scrape:distribution size: %d", len(result.Distributions))
 	return result, nil
 }
 
@@ -194,9 +194,9 @@ func (src *prometheusMetricsSource) parseMetrics(reader io.Reader, result *metri
 		batch, err := pointBuilder.build(metricFamilies, result)
 		points = append(points, batch...)
 	}
-    log.Infof("**prometheus.go:distribution size: %d", len(result.Distributions))
+	log.Infof("**prometheus.go:distribution size: %d", len(result.Distributions))
 
-    return points, err
+	return points, err
 }
 
 type prometheusProvider struct {
