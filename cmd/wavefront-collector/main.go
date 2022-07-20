@@ -5,7 +5,8 @@ package main
 
 import (
 	"fmt"
-	"net/http"
+    "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/experimental"
+    "net/http"
 	_ "net/http/pprof"
 	"os"
 	"runtime"
@@ -161,6 +162,11 @@ func loadConfigOrDie(file string) *configuration.Config {
 		log.Fatalf("invalid configuration file: %v", err)
 		return nil
 	}
+
+    for _, feature := range cfg.Experimental {
+        experimental.EnableFeature(feature)
+    }
+
 	return cfg
 }
 
