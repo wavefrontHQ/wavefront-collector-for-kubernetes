@@ -4,28 +4,28 @@
 package wavefront
 
 import (
-    "fmt"
-    "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/experimental"
-    "math/rand"
-    "os"
-    "runtime/debug"
-    "strconv"
-    "strings"
-    "time"
+	"fmt"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/experimental"
+	"math/rand"
+	"os"
+	"runtime/debug"
+	"strconv"
+	"strings"
+	"time"
 
-    "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
 
-    "github.com/wavefronthq/wavefront-sdk-go/event"
+	"github.com/wavefronthq/wavefront-sdk-go/event"
 
-    "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
-    "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/events"
-    "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
-    "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
-    "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
-    "github.com/wavefronthq/wavefront-sdk-go/senders"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/events"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
+	"github.com/wavefronthq/wavefront-sdk-go/senders"
 
-    gm "github.com/rcrowley/go-metrics"
-    log "github.com/sirupsen/logrus"
+	gm "github.com/rcrowley/go-metrics"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -188,15 +188,15 @@ func (sink *wavefrontSink) send(batch *metrics.Batch) {
 		if point == nil {
 			continue
 		}
-        tags := point.Tags()
-        if experimental.IsEnabled("cluster-source") {
-            point.Source = tags["cluster"]
-            if len(tags["namespace_name"]) > 0 {
-                point.Source += "." + tags["namespace_name"]
-            } else if len(tags["nodename"]) > 0 {
-                point.Source += "." + tags["nodename"]
-            }
-        }
+		tags := point.Tags()
+		if experimental.IsEnabled("cluster-source") {
+			point.Source = tags["cluster"]
+			if len(tags["namespace_name"]) > 0 {
+				point.Source += "." + tags["namespace_name"]
+			} else if len(tags["nodename"]) > 0 {
+				point.Source += "." + tags["nodename"]
+			}
+		}
 		sink.sendPoint(point.Metric, point.Value, point.Timestamp, point.Source, tags)
 	}
 

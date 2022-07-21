@@ -1,11 +1,15 @@
 package experimental
 
-import "os"
+var features = map[string]bool{}
 
 func IsEnabled(name string) bool {
-    return len(os.Getenv(name)) > 0
+	return features[name]
 }
 
 func EnableFeature(name string) {
-    os.Setenv(name, name)
+	features[name] = true
+}
+
+func DisableFeature(name string) {
+	delete(features, name)
 }
