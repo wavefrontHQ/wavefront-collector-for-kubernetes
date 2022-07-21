@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+
+	"github.com/gobwas/glob"
 )
 
 type Diff struct {
@@ -105,6 +107,12 @@ func fullTagKey(name, value string) keyer {
 	if strings.HasPrefix(name, "!") {
 		return func(metric *Metric) (bool, string) {
 			return metric.Tags[key] != value, fmt.Sprintf("%s!=%#v", key, metric.Tags[key])
+		}
+	}
+	if strings.HasPrefix(name, "~") {
+		g := glob.MustCompile(value)
+		return func(metric *Metric) (bool, string) {
+			return g.Match(metric.Tags[key]), fmt.Sprintf("%s≅%#v", key, value)
 		}
 	}
 	return func(metric *Metric) (bool, string) {

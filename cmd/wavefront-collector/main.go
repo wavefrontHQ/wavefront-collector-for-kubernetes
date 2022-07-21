@@ -91,6 +91,11 @@ func preRegister(opt *options.CollectorRunOptions) {
 }
 
 func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
+	experimental.DisableAll()
+	for _, feature := range cfg.Experimental {
+		experimental.EnableFeature(feature)
+	}
+
 	// backwards compat: used by prometheus sources to format histogram metric names
 	setEnvVar("omitBucketSuffix", strconv.FormatBool(cfg.OmitBucketSuffix))
 
@@ -162,10 +167,6 @@ func loadConfigOrDie(file string) *configuration.Config {
 	if err := validateCfg(cfg); err != nil {
 		log.Fatalf("invalid configuration file: %v", err)
 		return nil
-	}
-
-	for _, feature := range cfg.Experimental {
-		experimental.EnableFeature(feature)
 	}
 
 	return cfg
