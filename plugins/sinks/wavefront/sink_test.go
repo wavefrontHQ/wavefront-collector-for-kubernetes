@@ -4,9 +4,10 @@
 package wavefront
 
 import (
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/experimental"
 	"strings"
 	"testing"
+
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/experimental"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
 

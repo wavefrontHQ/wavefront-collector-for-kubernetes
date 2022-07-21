@@ -5,7 +5,6 @@ package wavefront
 
 import (
 	"fmt"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/experimental"
 	"math/rand"
 	"os"
 	"runtime/debug"
@@ -13,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/experimental"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
 
 	"github.com/wavefronthq/wavefront-sdk-go/event"
@@ -177,7 +177,7 @@ func (sink *wavefrontSink) logVerboseError(f log.Fields, msg string) {
 	}
 }
 
-func (sink *wavefrontSink) send(batch *metrics.Batch) {
+func (sink *wavefrontSink) Export(batch *metrics.Batch) {
 	log.Debugf("received metric points: %d", len(batch.Points))
 
 	before := errPoints.Count()
@@ -213,10 +213,6 @@ func (sink *wavefrontSink) send(batch *metrics.Batch) {
 		log.Info("sink: forcing memory release")
 		debug.FreeOSMemory()
 	}
-}
-
-func (sink *wavefrontSink) Export(batch *metrics.Batch) {
-	sink.send(batch)
 }
 
 func (sink *wavefrontSink) ExportEvent(ev *events.Event) {

@@ -5,8 +5,7 @@ package main
 
 import (
 	"fmt"
-    "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/experimental"
-    "net/http"
+	"net/http"
 	_ "net/http/pprof"
 	"os"
 	"runtime"
@@ -14,6 +13,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/experimental"
 
 	intdiscovery "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/leadership"
@@ -163,9 +164,9 @@ func loadConfigOrDie(file string) *configuration.Config {
 		return nil
 	}
 
-    for _, feature := range cfg.Experimental {
-        experimental.EnableFeature(feature)
-    }
+	for _, feature := range cfg.Experimental {
+		experimental.EnableFeature(feature)
+	}
 
 	return cfg
 }
