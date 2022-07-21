@@ -6,13 +6,14 @@
 package experimental
 
 import (
-    "github.com/stretchr/testify/assert"
-    "testing"
+	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
-func TestIsEnabled(t *testing.T) {
-	t.Run("Test feature enabled", func(t *testing.T) {
-        EnableFeature("cluster-scope")
-		assert.True(t, IsEnabled("cluster-scope"), "Error :: Feature cluster-scope is expected to be enabled.")
-	})
+func TestFeatureFlags(t *testing.T) {
+	assert.False(t, IsEnabled(ClusterSource), "Error :: Feature cluster-scope is expected to be disabled.")
+	EnableFeature(ClusterSource)
+	assert.True(t, IsEnabled(ClusterSource), "Error :: Feature cluster-scope is expected to be enabled.")
+	DisableFeature(ClusterSource)
+	assert.False(t, IsEnabled(ClusterSource), "Error :: Feature cluster-scope is expected to be disabled.")
 }

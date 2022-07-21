@@ -31,6 +31,10 @@ var (
 	MetricSetTypeNode            = "node"
 	MetricSetTypeCluster         = "cluster"
 
+	LabelCluster = LabelDescriptor{
+		Key:         "cluster",
+		Description: "The name of the kubernetes cluster",
+	}
 	LabelPodId = LabelDescriptor{
 		Key:         "pod_id",
 		Description: "The unique ID of the pod",

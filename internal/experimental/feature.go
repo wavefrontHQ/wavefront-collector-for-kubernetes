@@ -1,15 +1,17 @@
 package experimental
 
-var features = map[string]bool{}
+const ClusterSource = "cluster-source"
+
+var enabled = map[string]bool{}
 
 func IsEnabled(name string) bool {
-	return features[name]
+	return enabled[name]
 }
 
 func EnableFeature(name string) {
-	features[name] = true
+	enabled[name] = true
 }
 
 func DisableFeature(name string) {
-	delete(features, name)
+	delete(enabled, name)
 }

@@ -182,19 +182,19 @@ func (sink *wavefrontSink) send(batch *metrics.Batch) {
 
 	before := errPoints.Count()
 	for _, point := range batch.Points {
-		point.OverrideTag("cluster", sink.ClusterName)
+		point.OverrideTag(metrics.LabelCluster.Key, sink.ClusterName)
 		point.AddTags(sink.globalTags)
 		point = wf.Filter(sink.filters, filteredPoints, point)
 		if point == nil {
 			continue
 		}
 		tags := point.Tags()
-		if experimental.IsEnabled("cluster-source") {
-			point.Source = tags["cluster"]
-			if len(tags["namespace_name"]) > 0 {
-				point.Source += "." + tags["namespace_name"]
-			} else if len(tags["nodename"]) > 0 {
-				point.Source += "." + tags["nodename"]
+		if experimental.IsEnabled(experimental.ClusterSource) {
+			point.Source = tags[metrics.LabelCluster.Key]
+			if len(tags[metrics.LabelNamespaceName.Key]) > 0 {
+				point.Source += "." + tags[metrics.LabelNamespaceName.Key]
+			} else if len(tags[metrics.LabelNodename.Key]) > 0 {
+				point.Source += "." + tags[metrics.LabelNodename.Key]
 			}
 		}
 		sink.sendPoint(point.Metric, point.Value, point.Timestamp, point.Source, tags)

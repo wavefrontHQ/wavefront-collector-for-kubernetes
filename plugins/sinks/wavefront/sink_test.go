@@ -123,7 +123,7 @@ func TestCleansTagsBeforeSending(t *testing.T) {
 }
 
 func TestClusterSource(t *testing.T) {
-	experimental.EnableFeature("cluster-source")
+	experimental.EnableFeature(experimental.ClusterSource)
 	cfg := configuration.WavefrontSinkConfig{
 		ProxyAddress: "wavefront-proxy:2878",
 		TestMode:     true,
@@ -146,7 +146,7 @@ func TestClusterSource(t *testing.T) {
 	assert.True(t, strings.Contains(getMetrics(sink), "source=\"fakeCluster\""))
 	assert.True(t, strings.Contains(getMetrics(sink), "source=\"fakeCluster.fakeNamespace\""))
 	assert.True(t, strings.Contains(getMetrics(sink), "source=\"fakeCluster.fakeNodeName\""))
-	experimental.DisableFeature("cluster-source")
+	experimental.DisableFeature(experimental.ClusterSource)
 }
 
 func getMetrics(sink WavefrontSink) string {
