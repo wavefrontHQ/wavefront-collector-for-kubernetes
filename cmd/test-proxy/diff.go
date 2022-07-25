@@ -106,13 +106,25 @@ func fullTagKey(name, value string) keyer {
 	key := strings.TrimPrefix(name, "!")
 	if strings.HasPrefix(name, "!") {
 		return func(metric *Metric) (bool, string) {
-			return metric.Tags[key] != value, fmt.Sprintf("%s!=%#v", key, metric.Tags[key])
+			var adjustedKey string
+			if len(metric.Tags[key]) > 0 {
+				adjustedKey = key
+			} else {
+				adjustedKey = strings.Replace(key, "!", "", 1)
+			}
+			return metric.Tags[adjustedKey] != value, fmt.Sprintf("%s!=%#v", key, metric.Tags[key])
 		}
 	}
 	if strings.HasPrefix(name, "~") {
 		g := glob.MustCompile(value)
 		return func(metric *Metric) (bool, string) {
-			return g.Match(metric.Tags[key]), fmt.Sprintf("%s≅%#v", key, value)
+			var adjustedKey string
+			if len(metric.Tags[key]) > 0 {
+				adjustedKey = key
+			} else {
+				adjustedKey = strings.Replace(key, "~", "", 1)
+			}
+			return g.Match(metric.Tags[adjustedKey]), fmt.Sprintf("%s≅%#v", key, value)
 		}
 	}
 	return func(metric *Metric) (bool, string) {
