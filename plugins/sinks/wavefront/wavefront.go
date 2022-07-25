@@ -193,6 +193,8 @@ func (sink *wavefrontSink) Export(batch *metrics.Batch) {
 			point.Source = tags[metrics.LabelCluster.Key]
 			if len(tags[metrics.LabelNamespaceName.Key]) > 0 {
 				point.Source += "." + tags[metrics.LabelNamespaceName.Key]
+			} else if len(tags["namespace"]) > 0 {
+				point.Source += "." + tags["namespace"]
 			} else if len(tags[metrics.LabelNodename.Key]) > 0 {
 				point.Source += "." + tags[metrics.LabelNodename.Key]
 			}

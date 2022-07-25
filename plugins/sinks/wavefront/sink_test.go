@@ -139,12 +139,14 @@ func TestClusterSource(t *testing.T) {
 	db := metrics.Batch{
 		Points: []*wf.Point{
 			wf.NewPoint("metric.source.cluster", 1.0, 0, "fakeSource", map[string]string{}),
-			wf.NewPoint("metric.source.cluster.ns", 1.0, 0, "fakeSource", map[string]string{"namespace_name": "fakeNamespace", "nodename": "fakeNodeName"}),
+			wf.NewPoint("metric.source.cluster.ns", 1.0, 0, "fakeSource", map[string]string{"namespace_name": "fakeNamespaceName", "nodename": "fakeNodeName"}),
+			wf.NewPoint("metric.source.cluster.ns", 1.0, 0, "fakeSource", map[string]string{"namespace": "fakeNamespace", "nodename": "fakeNodeName"}),
 			wf.NewPoint("metric.source.cluster.node", 1.0, 0, "fakeSource", map[string]string{"nodename": "fakeNodeName"}),
 		},
 	}
 	sink.Export(&db)
 	assert.True(t, strings.Contains(getMetrics(sink), "source=\"fakeCluster\""))
+	assert.True(t, strings.Contains(getMetrics(sink), "source=\"fakeCluster.fakeNamespaceName\""))
 	assert.True(t, strings.Contains(getMetrics(sink), "source=\"fakeCluster.fakeNamespace\""))
 	assert.True(t, strings.Contains(getMetrics(sink), "source=\"fakeCluster.fakeNodeName\""))
 	experimental.DisableFeature(experimental.ClusterSource)
