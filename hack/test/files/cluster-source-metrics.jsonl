@@ -1,0 +1,22 @@
+{"Name":"kubernetes.cadvisor.container.cpu.cfs.throttled.periods.total.counter","Tags":{"cluster":"","container":"","id":"","image":"","name":"","namespace":"collector-targets","pod":"","source":"YOUR_CLUSTER_NAME.collector-targets"}}
+{"Name":"kubernetes.controlplane.apiserver.request.duration.seconds.bucket","Tags":{"cluster":"","le":"","resource":"","scope":"","source":"YOUR_CLUSTER_NAME","verb":""}}
+{"Name":"kubernetes.cluster.cpu.limit","Tags":{"cluster":"","source":"YOUR_CLUSTER_NAME","type":"cluster"}}
+{"Name":"kubernetes.collector.discovery.enabled","Tags":{"cluster":"","leading":"","source":"YOUR_CLUSTER_NAME"}}
+{"Name":"kubernetes.collector.discovery.enabled","Tags":{"cluster":"","leading":"","source":"YOUR_CLUSTER_NAME"}}
+{"Name":"kubernetes.deployment.available_replicas","Tags":{"cluster":"","deployment":"memcached-release","namespace_name": "collector-targets","source":"YOUR_CLUSTER_NAME.collector-targets"}}
+{"Name":"kubernetes.node.cpu.limit","Tags":{"cluster":"","!label.kubernetes.io/arch":"","label.kubernetes.io/hostname":"","label.kubernetes.io/os":"linux","nodename":"","~source":"YOUR_CLUSTER_NAME.*","type":"node","node_role":""}}
+{"Name":"kubernetes.ns.cpu.limit","Tags":{"cluster":"","namespace_name":"wavefront-collector","source":"YOUR_CLUSTER_NAME.wavefront-collector","type":"ns"}}
+{"Name":"kubernetes.pod.cpu.limit","Tags":{"cluster":"","label.app":"wavefront-proxy","namespace_name":"wavefront-collector","nodename":"","pod_name":"","source":"YOUR_CLUSTER_NAME.wavefront-collector","type":"pod"}}
+{"Name":"kubernetes.pod_container.cpu.limit","Tags":{"cluster":"","container_base_image":"","container_name":"memcached","label.app.kubernetes.io/instance":"memcached-release","label.app.kubernetes.io/managed-by":"Helm","label.app.kubernetes.io/name":"memcached","label.helm.sh/chart":"","namespace_name": "collector-targets","nodename":"","pod_name":"","source":"YOUR_CLUSTER_NAME.collector-targets","type":"pod_container"}}
+{"Name":"kubernetes.replicaset.available_replicas","Tags":{"cluster":"","namespace_name":"wavefront-collector","replicaset":"","source":"YOUR_CLUSTER_NAME.wavefront-collector"}}
+{"Name":"kubernetes.statefulset.current_replicas","Tags":{"cluster":"","namespace_name": "collector-targets","source":"YOUR_CLUSTER_NAME.collector-targets","statefulset":"mysql-release"}}
+{"Name":"linux.sysctl.fs.aio-max-nr","Tags":{"cluster":"","source":"YOUR_CLUSTER_NAME"}}
+{"Name":"mem.active","Tags":{"cluster":"","source":"YOUR_CLUSTER_NAME"}}
+{"Name":"memcached.accepting.conns","Tags":{"cluster":"","label.app.kubernetes.io/instance":"memcached-release","label.app.kubernetes.io/managed-by":"Helm","label.app.kubernetes.io/name":"memcached","label.helm.sh/chart":"","namespace":"collector-targets","pod":"","server":"memcached-release.collector-targets.svc.cluster.local:11211","source":"YOUR_CLUSTER_NAME.collector-targets"}}
+{"Name":"mysql.aborted.clients","Tags":{"cluster":"","server":"mysql-release.collector-targets.svc.cluster.local:3306","source":"YOUR_CLUSTER_NAME.collector-targets"}}
+{"Name":"net.bytes.recv","Tags":{"cluster":"","interface":"eth0","~source":"YOUR_CLUSTER_NAME.*"}}
+{"Name":"netstat.tcp.close","Tags":{"cluster":"","~source":"YOUR_CLUSTER_NAME.*"}}
+{"Name":"netstat.udp.socket","Tags":{"cluster":"","~source":"YOUR_CLUSTER_NAME.*"}}
+{"Name":"prom-example.ack.level.update.counter","Value":"1599186","Tags":{"cluster":"","label.k8s-app":"prom-example","label.name":"prom-example","namespace":"collector-targets","operation":"TransferActiveQueueProcessor","pod":"prom-example","source":"YOUR_CLUSTER_NAME.collector-targets","type":"history"}}
+{"Name":"swap.free","Tags":{"cluster":"","~source":"YOUR_CLUSTER_NAME.*"}}
+{"Name":"system.load1","Tags":{"cluster":"","~source":"YOUR_CLUSTER_NAME.*"}}
