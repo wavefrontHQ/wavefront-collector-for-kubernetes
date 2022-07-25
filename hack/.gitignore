@@ -4,5 +4,6 @@ test/missing.jsonl
 test/unwanted.jsonl
 test/base/collector.yaml
 test/files/combined-metrics.jsonl
+test/files/cluster-source-metrics-updated.jsonl
 test/base/deploy/*
 test/base/deploy/alternate-deployments/*

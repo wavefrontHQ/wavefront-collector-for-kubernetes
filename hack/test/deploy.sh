@@ -12,6 +12,8 @@ function print_usage_and_exit() {
     echo -e "\t-t wavefront token (required)"
     echo -e "\t-v collector docker image version"
     echo -e "\t-k K8s ENV (required)"
+    echo -e "\t-n K8s Cluster name"
+    echo -e "\t-e experimental features"
     echo -e "\t-y collector yaml"
     exit 1
 }
@@ -21,8 +23,10 @@ WAVEFRONT_TOKEN=
 VERSION=
 K8S_ENV=
 COLLECTOR_YAML=
+WF_CLUSTER_NAME=
+EXPERIMENTAL_FEATURES=
 
-while getopts ":c:t:v:d:k:y:" opt; do
+while getopts "c:t:v:d:k:n:e:y:" opt; do
   case $opt in
     c)
       WF_CLUSTER="$OPTARG"
@@ -35,6 +39,12 @@ while getopts ":c:t:v:d:k:y:" opt; do
       ;;
     k)
       K8S_ENV="$OPTARG"
+      ;;
+    n)
+      WF_CLUSTER_NAME="$OPTARG"
+      ;;
+    e)
+      EXPERIMENTAL_FEATURES="$OPTARG"
       ;;
     y)
       COLLECTOR_YAML="$OPTARG"
@@ -51,6 +61,6 @@ fi
 
 NS=wavefront-collector
 
-env USE_TEST_PROXY="$USE_TEST_PROXY" ./generate.sh -c "$WF_CLUSTER" -t "$WAVEFRONT_TOKEN" -v "$VERSION"  -k "$K8S_ENV" -y "$COLLECTOR_YAML"
+env USE_TEST_PROXY="$USE_TEST_PROXY" ./generate.sh -c "$WF_CLUSTER" -t "$WAVEFRONT_TOKEN" -v "$VERSION"  -k "$K8S_ENV" -n "$WF_CLUSTER_NAME" -e "$EXPERIMENTAL_FEATURES" -y "$COLLECTOR_YAML"
 
 kustomize build overlays/test-$K8S_ENV | kubectl apply -f -

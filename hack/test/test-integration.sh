@@ -19,6 +19,8 @@ fi
 METRICS_FILE_NAME=all-metrics
 COLLECTOR_YAML=
 SLEEP_TIME=70
+WF_CLUSTER_NAME=$(whoami)-${K8S_ENV}-$(date +"%y%m%d")
+EXPERIMENTAL_FEATURES=
 
 if [[ "${INTEGRATION_TEST_TYPE}" == "cluster-metrics-only" ]]; then
   METRICS_FILE_NAME="cluster-metrics-only"
@@ -33,6 +35,11 @@ if [[ "${INTEGRATION_TEST_TYPE}" == "combined" ]]; then
 fi
 if [[ "${INTEGRATION_TEST_TYPE}" == "single-deployment" ]]; then
   COLLECTOR_YAML="base/deploy/collector-deployments/5-collector-single-deployment.yaml"
+fi
+if [[ "${INTEGRATION_TEST_TYPE}" == "cluster-source" ]]; then
+  EXPERIMENTAL_FEATURES=["cluster-source"]
+  sed "s/YOUR_CLUSTER_NAME/${WF_CLUSTER_NAME}/g" files/cluster-source-metrics.jsonl  > files/cluster-source-metrics-updated.jsonl
+  METRICS_FILE_NAME="cluster-source-metrics-updated"
 fi
 
 NS=wavefront-collector
@@ -49,7 +56,7 @@ kubectl config set-context --current --namespace=default
 
 echo "deploying collector $IMAGE_NAME $VERSION"
 
-env USE_TEST_PROXY=true ./deploy.sh -c "$WAVEFRONT_CLUSTER" -t "$API_TOKEN" -v "$VERSION"  -k "$K8S_ENV" -y "$COLLECTOR_YAML"
+env USE_TEST_PROXY=true ./deploy.sh -c "$WAVEFRONT_CLUSTER" -t "$API_TOKEN" -v "$VERSION"  -k "$K8S_ENV" -n "$WF_CLUSTER_NAME" -e "$EXPERIMENTAL_FEATURES" -y "$COLLECTOR_YAML"
 
 wait_for_cluster_ready
 
@@ -62,7 +69,11 @@ sleep ${SLEEP_TIME}
 DIR=$(dirname "$0")
 RES=$(mktemp)
 
-cat "files/${METRICS_FILE_NAME}.jsonl"  overlays/test-$K8S_ENV/metrics/${METRICS_FILE_NAME}.jsonl  > files/combined-metrics.jsonl
+if [ -f "overlays/test-$K8S_ENV/metrics/${METRICS_FILE_NAME}.jsonl" ]; then
+  cat "files/${METRICS_FILE_NAME}.jsonl" overlays/test-$K8S_ENV/metrics/${METRICS_FILE_NAME}.jsonl  > files/combined-metrics.jsonl
+else
+  cat "files/${METRICS_FILE_NAME}.jsonl" > files/combined-metrics.jsonl
+fi
 
 while true ; do # wait until we get a good connection
   RES_CODE=$(curl --silent --output "$RES" --write-out "%{http_code}" --data-binary "@$DIR/files/combined-metrics.jsonl" "http://localhost:8888/metrics/diff")
