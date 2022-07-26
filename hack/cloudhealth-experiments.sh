@@ -7,7 +7,7 @@ function do_request() {
         -H "Authorization: Bearer $CLOUDHEALH_WAVEFRONT_TOKEN" \
         -w "$name [%{http_code}]: %{time_total}s\n" \
         -s -o "/tmp/high-cardinality/$name.dat"
-    local stats=$(grep -A1 "event: stats" "/tmp/high-cardinality/$name.dat" | tail -n 1 | awk '{print $2}' | jq -r '"cardinality=" + (.stats.keys | tostring) + ", scanned=" + (.stats.points + .stats.distributions | tostring)')
+    local stats=$(grep -A1 "event: stats" "/tmp/high-cardinality/$name.dat" | tail -n 1 | awk '{print $2}' | jq -r '"cardinality=" + (.stats.keys | tostring) + ", scannedPoints=" + (.stats.points | tostring) + ", scannedDistributions=" + (.stats.distributions | tostring)')
     echo "$name: $stats"
 }
 
