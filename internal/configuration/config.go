@@ -47,6 +47,8 @@ type Config struct {
 	// whether to omit the .bucket suffix for prometheus histogram metrics. Defaults to false.
 	OmitBucketSuffix bool `yaml:"omitBucketSuffix"`
 
+	Experimental []string `yaml:"experimental"`
+
 	// Internal use only
 	ScrapeCluster bool `yaml:"-"`
 }

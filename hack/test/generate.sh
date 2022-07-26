@@ -24,6 +24,8 @@ function print_usage_and_exit() {
     echo -e "\t-t wavefront token (required)"
     echo -e "\t-v collector docker image version"
     echo -e "\t-k K8s ENV (required)"
+    echo -e "\t-n K8s Cluster name"
+    echo -e "\t-e experimental features"
     echo -e "\t-y collector yaml"
     exit 1
 }
@@ -33,8 +35,10 @@ WAVEFRONT_TOKEN=
 VERSION=
 K8S_ENV=gke
 COLLECTOR_YAML=
+WF_CLUSTER_NAME=
+EXPERIMENTAL_FEATURES=
 
-while getopts "c:t:v:d:k:y:" opt; do
+while getopts "c:t:v:d:k:n:e:y:" opt; do
   case $opt in
     c)
       WF_CLUSTER="$OPTARG"
@@ -47,6 +51,12 @@ while getopts "c:t:v:d:k:y:" opt; do
       ;;
     k)
       K8S_ENV="$OPTARG"
+      ;;
+    n)
+      WF_CLUSTER_NAME="$OPTARG"
+      ;;
+    e)
+      EXPERIMENTAL_FEATURES="$OPTARG"
       ;;
     y)
       COLLECTOR_YAML="$OPTARG"
@@ -71,6 +81,10 @@ if [[ -z ${COLLECTOR_YAML} ]] ; then
     COLLECTOR_YAML="${REPO_ROOT}/deploy/kubernetes/5-collector-daemonset.yaml"
 fi
 
+if [[ -z ${WF_CLUSTER_NAME} ]] ; then
+    WF_CLUSTER_NAME=$(whoami)-${K8S_ENV}-$(date +"%y%m%d")
+fi
+
 cp "${REPO_ROOT}/deploy/kubernetes/0-collector-namespace.yaml" base/deploy/0-collector-namespace.yaml
 cp "${REPO_ROOT}/deploy/kubernetes/1-collector-cluster-role.yaml" base/deploy/1-collector-cluster-role.yaml
 cp "${REPO_ROOT}/deploy/kubernetes/2-collector-rbac.yaml" base/deploy/2-collector-rbac.yaml
@@ -87,7 +101,6 @@ cp "${COLLECTOR_YAML}" base/deploy/5-wavefront-collector.yaml
 
 
 NS=wavefront-collector
-WF_CLUSTER_NAME=$(whoami)-${K8S_ENV}-$(date +"%y%m%d")
 
 if $USE_TEST_PROXY ; then
   cp base/test-proxy.yaml base/deploy/6-wavefront-proxy.yaml
@@ -100,6 +113,7 @@ fi
 
 sed "s/YOUR_CLUSTER_NAME/${WF_CLUSTER_NAME}/g"  base/collector-config.template.yaml  |
   sed "s/NAMESPACE/${NS}/g" |
+  sed "s/YOUR_EXPERIMENTAL_FEATURES/${EXPERIMENTAL_FEATURES}/g" |
   sed "s/FLUSH_INTERVAL/${FLUSH_INTERVAL}/g" |
   sed  "s/COLLECTION_INTERVAL/${COLLECTION_INTERVAL}/g" > base/deploy/4-collector-config.yaml
 

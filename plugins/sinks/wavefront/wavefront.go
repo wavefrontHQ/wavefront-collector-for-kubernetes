@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/experimental"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
 
 	"github.com/wavefronthq/wavefront-sdk-go/event"
@@ -176,18 +177,29 @@ func (sink *wavefrontSink) logVerboseError(f log.Fields, msg string) {
 	}
 }
 
-func (sink *wavefrontSink) send(batch *metrics.Batch) {
+func (sink *wavefrontSink) Export(batch *metrics.Batch) {
 	log.Debugf("received metric points: %d", len(batch.Points))
 
 	before := errPoints.Count()
 	for _, point := range batch.Points {
-		point.OverrideTag("cluster", sink.ClusterName)
+		point.OverrideTag(metrics.LabelCluster.Key, sink.ClusterName)
 		point.AddTags(sink.globalTags)
 		point = wf.Filter(sink.filters, filteredPoints, point)
 		if point == nil {
 			continue
 		}
-		sink.sendPoint(point.Metric, point.Value, point.Timestamp, point.Source, point.Tags())
+		tags := point.Tags()
+		if experimental.IsEnabled(experimental.ClusterSource) {
+			point.Source = tags[metrics.LabelCluster.Key]
+			if len(tags[metrics.LabelNamespaceName.Key]) > 0 {
+				point.Source += "." + tags[metrics.LabelNamespaceName.Key]
+			} else if len(tags["namespace"]) > 0 {
+				point.Source += "." + tags["namespace"]
+			} else if len(tags[metrics.LabelNodename.Key]) > 0 {
+				point.Source += "." + tags[metrics.LabelNodename.Key]
+			}
+		}
+		sink.sendPoint(point.Metric, point.Value, point.Timestamp, point.Source, tags)
 	}
 
 	after := errPoints.Count()
@@ -203,10 +215,6 @@ func (sink *wavefrontSink) send(batch *metrics.Batch) {
 		log.Info("sink: forcing memory release")
 		debug.FreeOSMemory()
 	}
-}
-
-func (sink *wavefrontSink) Export(batch *metrics.Batch) {
-	sink.send(batch)
 }
 
 func (sink *wavefrontSink) ExportEvent(ev *events.Event) {

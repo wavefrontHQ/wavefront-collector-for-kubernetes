@@ -46,7 +46,7 @@
 {"Name":"kubernetes.controlplane.etcd.db.total.size.in.bytes.gauge","Tags":{"cluster":"","endpoint":"","source":""}}
 {"Name":"kubernetes.controlplane.etcd.request.duration.seconds.bucket","Tags":{"cluster":"","operation":"","source":"","type":""}}
 {"Name":"kubernetes.controlplane.workqueue.queue.duration.seconds.bucket","Tags":{"cluster":"","le":"","name":"","source":""}}
-{"Name":"kubernetes.cadvisor.container.cpu.cfs.throttled.periods.total.counter","Tags":{"cluster":"","container":"","id":"","image":"","name":"","namespace":"","pod":"","source":""}}
+{"Name":"kubernetes.cadvisor.container.cpu.cfs.throttled.periods.total.counter","Tags":{"cluster":"","container":"","id":"","image":"","name":"","namespace":"collector-targets","pod":"","source":""}}
 {"Name":"kubernetes.cadvisor.container.cpu.cfs.throttled.periods.total.counter","Tags":{"cluster":"","id":"","namespace":"","pod":"","source":""}}
 {"Name":"kubernetes.cadvisor.container.cpu.cfs.throttled.seconds.total.counter","Tags":{"cluster":"","container":"","id":"","image":"","name":"","namespace":"","pod":"","source":""}}
 {"Name":"kubernetes.cadvisor.container.cpu.cfs.throttled.seconds.total.counter","Tags":{"cluster":"","id":"","namespace":"","pod":"","source":""}}
@@ -57,7 +57,6 @@
 {"Name":"kubernetes.cluster.memory.usage","Tags":{"cluster":"","source":"","type":"cluster"}}
 {"Name":"kubernetes.cluster.pod.count","Tags":{"cluster":"","source":"","type":"cluster"}}
 {"Name":"kubernetes.cluster.pod_container.count","Tags":{"cluster":"","source":"","type":"cluster"}}
-{"Name":"kubernetes.collector.discovery.enabled","Tags":{"cluster":"","leading":"","source":""}}
 {"Name":"kubernetes.collector.discovery.rules.count","Tags":{"cluster":"","leading":"","source":""}}
 {"Name":"kubernetes.collector.discovery.targets.registered","Tags":{"cluster":"","leading":"","source":"","type":"prometheus"}}
 {"Name":"kubernetes.collector.discovery.targets.registered","Tags":{"cluster":"","leading":"","source":"","type":"telegraf"}}
@@ -559,7 +558,7 @@
 {"Name":"mem.wired","Tags":{"cluster":"","source":""}}
 {"Name":"mem.write.back","Tags":{"cluster":"","source":""}}
 {"Name":"mem.write.back.tmp","Tags":{"cluster":"","source":""}}
-{"Name":"memcached.accepting.conns","Tags":{"cluster":"","label.app.kubernetes.io/instance":"memcached-release","label.app.kubernetes.io/managed-by":"Helm","label.app.kubernetes.io/name":"memcached","label.helm.sh/chart":"","namespace":"","pod":"","server":"memcached-release.collector-targets.svc.cluster.local:11211","source":""}}
+{"Name":"memcached.accepting.conns","Tags":{"cluster":"","label.app.kubernetes.io/instance":"memcached-release","label.app.kubernetes.io/managed-by":"Helm","label.app.kubernetes.io/name":"memcached","label.helm.sh/chart":"","namespace":"collector-targets","pod":"","server":"memcached-release.collector-targets.svc.cluster.local:11211","source":""}}
 {"Name":"memcached.auth.cmds","Tags":{"cluster":"","label.app.kubernetes.io/instance":"memcached-release","label.app.kubernetes.io/managed-by":"Helm","label.app.kubernetes.io/name":"memcached","label.helm.sh/chart":"","namespace":"","pod":"","server":"memcached-release.collector-targets.svc.cluster.local:11211","source":""}}
 {"Name":"memcached.auth.errors","Tags":{"cluster":"","label.app.kubernetes.io/instance":"memcached-release","label.app.kubernetes.io/managed-by":"Helm","label.app.kubernetes.io/name":"memcached","label.helm.sh/chart":"","namespace":"","pod":"","server":"memcached-release.collector-targets.svc.cluster.local:11211","source":""}}
 {"Name":"memcached.bytes","Tags":{"cluster":"","label.app.kubernetes.io/instance":"memcached-release","label.app.kubernetes.io/managed-by":"Helm","label.app.kubernetes.io/name":"memcached","label.helm.sh/chart":"","namespace":"","pod":"","server":"memcached-release.collector-targets.svc.cluster.local:11211","source":""}}
@@ -1057,7 +1056,7 @@
 {"Name":"processes.total.threads","Tags":{"cluster":"","source":""}}
 {"Name":"processes.unknown","Tags":{"cluster":"","source":""}}
 {"Name":"processes.zombies","Tags":{"cluster":"","source":""}}
-{"Name":"prom-example.ack.level.update.counter","Value":"1599186","Tags":{"cluster":"","label.k8s-app":"prom-example","label.name":"prom-example","namespace":"","operation":"TransferActiveQueueProcessor","pod":"prom-example","source":"","type":"history"}}
+{"Name":"prom-example.ack.level.update.counter","Value":"1599186","Tags":{"cluster":"","label.k8s-app":"prom-example","label.name":"prom-example","namespace":"collector-targets","operation":"TransferActiveQueueProcessor","pod":"prom-example","source":"","type":"history"}}
 {"Name":"prom-example.ack.level.update.counter","Value":"1599204","Tags":{"cluster":"","label.k8s-app":"prom-example","label.name":"prom-example","namespace":"","operation":"TimerActiveQueueProcessor","pod":"prom-example","source":"","type":"history"}}
 {"Name":"prom-example.acquire.shards.count.counter","Value":"2904","Tags":{"cluster":"","label.k8s-app":"prom-example","label.name":"prom-example","namespace":"","operation":"ShardController","pod":"prom-example","source":"","type":"history"}}
 {"Name":"prom-example.acquire.shards.latency.bucket","Value":"0","Tags":{"cluster":"","label.k8s-app":"prom-example","label.name":"prom-example","le":"0.001","namespace":"","operation":"ShardController","pod":"prom-example","source":"","type":"history"}}

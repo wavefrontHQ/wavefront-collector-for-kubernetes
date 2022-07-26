@@ -7,6 +7,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/experimental"
+
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
 
 	"github.com/stretchr/testify/assert"
@@ -119,6 +121,35 @@ func TestCleansTagsBeforeSending(t *testing.T) {
 	}
 	sink.Export(&db)
 	assert.NotContains(t, getMetrics(sink), "emptyTag")
+}
+
+func TestClusterSource(t *testing.T) {
+	experimental.EnableFeature(experimental.ClusterSource)
+	cfg := configuration.WavefrontSinkConfig{
+		ProxyAddress: "wavefront-proxy:2878",
+		TestMode:     true,
+		Transforms: configuration.Transforms{
+			Prefix: "test.",
+		},
+		ClusterName: "fakeCluster",
+	}
+	sink, err := NewWavefrontSink(cfg)
+	assert.NoError(t, err)
+
+	db := metrics.Batch{
+		Points: []*wf.Point{
+			wf.NewPoint("metric.source.cluster", 1.0, 0, "fakeSource", map[string]string{}),
+			wf.NewPoint("metric.source.cluster.ns", 1.0, 0, "fakeSource", map[string]string{"namespace_name": "fakeNamespaceName", "nodename": "fakeNodeName"}),
+			wf.NewPoint("metric.source.cluster.ns", 1.0, 0, "fakeSource", map[string]string{"namespace": "fakeNamespace", "nodename": "fakeNodeName"}),
+			wf.NewPoint("metric.source.cluster.node", 1.0, 0, "fakeSource", map[string]string{"nodename": "fakeNodeName"}),
+		},
+	}
+	sink.Export(&db)
+	assert.True(t, strings.Contains(getMetrics(sink), "source=\"fakeCluster\""))
+	assert.True(t, strings.Contains(getMetrics(sink), "source=\"fakeCluster.fakeNamespaceName\""))
+	assert.True(t, strings.Contains(getMetrics(sink), "source=\"fakeCluster.fakeNamespace\""))
+	assert.True(t, strings.Contains(getMetrics(sink), "source=\"fakeCluster.fakeNodeName\""))
+	experimental.DisableFeature(experimental.ClusterSource)
 }
 
 func getMetrics(sink WavefrontSink) string {

@@ -26,8 +26,8 @@ func NewTestSender() senders.Sender {
 	}
 }
 
-func (t *TestSender) SendMetric(name string, value float64, _ int64, _ string, tags map[string]string) error {
-	line := fmt.Sprintf("Metric: %s %f %s\n", name, value, orderedTagString(tags))
+func (t *TestSender) SendMetric(name string, value float64, _ int64, source string, tags map[string]string) error {
+	line := fmt.Sprintf("Metric: %s %f source=\"%s\" %s\n", name, value, source, orderedTagString(tags))
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
 	t.testReceivedLines += line

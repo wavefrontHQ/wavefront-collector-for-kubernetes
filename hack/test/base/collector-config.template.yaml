@@ -10,7 +10,7 @@ data:
     enableDiscovery: true
     flushInterval: FLUSH_INTERVALs
     defaultCollectionInterval: COLLECTION_INTERVALs
-
+    experimental: YOUR_EXPERIMENTAL_FEATURES
 
     sinks:
     - proxyAddress: wavefront-proxy.NAMESPACE.svc.cluster.local:2878
