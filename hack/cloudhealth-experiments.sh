@@ -4,15 +4,15 @@ function do_request() {
     mkdir -p /tmp/high-cardinality
     curl "$url" \
         -H 'Accept: text/event-stream' \
-        -H "Authorization: Bearer $WAVEFRONT_TOKEN" \
+        -H "Authorization: Bearer $CLOUDHEALH_WAVEFRONT_TOKEN" \
         -w "$name [%{http_code}]: %{time_total}s\n" \
         -s -o "/tmp/high-cardinality/$name.dat"
-    local stats=$(grep -A1 "event: stats" "/tmp/high-cardinality/$name.dat" | tail -n 1 | awk '{print $2}' | jq -r '"cardinality=" + (.stats.keys | tostring) + ", scanned=" + (.stats.points | tostring)')
+    local stats=$(grep -A1 "event: stats" "/tmp/high-cardinality/$name.dat" | tail -n 1 | awk '{print $2}' | jq -r '"cardinality=" + (.stats.keys | tostring) + ", scanned=" + (.stats.points + .stats.distributions | tostring)')
     echo "$name: $stats"
 }
 
-WAVEFRONT_CLUSTER="nimba"
-K8S_CLUSTER="corn-mamichael-istio-testing-7-6"
+WAVEFRONT_CLUSTER="cloudhealth"
+K8S_CLUSTER="virginia-1.prod.cloudhealthtech.com"
 START_TIME=$(date -v '-1d' '+%s')
 END_TIME=$(date '+%s')
 
