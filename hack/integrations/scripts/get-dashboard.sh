@@ -2,7 +2,7 @@
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
 source ${REPO_ROOT}/hack/test/deploy/k8s-utils.sh
-excludedKeys=$(jq -r '.exclude | join(", ")' hack/integrations/key-filter.json)
+excludedKeys=$(jq -r '.exclude | join(", ")' ${REPO_ROOT}/hack/integrations/key-filter.json)
 
 function print_usage_and_exit() {
   echo "Failure: $1"

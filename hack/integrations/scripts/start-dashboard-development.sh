@@ -2,7 +2,6 @@
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
 source ${REPO_ROOT}/hack/test/deploy/k8s-utils.sh
-excludedKeys=$(jq -r '.exclude | join(", ")' hack/integrations/key-filter.json)
 
 function print_usage_and_exit() {
   echo "Failure: $1"
@@ -48,26 +47,17 @@ function main() {
     print_msg_and_exit "dashboard url required"
   fi
 
-  curl -sX GET --header "Accept: application/json" \
-    --header "Authorization: Bearer ${WAVEFRONT_TOKEN}" \
-    "https://${WF_CLUSTER}.wavefront.com/api/v2/dashboard/${DASHBOARD_URL}" \
-    | jq "del(.response | ${excludedKeys})"  | jq .response > ${DASHBOARD_URL}-partial-base.json
+  local DASHBOARD_DEV_URL="$(echo "${DASHBOARD_URL}" | sed 's/integration-//')-dev"
 
-  cat ${DASHBOARD_URL}-partial-base.json  | jq "del(.sections , .parameterDetails)" > ${DASHBOARD_URL}-partial-reduced.json
-  cat ${DASHBOARD_URL}-partial-base.json  |  jq '. | {"sections": .sections}' | jq --sort-keys >> ${DASHBOARD_URL}-partial-sections.json
-  cat ${DASHBOARD_URL}-partial-base.json  |  jq '. | {"parameterDetails": .parameterDetails}' | jq --sort-keys >> ${DASHBOARD_URL}-partial-parameterDetails.json
+  ../scripts/get-dashboard.sh -t ${WAVEFRONT_TOKEN} -d ${DASHBOARD_URL}
 
-  jq -s '.[0] * .[1]' \
-    ${DASHBOARD_URL}-partial-reduced.json \
-    ${DASHBOARD_URL}-partial-sections.json \
-    > ${DASHBOARD_URL}-partial-with-sections.json
+  jq ".url = \"${DASHBOARD_DEV_URL}\"" ${DASHBOARD_URL}.json >  ${DASHBOARD_DEV_URL}.json
+#
+#  curl -X POST  "https://${WF_CLUSTER}.wavefront.com/api/v2/dashboard" \
+#     --header "Accept: application/json" \
+#    --header "Authorization: Bearer ${WAVEFRONT_TOKEN}" \
+#    -d @ ${DASHBOARD_DEV_URL}.json
 
-  jq -s '.[0] * .[1]' \
-    ${DASHBOARD_URL}-partial-with-sections.json \
-    ${DASHBOARD_URL}-partial-parameterDetails.json \
-    > ${DASHBOARD_URL}.json
-
-  rm *-partial*.json
 }
 
 main $@
