@@ -13,15 +13,6 @@ function print_usage_and_exit() {
   exit 1
 }
 
-function exit_on_fail() {
-  $@ # run all arguments as a command
-  local exit_code=$?
-  if [[ $exit_code != 0 ]]; then
-    echo "Command '$@' exited with exit code '$exit_code'"
-    exit $exit_code
-  fi
-}
-
 function main() {
   cd "$(dirname "$0")/../working" # hack/integrations/scripts
 
@@ -60,8 +51,11 @@ function main() {
   curl -sX GET --header "Accept: application/json" \
     --header "Authorization: Bearer ${WAVEFRONT_TOKEN}" \
     "https://${WF_CLUSTER}.wavefront.com/api/v2/dashboard/${DASHBOARD_URL}" \
-    | jq "del(.response | ${excludedKeys})"  | jq .response > ${DASHBOARD_URL}.json
+    | jq "del(.response | ${excludedKeys})"  | jq .response > ${DASHBOARD_URL}-base.json
 
+  cat ${DASHBOARD_URL}-base.json  | jq "del(.sections , .parameterDetails)" > ${DASHBOARD_URL}.json
+  cat ${DASHBOARD_URL}-base.json  |  jq '. | {"sections": .sections}' | jq --sort-keys >> ${DASHBOARD_URL}-sections.json
+  jq -s '.[0] * .[1]'
 }
 
 main $@
