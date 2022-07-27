@@ -1,3 +1,4 @@
+integrations/working/*.json
 test/base/**/proxy.yaml
 test/extra.jsonl
 test/missing.jsonl
