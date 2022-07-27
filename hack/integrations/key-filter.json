@@ -12,6 +12,7 @@
         ".modifyAclAccess",
         ".numFavorite",
         ".orphan",
+        ".parameters",
         ".sections[].id",
         ".systemOwned",
         ".updatedEpochMillis",
