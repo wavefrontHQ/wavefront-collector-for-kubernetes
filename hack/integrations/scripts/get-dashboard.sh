@@ -9,12 +9,12 @@ function print_usage_and_exit() {
   echo "Usage: $0 [flags] [options]"
   echo -e "\t-c wavefront instance name (default: 'nimba')"
   echo -e "\t-t wavefront token (required)"
-  echo -e "\t-d dashboard url"
+  echo -e "\t-d dashboard url (required)"
   exit 1
 }
 
 function main() {
-  cd "$(dirname "$0")/../working" # hack/integrations/scripts
+  cd "$(dirname "$0")/../working"
 
   # REQUIRED
   local WAVEFRONT_TOKEN=

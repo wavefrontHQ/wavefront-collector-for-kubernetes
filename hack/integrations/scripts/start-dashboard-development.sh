@@ -8,12 +8,12 @@ function print_usage_and_exit() {
   echo "Usage: $0 [flags] [options]"
   echo -e "\t-c wavefront instance name (default: 'nimba')"
   echo -e "\t-t wavefront token (required)"
-  echo -e "\t-d dashboard url"
+  echo -e "\t-d dashboard url (required)"
   exit 1
 }
 
 function main() {
-  cd "$(dirname "$0")/../working" # hack/integrations/scripts
+  cd "$(dirname "$0")/../working"
 
   # REQUIRED
   local WAVEFRONT_TOKEN=
@@ -53,22 +53,24 @@ function main() {
 
   jq ".url = \"${DASHBOARD_DEV_URL}\"" ${DASHBOARD_URL}.json >  ${DASHBOARD_DEV_URL}.json
 
-  result=$(curl -X PUT --data "$(cat "${DASHBOARD_DEV_URL}".json)" \
+  local RESULT=$(curl -X PUT --data "$(cat "${DASHBOARD_DEV_URL}".json)" \
     --header "Content-Type: application/json" \
     --header "Authorization: Bearer ${WAVEFRONT_TOKEN}" \
     "https://${WF_CLUSTER}.wavefront.com/api/v2/dashboard/${DASHBOARD_DEV_URL}" \
     --write-out '%{http_code}' --silent --output /dev/null)
-  if [[ $result -ne 200 ]]; then
-    result=$(curl --silent -X POST --data "$(cat "${DASHBOARD_DEV_URL}".json)" \
+  if [[ $RESULT -ne 200 ]]; then
+    RESULT=$(curl --silent -X POST --data "$(cat "${DASHBOARD_DEV_URL}".json)" \
       --header "Content-Type: application/json" \
       --header "Authorization: Bearer ${WAVEFRONT_TOKEN}" \
       "https://${WF_CLUSTER}.wavefront.com/api/v2/dashboard" \
       --write-out '%{http_code}' --silent --output /dev/null)
-    if [[ $result -ne 200 ]]; then
-      red "Uploading ${DASHBOARD_DEV_URL} dashboard failed with error code: ${result}"
+    if [[ $RESULT -ne 200 ]]; then
+      red "Uploading ${DASHBOARD_DEV_URL} dashboard failed with error code: ${RESULT}"
+      exit 1
     fi
   fi
 
+  green "Dashboard uploaded at https://${WF_CLUSTER}.wavefront.com/dashboards/${DASHBOARD_DEV_URL}"
 }
 
 main $@
