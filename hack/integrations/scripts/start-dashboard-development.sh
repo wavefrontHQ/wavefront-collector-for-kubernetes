@@ -52,11 +52,22 @@ function main() {
   ../scripts/get-dashboard.sh -t ${WAVEFRONT_TOKEN} -d ${DASHBOARD_URL}
 
   jq ".url = \"${DASHBOARD_DEV_URL}\"" ${DASHBOARD_URL}.json >  ${DASHBOARD_DEV_URL}.json
-#
-#  curl -X POST  "https://${WF_CLUSTER}.wavefront.com/api/v2/dashboard" \
-#     --header "Accept: application/json" \
-#    --header "Authorization: Bearer ${WAVEFRONT_TOKEN}" \
-#    -d @ ${DASHBOARD_DEV_URL}.json
+
+  result=$(curl -X PUT --data "$(cat "${DASHBOARD_DEV_URL}".json)" \
+    --header "Content-Type: application/json" \
+    --header "Authorization: Bearer ${WAVEFRONT_TOKEN}" \
+    "https://${WF_CLUSTER}.wavefront.com/api/v2/dashboard/${DASHBOARD_DEV_URL}" \
+    --write-out '%{http_code}' --silent --output /dev/null)
+  if [[ $result -ne 200 ]]; then
+    result=$(curl --silent -X POST --data "$(cat "${DASHBOARD_DEV_URL}".json)" \
+      --header "Content-Type: application/json" \
+      --header "Authorization: Bearer ${WAVEFRONT_TOKEN}" \
+      "https://${WF_CLUSTER}.wavefront.com/api/v2/dashboard" \
+      --write-out '%{http_code}' --silent --output /dev/null)
+    if [[ $result -ne 200 ]]; then
+      red "Uploading ${DASHBOARD_DEV_URL} dashboard failed with error code: ${result}"
+    fi
+  fi
 
 }
 
