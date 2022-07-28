@@ -21,11 +21,10 @@ function main() {
   local DASHBOARD_DEV_URL=
 
   local BRANCH_NAME="k8po/kubernetes"
-  local COMMIT_MESSAGE="Updated from ${DASHBOARD_DEV_URL}"
   local WF_CLUSTER=nimba
 
 
-  while getopts ":c:t:d:b:m:" opt; do
+  while getopts ":c:t:d:b:" opt; do
     case $opt in
     c)
       WF_CLUSTER="$OPTARG"
@@ -35,9 +34,6 @@ function main() {
       ;;
     d)
       DASHBOARD_DEV_URL="$OPTARG"
-      ;;
-    m)
-      COMMIT_MESSAGE="$OPTARG"
       ;;
     b)
       BRANCH_NAME="$OPTARG"
@@ -68,7 +64,7 @@ function main() {
   # TODO: Verify if re-ordering in get-dashboards.sh is removing necessary contents
   cat ${DASHBOARD_URL}.json > ${INTEGRATION_DIR}/kubernetes/dashboards/${DASHBOARD_URL}.json
 
-  git commit -am"${COMMIT_MESSAGE}"
+  git -C "$INTEGRATION_DIR" commit -am"Updated from ${DASHBOARD_DEV_URL}"
   git -C "$INTEGRATION_DIR" push  2>/dev/null || git -C "$INTEGRATION_DIR" push --set-upstream origin k8po/kubernetes
 }
 
