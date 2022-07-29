@@ -56,7 +56,7 @@ function main() {
   local INTEGRATION_DIR=${REPO_ROOT}/../integrations
   local DASHBOARD_URL="integration-$(echo "${DASHBOARD_DEV_URL}" | sed 's/-dev//')"
   jq ".url = \"${DASHBOARD_URL}\"" ${DASHBOARD_DEV_URL}.json >  ${DASHBOARD_URL}.json
-  local VERSION=$(jq ".systemDashboardVersion" ${INTEGRATION_DIR}/kubernetes/dashboards/${DASHBOARD_URL}.json)
+  local VERSION=$(($(jq ".systemDashboardVersion" ${INTEGRATION_DIR}/kubernetes/dashboards/${DASHBOARD_URL}.json)+1))
   jq ". += {"systemDashboardVersion":\"${VERSION}\"}" ${DASHBOARD_URL}.json > "tmp" && mv "tmp" ${DASHBOARD_URL}.json
 
   # TODO: Should the branch be always created? Or re-use if exists like below?
@@ -65,7 +65,7 @@ function main() {
   cat ${DASHBOARD_URL}.json > ${INTEGRATION_DIR}/kubernetes/dashboards/${DASHBOARD_URL}.json
 
   git -C "$INTEGRATION_DIR" commit -am"Updated from ${DASHBOARD_DEV_URL}"
-  git -C "$INTEGRATION_DIR" push  2>/dev/null || git -C "$INTEGRATION_DIR" push --set-upstream origin k8po/kubernetes
+  git -C "$INTEGRATION_DIR" push  2>/dev/null || git -C "$INTEGRATION_DIR" push --set-upstream origin "$BRANCH_NAME"
 }
 
 main $@
