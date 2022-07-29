@@ -54,17 +54,19 @@ function main() {
 
   ../scripts/get-dashboard.sh -t ${WAVEFRONT_TOKEN} -d ${DASHBOARD_DEV_URL}
   local INTEGRATION_DIR=${REPO_ROOT}/../integrations
+  git -C "$INTEGRATION_DIR" checkout "$BRANCH_NAME" 2>/dev/null || git -C "$INTEGRATION_DIR" checkout -b "$BRANCH_NAME"
+
+  # Change the url field to match the integration url instead of the dev dashboard url
   local DASHBOARD_URL="integration-$(echo "${DASHBOARD_DEV_URL}" | sed 's/-dev//')"
   jq ".url = \"${DASHBOARD_URL}\"" ${DASHBOARD_DEV_URL}.json >  ${DASHBOARD_URL}.json
+
+  # Copy dashboard version from integration feature branch and increment it
   local VERSION=$(($(jq ".systemDashboardVersion" ${INTEGRATION_DIR}/kubernetes/dashboards/${DASHBOARD_URL}.json)+1))
   jq ". += {"systemDashboardVersion":\"${VERSION}\"}" ${DASHBOARD_URL}.json > "tmp" && mv "tmp" ${DASHBOARD_URL}.json
 
-  # TODO: Should the branch be always created? Or re-use if exists like below?
-  git -C "$INTEGRATION_DIR" checkout "$BRANCH_NAME" 2>/dev/null || git -C "$INTEGRATION_DIR" checkout -b "$BRANCH_NAME"
-  # TODO: Verify if re-ordering in get-dashboards.sh is removing necessary contents
   cat ${DASHBOARD_URL}.json > ${INTEGRATION_DIR}/kubernetes/dashboards/${DASHBOARD_URL}.json
-
-  git -C "$INTEGRATION_DIR" commit -am"Updated from ${DASHBOARD_DEV_URL}"
+  git -C "$INTEGRATION_DIR" add ${INTEGRATION_DIR}/kubernetes/dashboards/${DASHBOARD_URL}.json
+  git -C "$INTEGRATION_DIR" commit -m"Updated from ${DASHBOARD_DEV_URL}"
   git -C "$INTEGRATION_DIR" push  2>/dev/null || git -C "$INTEGRATION_DIR" push --set-upstream origin "$BRANCH_NAME"
 }
 
