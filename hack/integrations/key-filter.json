@@ -1,0 +1,29 @@
+{
+    "exclude": [
+        ".acl",
+        ".createdEpochMillis",
+        ".creatorId",
+        ".customer",
+        ".dashboardAttributes",
+        ".deleted",
+        ".favorite",
+        ".hidden",
+        ".id",
+        ".modifyAclAccess",
+        ".numFavorite",
+        ".orphan",
+        ".parameters",
+        ".sections[].id",
+        ".systemOwned",
+        ".updatedEpochMillis",
+        ".updaterId",
+        ".viewsLastDay",
+        ".viewsLastMonth",
+        ".viewsLastWeek",
+        ".viewsLastYear",
+        ".numCharts",
+        ".numFavorites",
+        ".tags"
+    ],
+    "include": []
+}
