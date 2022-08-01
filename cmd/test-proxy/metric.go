@@ -14,6 +14,9 @@ func ParseMetric(line string) (*Metric, error) {
 		return nil, err
 	}
 	g.Execute()
+	if g.Histogram {
+		return nil, nil
+	}
 	return &Metric{
 		Name:      g.Name,
 		Value:     g.Value,

@@ -66,7 +66,7 @@ func TestPrefix(t *testing.T) {
 	assert.NoError(t, err)
 
 	db := metrics.Batch{
-		Points: []*wf.Point{
+		Metrics: []wf.Metric{
 			wf.NewPoint("cpu.idle", 1.0, 0, "fakeSource", nil),
 		},
 	}
@@ -86,9 +86,9 @@ func TestNilPointDataBatch(t *testing.T) {
 	assert.NoError(t, err)
 
 	db := metrics.Batch{
-		Points: []*wf.Point{
-			wf.NewPoint("cpu.idle", 1.0, 0, "fakeSource", nil),
+		Metrics: []wf.Metric{
 			nil,
+			wf.NewPoint("cpu.idle", 1.0, 0, "fakeSource", nil),
 		},
 	}
 	sink.Export(&db)
@@ -107,7 +107,7 @@ func TestCleansTagsBeforeSending(t *testing.T) {
 	assert.NoError(t, err)
 
 	db := metrics.Batch{
-		Points: []*wf.Point{
+		Metrics: []wf.Metric{
 			wf.NewPoint(
 				"cpu.idle",
 				1.0,

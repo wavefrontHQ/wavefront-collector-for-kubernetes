@@ -15,7 +15,7 @@ func TestFilterAppend(t *testing.T) {
 			MetricDenyList: []string{"some*"},
 		})
 
-		actualPoints := FilterAppend(filters, &incrementer, []*Point{}, expectedPoint)
+		actualPoints := FilterAppend(filters, &incrementer, []Metric{}, expectedPoint)
 
 		assert.Equal(t, fakeCounter(1), incrementer, "increments filtered")
 		assert.Equal(t, 0, len(actualPoints), "does not add the point")
@@ -25,7 +25,7 @@ func TestFilterAppend(t *testing.T) {
 		expectedPoint := NewPoint("some.metric", 1.0, 2, "pod-123", map[string]string{"foo": "bar"})
 		incrementer := fakeCounter(0)
 
-		actualPoints := FilterAppend(nil, &incrementer, []*Point{}, expectedPoint)
+		actualPoints := FilterAppend(nil, &incrementer, []Metric{}, expectedPoint)
 
 		assert.Equal(t, fakeCounter(0), incrementer, "does not increment filtered")
 		if assert.Equal(t, 1, len(actualPoints), "adds the point") {

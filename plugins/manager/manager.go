@@ -84,33 +84,21 @@ func (rm *flushManagerImpl) push() {
 	combinedBatch := &metrics.Batch{}
 
 	for _, data := range dataBatches {
-		if len(data.Sets) > 0 {
-			// In deployment mode, the metric sets are spread across different data batches
-			// as data is collected independently from each node in the cluster
-			// combine all the metric sets and process them together below
-			combineMetricSets(data, combinedBatch)
-			continue
-		}
-
-		// export is either sink.Export or a null exporter for testing
-		// hopefully we can simplify threading and simplify this up in the future
-		rm.sink.Export(data)
+		combineMetricSets(data, combinedBatch)
 	}
 
 	// process the combined metric sets
-	if len(combinedBatch.Sets) > 0 {
-		for _, p := range rm.processors {
-			processedBatch, err := p.Process(combinedBatch)
-			if err == nil {
-				combinedBatch = processedBatch
-			} else {
-				log.Errorf("Error in processor: %v", err)
-				return
-			}
+	for _, p := range rm.processors {
+		processedBatch, err := p.Process(combinedBatch)
+		if err == nil {
+			combinedBatch = processedBatch
+		} else {
+			log.Errorf("Error in processor: %v", err)
+			return
 		}
-
-		rm.sink.Export(combinedBatch)
 	}
+
+	rm.sink.Export(combinedBatch)
 }
 
 func combineMetricSets(src, dst *metrics.Batch) {
@@ -122,4 +110,5 @@ func combineMetricSets(src, dst *metrics.Batch) {
 	for k, v := range src.Sets {
 		dst.Sets[k] = v
 	}
+	dst.Metrics = append(dst.Metrics, src.Metrics...)
 }

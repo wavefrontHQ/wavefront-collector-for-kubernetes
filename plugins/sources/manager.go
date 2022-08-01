@@ -279,7 +279,7 @@ func scrape(provider metrics.SourceProvider, channel chan *metrics.Batch) {
 
 		log.WithFields(log.Fields{
 			"name":          source.Name(),
-			"total_metrics": len(dataBatch.Points) + len(dataBatch.Sets),
+			"total_metrics": len(dataBatch.Metrics) + len(dataBatch.Sets),
 			"latency":       latency,
 		}).Infof("Finished querying source")
 	}

@@ -18,7 +18,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// converts Sets to Points.
+// converts Sets to Metrics.
 type pointConverter struct {
 	cluster string
 	prefix  string
@@ -101,7 +101,7 @@ func (converter *pointConverter) Process(batch *metrics.Batch) (*metrics.Batch, 
 
 			// convert to a point and add it to the data batch
 			point := wf.NewPoint(converter.cleanMetricName(metricType, metricName), value, ts, source, tags)
-			batch.Points = wf.FilterAppend(converter.filters, converter.filteredPoints, batch.Points, point)
+			batch.Metrics = wf.FilterAppend(converter.filters, converter.filteredPoints, batch.Metrics, point)
 			converter.collectedPoints.Inc(1)
 		}
 		for _, metric := range ms.LabeledValues {
@@ -129,7 +129,7 @@ func (converter *pointConverter) Process(batch *metrics.Batch) (*metrics.Batch, 
 
 			// convert to a point and add it to the data batch
 			point := wf.NewPoint(converter.cleanMetricName(metricType, metric.Name), value, ts, source, labels)
-			batch.Points = wf.FilterAppend(converter.filters, converter.filteredPoints, batch.Points, point)
+			batch.Metrics = wf.FilterAppend(converter.filters, converter.filteredPoints, batch.Metrics, point)
 			converter.collectedPoints.Inc(1)
 		}
 	}

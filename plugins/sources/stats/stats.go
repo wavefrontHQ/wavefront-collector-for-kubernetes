@@ -86,7 +86,7 @@ func (src *internalMetricsSource) internalStats() (*metrics.Batch, error) {
 	result := &metrics.Batch{
 		Timestamp: now,
 	}
-	var points []*wf.Point
+	var points []wf.Metric
 
 	src.tags["leading"] = strconv.FormatBool(leadership.Leading())
 	src.tags["installation_method"] = util.GetInstallationMethod()
@@ -118,13 +118,13 @@ func (src *internalMetricsSource) internalStats() (*metrics.Batch, error) {
 		}
 	})
 	src.pps.Inc(int64(len(points)))
-	result.Points = points
+	result.Metrics = points
 	return result, nil
 }
 
-func (src *internalMetricsSource) addHisto(name string, min, max int64, mean float64, percentiles []float64, now int64) []*wf.Point {
+func (src *internalMetricsSource) addHisto(name string, min, max int64, mean float64, percentiles []float64, now int64) []wf.Metric {
 	// convert from nanoseconds to milliseconds
-	var points []*wf.Point
+	var points []wf.Metric
 	points = wf.FilterAppend(src.filters, src.fps, points, src.point(combine(name, "duration.min"), float64(min)/1e6, now))
 	points = wf.FilterAppend(src.filters, src.fps, points, src.point(combine(name, "duration.max"), float64(max)/1e6, now))
 	points = wf.FilterAppend(src.filters, src.fps, points, src.point(combine(name, "duration.mean"), mean/1e6, now))
@@ -136,8 +136,8 @@ func (src *internalMetricsSource) addHisto(name string, min, max int64, mean flo
 	return points
 }
 
-func (src *internalMetricsSource) addRate(name string, count int64, m1, mean float64, now int64) []*wf.Point {
-	var points []*wf.Point
+func (src *internalMetricsSource) addRate(name string, count int64, m1, mean float64, now int64) []wf.Metric {
+	var points []wf.Metric
 	points = wf.FilterAppend(src.filters, src.fps, points, src.point(combine(name, "rate.count"), float64(count), now))
 	points = wf.FilterAppend(src.filters, src.fps, points, src.point(combine(name, "rate.m1"), m1, now))
 	points = wf.FilterAppend(src.filters, src.fps, points, src.point(combine(name, "rate.mean"), mean, now))
@@ -148,7 +148,7 @@ func combine(prefix, name string) string {
 	return fmt.Sprintf("%s.%s", prefix, name)
 }
 
-func (src *internalMetricsSource) point(name string, value float64, ts int64) *wf.Point {
+func (src *internalMetricsSource) point(name string, value float64, ts int64) wf.Metric {
 	name, tags := reporting.DecodeKey(name)
 	if value == 0.0 && src.filterName(name) {
 		// don't emit internal counts with zero values

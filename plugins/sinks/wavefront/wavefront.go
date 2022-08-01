@@ -15,6 +15,7 @@ import (
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
 
 	"github.com/wavefronthq/wavefront-sdk-go/event"
+	"github.com/wavefronthq/wavefront-sdk-go/histogram"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/events"
@@ -74,6 +75,15 @@ type wavefrontSink struct {
 	stopHeartbeat   chan struct{}
 }
 
+func (sink *wavefrontSink) SendDistribution(name string, centroids []histogram.Centroid, hgs map[histogram.Granularity]bool, ts int64, source string, tags map[string]string) error {
+	name = sanitizedChars.Replace(name)
+	if len(sink.Prefix) > 0 {
+		name = sink.Prefix + "." + name
+	}
+	logTagCleaningReasons(name, cleanTags(tags, maxWavefrontTags))
+	return sink.WavefrontClient.SendDistribution(name, centroids, hgs, ts, source, tags)
+}
+
 func NewWavefrontSink(cfg configuration.WavefrontSinkConfig) (WavefrontSink, error) {
 	storage := &wavefrontSink{
 		ClusterName: configuration.GetStringValue(cfg.ClusterName, "k8s-cluster"),
@@ -92,9 +102,10 @@ func NewWavefrontSink(cfg configuration.WavefrontSinkConfig) (WavefrontSink, err
 			return nil, fmt.Errorf("error parsing proxy port: %s", err.Error())
 		}
 		storage.WavefrontClient, err = senders.NewProxySender(&senders.ProxyConfiguration{
-			Host:        host,
-			MetricsPort: port,
-			EventsPort:  port,
+			Host:             host,
+			MetricsPort:      port,
+			DistributionPort: port,
+			EventsPort:       port,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("error creating proxy sender: %s", err.Error())
@@ -149,23 +160,14 @@ func (sink *wavefrontSink) Stop() {
 	sink.WavefrontClient.Close()
 }
 
-func (sink *wavefrontSink) sendPoint(metricName string, value float64, timestamp int64, source string, tags map[string]string) {
+func (sink *wavefrontSink) SendMetric(metricName string, value float64, timestamp int64, source string, tags map[string]string) error {
 	metricName = sanitizedChars.Replace(metricName)
 	if len(sink.Prefix) > 0 {
 		metricName = sink.Prefix + "." + metricName
 	}
 	logTagCleaningReasons(metricName, cleanTags(tags, maxWavefrontTags))
 
-	err := sink.WavefrontClient.SendMetric(metricName, value, timestamp, source, tags)
-	if err != nil {
-		errPoints.Inc(1)
-		sink.logVerboseError(log.Fields{
-			"name":  metricName,
-			"error": err,
-		}, "error sending metric")
-	} else {
-		sentPoints.Inc(1)
-	}
+	return sink.WavefrontClient.SendMetric(metricName, value, timestamp, source, tags)
 }
 
 func (sink *wavefrontSink) logVerboseError(f log.Fields, msg string) {
@@ -177,18 +179,29 @@ func (sink *wavefrontSink) logVerboseError(f log.Fields, msg string) {
 }
 
 func (sink *wavefrontSink) Export(batch *metrics.Batch) {
-	log.Debugf("received metric points: %d", len(batch.Points))
+	log.Debugf("received metric points: %d", len(batch.Metrics))
 
 	before := errPoints.Count()
-	for _, point := range batch.Points {
+	for _, point := range batch.Metrics {
+		if point == nil {
+			continue
+		}
 		point.OverrideTag(metrics.LabelCluster.Key, sink.ClusterName)
 		point.AddTags(sink.globalTags)
 		point = wf.Filter(sink.filters, filteredPoints, point)
 		if point == nil {
 			continue
 		}
-		tags := point.Tags()
-		sink.sendPoint(point.Metric, point.Value, point.Timestamp, point.Source, tags)
+		err := point.Send(sink)
+		if err != nil {
+			errPoints.Inc(1)
+			sink.logVerboseError(log.Fields{
+				"name":  point.Name(),
+				"error": err,
+			}, "error sending metric")
+		} else {
+			sentPoints.Inc(1)
+		}
 	}
 
 	after := errPoints.Count()

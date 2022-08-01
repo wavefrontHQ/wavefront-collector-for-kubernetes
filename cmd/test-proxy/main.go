@@ -76,6 +76,9 @@ func HandleIncomingMetrics(store *MetricStore, conn net.Conn) {
 			store.LogBadMetric(lines.Text())
 			continue
 		}
+		if metric == nil { // we got a histogram
+			continue
+		}
 		log.Debugf("%#v", metric)
 		store.LogMetric(metric)
 	}

@@ -20,8 +20,6 @@ package metrics
 
 import (
 	"time"
-
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
 )
 
 type Type int8
@@ -118,13 +116,6 @@ func (l *LabeledValue) GetValue() interface{} {
 	} else {
 		return nil
 	}
-}
-
-// Batch contains sets of metrics tied to specific k8s resources and other more general wavefront points
-type Batch struct {
-	Timestamp time.Time
-	Sets      map[ResourceKey]*Set
-	Points    []*wf.Point
 }
 
 // Source produces metric batches

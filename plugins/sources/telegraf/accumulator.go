@@ -57,7 +57,7 @@ func (t *telegrafDataBatch) preparePoints(measurement string, fields map[string]
 			metricName = t.source.prefix + "." + metricName
 		}
 
-		t.Points = wf.FilterAppend(t.source.filters, t.source.pointsFiltered, t.Points, wf.NewPoint(
+		t.Metrics = wf.FilterAppend(t.source.filters, t.source.pointsFiltered, t.Metrics, wf.NewPoint(
 			metricName,
 			value,
 			ts.UnixNano()/1000,

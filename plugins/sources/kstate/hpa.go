@@ -15,7 +15,7 @@ import (
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
 )
 
-func pointsForHPA(item interface{}, transforms configuration.Transforms) []*wf.Point {
+func pointsForHPA(item interface{}, transforms configuration.Transforms) []wf.Metric {
 	hpa, ok := item.(*v2beta2.HorizontalPodAutoscaler)
 	if !ok {
 		log.Errorf("invalid type: %s", reflect.TypeOf(item).String())
@@ -29,7 +29,7 @@ func pointsForHPA(item interface{}, transforms configuration.Transforms) []*wf.P
 	currReplicas := float64(hpa.Status.CurrentReplicas)
 	desiredReplicas := float64(hpa.Status.DesiredReplicas)
 
-	return []*wf.Point{
+	return []wf.Metric{
 		metricPoint(transforms.Prefix, "hpa.max_replicas", maxReplicas, now, transforms.Source, tags),
 		metricPoint(transforms.Prefix, "hpa.min_replicas", minReplicas, now, transforms.Source, tags),
 		metricPoint(transforms.Prefix, "hpa.current_replicas", currReplicas, now, transforms.Source, tags),

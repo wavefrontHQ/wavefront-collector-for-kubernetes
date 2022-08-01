@@ -5,9 +5,11 @@ package prometheus
 
 import (
 	"bytes"
+	"math"
 	"sort"
 	"testing"
 
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/experimental"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
 
 	"github.com/stretchr/testify/assert"
@@ -19,7 +21,7 @@ import (
 func TestParsingOfCounterPoints(t *testing.T) {
 	src := &prometheusMetricsSource{}
 
-	points := parseMetrics(t, src, `
+	points := parsePoints(t, src, `
 # HELP http_requests_total The total number of HTTP requests.
 # TYPE http_requests_total counter
 http_requests_total{method="post",code="200"} 1027 1395066363000
@@ -40,7 +42,7 @@ http_requests_total{method="post",code="400"}    3 1395066363000
 func TestParsingOfHistogramPoints(t *testing.T) {
 	src := &prometheusMetricsSource{}
 
-	points := parseMetrics(t, src, `
+	points := parsePoints(t, src, `
 # A histogram, which has a pretty complex representation in the text format:
 # HELP http_request_duration_seconds A histogram of the request duration.
 # TYPE http_request_duration_seconds histogram
@@ -71,10 +73,62 @@ http_request_duration_seconds_count 144320
 	assert.Equal(t, float64(53423), points[7].Value)
 }
 
+func TestParsingWFHistogramPoints(t *testing.T) {
+	experimental.EnableFeature(experimental.HistogramConversion)
+	src := &prometheusMetricsSource{}
+
+	distributions := parseDistributions(t, src, `
+# A histogram, which has a pretty complex representation in the text format:
+# HELP http_request_duration_seconds A histogram of the request duration.
+# TYPE http_request_duration_seconds histogram
+http_request_duration_seconds_bucket{le="0.05"} 24054
+http_request_duration_seconds_bucket{le="0.2"} 100392
+http_request_duration_seconds_bucket{le="0.1"} 33444
+http_request_duration_seconds_bucket{le="0.5"} 129389
+http_request_duration_seconds_bucket{le="1"} 133988
+http_request_duration_seconds_bucket{le="+Inf"} 144320
+http_request_duration_seconds_sum 53423
+http_request_duration_seconds_count 144320
+`)
+
+	assert.Equal(t, 1, len(distributions))
+
+	assert.Equal(t, 6, len(distributions[0].Centroids))
+	expectedCentroids := []wf.Centroid{
+		{Value: 0.05, Count: 24054},
+		{Value: 0.1, Count: 33444},
+		{Value: 0.2, Count: 100392},
+		{Value: 0.5, Count: 129389},
+		{Value: 1.0, Count: 133988},
+		{Value: math.Inf(1), Count: 144320},
+	}
+	assert.Equal(t, expectedCentroids, distributions[0].Centroids)
+
+	experimental.DisableFeature(experimental.HistogramConversion)
+}
+
+func TestParsingWFHistogramPointsWithOnlyInfiniteLE(t *testing.T) {
+	experimental.EnableFeature(experimental.HistogramConversion)
+	src := &prometheusMetricsSource{source: "somesource"}
+
+	distributions := parseDistributions(t, src, `
+# A histogram, which has a pretty complex representation in the text format:
+# HELP http_request_duration_seconds A histogram of the request duration.
+# TYPE http_request_duration_seconds histogram
+http_request_duration_seconds_bucket{sometag="somevalue", le="+Inf"} 144320
+http_request_duration_seconds_sum{sometag="somevalue"} 50
+http_request_duration_seconds_count{sometag="somevalue"} 144320
+`)
+
+	assert.Equal(t, 0, len(distributions))
+
+	experimental.DisableFeature(experimental.HistogramConversion)
+}
+
 func TestParsingOfQuantilePoints(t *testing.T) {
 	src := &prometheusMetricsSource{}
 
-	points := parseMetrics(t, src, `
+	points := parsePoints(t, src, `
 # Finally a summary, which has a complex representation, too:
 # HELP rpc_duration_seconds A summary of the RPC duration in seconds.
 # TYPE rpc_duration_seconds summary
@@ -107,7 +161,7 @@ rpc_duration_seconds_count 2693
 func TestSourceTags(t *testing.T) {
 	src := &prometheusMetricsSource{tags: map[string]string{"pod": "myPod"}}
 
-	points := parseMetrics(t, src, `
+	points := parsePoints(t, src, `
 # HELP http_requests_total The total number of HTTP requests.
 # TYPE http_requests_total counter
 http_requests_total{method="post",code="200"} 1027 1395066363000
@@ -117,7 +171,7 @@ http_requests_total{method="post",code="400"}    3 1395066363000
 	assert.Equal(t, 2, len(points))
 	assert.Equal(t, map[string]string{"method": "post", "code": "400", "pod": "myPod"}, points[0].Tags(), "wrong point tags")
 
-	points = parseMetrics(t, src, `
+	points = parsePoints(t, src, `
 # A histogram, which has a pretty complex representation in the text format:
 # HELP http_request_duration_seconds A histogram of the request duration.
 # TYPE http_request_duration_seconds histogram
@@ -136,7 +190,7 @@ http_request_duration_seconds_count 144320
 	assert.Equal(t, map[string]string{"pod": "myPod"}, points[6].Tags(), "wrong point tags for sum")
 	assert.Equal(t, map[string]string{"pod": "myPod"}, points[6].Tags(), "wrong point tags for count")
 
-	points = parseMetrics(t, src, `
+	points = parsePoints(t, src, `
 # Finally a summary, which has a complex representation, too:
 # HELP rpc_duration_seconds A summary of the RPC duration in seconds.
 # TYPE rpc_duration_seconds summary
@@ -155,22 +209,37 @@ rpc_duration_seconds_count 2693
 	assert.Equal(t, map[string]string{"pod": "myPod"}, points[6].Tags(), "wrong point tags for count")
 }
 
-func parseMetrics(t *testing.T, src *prometheusMetricsSource, metricsString string) []*wf.Point {
-	points, err := src.parseMetrics(bytes.NewReader([]byte(metricsString)))
+func parsePoints(t *testing.T, src *prometheusMetricsSource, metricsString string) []*wf.Point {
+	metrics, err := src.parseMetrics(bytes.NewReader([]byte(metricsString)))
 	require.NoError(t, err, "parsing metrics")
-
-	sort.Sort(byKeyValue(points))
+	var points []*wf.Point
+	for _, result := range metrics {
+		point, ok := result.(*wf.Point)
+		if ok {
+			points = append(points, point)
+		}
+	}
+	sort.Slice(points, func(i, j int) bool {
+		a := points[i]
+		b := points[j]
+		if a.Metric == b.Metric {
+			return a.Value < b.Value
+		} else {
+			return a.Metric < b.Metric
+		}
+	})
 	return points
 }
 
-type byKeyValue []*wf.Point
-
-func (a byKeyValue) Len() int      { return len(a) }
-func (a byKeyValue) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
-func (a byKeyValue) Less(i, j int) bool {
-	if a[i].Metric == a[j].Metric {
-		return a[i].Value < a[j].Value
-	} else {
-		return a[i].Metric < a[j].Metric
+func parseDistributions(t *testing.T, src *prometheusMetricsSource, metricsString string) []*wf.Distribution {
+	metrics, err := src.parseMetrics(bytes.NewReader([]byte(metricsString)))
+	require.NoError(t, err, "parsing metrics")
+	var distributions []*wf.Distribution
+	for _, result := range metrics {
+		distribution, ok := result.(*wf.Distribution)
+		if ok {
+			distributions = append(distributions, distribution)
+		}
 	}
+	return distributions
 }

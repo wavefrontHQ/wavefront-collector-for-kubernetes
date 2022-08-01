@@ -3,6 +3,8 @@ package kstate
 import (
 	"testing"
 
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
+
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 
 	"github.com/stretchr/testify/assert"
@@ -191,13 +193,14 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		testPod := setupPendingPod()
 		actualWFPoints := pointsForNonRunningPods(testPod, testTransform)
 		assert.Equal(t, 1, len(actualWFPoints))
-		assert.Equal(t, float64(util.POD_PHASE_PENDING), actualWFPoints[0].Value)
-		assert.Equal(t, "pod1", actualWFPoints[0].Tags()["pod_name"])
-		assert.Equal(t, string(v1.PodPending), actualWFPoints[0].Tags()["phase"])
-		assert.Equal(t, "testLabelName", actualWFPoints[0].Tags()["label.name"])
-		assert.Equal(t, "Unschedulable", actualWFPoints[0].Tags()["reason"])
-		assert.Equal(t, "none", actualWFPoints[0].Tags()["nodename"])
-		assert.Equal(t, "0/1 nodes are available: 1 Insufficient memory.", actualWFPoints[0].Tags()["message"])
+		point := actualWFPoints[0].(*wf.Point)
+		assert.Equal(t, float64(util.POD_PHASE_PENDING), point.Value)
+		assert.Equal(t, "pod1", point.Tags()["pod_name"])
+		assert.Equal(t, string(v1.PodPending), point.Tags()["phase"])
+		assert.Equal(t, "testLabelName", point.Tags()["label.name"])
+		assert.Equal(t, "Unschedulable", point.Tags()["reason"])
+		assert.Equal(t, "none", point.Tags()["nodename"])
+		assert.Equal(t, "0/1 nodes are available: 1 Insufficient memory.", point.Tags()["message"])
 	})
 
 	t.Run("test for completed pod", func(t *testing.T) {
@@ -206,16 +209,18 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		assert.Equal(t, 2, len(actualWFPoints))
 
 		// check for pod metrics
-		assert.Equal(t, float64(util.POD_PHASE_SUCCEEDED), actualWFPoints[0].Value)
-		assert.Equal(t, string(v1.PodSucceeded), actualWFPoints[0].Tags()["phase"])
-		assert.Equal(t, "", actualWFPoints[0].Tags()["reason"])
-		assert.Equal(t, "node1", actualWFPoints[0].Tags()["nodename"])
+		podPoint := actualWFPoints[0].(*wf.Point)
+		assert.Equal(t, float64(util.POD_PHASE_SUCCEEDED), podPoint.Value)
+		assert.Equal(t, string(v1.PodSucceeded), podPoint.Tags()["phase"])
+		assert.Equal(t, "", podPoint.Tags()["reason"])
+		assert.Equal(t, "node1", podPoint.Tags()["nodename"])
 
 		// check for container metrics
-		assert.Equal(t, float64(util.CONTAINER_STATE_TERMINATED), actualWFPoints[1].Value)
-		assert.Equal(t, "0", actualWFPoints[1].Tags()["exit_code"])
-		assert.Equal(t, "Completed", actualWFPoints[1].Tags()["reason"])
-		assert.Equal(t, "terminated", actualWFPoints[1].Tags()["status"])
+		containerPoint := actualWFPoints[1].(*wf.Point)
+		assert.Equal(t, float64(util.CONTAINER_STATE_TERMINATED), containerPoint.Value)
+		assert.Equal(t, "0", containerPoint.Tags()["exit_code"])
+		assert.Equal(t, "Completed", containerPoint.Tags()["reason"])
+		assert.Equal(t, "terminated", containerPoint.Tags()["status"])
 	})
 
 	t.Run("test for failed pod", func(t *testing.T) {
@@ -224,18 +229,20 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		assert.Equal(t, 2, len(actualWFPoints))
 
 		// check for pod metrics
-		assert.Equal(t, float64(util.POD_PHASE_FAILED), actualWFPoints[0].Value)
-		assert.Equal(t, string(v1.PodFailed), actualWFPoints[0].Tags()["phase"])
-		assert.Equal(t, "ContainersNotReady", actualWFPoints[0].Tags()["reason"])
-		assert.Equal(t, 255, len(actualWFPoints[0].Tags()["message"])+len("message")+len("="))
-		assert.Contains(t, actualWFPoints[0].Tags()["message"], "containers with unready status: [hello]")
-		assert.Equal(t, "node1", actualWFPoints[0].Tags()["nodename"])
+		podPoint := actualWFPoints[0].(*wf.Point)
+		assert.Equal(t, float64(util.POD_PHASE_FAILED), podPoint.Value)
+		assert.Equal(t, string(v1.PodFailed), podPoint.Tags()["phase"])
+		assert.Equal(t, "ContainersNotReady", podPoint.Tags()["reason"])
+		assert.Equal(t, 255, len(podPoint.Tags()["message"])+len("message")+len("="))
+		assert.Contains(t, podPoint.Tags()["message"], "containers with unready status: [hello]")
+		assert.Equal(t, "node1", podPoint.Tags()["nodename"])
 
 		// check for container metrics
-		assert.Equal(t, float64(util.CONTAINER_STATE_TERMINATED), actualWFPoints[1].Value)
-		assert.Equal(t, "1", actualWFPoints[1].Tags()["exit_code"])
-		assert.Equal(t, "Error", actualWFPoints[1].Tags()["reason"])
-		assert.Equal(t, "terminated", actualWFPoints[1].Tags()["status"])
+		containerMetric := actualWFPoints[1].(*wf.Point)
+		assert.Equal(t, float64(util.CONTAINER_STATE_TERMINATED), containerMetric.Value)
+		assert.Equal(t, "1", containerMetric.Tags()["exit_code"])
+		assert.Equal(t, "Error", containerMetric.Tags()["reason"])
+		assert.Equal(t, "terminated", containerMetric.Tags()["status"])
 	})
 
 	t.Run("test for container creating pod", func(t *testing.T) {
@@ -244,15 +251,17 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		assert.Equal(t, 2, len(actualWFPoints))
 
 		// check for pod metrics
-		assert.Equal(t, float64(util.POD_PHASE_PENDING), actualWFPoints[0].Value)
-		assert.Equal(t, string(v1.PodPending), actualWFPoints[0].Tags()["phase"])
-		assert.Equal(t, "ContainersNotReady", actualWFPoints[0].Tags()["reason"])
-		assert.Equal(t, "containers with unready status: [wavefront-proxy]", actualWFPoints[0].Tags()["message"])
-		assert.Equal(t, "node1", actualWFPoints[0].Tags()["nodename"])
+		podMetric := actualWFPoints[0].(*wf.Point)
+		assert.Equal(t, float64(util.POD_PHASE_PENDING), podMetric.Value)
+		assert.Equal(t, string(v1.PodPending), podMetric.Tags()["phase"])
+		assert.Equal(t, "ContainersNotReady", podMetric.Tags()["reason"])
+		assert.Equal(t, "containers with unready status: [wavefront-proxy]", podMetric.Tags()["message"])
+		assert.Equal(t, "node1", podMetric.Tags()["nodename"])
 
 		// check for container metrics
-		assert.Equal(t, float64(util.CONTAINER_STATE_WAITING), actualWFPoints[1].Value)
-		assert.Equal(t, "ContainerCreating", actualWFPoints[1].Tags()["reason"])
-		assert.Equal(t, "waiting", actualWFPoints[1].Tags()["status"])
+		containerMetric := actualWFPoints[1].(*wf.Point)
+		assert.Equal(t, float64(util.CONTAINER_STATE_WAITING), containerMetric.Value)
+		assert.Equal(t, "ContainerCreating", containerMetric.Tags()["reason"])
+		assert.Equal(t, "waiting", containerMetric.Tags()["status"])
 	})
 }

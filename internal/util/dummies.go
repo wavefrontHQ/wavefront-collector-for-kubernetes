@@ -116,7 +116,7 @@ func (dummy *DummyMetricsSource) Scrape() (*metrics.Batch, error) {
 	res := &metrics.Batch{
 		Timestamp: time.Now(),
 	}
-	res.Points = append(res.Points, point)
+	res.Metrics = append(res.Metrics, point)
 	return res, nil
 }
 
