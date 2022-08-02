@@ -58,7 +58,7 @@ function main() {
   green "PPS Goal: ${PPS_GOAL} Number of prom example replicas: ${NUMBER_OF_PROM_REPLICAS}"
   cp "$REPO_ROOT/hack/test/deploy/load-test-prom-example.yaml" "$TEMP_DIR/."
 
-	kubectl delete namespace load-test || true
+  kubectl delete namespace load-test || true
 
   pushd "$TEMP_DIR"
  		sed -i '' "s/NUMBER_OF_REPLICAS/${NUMBER_OF_PROM_REPLICAS}/g" "$TEMP_DIR/load-test-prom-example.yaml"
