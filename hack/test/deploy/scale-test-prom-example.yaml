@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: scale-test
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: prom-example
+    name: prom-example
+  name: prom-example
+  namespace: scale-test
+spec:
+  replicas: NUMBER_OF_REPLICAS
+  selector:
+    matchLabels:
+      k8s-app: prom-example
+      name: prom-example
+  template:
+    metadata:
+      labels:
+        k8s-app: prom-example
+        name: prom-example
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/scheme: 'http'
+        prometheus.io/port: '8443'
+        prometheus.io/prefix: 'prom-example.'
+      name: prom-example
+      namespace: scale-test
+    spec:
+     containers:
+     - name: prom-example
+       image: projects.registry.vmware.com/tanzu_observability_keights_saas/prometheus-example-app:latest
+   #    image: jgeeatvmware/crash-loop:1
+       imagePullPolicy: Always
+       command:
+       - /bin/prometheus-example-app
+       - --num=10
+       ports:
+       - containerPort: 8443
+         protocol: TCP
