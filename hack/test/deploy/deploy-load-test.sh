@@ -13,7 +13,7 @@ function print_usage_and_exit() {
 }
 
 function main() {
-  cd "$(dirname "$0")" # cd to deploy-scale-test.sh is in
+  cd "$(dirname "$0")" # cd to deploy-load-test.sh is in
 
   # REQUIRED
   local WAVEFRONT_TOKEN=
