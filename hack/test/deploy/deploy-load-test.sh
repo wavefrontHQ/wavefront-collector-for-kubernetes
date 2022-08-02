@@ -56,12 +56,12 @@ function main() {
   DEPLOY_TARGETS=no ./deploy-local.sh
 
   green "PPS Goal: ${PPS_GOAL} Number of prom example replicas: ${NUMBER_OF_PROM_REPLICAS}"
-  cp "$REPO_ROOT/hack/test/deploy/scale-test-prom-example.yaml" "$TEMP_DIR/."
+  cp "$REPO_ROOT/hack/test/deploy/load-test-prom-example.yaml" "$TEMP_DIR/."
 
-	kubectl delete namespace scale-test || true
+	kubectl delete namespace load-test || true
 
   pushd "$TEMP_DIR"
- 		sed -i '' "s/NUMBER_OF_REPLICAS/${NUMBER_OF_PROM_REPLICAS}/g" "$TEMP_DIR/scale-test-prom-example.yaml"
+ 		sed -i '' "s/NUMBER_OF_REPLICAS/${NUMBER_OF_PROM_REPLICAS}/g" "$TEMP_DIR/load-test-prom-example.yaml"
  		kubectl apply -f "$TEMP_DIR/."
   popd
 }
