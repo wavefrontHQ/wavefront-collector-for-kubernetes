@@ -13,7 +13,7 @@ function do_request() {
 
 WAVEFRONT_CLUSTER="cloudhealth"
 K8S_CLUSTER="virginia-1.prod.cloudhealthtech.com"
-START_TIME=$(date -v '-1d' '+%s')
+START_TIME=$(date -v '-12H' '+%s')
 END_TIME=$(date '+%s')
 
 echo "experiment, status code, query latency, cardinality, points scanned, distributions scanned"
@@ -41,3 +41,8 @@ do_request 'scenario2_original' "https://$WAVEFRONT_CLUSTER.wavefront.com/chart/
 
 # Scenario 2, Better Source Tagging
 do_request 'scenario2_source2' "https://$WAVEFRONT_CLUSTER.wavefront.com/chart/streaming/v2?request=%7B%22id%22%3A1657746503763%2C%22queries%22%3A%5B%7B%22queryType%22%3A%22WQL%22%2C%22query%22%3A%22ts(%5C%22highcardtest.source2.kubernetes.pod_container.restart_count%5C%22%2C%20source%3D%5C%22%24%7Bcluster%7D*%5C%22)%22%2C%22name%22%3A%22A%22%2C%22secondaryAxis%22%3Afalse%7D%5D%2C%22summarizationStrategy%22%3A%22MEAN%22%2C%22includeObsoleteMetrics%22%3Afalse%2C%22expectedDataSpacing%22%3A60%2C%22queryParameters%22%3A%7B%22cluster%22%3A%22$K8S_CLUSTER%22%2C%22%24_globalFilter_%22%3A%22%22%7D%2C%22applyGlobalFilter%22%3Afalse%2C%22isLog%22%3Afalse%2C%22autoEvents%22%3Atrue%2C%22compareOffset%22%3A0%2C%22start%22%3A$START_TIME%2C%22end%22%3A$END_TIME%2C%22points%22%3A749%2C%22merging%22%3Atrue%2C%22limit%22%3A0%2C%22perSeriesStats%22%3Afalse%2C%22perSeriesRawStats%22%3Afalse%7D&queryContext=%2Fcharts"
+
+# Scenario 2, Better Source Tagging
+do_request 'scenario2_source2_secondary' "https://$WAVEFRONT_CLUSTER.wavefront.com/chart/streaming/v2?request=%7B%22id%22%3A1657746503763%2C%22queries%22%3A%5B%7B%22queryType%22%3A%22WQL%22%2C%22query%22%3A%22ts(%5C%22highcardtest.source2.kubernetes.pod_container.restart_count%5C%22%2C%20source%3D%5C%22%24%7Bcluster%7D*%5C%22%20and%20cluster%3D%5C%22%24%7Bcluster%7D%5C%22)%22%2C%22name%22%3A%22A%22%2C%22secondaryAxis%22%3Afalse%7D%5D%2C%22summarizationStrategy%22%3A%22MEAN%22%2C%22includeObsoleteMetrics%22%3Afalse%2C%22expectedDataSpacing%22%3A60%2C%22queryParameters%22%3A%7B%22cluster%22%3A%22$K8S_CLUSTER%22%2C%22%24_globalFilter_%22%3A%22%22%7D%2C%22applyGlobalFilter%22%3Afalse%2C%22isLog%22%3Afalse%2C%22autoEvents%22%3Atrue%2C%22compareOffset%22%3A0%2C%22start%22%3A$START_TIME%2C%22end%22%3A$END_TIME%2C%22points%22%3A749%2C%22merging%22%3Atrue%2C%22limit%22%3A0%2C%22perSeriesStats%22%3Afalse%2C%22perSeriesRawStats%22%3Afalse%7D&queryContext=%2Fcharts"
+
+sleep 60
