@@ -12,7 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/experimental"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
 
 	"github.com/wavefronthq/wavefront-sdk-go/event"
@@ -189,16 +188,6 @@ func (sink *wavefrontSink) Export(batch *metrics.Batch) {
 			continue
 		}
 		tags := point.Tags()
-		if experimental.IsEnabled(experimental.ClusterSource) {
-			point.Source = tags[metrics.LabelCluster.Key]
-			if len(tags[metrics.LabelNamespaceName.Key]) > 0 {
-				point.Source += "." + tags[metrics.LabelNamespaceName.Key]
-			} else if len(tags["namespace"]) > 0 {
-				point.Source += "." + tags["namespace"]
-			} else if len(tags[metrics.LabelNodename.Key]) > 0 {
-				point.Source += "." + tags[metrics.LabelNodename.Key]
-			}
-		}
 		sink.sendPoint(point.Metric, point.Value, point.Timestamp, point.Source, tags)
 	}
 

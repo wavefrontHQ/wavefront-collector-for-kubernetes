@@ -2,8 +2,6 @@ package experimental
 
 import "sync"
 
-const ClusterSource = "cluster-source"
-
 var (
 	mu      sync.RWMutex
 	enabled = map[string]bool{}

@@ -108,7 +108,6 @@ pipeline {
                 sh 'make target-eks'
                 sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=single-deployment make deploy-test'
                 sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=combined make deploy-test'
-                sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=cluster-source make deploy-test'
                 sh 'VERSION_POSTFIX=$VERSION_POSTFIX make deploy-test'
                 sh './hack/test/test-wavefront-metrics.sh -t $WAVEFRONT_TOKEN'
               }
