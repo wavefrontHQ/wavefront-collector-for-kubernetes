@@ -12,9 +12,9 @@ import (
 )
 
 func TestFeatureFlags(t *testing.T) {
-	assert.False(t, IsEnabled(ClusterSource), "Error :: Feature cluster-scope is expected to be disabled.")
-	EnableFeature(ClusterSource)
-	assert.True(t, IsEnabled(ClusterSource), "Error :: Feature cluster-scope is expected to be enabled.")
-	DisableFeature(ClusterSource)
-	assert.False(t, IsEnabled(ClusterSource), "Error :: Feature cluster-scope is expected to be disabled.")
+	assert.False(t, IsEnabled("MyFeature"), "Error :: Feature cluster-scope is expected to be disabled.")
+	EnableFeature("MyFeature")
+	assert.True(t, IsEnabled("MyFeature"), "Error :: Feature cluster-scope is expected to be enabled.")
+	DisableFeature("MyFeature")
+	assert.False(t, IsEnabled("MyFeature"), "Error :: Feature cluster-scope is expected to be disabled.")
 }

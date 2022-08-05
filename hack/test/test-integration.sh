@@ -36,11 +36,6 @@ fi
 if [[ "${INTEGRATION_TEST_TYPE}" == "single-deployment" ]]; then
   COLLECTOR_YAML="base/deploy/collector-deployments/5-collector-single-deployment.yaml"
 fi
-if [[ "${INTEGRATION_TEST_TYPE}" == "cluster-source" ]]; then
-  EXPERIMENTAL_FEATURES=["cluster-source"]
-  sed "s/YOUR_CLUSTER_NAME/${WF_CLUSTER_NAME}/g" files/cluster-source-metrics.jsonl  > files/cluster-source-metrics-updated.jsonl
-  METRICS_FILE_NAME="cluster-source-metrics-updated"
-fi
 
 NS=wavefront-collector
 
