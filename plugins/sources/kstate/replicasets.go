@@ -15,7 +15,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 )
 
-func pointsForReplicaSet(item interface{}, transforms configuration.Transforms) []*wf.Point {
+func pointsForReplicaSet(item interface{}, transforms configuration.Transforms) []wf.Metric {
 	rs, ok := item.(*appsv1.ReplicaSet)
 	if !ok {
 		log.Errorf("invalid type: %s", reflect.TypeOf(item).String())
@@ -28,7 +28,7 @@ func pointsForReplicaSet(item interface{}, transforms configuration.Transforms) 
 	available := float64(rs.Status.AvailableReplicas)
 	ready := float64(rs.Status.ReadyReplicas)
 
-	return []*wf.Point{
+	return []wf.Metric{
 		metricPoint(transforms.Prefix, "replicaset.desired_replicas", desired, now, transforms.Source, tags),
 		metricPoint(transforms.Prefix, "replicaset.available_replicas", available, now, transforms.Source, tags),
 		metricPoint(transforms.Prefix, "replicaset.ready_replicas", ready, now, transforms.Source, tags),

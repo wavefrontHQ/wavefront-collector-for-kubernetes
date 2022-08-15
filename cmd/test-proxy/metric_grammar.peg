@@ -1,6 +1,7 @@
 package main
 
 type MetricGrammar Peg {
+    Histogram bool
     Name string
     Value string
     Timestamp string
@@ -8,7 +9,13 @@ type MetricGrammar Peg {
     currentTag string
 }
 
-MetricGrammar <- metricName ' ' metricValue (' ' timestamp)? ' ' tags !.
+MetricGrammar <- aggregationInterval (' ' timestamp)? ' ' histogramValues ' ' metricName ' ' tags !. / metricName ' ' metricValue (' ' timestamp)? ' ' tags !.
+
+aggregationInterval <- '!' ('M' / 'H' / 'D') { p.Histogram = true }
+
+histogramValues <- histogramValue (' ' histogramValue)*
+
+histogramValue <- '#' DIGIT+ ' ' metricValue
 
 tags <- { p.Tags = map[string]string{} } tag ( ' ' tag )*
 

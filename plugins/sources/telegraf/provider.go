@@ -112,7 +112,7 @@ func (t *telegrafPluginSource) Scrape() (*metrics.Batch, error) {
 		}
 		log.Errorf("error gathering %s metrics. error: %v", t.name, err)
 	}
-	count := len(result.Points)
+	count := len(result.Metrics)
 
 	log.WithFields(log.Fields{
 		"name":          t.Name(),

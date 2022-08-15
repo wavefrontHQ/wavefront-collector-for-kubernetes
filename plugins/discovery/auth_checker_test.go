@@ -113,7 +113,7 @@ type AccessSpy struct {
 }
 
 func (spy *AccessSpy) CreateContext(ctx context.Context, sar *v1.SelfSubjectAccessReview) (result *v1.SelfSubjectAccessReview, err error) {
-	panic("implement me")
+	panic("should not be called")
 }
 
 func (spy *AccessSpy) Create(ctx context.Context, sar *v1.SelfSubjectAccessReview, options v12.CreateOptions) (result *v1.SelfSubjectAccessReview, err error) {

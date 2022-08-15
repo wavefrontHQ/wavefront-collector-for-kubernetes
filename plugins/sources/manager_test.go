@@ -44,8 +44,8 @@ func TestNoTimeout(t *testing.T) {
 
 	present := make(map[string]bool)
 	for _, dataBatch := range dataBatchList {
-		for _, point := range dataBatch.Points {
-			present[point.Metric] = true
+		for _, point := range dataBatch.Metrics {
+			present[point.Name()] = true
 		}
 	}
 
@@ -73,8 +73,8 @@ func TestScrapeMetrics(t *testing.T) {
 			dbatch = <-testDataBatch
 
 			present := make(map[string]bool)
-			for _, point := range dbatch.Points {
-				present[point.Metric] = true
+			for _, point := range dbatch.Metrics {
+				present[point.Name()] = true
 			}
 			assert.Empty(t, present)
 			assert.Equal(t, initialErrCnt+1, scrapeErrors.Count())
@@ -98,8 +98,8 @@ func TestScrapeMetrics(t *testing.T) {
 			dbatch = <-testDataBatch
 
 			present := make(map[string]bool)
-			for _, point := range dbatch.Points {
-				present[point.Metric] = true
+			for _, point := range dbatch.Metrics {
+				present[point.Name()] = true
 			}
 			assert.Empty(t, present)
 			assert.Equal(t, initialErrCnt+1, scrapeErrors.Count())
@@ -122,8 +122,8 @@ func TestTimeout(t *testing.T) {
 
 	present := make(map[string]bool)
 	for _, dataBatch := range dataBatchList {
-		for _, point := range dataBatch.Points {
-			present[point.Metric] = true
+		for _, point := range dataBatch.Metrics {
+			present[point.Name()] = true
 		}
 	}
 
@@ -162,8 +162,8 @@ func TestMultipleMetrics(t *testing.T) {
 
 	counts := make(map[string]int)
 	for _, dataBatch := range dataBatchList {
-		for _, point := range dataBatch.Points {
-			counts[point.Metric]++
+		for _, point := range dataBatch.Metrics {
+			counts[point.Name()]++
 		}
 	}
 

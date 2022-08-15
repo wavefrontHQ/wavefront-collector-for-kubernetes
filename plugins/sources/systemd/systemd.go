@@ -89,9 +89,9 @@ func (src *systemdMetricsSource) Scrape() (*Batch, error) {
 	}
 
 	// channel for gathering collected metrics
-	gather := make(chan *wf.Point, 1000)
+	gather := make(chan wf.Metric, 1000)
 	done := make(chan bool)
-	var points []*wf.Point
+	var points []wf.Metric
 
 	// goroutine for gathering collected metrics
 	go func() {
@@ -162,15 +162,15 @@ func (src *systemdMetricsSource) Scrape() (*Batch, error) {
 	// wait for gathering to process all the points
 	<-done
 
-	result.Points = points
-	count := len(result.Points)
+	result.Metrics = points
+	count := len(result.Metrics)
 	log.Infof("%s metrics: %d", "systemd", count)
 	src.pps.Inc(int64(count))
 
 	return result, err
 }
 
-func (src *systemdMetricsSource) collectUnitStatusMetrics(conn *dbus.Conn, units []unit, ch chan<- *wf.Point, now int64) {
+func (src *systemdMetricsSource) collectUnitStatusMetrics(conn *dbus.Conn, units []unit, ch chan<- wf.Metric, now int64) {
 	for _, unit := range units {
 		serviceType := ""
 		if strings.HasSuffix(unit.Name, ".service") {
@@ -211,7 +211,7 @@ func (src *systemdMetricsSource) collectUnitStatusMetrics(conn *dbus.Conn, units
 	}
 }
 
-func (src *systemdMetricsSource) collectSockets(conn *dbus.Conn, units []unit, ch chan<- *wf.Point, now int64) {
+func (src *systemdMetricsSource) collectSockets(conn *dbus.Conn, units []unit, ch chan<- wf.Metric, now int64) {
 	for _, unit := range units {
 		if !strings.HasSuffix(unit.Name, ".socket") {
 			continue
@@ -243,7 +243,7 @@ func (src *systemdMetricsSource) collectSockets(conn *dbus.Conn, units []unit, c
 	}
 }
 
-func (src *systemdMetricsSource) collectUnitStartTimeMetrics(conn *dbus.Conn, units []unit, ch chan<- *wf.Point, now int64) {
+func (src *systemdMetricsSource) collectUnitStartTimeMetrics(conn *dbus.Conn, units []unit, ch chan<- wf.Metric, now int64) {
 	var startTimeUsec uint64
 	for _, unit := range units {
 		if unit.ActiveState != "active" {
@@ -262,7 +262,7 @@ func (src *systemdMetricsSource) collectUnitStartTimeMetrics(conn *dbus.Conn, un
 	}
 }
 
-func (src *systemdMetricsSource) collectUnitTasksMetrics(conn *dbus.Conn, units []unit, ch chan<- *wf.Point, now int64) {
+func (src *systemdMetricsSource) collectUnitTasksMetrics(conn *dbus.Conn, units []unit, ch chan<- wf.Metric, now int64) {
 	var val uint64
 	for _, unit := range units {
 		if strings.HasSuffix(unit.Name, ".service") {
@@ -294,7 +294,7 @@ func (src *systemdMetricsSource) collectUnitTasksMetrics(conn *dbus.Conn, units 
 	}
 }
 
-func (src *systemdMetricsSource) collectTimers(conn *dbus.Conn, units []unit, ch chan<- *wf.Point, now int64) {
+func (src *systemdMetricsSource) collectTimers(conn *dbus.Conn, units []unit, ch chan<- wf.Metric, now int64) {
 	for _, unit := range units {
 		if !strings.HasSuffix(unit.Name, ".timer") {
 			continue
@@ -311,7 +311,7 @@ func (src *systemdMetricsSource) collectTimers(conn *dbus.Conn, units []unit, ch
 	}
 }
 
-func (src *systemdMetricsSource) collectSummaryMetrics(summary map[string]float64, ch chan<- *wf.Point, now int64) {
+func (src *systemdMetricsSource) collectSummaryMetrics(summary map[string]float64, ch chan<- wf.Metric, now int64) {
 	for stateName, count := range summary {
 		tags := map[string]string{}
 		setTag(tags, "state_name", stateName)
@@ -319,7 +319,7 @@ func (src *systemdMetricsSource) collectSummaryMetrics(summary map[string]float6
 	}
 }
 
-func (src *systemdMetricsSource) collectSystemState(conn *dbus.Conn, ch chan<- *wf.Point, now int64) error {
+func (src *systemdMetricsSource) collectSystemState(conn *dbus.Conn, ch chan<- wf.Metric, now int64) error {
 	systemState, err := conn.GetManagerProperty("SystemState")
 	if err != nil {
 		return fmt.Errorf("couldn't get system state: %s", err)
@@ -388,7 +388,7 @@ func setTag(tags map[string]string, key, val string) {
 	}
 }
 
-func (src *systemdMetricsSource) metricPoint(name string, value float64, ts int64, tags map[string]string) *wf.Point {
+func (src *systemdMetricsSource) metricPoint(name string, value float64, ts int64, tags map[string]string) wf.Metric {
 	return wf.NewPoint(
 		src.prefix+strings.Replace(name, "_", ".", -1),
 		value,

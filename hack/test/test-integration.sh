@@ -36,6 +36,9 @@ fi
 if [[ "${INTEGRATION_TEST_TYPE}" == "single-deployment" ]]; then
   COLLECTOR_YAML="base/deploy/collector-deployments/5-collector-single-deployment.yaml"
 fi
+if [[ "${INTEGRATION_TEST_TYPE}" == "histogram-conversion" ]]; then
+  EXPERIMENTAL_FEATURES=["histogram-conversion"]
+fi
 
 NS=wavefront-collector
 

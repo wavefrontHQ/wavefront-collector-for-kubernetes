@@ -17,7 +17,7 @@ defaultCollectionInterval: 10s
 omitBucketSuffix: true
 
 experimental:
-- my-feature
+- histogram-conversion
 
 sinks:
 - proxyAddress: wavefront-proxy.default.svc.cluster.local:2878
@@ -116,7 +116,7 @@ func TestFromYAML(t *testing.T) {
 	assert.Equal(t, "kubernetes.", cfg.Sources.SummaryConfig.Prefix)
 	assert.Equal(t, "kube.apiserver.", cfg.Sources.PrometheusConfigs[0].Prefix)
 	assert.Equal(t, "kubernetes.cadvisor.", cfg.Sources.CadvisorConfig.Prefix)
-	assert.Equal(t, "my-feature", cfg.Experimental[0])
+	assert.Equal(t, "histogram-conversion", cfg.Experimental[0])
 
 	assert.Equal(t, cfg.DiscoveryConfig.AnnotationExcludes[0].Images, []string{"not-redis:*", "*not-redis*"})
 }

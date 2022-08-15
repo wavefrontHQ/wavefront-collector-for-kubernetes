@@ -15,7 +15,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 )
 
-func pointsForDeployment(item interface{}, transforms configuration.Transforms) []*wf.Point {
+func pointsForDeployment(item interface{}, transforms configuration.Transforms) []wf.Metric {
 	deployment, ok := item.(*appsv1.Deployment)
 	if !ok {
 		log.Errorf("invalid type: %s", reflect.TypeOf(item).String())
@@ -28,7 +28,7 @@ func pointsForDeployment(item interface{}, transforms configuration.Transforms) 
 	available := float64(deployment.Status.AvailableReplicas)
 	ready := float64(deployment.Status.ReadyReplicas)
 
-	return []*wf.Point{
+	return []wf.Metric{
 		metricPoint(transforms.Prefix, "deployment.desired_replicas", desired, now, transforms.Source, tags),
 		metricPoint(transforms.Prefix, "deployment.available_replicas", available, now, transforms.Source, tags),
 		metricPoint(transforms.Prefix, "deployment.ready_replicas", ready, now, transforms.Source, tags),

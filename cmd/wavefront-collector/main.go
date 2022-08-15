@@ -309,8 +309,9 @@ func createDataProcessorsOrDie(kubeClient *kube_client.Clientset, cluster string
 	}
 
 	dataProcessors := []metrics.Processor{
-		// Convert cumulative to rate
 		processors.NewRateCalculator(metrics.RateMetricsMapping),
+		processors.NewDistributionRateCalculator(),
+		processors.NewCumulativeDistributionConverter(),
 	}
 
 	collectionInterval := calculateCollectionInterval(cfg)
@@ -323,7 +324,6 @@ func createDataProcessorsOrDie(kubeClient *kube_client.Clientset, cluster string
 	}
 	dataProcessors = append(dataProcessors, namespaceBasedEnricher)
 
-	// aggregators
 	metricsToAggregate := []string{
 		metrics.MetricCpuUsageRate.Name,
 		metrics.MetricMemoryUsage.Name,

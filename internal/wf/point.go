@@ -26,6 +26,22 @@ func NewPoint(metric string, value float64, timestamp int64, source string, tags
 	}
 }
 
+func (m *Point) Points() int {
+	return 1
+}
+
+func (m *Point) Send(to Sender) error {
+	return to.SendMetric(m.Metric, m.Value, m.Timestamp, m.Source, m.Tags())
+}
+
+func (m *Point) SetSource(source string) {
+	m.Source = source
+}
+
+func (m *Point) Name() string {
+	return m.Metric
+}
+
 func (m *Point) SetLabelPairs(pairs []LabelPair) {
 	m.labelPairs = pairs
 }

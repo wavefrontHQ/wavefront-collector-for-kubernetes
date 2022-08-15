@@ -1,6 +1,10 @@
 package experimental
 
-import "sync"
+import (
+	"sync"
+)
+
+const HistogramConversion = "histogram-conversion"
 
 var (
 	mu      sync.RWMutex

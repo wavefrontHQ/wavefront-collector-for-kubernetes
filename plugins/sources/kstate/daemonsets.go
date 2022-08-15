@@ -15,7 +15,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 )
 
-func pointsForDaemonSet(item interface{}, transforms configuration.Transforms) []*wf.Point {
+func pointsForDaemonSet(item interface{}, transforms configuration.Transforms) []wf.Metric {
 	ds, ok := item.(*appsv1.DaemonSet)
 	if !ok {
 		log.Errorf("invalid type: %s", reflect.TypeOf(item).String())
@@ -29,7 +29,7 @@ func pointsForDaemonSet(item interface{}, transforms configuration.Transforms) [
 	misScheduled := float64(ds.Status.NumberMisscheduled)
 	ready := float64(ds.Status.NumberReady)
 
-	return []*wf.Point{
+	return []wf.Metric{
 		metricPoint(transforms.Prefix, "daemonset.current_scheduled", currentScheduled, now, transforms.Source, tags),
 		metricPoint(transforms.Prefix, "daemonset.desired_scheduled", desiredScheduled, now, transforms.Source, tags),
 		metricPoint(transforms.Prefix, "daemonset.misscheduled", misScheduled, now, transforms.Source, tags),

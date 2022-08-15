@@ -18,7 +18,7 @@ import (
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
 )
 
-func pointsForNonRunningPods(item interface{}, transforms configuration.Transforms) []*wf.Point {
+func pointsForNonRunningPods(item interface{}, transforms configuration.Transforms) []wf.Metric {
 	pod, ok := item.(*v1.Pod)
 	if !ok {
 		log.Errorf("invalid type: %s", reflect.TypeOf(item).String())
@@ -43,7 +43,7 @@ func truncateMessage(message string) string {
 	return message
 }
 
-func buildPodPhaseMetrics(pod *v1.Pod, transforms configuration.Transforms, sharedTags map[string]string, now int64) []*wf.Point {
+func buildPodPhaseMetrics(pod *v1.Pod, transforms configuration.Transforms, sharedTags map[string]string, now int64) []wf.Metric {
 	tags := buildTags("pod_name", pod.Name, pod.Namespace, transforms.Tags)
 	tags[metrics.LabelMetricSetType.Key] = metrics.MetricSetTypePod
 	tags[metrics.LabelPodId.Key] = string(pod.UID)
@@ -77,19 +77,19 @@ func buildPodPhaseMetrics(pod *v1.Pod, transforms configuration.Transforms, shar
 		sharedTags[metrics.LabelNodename.Key] = nodeName
 	}
 	copyTags(sharedTags, tags)
-	points := []*wf.Point{
+	points := []wf.Metric{
 		metricPoint(transforms.Prefix, "pod.status.phase", float64(phaseValue), now, transforms.Source, tags),
 	}
 	return points
 }
 
-func buildContainerStatusMetrics(pod *v1.Pod, sharedTags map[string]string, transforms configuration.Transforms, now int64) []*wf.Point {
+func buildContainerStatusMetrics(pod *v1.Pod, sharedTags map[string]string, transforms configuration.Transforms, now int64) []wf.Metric {
 	statuses := pod.Status.ContainerStatuses
 	if len(statuses) == 0 {
-		return []*wf.Point{}
+		return []wf.Metric{}
 	}
 
-	points := make([]*wf.Point, len(statuses))
+	points := make([]wf.Metric, len(statuses))
 	for i, status := range statuses {
 		containerStateInfo := util.NewContainerStateInfo(status.State)
 		tags := buildTags("pod_name", pod.Name, pod.Namespace, transforms.Tags)
