@@ -1,5 +1,5 @@
 # Wavefront Collector for Kubernetes
-[![build status][ci-img]][ci] [![Go Report Card][go-report-img]][go-report] [![Docker Pulls][docker-pull-img]][docker-img]
+[![Go Report Card][go-report-img]][go-report] [![Docker Pulls][docker-pull-img]][docker-img]
 
 [Wavefront](https://docs.wavefront.com) is a high-performance streaming analytics platform for monitoring and optimizing your environment and applications.
 
@@ -40,7 +40,6 @@ Commonly used `make` options include:
 ## Contributing
 Public contributions are always welcome. Please feel free to report issues or submit pull requests.
 
-[ci]: https://tobs-k8s-saas-ci.svc.eng.vmware.com/job/wavefront-collector-for-kubernetes-ci/
 [go-report-img]: https://goreportcard.com/badge/github.com/wavefronthq/wavefront-kubernetes-collector
 [go-report]: https://goreportcard.com/report/github.com/wavefronthq/wavefront-kubernetes-collector
 [docker-pull-img]: https://img.shields.io/docker/pulls/wavefronthq/wavefront-kubernetes-collector.svg?logo=docker
