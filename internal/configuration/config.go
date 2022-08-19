@@ -13,7 +13,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-// The main configuration struct that drives the Wavefront collector
+// Config is the main configuration struct that drives the Wavefront collector
 type Config struct {
 	// the global interval at which data is pushed. Defaults to 60 seconds.
 	FlushInterval time.Duration `yaml:"flushInterval"`
@@ -100,7 +100,7 @@ type Transforms struct {
 	Filters filter.Config `yaml:"filters"`
 }
 
-// Configuration options for the Wavefront sink
+// WavefrontSinkConfig has configuration options for the Wavefront sink
 type WavefrontSinkConfig struct {
 	Transforms `yaml:",inline"`
 
