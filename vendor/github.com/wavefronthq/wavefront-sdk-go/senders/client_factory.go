@@ -2,11 +2,12 @@ package senders
 
 import (
 	"fmt"
-	"github.com/wavefronthq/wavefront-sdk-go/internal"
 	"net/url"
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/wavefronthq/wavefront-sdk-go/internal"
 )
 
 const (
@@ -42,6 +43,18 @@ type configuration struct {
 	// together with batch size controls the max theoretical throughput of the sender.
 	FlushIntervalSeconds int
 	SDKMetricsTags       map[string]string
+}
+
+func (c *configuration) Direct() bool {
+	return c.Token != ""
+}
+
+func (c *configuration) MetricPrefix() string {
+	result := "~sdk.go.core.sender.proxy"
+	if c.Direct() {
+		result = "~sdk.go.core.sender.direct"
+	}
+	return result
 }
 
 func (c *configuration) setDefaultPort(port int) {
@@ -80,11 +93,11 @@ func CreateConfig(wfURL string, setters ...Option) (*configuration, error) {
 
 	switch strings.ToLower(u.Scheme) {
 	case "http":
-		if cfg.Token != "" {
+		if cfg.Direct() {
 			cfg.setDefaultPort(80)
 		}
 	case "https":
-		if cfg.Token != "" {
+		if cfg.Direct() {
 			cfg.setDefaultPort(443)
 		}
 	default:
@@ -114,7 +127,7 @@ func newWavefrontClient(cfg *configuration) (Sender, error) {
 
 	sender := &wavefrontSender{
 		defaultSource: internal.GetHostname("wavefront_direct_sender"),
-		proxy:         len(cfg.Token) == 0,
+		proxy:         !cfg.Direct(),
 	}
 	sender.initializeInternalMetrics(cfg)
 	sender.pointHandler = newLineHandler(metricsReporter, cfg, internal.MetricFormat, "points", sender.internalRegistry)
@@ -130,7 +143,7 @@ func newWavefrontClient(cfg *configuration) (Sender, error) {
 func (sender *wavefrontSender) initializeInternalMetrics(cfg *configuration) {
 
 	var setters []internal.RegistryOption
-	setters = append(setters, internal.SetPrefix("~sdk.go.core.sender.direct"))
+	setters = append(setters, internal.SetPrefix(cfg.MetricPrefix()))
 	setters = append(setters, internal.SetTag("pid", strconv.Itoa(os.Getpid())))
 
 	for key, value := range cfg.SDKMetricsTags {
