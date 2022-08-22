@@ -142,11 +142,13 @@ func (e *HTTPError) Error() string {
 	return fmt.Sprintf("error retrieving prometheus metrics from %s (http status %s)", e.MetricsURL, e.Status)
 }
 
+// TODO unit-test-driven refactor opportunity
 func (src *prometheusMetricsSource) Scrape() (*metrics.Batch, error) {
 	result := &metrics.Batch{
 		Timestamp: time.Now(),
 	}
 
+	// TODO the likely reason this is not unit tested
 	resp, err := src.client.Get(src.metricsURL)
 	if err != nil {
 		collectErrors.Inc(1)
