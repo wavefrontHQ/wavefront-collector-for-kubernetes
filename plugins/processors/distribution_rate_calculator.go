@@ -1,9 +1,11 @@
 package processors
 
 import (
-	"sync"
+    log "github.com/sirupsen/logrus"
+    "sync"
+    "time"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
+    "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
 )
 
@@ -31,7 +33,11 @@ func (rc *DistributionRateCalculator) Process(batch *metrics.Batch) (*metrics.Ba
 		if rate != nil {
 			newMetrics = append(newMetrics, rate)
 		}
-		rc.prevDistributions[distribution.Key()] = distribution
+        if rc.prevDistributions[distribution.Key()] != nil && distribution.Timestamp.Sub(rc.prevDistributions[distribution.Key()].Timestamp) < time.Minute {
+            log.Infof("Timestamp:: %+#v", distribution)
+            log.Infof("TimestampDiff:: %s", distribution.Timestamp.Sub(rc.prevDistributions[distribution.Key()].Timestamp).String())
+        }
+        rc.prevDistributions[distribution.Key()] = distribution
 	}
 	batch.Metrics = newMetrics
 	return batch, nil
