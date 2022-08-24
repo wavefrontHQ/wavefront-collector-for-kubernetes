@@ -1,12 +1,13 @@
 package processors
 
 import (
+	"sync"
+
 	gometrics "github.com/rcrowley/go-metrics"
 	log "github.com/sirupsen/logrus"
 	"github.com/wavefronthq/go-metrics-wavefront/reporting"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
-	"sync"
 )
 
 func DuplicateHistogramCounter(name string) gometrics.Counter {
