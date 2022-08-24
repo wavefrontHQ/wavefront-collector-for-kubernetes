@@ -48,6 +48,8 @@ func TestCumulativeDistributionConversion(t *testing.T) {
 		)}})
 
 		assert.NoError(t, err)
-		assert.Equal(t, 0, len(batch.Metrics))
+		assert.Equal(t, 1, len(batch.Metrics))
+		distribution := batch.Metrics[0].(*wf.Distribution)
+		assert.Equal(t, 0, len(distribution.Centroids))
 	})
 }

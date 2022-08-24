@@ -86,7 +86,7 @@ func (d *Distribution) ToFrequency() *Distribution {
 }
 
 func smoothCentroids(derivedCentroids []Centroid) []Centroid {
-	if len(derivedCentroids) == 0 || (len(derivedCentroids) == 1 && derivedCentroids[0].Value == math.Inf(1)) {
+	if len(derivedCentroids) == 1 && derivedCentroids[0].Value == math.Inf(1) {
 		return nil
 	}
 	amplification := math.Max(1, 1/minCount(derivedCentroids))
@@ -115,7 +115,7 @@ func smoothCentroids(derivedCentroids []Centroid) []Centroid {
 		upperCount := math.Trunc(currCount - lowerCount - middleCount)
 		centroidCounts[currBound] += upperCount
 	}
-	centroids := make([]Centroid, 0, 2*len(derivedCentroids)-1)
+	centroids := make([]Centroid, 0, len(centroidCounts))
 	for value, count := range centroidCounts {
 		centroids = append(centroids, Centroid{Value: value, Count: count})
 	}

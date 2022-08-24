@@ -172,7 +172,7 @@ func TestDistribution(t *testing.T) {
 			time.Now(),
 		).ToFrequency()
 
-		assert.Nil(t, density)
+		assert.Empty(t, density.Centroids)
 	})
 
 	t.Run("Converts cumulative to density with amplification", func(t *testing.T) {
