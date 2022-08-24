@@ -13,13 +13,14 @@ func (rc *CumulativeDistributionConverter) Name() string {
 }
 
 func (rc *CumulativeDistributionConverter) Process(batch *metrics.Batch) (*metrics.Batch, error) {
-	for i, m := range batch.Metrics {
-		distribution, ok := m.(*wf.Distribution)
+	batch.Metrics = FilterMap[wf.Metric](func(metric wf.Metric) (wf.Metric, bool) {
+		distribution, ok := metric.(*wf.Distribution)
 		if !ok {
-			continue
+			return metric, true
 		}
-		batch.Metrics[i] = distribution.ToFrequency()
-	}
+		newDistribution := distribution.ToFrequency()
+		return newDistribution, newDistribution != nil
+	}, batch.Metrics)
 	return batch, nil
 }
 

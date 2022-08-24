@@ -98,7 +98,7 @@ func smoothCentroids(derivedCentroids []Centroid) []Centroid {
 	for i, centroid := range derivedCentroids {
 		currBound := centroid.Value
 		currCount := derivedCentroids[i].Count * amplification
-		if currBound <= 0 || currCount == 0 { // TODO TDD
+		if currBound <= 0 || currCount == 0 {
 			continue
 		}
 		prevBound := 0.0

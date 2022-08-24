@@ -35,4 +35,19 @@ func TestCumulativeDistributionConversion(t *testing.T) {
 		assert.False(t, distribution.Cumulative)
 		assert.Equal(t, 11, len(distribution.Centroids))
 	})
+
+	t.Run("Handles conversion failures", func(t *testing.T) {
+		p := NewCumulativeDistributionConverter()
+
+		batch, err := p.Process(&metrics.Batch{Metrics: []wf.Metric{wf.NewCumulativeDistribution(
+			"some.distribution",
+			"somesource",
+			map[string]string{"sometag": "somevalue"},
+			nil,
+			time.Now(),
+		)}})
+
+		assert.NoError(t, err)
+		assert.Equal(t, 0, len(batch.Metrics))
+	})
 }

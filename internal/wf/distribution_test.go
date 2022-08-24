@@ -104,7 +104,7 @@ func TestDistribution(t *testing.T) {
 		}, density.Centroids)
 	})
 
-	t.Run("Converts cumulative to density with negative lower centroidValues", func(t *testing.T) {
+	t.Run("Converts cumulative to density with negative centroids", func(t *testing.T) {
 		density := wf.NewCumulativeDistribution(
 			"some.distribution",
 			"somesource",
@@ -163,7 +163,7 @@ func TestDistribution(t *testing.T) {
 		}, density.Centroids)
 	})
 
-	t.Run("Does Converts cumulative distribution no centroidValues", func(t *testing.T) {
+	t.Run("Does not convert cumulative distributions with centroids", func(t *testing.T) {
 		density := wf.NewCumulativeDistribution(
 			"some.distribution",
 			"somesource",
