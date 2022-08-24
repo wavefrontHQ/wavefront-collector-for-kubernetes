@@ -142,6 +142,8 @@ type Sink interface {
 	Export(*Batch)
 }
 
+// Processor should not store any references to anything in *Batch because it is assumed that Processor does not own that memory.
+// Other components are free to mutably update *Batch after Process is run.
 type Processor interface {
 	Name() string
 	Process(*Batch) (*Batch, error)
