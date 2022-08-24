@@ -1,12 +1,10 @@
 package processors
 
 import (
-    log "github.com/sirupsen/logrus"
-    "sync"
-    "time"
-
-    "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
+	log "github.com/sirupsen/logrus"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
+	"sync"
 )
 
 type DistributionRateCalculator struct {
@@ -32,12 +30,11 @@ func (rc *DistributionRateCalculator) Process(batch *metrics.Batch) (*metrics.Ba
 		rate := distribution.Rate(rc.prevDistributions[distribution.Key()])
 		if rate != nil {
 			newMetrics = append(newMetrics, rate)
+		} else if distribution.Name() == "kubernetes.controlplane.etcd.request.duration.seconds" {
+			log.Infof("NilDistribution:: %+#v", distribution)
+			log.Infof("NilDistribution:: %+#v", rc.prevDistributions[distribution.Key()])
 		}
-        if rc.prevDistributions[distribution.Key()] != nil && distribution.Timestamp.Sub(rc.prevDistributions[distribution.Key()].Timestamp) < time.Minute {
-            log.Infof("Timestamp:: %+#v", distribution)
-            log.Infof("TimestampDiff:: %s", distribution.Timestamp.Sub(rc.prevDistributions[distribution.Key()].Timestamp).String())
-        }
-        rc.prevDistributions[distribution.Key()] = distribution
+		rc.prevDistributions[distribution.Key()] = distribution.Clone() // TODO TDD
 	}
 	batch.Metrics = newMetrics
 	return batch, nil

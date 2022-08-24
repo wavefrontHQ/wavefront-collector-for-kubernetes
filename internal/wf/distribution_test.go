@@ -73,7 +73,7 @@ func TestDistribution(t *testing.T) {
 		})
 	})
 
-	t.Run("Coverts Cumulative to density distribution", func(t *testing.T) {
+	t.Run("Coverts cumulative to density distribution", func(t *testing.T) {
 		density := wf.NewCumulativeDistribution(
 			"some.distribution",
 			"somesource",
@@ -89,7 +89,6 @@ func TestDistribution(t *testing.T) {
 			time.Now(),
 		).ToFrequency()
 
-		assert.Equal(t, 11, len(density.Centroids))
 		assertCentroids(t, []wf.Centroid{
 			{Value: 0.0, Count: 6013},
 			{Value: 0.025, Count: 12027},
@@ -105,7 +104,7 @@ func TestDistribution(t *testing.T) {
 		}, density.Centroids)
 	})
 
-	t.Run("Converts cumulative distribution with negative lower bounds", func(t *testing.T) {
+	t.Run("Converts cumulative to density with negative lower centroidValues", func(t *testing.T) {
 		density := wf.NewCumulativeDistribution(
 			"some.distribution",
 			"somesource",
@@ -121,37 +120,79 @@ func TestDistribution(t *testing.T) {
 			time.Now(),
 		).ToFrequency()
 
-		assert.Equal(t, 9, len(density.Centroids))
 		assertCentroids(t, []wf.Centroid{
-			{Value: -0.1, Count: float64(24054 + 9390/4)},
-			{Value: -0.075, Count: float64(9390 / 2)},
-			{Value: -0.05, Count: float64(9390 - 9390/4 - 9390/2 + 66948/4)},
-			{Value: 0.075, Count: float64(66948 / 2)},
-			{Value: 0.2, Count: float64(66948 - 66948/4 - 66948/2 + 28997/4)},
-			{Value: 0.35, Count: float64(28997 / 2)},
-			{Value: 0.5, Count: float64(28997 - 28997/4 - 28997/2 + 4599/4)},
-			{Value: 0.75, Count: float64(4599 / 2)},
-			{Value: 1.0, Count: float64(4599 - 4599/4 - 4599/2 + (144320 - 133988))},
+			{Value: -0.050, Count: math.Trunc(66_948 / 4)},
+			{Value: 0.075, Count: math.Trunc(66_948 / 2)},
+			{Value: 0.200, Count: math.Trunc(66_948-math.Trunc(66_948/2)-math.Trunc(66_948/4)) + math.Trunc(28_997/4)},
+			{Value: 0.350, Count: math.Trunc(28_997 / 2)},
+			{Value: 0.500, Count: math.Trunc(28_997-math.Trunc(28_997/2)-math.Trunc(28_997/4)) + math.Trunc(4_599/4)},
+			{Value: 0.750, Count: math.Trunc(4_599 / 2)},
+			{Value: 1.000, Count: math.Trunc(4_599-math.Trunc(4_599/2)-math.Trunc(4_599/4)) + 10_332},
 		}, density.Centroids)
 	})
 
-	t.Run("Converts cumulative distribution with amplification", func(t *testing.T) {
+	t.Run("Does not convert cumulative distribution with only single infinity upper bound", func(t *testing.T) {
 		density := wf.NewCumulativeDistribution(
 			"some.distribution",
 			"somesource",
 			map[string]string{"sometag": "somevalue"},
 			[]wf.Centroid{
-				{Value: -0.1, Count: 0.5},
-				{Value: -0.05, Count: 1},
+				{Value: math.Inf(1), Count: 144320},
 			},
 			time.Now(),
 		).ToFrequency()
 
-		assert.Equal(t, 3, len(density.Centroids))
+		assert.Nil(t, density)
+	})
+
+	t.Run("Converts cumulative distribution with a single bound", func(t *testing.T) {
+		density := wf.NewCumulativeDistribution(
+			"some.distribution",
+			"somesource",
+			map[string]string{"sometag": "somevalue"},
+			[]wf.Centroid{
+				{Value: 1.0, Count: 144320},
+			},
+			time.Now(),
+		).ToFrequency()
+
 		assertCentroids(t, []wf.Centroid{
-			{Value: -0.1, Count: 1},
-			{Value: -0.075, Count: 0},
-			{Value: -0.05, Count: 1},
+			{Value: 0.0, Count: math.Trunc(144320.0 / 4)},
+			{Value: 0.5, Count: math.Trunc(144320.0 / 2)},
+			{Value: 1.0, Count: math.Trunc(144320.0 - math.Trunc(144320.0/2) - math.Trunc(144320.0/4))},
+		}, density.Centroids)
+	})
+
+	t.Run("Does Converts cumulative distribution no centroidValues", func(t *testing.T) {
+		density := wf.NewCumulativeDistribution(
+			"some.distribution",
+			"somesource",
+			map[string]string{"sometag": "somevalue"},
+			nil,
+			time.Now(),
+		).ToFrequency()
+
+		assert.Nil(t, density)
+	})
+
+	t.Run("Converts cumulative to density with amplification", func(t *testing.T) {
+		density := wf.NewCumulativeDistribution(
+			"some.distribution",
+			"somesource",
+			map[string]string{"sometag": "somevalue"},
+			[]wf.Centroid{
+				{Value: 0.5, Count: 1},
+				{Value: 1.0, Count: 0.5},
+			},
+			time.Now(),
+		).ToFrequency()
+
+		assertCentroids(t, []wf.Centroid{
+			{Value: 0.00, Count: 0},
+			{Value: 0.25, Count: 0},
+			{Value: 0.50, Count: 1},
+			{Value: 0.75, Count: 0},
+			{Value: 1.00, Count: 0},
 		}, density.Centroids)
 	})
 
@@ -330,10 +371,41 @@ func (m *MockDistributionSender) Verify(t *testing.T) {
 }
 
 func assertCentroids(t *testing.T, expectedCentroids []wf.Centroid, actualCentroids []wf.Centroid) {
-	for i, expectedCentroid := range expectedCentroids {
-		assert.InDeltaf(t, expectedCentroid.Value, actualCentroids[i].Value, 0.000000000001, "values are close")
-		assert.Equal(t, expectedCentroid.Count, actualCentroids[i].Count)
+	t.Helper()
+	valueEpsilon := 0.000000000001 // how close values have to be due to floating point rounding errors
+	missing := diffValues(expectedCentroids, actualCentroids, valueEpsilon)
+	extra := diffValues(actualCentroids, expectedCentroids, valueEpsilon)
+	if len(missing) > 0 || len(extra) > 0 {
+		if len(missing) > 0 {
+			t.Errorf("missing expected centroids: %v", missing)
+		}
+		if len(extra) > 0 {
+			t.Errorf("contained unexpected centroids: %v", extra)
+		}
+		return
 	}
+	for i, expectedCentroid := range expectedCentroids {
+		assert.InDeltaf(t, expectedCentroid.Value, actualCentroids[i].Value, valueEpsilon, "values are close")
+		assert.Equalf(t, expectedCentroid.Count, actualCentroids[i].Count, "bound=%f, expected=%f, actual=%f", expectedCentroid.Value, expectedCentroid.Count, actualCentroids[i].Count)
+	}
+}
+
+// diffValues computes the values as that are not present in bs
+func diffValues(as, bs []wf.Centroid, epsilon float64) []float64 {
+	var presentOnlyInAs []float64
+	for _, a := range as {
+		found := false
+		for _, b := range bs {
+			if math.Abs(a.Value-b.Value) < epsilon {
+				found = true
+				break
+			}
+		}
+		if !found {
+			presentOnlyInAs = append(presentOnlyInAs, a.Value)
+		}
+	}
+	return presentOnlyInAs
 }
 
 func TestCentroidRate(t *testing.T) {

@@ -50,6 +50,24 @@ func newDistribution(cumulative bool, name string, source string, tags map[strin
 	}
 }
 
+func (d *Distribution) Clone() *Distribution {
+	return newDistribution(d.Cumulative, d.Name(), d.Source, d.clonedTags(), d.clonedCentroids(), d.Timestamp)
+}
+
+func (d *Distribution) clonedTags() map[string]string {
+	clonedTags := make(map[string]string, len(d.Tags()))
+	for k, v := range d.Tags() {
+		clonedTags[k] = v
+	}
+	return clonedTags
+}
+
+func (d *Distribution) clonedCentroids() []Centroid {
+	cloned := make([]Centroid, len(d.Centroids))
+	copy(cloned, d.Centroids)
+	return cloned
+}
+
 func (d *Distribution) Points() int {
 	return 7
 }
@@ -58,38 +76,48 @@ func (d *Distribution) ToFrequency() *Distribution {
 	if !d.Cumulative {
 		return d
 	}
+	centroids := smoothCentroids(deriveCentroids(d.Centroids))
+	if len(centroids) == 0 {
+		return nil
+	}
 	return NewFrequencyDistribution(
 		d.Name(),
 		d.Source,
 		d.Tags(),
-		smoothCentroids(deriveCentroids(d.Centroids)),
+		centroids,
 		d.Timestamp,
 	)
 }
 
 func smoothCentroids(derivedCentroids []Centroid) []Centroid {
+	if len(derivedCentroids) == 0 || (len(derivedCentroids) == 1 && derivedCentroids[0].Value == math.Inf(1)) {
+		return nil
+	}
 	amplification := math.Max(1, 1/minCount(derivedCentroids))
 	centroidCounts := map[float64]float64{}
 	for i, centroid := range derivedCentroids {
-		currValue := centroid.Value
-		prevValue := 0.0
-		if i > 0 {
-			prevValue = derivedCentroids[i-1].Value
-		} else if centroid.Value > 0 {
-			prevValue = 0
-		} else {
-			prevValue = currValue
-		}
-		if currValue == math.Inf(1) {
-			currValue = prevValue
-		}
+		currBound := centroid.Value
 		currCount := derivedCentroids[i].Count * amplification
+		if currBound <= 0 || currCount == 0 { // TODO TDD
+			continue
+		}
+		prevBound := 0.0
+		if i > 0 {
+			prevBound = derivedCentroids[i-1].Value
+		} else if currBound > 0 {
+			prevBound = 0
+		} else {
+			prevBound = currBound
+		}
+		if currBound == math.Inf(1) {
+			currBound = prevBound
+		}
 		lowerCount := math.Trunc(currCount / 4)
-		centroidCounts[prevValue] += lowerCount
+		centroidCounts[prevBound] += lowerCount
 		middleCount := math.Trunc(currCount / 2)
-		centroidCounts[(currValue+prevValue)/2] += middleCount
+		centroidCounts[(currBound+prevBound)/2] += middleCount
 		upperCount := math.Trunc(currCount - lowerCount - middleCount)
-		centroidCounts[currValue] += upperCount
+		centroidCounts[currBound] += upperCount
 	}
 	centroids := make([]Centroid, 0, 2*len(derivedCentroids)-1)
 	for value, count := range centroidCounts {
