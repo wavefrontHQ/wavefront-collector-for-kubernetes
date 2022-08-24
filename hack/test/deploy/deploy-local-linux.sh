@@ -33,8 +33,8 @@ fi
 echo "Using cluster name '$CONFIG_CLUSTER_NAME' in '$WF_CLUSTER'"
 echo "Temp dir: $TEMP_DIR"
 
-cp "$ROOT_DIR"/deploy/kubernetes/*  "$TEMP_DIR/."
-rm "$TEMP_DIR"/kustomization.yaml
+cp "$ROOT_DIR"/deploy/kubernetes/*.yaml  "$TEMP_DIR/."
+rm "$TEMP_DIR"/kustomization.yaml || true
 
 cp "$ROOT_DIR/hack/test/deploy/memcached-config.yaml" "$TEMP_DIR/."
 cp "$ROOT_DIR/hack/test/deploy/mysql-config.yaml" "$TEMP_DIR/."
