@@ -142,7 +142,7 @@ func TestDistribution(t *testing.T) {
 			time.Now(),
 		).ToFrequency()
 
-		assert.Nil(t, density)
+		assert.Equal(t, 0, len(density.Centroids))
 	})
 
 	t.Run("Converts cumulative distribution with a single bound", func(t *testing.T) {
@@ -163,7 +163,7 @@ func TestDistribution(t *testing.T) {
 		}, density.Centroids)
 	})
 
-	t.Run("Does not convert cumulative distributions with centroids", func(t *testing.T) {
+	t.Run("Does not convert cumulative distributions with no centroids", func(t *testing.T) {
 		density := wf.NewCumulativeDistribution(
 			"some.distribution",
 			"somesource",

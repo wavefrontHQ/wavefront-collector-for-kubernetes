@@ -76,15 +76,11 @@ func (d *Distribution) ToFrequency() *Distribution {
 	if !d.Cumulative {
 		return d
 	}
-	centroids := smoothCentroids(deriveCentroids(d.Centroids))
-	if len(centroids) == 0 {
-		return nil
-	}
 	return NewFrequencyDistribution(
 		d.Name(),
 		d.Source,
 		d.Tags(),
-		centroids,
+		smoothCentroids(deriveCentroids(d.Centroids)),
 		d.Timestamp,
 	)
 }

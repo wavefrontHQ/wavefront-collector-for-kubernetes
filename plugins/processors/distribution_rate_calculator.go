@@ -35,7 +35,7 @@ func (rc *DistributionRateCalculator) Process(batch *metrics.Batch) (*metrics.Ba
 		if !ok {
 			return metric, true
 		}
-		if _, visited := seen[distribution.Key()]; visited {
+		if _, isDuplicate := seen[distribution.Key()]; isDuplicate {
 			log.Warnf(
 				"duplicate histogram series name=%s source=%s tags=%v",
 				distribution.Name(), distribution.Source, distribution.Tags(),

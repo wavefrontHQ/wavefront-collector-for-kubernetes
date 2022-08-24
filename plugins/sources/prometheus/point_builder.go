@@ -127,9 +127,6 @@ func (builder *pointBuilder) buildSummaryPoints(name string, m *prom.Metric, now
 
 func (builder *pointBuilder) buildWFHistogram(name string, m *prom.Metric, now int64, tags map[string]string) wf.Metric {
 	buckets := m.GetHistogram().Bucket
-	if len(buckets) == 1 && buckets[0].GetUpperBound() == math.Inf(1) {
-		return nil
-	}
 	centroids := make([]wf.Centroid, 0, len(buckets))
 	for i, bucket := range buckets {
 		centroids = append(centroids, wf.Centroid{
