@@ -1,10 +1,15 @@
 // Copyright 2021 VMware, Inc. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+// TODO prometheus_test for true interface testing but it will break everything
 package prometheus
 
 import (
 	"bytes"
+	"fmt"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
+	"net/http"
 	"testing"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/httputil"
@@ -161,4 +166,100 @@ func TestDiscoveredPrometheusMetricSource(t *testing.T) {
 		assert.Nil(t, err)
 		assert.True(t, ms.AutoDiscovered(), "prometheus auto-discovery")
 	})
+}
+
+func Test_prometheusMetricsSource_Scrape(t *testing.T) {
+	type fields struct {
+		metricsURL           string
+		prefix               string
+		source               string
+		tags                 map[string]string
+		filters              filter.Filter
+		client               *http.Client
+		pps                  gm.Counter
+		eps                  gm.Counter
+		internalMetricsNames []string
+		autoDiscovered       bool
+		omitBucketSuffix     bool
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		want    *metrics.Batch
+		wantErr assert.ErrorAssertionFunc
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			src := &prometheusMetricsSource{
+				metricsURL:           tt.fields.metricsURL,
+				prefix:               tt.fields.prefix,
+				source:               tt.fields.source,
+				tags:                 tt.fields.tags,
+				filters:              tt.fields.filters,
+				client:               tt.fields.client,
+				pps:                  tt.fields.pps,
+				eps:                  tt.fields.eps,
+				internalMetricsNames: tt.fields.internalMetricsNames,
+				autoDiscovered:       tt.fields.autoDiscovered,
+				omitBucketSuffix:     tt.fields.omitBucketSuffix,
+			}
+			got, err := src.Scrape()
+			if !tt.wantErr(t, err, fmt.Sprintf("Scrape()")) {
+				return
+			}
+			assert.Equalf(t, tt.want, got, "Scrape()")
+		})
+	}
+}
+
+func Test_prometheusProvider_GetMetricsSources(t *testing.T) {
+	type fields struct {
+		DefaultSourceProvider metrics.DefaultSourceProvider
+		name                  string
+		useLeaderElection     bool
+		sources               []metrics.Source
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   []metrics.Source
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := &prometheusProvider{
+				DefaultSourceProvider: tt.fields.DefaultSourceProvider,
+				name:                  tt.fields.name,
+				useLeaderElection:     tt.fields.useLeaderElection,
+				sources:               tt.fields.sources,
+			}
+			assert.Equalf(t, tt.want, p.GetMetricsSources(), "GetMetricsSources()")
+		})
+	}
+}
+
+func TestNewPrometheusProvider(t *testing.T) {
+	type args struct {
+		cfg configuration.PrometheusSourceConfig
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    metrics.SourceProvider
+		wantErr assert.ErrorAssertionFunc
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := NewPrometheusProvider(tt.args.cfg)
+			if !tt.wantErr(t, err, fmt.Sprintf("NewPrometheusProvider(%v)", tt.args.cfg)) {
+				return
+			}
+			assert.Equalf(t, tt.want, got, "NewPrometheusProvider(%v)", tt.args.cfg)
+		})
+	}
 }
