@@ -8,6 +8,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/caio/go-tdigest"
 	"github.com/wavefronthq/wavefront-sdk-go/histogram"
 	"golang.org/x/crypto/blake2b"
 )
@@ -23,20 +24,25 @@ type Distribution struct {
 	tags       map[string]string // TODO string interning
 	Source     string            // TODO string interning
 	Centroids  []Centroid
+	Digest     *tdigest.TDigest
 	Timestamp  time.Time
 }
 
 // NewCumulativeDistribution encodes prometheus style distribution.
 func NewCumulativeDistribution(name string, source string, tags map[string]string, centroids []Centroid, timestamp time.Time) *Distribution {
-	return newDistribution(true, name, source, tags, centroids, timestamp)
+	return newDistribution(true, name, source, tags, centroids, nil, timestamp)
 }
 
 // NewFrequencyDistribution encodes a WF style distribution.
 func NewFrequencyDistribution(name string, source string, tags map[string]string, centroids []Centroid, timestamp time.Time) *Distribution {
-	return newDistribution(false, name, source, tags, centroids, timestamp)
+	return newDistribution(false, name, source, tags, centroids, nil, timestamp)
 }
 
-func newDistribution(cumulative bool, name string, source string, tags map[string]string, centroids []Centroid, timestamp time.Time) *Distribution {
+func NewDigestDistribution(name string, source string, tags map[string]string, digest *tdigest.TDigest, timestamp time.Time) *Distribution {
+	return newDistribution(false, name, source, tags, nil, digest, timestamp)
+}
+
+func newDistribution(cumulative bool, name string, source string, tags map[string]string, centroids []Centroid, digest *tdigest.TDigest, timestamp time.Time) *Distribution {
 	sort.Slice(centroids, func(i, j int) bool {
 		return centroids[i].Value < centroids[j].Value
 	})
@@ -46,12 +52,13 @@ func newDistribution(cumulative bool, name string, source string, tags map[strin
 		Source:     source,
 		tags:       tags,
 		Centroids:  centroids,
+		Digest:     digest,
 		Timestamp:  timestamp,
 	}
 }
 
 func (d *Distribution) Clone() *Distribution {
-	return newDistribution(d.Cumulative, d.Name(), d.Source, d.clonedTags(), d.clonedCentroids(), d.Timestamp)
+	return newDistribution(d.Cumulative, d.Name(), d.Source, d.clonedTags(), d.clonedCentroids(), d.Digest, d.Timestamp)
 }
 
 func (d *Distribution) clonedTags() map[string]string {
@@ -76,7 +83,7 @@ func (d *Distribution) ToFrequency() *Distribution {
 	if !d.Cumulative {
 		return d
 	}
-	return NewFrequencyDistribution(
+	return NewDigestDistribution(
 		d.Name(),
 		d.Source,
 		d.Tags(),
@@ -85,46 +92,55 @@ func (d *Distribution) ToFrequency() *Distribution {
 	)
 }
 
-func smoothCentroids(derivedCentroids []Centroid) []Centroid {
+func smoothCentroids(derivedCentroids []Centroid) *tdigest.TDigest {
 	if len(derivedCentroids) == 1 && derivedCentroids[0].Value == math.Inf(1) {
 		return nil
 	}
 	amplification := math.Max(1, 1/minCount(derivedCentroids))
-	centroidCounts := map[float64]float64{}
+	digest, _ := tdigest.New(tdigest.Compression(3.2))
+	//centroidCounts := map[float64]float64{}
 	for i, centroid := range derivedCentroids {
-		currBound := centroid.Value
-		currCount := derivedCentroids[i].Count * amplification
-		if currBound <= 0 || currCount == 0 {
+		currentBucketBound := centroid.Value
+		actualBucketCount := derivedCentroids[i].Count * amplification
+		if currentBucketBound <= 0 || actualBucketCount == 0 {
 			continue
 		}
-		prevBound := 0.0
+		actualBucketCount = math.Max(1.0, actualBucketCount)
+		previousBucketBound := 0.0
+		if currentBucketBound == math.Inf(1) {
+			currentBucketBound = derivedCentroids[i-1].Value
+		}
 		if i > 0 {
-			prevBound = derivedCentroids[i-1].Value
-		} else if currBound > 0 {
-			prevBound = 0
+			previousBucketBound = derivedCentroids[i-1].Value
+		} else if currentBucketBound > 0 {
+			previousBucketBound = 0
 		} else {
-			prevBound = currBound
+			previousBucketBound = currentBucketBound
 		}
-		if currBound == math.Inf(1) {
-			currBound = prevBound
+
+		lowerCount := math.Trunc(actualBucketCount / 4)
+		if lowerCount > 0 {
+			_ = digest.AddWeighted(previousBucketBound, uint64(lowerCount))
 		}
-		lowerCount := math.Trunc(currCount / 4)
-		centroidCounts[prevBound] += lowerCount
-		middleCount := math.Trunc(currCount / 2)
-		centroidCounts[(currBound+prevBound)/2] += middleCount
-		upperCount := math.Trunc(currCount - lowerCount - middleCount)
-		centroidCounts[currBound] += upperCount
+		middleCount := math.Trunc(actualBucketCount / 2)
+		if middleCount > 0 {
+			_ = digest.AddWeighted((currentBucketBound+previousBucketBound)/2, uint64(middleCount))
+		}
+		upperCount := math.Trunc(actualBucketCount - lowerCount - middleCount)
+		if upperCount > 0 {
+			_ = digest.AddWeighted(currentBucketBound, uint64(upperCount))
+		}
 	}
-	centroids := make([]Centroid, 0, len(centroidCounts))
-	for value, count := range centroidCounts {
-		centroids = append(centroids, Centroid{Value: value, Count: count})
-	}
-	return centroids
+	//centroids := make([]Centroid, 0, len(centroidCounts))
+	//for value, count := range centroidCounts {
+	//	centroids = append(centroids, Centroid{Value: value, Count: count})
+	//}
+	return digest
 }
 
-func minCount(derivedCentroids []Centroid) float64 {
+func minCount(centroids []Centroid) float64 {
 	minCount := math.MaxFloat64
-	for _, centroid := range derivedCentroids {
+	for _, centroid := range centroids {
 		if centroid.Count > 0 && centroid.Count < minCount {
 			minCount = centroid.Count
 		}
@@ -142,8 +158,8 @@ func deriveCentroids(centroids []Centroid) []Centroid {
 			deltaCount = centroid.Count
 		}
 		derived = append(derived, Centroid{
-			Count: deltaCount,
 			Value: centroid.Value,
+			Count: deltaCount,
 		})
 	}
 	return derived
@@ -204,10 +220,17 @@ func (d *Distribution) Send(to Sender) error {
 	if d.Cumulative {
 		return errors.New("cannot send prometheus style distribution to wavefront")
 	}
-	centroids := wfCentroids(d)
-	if len(centroids) == 0 {
-		return nil
-	}
+	var centroids []histogram.Centroid
+	//centroids := wfCentroids(d)
+	//if len(centroids) == 0 {
+	//	return nil
+	//}
+	d.Digest.ForEachCentroid(func(mean float64, count uint64) bool {
+		if count > 0 {
+			centroids = append(centroids, histogram.Centroid{Value: mean, Count: int(count)})
+		}
+		return true
+	})
 	return to.SendDistribution(
 		d.Name(),
 		centroids,
@@ -267,7 +290,7 @@ func (d *Distribution) Rate(prev *Distribution) *Distribution {
 	if centroidRate == nil {
 		return nil
 	}
-	return newDistribution(d.Cumulative, d.Name(), d.Source, d.Tags(), centroidRate, d.Timestamp)
+	return newDistribution(d.Cumulative, d.Name(), d.Source, d.Tags(), centroidRate, d.Digest, d.Timestamp)
 }
 
 func CentroidRate(curr, prev []Centroid, duration time.Duration) []Centroid {
