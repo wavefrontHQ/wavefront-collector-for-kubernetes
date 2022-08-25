@@ -131,10 +131,6 @@ func smoothCentroids(derivedCentroids []Centroid) *tdigest.TDigest {
 			_ = digest.AddWeighted(currentBucketBound, uint64(upperCount))
 		}
 	}
-	//centroids := make([]Centroid, 0, len(centroidCounts))
-	//for value, count := range centroidCounts {
-	//	centroids = append(centroids, Centroid{Value: value, Count: count})
-	//}
 	return digest
 }
 
