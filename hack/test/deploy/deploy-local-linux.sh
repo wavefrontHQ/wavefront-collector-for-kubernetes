@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -ex
+set -e
 
 cd "$(dirname "$0")" # cd to deploy-local.sh is in
 
