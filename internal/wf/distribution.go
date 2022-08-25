@@ -97,7 +97,7 @@ func smoothCentroids(derivedCentroids []Centroid) *tdigest.TDigest {
 		return nil
 	}
 	amplification := math.Max(1, 1/minCount(derivedCentroids))
-	digest, _ := tdigest.New(tdigest.Compression(3.2))
+	digest, _ := tdigest.New(tdigest.Compression(100))
 	//centroidCounts := map[float64]float64{}
 	for i, centroid := range derivedCentroids {
 		currentBucketBound := centroid.Value
