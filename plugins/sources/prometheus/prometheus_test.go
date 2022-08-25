@@ -262,4 +262,11 @@ func TestNewPrometheusProvider(t *testing.T) {
 			assert.Equalf(t, tt.want, got, "NewPrometheusProvider(%v)", tt.args.cfg)
 		})
 	}
+
+	t.Run("errors if prometheus URL is missing", func(t *testing.T) {
+		cfg := configuration.PrometheusSourceConfig{}
+		sourceProvider, err := NewPrometheusProvider(cfg)
+		assert.Nil(t, sourceProvider)
+		assert.NotNil(t, err)
+	})
 }
