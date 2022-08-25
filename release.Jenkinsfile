@@ -134,8 +134,8 @@ pipeline {
 //         sh './hack/jenkins/generate_github_release.sh'
 //       }
 //     }
-//   }
-//
+  }
+
 //   post {
 //     // Notify only on null->failure or success->failure or any->success
 //     failure {
