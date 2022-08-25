@@ -182,17 +182,17 @@ func TestDistribution(t *testing.T) {
 			map[string]string{"sometag": "somevalue"},
 			[]wf.Centroid{
 				{Value: 0.5, Count: 1},
-				{Value: 1.0, Count: 0.5},
+				{Value: 1.0, Count: 1.5},
 			},
 			time.Now(),
 		).ToFrequency()
 
 		assertCentroids(t, []wf.Centroid{
 			{Value: 0.00, Count: 0},
-			{Value: 0.25, Count: 0},
+			{Value: 0.25, Count: 1},
 			{Value: 0.50, Count: 1},
 			{Value: 0.75, Count: 0},
-			{Value: 1.00, Count: 0},
+			{Value: 1.00, Count: 1},
 		}, density.Centroids)
 	})
 
