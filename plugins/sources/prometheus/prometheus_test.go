@@ -265,8 +265,26 @@ func TestNewPrometheusProvider(t *testing.T) {
 
 	t.Run("errors if prometheus URL is missing", func(t *testing.T) {
 		cfg := configuration.PrometheusSourceConfig{}
-		sourceProvider, err := NewPrometheusProvider(cfg)
-		assert.Nil(t, sourceProvider)
+		prometheusProvider, err := NewPrometheusProvider(cfg)
+		assert.Nil(t, prometheusProvider)
 		assert.NotNil(t, err)
+	})
+
+	t.Run("creates a prometheus provider with name based on configured name or URL", func(t *testing.T) {
+		cfg := configuration.PrometheusSourceConfig{
+			Name: "test-name",
+			URL:  "http://test-prometheus-url.com",
+		}
+		prometheusProvider, err := NewPrometheusProvider(cfg)
+		assert.NoError(t, err)
+		assert.Equal(t, fmt.Sprintf("%s: test-name", providerName), prometheusProvider.Name())
+	})
+
+	t.Run("creates a prometheus provider with leader election based on configured leader election or discovery", func(t *testing.T) {
+
+	})
+
+	t.Run("creates a prometheus provider with sources based on config name or URL", func(t *testing.T) {
+
 	})
 }
