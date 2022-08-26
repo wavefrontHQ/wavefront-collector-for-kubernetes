@@ -2,7 +2,6 @@ package processors
 
 import (
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/slicextra"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
 )
 
@@ -14,7 +13,7 @@ func (rc *CumulativeDistributionConverter) Name() string {
 }
 
 func (rc *CumulativeDistributionConverter) Process(batch *metrics.Batch) (*metrics.Batch, error) {
-	batch.Metrics = slicextra.MapInPlace[wf.Metric](func(metric wf.Metric) wf.Metric {
+	batch.Metrics = mapInPlace(func(metric wf.Metric) wf.Metric {
 		distribution, ok := metric.(*wf.Distribution)
 		if !ok {
 			return metric
@@ -22,6 +21,13 @@ func (rc *CumulativeDistributionConverter) Process(batch *metrics.Batch) (*metri
 		return distribution.ToFrequency()
 	}, batch.Metrics)
 	return batch, nil
+}
+
+func mapInPlace(transform func(wf.Metric) wf.Metric, es []wf.Metric) []wf.Metric {
+	for i, e := range es {
+		es[i] = transform(e)
+	}
+	return es
 }
 
 func NewCumulativeDistributionConverter() *CumulativeDistributionConverter {

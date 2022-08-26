@@ -3,8 +3,6 @@ package processors
 import (
 	"sync"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/slicextra"
-
 	gometrics "github.com/rcrowley/go-metrics"
 	log "github.com/sirupsen/logrus"
 	"github.com/wavefronthq/go-metrics-wavefront/reporting"
@@ -32,7 +30,7 @@ func (rc *DistributionRateCalculator) Process(batch *metrics.Batch) (*metrics.Ba
 	rc.lock.Lock()
 	defer rc.lock.Unlock()
 	seen := map[wf.DistributionHash]struct{}{}
-	batch.Metrics = slicextra.FilterMapInPlace[wf.Metric](func(metric wf.Metric) (wf.Metric, bool) {
+	batch.Metrics = filterMapInPlace(func(metric wf.Metric) (wf.Metric, bool) {
 		distribution, ok := metric.(*wf.Distribution)
 		if !ok {
 			return metric, true
@@ -51,6 +49,20 @@ func (rc *DistributionRateCalculator) Process(batch *metrics.Batch) (*metrics.Ba
 		return rate, rate != nil
 	}, batch.Metrics)
 	return batch, nil
+}
+
+func filterMapInPlace(f func(wf.Metric) (wf.Metric, bool), es []wf.Metric) []wf.Metric {
+	newEs := es[:0]
+	for _, e := range es {
+		newE, include := f(e)
+		if include {
+			newEs = append(newEs, newE)
+		}
+	}
+	for i := range es[len(newEs):] {
+		es[len(newEs)+i] = nil
+	}
+	return newEs
 }
 
 func NewDistributionRateCalculator() *DistributionRateCalculator {
