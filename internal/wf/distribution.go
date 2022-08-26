@@ -20,8 +20,8 @@ type Centroid struct {
 type Distribution struct {
 	Cumulative bool
 	name       string
-	tags       map[string]string // TODO string interning
-	Source     string            // TODO string interning
+	tags       map[string]string
+	Source     string
 	Centroids  []Centroid
 	Timestamp  time.Time
 }
@@ -114,6 +114,10 @@ func smoothCentroids(derivedCentroids []Centroid) []Centroid {
 		upperCount := math.Trunc(actualBucketCount - lowerCount - middleCount)
 		centroidCounts[currentBucketBound] += upperCount
 	}
+	return centroidMapToSlice(centroidCounts)
+}
+
+func centroidMapToSlice(centroidCounts map[float64]float64) []Centroid {
 	centroids := make([]Centroid, 0, len(centroidCounts))
 	for value, count := range centroidCounts {
 		centroids = append(centroids, Centroid{Value: value, Count: count})
