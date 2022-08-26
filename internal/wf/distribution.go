@@ -8,8 +8,6 @@ import (
 	"sort"
 	"time"
 
-	log "github.com/sirupsen/logrus"
-
 	"github.com/wavefronthq/wavefront-sdk-go/histogram"
 	"golang.org/x/crypto/blake2b"
 )
@@ -82,12 +80,12 @@ func (d *Distribution) ToFrequency() *Distribution {
 		d.Name(),
 		d.Source,
 		d.Tags(),
-		smoothCentroids(d.Name(), d.Tags(), deriveCentroids(d.Centroids)),
+		smoothCentroids(deriveCentroids(d.Centroids)),
 		d.Timestamp,
 	)
 }
 
-func smoothCentroids(name string, tags map[string]string, derivedCentroids []Centroid) []Centroid {
+func smoothCentroids(derivedCentroids []Centroid) []Centroid {
 	if len(derivedCentroids) == 1 && derivedCentroids[0].Value == math.Inf(1) {
 		return nil
 	}
@@ -99,11 +97,7 @@ func smoothCentroids(name string, tags map[string]string, derivedCentroids []Cen
 		if currentBucketBound <= 0 || actualBucketCount == 0 {
 			continue
 		}
-		actualBucketCountBefore := actualBucketCount
 		actualBucketCount = math.Max(1.0, actualBucketCount)
-		if actualBucketCount != actualBucketCountBefore {
-			log.Infof("NEGATIVE BUCKET: %s %v before=%f after=%f", name, tags, actualBucketCountBefore, actualBucketCount)
-		}
 		if currentBucketBound == math.Inf(1) {
 			currentBucketBound = derivedCentroids[i-1].Value
 		}
