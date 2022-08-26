@@ -8,6 +8,8 @@ import (
 	"sort"
 	"time"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/wavefronthq/wavefront-sdk-go/histogram"
 	"golang.org/x/crypto/blake2b"
 )
@@ -80,16 +82,16 @@ func (d *Distribution) ToFrequency() *Distribution {
 		d.Name(),
 		d.Source,
 		d.Tags(),
-		smoothCentroids(deriveCentroids(d.Centroids)),
+		smoothCentroids(d.Name(), d.Tags(), deriveCentroids(d.Centroids)),
 		d.Timestamp,
 	)
 }
 
-func smoothCentroids(derivedCentroids []Centroid) []Centroid {
+func smoothCentroids(name string, tags map[string]string, derivedCentroids []Centroid) []Centroid {
 	if len(derivedCentroids) == 1 && derivedCentroids[0].Value == math.Inf(1) {
 		return nil
 	}
-	amplification := math.Max(1, 1/minCount(derivedCentroids))
+	amplification := math.Max(1, 1/smallestCountAboveZero(derivedCentroids))
 	centroidCounts := map[float64]float64{}
 	for i, centroid := range derivedCentroids {
 		currentBucketBound := centroid.Value
@@ -97,19 +99,18 @@ func smoothCentroids(derivedCentroids []Centroid) []Centroid {
 		if currentBucketBound <= 0 || actualBucketCount == 0 {
 			continue
 		}
+		actualBucketCountBefore := actualBucketCount
 		actualBucketCount = math.Max(1.0, actualBucketCount)
-		previousBucketBound := 0.0
+		if actualBucketCount != actualBucketCountBefore {
+			log.Infof("NEGATIVE BUCKET: %s %v before=%f after=%f", name, tags, actualBucketCountBefore, actualBucketCount)
+		}
 		if currentBucketBound == math.Inf(1) {
 			currentBucketBound = derivedCentroids[i-1].Value
 		}
+		previousBucketBound := 0.0
 		if i > 0 {
 			previousBucketBound = derivedCentroids[i-1].Value
-		} else if currentBucketBound > 0 {
-			previousBucketBound = 0
-		} else {
-			previousBucketBound = currentBucketBound
 		}
-
 		lowerCount := math.Trunc(actualBucketCount / 4)
 		centroidCounts[previousBucketBound] += lowerCount
 
@@ -126,7 +127,7 @@ func smoothCentroids(derivedCentroids []Centroid) []Centroid {
 	return centroids
 }
 
-func minCount(centroids []Centroid) float64 {
+func smallestCountAboveZero(centroids []Centroid) float64 {
 	minCount := math.MaxFloat64
 	for _, centroid := range centroids {
 		if centroid.Count > 0 && centroid.Count < minCount {
