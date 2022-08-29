@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi8/go-toolset:1.16.12-4 as builder
+FROM registry.access.redhat.com/ubi8/go-toolset:1.17.12-3 as builder
 USER root
 
 ARG COLLECTOR_VERSION
