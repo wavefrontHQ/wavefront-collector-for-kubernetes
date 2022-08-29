@@ -55,7 +55,8 @@ func (builder *pointBuilder) build(metricFamilies map[string]*prom.MetricFamily)
 				result = append(result, builder.buildSummaryPoints(metricName, m, now, builder.buildTags(m))...)
 			} else if mf.GetType() == prom.MetricType_HISTOGRAM {
 				if experimental.IsEnabled(experimental.HistogramConversion) {
-					result = append(result, builder.buildWFHistogram(metricName, m, now, builder.buildTags(m)))
+					point := builder.buildWFHistogram(metricName, m, now, builder.buildTags(m))
+					result = wf.FilterAppend(builder.filters, builder.filtered, result, point)
 				}
 				result = append(result, builder.buildHistogramPoints(metricName, m, now, builder.buildTags(m))...)
 			} else {
@@ -126,9 +127,6 @@ func (builder *pointBuilder) buildSummaryPoints(name string, m *prom.Metric, now
 
 func (builder *pointBuilder) buildWFHistogram(name string, m *prom.Metric, now int64, tags map[string]string) wf.Metric {
 	buckets := m.GetHistogram().Bucket
-	if len(buckets) == 1 && buckets[0].GetUpperBound() == math.Inf(1) {
-		return nil
-	}
 	centroids := make([]wf.Centroid, 0, len(buckets))
 	for i, bucket := range buckets {
 		centroids = append(centroids, wf.Centroid{

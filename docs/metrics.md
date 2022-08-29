@@ -183,27 +183,28 @@ Application metrics:
 
 These are internal metrics about the health and configuration of the Wavefront Collector.
 
-| Metric Name | Description |
-|------------|-------------|
-| kubernetes.collector.discovery.enabled | Whether discovery is enabled. 0 (false) or 1 (true). |
-| kubernetes.collector.discovery.rules.count | # of discovery configuration rules. |
-| kubernetes.collector.discovery.targets.registered | # of auto discovered scrape targets currently being monitored. |
-| kubernetes.collector.events.* | Events received, sent and filtered. |
-| kubernetes.collector.leaderelection.error | leader election error counter. Only emitted in daemonset mode. |
-| kubernetes.collector.leaderelection.leading | 1 indicates a pod is the leader. 0 (no). Only emitted in daemonset mode. |
-| kubernetes.collector.runtime.* | Go runtime metrics (MemStats, NumGoroutine etc). |
-| kubernetes.collector.sink.manager.timeouts | Counter of timeouts in sending data to Wavefront. |
-| kubernetes.collector.source.manager.providers | # of configured source providers. Includes sources configured via auto-discovery. |
-| kubernetes.collector.source.manager.scrape.errors | Scrape error counter across all sources. |
-| kubernetes.collector.source.manager.scrape.latency.* | Scrape latencies across all sources. |
-| kubernetes.collector.source.manager.scrape.timeouts | Scrape timeout counter across all sources. |
-| kubernetes.collector.source.manager.sources | # of configured scrape targets. For example, a single Kubernetes source provider on a 10 node cluster will yield a count of 10. |
-| kubernetes.collector.source.points.collected | collected points counter per source type. |
-| kubernetes.collector.source.points.filtered | filtered points counter per source type. |
-| kubernetes.collector.version | The version of the collector. |
-| kubernetes.collector.wavefront.points.* | Wavefront sink points sent, filtered, errors etc. |
-| kubernetes.collector.wavefront.events.* | Wavefront sink events sent, filtered, errors etc. |
-| kubernetes.collector.wavefront.sender.type | 1 for proxy and 0 for direct ingestion. |
+| Metric Name                                          | Description                                                                                                                     |
+|------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------|
+| kubernetes.collector.discovery.enabled               | Whether discovery is enabled. 0 (false) or 1 (true).                                                                            |
+| kubernetes.collector.discovery.rules.count           | # of discovery configuration rules.                                                                                             |
+| kubernetes.collector.discovery.targets.registered    | # of auto discovered scrape targets currently being monitored.                                                                  |
+| kubernetes.collector.events.*                        | Events received, sent and filtered.                                                                                             |
+| kubernetes.collector.leaderelection.error            | leader election error counter. Only emitted in daemonset mode.                                                                  |
+| kubernetes.collector.leaderelection.leading          | 1 indicates a pod is the leader. 0 (no). Only emitted in daemonset mode.                                                        |
+| kubernetes.collector.runtime.*                       | Go runtime metrics (MemStats, NumGoroutine etc).                                                                                |
+| kubernetes.collector.sink.manager.timeouts           | Counter of timeouts in sending data to Wavefront.                                                                               |
+| kubernetes.collector.source.manager.providers        | # of configured source providers. Includes sources configured via auto-discovery.                                               |
+| kubernetes.collector.source.manager.scrape.errors    | Scrape error counter across all sources.                                                                                        |
+| kubernetes.collector.source.manager.scrape.latency.* | Scrape latencies across all sources.                                                                                            |
+| kubernetes.collector.source.manager.scrape.timeouts  | Scrape timeout counter across all sources.                                                                                      |
+| kubernetes.collector.source.manager.sources          | # of configured scrape targets. For example, a single Kubernetes source provider on a 10 node cluster will yield a count of 10. |
+| kubernetes.collector.source.points.collected         | collected points counter per source type.                                                                                       |
+| kubernetes.collector.source.points.filtered          | filtered points counter per source type.                                                                                        |
+| kubernetes.collector.version                         | The version of the collector.                                                                                                   |
+| kubernetes.collector.wavefront.points.*              | Wavefront sink points sent, filtered, errors etc.                                                                               |
+| kubernetes.collector.wavefront.events.*              | Wavefront sink events sent, filtered, errors etc.                                                                               |
+| kubernetes.collector.wavefront.sender.type           | 1 for proxy and 0 for direct ingestion.                                                                                         |
+| kubernetes.collector.histograms.duplicates           | Number of duplicate histogram series tagged by metricname (not emitted if no duplicates)                                        |
 
 ## cAdvisor Metrics
 

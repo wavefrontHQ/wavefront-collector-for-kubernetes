@@ -105,4 +105,80 @@ func TestDistributionRateCalculator(t *testing.T) {
 		assert.Equal(t, 2, len(batch.Metrics))
 	})
 
+	t.Run("handles duplicate series", func(t *testing.T) {
+		firstSampleTS := time.Now()
+		p := NewDistributionRateCalculator()
+		DuplicateHistogramCounter("some.distribution").Clear()
+
+		batch, err := p.Process(&metrics.Batch{Metrics: []wf.Metric{
+			wf.NewCumulativeDistribution(
+				"some.distribution",
+				"somesource",
+				map[string]string{"sometag": "somevalue"},
+				[]wf.Centroid{{Value: 1, Count: 0}},
+				firstSampleTS,
+			),
+			wf.NewCumulativeDistribution(
+				"some.distribution",
+				"somesource",
+				map[string]string{"sometag": "somevalue"},
+				[]wf.Centroid{{Value: 1, Count: 1}},
+				firstSampleTS.Add(time.Second),
+			),
+		}})
+
+		assert.NoError(t, err)
+		assert.Equal(t, 0, len(batch.Metrics))
+		assert.Equal(t, int64(1), DuplicateHistogramCounter("some.distribution").Count())
+
+		batch, err = p.Process(&metrics.Batch{Metrics: []wf.Metric{
+			wf.NewCumulativeDistribution(
+				"some.distribution",
+				"somesource",
+				map[string]string{"sometag": "somevalue"},
+				[]wf.Centroid{{Value: 1, Count: 1}},
+				firstSampleTS.Add(time.Minute),
+			),
+			wf.NewCumulativeDistribution(
+				"some.distribution",
+				"somesource",
+				map[string]string{"sometag": "somevalue"},
+				[]wf.Centroid{{Value: 1, Count: 2}},
+				firstSampleTS.Add(time.Minute+time.Second),
+			),
+		}})
+
+		assert.NoError(t, err)
+		assert.Equal(t, 1, len(batch.Metrics))
+		assert.Equal(t, int64(2), DuplicateHistogramCounter("some.distribution").Count())
+	})
+
+	t.Run("can mutate distributions after processing without affecting rate calculation", func(t *testing.T) {
+		firstSampleTS := time.Now()
+		p := NewDistributionRateCalculator()
+		DuplicateHistogramCounter("some.distribution").Clear()
+
+		firstDistribution := wf.NewCumulativeDistribution(
+			"some.distribution",
+			"somesource",
+			map[string]string{"sometag": "somevalue"},
+			[]wf.Centroid{{Value: 1, Count: 0}},
+			firstSampleTS,
+		)
+		batch, _ := p.Process(&metrics.Batch{Metrics: []wf.Metric{firstDistribution}})
+
+		firstDistribution.AddTags(map[string]string{"extra": "foo"})
+
+		batch, _ = p.Process(&metrics.Batch{Metrics: []wf.Metric{
+			wf.NewCumulativeDistribution(
+				"some.distribution",
+				"somesource",
+				map[string]string{"sometag": "somevalue"},
+				[]wf.Centroid{{Value: 1, Count: 1}},
+				firstSampleTS.Add(time.Minute),
+			),
+		}})
+
+		assert.Equal(t, 1, len(batch.Metrics))
+	})
 }

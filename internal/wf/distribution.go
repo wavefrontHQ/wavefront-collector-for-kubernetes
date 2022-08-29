@@ -20,8 +20,8 @@ type Centroid struct {
 type Distribution struct {
 	Cumulative bool
 	name       string
-	tags       map[string]string // TODO string interning
-	Source     string            // TODO string interning
+	tags       map[string]string
+	Source     string
 	Centroids  []Centroid
 	Timestamp  time.Time
 }
@@ -50,6 +50,24 @@ func newDistribution(cumulative bool, name string, source string, tags map[strin
 	}
 }
 
+func (d *Distribution) Clone() *Distribution {
+	return newDistribution(d.Cumulative, d.Name(), d.Source, d.clonedTags(), d.clonedCentroids(), d.Timestamp)
+}
+
+func (d *Distribution) clonedTags() map[string]string {
+	clonedTags := make(map[string]string, len(d.Tags()))
+	for k, v := range d.Tags() {
+		clonedTags[k] = v
+	}
+	return clonedTags
+}
+
+func (d *Distribution) clonedCentroids() []Centroid {
+	cloned := make([]Centroid, len(d.Centroids))
+	copy(cloned, d.Centroids)
+	return cloned
+}
+
 func (d *Distribution) Points() int {
 	return 7
 }
@@ -68,39 +86,48 @@ func (d *Distribution) ToFrequency() *Distribution {
 }
 
 func smoothCentroids(derivedCentroids []Centroid) []Centroid {
-	amplification := math.Max(1, 1/minCount(derivedCentroids))
+	if len(derivedCentroids) == 1 && derivedCentroids[0].Value == math.Inf(1) {
+		return nil
+	}
+	amplification := math.Max(1, 1/smallestCountAboveZero(derivedCentroids))
 	centroidCounts := map[float64]float64{}
 	for i, centroid := range derivedCentroids {
-		currValue := centroid.Value
-		prevValue := 0.0
+		currentBucketBound := centroid.Value
+		actualBucketCount := derivedCentroids[i].Count * amplification
+		if currentBucketBound <= 0 || actualBucketCount == 0 {
+			continue
+		}
+		actualBucketCount = math.Max(1.0, actualBucketCount)
+		if currentBucketBound == math.Inf(1) {
+			currentBucketBound = derivedCentroids[i-1].Value
+		}
+		previousBucketBound := 0.0
 		if i > 0 {
-			prevValue = derivedCentroids[i-1].Value
-		} else if centroid.Value > 0 {
-			prevValue = 0
-		} else {
-			prevValue = currValue
+			previousBucketBound = derivedCentroids[i-1].Value
 		}
-		if currValue == math.Inf(1) {
-			currValue = prevValue
-		}
-		currCount := derivedCentroids[i].Count * amplification
-		lowerCount := math.Trunc(currCount / 4)
-		centroidCounts[prevValue] += lowerCount
-		middleCount := math.Trunc(currCount / 2)
-		centroidCounts[(currValue+prevValue)/2] += middleCount
-		upperCount := math.Trunc(currCount - lowerCount - middleCount)
-		centroidCounts[currValue] += upperCount
+		lowerCount := math.Trunc(actualBucketCount / 4)
+		centroidCounts[previousBucketBound] += lowerCount
+
+		middleCount := math.Trunc(actualBucketCount / 2)
+		centroidCounts[(currentBucketBound+previousBucketBound)/2] += middleCount
+
+		upperCount := math.Trunc(actualBucketCount - lowerCount - middleCount)
+		centroidCounts[currentBucketBound] += upperCount
 	}
-	centroids := make([]Centroid, 0, 2*len(derivedCentroids)-1)
+	return centroidMapToSlice(centroidCounts)
+}
+
+func centroidMapToSlice(centroidCounts map[float64]float64) []Centroid {
+	centroids := make([]Centroid, 0, len(centroidCounts))
 	for value, count := range centroidCounts {
 		centroids = append(centroids, Centroid{Value: value, Count: count})
 	}
 	return centroids
 }
 
-func minCount(derivedCentroids []Centroid) float64 {
+func smallestCountAboveZero(centroids []Centroid) float64 {
 	minCount := math.MaxFloat64
-	for _, centroid := range derivedCentroids {
+	for _, centroid := range centroids {
 		if centroid.Count > 0 && centroid.Count < minCount {
 			minCount = centroid.Count
 		}
@@ -118,8 +145,8 @@ func deriveCentroids(centroids []Centroid) []Centroid {
 			deltaCount = centroid.Count
 		}
 		derived = append(derived, Centroid{
-			Count: deltaCount,
 			Value: centroid.Value,
+			Count: deltaCount,
 		})
 	}
 	return derived
@@ -180,7 +207,7 @@ func (d *Distribution) Send(to Sender) error {
 	if d.Cumulative {
 		return errors.New("cannot send prometheus style distribution to wavefront")
 	}
-	centroids := wfCentroids(d)
+	centroids := sendableCentroids(d)
 	if len(centroids) == 0 {
 		return nil
 	}
@@ -194,7 +221,7 @@ func (d *Distribution) Send(to Sender) error {
 	)
 }
 
-func wfCentroids(d *Distribution) []histogram.Centroid {
+func sendableCentroids(d *Distribution) []histogram.Centroid {
 	wfCentroids := make([]histogram.Centroid, 0, len(d.Centroids))
 	for _, centroid := range d.Centroids {
 		if centroid.Count == 0.0 {

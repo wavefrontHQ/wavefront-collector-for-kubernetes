@@ -34,7 +34,7 @@ func TestDistribution(t *testing.T) {
 	})
 
 	t.Run("Rate", func(t *testing.T) {
-		t.Run("Calculate Centroid rate", func(t *testing.T) {
+		t.Run("calculates rate", func(t *testing.T) {
 			prevTimeStamp := time.Now()
 			prev := wf.NewCumulativeDistribution("name1", "source1", map[string]string{"btag": "bvalue", "atag": "avalue", "ctag": "cvalue"}, []wf.Centroid{{Value: 1, Count: 2}}, prevTimeStamp)
 			current := wf.NewCumulativeDistribution("name1", "source1", map[string]string{"btag": "bvalue", "atag": "avalue", "ctag": "cvalue"}, []wf.Centroid{{Value: 1, Count: 3}}, prevTimeStamp.Add(time.Minute))
@@ -49,7 +49,7 @@ func TestDistribution(t *testing.T) {
 			assert.Equal(t, []wf.Centroid{{Value: 1, Count: 1}}, currRate.Centroids)
 		})
 
-		t.Run("Doesn't calculate rate on different distributions", func(t *testing.T) {
+		t.Run("doesn't calculate rate on different distributions", func(t *testing.T) {
 			prevTimeStamp := time.Now()
 			prev := wf.NewCumulativeDistribution("name1", "source1", map[string]string{"btag": "bvalue", "atag": "avalue", "ctag": "cvalue"}, []wf.Centroid{{Value: 1, Count: 2}}, prevTimeStamp)
 			current := wf.NewCumulativeDistribution("name2", "source1", map[string]string{"btag": "bvalue", "atag": "avalue", "ctag": "cvalue"}, []wf.Centroid{{Value: 1, Count: 70}}, prevTimeStamp.Add(time.Minute))
@@ -57,7 +57,7 @@ func TestDistribution(t *testing.T) {
 			assert.Nil(t, currRate)
 		})
 
-		t.Run("Doesn't calculate rate for non compatible centroids", func(t *testing.T) {
+		t.Run("doesn't calculate rate for non compatible centroids", func(t *testing.T) {
 			prevTimeStamp := time.Now()
 			prev := wf.NewCumulativeDistribution("name1", "source1", map[string]string{"btag": "bvalue", "atag": "avalue", "ctag": "cvalue"}, []wf.Centroid{{Value: 1, Count: 2}}, prevTimeStamp)
 			current := wf.NewCumulativeDistribution("name1", "source1", map[string]string{"btag": "bvalue", "atag": "avalue", "ctag": "cvalue"}, []wf.Centroid{{Value: 2, Count: 70}}, prevTimeStamp.Add(time.Minute))
@@ -65,7 +65,7 @@ func TestDistribution(t *testing.T) {
 			assert.Nil(t, currRate)
 		})
 
-		t.Run("Doesn't send rate if previous is nil", func(t *testing.T) {
+		t.Run("doesn't send rate if previous is nil", func(t *testing.T) {
 			prevTimeStamp := time.Now()
 			current := wf.NewCumulativeDistribution("name1", "source1", map[string]string{"btag": "bvalue", "atag": "avalue", "ctag": "cvalue"}, []wf.Centroid{{Value: 2, Count: 70}}, prevTimeStamp.Add(time.Minute))
 			currRate := current.Rate(nil)
@@ -73,101 +73,180 @@ func TestDistribution(t *testing.T) {
 		})
 	})
 
-	t.Run("Coverts Cumulative to density distribution", func(t *testing.T) {
-		density := wf.NewCumulativeDistribution(
-			"some.distribution",
-			"somesource",
-			map[string]string{"sometag": "somevalue"},
-			[]wf.Centroid{
-				{Value: 0.05, Count: 24054},
-				{Value: 0.1, Count: 33444},
-				{Value: 0.2, Count: 100392},
-				{Value: 0.5, Count: 129389},
-				{Value: 1, Count: 133988},
-				{Value: math.Inf(1), Count: 144320},
-			},
-			time.Now(),
-		).ToFrequency()
+	t.Run("ToFrequency", func(t *testing.T) {
+		t.Run("does not convert distributions that are already in frequency format", func(t *testing.T) {
+			d := wf.NewFrequencyDistribution(
+				"some.distribution",
+				"somesource",
+				map[string]string{"sometag": "somevalue"},
+				[]wf.Centroid{
+					{Value: -0.1, Count: 0.5},
+					{Value: -0.05, Count: 1},
+				},
+				time.Now(),
+			)
 
-		assert.Equal(t, 11, len(density.Centroids))
-		assertCentroids(t, []wf.Centroid{
-			{Value: 0.0, Count: 6013},
-			{Value: 0.025, Count: 12027},
-			{Value: 0.05, Count: 8361},
-			{Value: 0.075, Count: 4695},
-			{Value: 0.1, Count: 19085},
-			{Value: 0.15, Count: 33474},
-			{Value: 0.2, Count: 23986},
-			{Value: 0.35, Count: 14498},
-			{Value: 0.5, Count: 8399},
-			{Value: 0.75, Count: 2299},
-			{Value: 1.0, Count: 11483},
-		}, density.Centroids)
-	})
+			assert.Equal(t, d, d.ToFrequency())
+		})
 
-	t.Run("Converts cumulative distribution with negative lower bounds", func(t *testing.T) {
-		density := wf.NewCumulativeDistribution(
-			"some.distribution",
-			"somesource",
-			map[string]string{"sometag": "somevalue"},
-			[]wf.Centroid{
-				{Value: -0.1, Count: 24054},
-				{Value: -0.05, Count: 33444},
-				{Value: 0.2, Count: 100392},
-				{Value: 0.5, Count: 129389},
-				{Value: 1, Count: 133988},
-				{Value: math.Inf(1), Count: 144320},
-			},
-			time.Now(),
-		).ToFrequency()
+		t.Run("does not convert distributions with only a single bucket with an upper bound of infinity", func(t *testing.T) {
+			density := wf.NewCumulativeDistribution(
+				"some.distribution",
+				"somesource",
+				map[string]string{"sometag": "somevalue"},
+				[]wf.Centroid{
+					{Value: math.Inf(1), Count: 144320},
+				},
+				time.Now(),
+			).ToFrequency()
 
-		assert.Equal(t, 9, len(density.Centroids))
-		assertCentroids(t, []wf.Centroid{
-			{Value: -0.1, Count: float64(24054 + 9390/4)},
-			{Value: -0.075, Count: float64(9390 / 2)},
-			{Value: -0.05, Count: float64(9390 - 9390/4 - 9390/2 + 66948/4)},
-			{Value: 0.075, Count: float64(66948 / 2)},
-			{Value: 0.2, Count: float64(66948 - 66948/4 - 66948/2 + 28997/4)},
-			{Value: 0.35, Count: float64(28997 / 2)},
-			{Value: 0.5, Count: float64(28997 - 28997/4 - 28997/2 + 4599/4)},
-			{Value: 0.75, Count: float64(4599 / 2)},
-			{Value: 1.0, Count: float64(4599 - 4599/4 - 4599/2 + (144320 - 133988))},
-		}, density.Centroids)
-	})
+			assert.Equal(t, 0, len(density.Centroids))
+		})
 
-	t.Run("Converts cumulative distribution with amplification", func(t *testing.T) {
-		density := wf.NewCumulativeDistribution(
-			"some.distribution",
-			"somesource",
-			map[string]string{"sometag": "somevalue"},
-			[]wf.Centroid{
-				{Value: -0.1, Count: 0.5},
-				{Value: -0.05, Count: 1},
-			},
-			time.Now(),
-		).ToFrequency()
+		t.Run("spreads buckets between multiple centroids", func(t *testing.T) {
+			density := wf.NewCumulativeDistribution(
+				"some.distribution",
+				"somesource",
+				map[string]string{"sometag": "somevalue"},
+				[]wf.Centroid{
+					{Value: 1.0, Count: 4},
+				},
+				time.Now(),
+			).ToFrequency()
 
-		assert.Equal(t, 3, len(density.Centroids))
-		assertCentroids(t, []wf.Centroid{
-			{Value: -0.1, Count: 1},
-			{Value: -0.075, Count: 0},
-			{Value: -0.05, Count: 1},
-		}, density.Centroids)
-	})
+			assertCentroids(t, []wf.Centroid{
+				{Value: 0.0, Count: 1},
+				{Value: 0.5, Count: 2},
+				{Value: 1.0, Count: 1},
+			}, density.Centroids)
+		})
 
-	t.Run("Leaves non-cumulative distribution unchanged", func(t *testing.T) {
-		d := wf.NewFrequencyDistribution(
-			"some.distribution",
-			"somesource",
-			map[string]string{"sometag": "somevalue"},
-			[]wf.Centroid{
-				{Value: -0.1, Count: 0.5},
-				{Value: -0.05, Count: 1},
-			},
-			time.Now(),
-		)
+		t.Run("uses the delta between centroids to compute the counts", func(t *testing.T) {
+			density := wf.NewCumulativeDistribution(
+				"some.distribution",
+				"somesource",
+				map[string]string{"sometag": "somevalue"},
+				[]wf.Centroid{
+					{Value: 1.0, Count: 4},
+					{Value: 2.0, Count: 8},
+				},
+				time.Now(),
+			).ToFrequency()
 
-		assert.Equal(t, d, d.ToFrequency())
+			assertCentroids(t, []wf.Centroid{
+				{Value: 0.0, Count: 1},
+				{Value: 0.5, Count: 2},
+				{Value: 1.0, Count: 2},
+				{Value: 1.5, Count: 2},
+				{Value: 2.0, Count: 1},
+			}, density.Centroids)
+		})
+
+		t.Run("only includes the largest negative bucket", func(t *testing.T) {
+			density := wf.NewCumulativeDistribution(
+				"some.distribution",
+				"somesource",
+				map[string]string{"sometag": "somevalue"},
+				[]wf.Centroid{
+					{Value: -1.0, Count: 4},
+					{Value: -0.5, Count: 8},
+					{Value: 0.5, Count: 12},
+					{Value: 1, Count: 16},
+				},
+				time.Now(),
+			).ToFrequency()
+
+			assertCentroids(t, []wf.Centroid{
+				{Value: -0.5, Count: 1},
+				{Value: 0, Count: 2},
+				{Value: 0.5, Count: 2},
+				{Value: 0.75, Count: 2},
+				{Value: 1.0, Count: 1},
+			}, density.Centroids)
+		})
+
+		t.Run("doesn't convert distributions with no buckets", func(t *testing.T) {
+			density := wf.NewCumulativeDistribution(
+				"some.distribution",
+				"somesource",
+				map[string]string{"sometag": "somevalue"},
+				nil,
+				time.Now(),
+			).ToFrequency()
+
+			assert.Empty(t, density.Centroids)
+		})
+
+		t.Run("adds the infinite bucket to the highest non-infinite bucket", func(t *testing.T) {
+			density := wf.NewCumulativeDistribution(
+				"some.distribution",
+				"somesource",
+				map[string]string{"sometag": "somevalue"},
+				[]wf.Centroid{
+					{Value: 1.0, Count: 4},
+					{Value: math.Inf(1), Count: 8},
+				},
+				time.Now(),
+			).ToFrequency()
+
+			assertCentroids(t, []wf.Centroid{
+				{Value: 0.0, Count: 1},
+				{Value: 0.5, Count: 2},
+				{Value: 1.0, Count: 5},
+			}, density.Centroids)
+		})
+
+		t.Run("amplifies buckets when the smallest count is below 1.0", func(t *testing.T) {
+			density := wf.NewCumulativeDistribution(
+				"some.distribution",
+				"somesource",
+				map[string]string{"sometag": "somevalue"},
+				[]wf.Centroid{
+					{Value: 0.0, Count: 0.5},
+					{Value: 1.0, Count: 1.5},
+				},
+				time.Now(),
+			).ToFrequency()
+
+			assertCentroids(t, []wf.Centroid{
+				{Value: 0.0, Count: 0},
+				{Value: 0.5, Count: 1},
+				{Value: 1.0, Count: 1},
+			}, density.Centroids)
+		})
+
+		t.Run("does not count buckets with zero counts", func(t *testing.T) {
+			density := wf.NewCumulativeDistribution(
+				"some.distribution",
+				"somesource",
+				map[string]string{"sometag": "somevalue"},
+				[]wf.Centroid{
+					{Value: 1.0, Count: 0.0},
+				},
+				time.Now(),
+			).ToFrequency()
+
+			assert.Empty(t, density.Centroids)
+		})
+
+		t.Run("buckets with negative counts use a count of 1", func(t *testing.T) {
+			density := wf.NewCumulativeDistribution(
+				"some.distribution",
+				"somesource",
+				map[string]string{"sometag": "somevalue"},
+				[]wf.Centroid{
+					{Value: 0.0, Count: 8},
+					{Value: 1.0, Count: 4},
+				},
+				time.Now(),
+			).ToFrequency()
+
+			assertCentroids(t, []wf.Centroid{
+				{Value: 0.0, Count: 0},
+				{Value: 0.5, Count: 0},
+				{Value: 1.0, Count: 1},
+			}, density.Centroids)
+		})
 	})
 
 	t.Run("Sends to WF", func(t *testing.T) {
@@ -330,10 +409,41 @@ func (m *MockDistributionSender) Verify(t *testing.T) {
 }
 
 func assertCentroids(t *testing.T, expectedCentroids []wf.Centroid, actualCentroids []wf.Centroid) {
-	for i, expectedCentroid := range expectedCentroids {
-		assert.InDeltaf(t, expectedCentroid.Value, actualCentroids[i].Value, 0.000000000001, "values are close")
-		assert.Equal(t, expectedCentroid.Count, actualCentroids[i].Count)
+	t.Helper()
+	valueEpsilon := 0.000000000001 // how close values have to be due to floating point rounding errors
+	missing := diffValues(expectedCentroids, actualCentroids, valueEpsilon)
+	extra := diffValues(actualCentroids, expectedCentroids, valueEpsilon)
+	if len(missing) > 0 || len(extra) > 0 {
+		if len(missing) > 0 {
+			t.Errorf("missing expected centroids: %v", missing)
+		}
+		if len(extra) > 0 {
+			t.Errorf("contained unexpected centroids: %v", extra)
+		}
+		return
 	}
+	for i, expectedCentroid := range expectedCentroids {
+		assert.InDeltaf(t, expectedCentroid.Value, actualCentroids[i].Value, valueEpsilon, "values are close")
+		assert.Equalf(t, expectedCentroid.Count, actualCentroids[i].Count, "bound=%f, expected=%f, actual=%f", expectedCentroid.Value, expectedCentroid.Count, actualCentroids[i].Count)
+	}
+}
+
+// diffValues computes the values as that are not present in bs
+func diffValues(as, bs []wf.Centroid, epsilon float64) []float64 {
+	var presentOnlyInAs []float64
+	for _, a := range as {
+		found := false
+		for _, b := range bs {
+			if math.Abs(a.Value-b.Value) < epsilon {
+				found = true
+				break
+			}
+		}
+		if !found {
+			presentOnlyInAs = append(presentOnlyInAs, a.Value)
+		}
+	}
+	return presentOnlyInAs
 }
 
 func TestCentroidRate(t *testing.T) {
