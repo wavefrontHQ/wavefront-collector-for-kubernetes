@@ -195,11 +195,12 @@ func SpanLine(name string, startMillis, durationMillis int64, source, traceId, s
 }
 
 // SpanLogJSON is for internal use only.
-func SpanLogJSON(traceId, spanId string, spanLogs []SpanLog) (string, error) {
+func SpanLogJSON(traceId, spanId string, spanLogs []SpanLog, span string) (string, error) {
 	l := SpanLogs{
 		TraceId: traceId,
 		SpanId:  spanId,
 		Logs:    spanLogs,
+		Span:    span,
 	}
 	out, err := json.Marshal(l)
 	if err != nil {
