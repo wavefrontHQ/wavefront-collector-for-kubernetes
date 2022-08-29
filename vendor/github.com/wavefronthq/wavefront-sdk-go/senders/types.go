@@ -20,6 +20,7 @@ type SpanLogs struct {
 	TraceId string    `json:"traceId"`
 	SpanId  string    `json:"spanId"`
 	Logs    []SpanLog `json:"logs"`
+	Span    string    `json:"span"`
 }
 
 // MetricSender Interface for sending metrics to Wavefront

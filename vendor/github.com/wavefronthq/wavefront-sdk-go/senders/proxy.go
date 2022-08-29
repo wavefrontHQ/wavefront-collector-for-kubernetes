@@ -255,7 +255,7 @@ func (sender *proxySender) SendSpan(name string, startMillis, durationMillis int
 	}
 
 	if len(spanLogs) > 0 {
-		logs, err := SpanLogJSON(traceId, spanId, spanLogs)
+		logs, err := SpanLogJSON(traceId, spanId, spanLogs, line)
 		if err != nil {
 			sender.spanLogsInvalid.Inc()
 			return err

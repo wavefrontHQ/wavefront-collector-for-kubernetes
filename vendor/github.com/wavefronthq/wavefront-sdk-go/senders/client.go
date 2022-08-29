@@ -135,7 +135,7 @@ func (sender *wavefrontSender) SendSpan(name string, startMillis, durationMillis
 	}
 
 	if len(spanLogs) > 0 {
-		logs, err := SpanLogJSON(traceId, spanId, spanLogs)
+		logs, err := SpanLogJSON(traceId, spanId, spanLogs, line)
 		if err != nil {
 			sender.spanLogsInvalid.Inc()
 			return err
