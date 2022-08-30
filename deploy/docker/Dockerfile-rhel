@@ -13,8 +13,8 @@ RUN /bin/bash -c "CGO_ENABLED=0 go build -ldflags '-w -X main.version="${COLLECT
 
 #Using ubi8 minimal image
 FROM registry.access.redhat.com/ubi8-minimal:latest
-RUN microdnf upgrade && \
-    microdnf clean all \
+RUN microdnf upgrade \
+  && microdnf clean all
 
 MAINTAINER wavefront@vmware.com
 
