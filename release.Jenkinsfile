@@ -14,7 +14,7 @@ pipeline {
     TOKEN = credentials('GITHUB_TOKEN')
   }
 
-//   stages {
+  stages {
 //     stage("Setup tools") {
 //       steps {
 //         withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
