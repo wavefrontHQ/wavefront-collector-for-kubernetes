@@ -23,11 +23,11 @@ DEFAULT_PROXY_VERSION=11.3
 CURRENT_PROXY_VERSION=${CURRENT_PROXY_VERSION:-$DEFAULT_PROXY_VERSION}
 DEFAULT_PROXY_REPO=projects.registry.vmware.com/tanzu_observability/proxy
 CURRENT_PROXY_REPO=${CURRENT_PROXY_REPO:-$DEFAULT_PROXY_REPO}
-DEPLOY_TARGETS=?yes
+DEPLOY_TARGETS="${DEPLOY_TARGETS:-yes}"
 
 pushd "$ROOT_DIR"
   make clean-deployment
-  if [ "${DEPLOY_TARGETS}" == "yes"] ; then
+  if [ "${DEPLOY_TARGETS}" == "yes" ] ; then
   	make deploy-targets
   fi
 popd
@@ -46,7 +46,7 @@ echo "Temp dir: $TEMP_DIR"
 cp "$ROOT_DIR"/deploy/kubernetes/*.yaml  "$TEMP_DIR/."
 rm "$TEMP_DIR"/kustomization.yaml || true
 
-if [ "${DEPLOY_TARGETS}" == "yes"] ; then
+if [ "${DEPLOY_TARGETS}" == "yes" ] ; then
   cp "$ROOT_DIR/hack/test/deploy/memcached-config.yaml" "$TEMP_DIR/."
   cp "$ROOT_DIR/hack/test/deploy/mysql-config.yaml" "$TEMP_DIR/."
   cp "$ROOT_DIR/hack/test/deploy/prom-example.yaml" "$TEMP_DIR/."
