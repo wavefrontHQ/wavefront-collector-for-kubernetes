@@ -14,20 +14,17 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
-
+	"github.com/prometheus/common/expfmt"
+	gometrics "github.com/rcrowley/go-metrics"
+	log "github.com/sirupsen/logrus"
+	"github.com/wavefronthq/go-metrics-wavefront/reporting"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/httputil"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/leadership"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
-
-	log "github.com/sirupsen/logrus"
-
-	"github.com/prometheus/common/expfmt"
-	gometrics "github.com/rcrowley/go-metrics"
-	"github.com/wavefronthq/go-metrics-wavefront/reporting"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
 )
 
 var (
@@ -217,9 +214,17 @@ func (p *prometheusProvider) Name() string {
 	return p.name
 }
 
-const providerName = "prometheus_metrics_provider"
+type metricsSourceConstructor func(
+	metricsURL,
+	prefix,
+	source,
+	discovered string,
+	tags map[string]string,
+	filters filter.Filter,
+	httpCfg httputil.ClientConfig,
+) (metrics.Source, error)
 
-func NewPrometheusProvider(cfg configuration.PrometheusSourceConfig) (metrics.SourceProvider, error) {
+func prometheusProviderWithMetricsSource(newMetricsSource metricsSourceConstructor, cfg configuration.PrometheusSourceConfig) (metrics.SourceProvider, error) {
 	if len(cfg.URL) == 0 {
 		return nil, fmt.Errorf("missing prometheus url")
 	}
@@ -244,7 +249,7 @@ func NewPrometheusProvider(cfg configuration.PrometheusSourceConfig) (metrics.So
 	filters := filter.FromConfig(cfg.Filters)
 
 	var sources []metrics.Source
-	metricsSource, err := NewPrometheusMetricsSource(cfg.URL, prefix, source, discovered, tags, filters, httpCfg)
+	metricsSource, err := newMetricsSource(cfg.URL, prefix, source, discovered, tags, filters, httpCfg)
 	if err == nil {
 		sources = append(sources, metricsSource)
 	} else {
@@ -256,4 +261,10 @@ func NewPrometheusProvider(cfg configuration.PrometheusSourceConfig) (metrics.So
 		useLeaderElection: cfg.UseLeaderElection || discovered == "",
 		sources:           sources,
 	}, nil
+}
+
+const providerName = "prometheus_metrics_provider"
+
+func NewPrometheusProvider(cfg configuration.PrometheusSourceConfig) (metrics.SourceProvider, error) {
+	return prometheusProviderWithMetricsSource(NewPrometheusMetricsSource, cfg)
 }
