@@ -6,6 +6,7 @@ package prometheus
 import (
 	"bytes"
 	"fmt"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -23,7 +24,6 @@ import (
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/httputil"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/leadership"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
 )
 
@@ -224,12 +224,14 @@ type metricsSourceConstructor func(
 	httpCfg httputil.ClientConfig,
 ) (metrics.Source, error)
 
-func prometheusProviderWithMetricsSource(newMetricsSource metricsSourceConstructor, cfg configuration.PrometheusSourceConfig) (metrics.SourceProvider, error) {
+type nodeNameGetter func() string
+
+func prometheusProviderWithMetricsSource(newMetricsSource metricsSourceConstructor, getNodeName nodeNameGetter, cfg configuration.PrometheusSourceConfig) (metrics.SourceProvider, error) {
 	if len(cfg.URL) == 0 {
 		return nil, fmt.Errorf("missing prometheus url")
 	}
 
-	source := configuration.GetStringValue(cfg.Source, util.GetNodeName()) // TODO inject node name getter
+	source := configuration.GetStringValue(cfg.Source, getNodeName())
 	source = configuration.GetStringValue(source, "prom_source")
 
 	name := ""
@@ -266,5 +268,5 @@ func prometheusProviderWithMetricsSource(newMetricsSource metricsSourceConstruct
 const providerName = "prometheus_metrics_provider"
 
 func NewPrometheusProvider(cfg configuration.PrometheusSourceConfig) (metrics.SourceProvider, error) {
-	return prometheusProviderWithMetricsSource(NewPrometheusMetricsSource, cfg)
+	return prometheusProviderWithMetricsSource(NewPrometheusMetricsSource, util.GetNodeName, cfg)
 }

@@ -243,57 +243,80 @@ func Test_prometheusProvider_GetMetricsSources(t *testing.T) {
 
 func TestNewPrometheusProvider(t *testing.T) {
 	t.Run("errors if prometheus URL is missing", func(t *testing.T) {
-		fms := fakeMetricsSourceConstructor{}
+		fdi := fakePrometheusProviderDependencyInjector{}
 		cfg := configuration.PrometheusSourceConfig{}
-		prometheusProvider, err := prometheusProviderWithMetricsSource(fms.newMetricsSource, cfg)
+		prometheusProvider, err := prometheusProviderWithMetricsSource(fdi.newMetricsSource, fdi.getNodeName, cfg)
 		assert.Nil(t, prometheusProvider)
 		assert.NotNil(t, err)
 	})
 
+	t.Run("use configured source, node name, or 'prom_source' as source tag", func(t *testing.T) {
+		fdi := fakePrometheusProviderDependencyInjector{}
+		cfg := configuration.PrometheusSourceConfig{
+			URL: "fake url",
+			Transforms: configuration.Transforms{
+				Source: "fake source",
+			},
+		}
+		_, err := prometheusProviderWithMetricsSource(fdi.newMetricsSource, fdi.getNodeName, cfg)
+		assert.NoError(t, err)
+		assert.Equal(t, "fake source", fdi.source)
+
+		fdi = fakePrometheusProviderDependencyInjector{
+			returnNodeName: "fake node name",
+		}
+		cfg = configuration.PrometheusSourceConfig{
+			URL: "fake url",
+		}
+		_, err = prometheusProviderWithMetricsSource(fdi.newMetricsSource, fdi.getNodeName, cfg)
+		assert.NoError(t, err)
+		assert.Equal(t, "fake node name", fdi.source)
+	})
+
 	t.Run("metrics source defaults if only URL provided", func(t *testing.T) {
-		fms := fakeMetricsSourceConstructor{}
+		fdi := fakePrometheusProviderDependencyInjector{}
 		cfg := configuration.PrometheusSourceConfig{
 			URL: "http://test-prometheus-url.com",
 		}
-		_, err := prometheusProviderWithMetricsSource(fms.newMetricsSource, cfg)
+		_, err := prometheusProviderWithMetricsSource(fdi.newMetricsSource, fdi.getNodeName, cfg)
 		assert.NoError(t, err)
 
-		assert.Equal(t, "http://test-prometheus-url.com", fms.metricsURL)
-		assert.Equal(t, "prom_source", fms.source)
-		assert.Equal(t, "", fms.discovered)
-		assert.Equal(t, map[string]string(nil), fms.tags)
-		assert.Equal(t, nil, fms.filters)
-		assert.Equal(t, httputil.ClientConfig{}, fms.httpCfg)
+		assert.Equal(t, "http://test-prometheus-url.com", fdi.metricsURL)
+		assert.Equal(t, "prom_source", fdi.source)
+		assert.Equal(t, "", fdi.discovered)
+		assert.Equal(t, map[string]string(nil), fdi.tags)
+		assert.Equal(t, nil, fdi.filters)
+		assert.Equal(t, httputil.ClientConfig{}, fdi.httpCfg)
 	})
 
 	t.Run("returns an error if metrics source creation fails", func(t *testing.T) {
-		fms := fakeMetricsSourceConstructor{
+		fdi := fakePrometheusProviderDependencyInjector{
 			returnError: errors.New("fake metrics source error"),
 		}
 		cfg := configuration.PrometheusSourceConfig{
 			URL: "http://test-prometheus-url.com",
 		}
-		_, err := prometheusProviderWithMetricsSource(fms.newMetricsSource, cfg)
+		_, err := prometheusProviderWithMetricsSource(fdi.newMetricsSource, fdi.getNodeName, cfg)
 		assert.NotNil(t, err)
 	})
 
 	// TODO obviously need to test all logic within this constructor
 
 	t.Run("creates a prometheus provider with name based on configured name or URL", func(t *testing.T) {
-		fms := fakeMetricsSourceConstructor{}
+		fdi := fakePrometheusProviderDependencyInjector{}
 		cfg := configuration.PrometheusSourceConfig{
 			Name: "test-name",
 			URL:  "http://test-prometheus-url.com",
 		}
-		prometheusProvider, err := prometheusProviderWithMetricsSource(fms.newMetricsSource, cfg)
+		prometheusProvider, err := prometheusProviderWithMetricsSource(fdi.newMetricsSource, fdi.getNodeName, cfg)
 		assert.NoError(t, err)
 		assert.Equal(t, fmt.Sprintf("%s: test-name", providerName), prometheusProvider.Name())
 
-		fms = fakeMetricsSourceConstructor{}
+		fdi = fakePrometheusProviderDependencyInjector{}
 		cfg = configuration.PrometheusSourceConfig{
 			URL: "http://test-prometheus-url-only.com",
 		}
-		prometheusProvider, err = prometheusProviderWithMetricsSource(fms.newMetricsSource, cfg)
+		prometheusProvider, err = prometheusProviderWithMetricsSource(fdi.newMetricsSource, fdi.getNodeName, cfg)
 		assert.NoError(t, err)
 		assert.Equal(t, fmt.Sprintf("%s: http://test-prometheus-url-only.com", providerName), prometheusProvider.Name())
 	})
@@ -307,7 +330,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 	})
 }
 
-type fakeMetricsSourceConstructor struct {
+type fakePrometheusProviderDependencyInjector struct {
 	metricsURL string
 	prefix     string
 	source     string
@@ -316,10 +339,11 @@ type fakeMetricsSourceConstructor struct {
 	filters    filter.Filter
 	httpCfg    httputil.ClientConfig
 
-	returnError error
+	returnNodeName string
+	returnError    error
 }
 
-func (fms *fakeMetricsSourceConstructor) newMetricsSource(
+func (fdi *fakePrometheusProviderDependencyInjector) newMetricsSource(
 	metricsURL,
 	prefix,
 	source,
@@ -328,17 +352,21 @@ func (fms *fakeMetricsSourceConstructor) newMetricsSource(
 	filters filter.Filter,
 	httpCfg httputil.ClientConfig,
 ) (metrics.Source, error) {
-	fms.metricsURL = metricsURL
-	fms.prefix = prefix
-	fms.source = source
-	fms.discovered = discovered
-	fms.tags = tags
-	fms.filters = filters
-	fms.httpCfg = httpCfg
+	fdi.metricsURL = metricsURL
+	fdi.prefix = prefix
+	fdi.source = source
+	fdi.discovered = discovered
+	fdi.tags = tags
+	fdi.filters = filters
+	fdi.httpCfg = httpCfg
 
-	if fms.returnError != nil {
-		return nil, fms.returnError
+	if fdi.returnError != nil {
+		return nil, fdi.returnError
 	}
 
 	return nil, nil
+}
+
+func (fdi fakePrometheusProviderDependencyInjector) getNodeName() string {
+	return fdi.returnNodeName
 }
