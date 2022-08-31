@@ -280,7 +280,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 		assert.Equal(t, "prom_source", fdi.source)
 	})
 
-	t.Run("default name to URL if no name configured", func(t *testing.T) {
+	t.Run("default name to URL if not configured", func(t *testing.T) {
 		fdi := fakePrometheusProviderDependencyInjector{}
 		cfg := configuration.PrometheusSourceConfig{
 			URL: "http://test-prometheus-url.com",
@@ -295,7 +295,22 @@ func TestNewPrometheusProvider(t *testing.T) {
 		assert.Equal(t, fmt.Sprintf("%s: fake name", providerName), prometheusProvider.Name())
 	})
 
-	t.Run("metrics source defaults if only URL provided", func(t *testing.T) {
+	t.Run("default discovered to empty if not configured", func(t *testing.T) {
+		fdi := fakePrometheusProviderDependencyInjector{}
+		cfg := configuration.PrometheusSourceConfig{
+			URL: "http://test-prometheus-url.com",
+		}
+		_, err := prometheusProviderWithMetricsSource(fdi.newMetricsSource, fdi.getNodeName, cfg)
+		assert.NoError(t, err)
+		assert.Equal(t, "", fdi.discovered)
+
+		cfg.Discovered = "fake discovered"
+		_, err = prometheusProviderWithMetricsSource(fdi.newMetricsSource, fdi.getNodeName, cfg)
+		assert.NoError(t, err)
+		assert.Equal(t, "fake discovered", fdi.discovered)
+	})
+
+	t.Run("metrics source defaults with minimal configuration", func(t *testing.T) {
 		fdi := fakePrometheusProviderDependencyInjector{}
 		cfg := configuration.PrometheusSourceConfig{
 			URL: "http://test-prometheus-url.com",
@@ -303,12 +318,15 @@ func TestNewPrometheusProvider(t *testing.T) {
 		_, err := prometheusProviderWithMetricsSource(fdi.newMetricsSource, fdi.getNodeName, cfg)
 		assert.NoError(t, err)
 
-		assert.Equal(t, "http://test-prometheus-url.com", fdi.metricsURL)
-		assert.Equal(t, "", fdi.discovered)
+		assert.Equal(t, httputil.ClientConfig{}, fdi.httpCfg)
+		assert.Equal(t, "", fdi.prefix)
 		assert.Equal(t, map[string]string(nil), fdi.tags)
 		assert.Equal(t, nil, fdi.filters)
-		assert.Equal(t, httputil.ClientConfig{}, fdi.httpCfg)
+
+		assert.Equal(t, "http://test-prometheus-url.com", fdi.metricsURL)
 	})
+
+	// TODO leader election based on config or discovered
 
 	t.Run("returns an error if metrics source creation fails", func(t *testing.T) {
 		fdi := fakePrometheusProviderDependencyInjector{
