@@ -243,7 +243,7 @@ func prometheusProviderWithMetricsSource(newMetricsSource metricsSourceConstruct
 	}
 
 	discovered := configuration.GetStringValue(cfg.Discovered, "")
-	log.Debugf("name: %s discovered: %s", name, discovered)
+	log.Debugf("name: '%s' discovered: '%s'", name, discovered)
 
 	httpCfg := cfg.HTTPClientConfig
 	prefix := cfg.Prefix
