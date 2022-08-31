@@ -168,6 +168,7 @@ func TestDiscoveredPrometheusMetricSource(t *testing.T) {
 	})
 }
 
+// TODO actual Scrape tests
 func Test_prometheusMetricsSource_Scrape(t *testing.T) {
 	type fields struct {
 		metricsURL           string
@@ -214,6 +215,7 @@ func Test_prometheusMetricsSource_Scrape(t *testing.T) {
 	}
 }
 
+// TODO actual GetMetricsSources tests
 func Test_prometheusProvider_GetMetricsSources(t *testing.T) {
 	type fields struct {
 		DefaultSourceProvider metrics.DefaultSourceProvider
@@ -271,6 +273,26 @@ func TestNewPrometheusProvider(t *testing.T) {
 		_, err = prometheusProviderWithMetricsSource(fdi.newMetricsSource, fdi.getNodeName, cfg)
 		assert.NoError(t, err)
 		assert.Equal(t, "fake node name", fdi.source)
+
+		fdi = fakePrometheusProviderDependencyInjector{}
+		_, err = prometheusProviderWithMetricsSource(fdi.newMetricsSource, fdi.getNodeName, cfg)
+		assert.NoError(t, err)
+		assert.Equal(t, "prom_source", fdi.source)
+	})
+
+	t.Run("default name to URL if no name configured", func(t *testing.T) {
+		fdi := fakePrometheusProviderDependencyInjector{}
+		cfg := configuration.PrometheusSourceConfig{
+			URL: "http://test-prometheus-url.com",
+		}
+		prometheusProvider, err := prometheusProviderWithMetricsSource(fdi.newMetricsSource, fdi.getNodeName, cfg)
+		assert.NoError(t, err)
+		assert.Equal(t, fmt.Sprintf("%s: http://test-prometheus-url.com", providerName), prometheusProvider.Name())
+
+		cfg.Name = "fake name"
+		prometheusProvider, err = prometheusProviderWithMetricsSource(fdi.newMetricsSource, fdi.getNodeName, cfg)
+		assert.NoError(t, err)
+		assert.Equal(t, fmt.Sprintf("%s: fake name", providerName), prometheusProvider.Name())
 	})
 
 	t.Run("metrics source defaults if only URL provided", func(t *testing.T) {
@@ -282,7 +304,6 @@ func TestNewPrometheusProvider(t *testing.T) {
 		assert.NoError(t, err)
 
 		assert.Equal(t, "http://test-prometheus-url.com", fdi.metricsURL)
-		assert.Equal(t, "prom_source", fdi.source)
 		assert.Equal(t, "", fdi.discovered)
 		assert.Equal(t, map[string]string(nil), fdi.tags)
 		assert.Equal(t, nil, fdi.filters)
@@ -301,25 +322,6 @@ func TestNewPrometheusProvider(t *testing.T) {
 	})
 
 	// TODO obviously need to test all logic within this constructor
-
-	t.Run("creates a prometheus provider with name based on configured name or URL", func(t *testing.T) {
-		fdi := fakePrometheusProviderDependencyInjector{}
-		cfg := configuration.PrometheusSourceConfig{
-			Name: "test-name",
-			URL:  "http://test-prometheus-url.com",
-		}
-		prometheusProvider, err := prometheusProviderWithMetricsSource(fdi.newMetricsSource, fdi.getNodeName, cfg)
-		assert.NoError(t, err)
-		assert.Equal(t, fmt.Sprintf("%s: test-name", providerName), prometheusProvider.Name())
-
-		fdi = fakePrometheusProviderDependencyInjector{}
-		cfg = configuration.PrometheusSourceConfig{
-			URL: "http://test-prometheus-url-only.com",
-		}
-		prometheusProvider, err = prometheusProviderWithMetricsSource(fdi.newMetricsSource, fdi.getNodeName, cfg)
-		assert.NoError(t, err)
-		assert.Equal(t, fmt.Sprintf("%s: http://test-prometheus-url-only.com", providerName), prometheusProvider.Name())
-	})
 
 	t.Run("creates a prometheus provider with leader election based on configured leader election or discovery", func(t *testing.T) {
 
