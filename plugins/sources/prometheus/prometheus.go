@@ -229,7 +229,7 @@ func prometheusProviderWithMetricsSource(newMetricsSource metricsSourceConstruct
 		return nil, fmt.Errorf("missing prometheus url")
 	}
 
-	source := configuration.GetStringValue(cfg.Source, util.GetNodeName())
+	source := configuration.GetStringValue(cfg.Source, util.GetNodeName()) // TODO inject node name getter
 	source = configuration.GetStringValue(source, "prom_source")
 
 	name := ""
@@ -246,7 +246,7 @@ func prometheusProviderWithMetricsSource(newMetricsSource metricsSourceConstruct
 	httpCfg := cfg.HTTPClientConfig
 	prefix := cfg.Prefix
 	tags := cfg.Tags
-	filters := filter.FromConfig(cfg.Filters)
+	filters := filter.FromConfig(cfg.Filters) // TODO test all allow and denylist stuff?
 
 	var sources []metrics.Source
 	metricsSource, err := newMetricsSource(cfg.URL, prefix, source, discovered, tags, filters, httpCfg)

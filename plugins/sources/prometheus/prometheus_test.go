@@ -6,6 +6,7 @@ package prometheus
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"net/http"
 	"testing"
@@ -241,68 +242,60 @@ func Test_prometheusProvider_GetMetricsSources(t *testing.T) {
 }
 
 func TestNewPrometheusProvider(t *testing.T) {
-	type args struct {
-		cfg configuration.PrometheusSourceConfig
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    metrics.SourceProvider
-		wantErr assert.ErrorAssertionFunc
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := NewPrometheusProvider(tt.args.cfg)
-			if !tt.wantErr(t, err, fmt.Sprintf("NewPrometheusProvider(%v)", tt.args.cfg)) {
-				return
-			}
-			assert.Equalf(t, tt.want, got, "NewPrometheusProvider(%v)", tt.args.cfg)
-		})
-	}
-
 	t.Run("errors if prometheus URL is missing", func(t *testing.T) {
+		fms := fakeMetricsSourceConstructor{}
 		cfg := configuration.PrometheusSourceConfig{}
-		prometheusProvider, err := NewPrometheusProvider(cfg)
+		prometheusProvider, err := prometheusProviderWithMetricsSource(fms.newMetricsSource, cfg)
 		assert.Nil(t, prometheusProvider)
 		assert.NotNil(t, err)
 	})
 
-	t.Run("creates a prometheus provider with name based on configured name or URL", func(t *testing.T) {
+	t.Run("metrics source defaults if only URL provided", func(t *testing.T) {
+		fms := fakeMetricsSourceConstructor{}
 		cfg := configuration.PrometheusSourceConfig{
-			Name: "test-name",
-			URL:  "http://test-prometheus-url.com",
+			URL: "http://test-prometheus-url.com",
 		}
-		prometheusProvider, err := NewPrometheusProvider(cfg)
+		_, err := prometheusProviderWithMetricsSource(fms.newMetricsSource, cfg)
 		assert.NoError(t, err)
-		assert.Equal(t, fmt.Sprintf("%s: test-name", providerName), prometheusProvider.Name())
 
-		cfg = configuration.PrometheusSourceConfig{
-			URL: "http://test-prometheus-url-only.com",
-		}
-		prometheusProvider, err = NewPrometheusProvider(cfg)
-		assert.NoError(t, err)
-		assert.Equal(t, fmt.Sprintf("%s: http://test-prometheus-url-only.com", providerName), prometheusProvider.Name())
+		assert.Equal(t, "http://test-prometheus-url.com", fms.metricsURL)
+		assert.Equal(t, "prom_source", fms.source)
+		assert.Equal(t, "", fms.discovered)
+		assert.Equal(t, map[string]string(nil), fms.tags)
+		assert.Equal(t, nil, fms.filters)
+		assert.Equal(t, httputil.ClientConfig{}, fms.httpCfg)
 	})
 
-	t.Run("calls metrics source constructor with correct values", func(t *testing.T) {
-		// url, prefix, source, correct discovered value, tags, filters, http config
+	t.Run("returns an error if metrics source creation fails", func(t *testing.T) {
+		fms := fakeMetricsSourceConstructor{
+			returnError: errors.New("fake metrics source error"),
+		}
+		cfg := configuration.PrometheusSourceConfig{
+			URL: "http://test-prometheus-url.com",
+		}
+		_, err := prometheusProviderWithMetricsSource(fms.newMetricsSource, cfg)
+		assert.NotNil(t, err)
+	})
+
+	// TODO obviously need to test all logic within this constructor
+
+	t.Run("creates a prometheus provider with name based on configured name or URL", func(t *testing.T) {
 		fms := fakeMetricsSourceConstructor{}
 		cfg := configuration.PrometheusSourceConfig{
 			Name: "test-name",
 			URL:  "http://test-prometheus-url.com",
 		}
-		_, err := prometheusProviderWithMetricsSource(fms.newMetricsSource, cfg)
+		prometheusProvider, err := prometheusProviderWithMetricsSource(fms.newMetricsSource, cfg)
 		assert.NoError(t, err)
+		assert.Equal(t, fmt.Sprintf("%s: test-name", providerName), prometheusProvider.Name())
 
-		assert.Equal(t, fms.metricsURL, "http://test-prometheus-url.com")
-		//assert.Equal(t, fms.prefix, )
-		//assert.Equal(t, fms.source, )
-		//assert.Equal(t, fms.discovered, )
-		//assert.Equal(t, fms.tags, )
-		//assert.Equal(t, fms.filters, )
-		//assert.Equal(t, fms.httpCfg, )
+		fms = fakeMetricsSourceConstructor{}
+		cfg = configuration.PrometheusSourceConfig{
+			URL: "http://test-prometheus-url-only.com",
+		}
+		prometheusProvider, err = prometheusProviderWithMetricsSource(fms.newMetricsSource, cfg)
+		assert.NoError(t, err)
+		assert.Equal(t, fmt.Sprintf("%s: http://test-prometheus-url-only.com", providerName), prometheusProvider.Name())
 	})
 
 	t.Run("creates a prometheus provider with leader election based on configured leader election or discovery", func(t *testing.T) {
@@ -322,6 +315,8 @@ type fakeMetricsSourceConstructor struct {
 	tags       map[string]string
 	filters    filter.Filter
 	httpCfg    httputil.ClientConfig
+
+	returnError error
 }
 
 func (fms *fakeMetricsSourceConstructor) newMetricsSource(
@@ -340,6 +335,10 @@ func (fms *fakeMetricsSourceConstructor) newMetricsSource(
 	fms.tags = tags
 	fms.filters = filters
 	fms.httpCfg = httpCfg
+
+	if fms.returnError != nil {
+		return nil, fms.returnError
+	}
 
 	return nil, nil
 }
