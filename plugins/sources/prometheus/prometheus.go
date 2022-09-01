@@ -256,13 +256,10 @@ func prometheusProviderWithMetricsSource(newMetricsSource metricsSourceConstruct
 		return nil, fmt.Errorf("error creating source: %v", err)
 	}
 
-	var sources []metrics.Source
-	sources = append(sources, metricsSource)
-
 	return &prometheusProvider{
 		name:              name,
 		useLeaderElection: cfg.UseLeaderElection || discovered == "",
-		sources:           sources,
+		sources:           []metrics.Source{metricsSource},
 	}, nil
 }
 
