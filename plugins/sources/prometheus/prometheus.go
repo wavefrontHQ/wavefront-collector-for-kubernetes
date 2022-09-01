@@ -250,13 +250,13 @@ func prometheusProviderWithMetricsSource(newMetricsSource metricsSourceConstruct
 	tags := cfg.Tags
 	filters := filter.FromConfig(cfg.Filters) // TODO test all allow and denylist stuff?
 
-	var sources []metrics.Source
 	metricsSource, err := newMetricsSource(cfg.URL, prefix, source, discovered, tags, filters, httpCfg)
-	if err == nil {
-		sources = append(sources, metricsSource)
-	} else {
+	if err != nil {
 		return nil, fmt.Errorf("error creating source: %v", err)
 	}
+
+	var sources []metrics.Source
+	sources = append(sources, metricsSource)
 
 	return &prometheusProvider{
 		name:              name,

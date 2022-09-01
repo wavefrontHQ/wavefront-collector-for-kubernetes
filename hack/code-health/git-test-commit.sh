@@ -20,6 +20,6 @@ function gtc() {
     git status
     git commit -m "${message}
 
-    - total test runtime: ${total_runtime}"
+    - total test runtime: ${total_runtime}s"
     git push
 }
