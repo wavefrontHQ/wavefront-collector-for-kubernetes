@@ -247,100 +247,100 @@ func Test_prometheusProvider_GetMetricsSources(t *testing.T) {
 
 func TestNewPrometheusProvider(t *testing.T) {
 	t.Run("errors if prometheus URL is missing", func(t *testing.T) {
-		stubPDI := stubPrometheusProviderDependencyInjector{}
+		mockPDI := mockPrometheusProviderDependencyInjector{}
 		cfg := configuration.PrometheusSourceConfig{}
-		prometheusProvider, err := prometheusProviderWithMetricsSource(stubPDI.newMetricsSource, stubPDI.getNodeName, cfg)
+		prometheusProvider, err := prometheusProviderWithMetricsSource(mockPDI.newMetricsSource, mockPDI.getNodeName, cfg)
 		assert.Nil(t, prometheusProvider)
 		assert.NotNil(t, err)
 	})
 
 	t.Run("use configured source, node name, or 'prom_source' as source tag", func(t *testing.T) {
-		stubPDI := stubPrometheusProviderDependencyInjector{}
+		mockPDI := mockPrometheusProviderDependencyInjector{}
 		cfg := configuration.PrometheusSourceConfig{
 			URL: "fake url",
 			Transforms: configuration.Transforms{
 				Source: "fake source",
 			},
 		}
-		_, err := prometheusProviderWithMetricsSource(stubPDI.newMetricsSource, stubPDI.getNodeName, cfg)
+		_, err := prometheusProviderWithMetricsSource(mockPDI.newMetricsSource, mockPDI.getNodeName, cfg)
 		assert.NoError(t, err)
-		assert.Equal(t, "fake source", stubPDI.source)
+		assert.Equal(t, "fake source", mockPDI.source)
 
-		stubPDI = stubPrometheusProviderDependencyInjector{
+		mockPDI = mockPrometheusProviderDependencyInjector{
 			returnNodeName: "fake node name",
 		}
 		cfg = configuration.PrometheusSourceConfig{
 			URL: "fake url",
 		}
-		_, err = prometheusProviderWithMetricsSource(stubPDI.newMetricsSource, stubPDI.getNodeName, cfg)
+		_, err = prometheusProviderWithMetricsSource(mockPDI.newMetricsSource, mockPDI.getNodeName, cfg)
 		assert.NoError(t, err)
-		assert.Equal(t, "fake node name", stubPDI.source)
+		assert.Equal(t, "fake node name", mockPDI.source)
 
-		stubPDI = stubPrometheusProviderDependencyInjector{}
-		_, err = prometheusProviderWithMetricsSource(stubPDI.newMetricsSource, stubPDI.getNodeName, cfg)
+		mockPDI = mockPrometheusProviderDependencyInjector{}
+		_, err = prometheusProviderWithMetricsSource(mockPDI.newMetricsSource, mockPDI.getNodeName, cfg)
 		assert.NoError(t, err)
-		assert.Equal(t, "prom_source", stubPDI.source)
+		assert.Equal(t, "prom_source", mockPDI.source)
 	})
 
 	t.Run("default name to URL if not configured", func(t *testing.T) {
-		stubPDI := stubPrometheusProviderDependencyInjector{}
+		mockPDI := mockPrometheusProviderDependencyInjector{}
 		cfg := configuration.PrometheusSourceConfig{
 			URL: "http://test-prometheus-url.com",
 		}
-		prometheusProvider, err := prometheusProviderWithMetricsSource(stubPDI.newMetricsSource, stubPDI.getNodeName, cfg)
+		prometheusProvider, err := prometheusProviderWithMetricsSource(mockPDI.newMetricsSource, mockPDI.getNodeName, cfg)
 		assert.NoError(t, err)
 		assert.Equal(t, fmt.Sprintf("%s: http://test-prometheus-url.com", providerName), prometheusProvider.Name())
 
 		cfg.Name = "fake name"
-		prometheusProvider, err = prometheusProviderWithMetricsSource(stubPDI.newMetricsSource, stubPDI.getNodeName, cfg)
+		prometheusProvider, err = prometheusProviderWithMetricsSource(mockPDI.newMetricsSource, mockPDI.getNodeName, cfg)
 		assert.NoError(t, err)
 		assert.Equal(t, fmt.Sprintf("%s: fake name", providerName), prometheusProvider.Name())
 	})
 
 	t.Run("default discovered to empty if not configured", func(t *testing.T) {
-		stubPDI := stubPrometheusProviderDependencyInjector{}
+		mockPDI := mockPrometheusProviderDependencyInjector{}
 		cfg := configuration.PrometheusSourceConfig{
 			URL: "http://test-prometheus-url.com",
 		}
-		_, err := prometheusProviderWithMetricsSource(stubPDI.newMetricsSource, stubPDI.getNodeName, cfg)
+		_, err := prometheusProviderWithMetricsSource(mockPDI.newMetricsSource, mockPDI.getNodeName, cfg)
 		assert.NoError(t, err)
-		assert.Equal(t, "", stubPDI.discovered)
+		assert.Equal(t, "", mockPDI.discovered)
 
 		cfg.Discovered = "fake discovered"
-		_, err = prometheusProviderWithMetricsSource(stubPDI.newMetricsSource, stubPDI.getNodeName, cfg)
+		_, err = prometheusProviderWithMetricsSource(mockPDI.newMetricsSource, mockPDI.getNodeName, cfg)
 		assert.NoError(t, err)
-		assert.Equal(t, "fake discovered", stubPDI.discovered)
+		assert.Equal(t, "fake discovered", mockPDI.discovered)
 	})
 
 	t.Run("metrics source defaults with minimal configuration", func(t *testing.T) {
-		stubPDI := stubPrometheusProviderDependencyInjector{}
+		mockPDI := mockPrometheusProviderDependencyInjector{}
 		cfg := configuration.PrometheusSourceConfig{
 			URL: "http://test-prometheus-url.com",
 		}
-		_, err := prometheusProviderWithMetricsSource(stubPDI.newMetricsSource, stubPDI.getNodeName, cfg)
+		_, err := prometheusProviderWithMetricsSource(mockPDI.newMetricsSource, mockPDI.getNodeName, cfg)
 		assert.NoError(t, err)
 
-		assert.Equal(t, httputil.ClientConfig{}, stubPDI.httpCfg)
-		assert.Equal(t, "", stubPDI.prefix)
-		assert.Equal(t, map[string]string(nil), stubPDI.tags)
-		assert.Equal(t, nil, stubPDI.filters)
+		assert.Equal(t, httputil.ClientConfig{}, mockPDI.httpCfg)
+		assert.Equal(t, "", mockPDI.prefix)
+		assert.Equal(t, map[string]string(nil), mockPDI.tags)
+		assert.Equal(t, nil, mockPDI.filters)
 
-		assert.Equal(t, "http://test-prometheus-url.com", stubPDI.metricsURL)
+		assert.Equal(t, "http://test-prometheus-url.com", mockPDI.metricsURL)
 	})
 
 	t.Run("returns an error if metrics source creation fails", func(t *testing.T) {
-		stubPDI := stubPrometheusProviderDependencyInjector{
+		mockPDI := mockPrometheusProviderDependencyInjector{
 			returnError: errors.New("fake metrics source error"),
 		}
 		cfg := configuration.PrometheusSourceConfig{
 			URL: "http://test-prometheus-url.com",
 		}
-		_, err := prometheusProviderWithMetricsSource(stubPDI.newMetricsSource, stubPDI.getNodeName, cfg)
+		_, err := prometheusProviderWithMetricsSource(mockPDI.newMetricsSource, mockPDI.getNodeName, cfg)
 		assert.NotNil(t, err)
 	})
 
 	t.Run("prometheus provider sources contains whatever is returned by metrics source constructor", func(t *testing.T) {
-		stubPDI := stubPrometheusProviderDependencyInjector{
+		mockPDI := mockPrometheusProviderDependencyInjector{
 			returnMetricsSource: fakePrometheusMetricsSource{
 				metricsURL: "fake metrics source url",
 				prefix:     "fake metrics source prefix",
@@ -355,7 +355,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 			UseLeaderElection: false,
 			Discovered:        "fake discovered",
 		}
-		prometheusProvider, err := prometheusProviderWithMetricsSource(stubPDI.newMetricsSource, stubPDI.getNodeName, cfg)
+		prometheusProvider, err := prometheusProviderWithMetricsSource(mockPDI.newMetricsSource, mockPDI.getNodeName, cfg)
 		assert.NoError(t, err)
 
 		mockAgentType, err := options.NewAgentType("cluster")
@@ -363,13 +363,26 @@ func TestNewPrometheusProvider(t *testing.T) {
 		util.SetAgentType(mockAgentType)
 		fakeSource := prometheusProvider.GetMetricsSources()[0].(fakePrometheusMetricsSource)
 
+		// notes from Matt
+		// leader election is what makes this have to be global
+		// can't dependency inject agent type and still have leader election global
+		// lot of subtle implications not well covered by tests
+		// increasing test coverage may help rip out global leadership
+		// let needs of function drive order; do what feels most obvious
+		// first test -> PR -> then try to make the major refactors
+		// just the tests alone would be valuable
+		// test -> marinate -> see problems holistically -> refactor fearlessly
+		// providers are factories for sources; they could be a function that creates a scrape function--crazy refactor though
+
+		// new technique: comment THE WHOLE FUNCTION and TDD the uncommenting
+
 		assert.Equal(t, "fake metrics source url", fakeSource.metricsURL)
 		assert.Equal(t, "fake metrics source prefix", fakeSource.prefix)
 		assert.Equal(t, "fake metrics source source", fakeSource.source)
 	})
 
 	t.Run("creates a prometheus provider with leader election based on configured leader election or discovery", func(t *testing.T) {
-		stubPDI := stubPrometheusProviderDependencyInjector{}
+		mockPDI := mockPrometheusProviderDependencyInjector{}
 
 		cfg := configuration.PrometheusSourceConfig{
 			URL: "http://test-prometheus-url.com",
@@ -377,7 +390,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 			UseLeaderElection: false,
 			Discovered:        "fake discovered",
 		}
-		promProvider, err := prometheusProviderWithMetricsSource(stubPDI.newMetricsSource, stubPDI.getNodeName, cfg)
+		promProvider, err := prometheusProviderWithMetricsSource(mockPDI.newMetricsSource, mockPDI.getNodeName, cfg)
 		assert.NoError(t, err)
 
 		// TODO should not be testing internal fields, but for now this shines a light on
@@ -390,7 +403,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 			UseLeaderElection: true,
 			Discovered:        "fake discovered",
 		}
-		promProvider, err = prometheusProviderWithMetricsSource(stubPDI.newMetricsSource, stubPDI.getNodeName, cfg)
+		promProvider, err = prometheusProviderWithMetricsSource(mockPDI.newMetricsSource, mockPDI.getNodeName, cfg)
 		assert.NoError(t, err)
 		assert.True(t, promProvider.(*prometheusProvider).useLeaderElection)
 
@@ -400,7 +413,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 			UseLeaderElection: false,
 			Discovered:        "",
 		}
-		promProvider, err = prometheusProviderWithMetricsSource(stubPDI.newMetricsSource, stubPDI.getNodeName, cfg)
+		promProvider, err = prometheusProviderWithMetricsSource(mockPDI.newMetricsSource, mockPDI.getNodeName, cfg)
 		assert.NoError(t, err)
 		assert.True(t, promProvider.(*prometheusProvider).useLeaderElection)
 	})
@@ -410,7 +423,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 	})
 }
 
-type stubPrometheusProviderDependencyInjector struct {
+type mockPrometheusProviderDependencyInjector struct {
 	metricsURL string
 	prefix     string
 	source     string
@@ -424,7 +437,7 @@ type stubPrometheusProviderDependencyInjector struct {
 	returnMetricsSource metrics.Source
 }
 
-func (pdi *stubPrometheusProviderDependencyInjector) newMetricsSource(
+func (pdi *mockPrometheusProviderDependencyInjector) newMetricsSource(
 	metricsURL,
 	prefix,
 	source,
@@ -448,7 +461,7 @@ func (pdi *stubPrometheusProviderDependencyInjector) newMetricsSource(
 	return pdi.returnMetricsSource, nil
 }
 
-func (pdi stubPrometheusProviderDependencyInjector) getNodeName() string {
+func (pdi mockPrometheusProviderDependencyInjector) getNodeName() string {
 	return pdi.returnNodeName
 }
 

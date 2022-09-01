@@ -226,6 +226,7 @@ type metricsSourceConstructor func(
 
 type nodeNameGetter func() string
 
+// TODO don't need to inject node name function; just inject string. duh.
 func prometheusProviderWithMetricsSource(newMetricsSource metricsSourceConstructor, getNodeName nodeNameGetter, cfg configuration.PrometheusSourceConfig) (metrics.SourceProvider, error) {
 	if len(cfg.URL) == 0 {
 		return nil, fmt.Errorf("missing prometheus url")
