@@ -368,16 +368,45 @@ func TestNewPrometheusProvider(t *testing.T) {
 		assert.Equal(t, "fake metrics source source", fakeSource.source)
 	})
 
-	// TODO leader election based on config or discovered
-
-	// TODO obviously need to test all logic within this constructor
-
 	t.Run("creates a prometheus provider with leader election based on configured leader election or discovery", func(t *testing.T) {
+		stubPDI := stubPrometheusProviderDependencyInjector{}
 
+		cfg := configuration.PrometheusSourceConfig{
+			URL: "http://test-prometheus-url.com",
+
+			UseLeaderElection: false,
+			Discovered:        "fake discovered",
+		}
+		promProvider, err := prometheusProviderWithMetricsSource(stubPDI.newMetricsSource, stubPDI.getNodeName, cfg)
+		assert.NoError(t, err)
+
+		// TODO should not be testing internal fields, but for now this shines a light on
+		// questions I have about the design of this.
+		assert.False(t, promProvider.(*prometheusProvider).useLeaderElection)
+
+		cfg = configuration.PrometheusSourceConfig{
+			URL: "http://test-prometheus-url.com",
+
+			UseLeaderElection: true,
+			Discovered:        "fake discovered",
+		}
+		promProvider, err = prometheusProviderWithMetricsSource(stubPDI.newMetricsSource, stubPDI.getNodeName, cfg)
+		assert.NoError(t, err)
+		assert.True(t, promProvider.(*prometheusProvider).useLeaderElection)
+
+		cfg = configuration.PrometheusSourceConfig{
+			URL: "http://test-prometheus-url.com",
+
+			UseLeaderElection: false,
+			Discovered:        "",
+		}
+		promProvider, err = prometheusProviderWithMetricsSource(stubPDI.newMetricsSource, stubPDI.getNodeName, cfg)
+		assert.NoError(t, err)
+		assert.True(t, promProvider.(*prometheusProvider).useLeaderElection)
 	})
 
 	t.Run("creates a prometheus provider with sources based on config name or URL", func(t *testing.T) {
-
+		// TODO what is this? What did I intend with this test?
 	})
 }
 
