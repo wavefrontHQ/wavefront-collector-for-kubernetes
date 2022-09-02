@@ -1,0 +1,27 @@
+plugins:
+  defaultgroup:
+    type: group
+    options:
+      members:
+      - /slack/team~id:T024JFTN4/user~id:W013KA7DHB8
+
+autoreply:
+  message:
+    text: |
+      ^ {{ mention defaultMentions }}
+      
+      Hi! Thank you for coming to our channel! In order to help you get the most efficient answer to your question, could you please answer the questions below? 😃
+      
+      1. What version of the collector and proxy are running?
+      1. What is your deployment environment? (K8s version, cloud, self-hosted, managed, unmanaged)
+      1. How did you install the collector and proxy (TMC, Helm, Operator, Manual)
+      1. What kind of environment is this? (internal customer environment, external customer, POC, demo, lab, dev, test, production, etc.)
+      1. Is it a bug?
+      1. Please provide a shortlink to the appropriate chart/dashboard/customer tenant
+      1. If its a customer environment, what is the customer or prospect, and is it blocking a sales opportunity?
+      1. For questions related to configuration, can you please run
+          `kubectl get configmap/wavefront-collector-config -n wavefront -o yaml`
+         to get the collector config?
+      1. What steps from the troubleshooting guide have you tried? What were the results?
+      1. How is what is happening different that what were you expecting to see?
+      1. Does the troubleshooting dashboard show that your collector is healthy?
