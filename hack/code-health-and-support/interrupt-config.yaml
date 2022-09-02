@@ -25,3 +25,6 @@ autoreply:
       1. What steps from the troubleshooting guide have you tried? What were the results?
       1. How is what is happening different that what were you expecting to see?
       1. Does the troubleshooting dashboard show that your collector is healthy?
+      1. Lastly, could you please go download and run the following script and upload the zip file it creates (k8s-assist-info.zip)? This will help us pinpoint which component of ours is causing the issue.
+      
+          [get-troubleshooting-info.sh](https://raw.githubusercontent.com/wavefrontHQ/wavefront-collector-for-kubernetes/main/hack/code-health-and-support/get-troubleshooting-info.sh)
