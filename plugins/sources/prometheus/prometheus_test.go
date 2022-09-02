@@ -359,7 +359,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 
 	t.Run("prometheus provider sources contains whatever is returned by metrics source constructor", func(t *testing.T) {
 		mockPDI := mockPrometheusProviderDependencyInjector{
-			returnMetricsSource: fakePrometheusMetricsSource{
+			returnMetricsSource: &prometheusMetricsSource{
 				metricsURL: "fake metrics source url",
 				prefix:     "fake metrics source prefix",
 				source:     "fake metrics source source",
@@ -379,7 +379,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 		mockAgentType, err := options.NewAgentType("cluster")
 		assert.NoError(t, err)
 		util.SetAgentType(mockAgentType)
-		fakeSource := prometheusProvider.GetMetricsSources()[0].(fakePrometheusMetricsSource)
+		fakeSource := prometheusProvider.GetMetricsSources()[0].(*prometheusMetricsSource)
 
 		// notes from Matt
 		// leader election is what makes this have to be global
@@ -393,6 +393,8 @@ func TestNewPrometheusProvider(t *testing.T) {
 		// providers are factories for sources; they could be a function that creates a scrape function--crazy refactor though
 
 		// new technique: comment THE WHOLE FUNCTION and TDD the uncommenting
+
+		// what if we used an Observer pattern for leadership election??
 
 		assert.Equal(t, "fake metrics source url", fakeSource.metricsURL)
 		assert.Equal(t, "fake metrics source prefix", fakeSource.prefix)
@@ -481,30 +483,4 @@ func (pdi *mockPrometheusProviderDependencyInjector) newMetricsSource(
 
 func (pdi mockPrometheusProviderDependencyInjector) getNodeName() string {
 	return pdi.returnNodeName
-}
-
-type fakePrometheusMetricsSource struct {
-	metricsURL string
-	prefix     string
-	source     string
-}
-
-func (f fakePrometheusMetricsSource) AutoDiscovered() bool {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (f fakePrometheusMetricsSource) Name() string {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (f fakePrometheusMetricsSource) Scrape() (*metrics.Batch, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (f fakePrometheusMetricsSource) Cleanup() {
-	//TODO implement me
-	panic("implement me")
 }
