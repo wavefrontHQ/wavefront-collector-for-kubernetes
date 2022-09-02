@@ -6,6 +6,7 @@ package prometheus
 import (
 	"bytes"
 	"fmt"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/leadership"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 	"io"
 	"io/ioutil"
@@ -22,7 +23,6 @@ import (
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/httputil"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/leadership"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
 )
@@ -266,5 +266,6 @@ func prometheusProviderWithMetricsSource(newMetricsSource metricsSourceConstruct
 const providerName = "prometheus_metrics_provider"
 
 func NewPrometheusProvider(cfg configuration.PrometheusSourceConfig) (metrics.SourceProvider, error) {
+	// TODO Holistic Refactor
 	return prometheusProviderWithMetricsSource(NewPrometheusMetricsSource, util.GetNodeName, cfg)
 }

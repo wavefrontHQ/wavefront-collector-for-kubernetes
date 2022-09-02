@@ -217,32 +217,50 @@ func Test_prometheusMetricsSource_Scrape(t *testing.T) {
 	}
 }
 
-// TODO actual GetMetricsSources tests
 func Test_prometheusProvider_GetMetricsSources(t *testing.T) {
-	type fields struct {
-		DefaultSourceProvider metrics.DefaultSourceProvider
-		name                  string
-		useLeaderElection     bool
-		sources               []metrics.Source
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		want   []metrics.Source
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			p := &prometheusProvider{
-				DefaultSourceProvider: tt.fields.DefaultSourceProvider,
-				name:                  tt.fields.name,
-				useLeaderElection:     tt.fields.useLeaderElection,
-				sources:               tt.fields.sources,
-			}
-			assert.Equalf(t, tt.want, p.GetMetricsSources(), "GetMetricsSources()")
-		})
-	}
+	t.Run("returns sources dependent on leadership election and leading status", func(t *testing.T) {
+		promProvider := prometheusProvider{
+			useLeaderElection: false,
+			sources: []metrics.Source{&prometheusMetricsSource{
+				metricsURL: "fake metrics url",
+			}},
+		}
+
+		sources := promProvider.GetMetricsSources()
+		assert.Equal(t, []metrics.Source{&prometheusMetricsSource{
+			metricsURL: "fake metrics url",
+		}}, sources)
+
+		promProvider.useLeaderElection = true
+		allAgentType, err := options.NewAgentType("all")
+		assert.NoError(t, err)
+		util.SetAgentType(allAgentType)
+		sources = promProvider.GetMetricsSources()
+		assert.Nil(t, sources)
+
+		promProvider.useLeaderElection = true
+		clusterAgentType, err := options.NewAgentType("cluster")
+		assert.NoError(t, err)
+		util.SetAgentType(clusterAgentType)
+		sources = promProvider.GetMetricsSources()
+		assert.Nil(t, sources)
+
+		promProvider.useLeaderElection = false
+		nodeAgentType, err := options.NewAgentType("node")
+		assert.NoError(t, err)
+		util.SetAgentType(nodeAgentType)
+		sources = promProvider.GetMetricsSources()
+		assert.Equal(t, []metrics.Source{&prometheusMetricsSource{
+			metricsURL: "fake metrics url",
+		}}, sources)
+
+		promProvider.useLeaderElection = true
+		legacyAgentType, err := options.NewAgentType("legacy")
+		assert.NoError(t, err)
+		util.SetAgentType(legacyAgentType)
+		sources = promProvider.GetMetricsSources()
+		assert.Nil(t, sources)
+	})
 }
 
 func TestNewPrometheusProvider(t *testing.T) {
