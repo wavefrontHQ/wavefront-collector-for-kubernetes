@@ -8,7 +8,7 @@ plugins:
 autoreply:
   message:
     text: |
-      ^ {{ mention defaultMentions }}
+      ^ {{ mention ( plugin "defaultgroup" ).members }}
       
       Hi! Thank you for coming to our channel! In order to help you get the most efficient answer to your question, could you please answer the questions below? 😃
       
