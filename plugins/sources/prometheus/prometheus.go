@@ -224,15 +224,13 @@ type metricsSourceConstructor func(
 	httpCfg httputil.ClientConfig,
 ) (metrics.Source, error)
 
-type nodeNameGetter func() string
-
 // TODO don't need to inject node name function; just inject string. duh.
-func prometheusProviderWithMetricsSource(newMetricsSource metricsSourceConstructor, getNodeName nodeNameGetter, cfg configuration.PrometheusSourceConfig) (metrics.SourceProvider, error) {
+func prometheusProviderWithMetricsSource(newMetricsSource metricsSourceConstructor, nodeName string, cfg configuration.PrometheusSourceConfig) (metrics.SourceProvider, error) {
 	if len(cfg.URL) == 0 {
 		return nil, fmt.Errorf("missing prometheus url")
 	}
 
-	source := configuration.GetStringValue(cfg.Source, getNodeName())
+	source := configuration.GetStringValue(cfg.Source, nodeName)
 	source = configuration.GetStringValue(source, "prom_source")
 
 	name := ""
@@ -267,5 +265,5 @@ const providerName = "prometheus_metrics_provider"
 
 func NewPrometheusProvider(cfg configuration.PrometheusSourceConfig) (metrics.SourceProvider, error) {
 	// TODO Holistic Refactor
-	return prometheusProviderWithMetricsSource(NewPrometheusMetricsSource, util.GetNodeName, cfg)
+	return prometheusProviderWithMetricsSource(NewPrometheusMetricsSource, util.GetNodeName(), cfg)
 }
