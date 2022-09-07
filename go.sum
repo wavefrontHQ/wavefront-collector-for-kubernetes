@@ -490,8 +490,8 @@ github.com/vishvananda/netns v0.0.0-20191106174202-0a2b9b5464df/go.mod h1:JP3t17
 github.com/wavefronthq/go-metrics-wavefront v1.0.3 h1:9+PCRCpk070YrASfF826GZX+Mokezd4XNtN0kCHsDr8=
 github.com/wavefronthq/go-metrics-wavefront v1.0.3/go.mod h1:ppFcElto2jS+V/arvmtvjCem4LPJ+h+5aaP2+JmdpN4=
 github.com/wavefronthq/wavefront-sdk-go v0.9.8/go.mod h1:JTGsu+KKgxx+GitC65VVdftN2iep1nVpQi/8EGR6v4Y=
-github.com/wavefronthq/wavefront-sdk-go v0.10.3 h1:tQaOy6FdnU4//roxb2nBrTXsGOQ/5iYZ02JT5vLJESY=
-github.com/wavefronthq/wavefront-sdk-go v0.10.3/go.mod h1:oKJ9Y0y36n+szFm2NiivXI+UubZe3lwfWnN1p+mFNDw=
+github.com/wavefronthq/wavefront-sdk-go v0.10.4 h1:O8jNBlz21GUDN12YiEFwJWRs25C2zTGt1HEf2I2cs+g=
+github.com/wavefronthq/wavefront-sdk-go v0.10.4/go.mod h1:oKJ9Y0y36n+szFm2NiivXI+UubZe3lwfWnN1p+mFNDw=
 github.com/yuin/goldmark v1.1.25/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.1.32/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
