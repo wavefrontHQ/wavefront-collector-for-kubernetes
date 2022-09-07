@@ -49,7 +49,7 @@ function main() {
 
   local DASHBOARD_DEV_URL="$(echo "${DASHBOARD_URL}" | sed 's/integration-//')-dev"
 
-  ../scripts/get-dashboard.sh -t ${WAVEFRONT_TOKEN} -d ${DASHBOARD_URL}
+  ../scripts/get-dashboard.sh -c ${WF_CLUSTER} -t ${WAVEFRONT_TOKEN} -d ${DASHBOARD_URL}
 
   jq ".url = \"${DASHBOARD_DEV_URL}\"" ${DASHBOARD_URL}.json >  ${DASHBOARD_DEV_URL}.json
 
