@@ -477,3 +477,50 @@ func (pdi *mockPrometheusProviderDependencyInjector) newMetricsSource(
 
 	return pdi.returnMetricsSource, nil
 }
+
+//t.Run("sending own status", func(t *testing.T) {
+//    stubKM := test_helper.NewMockKubernetesManager()
+//    expectStatusSent := test_helper.NewExpectStatusSent(wf.WavefrontStatus{}, "testClusterName")
+//
+//    // TODO: so much setup for only one usage...
+//    r, wfCR, apiClient, _ := setup("testWavefrontUrl", "updatedToken", "testClusterName")
+//    r.KubernetesManager = stubKM
+//    r.StatusSender = expectStatusSent
+//
+//    err := apiClient.Delete(context.Background(), wfCR)
+//
+//    _, err = r.Reconcile(context.Background(), defaultRequest())
+//    assert.NoError(t, err)
+//
+//    expectStatusSent.Verify(t)
+//})
+
+//type MockStatusSender struct {
+//    lastStatus      wf.WavefrontStatus
+//    lastClusterName string
+//
+//    expectedStatus      wf.WavefrontStatus
+//    expectedClusterName string
+//}
+//
+//func NewMockStatusSender(expectedStatus wf.WavefrontStatus, expectedClusterName string) *MockStatusSender {
+//    return &MockStatusSender{
+//        expectedStatus:      expectedStatus,
+//        expectedClusterName: expectedClusterName,
+//    }
+//}
+//
+//func (m *MockStatusSender) SendStatus(status wf.WavefrontStatus, clusterName string) error {
+//    m.lastStatus = status
+//    m.lastClusterName = clusterName
+//    return nil
+//}
+//
+//func (m *MockStatusSender) Close() {
+//    panic("did not expect Close to be called on MockStatusSender")
+//}
+//
+//func (m *MockStatusSender) Verify(t *testing.T)  {
+//    require.Equal(t, m.expectedClusterName, m.lastClusterName)
+//    require.Equal(t, m.expectedStatus, m.lastStatus)
+//}
