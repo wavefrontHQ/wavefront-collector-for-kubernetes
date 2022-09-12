@@ -23,3 +23,15 @@ function gtc() {
     - total test runtime: ${total_runtime}s"
     git push
 }
+
+function borkWIP() {
+    local message=$1
+
+    local branch=$(git rev-parse --abbrev-ref HEAD)
+    if [[ $branch != "BORKWIP/"* ]]; then
+        git checkout -b "BORKWIP/${branch}"
+    fi
+
+    echo git commit -m "${message}"
+    echo git push --set-upstream origin
+}

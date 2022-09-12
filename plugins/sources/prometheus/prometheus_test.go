@@ -11,7 +11,9 @@ import (
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/options"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 	"net/http"
+	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
@@ -172,49 +174,51 @@ func TestDiscoveredPrometheusMetricSource(t *testing.T) {
 
 // TODO actual Scrape tests
 func Test_prometheusMetricsSource_Scrape(t *testing.T) {
-	type fields struct {
-		metricsURL           string
-		prefix               string
-		source               string
-		tags                 map[string]string
-		filters              filter.Filter
-		client               *http.Client
-		pps                  gm.Counter
-		eps                  gm.Counter
-		internalMetricsNames []string
-		autoDiscovered       bool
-		omitBucketSuffix     bool
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		want    *metrics.Batch
-		wantErr assert.ErrorAssertionFunc
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			src := &prometheusMetricsSource{
-				metricsURL:           tt.fields.metricsURL,
-				prefix:               tt.fields.prefix,
-				source:               tt.fields.source,
-				tags:                 tt.fields.tags,
-				filters:              tt.fields.filters,
-				client:               tt.fields.client,
-				pps:                  tt.fields.pps,
-				eps:                  tt.fields.eps,
-				internalMetricsNames: tt.fields.internalMetricsNames,
-				autoDiscovered:       tt.fields.autoDiscovered,
-				omitBucketSuffix:     tt.fields.omitBucketSuffix,
+	t.Run("returns a result with current timestamp", func(t *testing.T) {
+		nowTime := time.Now()
+		server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+			writer.WriteHeader(http.StatusOK)
+		}))
+		defer server.Close()
+
+		promMetSource := prometheusMetricsSource{
+			metricsURL: fmt.Sprintf("%s/fake/metrics/path", server.URL),
+			client:     &http.Client{},
+		}
+
+		result, err := promMetSource.Scrape()
+		assert.NoError(t, err)
+		assert.GreaterOrEqual(t, result.Timestamp, nowTime)
+	})
+
+	t.Run("return an error if client fails to get metrics URL", func(t *testing.T) {
+		promMetSource := prometheusMetricsSource{
+			metricsURL: "fake metrics URL",
+			client:     &http.Client{},
+		}
+
+		_, err := promMetSource.Scrape()
+		assert.NotNil(t, err)
+	})
+
+	t.Run("gets the metrics URL", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+			if request.URL.Path != "/fake/metrics/path" {
+				t.Errorf("expected request to '/fake/metrics/path', got '%s'", request.URL.Path)
 			}
-			got, err := src.Scrape()
-			if !tt.wantErr(t, err, fmt.Sprintf("Scrape()")) {
-				return
-			}
-			assert.Equalf(t, tt.want, got, "Scrape()")
-		})
-	}
+
+			writer.WriteHeader(http.StatusOK)
+		}))
+		defer server.Close()
+
+		promMetSource := prometheusMetricsSource{
+			metricsURL: fmt.Sprintf("%s/fake/metrics/path", server.URL),
+			client:     &http.Client{},
+		}
+
+		_, err := promMetSource.Scrape()
+		assert.NoError(t, err)
+	})
 }
 
 func Test_prometheusProvider_GetMetricsSources(t *testing.T) {

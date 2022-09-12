@@ -9,7 +9,6 @@ import (
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/leadership"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"strconv"
@@ -139,38 +138,45 @@ func (e *HTTPError) Error() string {
 	return fmt.Sprintf("error retrieving prometheus metrics from %s (http status %s)", e.MetricsURL, e.Status)
 }
 
+// https://medium.com/zus-health/mocking-outbound-http-requests-in-go-youre-probably-doing-it-wrong-60373a38d2aa
 // TODO unit-test-driven refactor opportunity
 func (src *prometheusMetricsSource) Scrape() (*metrics.Batch, error) {
 	result := &metrics.Batch{
 		Timestamp: time.Now(),
 	}
 
-	// TODO the likely reason this is not unit tested
-	resp, err := src.client.Get(src.metricsURL)
+	//// TODO the likely reason this is not unit tested
+	_, err := src.client.Get(src.metricsURL)
 	if err != nil {
-		collectErrors.Inc(1)
-		src.eps.Inc(1)
 		return nil, err
 	}
-	defer func() {
-		io.Copy(ioutil.Discard, resp.Body)
-		resp.Body.Close()
-	}()
 
-	if resp.StatusCode != http.StatusOK {
-		collectErrors.Inc(1)
-		src.eps.Inc(1)
-		return nil, &HTTPError{MetricsURL: src.metricsURL, Status: resp.Status, StatusCode: resp.StatusCode}
-	}
-
-	result.Metrics, err = src.parseMetrics(resp.Body)
-	if err != nil {
-		collectErrors.Inc(1)
-		src.eps.Inc(1)
-		return result, err
-	}
-	collectedPoints.Inc(int64(result.Points()))
-	src.pps.Inc(int64(result.Points()))
+	/* TODO UNTESTED */
+	//resp, err := src.client.Get(src.metricsURL)
+	//if err != nil {
+	//	collectErrors.Inc(1)
+	//	src.eps.Inc(1)
+	//	return nil, err
+	//}
+	//defer func() {
+	//	io.Copy(ioutil.Discard, resp.Body)
+	//	resp.Body.Close()
+	//}()
+	//
+	//if resp.StatusCode != http.StatusOK {
+	//	collectErrors.Inc(1)
+	//	src.eps.Inc(1)
+	//	return nil, &HTTPError{MetricsURL: src.metricsURL, Status: resp.Status, StatusCode: resp.StatusCode}
+	//}
+	//
+	//result.Metrics, err = src.parseMetrics(resp.Body)
+	//if err != nil {
+	//	collectErrors.Inc(1)
+	//	src.eps.Inc(1)
+	//	return result, err
+	//}
+	//collectedPoints.Inc(int64(result.Points()))
+	//src.pps.Inc(int64(result.Points()))
 
 	return result, nil
 }
