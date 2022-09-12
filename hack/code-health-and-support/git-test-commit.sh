@@ -30,8 +30,9 @@ function borkWIP() {
     local branch=$(git rev-parse --abbrev-ref HEAD)
     if [[ $branch != "BORKWIP/"* ]]; then
         git checkout -b "BORKWIP/${branch}"
+        branch="BORKWIP/${branch}"
     fi
 
-    echo git commit -m "${message}"
-    echo git push --set-upstream origin
+    git commit -m "BORKWIP: ${message}"
+    git push --set-upstream origin "${branch}"
 }
