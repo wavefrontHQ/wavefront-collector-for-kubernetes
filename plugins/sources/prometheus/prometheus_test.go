@@ -198,10 +198,12 @@ func Test_prometheusMetricsSource_Scrape(t *testing.T) {
 			eps:        gm.NewCounter(),
 		}
 
+		collectErrCountBefore := collectErrors.Count()
 		_, err := promMetSource.Scrape()
 		assert.NotNil(t, err)
+		collectErrCountAfter := collectErrors.Count()
 
-		assert.Equal(t, int64(1), collectErrors.Count())
+		assert.Equal(t, int64(1), collectErrCountAfter-collectErrCountBefore)
 		assert.Equal(t, int64(1), promMetSource.eps.Count())
 	})
 
@@ -222,6 +224,35 @@ func Test_prometheusMetricsSource_Scrape(t *testing.T) {
 
 		_, err := promMetSource.Scrape()
 		assert.NoError(t, err)
+	})
+
+	// TODO should I test response close?
+	// t.Run("closes response body at end of scrape to prevent leaking", func(t *testing.T) {}
+
+	t.Run("returns an HTTPError and increments error counters on resp error status", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+			writer.WriteHeader(http.StatusBadRequest)
+		}))
+		defer server.Close()
+
+		promMetSource := prometheusMetricsSource{
+			metricsURL: fmt.Sprintf("%s/fake/metrics/path", server.URL),
+			client:     &http.Client{},
+			eps:        gm.NewCounter(),
+		}
+
+		expectedErr := &HTTPError{
+			MetricsURL: fmt.Sprintf("%s/fake/metrics/path", server.URL),
+			Status:     "400 Bad Request",
+			StatusCode: http.StatusBadRequest,
+		}
+		collectErrCountBefore := collectErrors.Count()
+		_, err := promMetSource.Scrape()
+		assert.Equal(t, expectedErr, err)
+		collectErrCountAfter := collectErrors.Count()
+
+		assert.Equal(t, int64(1), collectErrCountAfter-collectErrCountBefore)
+		assert.Equal(t, int64(1), promMetSource.eps.Count())
 	})
 }
 
