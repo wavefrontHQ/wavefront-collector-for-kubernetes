@@ -191,14 +191,18 @@ func Test_prometheusMetricsSource_Scrape(t *testing.T) {
 		assert.GreaterOrEqual(t, result.Timestamp, nowTime)
 	})
 
-	t.Run("return an error if client fails to get metrics URL", func(t *testing.T) {
+	t.Run("return an error and increments error counters if client fails to get metrics URL", func(t *testing.T) {
 		promMetSource := prometheusMetricsSource{
 			metricsURL: "fake metrics URL",
 			client:     &http.Client{},
+			eps:        gm.NewCounter(),
 		}
 
 		_, err := promMetSource.Scrape()
 		assert.NotNil(t, err)
+
+		assert.Equal(t, int64(1), collectErrors.Count())
+		assert.Equal(t, int64(1), promMetSource.eps.Count())
 	})
 
 	t.Run("gets the metrics URL", func(t *testing.T) {

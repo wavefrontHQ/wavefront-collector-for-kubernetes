@@ -148,14 +148,13 @@ func (src *prometheusMetricsSource) Scrape() (*metrics.Batch, error) {
 	//// TODO the likely reason this is not unit tested
 	_, err := src.client.Get(src.metricsURL)
 	if err != nil {
+		collectErrors.Inc(1)
+		src.eps.Inc(1)
 		return nil, err
 	}
 
 	/* TODO UNTESTED */
 	//resp, err := src.client.Get(src.metricsURL)
-	//if err != nil {
-	//	collectErrors.Inc(1)
-	//	src.eps.Inc(1)
 	//	return nil, err
 	//}
 	//defer func() {
