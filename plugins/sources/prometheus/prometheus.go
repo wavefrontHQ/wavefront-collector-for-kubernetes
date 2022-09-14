@@ -138,8 +138,9 @@ func (e *HTTPError) Error() string {
 	return fmt.Sprintf("error retrieving prometheus metrics from %s (http status %s)", e.MetricsURL, e.Status)
 }
 
-// https://medium.com/zus-health/mocking-outbound-http-requests-in-go-youre-probably-doing-it-wrong-60373a38d2aa
-func (src *prometheusMetricsSource) Scrape() (*metrics.Batch, error) {
+type metricsParser func(reader io.Reader) ([]wf.Metric, error)
+
+func (src *prometheusMetricsSource) scrapeWithParseMetrics(parseMetrics metricsParser) (*metrics.Batch, error) {
 	result := &metrics.Batch{
 		Timestamp: time.Now(),
 	}
@@ -163,17 +164,22 @@ func (src *prometheusMetricsSource) Scrape() (*metrics.Batch, error) {
 		src.eps.Inc(1)
 		return nil, &HTTPError{MetricsURL: src.metricsURL, Status: resp.Status, StatusCode: resp.StatusCode}
 	}
-	//
-	//result.Metrics, err = src.parseMetrics(resp.Body)
-	//if err != nil {
-	//	collectErrors.Inc(1)
-	//	src.eps.Inc(1)
-	//	return result, err
-	//}
-	//collectedPoints.Inc(int64(result.Points()))
-	//src.pps.Inc(int64(result.Points()))
+
+	result.Metrics, err = parseMetrics(resp.Body)
+	if err != nil {
+		collectErrors.Inc(1)
+		src.eps.Inc(1)
+		return result, err
+	}
+	collectedPoints.Inc(int64(result.Points()))
+	src.pps.Inc(int64(result.Points()))
 
 	return result, nil
+}
+
+// https://medium.com/zus-health/mocking-outbound-http-requests-in-go-youre-probably-doing-it-wrong-60373a38d2aa
+func (src *prometheusMetricsSource) Scrape() (*metrics.Batch, error) {
+	return src.scrapeWithParseMetrics(src.parseMetrics)
 }
 
 // parseMetrics converts serialized prometheus metrics to wavefront points

@@ -10,6 +10,8 @@ import (
 	"fmt"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/options"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -184,9 +186,13 @@ func Test_prometheusMetricsSource_Scrape(t *testing.T) {
 		promMetSource := prometheusMetricsSource{
 			metricsURL: fmt.Sprintf("%s/fake/metrics/path", server.URL),
 			client:     &http.Client{},
+			pps:        gm.NewCounter(),
 		}
 
-		result, err := promMetSource.Scrape()
+		stubParseMetrics := func(reader io.Reader) ([]wf.Metric, error) {
+			return nil, nil
+		}
+		result, err := promMetSource.scrapeWithParseMetrics(stubParseMetrics)
 		assert.NoError(t, err)
 		assert.GreaterOrEqual(t, result.Timestamp, nowTime)
 	})
@@ -220,9 +226,13 @@ func Test_prometheusMetricsSource_Scrape(t *testing.T) {
 		promMetSource := prometheusMetricsSource{
 			metricsURL: fmt.Sprintf("%s/fake/metrics/path", server.URL),
 			client:     &http.Client{},
+			pps:        gm.NewCounter(),
 		}
 
-		_, err := promMetSource.Scrape()
+		stubParseMetrics := func(reader io.Reader) ([]wf.Metric, error) {
+			return nil, nil
+		}
+		_, err := promMetSource.scrapeWithParseMetrics(stubParseMetrics)
 		assert.NoError(t, err)
 	})
 
@@ -251,8 +261,70 @@ func Test_prometheusMetricsSource_Scrape(t *testing.T) {
 		assert.Equal(t, expectedErr, err)
 		collectErrCountAfter := collectErrors.Count()
 
+		// TODO getting tired of all this copypasta; could I create test "command" objects with verify(t)?
 		assert.Equal(t, int64(1), collectErrCountAfter-collectErrCountBefore)
 		assert.Equal(t, int64(1), promMetSource.eps.Count())
+	})
+
+	t.Run("returns an error and increments error counters if parseMetrics fails", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+			writer.WriteHeader(http.StatusOK)
+		}))
+		defer server.Close()
+
+		promMetSource := prometheusMetricsSource{
+			metricsURL: fmt.Sprintf("%s/fake/metrics/path", server.URL),
+			client:     &http.Client{},
+			eps:        gm.NewCounter(),
+		}
+
+		collectErrCountBefore := collectErrors.Count()
+		stubParseMetrics := func(reader io.Reader) ([]wf.Metric, error) {
+			return nil, errors.New("fake failed to parse metrics")
+		}
+		_, err := promMetSource.scrapeWithParseMetrics(stubParseMetrics)
+		assert.NotNil(t, err)
+		collectErrCountAfter := collectErrors.Count()
+
+		assert.Equal(t, int64(1), collectErrCountAfter-collectErrCountBefore)
+		assert.Equal(t, int64(1), promMetSource.eps.Count())
+	})
+
+	t.Run("returns metrics based on response body and counts number of points", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+			writer.WriteHeader(http.StatusOK)
+			writer.Write([]byte("fake metrics"))
+		}))
+		defer server.Close()
+
+		promMetSource := prometheusMetricsSource{
+			metricsURL: fmt.Sprintf("%s/fake/metrics/path", server.URL),
+			client:     &http.Client{},
+			pps:        gm.NewCounter(),
+		}
+
+		stubMetric := wf.NewPoint(
+			"fake metric",
+			1.0,
+			time.Now().Unix(),
+			"fake source",
+			map[string]string{},
+		)
+		stubParseMetrics := func(reader io.Reader) ([]wf.Metric, error) {
+			return []wf.Metric{
+				stubMetric,
+				stubMetric,
+			}, nil
+		}
+
+		collectedPointsBefore := collectedPoints.Count()
+		result, err := promMetSource.scrapeWithParseMetrics(stubParseMetrics)
+		assert.NoError(t, err)
+		collectedPointsAfter := collectedPoints.Count()
+		assert.Equal(t, []wf.Metric{stubMetric, stubMetric}, result.Metrics)
+
+		assert.Equal(t, int64(2), collectedPointsAfter-collectedPointsBefore)
+		assert.Equal(t, int64(2), promMetSource.pps.Count())
 	})
 }
 
