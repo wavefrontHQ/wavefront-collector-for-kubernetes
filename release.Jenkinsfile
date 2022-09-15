@@ -67,6 +67,7 @@ pipeline {
             sh 'make gke-connect-to-cluster'
             sh './hack/test/deploy/deploy-local-linux.sh'
             sh './hack/test/test-wavefront-metrics.sh -c ${WF_CLUSTER} -t ${WAVEFRONT_TOKEN} -n ${CONFIG_CLUSTER_NAME} -v ${VERSION}'
+            sh 'make clean-cluster'
           }
         }
       }
