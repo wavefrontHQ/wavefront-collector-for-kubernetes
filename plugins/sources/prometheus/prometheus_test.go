@@ -174,6 +174,46 @@ func TestDiscoveredPrometheusMetricSource(t *testing.T) {
 	})
 }
 
+type ExpectScrapeErrorWithErrorCounts struct {
+	scrapeError    error
+	errCountBefore int64
+	errCountAfter  int64
+	promMetSource  *prometheusMetricsSource
+}
+
+func (e *ExpectScrapeErrorWithErrorCounts) runScrape(promMetSource *prometheusMetricsSource) {
+	e.promMetSource = promMetSource
+	e.promMetSource.eps = gm.NewCounter()
+	e.errCountBefore = collectErrors.Count()
+
+	_, e.scrapeError = promMetSource.Scrape()
+
+	e.errCountAfter = collectErrors.Count()
+}
+
+func (e *ExpectScrapeErrorWithErrorCounts) runScrapeWithParseMetrics(promMetSource *prometheusMetricsSource, parseMetrics metricsParser) {
+	e.promMetSource = promMetSource
+	e.promMetSource.eps = gm.NewCounter()
+	e.errCountBefore = collectErrors.Count()
+
+	_, e.scrapeError = promMetSource.scrapeWithParseMetrics(parseMetrics)
+
+	e.errCountAfter = collectErrors.Count()
+}
+
+func (e *ExpectScrapeErrorWithErrorCounts) verifyErrorNotNil(t *testing.T) {
+	assert.NotNil(t, e.scrapeError)
+}
+
+func (e *ExpectScrapeErrorWithErrorCounts) verifyErrorEquals(t *testing.T, expectedError interface{}) {
+	assert.Equal(t, expectedError, e.scrapeError)
+}
+
+func (e *ExpectScrapeErrorWithErrorCounts) verifyErrorCountsIncreased(t *testing.T) {
+	assert.Equal(t, int64(1), e.errCountAfter-e.errCountBefore)
+	assert.Equal(t, int64(1), e.promMetSource.eps.Count())
+}
+
 // TODO actual Scrape tests
 func Test_prometheusMetricsSource_Scrape(t *testing.T) {
 	t.Run("returns a result with current timestamp", func(t *testing.T) {
@@ -198,19 +238,15 @@ func Test_prometheusMetricsSource_Scrape(t *testing.T) {
 	})
 
 	t.Run("return an error and increments error counters if client fails to get metrics URL", func(t *testing.T) {
-		promMetSource := prometheusMetricsSource{
+		promMetSource := &prometheusMetricsSource{
 			metricsURL: "fake metrics URL",
 			client:     &http.Client{},
-			eps:        gm.NewCounter(),
 		}
 
-		collectErrCountBefore := collectErrors.Count()
-		_, err := promMetSource.Scrape()
-		assert.NotNil(t, err)
-		collectErrCountAfter := collectErrors.Count()
-
-		assert.Equal(t, int64(1), collectErrCountAfter-collectErrCountBefore)
-		assert.Equal(t, int64(1), promMetSource.eps.Count())
+		e := ExpectScrapeErrorWithErrorCounts{}
+		e.runScrape(promMetSource)
+		e.verifyErrorNotNil(t)
+		e.verifyErrorCountsIncreased(t)
 	})
 
 	t.Run("gets the metrics URL", func(t *testing.T) {
@@ -245,10 +281,9 @@ func Test_prometheusMetricsSource_Scrape(t *testing.T) {
 		}))
 		defer server.Close()
 
-		promMetSource := prometheusMetricsSource{
+		promMetSource := &prometheusMetricsSource{
 			metricsURL: fmt.Sprintf("%s/fake/metrics/path", server.URL),
 			client:     &http.Client{},
-			eps:        gm.NewCounter(),
 		}
 
 		expectedErr := &HTTPError{
@@ -256,14 +291,11 @@ func Test_prometheusMetricsSource_Scrape(t *testing.T) {
 			Status:     "400 Bad Request",
 			StatusCode: http.StatusBadRequest,
 		}
-		collectErrCountBefore := collectErrors.Count()
-		_, err := promMetSource.Scrape()
-		assert.Equal(t, expectedErr, err)
-		collectErrCountAfter := collectErrors.Count()
 
-		// TODO getting tired of all this copypasta; could I create test "command" objects with verify(t)?
-		assert.Equal(t, int64(1), collectErrCountAfter-collectErrCountBefore)
-		assert.Equal(t, int64(1), promMetSource.eps.Count())
+		e := ExpectScrapeErrorWithErrorCounts{}
+		e.runScrape(promMetSource)
+		e.verifyErrorEquals(t, expectedErr)
+		e.verifyErrorCountsIncreased(t)
 	})
 
 	t.Run("returns an error and increments error counters if parseMetrics fails", func(t *testing.T) {
@@ -272,22 +304,19 @@ func Test_prometheusMetricsSource_Scrape(t *testing.T) {
 		}))
 		defer server.Close()
 
-		promMetSource := prometheusMetricsSource{
+		promMetSource := &prometheusMetricsSource{
 			metricsURL: fmt.Sprintf("%s/fake/metrics/path", server.URL),
 			client:     &http.Client{},
-			eps:        gm.NewCounter(),
 		}
 
-		collectErrCountBefore := collectErrors.Count()
 		stubParseMetrics := func(reader io.Reader) ([]wf.Metric, error) {
 			return nil, errors.New("fake failed to parse metrics")
 		}
-		_, err := promMetSource.scrapeWithParseMetrics(stubParseMetrics)
-		assert.NotNil(t, err)
-		collectErrCountAfter := collectErrors.Count()
 
-		assert.Equal(t, int64(1), collectErrCountAfter-collectErrCountBefore)
-		assert.Equal(t, int64(1), promMetSource.eps.Count())
+		e := ExpectScrapeErrorWithErrorCounts{}
+		e.runScrapeWithParseMetrics(promMetSource, stubParseMetrics)
+		e.verifyErrorNotNil(t)
+		e.verifyErrorCountsIncreased(t)
 	})
 
 	t.Run("returns metrics based on response body and counts number of points", func(t *testing.T) {
