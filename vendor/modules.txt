@@ -285,7 +285,7 @@ github.com/wavefronthq/wavefront-sdk-go/version
 ## explicit; go 1.17
 golang.org/x/crypto/blake2b
 golang.org/x/crypto/pbkdf2
-# golang.org/x/net v0.0.0-20220225172249-27dd8689420f
+# golang.org/x/net v0.0.0-20220906165146-f3363e06e74c
 ## explicit; go 1.17
 golang.org/x/net/context
 golang.org/x/net/context/ctxhttp
