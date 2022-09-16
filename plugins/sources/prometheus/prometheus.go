@@ -9,6 +9,7 @@ import (
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/leadership"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"strconv"
@@ -154,11 +155,11 @@ func (src *prometheusMetricsSource) scrapeWithParseMetrics(parseMetrics metricsP
 	}
 
 	/* TODO UNTESTED */
-	//defer func() {
-	//	io.Copy(ioutil.Discard, resp.Body)
-	//	resp.Body.Close()
-	//}()
-	//
+	defer func() {
+		io.Copy(ioutil.Discard, resp.Body)
+		resp.Body.Close()
+	}()
+
 	if resp.StatusCode != http.StatusOK {
 		collectErrors.Inc(1)
 		src.eps.Inc(1)
