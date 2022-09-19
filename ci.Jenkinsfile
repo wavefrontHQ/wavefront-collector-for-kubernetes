@@ -79,7 +79,7 @@ pipeline {
                 sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=node-metrics-only make deploy-test'
                 sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=combined make deploy-test'
                 sh 'VERSION_POSTFIX=$VERSION_POSTFIX make deploy-test'
-                sh 'make clean-cluster'
+                sh 'make clean-deployment'
               }
             }
           }
@@ -111,7 +111,7 @@ pipeline {
                 sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=combined make deploy-test'
                 sh 'VERSION_POSTFIX=$VERSION_POSTFIX make deploy-test'
                 sh './hack/test/test-wavefront-metrics.sh -t $WAVEFRONT_TOKEN'
-                sh 'make clean-cluster'
+                sh 'make clean-deployment'
               }
             }
           }
