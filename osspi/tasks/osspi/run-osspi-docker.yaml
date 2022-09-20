@@ -1,0 +1,23 @@
+---
+platform: linux
+image_resource:
+  type: registry-image
+  source:
+    repository: harbor-repo.vmware.com/source_insight_tooling/osspi-runner
+
+inputs:
+  - name: ci_repo
+params:
+  IMAGE:
+  TAG: latest
+  API_KEY:
+  OSM_ENVIRONMENT: beta
+  OSSTP_LOAD_DRY_RUN:
+  ENDPOINT:
+  USERNAME:
+  PRODUCT:
+  VERSION:
+  OSSPI_IGNORE_RULES:
+  APPEND:
+run:
+  path: ci_repo/osspi/tasks/osspi/run-osspi-docker.sh
