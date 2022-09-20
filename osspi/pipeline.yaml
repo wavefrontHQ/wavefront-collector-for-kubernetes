@@ -17,6 +17,16 @@ resources:
     source:
       uri: git@github.com:wavefrontHQ/wavefront-operator-for-kubernetes.git
       private_key: ((osspi.jcornish-github-private-key)) # TODO use a deploy key
+  - name: wavefront-kubernetes-adapter
+    type: git
+    source:
+      uri: git@github.com:wavefrontHQ/wavefront-kubernetes-adapter.git
+      private_key: ((osspi.jcornish-github-private-key)) # TODO use a deploy key
+  - name: prometheus-storage-adapter
+    type: git
+    source:
+      uri: git@github.com:wavefrontHQ/prometheus-storage-adapter.git
+      private_key: ((osspi.jcornish-github-private-key)) # TODO use a deploy key
 jobs:
   - name: osspi-scan-wavefront-collector
     serial: true
@@ -33,8 +43,8 @@ jobs:
           params:
             REPO: project_repo
             OSM_ENVIRONMENT: beta
-            API_KEY: ((osspi.osm-api-key)) # TODO separate beta and prod keys
-            USERNAME: ((osspi.osm-username)) # TODO create OSM service account bot
+            API_KEY: ((osspi.osm-beta-api-key)) # TODO separate beta and prod keys
+            USERNAME: ((osspi.osm-beta-username)) # TODO create OSM service account bot
             PRODUCT: WavefrontKubernetesCollector
             VERSION: Latest
             PREPARE: |
@@ -71,8 +81,8 @@ jobs:
           params:
             REPO: project_repo
             OSM_ENVIRONMENT: beta
-            API_KEY: ((osspi.osm-api-key)) # TODO separate beta and prod keys
-            USERNAME: ((osspi.osm-username)) # TODO create OSM service account bot
+            API_KEY: ((osspi.osm-beta-api-key)) # TODO separate beta and prod keys
+            USERNAME: ((osspi.osm-beta-username)) # TODO create OSM service account bot
             PRODUCT: Wavefront_K8_Operator
             VERSION: Latest
             PREPARE: |
@@ -91,3 +101,109 @@ jobs:
                 version_regex: .*
               - name_regex: gomega
                 version_regex: .*
+  - name: osspi-scan-wavefront-kubernetes-adapter
+    serial: true
+    plan:
+    - in_parallel:
+      - get: wavefront-collector
+        params: { submodules: all }
+      - get: wavefront-kubernetes-adapter
+        params: { submodules: all }
+    - in_parallel:
+      - task: osspi-scan-docker
+        file: wavefront-collector/osspi/tasks/osspi/run-osspi-docker.yaml
+        input_mapping:
+          ci_repo: wavefront-collector
+        params:
+          IMAGE: projects.registry.vmware.com/tanzu_observability/kubernetes-hpa-adapter
+          TAG: passed
+          OSM_ENVIRONMENT: production
+          OSSTP_LOAD_DRY_RUN: true
+          API_KEY: ((osspi.osm-prod-api-key)) # TODO separate beta and prod keys
+          ENDPOINT: https://osm.eng.vmware.com/
+          USERNAME: ((osspi.osm-prod-username)) # TODO create OSM service account bot
+          PRODUCT: WavefrontKubernetesAdapter
+          VERSION: Latest
+          APPEND: true
+      - task: osspi-scan-packages
+        file: wavefront-collector/osspi/tasks/osspi/run-osspi-source.yaml
+        input_mapping:
+          ci_repo: wavefront-collector
+          project_repo: wavefront-kubernetes-adapter
+        params:
+          REPO: project_repo
+          OSM_ENVIRONMENT: production
+          OSSTP_LOAD_DRY_RUN: true
+          API_KEY: ((osspi.osm-prod-api-key)) # TODO separate beta and prod keys
+          USERNAME: ((osspi.osm-prod-username)) # TODO create OSM service account bot
+          PRODUCT: WavefrontKubernetesAdapter
+          VERSION: Latest
+          PREPARE: |
+            go mod vendor
+          OSSPI_SCANNING_PARAMS: |
+            enable: true
+            include_bomtools: "go_mod"
+            search_depth: 5
+            go_mod.path: "/go/bin/go"
+            
+            # exclude for signature scans
+            exclude_patterns:
+              - vendor
+          OSSPI_IGNORE_RULES: |
+            - name_regex: onsi\/ginkgo
+              version_regex: .*
+            - name_regex: gomega
+              version_regex: .*
+  - name: osspi-scan-prometheus-storage-adapter
+    serial: true
+    plan:
+    - in_parallel:
+      - get: wavefront-collector
+        params: { submodules: all }
+      - get: prometheus-storage-adapter
+        params: { submodules: all }
+    - in_parallel:
+      - task: osspi-scan-docker
+        file: wavefront-collector/osspi/tasks/osspi/run-osspi-docker.yaml
+        input_mapping:
+          ci_repo: wavefront-collector
+        params:
+          IMAGE: projects.registry.vmware.com/tanzu_observability/prometheus-storage-adapter
+          TAG: passed
+          OSM_ENVIRONMENT: production
+          OSSTP_LOAD_DRY_RUN: true
+          API_KEY: ((osspi.osm-prod-api-key)) # TODO separate beta and prod keys
+          ENDPOINT: https://osm.eng.vmware.com/
+          USERNAME: ((osspi.osm-prod-username)) # TODO create OSM service account bot
+          PRODUCT: PrometheusStorageAdapter
+          VERSION: Latest
+          APPEND: true
+      - task: osspi-scan-packages
+        file: wavefront-collector/osspi/tasks/osspi/run-osspi-source.yaml
+        input_mapping:
+          ci_repo: wavefront-collector
+          project_repo: prometheus-storage-adapter
+        params:
+          REPO: project_repo
+          OSM_ENVIRONMENT: production
+          OSSTP_LOAD_DRY_RUN: true
+          API_KEY: ((osspi.osm-prod-api-key)) # TODO separate beta and prod keys
+          USERNAME: ((osspi.osm-prod-username)) # TODO create OSM service account bot
+          PRODUCT: PrometheusStorageAdapter
+          VERSION: Latest
+          PREPARE: |
+            go mod vendor
+          OSSPI_SCANNING_PARAMS: |
+            enable: true
+            include_bomtools: "go_mod"
+            search_depth: 5
+            go_mod.path: "/go/bin/go"
+            
+            # exclude for signature scans
+            exclude_patterns:
+              - vendor
+          OSSPI_IGNORE_RULES: |
+            - name_regex: onsi\/ginkgo
+              version_regex: .*
+            - name_regex: gomega
+              version_regex: .*
