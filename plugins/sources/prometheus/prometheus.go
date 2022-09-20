@@ -6,6 +6,8 @@ package prometheus
 import (
 	"bytes"
 	"fmt"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/leadership"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -14,20 +16,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
-
+	"github.com/prometheus/common/expfmt"
+	gometrics "github.com/rcrowley/go-metrics"
+	log "github.com/sirupsen/logrus"
+	"github.com/wavefronthq/go-metrics-wavefront/reporting"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/httputil"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/leadership"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
-
-	log "github.com/sirupsen/logrus"
-
-	"github.com/prometheus/common/expfmt"
-	gometrics "github.com/rcrowley/go-metrics"
-	"github.com/wavefronthq/go-metrics-wavefront/reporting"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
 )
 
 var (
@@ -142,17 +139,22 @@ func (e *HTTPError) Error() string {
 	return fmt.Sprintf("error retrieving prometheus metrics from %s (http status %s)", e.MetricsURL, e.Status)
 }
 
-func (src *prometheusMetricsSource) Scrape() (*metrics.Batch, error) {
+type metricsParser func(reader io.Reader) ([]wf.Metric, error)
+
+func (src *prometheusMetricsSource) scrapeWithParseMetrics(parseMetrics metricsParser) (*metrics.Batch, error) {
 	result := &metrics.Batch{
 		Timestamp: time.Now(),
 	}
 
+	// TODO the likely reason this is not unit tested
 	resp, err := src.client.Get(src.metricsURL)
 	if err != nil {
 		collectErrors.Inc(1)
 		src.eps.Inc(1)
 		return nil, err
 	}
+
+	/* TODO UNTESTED */
 	defer func() {
 		io.Copy(ioutil.Discard, resp.Body)
 		resp.Body.Close()
@@ -164,7 +166,7 @@ func (src *prometheusMetricsSource) Scrape() (*metrics.Batch, error) {
 		return nil, &HTTPError{MetricsURL: src.metricsURL, Status: resp.Status, StatusCode: resp.StatusCode}
 	}
 
-	result.Metrics, err = src.parseMetrics(resp.Body)
+	result.Metrics, err = parseMetrics(resp.Body)
 	if err != nil {
 		collectErrors.Inc(1)
 		src.eps.Inc(1)
@@ -174,6 +176,12 @@ func (src *prometheusMetricsSource) Scrape() (*metrics.Batch, error) {
 	src.pps.Inc(int64(result.Points()))
 
 	return result, nil
+}
+
+// TODO yikes, should we touch code that already works?
+// https://medium.com/zus-health/mocking-outbound-http-requests-in-go-youre-probably-doing-it-wrong-60373a38d2aa
+func (src *prometheusMetricsSource) Scrape() (*metrics.Batch, error) {
+	return src.scrapeWithParseMetrics(src.parseMetrics)
 }
 
 // parseMetrics converts serialized prometheus metrics to wavefront points
@@ -215,14 +223,22 @@ func (p *prometheusProvider) Name() string {
 	return p.name
 }
 
-const providerName = "prometheus_metrics_provider"
+type metricsSourceConstructor func(
+	metricsURL,
+	prefix,
+	source,
+	discovered string,
+	tags map[string]string,
+	filters filter.Filter,
+	httpCfg httputil.ClientConfig,
+) (metrics.Source, error)
 
-func NewPrometheusProvider(cfg configuration.PrometheusSourceConfig) (metrics.SourceProvider, error) {
+func prometheusProviderWithMetricsSource(newMetricsSource metricsSourceConstructor, nodeName string, cfg configuration.PrometheusSourceConfig) (metrics.SourceProvider, error) {
 	if len(cfg.URL) == 0 {
 		return nil, fmt.Errorf("missing prometheus url")
 	}
 
-	source := configuration.GetStringValue(cfg.Source, util.GetNodeName())
+	source := configuration.GetStringValue(cfg.Source, nodeName)
 	source = configuration.GetStringValue(source, "prom_source")
 
 	name := ""
@@ -234,24 +250,28 @@ func NewPrometheusProvider(cfg configuration.PrometheusSourceConfig) (metrics.So
 	}
 
 	discovered := configuration.GetStringValue(cfg.Discovered, "")
-	log.Debugf("name: %s discovered: %s", name, discovered)
+	log.Debugf("name: '%s' discovered: '%s'", name, discovered)
 
 	httpCfg := cfg.HTTPClientConfig
 	prefix := cfg.Prefix
 	tags := cfg.Tags
-	filters := filter.FromConfig(cfg.Filters)
+	filters := filter.FromConfig(cfg.Filters) // TODO test all allow and denylist stuff?
 
-	var sources []metrics.Source
-	metricsSource, err := NewPrometheusMetricsSource(cfg.URL, prefix, source, discovered, tags, filters, httpCfg)
-	if err == nil {
-		sources = append(sources, metricsSource)
-	} else {
+	metricsSource, err := newMetricsSource(cfg.URL, prefix, source, discovered, tags, filters, httpCfg)
+	if err != nil {
 		return nil, fmt.Errorf("error creating source: %v", err)
 	}
 
 	return &prometheusProvider{
 		name:              name,
 		useLeaderElection: cfg.UseLeaderElection || discovered == "",
-		sources:           sources,
+		sources:           []metrics.Source{metricsSource},
 	}, nil
+}
+
+const providerName = "prometheus_metrics_provider"
+
+func NewPrometheusProvider(cfg configuration.PrometheusSourceConfig) (metrics.SourceProvider, error) {
+	// TODO Holistic Refactor
+	return prometheusProviderWithMetricsSource(NewPrometheusMetricsSource, util.GetNodeName(), cfg)
 }

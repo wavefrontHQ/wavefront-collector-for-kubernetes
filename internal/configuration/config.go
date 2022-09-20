@@ -13,36 +13,45 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-// The main configuration struct that drives the Wavefront collector
+// Config is the main configuration struct that drives the Wavefront collector
 type Config struct {
-	// the global interval at which data is pushed. Defaults to 60 seconds.
-	FlushInterval time.Duration `yaml:"flushInterval"`
-
-	DefaultCollectionInterval time.Duration `yaml:"defaultCollectionInterval"`
-
-	// the timeout for sinks to export data to Wavefront. Defaults to 20 seconds.
-	SinkExportDataTimeout time.Duration `yaml:"sinkExportDataTimeout"`
-
-	// whether auto-discovery is enabled.
-	EnableDiscovery bool `yaml:"enableDiscovery"`
-
-	// whether Events is enabled.
-	EnableEvents bool `yaml:"enableEvents"`
-
+	/* TOP LEVEL CONFIGURATION "PRIMITIVES";
+	 * SIMPLE THINGS THE USER WILL LIKELY NEED TO CONFIGURE. */
 	// A unique identifier for your Kubernetes cluster. Defaults to k8s-cluster.
 	// Included as a point tag on all metrics sent to Wavefront.
 	ClusterName string `yaml:"clusterName"`
 
-	// list of Wavefront sinks. At least 1 is required.
+	// whether Events is enabled.
+	EnableEvents bool `yaml:"enableEvents"`
+
+	// whether auto-discovery is enabled.
+	EnableDiscovery bool `yaml:"enableDiscovery"`
+
+	// FlushInterval is the global interval at which data is PUSHED.
+	// Defaults to 60 seconds.
+	FlushInterval time.Duration `yaml:"flushInterval"`
+
+	// DefaultCollectionInterval is the interval at which data is COLLECTED.
+	// Defaults to 60 seconds but can be increased to
+	// minimize collisions between collection and flush TODO ?
+	DefaultCollectionInterval time.Duration `yaml:"defaultCollectionInterval"`
+
+	/* BIG "MEATY" PARTICULARS OF COLLECTOR CONFIGURATION. */
+	// configuration specific to the events collection.
+	EventsConfig EventsConfig `yaml:"events"`
+
+	// list of Wavefront Sinks. At least 1 is required.
 	Sinks []*WavefrontSinkConfig `yaml:"sinks"`
 
 	// list of sources. SummarySource is mandatory. Others are optional.
 	Sources *SourceConfig `yaml:"sources"`
 
-	// configuration specific to the events collection.
-	EventsConfig EventsConfig `yaml:"events"`
-
+	// DiscoveryConfig for automatic scraping of pods and services based on metadata.
 	DiscoveryConfig discovery.Config `yaml:"discovery"`
+
+	/* HIDDEN, INTERNAL, AND EXPERIMENTAL. */
+	// the timeout for sinks to export data to Wavefront. Defaults to 20 seconds.
+	SinkExportDataTimeout time.Duration `yaml:"sinkExportDataTimeout"`
 
 	// whether to omit the .bucket suffix for prometheus histogram metrics. Defaults to false.
 	OmitBucketSuffix bool `yaml:"omitBucketSuffix"`
@@ -100,7 +109,7 @@ type Transforms struct {
 	Filters filter.Config `yaml:"filters"`
 }
 
-// Configuration options for the Wavefront sink
+// WavefrontSinkConfig has configuration options for the Wavefront sink
 type WavefrontSinkConfig struct {
 	Transforms `yaml:",inline"`
 
