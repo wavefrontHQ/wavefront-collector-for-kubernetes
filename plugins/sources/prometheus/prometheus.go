@@ -178,6 +178,7 @@ func (src *prometheusMetricsSource) scrapeWithParseMetrics(parseMetrics metricsP
 	return result, nil
 }
 
+// TODO yikes, should we touch code that already works?
 // https://medium.com/zus-health/mocking-outbound-http-requests-in-go-youre-probably-doing-it-wrong-60373a38d2aa
 func (src *prometheusMetricsSource) Scrape() (*metrics.Batch, error) {
 	return src.scrapeWithParseMetrics(src.parseMetrics)
