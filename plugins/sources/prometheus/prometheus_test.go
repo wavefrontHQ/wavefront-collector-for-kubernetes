@@ -14,6 +14,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -664,3 +665,37 @@ func (pdi *mockPrometheusProviderDependencyInjector) newMetricsSource(
 //    require.Equal(t, m.expectedClusterName, m.lastClusterName)
 //    require.Equal(t, m.expectedStatus, m.lastStatus)
 //}
+
+func Test_prometheusMetricsSource_parseMetrics(t *testing.T) {
+	t.Run("returns points", func(t *testing.T) {
+		promMetSource := prometheusMetricsSource{}
+		var expectedMetrics []wf.Metric
+
+		stubReader := &strings.Reader{}
+		actualMetrics, err := promMetSource.parseMetrics(stubReader)
+		assert.NoError(t, err)
+
+		assert.Equal(t, expectedMetrics, actualMetrics)
+	})
+
+	t.Run("parses a metric in body of reader", func(t *testing.T) {
+		promMetSource := prometheusMetricsSource{}
+		expectedMetrics := []wf.Metric{
+			wf.NewPoint(
+				"fake.metric.value",
+				10.0,
+				1663860508,
+				"fake source",
+				map[string]string{"fake_label": "fake label value"},
+			),
+		}
+
+		stubReader := strings.NewReader(`
+fake_metric{fake_label="fake label value", source="fake source"} 10
+`)
+		actualMetrics, err := promMetSource.parseMetrics(stubReader)
+		assert.NoError(t, err)
+
+		assert.Equal(t, expectedMetrics, actualMetrics)
+	})
+}
