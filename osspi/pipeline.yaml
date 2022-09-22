@@ -42,9 +42,9 @@ jobs:
             project_repo: wavefront-collector
           params:
             REPO: project_repo
-            OSM_ENVIRONMENT: beta
-            API_KEY: ((osspi.osm-beta-api-key)) # TODO separate beta and prod keys
-            USERNAME: ((osspi.osm-beta-username)) # TODO create OSM service account bot
+            OSM_ENVIRONMENT: production
+            API_KEY: ((osspi.osm-prod-api-key))
+            USERNAME: ((osspi.osm-prod-username))
             PRODUCT: WavefrontKubernetesCollector
             VERSION: Latest
             PREPARE: |
@@ -80,9 +80,9 @@ jobs:
             project_repo: wavefront-operator
           params:
             REPO: project_repo
-            OSM_ENVIRONMENT: beta
-            API_KEY: ((osspi.osm-beta-api-key)) # TODO separate beta and prod keys
-            USERNAME: ((osspi.osm-beta-username)) # TODO create OSM service account bot
+            OSM_ENVIRONMENT: production
+            API_KEY: ((osspi.osm-prod-api-key))
+            USERNAME: ((osspi.osm-prod-username))
             PRODUCT: Wavefront_K8_Operator
             VERSION: Latest
             PREPARE: |
@@ -119,10 +119,9 @@ jobs:
 #          IMAGE: projects.registry.vmware.com/tanzu_observability/kubernetes-hpa-adapter
 #          TAG: passed
 #          OSM_ENVIRONMENT: production
-#          OSSTP_LOAD_DRY_RUN: true
-#          API_KEY: ((osspi.osm-prod-api-key)) # TODO separate beta and prod keys
+#          API_KEY: ((osspi.osm-prod-api-key))
 #          ENDPOINT: https://osm.eng.vmware.com/
-#          USERNAME: ((osspi.osm-prod-username)) # TODO create OSM service account bot
+#          USERNAME: ((osspi.osm-prod-username))
 #          PRODUCT: WavefrontKubernetesAdapter
 #          VERSION: Latest
 #          APPEND: true
@@ -134,9 +133,8 @@ jobs:
         params:
           REPO: project_repo
           OSM_ENVIRONMENT: production
-          OSSTP_LOAD_DRY_RUN: true
-          API_KEY: ((osspi.osm-prod-api-key)) # TODO separate beta and prod keys
-          USERNAME: ((osspi.osm-prod-username)) # TODO create OSM service account bot
+          API_KEY: ((osspi.osm-prod-api-key))
+          USERNAME: ((osspi.osm-prod-username))
           PRODUCT: WavefrontKubernetesAdapter
           VERSION: Latest
           PREPARE: |
@@ -173,10 +171,9 @@ jobs:
 #          IMAGE: projects.registry.vmware.com/tanzu_observability/prometheus-storage-adapter
 #          TAG: passed
 #          OSM_ENVIRONMENT: production
-#          OSSTP_LOAD_DRY_RUN: true
-#          API_KEY: ((osspi.osm-prod-api-key)) # TODO separate beta and prod keys
+#          API_KEY: ((osspi.osm-prod-api-key))
 #          ENDPOINT: https://osm.eng.vmware.com/
-#          USERNAME: ((osspi.osm-prod-username)) # TODO create OSM service account bot
+#          USERNAME: ((osspi.osm-prod-username))
 #          PRODUCT: PrometheusStorageAdapter
 #          VERSION: Latest
 #          APPEND: true
@@ -188,9 +185,8 @@ jobs:
         params:
           REPO: project_repo
           OSM_ENVIRONMENT: production
-          OSSTP_LOAD_DRY_RUN: true
-          API_KEY: ((osspi.osm-prod-api-key)) # TODO separate beta and prod keys
-          USERNAME: ((osspi.osm-prod-username)) # TODO create OSM service account bot
+          API_KEY: ((osspi.osm-prod-api-key))
+          USERNAME: ((osspi.osm-prod-username))
           PRODUCT: PrometheusStorageAdapter
           VERSION: Latest
           PREPARE: |
