@@ -33,6 +33,7 @@ jobs:
     plan:
       - in_parallel:
           - get: wavefront-collector
+            trigger: true
             params: { submodules: all }
       - in_parallel:
         - task: osspi-scan-packages
@@ -71,6 +72,7 @@ jobs:
           - get: wavefront-collector
             params: { submodules: all }
           - get: wavefront-operator
+            trigger: true
             params: { submodules: all }
       - in_parallel:
         - task: osspi-scan-packages
@@ -108,6 +110,7 @@ jobs:
       - get: wavefront-collector
         params: { submodules: all }
       - get: wavefront-kubernetes-adapter
+        trigger: true
         params: { submodules: all }
     - in_parallel:
 #      TODO: Figure out how to pass the below task
@@ -160,6 +163,7 @@ jobs:
       - get: wavefront-collector
         params: { submodules: all }
       - get: prometheus-storage-adapter
+        trigger: true
         params: { submodules: all }
     - in_parallel:
 #      TODO: Figure out how to pass the below task
