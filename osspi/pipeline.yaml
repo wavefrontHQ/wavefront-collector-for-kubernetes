@@ -110,21 +110,22 @@ jobs:
       - get: wavefront-kubernetes-adapter
         params: { submodules: all }
     - in_parallel:
-      - task: osspi-scan-docker
-        file: wavefront-collector/osspi/tasks/osspi/run-osspi-docker.yaml
-        input_mapping:
-          ci_repo: wavefront-collector
-        params:
-          IMAGE: projects.registry.vmware.com/tanzu_observability/kubernetes-hpa-adapter
-          TAG: passed
-          OSM_ENVIRONMENT: production
-          OSSTP_LOAD_DRY_RUN: true
-          API_KEY: ((osspi.osm-prod-api-key)) # TODO separate beta and prod keys
-          ENDPOINT: https://osm.eng.vmware.com/
-          USERNAME: ((osspi.osm-prod-username)) # TODO create OSM service account bot
-          PRODUCT: WavefrontKubernetesAdapter
-          VERSION: Latest
-          APPEND: true
+#      TODO: Figure out how to pass the below task
+#      - task: osspi-scan-docker
+#        file: wavefront-collector/osspi/tasks/osspi/run-osspi-docker.yaml
+#        input_mapping:
+#          ci_repo: wavefront-collector
+#        params:
+#          IMAGE: projects.registry.vmware.com/tanzu_observability/kubernetes-hpa-adapter
+#          TAG: passed
+#          OSM_ENVIRONMENT: production
+#          OSSTP_LOAD_DRY_RUN: true
+#          API_KEY: ((osspi.osm-prod-api-key)) # TODO separate beta and prod keys
+#          ENDPOINT: https://osm.eng.vmware.com/
+#          USERNAME: ((osspi.osm-prod-username)) # TODO create OSM service account bot
+#          PRODUCT: WavefrontKubernetesAdapter
+#          VERSION: Latest
+#          APPEND: true
       - task: osspi-scan-packages
         file: wavefront-collector/osspi/tasks/osspi/run-osspi-source.yaml
         input_mapping:
@@ -163,21 +164,22 @@ jobs:
       - get: prometheus-storage-adapter
         params: { submodules: all }
     - in_parallel:
-      - task: osspi-scan-docker
-        file: wavefront-collector/osspi/tasks/osspi/run-osspi-docker.yaml
-        input_mapping:
-          ci_repo: wavefront-collector
-        params:
-          IMAGE: projects.registry.vmware.com/tanzu_observability/prometheus-storage-adapter
-          TAG: passed
-          OSM_ENVIRONMENT: production
-          OSSTP_LOAD_DRY_RUN: true
-          API_KEY: ((osspi.osm-prod-api-key)) # TODO separate beta and prod keys
-          ENDPOINT: https://osm.eng.vmware.com/
-          USERNAME: ((osspi.osm-prod-username)) # TODO create OSM service account bot
-          PRODUCT: PrometheusStorageAdapter
-          VERSION: Latest
-          APPEND: true
+#      TODO: Figure out how to pass the below task
+#      - task: osspi-scan-docker
+#        file: wavefront-collector/osspi/tasks/osspi/run-osspi-docker.yaml
+#        input_mapping:
+#          ci_repo: wavefront-collector
+#        params:
+#          IMAGE: projects.registry.vmware.com/tanzu_observability/prometheus-storage-adapter
+#          TAG: passed
+#          OSM_ENVIRONMENT: production
+#          OSSTP_LOAD_DRY_RUN: true
+#          API_KEY: ((osspi.osm-prod-api-key)) # TODO separate beta and prod keys
+#          ENDPOINT: https://osm.eng.vmware.com/
+#          USERNAME: ((osspi.osm-prod-username)) # TODO create OSM service account bot
+#          PRODUCT: PrometheusStorageAdapter
+#          VERSION: Latest
+#          APPEND: true
       - task: osspi-scan-packages
         file: wavefront-collector/osspi/tasks/osspi/run-osspi-source.yaml
         input_mapping:
