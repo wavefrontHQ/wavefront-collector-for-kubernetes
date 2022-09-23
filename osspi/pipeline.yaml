@@ -103,6 +103,20 @@ jobs:
                 version_regex: .*
               - name_regex: gomega
                 version_regex: .*
+        - task: osspi-scan-docker
+          file: wavefront-collector/osspi/tasks/osspi/run-osspi-docker.yaml
+          input_mapping:
+            ci_repo: wavefront-collector
+          params:
+            IMAGE: projects.registry.vmware.com/tanzu_observability/kubernetes-operator-fluentd
+            TAG: 1.0.3-1.15.2
+            API_KEY: ((osspi.osm-prod-api-key))
+            OSM_ENVIRONMENT: production
+            ENDPOINT: https://osm.eng.vmware.com/
+            USERNAME: ((osspi.osm-prod-username))
+            PRODUCT: Wavefront_K8_Operator
+            VERSION: Latest
+            APPEND: true
   - name: osspi-scan-wavefront-kubernetes-adapter
     serial: true
     plan:
