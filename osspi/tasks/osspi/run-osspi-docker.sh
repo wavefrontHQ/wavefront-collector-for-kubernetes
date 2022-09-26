@@ -55,11 +55,11 @@ fi
 echo "CT_TRACKER_ID: '${CT_TRACKER_ID}'"
 
 set -x
-osspi scan docker-bom \
+osspi scan docker \
   "${ignore_package_flag[@]}" \
   --image "$IMAGE":"$TAG" \
   --format manifest \
-  --output-dir docker_bom
+  --output-dir docker_scan
 set +x
 
 declare -a osstp_dry_run_flag
@@ -78,6 +78,6 @@ osstp-load.py \
   "${baseos_append_flag[@]}" \
   --noinput \
   --baseos-ct-tracker "$CT_TRACKER_ID" \
-  docker_bom/osspi_docker_detect_result.manifest
+  docker_scan/osspi_docker_detect_result.manifest
 
 set +x
