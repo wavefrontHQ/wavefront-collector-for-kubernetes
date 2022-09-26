@@ -117,6 +117,7 @@ jobs:
             PRODUCT: Wavefront_K8_Operator
             VERSION: Latest
             APPEND: true
+            CT_TRACKER_OS: debian
   - name: osspi-scan-wavefront-kubernetes-adapter
     serial: true
     plan:

@@ -19,23 +19,29 @@ fi
 
 echo "$USERNAME" "$API_KEY" > apiKeyFile
 
-# Get product by name and version to fetch current release ID
-PROJECT_RELEASE_REQUEST=$(curl -L -H "Authorization: ApiKey $USERNAME:$API_KEY" "$ENDPOINT/api/public/v1/release?product_name=$PRODUCT&version=$VERSION")
+echo "Getting product by name and version to fetch current release ID."
+RELEASE_SEARCH_URL="$ENDPOINT/api/public/v1/release?product_name=$PRODUCT&version=$VERSION"
+echo "RELEASE_SEARCH_URL: '${RELEASE_SEARCH_URL}'"
+PROJECT_RELEASE_REQUEST=$(curl -L -H "Authorization: ApiKey $USERNAME:$API_KEY" "$RELEASE_SEARCH_URL")
 MATCHING_RELEASE=$(echo "$PROJECT_RELEASE_REQUEST" | jq ".results[] | .version |= ascii_downcase | select(.version==\"$(echo $VERSION  | tr '[:upper:]' '[:lower:]')\")")
 RELEASE_ID=$(echo "$MATCHING_RELEASE" | jq '.id')
-echo "$RELEASE_ID"
+echo "RELEASE_ID: '${RELEASE_ID}'"
 
-## Get ct tracker master package if exists, if not create it and return the ID
-MASTER_PACKAGE_REQUEST=$(curl -H "Authorization: ApiKey $USERNAME:$API_KEY" "$ENDPOINT/api/public/v1/master_package/?name=ct-tracker-$CT_TRACKER_OS&version=none&repository=Other")
+echo "Getting ct tracker master package if exists. If not, create it and return the ID."
+MASTER_PACKAGE_URL="$ENDPOINT/api/public/v1/master_package/?name=ct-tracker-$CT_TRACKER_OS&version=none&repository=Other"
+echo "MASTER_PACKAGE_URL: '${MASTER_PACKAGE_URL}'"
+MASTER_PACKAGE_REQUEST=$(curl -H "Authorization: ApiKey $USERNAME:$API_KEY" "$MASTER_PACKAGE_URL")
 if [ $(echo "$MASTER_PACKAGE_REQUEST" | jq .count) == 1 ]; then
- MASTER_PACKAGE_ID=$(echo "$MASTER_PACKAGE_REQUEST" | jq ".results[].id")
+  echo "Master package found"
+  MASTER_PACKAGE_ID=$(echo "$MASTER_PACKAGE_REQUEST" | jq ".results[].id")
 else
+  echo "Master package not found. Creating package."
   MASTER_PACKAGE_REQUEST=$(curl --request POST -H "Authorization: ApiKey $USERNAME:$API_KEY" --data '{"name":"ct-tracker-$CT_TRACKER_OS","version":"none","repository":"Other"}' "$ENDPOINT/api/public/v1/master_package/")
   MASTER_PACKAGE_ID=$(echo "$MASTER_PACKAGE_REQUEST" | jq ".results[].id")
 fi
-echo "$MASTER_PACKAGE_ID"
+echo "MASTER_PACKAGE_ID: '${MASTER_PACKAGE_ID}'"
 
-## Attach the ct-tracker-ubuntu master package to the osm release ID and return the ct tracker ID
+echo "Attaching the ct-tracker-${CT_TRACKER_OS} master package to the osm release ID and returning the ct tracker ID."
 CT_TRACKER_REQUEST=$(curl --request POST -H "Authorization: ApiKey $USERNAME:$API_KEY" -H "Content-Type: application/json" --data "{\"release_id\":\"$RELEASE_ID\",\"master_package_id\":\"$MASTER_PACKAGE_ID\",\"interaction_type_id\":[\"1\"],\"modified\":\"No\"}" "$ENDPOINT/api/public/v1/package/")
 if [ $(echo "$CT_TRACKER_REQUEST" | jq -r ".err_code") == 40904  ]; then
   ERROR_MESSAGE=$(echo "$CT_TRACKER_REQUEST" | jq -r ".err_msg")
@@ -43,6 +49,7 @@ if [ $(echo "$CT_TRACKER_REQUEST" | jq -r ".err_code") == 40904  ]; then
 else
   CT_TRACKER_ID=$(echo "$CT_TRACKER_REQUEST" | jq ".results[].id")
 fi
+echo "CT_TRACKER_ID: '${CT_TRACKER_ID}'"
 
 set -x
 osspi scan docker-bom \
