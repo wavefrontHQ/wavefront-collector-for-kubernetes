@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "Running OSSPI"
+echo "Running OSSPI with CT_TRACKER_OS '${CT_TRACKER_OS}'"
 
 #Pass in append
 declare -a baseos_append_flag
@@ -26,11 +26,11 @@ RELEASE_ID=$(echo "$MATCHING_RELEASE" | jq '.id')
 echo "$RELEASE_ID"
 
 ## Get ct tracker master package if exists, if not create it and return the ID
-MASTER_PACKAGE_REQUEST=$(curl -H "Authorization: ApiKey $USERNAME:$API_KEY" "$ENDPOINT/api/public/v1/master_package/?name=ct-tracker-ubuntu&version=none&repository=Other")
+MASTER_PACKAGE_REQUEST=$(curl -H "Authorization: ApiKey $USERNAME:$API_KEY" "$ENDPOINT/api/public/v1/master_package/?name=ct-tracker-$CT_TRACKER_OS&version=none&repository=Other")
 if [ $(echo "$MASTER_PACKAGE_REQUEST" | jq .count) == 1 ]; then
  MASTER_PACKAGE_ID=$(echo "$MASTER_PACKAGE_REQUEST" | jq ".results[].id")
 else
-  MASTER_PACKAGE_REQUEST=$(curl --request POST -H "Authorization: ApiKey $USERNAME:$API_KEY" --data '{"name":"ct-tracker-ubuntu","version":"none","repository":"Other"}' "$ENDPOINT/api/public/v1/master_package/")
+  MASTER_PACKAGE_REQUEST=$(curl --request POST -H "Authorization: ApiKey $USERNAME:$API_KEY" --data '{"name":"ct-tracker-$CT_TRACKER_OS","version":"none","repository":"Other"}' "$ENDPOINT/api/public/v1/master_package/")
   MASTER_PACKAGE_ID=$(echo "$MASTER_PACKAGE_REQUEST" | jq ".results[].id")
 fi
 echo "$MASTER_PACKAGE_ID"
@@ -44,11 +44,13 @@ else
   CT_TRACKER_ID=$(echo "$CT_TRACKER_REQUEST" | jq ".results[].id")
 fi
 
+set -x
 osspi scan docker-bom \
   "${ignore_package_flag[@]}" \
   --image "$IMAGE":"$TAG" \
   --format manifest \
   --output-dir docker_bom
+set +x
 
 declare -a osstp_dry_run_flag
 if [ "${OSSTP_LOAD_DRY_RUN+defined}" = defined ] && [ "$OSSTP_LOAD_DRY_RUN" = 'true' ]; then

@@ -19,5 +19,6 @@ params:
   VERSION:
   OSSPI_IGNORE_RULES:
   APPEND:
+  CT_TRACKER_OS: ubuntu
 run:
   path: ci_repo/osspi/tasks/osspi/run-osspi-docker.sh
