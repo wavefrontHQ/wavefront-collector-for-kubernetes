@@ -45,6 +45,7 @@ echo "MASTER_PACKAGE_ID: '${MASTER_PACKAGE_ID}'"
 
 echo "Attaching the ct-tracker-${CT_TRACKER_OS} master package to the osm release ID and returning the ct tracker ID."
 CT_TRACKER_REQUEST=$(curl --request POST -H "Authorization: ApiKey $USERNAME:$API_KEY" -H "Content-Type: application/json" --data "{\"release_id\":\"$RELEASE_ID\",\"master_package_id\":\"$MASTER_PACKAGE_ID\",\"interaction_type_id\":[\"1\"],\"modified\":\"No\"}" "$ENDPOINT/api/public/v1/package/")
+echo "CT_TRACKER_REQUEST results: '${CT_TRACKER_REQUEST}'"
 if [ $(echo "$CT_TRACKER_REQUEST" | jq -r ".err_code") == 40904  ]; then
   ERROR_MESSAGE=$(echo "$CT_TRACKER_REQUEST" | jq -r ".err_msg")
   CT_TRACKER_ID=$(echo ${ERROR_MESSAGE##* })
