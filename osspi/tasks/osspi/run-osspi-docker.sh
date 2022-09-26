@@ -47,6 +47,7 @@ if [ $(echo "$CT_TRACKER_REQUEST" | jq -r ".err_code") == 40904  ]; then
   ERROR_MESSAGE=$(echo "$CT_TRACKER_REQUEST" | jq -r ".err_msg")
   CT_TRACKER_ID=$(echo ${ERROR_MESSAGE##* })
 else
+  echo "is this where it's failing?! CT_TRACKER_REQUEST: ${CT_TRACKER_REQUEST}"
   CT_TRACKER_ID=$(echo "$CT_TRACKER_REQUEST" | jq ".results[].id")
 fi
 echo "CT_TRACKER_ID: '${CT_TRACKER_ID}'"
