@@ -36,7 +36,9 @@ if [ $(echo "$MASTER_PACKAGE_REQUEST" | jq .count) == 1 ]; then
   MASTER_PACKAGE_ID=$(echo "$MASTER_PACKAGE_REQUEST" | jq ".results[].id")
 else
   echo "Master package not found. Creating package."
-  MASTER_PACKAGE_REQUEST=$(curl --request POST -H "Authorization: ApiKey $USERNAME:$API_KEY" --data '{"name":"ct-tracker-$CT_TRACKER_OS","version":"none","repository":"Other"}' "$ENDPOINT/api/public/v1/master_package/")
+  CT_TRACKER_DATA_PAYLOAD="{\"name\":\"ct-tracker-${CT_TRACKER_OS}\",\"version\":\"none\",\"repository\":\"Other\"}"
+  echo "CT_TRACKER_DATA_PAYLOAD: '${CT_TRACKER_DATA_PAYLOAD}'"
+  MASTER_PACKAGE_REQUEST=$(curl --request POST -H "Authorization: ApiKey $USERNAME:$API_KEY" --data "$CT_TRACKER_DATA_PAYLOAD" "$ENDPOINT/api/public/v1/master_package/")
   MASTER_PACKAGE_ID=$(echo "$MASTER_PACKAGE_REQUEST" | jq ".results[].id")
 fi
 echo "MASTER_PACKAGE_ID: '${MASTER_PACKAGE_ID}'"
@@ -47,7 +49,6 @@ if [ $(echo "$CT_TRACKER_REQUEST" | jq -r ".err_code") == 40904  ]; then
   ERROR_MESSAGE=$(echo "$CT_TRACKER_REQUEST" | jq -r ".err_msg")
   CT_TRACKER_ID=$(echo ${ERROR_MESSAGE##* })
 else
-  echo "is this where it's failing?! CT_TRACKER_REQUEST: ${CT_TRACKER_REQUEST}"
   CT_TRACKER_ID=$(echo "$CT_TRACKER_REQUEST" | jq ".results[].id")
 fi
 echo "CT_TRACKER_ID: '${CT_TRACKER_ID}'"

@@ -14,9 +14,6 @@ export IMAGE
 TAG=1.0.3-1.15.2
 export TAG
 
-API_KEY='<your OSM API key>'
-export API_KEY
-
 OSM_ENVIRONMENT='beta'
 export OSM_ENVIRONMENT
 
@@ -25,9 +22,6 @@ export OSSTP_LOAD_DRY_RUN
 
 ENDPOINT='https://osm-beta.eng.vmware.com/'
 export ENDPOINT
-
-USERNAME='<your OSM email login'
-export USERNAME
 
 PRODUCT='Wavefront_K8_Operator'
 export PRODUCT
@@ -63,3 +57,8 @@ docker run \
   --env APPEND \
   --env CT_TRACKER_OS \
   -it harbor-repo.vmware.com/source_insight_tooling/osspi-runner:latest
+
+# then when you're in the command prompt, just run the osspi task scripts
+# e.g. /workspace/wavefront-collector-for-kubernetes/osspi/tasks/osspi/run-osspi-docker.sh
+
+# see what jq is getting from OSM server and troubleshoot error message
