@@ -678,24 +678,42 @@ func Test_prometheusMetricsSource_parseMetrics(t *testing.T) {
 		assert.Equal(t, expectedMetrics, actualMetrics)
 	})
 
+	// TODO GOAL: capture exact BEHAVIOR fully without any change to the code.
+	// when has a class or function ever been written in isolation? Never. So why are we struggling so much here with dependency injection?
 	t.Run("parses a metric in body of reader", func(t *testing.T) {
 		promMetSource := prometheusMetricsSource{}
-		expectedMetrics := []wf.Metric{
-			wf.NewPoint(
-				"fake.metric.value",
-				10.0,
-				1663860508,
-				"fake source",
-				map[string]string{"fake_label": "fake label value"},
-			),
-		}
+		var fakeTags map[string]string
+		expectedPoint := wf.NewPoint(
+			"fake.metric.value",
+			10.0,
+			time.Now().Unix(),
+			"",
+			fakeTags,
+		)
+		expectedLabelName := "fake_label"
+		expectedLabelValue := "fake label value"
+		expectedPoint.SetLabelPairs([]wf.LabelPair{{
+			Name:  &expectedLabelName,
+			Value: &expectedLabelValue,
+		}})
 
 		stubReader := strings.NewReader(`
-fake_metric{fake_label="fake label value", source="fake source"} 10
+fake_metric{fake_label="fake label value"} 10
 `)
 		actualMetrics, err := promMetSource.parseMetrics(stubReader)
 		assert.NoError(t, err)
 
-		assert.Equal(t, expectedMetrics, actualMetrics)
+		actualPoint := actualMetrics[0].(*wf.Point)
+		assert.Equal(t, expectedPoint.Metric, actualPoint.Metric)
+		assert.Equal(t, expectedPoint.Source, actualPoint.Source)
+		assert.Equal(t, expectedPoint.Value, actualPoint.Value)
+		assert.Equal(t, expectedPoint.Name(), actualPoint.Name())
+		assert.Equal(t, expectedPoint.Tags(), actualPoint.Tags())
+
+		assert.LessOrEqual(t, expectedPoint.Timestamp, actualPoint.Timestamp)
+	})
+
+	t.Run("TODO make sure it parses multiple points", func(t *testing.T) {
+		t.Fail()
 	})
 }

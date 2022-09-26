@@ -6,6 +6,7 @@ package prometheus
 import (
 	"bytes"
 	"fmt"
+	"github.com/prometheus/common/expfmt"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/leadership"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 	"io"
@@ -16,7 +17,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/prometheus/common/expfmt"
 	gometrics "github.com/rcrowley/go-metrics"
 	log "github.com/sirupsen/logrus"
 	"github.com/wavefronthq/go-metrics-wavefront/reporting"
@@ -191,16 +191,16 @@ func (src *prometheusMetricsSource) parseMetrics(reader io.Reader) ([]wf.Metric,
 	pointBuilder := NewPointBuilder(src, filteredPoints)
 	var points []wf.Metric
 	var err error
-	for !metricReader.Done() {
-		var parser expfmt.TextParser
-		reader := bytes.NewReader(metricReader.Read())
-		metricFamilies, err := parser.TextToMetricFamilies(reader)
-		if err != nil {
-			log.Errorf("reading text format failed: %s", err)
-		}
-		pointsToAdd, err := pointBuilder.build(metricFamilies)
-		points = append(points, pointsToAdd...)
+	//for !metricReader.Done() {
+	var parser expfmt.TextParser
+	reader = bytes.NewReader(metricReader.Read())
+	metricFamilies, err := parser.TextToMetricFamilies(reader)
+	if err != nil {
+		log.Errorf("reading text format failed: %s", err)
 	}
+	pointsToAdd, err := pointBuilder.build(metricFamilies)
+	points = append(points, pointsToAdd...)
+	//}
 	return points, err
 }
 
