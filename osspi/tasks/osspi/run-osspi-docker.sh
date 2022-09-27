@@ -28,7 +28,7 @@ RELEASE_ID=$(echo "$MATCHING_RELEASE" | jq '.id')
 echo "RELEASE_ID: '${RELEASE_ID}'"
 
 echo "Getting ct tracker master package if exists. If not, create it and return the ID."
-MASTER_PACKAGE_URL="$ENDPOINT/api/public/v1/master_package/?name=ct-tracker-$CT_TRACKER_OS&version=none&repository=Other&resolution=APPROVED"
+MASTER_PACKAGE_URL="$ENDPOINT/api/public/v1/master_package/?name=ct-tracker-$CT_TRACKER_OS&repository=VMWsource"
 echo "MASTER_PACKAGE_URL: '${MASTER_PACKAGE_URL}'"
 MASTER_PACKAGE_REQUEST=$(curl -H "Authorization: ApiKey $USERNAME:$API_KEY" "$MASTER_PACKAGE_URL")
 if [ $(echo "$MASTER_PACKAGE_REQUEST" | jq .count) == 1 ]; then
