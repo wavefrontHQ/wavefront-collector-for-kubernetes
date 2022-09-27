@@ -191,16 +191,16 @@ func (src *prometheusMetricsSource) parseMetrics(reader io.Reader) ([]wf.Metric,
 	pointBuilder := NewPointBuilder(src, filteredPoints)
 	var points []wf.Metric
 	var err error
-	//for !metricReader.Done() {
-	var parser expfmt.TextParser
-	reader = bytes.NewReader(metricReader.Read())
-	metricFamilies, err := parser.TextToMetricFamilies(reader)
-	if err != nil {
-		log.Errorf("reading text format failed: %s", err)
+	for !metricReader.Done() {
+		var parser expfmt.TextParser
+		reader := bytes.NewReader(metricReader.Read())
+		metricFamilies, err := parser.TextToMetricFamilies(reader)
+		if err != nil {
+			log.Errorf("reading text format failed: %s", err)
+		}
+		pointsToAdd, err := pointBuilder.build(metricFamilies)
+		points = append(points, pointsToAdd...)
 	}
-	pointsToAdd, err := pointBuilder.build(metricFamilies)
-	points = append(points, pointsToAdd...)
-	//}
 	return points, err
 }
 

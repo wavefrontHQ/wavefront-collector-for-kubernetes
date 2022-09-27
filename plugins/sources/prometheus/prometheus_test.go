@@ -682,13 +682,13 @@ func Test_prometheusMetricsSource_parseMetrics(t *testing.T) {
 	// when has a class or function ever been written in isolation? Never. So why are we struggling so much here with dependency injection?
 	t.Run("parses a metric in body of reader", func(t *testing.T) {
 		promMetSource := prometheusMetricsSource{}
-		var fakeTags map[string]string
+		var emptyTags map[string]string
 		expectedPoint := wf.NewPoint(
 			"fake.metric.value",
 			10.0,
 			time.Now().Unix(),
 			"",
-			fakeTags,
+			emptyTags,
 		)
 		expectedLabelName := "fake_label"
 		expectedLabelValue := "fake label value"
@@ -713,7 +713,71 @@ fake_metric{fake_label="fake label value"} 10
 		assert.LessOrEqual(t, expectedPoint.Timestamp, actualPoint.Timestamp)
 	})
 
-	t.Run("TODO make sure it parses multiple points", func(t *testing.T) {
-		t.Fail()
+	t.Run("make sure it parses multiple points", func(t *testing.T) {
+		promMetSource := prometheusMetricsSource{}
+		var emptyTags map[string]string
+		expectedPoint1 := wf.NewPoint(
+			"fake.metric1.value",
+			10.0,
+			time.Now().Unix(),
+			"",
+			emptyTags,
+		)
+		expectedLabelName1 := "fake_label1"
+		expectedLabelValue1 := "fake label value 1"
+		expectedPoint1.SetLabelPairs([]wf.LabelPair{{
+			Name:  &expectedLabelName1,
+			Value: &expectedLabelValue1,
+		}})
+
+		expectedPoint4 := wf.NewPoint(
+			"fake.metric4.value",
+			15.0,
+			time.Now().Unix(),
+			"",
+			emptyTags,
+		)
+		expectedLabelName4 := "fake_label4"
+		expectedLabelValue4 := "fake label value 4"
+		expectedPoint1.SetLabelPairs([]wf.LabelPair{{
+			Name:  &expectedLabelName4,
+			Value: &expectedLabelValue4,
+		}})
+
+		// TODO ugh
+		stubReader := strings.NewReader(`
+fake_metric1{fake_label1="fake label value 1"} 10
+fake_metric2{fake_label2="fake label value 2"} 15
+
+
+fake_metric3{fake_label3="fake label value 3"} 15
+fake_metricX{fake_labelX="fake label value X"} 15
+fake_metricX{fake_labelX="fake label value X"} 15
+fake_metricX{fake_labelX="fake label value X"} 15
+fake_metricX{fake_labelX="fake label value X"} 15
+fake_metricX{fake_labelX="fake label value X"} 15
+fake_metricX{fake_labelX="fake label value X"} 15
+fake_metricX{fake_labelX="fake label value X"} 15
+fake_metricX{fake_labelX="fake label value X"} 15
+fake_metricX{fake_labelX="fake label value X"} 15
+fake_metricX{fake_labelX="fake label value X"} 15
+fake_metricX{fake_labelX="fake label value X"} 15
+fake_metricX{fake_labelX="fake label value X"} 15
+fake_metricX{fake_labelX="fake label value X"} 15
+
+
+
+fake_metric4{fake_label4="fake label value 4"} 15
+`)
+		actualMetrics, err := promMetSource.parseMetrics(stubReader)
+		assert.NoError(t, err)
+
+		actualPoint1 := actualMetrics[0].(*wf.Point)
+		assert.Equal(t, expectedPoint1.Metric, actualPoint1.Metric)
+		assert.Equal(t, expectedPoint1.Value, actualPoint1.Value)
+
+		actualPoint4 := actualMetrics[16].(*wf.Point)
+		assert.Equal(t, expectedPoint4.Metric, actualPoint4.Metric)
+		assert.Equal(t, expectedPoint4.Value, actualPoint4.Value)
 	})
 }
