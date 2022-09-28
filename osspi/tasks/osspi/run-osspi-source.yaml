@@ -1,0 +1,26 @@
+---
+platform: linux
+image_resource:
+  type: registry-image
+  source:
+    repository: harbor-repo.vmware.com/source_insight_tooling/osspi-runner
+
+inputs:
+  - name: ci_repo
+  - name: project_repo
+params:
+  REPO:
+  API_KEY:
+  OSM_ENVIRONMENT: production
+  OSSTP_LOAD_DRY_RUN:
+  OSM_PACKAGE_GROUP_NAME:
+  OSSTP_MULTIPLE_GROUP_VERSIONS:
+  USERNAME:
+  PRODUCT:
+  VERSION:
+  GITHUB_KEY:
+  PREPARE:
+  OSSPI_SCANNING_PARAMS:
+  OSSPI_IGNORE_RULES:
+run:
+  path: ci_repo/osspi/tasks/osspi/run-osspi-source.sh

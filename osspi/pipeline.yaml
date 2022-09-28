@@ -1,0 +1,215 @@
+resource_types:
+  - name: gitlab
+    type: registry-image
+    source:
+      repository: devtools-docker.artifactory.eng.vmware.com/vmware/runway/resourcetypes/gitlab-resource
+      tag: 1.0.0
+
+resources:
+  - name: wavefront-collector
+    type: git
+    source:
+      uri: git@github.com:wavefrontHQ/wavefront-collector-for-kubernetes.git
+      branch: K8SSAAS-1145-migrate-off-norsk-without-leaking-credentials
+      private_key: ((osspi.jcornish-github-private-key)) # TODO use a deploy key
+  - name: wavefront-operator
+    type: git
+    source:
+      uri: git@github.com:wavefrontHQ/wavefront-operator-for-kubernetes.git
+      private_key: ((osspi.jcornish-github-private-key)) # TODO use a deploy key
+  - name: wavefront-kubernetes-adapter
+    type: git
+    source:
+      uri: git@github.com:wavefrontHQ/wavefront-kubernetes-adapter.git
+      private_key: ((osspi.jcornish-github-private-key)) # TODO use a deploy key
+  - name: prometheus-storage-adapter
+    type: git
+    source:
+      uri: git@github.com:wavefrontHQ/prometheus-storage-adapter.git
+      private_key: ((osspi.jcornish-github-private-key)) # TODO use a deploy key
+jobs:
+  - name: osspi-scan-wavefront-collector
+    serial: true
+    plan:
+      - in_parallel:
+          - get: wavefront-collector
+            trigger: true
+            params: { submodules: all }
+      - in_parallel:
+        - task: osspi-scan-packages
+          file: wavefront-collector/osspi/tasks/osspi/run-osspi-source.yaml
+          input_mapping:
+            ci_repo: wavefront-collector
+            project_repo: wavefront-collector
+          params:
+            REPO: project_repo
+            API_KEY: ((osspi.osm-prod-api-key))
+            USERNAME: ((osspi.osm-prod-username))
+            PRODUCT: WavefrontKubernetesCollector
+            VERSION: Latest
+            PREPARE: |
+              go mod vendor
+            OSSPI_SCANNING_PARAMS: |
+              enable: true
+              include_bomtools: "go_mod"
+              search_depth: 5
+              go_mod.path: "/go/bin/go"
+
+              # exclude for signature scans
+              exclude_patterns:
+                - vendor
+            OSSPI_IGNORE_RULES: |
+              - name_regex: onsi\/ginkgo
+                version_regex: .*
+              - name_regex: gomega
+                version_regex: .*
+
+  - name: osspi-scan-wavefront-operator
+    serial: true
+    plan:
+      - in_parallel:
+          - get: wavefront-collector
+            params: { submodules: all }
+          - get: wavefront-operator
+            trigger: true
+            params: { submodules: all }
+      - in_parallel:
+        - task: osspi-scan-packages
+          file: wavefront-collector/osspi/tasks/osspi/run-osspi-source.yaml
+          input_mapping:
+            ci_repo: wavefront-collector
+            project_repo: wavefront-operator
+          params:
+            REPO: project_repo
+            API_KEY: ((osspi.osm-prod-api-key))
+            USERNAME: ((osspi.osm-prod-username))
+            PRODUCT: Wavefront_K8_Operator
+            VERSION: Latest
+            PREPARE: |
+              go mod vendor
+            OSSPI_SCANNING_PARAMS: |
+              enable: true
+              include_bomtools: "go_mod"
+              search_depth: 5
+              go_mod.path: "/go/bin/go"
+
+              # exclude for signature scans
+              exclude_patterns:
+                - vendor
+            OSSPI_IGNORE_RULES: |
+              - name_regex: onsi\/ginkgo
+                version_regex: .*
+              - name_regex: gomega
+                version_regex: .*
+        - task: osspi-scan-docker
+          file: wavefront-collector/osspi/tasks/osspi/run-osspi-docker.yaml
+          input_mapping:
+            ci_repo: wavefront-collector
+          params:
+            IMAGE: projects.registry.vmware.com/tanzu_observability/kubernetes-operator-fluentd
+            TAG: 1.0.3-1.15.2
+            API_KEY: ((osspi.osm-prod-api-key))
+            USERNAME: ((osspi.osm-prod-username))
+            PRODUCT: Wavefront_K8_Operator
+            VERSION: Latest
+            APPEND: true
+  - name: osspi-scan-wavefront-kubernetes-adapter
+    serial: true
+    plan:
+    - in_parallel:
+      - get: wavefront-collector
+        params: { submodules: all }
+      - get: wavefront-kubernetes-adapter
+        trigger: true
+        params: { submodules: all }
+    - in_parallel:
+#      TODO: Figure out how to pass the below task
+#      - task: osspi-scan-docker
+#        file: wavefront-collector/osspi/tasks/osspi/run-osspi-docker.yaml
+#        input_mapping:
+#          ci_repo: wavefront-collector
+#        params:
+#          IMAGE: projects.registry.vmware.com/tanzu_observability/kubernetes-hpa-adapter
+#          TAG: passed
+#          API_KEY: ((osspi.osm-prod-api-key))
+#          USERNAME: ((osspi.osm-prod-username))
+#          PRODUCT: WavefrontKubernetesAdapter
+#          VERSION: Latest
+#          APPEND: true
+      - task: osspi-scan-packages
+        file: wavefront-collector/osspi/tasks/osspi/run-osspi-source.yaml
+        input_mapping:
+          ci_repo: wavefront-collector
+          project_repo: wavefront-kubernetes-adapter
+        params:
+          REPO: project_repo
+          API_KEY: ((osspi.osm-prod-api-key))
+          USERNAME: ((osspi.osm-prod-username))
+          PRODUCT: WavefrontKubernetesAdapter
+          VERSION: Latest
+          PREPARE: |
+            go mod vendor
+          OSSPI_SCANNING_PARAMS: |
+            enable: true
+            include_bomtools: "go_mod"
+            search_depth: 5
+            go_mod.path: "/go/bin/go"
+            
+            # exclude for signature scans
+            exclude_patterns:
+              - vendor
+          OSSPI_IGNORE_RULES: |
+            - name_regex: onsi\/ginkgo
+              version_regex: .*
+            - name_regex: gomega
+              version_regex: .*
+  - name: osspi-scan-prometheus-storage-adapter
+    serial: true
+    plan:
+    - in_parallel:
+      - get: wavefront-collector
+        params: { submodules: all }
+      - get: prometheus-storage-adapter
+        trigger: true
+        params: { submodules: all }
+    - in_parallel:
+#      TODO: Figure out how to pass the below task
+#      - task: osspi-scan-docker
+#        file: wavefront-collector/osspi/tasks/osspi/run-osspi-docker.yaml
+#        input_mapping:
+#          ci_repo: wavefront-collector
+#        params:
+#          IMAGE: projects.registry.vmware.com/tanzu_observability/prometheus-storage-adapter
+#          TAG: passed
+#          API_KEY: ((osspi.osm-prod-api-key))
+#          USERNAME: ((osspi.osm-prod-username))
+#          PRODUCT: PrometheusStorageAdapter
+#          VERSION: Latest
+#          APPEND: true
+      - task: osspi-scan-packages
+        file: wavefront-collector/osspi/tasks/osspi/run-osspi-source.yaml
+        input_mapping:
+          ci_repo: wavefront-collector
+          project_repo: prometheus-storage-adapter
+        params:
+          REPO: project_repo
+          API_KEY: ((osspi.osm-prod-api-key))
+          USERNAME: ((osspi.osm-prod-username))
+          PRODUCT: PrometheusStorageAdapter
+          VERSION: Latest
+          PREPARE: |
+            go mod vendor
+          OSSPI_SCANNING_PARAMS: |
+            enable: true
+            include_bomtools: "go_mod"
+            search_depth: 5
+            go_mod.path: "/go/bin/go"
+            
+            # exclude for signature scans
+            exclude_patterns:
+              - vendor
+          OSSPI_IGNORE_RULES: |
+            - name_regex: onsi\/ginkgo
+              version_regex: .*
+            - name_regex: gomega
+              version_regex: .*
