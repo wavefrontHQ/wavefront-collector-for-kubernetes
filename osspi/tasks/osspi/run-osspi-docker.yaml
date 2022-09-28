@@ -11,14 +11,14 @@ params:
   IMAGE:
   TAG: latest
   API_KEY:
-  OSM_ENVIRONMENT: beta
   OSSTP_LOAD_DRY_RUN:
-  ENDPOINT:
+  OSM_ENVIRONMENT: production
+  ENDPOINT: https://osm.eng.vmware.com/
   USERNAME:
   PRODUCT:
   VERSION:
   OSSPI_IGNORE_RULES:
   APPEND:
-  CT_TRACKER_OS: ubuntu
+  CT_TRACKER_OS: debian
 run:
   path: ci_repo/osspi/tasks/osspi/run-osspi-docker.sh
