@@ -1,4 +1,5 @@
 # shellcheck shell=bash
+# docker-run.sh is for local testing outside of Concourse
 
 set -euo pipefail
 
