@@ -81,3 +81,7 @@ osstp-load.py \
   docker_scan/osspi_docker_detect_result.manifest
 
 set +x
+
+# TODO DELETEME fail so I can hijack and get manifest
+echo 'AAGHH'
+exit 1
