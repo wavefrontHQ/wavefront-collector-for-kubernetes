@@ -82,6 +82,6 @@ osstp-load.py \
 
 set +x
 
-# TODO DELETEME fail so I can hijack and get manifest
-echo 'AAGHH'
-exit 1
+# Uncomment to cause a failure so we can hijack and get docker scan results for debugging
+#echo 'AAGHH'
+#exit 1
