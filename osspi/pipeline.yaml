@@ -107,7 +107,7 @@ jobs:
             ci_repo: wavefront-collector
           params:
             IMAGE: projects.registry.vmware.com/tanzu_observability/kubernetes-operator-fluentd
-            TAG: 1.0.3-1.15.2
+            TAG: 1.1.0-1.15.2
             API_KEY: ((osspi.osm-prod-api-key))
             USERNAME: ((osspi.osm-prod-username))
             PRODUCT: Wavefront_K8_Operator
