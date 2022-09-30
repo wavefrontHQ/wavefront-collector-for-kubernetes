@@ -45,7 +45,7 @@ echo "MASTER_PACKAGE_ID: '${MASTER_PACKAGE_ID}'"
 
 echo "Getting CT_TRACKER_ID from osm release ID that belongs to MASTER_PACKAGE_ID ${MASTER_PACKAGE_ID} if exists. If not, create it and return the CT_TRACKER_ID."
 DISTRIBUTED_CALLING_EXISTING_CLASSES=1
-CT_TRACKER_URL="$ENDPOINT/api/public/v1/package/?release_id=$RELEASE_ID&master_package_id=$MASTER_PACKAGE_ID&interaction_type_id=$DISTRIBUTED_CALLING_EXISTING_CLASSES&modified=No"
+CT_TRACKER_URL="$ENDPOINT/api/public/v1/package/?release=$RELEASE_ID&master_package=$MASTER_PACKAGE_ID"
 echo "CT_TRACKER_URL: '${CT_TRACKER_URL}'"
 CT_TRACKER_REQUEST=$(curl -H "Authorization: ApiKey $USERNAME:$API_KEY" "$CT_TRACKER_URL")
 if [ $(echo "$CT_TRACKER_REQUEST" | jq .count) == 1 ]; then
