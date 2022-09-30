@@ -43,24 +43,45 @@ else
 fi
 echo "MASTER_PACKAGE_ID: '${MASTER_PACKAGE_ID}'"
 
-echo "Attaching the ct-tracker-${CT_TRACKER_OS} master package to the osm release ID and returning the ct tracker ID."
-
+echo "Getting CT_TRACKER_ID from osm release ID that belongs to MASTER_PACKAGE_ID ${MASTER_PACKAGE_ID} if exists. If not, create it and return the CT_TRACKER_ID."
 DISTRIBUTED_CALLING_EXISTING_CLASSES=1
 CT_TRACKER_URL="$ENDPOINT/api/public/v1/package/?release_id=$RELEASE_ID&master_package_id=$MASTER_PACKAGE_ID&interaction_type_id=$DISTRIBUTED_CALLING_EXISTING_CLASSES&modified=No"
 echo "CT_TRACKER_URL: '${CT_TRACKER_URL}'"
-CT_TRACKER_REQUEST=$(curl --request POST -H "Authorization: ApiKey $USERNAME:$API_KEY" "$CT_TRACKER_URL")
-echo "CT_TRACKER_REQUEST results: '${CT_TRACKER_REQUEST}'"
-if [ $(echo "$CT_TRACKER_REQUEST" | jq -r ".err_code") == 40904  ]; then
-  ERROR_MESSAGE=$(echo "$CT_TRACKER_REQUEST" | jq -r ".err_msg")
-  CT_TRACKER_ID=$(echo ${ERROR_MESSAGE##* })
-else
+CT_TRACKER_REQUEST=$(curl -H "Authorization: ApiKey $USERNAME:$API_KEY" "$CT_TRACKER_URL")
+if [ $(echo "$CT_TRACKER_REQUEST" | jq .count) == 1 ]; then
+  echo "ct-tracker-${CT_TRACKER_OS} found in ${PRODUCT} release"
   CT_TRACKER_ID=$(echo "$CT_TRACKER_REQUEST" | jq ".results[].id")
+else
+  echo "CT_TRACKER_ID not found in osm release ID. Creating a new CT_TRACKER_ID."
+  CT_TRACKER_REQUEST=$(curl --request POST -H "Authorization: ApiKey $USERNAME:$API_KEY" -H "Content-Type: application/json" --data "{\"release_id\":\"$RELEASE_ID\",\"master_package_id\":\"$MASTER_PACKAGE_ID\",\"interaction_type_id\":[\"1\"],\"modified\":\"No\"}" "$ENDPOINT/api/public/v1/package/")
+  echo "CT_TRACKER_REQUEST results: '${CT_TRACKER_REQUEST}'"
+  if [ $(echo "$CT_TRACKER_REQUEST" | jq -r ".err_code") == 40904  ]; then
+    ERROR_MESSAGE=$(echo "$CT_TRACKER_REQUEST" | jq -r ".err_msg")
+    CT_TRACKER_ID=$(echo ${ERROR_MESSAGE##* })
+  else
+    CT_TRACKER_ID=$(echo "$CT_TRACKER_REQUEST" | jq ".results[].id")
+  fi
 fi
-echo "CT_TRACKER_ID: '${CT_TRACKER_ID}'"
+echo "CT_TRACKER_ID: '${MASTER_PACKAGE_ID}'"
 
-# TODO: Figure out how to get the correct one 4627362 and not 4613247.
-CT_TRACKER_ID=4627362
-echo "Hardcoding CT_TRACKER_ID: '${CT_TRACKER_ID}'"
+#echo "Attaching the ct-tracker-${CT_TRACKER_OS} master package to the osm release ID and returning the ct tracker ID."
+#
+#DISTRIBUTED_CALLING_EXISTING_CLASSES=1
+#CT_TRACKER_URL="$ENDPOINT/api/public/v1/package/?release_id=$RELEASE_ID&master_package_id=$MASTER_PACKAGE_ID&interaction_type_id=$DISTRIBUTED_CALLING_EXISTING_CLASSES&modified=No"
+#echo "CT_TRACKER_URL: '${CT_TRACKER_URL}'"
+#CT_TRACKER_REQUEST=$(curl --request POST -H "Authorization: ApiKey $USERNAME:$API_KEY" "$CT_TRACKER_URL")
+#echo "CT_TRACKER_REQUEST results: '${CT_TRACKER_REQUEST}'"
+#if [ $(echo "$CT_TRACKER_REQUEST" | jq -r ".err_code") == 40904  ]; then
+#  ERROR_MESSAGE=$(echo "$CT_TRACKER_REQUEST" | jq -r ".err_msg")
+#  CT_TRACKER_ID=$(echo ${ERROR_MESSAGE##* })
+#else
+#  CT_TRACKER_ID=$(echo "$CT_TRACKER_REQUEST" | jq ".results[].id")
+#fi
+#echo "CT_TRACKER_ID: '${CT_TRACKER_ID}'"
+#
+## TODO: Figure out how to get the correct one 4627362 and not 4613247.
+#CT_TRACKER_ID=4627362
+#echo "Hardcoding CT_TRACKER_ID: '${CT_TRACKER_ID}'"
 
 #set -x
 #osspi scan docker \
