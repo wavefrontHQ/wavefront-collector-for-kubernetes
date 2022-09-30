@@ -74,33 +74,33 @@ jobs:
             trigger: true
             params: { submodules: all }
       - in_parallel:
-        - task: osspi-scan-packages
-          file: wavefront-collector/osspi/tasks/osspi/run-osspi-source.yaml
-          input_mapping:
-            ci_repo: wavefront-collector
-            project_repo: wavefront-operator
-          params:
-            REPO: project_repo
-            API_KEY: ((osspi.osm-prod-api-key))
-            USERNAME: ((osspi.osm-prod-username))
-            PRODUCT: Wavefront_K8_Operator
-            VERSION: Latest
-            PREPARE: |
-              go mod vendor
-            OSSPI_SCANNING_PARAMS: |
-              enable: true
-              include_bomtools: "go_mod"
-              search_depth: 5
-              go_mod.path: "/go/bin/go"
-
-              # exclude for signature scans
-              exclude_patterns:
-                - vendor
-            OSSPI_IGNORE_RULES: |
-              - name_regex: onsi\/ginkgo
-                version_regex: .*
-              - name_regex: gomega
-                version_regex: .*
+#        - task: osspi-scan-packages
+#          file: wavefront-collector/osspi/tasks/osspi/run-osspi-source.yaml
+#          input_mapping:
+#            ci_repo: wavefront-collector
+#            project_repo: wavefront-operator
+#          params:
+#            REPO: project_repo
+#            API_KEY: ((osspi.osm-prod-api-key))
+#            USERNAME: ((osspi.osm-prod-username))
+#            PRODUCT: Wavefront_K8_Operator
+#            VERSION: Latest
+#            PREPARE: |
+#              go mod vendor
+#            OSSPI_SCANNING_PARAMS: |
+#              enable: true
+#              include_bomtools: "go_mod"
+#              search_depth: 5
+#              go_mod.path: "/go/bin/go"
+#
+#              # exclude for signature scans
+#              exclude_patterns:
+#                - vendor
+#            OSSPI_IGNORE_RULES: |
+#              - name_regex: onsi\/ginkgo
+#                version_regex: .*
+#              - name_regex: gomega
+#                version_regex: .*
         - task: osspi-scan-docker
           file: wavefront-collector/osspi/tasks/osspi/run-osspi-docker.yaml
           input_mapping:
