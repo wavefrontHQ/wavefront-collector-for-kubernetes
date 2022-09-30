@@ -10,7 +10,6 @@ resources:
     type: git
     source:
       uri: git@github.com:wavefrontHQ/wavefront-collector-for-kubernetes.git
-      branch: K8SSAAS-1145-migrate-off-norsk-without-leaking-credentials
       private_key: ((osspi.jcornish-github-private-key)) # TODO use a deploy key
   - name: wavefront-operator
     type: git
