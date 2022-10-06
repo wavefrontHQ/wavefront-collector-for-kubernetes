@@ -21,9 +21,9 @@ function main() {
   local DASHBOARD_URL=
 
   local WF_CLUSTER=nimba
+  local DASHBOARD_OUTPUT_FILE=
 
-
-  while getopts ":c:t:d:" opt; do
+  while getopts ":c:t:d:o:" opt; do
     case $opt in
     c)
       WF_CLUSTER="$OPTARG"
@@ -33,6 +33,9 @@ function main() {
       ;;
     d)
       DASHBOARD_URL="$OPTARG"
+      ;;
+    o)
+      DASHBOARD_OUTPUT_FILE="$OPTARG"
       ;;
     \?)
       print_usage_and_exit "Invalid option: -$OPTARG"
@@ -48,26 +51,15 @@ function main() {
     print_msg_and_exit "dashboard url required"
   fi
 
+  if [[ -z ${DASHBOARD_OUTPUT_FILE} ]]; then
+    print_msg_and_exit "dashboard output file required"
+  fi
+
   curl -sX GET --header "Accept: application/json" \
     --header "Authorization: Bearer ${WAVEFRONT_TOKEN}" \
     "https://${WF_CLUSTER}.wavefront.com/api/v2/dashboard/${DASHBOARD_URL}" \
-    | jq "del(.response | ${excludedKeys})"  | jq .response > ${DASHBOARD_URL}-partial-base.json
-
-  cat ${DASHBOARD_URL}-partial-base.json  | jq "del(.sections , .parameterDetails)" > ${DASHBOARD_URL}-partial-reduced.json
-  cat ${DASHBOARD_URL}-partial-base.json  |  jq '. | {"sections": .sections}' | jq --sort-keys >> ${DASHBOARD_URL}-partial-sections.json
-  cat ${DASHBOARD_URL}-partial-base.json  |  jq '. | {"parameterDetails": .parameterDetails}' | jq --sort-keys >> ${DASHBOARD_URL}-partial-parameterDetails.json
-
-  jq -s '.[0] * .[1]' \
-    ${DASHBOARD_URL}-partial-reduced.json \
-    ${DASHBOARD_URL}-partial-sections.json \
-    > ${DASHBOARD_URL}-partial-with-sections.json
-
-  jq -s '.[0] * .[1]' \
-    ${DASHBOARD_URL}-partial-with-sections.json \
-    ${DASHBOARD_URL}-partial-parameterDetails.json \
-    > ${DASHBOARD_URL}.json
-
-  rm *-partial*.json
+    | jq "del(.response | ${excludedKeys})"  | jq .response \
+    > "${DASHBOARD_OUTPUT_FILE}"
 }
 
 main $@
