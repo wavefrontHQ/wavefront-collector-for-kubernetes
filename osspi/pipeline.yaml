@@ -27,6 +27,12 @@ resources:
       uri: git@github.com:wavefrontHQ/prometheus-storage-adapter.git
       private_key: ((osspi.jcornish-github-private-key)) # TODO use a deploy key
 jobs:
+  - name: update-self
+    plan:
+    - get: wavefront-collector
+      trigger: true
+    - set_pipeline: collector-osspi
+      file: wavefront-collector/osspi/pipeline.yaml
   - name: osspi-scan-wavefront-collector
     serial: true
     plan:
