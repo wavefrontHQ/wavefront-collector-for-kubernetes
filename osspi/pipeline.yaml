@@ -10,6 +10,7 @@ resources:
     type: git
     source:
       uri: git@github.com:wavefrontHQ/wavefront-collector-for-kubernetes.git
+      branch: osspi-test
       private_key: ((osspi.jcornish-github-private-key)) # TODO use a deploy key
   - name: wavefront-operator
     type: git
