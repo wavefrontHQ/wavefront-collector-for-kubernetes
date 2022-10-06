@@ -49,9 +49,13 @@ function main() {
 
   local DASHBOARD_DEV_URL="$(echo "${DASHBOARD_URL}" | sed 's/integration-//')-dev"
 
-  ../scripts/get-dashboard.sh -c ${WF_CLUSTER} -t ${WAVEFRONT_TOKEN} -d ${DASHBOARD_URL}
+  ../scripts/get-dashboard.sh -c ${WF_CLUSTER} -t ${WAVEFRONT_TOKEN} -d ${DASHBOARD_URL} -o ${DASHBOARD_URL}-partial-base.json
 
-  jq ".url = \"${DASHBOARD_DEV_URL}\"" ${DASHBOARD_URL}.json >  ${DASHBOARD_DEV_URL}.json
+  ../scripts/sort-dashboard.sh -i ${DASHBOARD_URL}-partial-base.json -o ${DASHBOARD_URL}.json
+
+  ../scripts/clean-partials.sh # because I don't want scripts bludgeoning the '-partial-base.json'
+
+  jq ".url = \"${DASHBOARD_DEV_URL}\"" ${DASHBOARD_URL}.json > ${DASHBOARD_DEV_URL}.json
 
   local RESULT=$(curl -X PUT --data "$(cat "${DASHBOARD_DEV_URL}".json)" \
     --header "Content-Type: application/json" \
