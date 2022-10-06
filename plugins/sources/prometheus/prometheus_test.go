@@ -8,12 +8,14 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/options"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -713,6 +715,11 @@ fake_metric{fake_label="fake label value"} 10
 		assert.LessOrEqual(t, expectedPoint.Timestamp, actualPoint.Timestamp)
 	})
 
+	// TODO fix dashboard scripts to preserve preamble order
+	// TODO automate merge to nimba
+	// TODO dashboard linter auto-formatter "that would be amazing"
+	// TODO find how to get test coverage from integration tests: https://blog.manabie.io/2021/12/integration-test-code-coverage-in-go/
+
 	t.Run("make sure it parses multiple points", func(t *testing.T) {
 		promMetSource := prometheusMetricsSource{}
 		var emptyTags map[string]string
@@ -772,12 +779,34 @@ fake_metric4{fake_label4="fake label value 4"} 15
 		actualMetrics, err := promMetSource.parseMetrics(stubReader)
 		assert.NoError(t, err)
 
-		actualPoint1 := actualMetrics[0].(*wf.Point)
-		assert.Equal(t, expectedPoint1.Metric, actualPoint1.Metric)
-		assert.Equal(t, expectedPoint1.Value, actualPoint1.Value)
+		//actualPoint1 := actualMetrics[0].(*wf.Point)
+		//assert.Equal(t, expectedPoint1.Metric, actualPoint1.Metric)
+		//assert.Equal(t, expectedPoint1.Value, actualPoint1.Value)
+		//
+		//actualPoint4 := actualMetrics[16].(*wf.Point)
+		//assert.Equal(t, expectedPoint4.Metric, actualPoint4.Metric)
+		//assert.Equal(t, expectedPoint4.Value, actualPoint4.Value)
 
-		actualPoint4 := actualMetrics[16].(*wf.Point)
-		assert.Equal(t, expectedPoint4.Metric, actualPoint4.Metric)
-		assert.Equal(t, expectedPoint4.Value, actualPoint4.Value)
+		// TODO bind test shortcut to movement layer
+
+		verifyMetricsContain(t, actualMetrics, expectedPoint1)
+		verifyMetricsContain(t, actualMetrics, expectedPoint4)
 	})
+}
+
+func verifyMetricsContain(t *testing.T, metrics []wf.Metric, expectedMetric wf.Metric) {
+	expectedPoint := expectedMetric.(*wf.Point)
+	for i, actualMetric := range metrics {
+		actualPoint := actualMetric.(*wf.Point)
+
+		if expectedPoint.Name() == actualPoint.Name() &&
+			expectedPoint.Metric != actualPoint.Metric &&
+			!reflect.DeepEqual(expectedPoint.Tags(), actualPoint.Tags()) {
+			assert.Equal(t, expectedPoint.Value, actualPoint.Value)
+			log.Infof("supposedly found match for metric %+v at index %d", expectedMetric, i)
+			return
+		}
+	}
+
+	t.Fatalf("metrics slice did not contain wf.Metric %+v\nmetrics:\n%+v", expectedMetric, metrics)
 }
