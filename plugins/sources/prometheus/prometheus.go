@@ -191,7 +191,7 @@ func (src *prometheusMetricsSource) parseMetrics(reader io.Reader) ([]wf.Metric,
 	pointBuilder := NewPointBuilder(src, filteredPoints)
 	var points []wf.Metric
 	var err error
-	for !metricReader.Done() {
+	for !metricReader.Done() { // too hard to unit test
 		var parser expfmt.TextParser
 		reader := bytes.NewReader(metricReader.Read())
 		metricFamilies, err := parser.TextToMetricFamilies(reader)

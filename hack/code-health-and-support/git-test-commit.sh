@@ -36,3 +36,7 @@ function borkWIP() {
     git commit -m "BORKWIP: ${message}"
     git push --set-upstream origin "${branch}"
 }
+
+function closeBork() {
+    echo 'TODO test -> close branch and merge with unborked'
+}
