@@ -219,6 +219,7 @@ func (e *ExpectScrapeErrorWithErrorCounts) verifyErrorCountsIncreased(t *testing
 func Test_prometheusMetricsSource_Scrape(t *testing.T) {
 	t.Run("returns a result with current timestamp", func(t *testing.T) {
 		nowTime := time.Now()
+		// https://medium.com/zus-health/mocking-outbound-http-requests-in-go-youre-probably-doing-it-wrong-60373a38d2aa
 		server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 			writer.WriteHeader(http.StatusOK)
 		}))
