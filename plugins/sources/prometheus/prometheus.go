@@ -167,6 +167,7 @@ func (src *prometheusMetricsSource) Scrape() (*metrics.Batch, error) {
 		return nil, &HTTPError{MetricsURL: src.metricsURL, Status: resp.Status, StatusCode: resp.StatusCode}
 	}
 
+	// TODO I can create a wrapper test class on prometheusMetricsSource and override parseMetrics to make testing easier!
 	result.Metrics, err = src.parseMetrics(resp.Body)
 	if err != nil {
 		collectErrors.Inc(1)
