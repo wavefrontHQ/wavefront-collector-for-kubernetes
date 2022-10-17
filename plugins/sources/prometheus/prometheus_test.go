@@ -6,12 +6,10 @@ package prometheus
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/options"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -187,17 +185,7 @@ func (e *ExpectScrapeErrorWithErrorCounts) runScrape(promMetSource *prometheusMe
 	e.promMetSource.eps = gm.NewCounter()
 	e.errCountBefore = collectErrors.Count()
 
-	_, e.scrapeError = promMetSource.Scrape()
-
-	e.errCountAfter = collectErrors.Count()
-}
-
-func (e *ExpectScrapeErrorWithErrorCounts) runScrapeWithParseMetrics(promMetSource *prometheusMetricsSource, parseMetrics metricsParser) {
-	e.promMetSource = promMetSource
-	e.promMetSource.eps = gm.NewCounter()
-	e.errCountBefore = collectErrors.Count()
-
-	_, e.scrapeError = promMetSource.scrapeWithParseMetrics(parseMetrics)
+	_, e.scrapeError = e.promMetSource.Scrape()
 
 	e.errCountAfter = collectErrors.Count()
 }
@@ -231,10 +219,7 @@ func Test_prometheusMetricsSource_Scrape(t *testing.T) {
 			pps:        gm.NewCounter(),
 		}
 
-		stubParseMetrics := func(reader io.Reader) ([]wf.Metric, error) {
-			return nil, nil
-		}
-		result, err := promMetSource.scrapeWithParseMetrics(stubParseMetrics)
+		result, err := promMetSource.Scrape()
 		assert.NoError(t, err)
 		assert.GreaterOrEqual(t, result.Timestamp, nowTime)
 	})
@@ -267,10 +252,7 @@ func Test_prometheusMetricsSource_Scrape(t *testing.T) {
 			pps:        gm.NewCounter(),
 		}
 
-		stubParseMetrics := func(reader io.Reader) ([]wf.Metric, error) {
-			return nil, nil
-		}
-		_, err := promMetSource.scrapeWithParseMetrics(stubParseMetrics)
+		_, err := promMetSource.Scrape()
 		assert.NoError(t, err)
 	})
 
@@ -303,6 +285,7 @@ func Test_prometheusMetricsSource_Scrape(t *testing.T) {
 	t.Run("returns an error and increments error counters if parseMetrics fails", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 			writer.WriteHeader(http.StatusOK)
+			writer.Write([]byte("some whacky non-metric stuff"))
 		}))
 		defer server.Close()
 
@@ -311,12 +294,8 @@ func Test_prometheusMetricsSource_Scrape(t *testing.T) {
 			client:     &http.Client{},
 		}
 
-		stubParseMetrics := func(reader io.Reader) ([]wf.Metric, error) {
-			return nil, errors.New("fake failed to parse metrics")
-		}
-
 		e := ExpectScrapeErrorWithErrorCounts{}
-		e.runScrapeWithParseMetrics(promMetSource, stubParseMetrics)
+		e.runScrape(promMetSource)
 		e.verifyErrorNotNil(t)
 		e.verifyErrorCountsIncreased(t)
 	})
@@ -324,7 +303,9 @@ func Test_prometheusMetricsSource_Scrape(t *testing.T) {
 	t.Run("returns metrics based on response body and counts number of points", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 			writer.WriteHeader(http.StatusOK)
-			writer.Write([]byte("fake metrics"))
+			writer.Write([]byte(`
+fake_metric{source="fake source"} 1
+`))
 		}))
 		defer server.Close()
 
@@ -341,15 +322,9 @@ func Test_prometheusMetricsSource_Scrape(t *testing.T) {
 			"fake source",
 			map[string]string{},
 		)
-		stubParseMetrics := func(reader io.Reader) ([]wf.Metric, error) {
-			return []wf.Metric{
-				stubMetric,
-				stubMetric,
-			}, nil
-		}
 
 		collectedPointsBefore := collectedPoints.Count()
-		result, err := promMetSource.scrapeWithParseMetrics(stubParseMetrics)
+		result, err := promMetSource.Scrape()
 		assert.NoError(t, err)
 		collectedPointsAfter := collectedPoints.Count()
 		assert.Equal(t, []wf.Metric{stubMetric, stubMetric}, result.Metrics)
@@ -407,9 +382,8 @@ func Test_prometheusProvider_GetMetricsSources(t *testing.T) {
 
 func TestNewPrometheusProvider(t *testing.T) {
 	t.Run("errors if prometheus URL is missing", func(t *testing.T) {
-		mockPDI := mockPrometheusProviderDependencyInjector{}
 		cfg := configuration.PrometheusSourceConfig{}
-		prometheusProvider, err := prometheusProviderWithMetricsSource(mockPDI.newMetricsSource, "", cfg)
+		prometheusProvider, err := NewPrometheusProvider(cfg)
 		assert.Nil(t, prometheusProvider)
 		assert.NotNil(t, err)
 	})
@@ -422,7 +396,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 				Source: "fake source",
 			},
 		}
-		_, err := prometheusProviderWithMetricsSource(mockPDI.newMetricsSource, "", cfg)
+		_, err := NewPrometheusProvider(cfg)
 		assert.NoError(t, err)
 		assert.Equal(t, "fake source", mockPDI.source)
 
@@ -430,27 +404,26 @@ func TestNewPrometheusProvider(t *testing.T) {
 		cfg = configuration.PrometheusSourceConfig{
 			URL: "fake url",
 		}
-		_, err = prometheusProviderWithMetricsSource(mockPDI.newMetricsSource, "fake node name", cfg)
+		_, err = NewPrometheusProvider(cfg)
 		assert.NoError(t, err)
 		assert.Equal(t, "fake node name", mockPDI.source)
 
 		mockPDI = mockPrometheusProviderDependencyInjector{}
-		_, err = prometheusProviderWithMetricsSource(mockPDI.newMetricsSource, "", cfg)
+		_, err = NewPrometheusProvider(cfg)
 		assert.NoError(t, err)
 		assert.Equal(t, "prom_source", mockPDI.source)
 	})
 
 	t.Run("default name to URL if not configured", func(t *testing.T) {
-		mockPDI := mockPrometheusProviderDependencyInjector{}
 		cfg := configuration.PrometheusSourceConfig{
 			URL: "http://test-prometheus-url.com",
 		}
-		prometheusProvider, err := prometheusProviderWithMetricsSource(mockPDI.newMetricsSource, "", cfg)
+		prometheusProvider, err := NewPrometheusProvider(cfg)
 		assert.NoError(t, err)
 		assert.Equal(t, fmt.Sprintf("%s: http://test-prometheus-url.com", providerName), prometheusProvider.Name())
 
 		cfg.Name = "fake name"
-		prometheusProvider, err = prometheusProviderWithMetricsSource(mockPDI.newMetricsSource, "", cfg)
+		prometheusProvider, err = NewPrometheusProvider(cfg)
 		assert.NoError(t, err)
 		assert.Equal(t, fmt.Sprintf("%s: fake name", providerName), prometheusProvider.Name())
 	})
@@ -460,12 +433,12 @@ func TestNewPrometheusProvider(t *testing.T) {
 		cfg := configuration.PrometheusSourceConfig{
 			URL: "http://test-prometheus-url.com",
 		}
-		_, err := prometheusProviderWithMetricsSource(mockPDI.newMetricsSource, "", cfg)
+		_, err := NewPrometheusProvider(cfg)
 		assert.NoError(t, err)
 		assert.Equal(t, "", mockPDI.discovered)
 
 		cfg.Discovered = "fake discovered"
-		_, err = prometheusProviderWithMetricsSource(mockPDI.newMetricsSource, "", cfg)
+		_, err = NewPrometheusProvider(cfg)
 		assert.NoError(t, err)
 		assert.Equal(t, "fake discovered", mockPDI.discovered)
 	})
@@ -475,7 +448,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 		cfg := configuration.PrometheusSourceConfig{
 			URL: "http://test-prometheus-url.com",
 		}
-		_, err := prometheusProviderWithMetricsSource(mockPDI.newMetricsSource, "", cfg)
+		_, err := NewPrometheusProvider(cfg)
 		assert.NoError(t, err)
 
 		assert.Equal(t, httputil.ClientConfig{}, mockPDI.httpCfg)
@@ -487,24 +460,14 @@ func TestNewPrometheusProvider(t *testing.T) {
 	})
 
 	t.Run("returns an error if metrics source creation fails", func(t *testing.T) {
-		mockPDI := mockPrometheusProviderDependencyInjector{
-			returnError: errors.New("fake metrics source error"),
-		}
 		cfg := configuration.PrometheusSourceConfig{
 			URL: "http://test-prometheus-url.com",
 		}
-		_, err := prometheusProviderWithMetricsSource(mockPDI.newMetricsSource, "", cfg)
+		_, err := NewPrometheusProvider(cfg)
 		assert.NotNil(t, err)
 	})
 
 	t.Run("prometheus provider sources contains whatever is returned by metrics source constructor", func(t *testing.T) {
-		mockPDI := mockPrometheusProviderDependencyInjector{
-			returnMetricsSource: &prometheusMetricsSource{
-				metricsURL: "fake metrics source url",
-				prefix:     "fake metrics source prefix",
-				source:     "fake metrics source source",
-			},
-		}
 
 		// TODO Jackpot. Behold the calamity of code necessary to get this test to pass.
 		cfg := configuration.PrometheusSourceConfig{
@@ -513,7 +476,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 			UseLeaderElection: false,
 			Discovered:        "fake discovered",
 		}
-		prometheusProvider, err := prometheusProviderWithMetricsSource(mockPDI.newMetricsSource, "", cfg)
+		prometheusProvider, err := NewPrometheusProvider(cfg)
 		assert.NoError(t, err)
 
 		mockAgentType, err := options.NewAgentType("cluster")
@@ -542,15 +505,13 @@ func TestNewPrometheusProvider(t *testing.T) {
 	})
 
 	t.Run("creates a prometheus provider with leader election based on configured leader election or discovery", func(t *testing.T) {
-		mockPDI := mockPrometheusProviderDependencyInjector{}
-
 		cfg := configuration.PrometheusSourceConfig{
 			URL: "http://test-prometheus-url.com",
 
 			UseLeaderElection: false,
 			Discovered:        "fake discovered",
 		}
-		promProvider, err := prometheusProviderWithMetricsSource(mockPDI.newMetricsSource, "", cfg)
+		promProvider, err := NewPrometheusProvider(cfg)
 		assert.NoError(t, err)
 
 		// TODO should not be testing internal fields, but for now this shines a light on
@@ -563,7 +524,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 			UseLeaderElection: true,
 			Discovered:        "fake discovered",
 		}
-		promProvider, err = prometheusProviderWithMetricsSource(mockPDI.newMetricsSource, "", cfg)
+		promProvider, err = NewPrometheusProvider(cfg)
 		assert.NoError(t, err)
 		assert.True(t, promProvider.(*prometheusProvider).useLeaderElection)
 
@@ -573,7 +534,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 			UseLeaderElection: false,
 			Discovered:        "",
 		}
-		promProvider, err = prometheusProviderWithMetricsSource(mockPDI.newMetricsSource, "", cfg)
+		promProvider, err = NewPrometheusProvider(cfg)
 		assert.NoError(t, err)
 		assert.True(t, promProvider.(*prometheusProvider).useLeaderElection)
 	})
