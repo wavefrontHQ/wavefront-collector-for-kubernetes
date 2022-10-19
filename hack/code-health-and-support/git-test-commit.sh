@@ -46,6 +46,8 @@ function unBork() {
     local unborked_branch=${borked_branch#BORKWIP/}
 
     gtc "UNBORK! : ${message}" || return 1
+    echo "Stashing any uncommitted changes before checkout and rebase..."
+    git stash
     git checkout "${unborked_branch}"
     git rebase -i "${borked_branch}"
     git push --set-upstream origin "${unborked_branch}"
