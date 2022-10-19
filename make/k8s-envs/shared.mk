@@ -17,8 +17,6 @@ k8s-env:
 k8s-nodes-arch:
 	kubectl get nodes --label-columns='kubernetes.io/arch'
 
-clean-cluster: clean-targets clean-deployment
-
 push-images:
 ifeq ($(K8S_ENV), Kind)
 	make push-to-kind

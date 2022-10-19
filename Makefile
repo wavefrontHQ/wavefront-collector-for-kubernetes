@@ -164,4 +164,7 @@ integration-test-rhel: token-check k8s-env clean-deployment deploy-targets
 	VERSION=$(VERSION)-rhel make container_rhel test-proxy-container delete-images push-images proxy-test
 
 
+clean-cluster:
+	(cd $(TEST_DIR) && ./clean-cluster.sh)
+
 .PHONY: all fmt container clean release semver-cli
