@@ -26,17 +26,27 @@ function gtc() {
 
 function borkWIP() {
     local message=$1
-
-    local branch=$(git rev-parse --abbrev-ref HEAD)
-    if [[ $branch != "BORKWIP/"* ]]; then
-        git checkout -b "BORKWIP/${branch}"
-        branch="BORKWIP/${branch}"
+    local borked_branch=$(git rev-parse --abbrev-ref HEAD)
+    if [[ $borked_branch != "BORKWIP/"* ]]; then
+        git checkout -b "BORKWIP/${borked_branch}"
+        borked_branch="BORKWIP/${borked_branch}"
     fi
 
     git commit -m "BORKWIP: ${message}"
-    git push --set-upstream origin "${branch}"
+    git push --set-upstream origin "${borked_branch}"
 }
 
-function closeBork() {
-    echo 'TODO test -> close branch and merge with unborked'
+function unBork() {
+    local message=$1
+    local borked_branch=$(git rev-parse --abbrev-ref HEAD)
+    if [[ $borked_branch != "BORKWIP/"* ]]; then
+        echo 'you are already unborked.'
+        exit 1
+    fi
+    local unborked_branch=${borked_branch#BORKWIP/}
+
+    gtc "UNBORK! : ${message}" || return 1
+    git checkout "${unborked_branch}"
+    git rebase -i "${borked_branch}"
+    git push --set-upstream origin "${unborked_branch}"
 }

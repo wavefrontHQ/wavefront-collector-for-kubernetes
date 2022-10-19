@@ -360,21 +360,21 @@ func Test_prometheusProvider_GetMetricsSources(t *testing.T) {
 		}}, sources)
 
 		promProvider.useLeaderElection = true
-		allAgentType, err := options.NewAgentType("all")
+		allAgentType, err := options.NewAgentType("all") // TODO I don't have to create this
 		assert.NoError(t, err)
 		util.SetAgentType(allAgentType)
 		sources = promProvider.GetMetricsSources()
 		assert.Nil(t, sources)
 
 		promProvider.useLeaderElection = true
-		clusterAgentType, err := options.NewAgentType("cluster")
+		clusterAgentType, err := options.NewAgentType("cluster") // TODO I don't have to create this
 		assert.NoError(t, err)
 		util.SetAgentType(clusterAgentType)
 		sources = promProvider.GetMetricsSources()
 		assert.Nil(t, sources)
 
 		promProvider.useLeaderElection = false
-		nodeAgentType, err := options.NewAgentType("node")
+		nodeAgentType, err := options.NewAgentType("node") // TODO I don't have to create this
 		assert.NoError(t, err)
 		util.SetAgentType(nodeAgentType)
 		sources = promProvider.GetMetricsSources()
@@ -383,7 +383,7 @@ func Test_prometheusProvider_GetMetricsSources(t *testing.T) {
 		}}, sources)
 
 		promProvider.useLeaderElection = true
-		legacyAgentType, err := options.NewAgentType("legacy")
+		legacyAgentType, err := options.NewAgentType("legacy") // TODO I don't have to create this
 		assert.NoError(t, err)
 		util.SetAgentType(legacyAgentType)
 		sources = promProvider.GetMetricsSources()
@@ -475,12 +475,15 @@ func TestNewPrometheusProvider(t *testing.T) {
 		promProvider, err := NewPrometheusProvider(cfg)
 		assert.NoError(t, err)
 
+		leadership.SetLeading(true)
+		util.SetAgentType(options.AllAgentType)
 		source := promProvider.GetMetricsSources()[0].(*prometheusMetricsSource)
 
 		expectedClient, err := httpClient("http://test-prometheus-url.com", httputil.ClientConfig{})
 		assert.NoError(t, err)
 
-		assert.Equal(t, expectedClient, source.client)
+		assert.Equal(t, expectedClient.Timeout, source.client.Timeout)
+		assert.NotNil(t, source.client.Transport) // TODO is this necessary to check?
 		assert.Equal(t, "", source.prefix)
 		assert.Equal(t, map[string]string(nil), source.tags)
 		assert.Equal(t, nil, source.filters)
@@ -491,6 +494,12 @@ func TestNewPrometheusProvider(t *testing.T) {
 	t.Run("returns an error if metrics source creation fails", func(t *testing.T) {
 		cfg := configuration.PrometheusSourceConfig{
 			URL: "http://test-prometheus-url.com",
+			HTTPClientConfig: httputil.ClientConfig{
+				TLSConfig: httputil.TLSConfig{
+					KeyFile:            "sldlfdldldfkjkjlfd",
+					InsecureSkipVerify: false,
+				},
+			},
 		}
 		_, err := NewPrometheusProvider(cfg)
 		assert.NotNil(t, err)
@@ -512,7 +521,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 		prometheusProvider, err := NewPrometheusProvider(cfg)
 		assert.NoError(t, err)
 
-		mockAgentType, err := options.NewAgentType("cluster")
+		mockAgentType, err := options.NewAgentType("cluster") // TODO I don't have to create this
 		assert.NoError(t, err)
 		util.SetAgentType(mockAgentType)
 		source := prometheusProvider.GetMetricsSources()[0].(*prometheusMetricsSource)
