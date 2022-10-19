@@ -48,7 +48,8 @@ function unBork() {
     gtc "UNBORK! : ${message}" || return 1
     echo "Stashing any uncommitted changes before checkout and rebase..."
     git stash
-    git checkout "${unborked_branch}"
-    git rebase -i "${borked_branch}"
-    git push --set-upstream origin "${unborked_branch}"
+    git checkout "${unborked_branch}" || return 1
+    git rebase -i "${borked_branch}" || return 1
+    git push --set-upstream origin "${unborked_branch}" || return 1
+    git branch -D ${borked_branch}
 }

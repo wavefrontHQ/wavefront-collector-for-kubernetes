@@ -47,6 +47,10 @@ var (
 )
 
 func main() {
+	run()
+}
+
+func run() {
 	log.SetFormatter(&log.TextFormatter{})
 	log.SetLevel(log.InfoLevel)
 	log.SetOutput(os.Stdout)

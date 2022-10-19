@@ -7,16 +7,17 @@ package prometheus
 import (
 	"bytes"
 	"fmt"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/leadership"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/options"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/leadership"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/options"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
