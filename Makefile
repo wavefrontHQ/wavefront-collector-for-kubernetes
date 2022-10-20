@@ -181,4 +181,7 @@ git-rebase:
 	git rebase origin/main
 	git log --oneline -n 10
 
+clean-cluster:
+	(cd $(TEST_DIR) && ./clean-cluster.sh)
+
 .PHONY: all fmt container clean release semver-cli

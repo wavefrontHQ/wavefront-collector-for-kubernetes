@@ -7,7 +7,9 @@ cd "$SCRIPT_DIR"
 
 echo "Deploying targets..."
 
-kubectl create namespace collector-targets &> /dev/null || true
+kubectl delete namespace collector-targets &> /dev/null || true
+
+wait_for_namespace_created collector-targets
 
 wait_for_namespaced_resource_created collector-targets serviceaccount/default
 

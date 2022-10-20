@@ -75,6 +75,7 @@ pipeline {
               lock("integration-test-gke-collector") {
                 sh './hack/jenkins/setup-for-integration-test.sh -k gke'
                 sh 'make gke-connect-to-cluster'
+                sh 'make clean-cluster'
                 sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=cluster-metrics-only make deploy-test'
                 sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=node-metrics-only make deploy-test'
                 sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=combined make deploy-test'
@@ -107,6 +108,7 @@ pipeline {
               lock("integration-test-eks") {
                 sh './hack/jenkins/setup-for-integration-test.sh -k eks'
                 sh 'make target-eks'
+                sh 'make clean-cluster'
                 sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=single-deployment make deploy-test'
                 sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=combined make deploy-test'
                 sh 'VERSION_POSTFIX=$VERSION_POSTFIX make deploy-test'
