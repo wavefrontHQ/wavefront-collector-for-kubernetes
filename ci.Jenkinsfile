@@ -137,12 +137,5 @@ pipeline {
     fixed {
       slackSend (channel: '#tobs-k8po-team', color: '#008000', message: "CI BUILD FIXED: <${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>")
     }
-    success {
-      script {
-        if (env.BRANCH_NAME == 'main') {
-          sh './hack/jenkins/update_github_status.sh'
-        }
-      }
-    }
   }
 }
