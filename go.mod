@@ -15,7 +15,7 @@ require (
 	github.com/shirou/gopsutil v3.21.10+incompatible
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/pflag v1.0.5
-	github.com/stretchr/testify v1.8.0
+	github.com/stretchr/testify v1.8.1
 	github.com/wavefronthq/go-metrics-wavefront v1.0.3
 	github.com/wavefronthq/wavefront-sdk-go v0.10.4
 	golang.org/x/crypto v0.0.0-20220722155217-630584e8d5aa
@@ -74,7 +74,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/shopspring/decimal v0.0.0-20200105231215-408a2507e114 // indirect
-	github.com/stretchr/objx v0.4.0 // indirect
+	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/tidwall/gjson v1.11.0 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect
