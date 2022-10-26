@@ -47,14 +47,14 @@ echo "Getting CT_TRACKER_ID from osm release ID that belongs to MASTER_PACKAGE_I
 CT_TRACKER_URL="$ENDPOINT/api/public/v1/package/?release=$RELEASE_ID&master_package=$MASTER_PACKAGE_ID"
 echo "CT_TRACKER_URL: '${CT_TRACKER_URL}'"
 CT_TRACKER_LIST_REQUEST=$(curl -H "Authorization: ApiKey $USERNAME:$API_KEY" "$CT_TRACKER_URL")
-if [ $(echo "CT_TRACKER_LIST_REQUEST" | jq .count) == 1 ]; then
+if [ $(echo "$CT_TRACKER_LIST_REQUEST" | jq .count) == 1 ]; then
   echo "ct-tracker-${CT_TRACKER_OS} found in ${PRODUCT} release"
-  CT_TRACKER_ID=$(echo "CT_TRACKER_LIST_REQUEST" | jq ".results[].id")
+  CT_TRACKER_ID=$(echo "$CT_TRACKER_LIST_REQUEST" | jq ".results[].id")
 else
   echo "CT_TRACKER_ID not found in osm release ID. Creating a new CT_TRACKER_ID."
   CT_TRACKER_CREATE_REQUEST=$(curl --request POST -H "Authorization: ApiKey $USERNAME:$API_KEY" -H "Content-Type: application/json" --data "{\"release_id\":\"$RELEASE_ID\",\"master_package_id\":\"$MASTER_PACKAGE_ID\",\"interaction_type_id\":[\"1\"],\"modified\":\"No\"}" "$ENDPOINT/api/public/v1/package/")
   echo "CT_TRACKER_REQUEST results: '${CT_TRACKER_CREATE_REQUEST}'"
-  if [ $(echo "CT_TRACKER_CREATE_REQUEST" | jq -r ".err_code") == 40904  ]; then
+  if [ $(echo "$CT_TRACKER_CREATE_REQUEST" | jq -r ".err_code") == 40904  ]; then
     ERROR_MESSAGE=$(echo "$CT_TRACKER_CREATE_REQUEST" | jq -r ".err_msg")
     CT_TRACKER_ID=$(echo ${ERROR_MESSAGE##* })
   else
