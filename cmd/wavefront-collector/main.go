@@ -46,8 +46,12 @@ var (
 	discWatcher util.FileWatcher
 )
 
-func run(v string, opt *options.CollectorRunOptions) {
-	version = v
+func main() {
+	log.SetFormatter(&log.TextFormatter{})
+	log.SetLevel(log.InfoLevel)
+	log.SetOutput(os.Stdout)
+
+	opt := options.Parse()
 
 	if opt.Version {
 		fmt.Println(fmt.Sprintf("version: %s\ncommit: %s", version, commit))
@@ -74,16 +78,6 @@ func run(v string, opt *options.CollectorRunOptions) {
 	ag := createAgentOrDie(cfg)
 	registerListeners(ag, opt)
 	waitForStop()
-}
-
-func main() {
-	log.SetFormatter(&log.TextFormatter{})
-	log.SetLevel(log.InfoLevel)
-	log.SetOutput(os.Stdout)
-
-	opt := options.Parse()
-
-	run(version, opt)
 }
 
 func preRegister(opt *options.CollectorRunOptions) {

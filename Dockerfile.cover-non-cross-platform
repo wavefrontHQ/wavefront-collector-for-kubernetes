@@ -2,7 +2,8 @@ FROM harbor-repo.vmware.com/dockerhub-proxy-cache/bitnami/golang:1.18 as builder
 
 # Base Setup
 ARG BINARY_NAME
-ARG LDFLAGS
+# ARG RELEASE_VERSION
+# ARG GIT_COMMIT
 WORKDIR /workspace
 # Copy the Go Modules manifests
 
@@ -14,11 +15,13 @@ COPY go.mod go.sum ./
 COPY . .
 
 # Then build
-RUN CGO_ENABLED=0 GOOS=linux GO111MODULE=on go test -c ./cmd/wavefront-collector/ -cover -covermode=count -coverpkg=./... -ldflags "${LDFLAGS}" -a -o ${BINARY_NAME}
+RUN CGO_ENABLED=0 GOOS=linux GO111MODULE=on go test -c ./cmd/wavefront-collector/ -cover -covermode=count -coverpkg=./... -a -o ${BINARY_NAME}
 
 # Copy main binary into a thin image
 FROM scratch
 ARG BINARY_NAME
+# ARG RELEASE_VERSION
+# ARG GIT_COMMIT
 WORKDIR /
 COPY --from=builder /workspace/${BINARY_NAME} .
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
@@ -26,4 +29,5 @@ COPY --from=builder /workspace/open_source_licenses.txt .
 
 #   nobody:nobody
 USER 65534:65534
+# ENTRYPOINT ["/wavefront-collector", "--test-version", "${RELEASE_VERSION}", "--test-commit", "${GIT_COMMIT}", "--daemon"]
 ENTRYPOINT ["/wavefront-collector"]

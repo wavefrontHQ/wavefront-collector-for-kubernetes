@@ -94,7 +94,8 @@ cover-container: $(SEMVER_CLI_BIN)
 	# Run build in a container in order to have reproducible builds
 	docker build \
 	-f $(REPO_DIR)/Dockerfile.cover-non-cross-platform \
-	--build-arg BINARY_NAME=$(BINARY_NAME) --build-arg LDFLAGS="$(LDFLAGS)" \
+	--build-arg BINARY_NAME=$(BINARY_NAME) \
+	--build-arg RELEASE_VERSION=$(RELEASE_VERSION) --build-arg GIT_COMMIT="$(GIT_COMMIT)" \
 	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) .
 ifneq ($(OVERRIDE_IMAGE_NAME),)
 	docker tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OVERRIDE_IMAGE_NAME)
