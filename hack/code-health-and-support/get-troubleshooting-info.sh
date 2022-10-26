@@ -1,29 +1,43 @@
 #!/usr/bin/env bash
 
-# legacy collector DaemonSet logs
+### LEGACY (MANUAL) ###
+
+# collector DaemonSet logs
 (kubectl --namespace wavefront-collector logs daemonset/wavefront-collector 2> /dev/null \
-  || echo "No wavefront-collector DaemonSet found in wavefront-collector namespace; this is either a failure or it was installed via the new Wavefront Operator.") \
-  > k8s-assist-wavefront-collector-legacy-daemonset.txt
+  || echo "No wavefront-collector DaemonSet found in wavefront-collector namespace; this is either a failure or it was installed some other way.") \
+  > k8s-assist-legacy-wavefront-collector-legacy-daemonset.txt
 
-# legacy collector Deployment logs
+# collector Deployment logs
 (kubectl --namespace wavefront-collector logs deployment/wavefront-collector 2> /dev/null \
-  || echo "No wavefront-collector Deployment found in wavefront-collector namespace; this is either a failure or it was installed via the new Wavefront Operator.") \
-  > k8s-assist-wavefront-collector-legacy-deployment.txt
+  || echo "No wavefront-collector Deployment found in wavefront-collector namespace; this is either a failure or it was installed some other way.") \
+  > k8s-assist-legacy-wavefront-collector-legacy-deployment.txt
 
-# Wavefront Proxy Deployment logs
-(kubectl --namespace wavefront logs deployment/wavefront-proxy 2> /dev/null \
+# Proxy Deployment logs
+(kubectl --namespace default logs deployment/wavefront-proxy 2> /dev/null \
   || echo "No wavefront-proxy Deployment found in wavefront namespace; this may indicate a failure.") \
-  > k8s-assist-wavefront-proxy.txt
+  > k8s-assist-legacy-wavefront-proxy.txt
 
-# Operator collector DaemonSet logs
-(kubectl --namespace wavefront logs daemonset/wavefront-node-collector 2> /dev/null \
-  || echo "No wavefront-node-collector DaemonSet found in wavefront namespace; this is either a failure or it was installed via the legacy install method.") \
-  > k8s-assist-wavefront-node-collector.txt
+### HELM ###
 
-# Operator collector Deployment logs
-(kubectl --namespace wavefront logs deployment/wavefront-cluster-collector 2> /dev/null \
-  || echo "No wavefront-cluster-collector Deployment found in wavefront namespace; this is either a failure or it was installed via the legacy install method.") \
-  > k8s-assist-wavefront-cluster-collector.txt
+# collector DaemonSet logs
+(kubectl --namespace wavefront logs daemonset/wavefront-collector 2> /dev/null \
+  || echo "No wavefront-collector DaemonSet found in wavefront-collector namespace; this is either a failure or it was installed some other way.") \
+  > k8s-assist-helm-wavefront-collector-legacy-daemonset.txt
+
+# Proxy Deployment logs
+(kubectl --namespace wavefront logs deployment/wavefront-proxy 2> /dev/null \
+  || echo "No wavefront-proxy Deployment found in wavefront namespace; this may indicate a failure or it was installed some other way.") \
+  > k8s-assist-helm-wavefront-proxy.txt
+
+### Operator ###
+
+(kubectl --namespace observability-system get wavefront/wavefront 2> /dev/null \
+  || echo "No wavefront resource found in observability-system namespace; this is either a failure or it was installed some other way.") \
+  > k8s-assist-operator-status.txt
+
+(kubectl  --namespace observability-system logs --selector='app.kubernetes.io/name=wavefront' 2> /dev/null \
+    || echo "No operator logs found in observability-system namespace; this is either a failure or it was installed some other way.") \
+    > k8s-assist-operator-logs.txt
 
 zip k8s-assist-info.zip k8s-assist-*.txt
 rm k8s-assist-*.txt
