@@ -69,7 +69,7 @@ build: clean fmt vet
 # perfectly okay to just do in arch retro
 # line vs. branch coverage, where have we run into issues, etc.?
 build-test: clean fmt vet
-	GOARCH=$(ARCH) CGO_ENABLED=0 go test -c ./ -cover -covermode=count -coverpkg=./... -ldflags "$(LDFLAGS)" -o $(OUT_DIR)/$(ARCH)/$(BINARY_NAME) ./cmd/wavefront-collector/
+	GOARCH=$(ARCH) CGO_ENABLED=0 go test -c ./cmd/wavefront-collector/ -cover -covermode=count -coverpkg=./... -ldflags "$(LDFLAGS)" -a -o $(OUT_DIR)/$(ARCH)/$(BINARY_NAME)
 
 vet:
 	go vet -composites=false ./...
@@ -84,6 +84,16 @@ container: $(SEMVER_CLI_BIN)
 	# Run build in a container in order to have reproducible builds
 	docker build \
 	-f $(REPO_DIR)/Dockerfile.non-cross-platform \
+	--build-arg BINARY_NAME=$(BINARY_NAME) --build-arg LDFLAGS="$(LDFLAGS)" \
+	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) .
+ifneq ($(OVERRIDE_IMAGE_NAME),)
+	docker tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OVERRIDE_IMAGE_NAME)
+endif
+
+cover-container: $(SEMVER_CLI_BIN)
+	# Run build in a container in order to have reproducible builds
+	docker build \
+	-f $(REPO_DIR)/Dockerfile.cover-non-cross-platform \
 	--build-arg BINARY_NAME=$(BINARY_NAME) --build-arg LDFLAGS="$(LDFLAGS)" \
 	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) .
 ifneq ($(OVERRIDE_IMAGE_NAME),)
@@ -165,6 +175,9 @@ deploy-test: token-check k8s-env clean-deployment deploy-targets proxy-test
 
 #Testing code, configuration and deployment changes
 integration-test: token-check k8s-env clean-deployment deploy-targets delete-images push-images proxy-test
+
+# Get code coverage of integration test
+cover-integration-test: token-check k8s-env clean-deployment deploy-targets delete-images cover-push-images proxy-test
 
 # creating this as separate and distinct for now,
 # but would like to recombine as a flag on integration-test

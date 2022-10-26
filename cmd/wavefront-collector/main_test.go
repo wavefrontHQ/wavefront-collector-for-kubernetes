@@ -3,18 +3,23 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/options"
 	"net/http"
 	"testing"
 )
 
-func TestRun(t *testing.T) {
+var opt *options.CollectorRunOptions
+
+// from Go 1.13, you'll get the following error if you use flag.Parse() in init()
+// https://stackoverflow.com/questions/27342973/custom-command-line-flags-in-gos-unit-tests
+func TestMain(m *testing.M) {
 	ctx, cancel := context.WithCancel(context.Background())
+	opt = options.Parse()
 
-	run()
-
+	fmt.Println("attempting to run test collector for coverage data")
 	killServer := newKillServer(":19999", cancel)
 	go killServer.Start()
-	go runService(ctx)
+	go run("0.0.0", opt)
 
 	<-ctx.Done()
 

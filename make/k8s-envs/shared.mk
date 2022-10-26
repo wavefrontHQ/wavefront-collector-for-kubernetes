@@ -26,6 +26,13 @@ else
 	make publish
 endif
 
+cover-push-images:
+ifeq ($(K8S_ENV), Kind)
+	make cover-push-to-kind
+else
+	make publish
+endif
+
 delete-images:
 ifeq ($(K8S_ENV), Kind)
 	make delete-images-kind
