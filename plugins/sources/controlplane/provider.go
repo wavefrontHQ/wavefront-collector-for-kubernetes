@@ -31,10 +31,10 @@ type provider struct {
 	providers []metrics.SourceProvider
 }
 
-func NewProvider(cfg configuration.ControlPlaneSourceConfig, summaryCfg configuration.SummarySourceConfig, lookupHost prometheus.LookupHost) (metrics.SourceProvider, error) {
+func NewProvider(cfg configuration.ControlPlaneSourceConfig, summaryCfg configuration.SummarySourceConfig, lookupHosts prometheus.LookupHosts) (metrics.SourceProvider, error) {
 	var providers []metrics.SourceProvider
 	for _, promCfg := range buildPromConfigs(cfg, summaryCfg) {
-		provider, err := prometheus.NewPrometheusProvider(promCfg, lookupHost)
+		provider, err := prometheus.NewPrometheusProvider(promCfg, lookupHosts)
 		if err != nil {
 			return nil, fmt.Errorf("error building prometheus sources for control plane: %s", err.Error())
 		}

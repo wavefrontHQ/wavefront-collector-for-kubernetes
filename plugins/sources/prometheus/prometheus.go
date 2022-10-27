@@ -44,7 +44,7 @@ func init() {
 	collectErrors = gometrics.GetOrRegisterCounter(reporting.EncodeKey("source.collect.errors", pt), gometrics.DefaultRegistry)
 }
 
-type LookupHost func(host string) (addrs []string, err error)
+type LookupHosts func(host string) (addrs []string, err error)
 
 type prometheusMetricsSource struct {
 	metricsURL           string
@@ -204,7 +204,7 @@ type prometheusProvider struct {
 	name              string
 	useLeaderElection bool
 	URL               *url.URL
-	lookupHost        LookupHost
+	lookupHosts       LookupHosts
 	buildSource       func(url url.URL) (metrics.Source, error)
 	sources           []metrics.Source
 }
@@ -214,7 +214,7 @@ func (p *prometheusProvider) GetMetricsSources() []metrics.Source {
 		log.Infof("not scraping sources from: %s. current leader: %s", p.name, leadership.Leader())
 		return nil
 	}
-	ips, err := p.lookupHost(p.URL.Hostname())
+	ips, err := p.lookupHosts(p.URL.Hostname())
 	if err != nil {
 		log.Errorf("error looking up host addrs: %v", err)
 		return nil
@@ -243,7 +243,7 @@ func (p *prometheusProvider) Name() string {
 
 const providerName = "prometheus_metrics_provider"
 
-func NewPrometheusProvider(cfg configuration.PrometheusSourceConfig, lookupHost LookupHost) (metrics.SourceProvider, error) {
+func NewPrometheusProvider(cfg configuration.PrometheusSourceConfig, lookupHosts LookupHosts) (metrics.SourceProvider, error) {
 	source := configuration.GetStringValue(cfg.Source, util.GetNodeName())
 	source = configuration.GetStringValue(source, "prom_source")
 
@@ -269,7 +269,7 @@ func NewPrometheusProvider(cfg configuration.PrometheusSourceConfig, lookupHost 
 		name:              name,
 		useLeaderElection: cfg.UseLeaderElection || discovered == "",
 		URL:               metricsURL,
-		lookupHost:        lookupHost,
+		lookupHosts:       lookupHosts,
 		buildSource: func(url url.URL) (metrics.Source, error) {
 			copiedTags := map[string]string{}
 			for name, value := range cfg.Tags {

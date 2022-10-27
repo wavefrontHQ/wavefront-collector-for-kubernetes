@@ -1,14 +1,24 @@
 package prometheus
 
 import (
+	"context"
+	"errors"
 	"fmt"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"regexp"
 
-	corev1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 )
 
-func LookupByEndpoints(getEndpoints func() (*corev1.Endpoints, error)) LookupHost {
+var matchNSName = regexp.MustCompile("^([^\\.]+).([^\\.]+).svc")
+
+func LookupByEndpoints(client corev1.CoreV1Interface) LookupHosts {
 	return func(host string) (addrs []string, err error) {
-		endpoints, err := getEndpoints()
+		matches := matchNSName.FindStringSubmatch(host)
+		if len(matches) == 0 {
+			return nil, errors.New("does not match expected hostname format")
+		}
+		endpoints, err := client.Endpoints(matches[2]).Get(context.Background(), matches[1], metav1.GetOptions{})
 		if err != nil {
 			return nil, err
 		}

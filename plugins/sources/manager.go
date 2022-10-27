@@ -18,7 +18,6 @@
 package sources
 
 import (
-	"context"
 	"fmt"
 	"math/rand"
 	"net"
@@ -26,8 +25,6 @@ import (
 	"sync"
 	"time"
 
-	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
@@ -314,9 +311,7 @@ func buildProviders(client kubernetes.Interface, cfg configuration.SourceConfig)
 			result = appendProvider(result, provider, err, cfg.CadvisorConfig.Collection)
 		}
 		if cfg.ControlPlaneConfig != nil {
-			provider, err = controlplane.NewProvider(*cfg.ControlPlaneConfig, *cfg.SummaryConfig, prometheus.LookupByEndpoints(func() (*v1.Endpoints, error) {
-				return client.CoreV1().Endpoints("default").Get(context.Background(), "kubernetes", metav1.GetOptions{})
-			}))
+			provider, err = controlplane.NewProvider(*cfg.ControlPlaneConfig, *cfg.SummaryConfig, prometheus.LookupByEndpoints(client.CoreV1()))
 			result = appendProvider(result, provider, err, cfg.ControlPlaneConfig.Collection)
 		}
 	}

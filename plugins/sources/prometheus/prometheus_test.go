@@ -378,7 +378,7 @@ func Test_prometheusProvider_GetMetricsSources(t *testing.T) {
 		assert.Equal(t, "http://127.0.0.2:2222/metrics", sources[0].(*prometheusMetricsSource).metricsURL)
 	})
 
-	t.Run("passes the hostname into lookupHost", func(t *testing.T) {
+	t.Run("passes the hostname into lookupHosts", func(t *testing.T) {
 		actualHost := ""
 		promProvider, _ := NewPrometheusProvider(configuration.PrometheusSourceConfig{
 			URL:        "http://example.local:2222/metrics",
