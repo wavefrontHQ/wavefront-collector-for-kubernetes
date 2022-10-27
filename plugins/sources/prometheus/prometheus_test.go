@@ -347,7 +347,7 @@ func Test_prometheusProvider_GetMetricsSources(t *testing.T) {
 
 	t.Run("returns one source per IP of the host url", func(t *testing.T) {
 		promProvider, _ := NewPrometheusProvider(configuration.PrometheusSourceConfig{
-			URL:        "http://example.local",
+			URL:        "http://example.local:2222/metrics",
 			Discovered: "something",
 		}, func(_ string) (addrs []string, err error) {
 			return []string{"127.0.0.1", "127.0.0.2"}, nil
@@ -357,6 +357,23 @@ func Test_prometheusProvider_GetMetricsSources(t *testing.T) {
 		sources := promProvider.GetMetricsSources()
 
 		assert.Len(t, sources, 2)
+		assert.Equal(t, "http://127.0.0.1:2222/metrics", sources[0].(*prometheusMetricsSource).metricsURL)
+		assert.Equal(t, "http://127.0.0.2:2222/metrics", sources[1].(*prometheusMetricsSource).metricsURL)
+	})
+
+	t.Run("supports https", func(t *testing.T) {
+		promProvider, _ := NewPrometheusProvider(configuration.PrometheusSourceConfig{
+			URL:        "https://example.local:2222/metrics",
+			Discovered: "something",
+		}, func(_ string) (addrs []string, err error) {
+			return []string{"127.0.0.1", "127.0.0.2"}, nil
+		})
+		util.SetAgentType(options.AllAgentType)
+
+		sources := promProvider.GetMetricsSources()
+
+		assert.Equal(t, "https://127.0.0.1:2222/metrics", sources[0].(*prometheusMetricsSource).metricsURL)
+		assert.Equal(t, "https://127.0.0.2:2222/metrics", sources[1].(*prometheusMetricsSource).metricsURL)
 	})
 }
 

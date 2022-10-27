@@ -9,6 +9,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -219,7 +220,7 @@ const providerName = "prometheus_metrics_provider"
 
 type LookupHostIPs func(host string) (ips []string, err error)
 
-func NewPrometheusProvider(cfg configuration.PrometheusSourceConfig, _ LookupHostIPs) (metrics.SourceProvider, error) {
+func NewPrometheusProvider(cfg configuration.PrometheusSourceConfig, lookupHostIPs LookupHostIPs) (metrics.SourceProvider, error) {
 	if len(cfg.URL) == 0 {
 		return nil, fmt.Errorf("missing prometheus url")
 	}
@@ -244,11 +245,18 @@ func NewPrometheusProvider(cfg configuration.PrometheusSourceConfig, _ LookupHos
 	filters := filter.FromConfig(cfg.Filters)
 
 	var sources []metrics.Source
-	metricsSource, err := NewPrometheusMetricsSource(cfg.URL, prefix, source, discovered, tags, filters, httpCfg)
-	if err == nil {
-		sources = append(sources, metricsSource)
-	} else {
-		return nil, fmt.Errorf("error creating source: %v", err)
+	ips, _ := lookupHostIPs(cfg.URL) // TODO test error
+
+	metricsURL, _ := url.Parse(cfg.URL) // TODO test error
+	for _, ip := range ips {
+		// metricsURL.String() strips port >:L
+		sourceWithPort := fmt.Sprintf("%s://%s:%s%s", metricsURL.Scheme, ip, metricsURL.Port(), metricsURL.Path)
+		metricsSource, err := NewPrometheusMetricsSource(sourceWithPort, prefix, source, discovered, tags, filters, httpCfg)
+		if err == nil {
+			sources = append(sources, metricsSource)
+		} else {
+			return nil, fmt.Errorf("error creating source: %v", err)
+		}
 	}
 
 	return &prometheusProvider{
