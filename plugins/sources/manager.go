@@ -20,6 +20,7 @@ package sources
 import (
 	"fmt"
 	"math/rand"
+	"net"
 	"sort"
 	"sync"
 	"time"
@@ -301,7 +302,7 @@ func buildProviders(cfg configuration.SourceConfig) (result []metrics.SourceProv
 			result = appendProvider(result, provider, err, cfg.CadvisorConfig.Collection)
 		}
 		if cfg.ControlPlaneConfig != nil {
-			provider, err = controlplane.NewProvider(*cfg.ControlPlaneConfig, *cfg.SummaryConfig)
+			provider, err = controlplane.NewProvider(*cfg.ControlPlaneConfig, *cfg.SummaryConfig, net.LookupHost)
 			result = appendProvider(result, provider, err, cfg.ControlPlaneConfig.Collection)
 		}
 	}
@@ -322,7 +323,7 @@ func buildProviders(cfg configuration.SourceConfig) (result []metrics.SourceProv
 		result = appendProvider(result, provider, err, srcCfg.Collection)
 	}
 	for _, srcCfg := range cfg.PrometheusConfigs {
-		provider, err := prometheus.NewPrometheusProvider(*srcCfg)
+		provider, err := prometheus.NewPrometheusProvider(*srcCfg, net.LookupHost)
 		result = appendProvider(result, provider, err, srcCfg.Collection)
 	}
 

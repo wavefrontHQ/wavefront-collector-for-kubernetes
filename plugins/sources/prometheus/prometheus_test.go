@@ -13,6 +13,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/testhelper"
+
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/leadership"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/options"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
@@ -300,7 +302,7 @@ func Test_prometheusProvider_GetMetricsSources(t *testing.T) {
 			promProvider, _ := NewPrometheusProvider(configuration.PrometheusSourceConfig{
 				UseLeaderElection: true,
 				URL:               "https://example.local/metrics",
-			}, noopLookupHostIP)
+			}, testhelper.NoopLookupHost)
 			util.SetAgentType(options.AllAgentType)
 			leadership.SetLeading(true)
 			defer leadership.SetLeading(false)
@@ -314,7 +316,7 @@ func Test_prometheusProvider_GetMetricsSources(t *testing.T) {
 			promProvider, _ := NewPrometheusProvider(configuration.PrometheusSourceConfig{
 				UseLeaderElection: true,
 				URL:               "https://example.local/metrics",
-			}, noopLookupHostIP)
+			}, testhelper.NoopLookupHost)
 			util.SetAgentType(options.AllAgentType)
 
 			sources := promProvider.GetMetricsSources()
@@ -328,7 +330,7 @@ func Test_prometheusProvider_GetMetricsSources(t *testing.T) {
 			UseLeaderElection: false,
 			Discovered:        "something",
 			URL:               "https://example.local/metrics",
-		}, noopLookupHostIP)
+		}, testhelper.NoopLookupHost)
 
 		util.SetAgentType(options.AllAgentType)
 
@@ -422,15 +424,11 @@ func Test_prometheusProvider_GetMetricsSources(t *testing.T) {
 	})
 }
 
-func noopLookupHostIP(host string) ([]string, error) {
-	return []string{host}, nil
-}
-
 func TestNewPrometheusProvider(t *testing.T) {
 	t.Run("errors if prometheus URL is missing", func(t *testing.T) {
 		_, err := NewPrometheusProvider(
 			configuration.PrometheusSourceConfig{},
-			noopLookupHostIP,
+			testhelper.NoopLookupHost,
 		)
 
 		assert.Error(t, err)
@@ -439,7 +437,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 	t.Run("errors if prometheus URL is invalid", func(t *testing.T) {
 		_, err := NewPrometheusProvider(configuration.PrometheusSourceConfig{
 			URL: "\x00https://example.local/metrics",
-		}, noopLookupHostIP)
+		}, testhelper.NoopLookupHost)
 
 		assert.Error(t, err)
 	})
@@ -456,7 +454,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 		leadership.SetLeading(true)
 		util.SetAgentType(options.AllAgentType)
 
-		promProvider, err := NewPrometheusProvider(cfg, noopLookupHostIP)
+		promProvider, err := NewPrometheusProvider(cfg, testhelper.NoopLookupHost)
 		assert.NoError(t, err)
 		source := promProvider.GetMetricsSources()[0].(*prometheusMetricsSource)
 		assert.Equal(t, "fake source", source.source)
@@ -467,7 +465,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 		_ = os.Setenv(util.NodeNameEnvVar, "fake node name")
 		defer os.Unsetenv(util.NodeNameEnvVar)
 
-		promProvider, err := NewPrometheusProvider(cfg, noopLookupHostIP)
+		promProvider, err := NewPrometheusProvider(cfg, testhelper.NoopLookupHost)
 
 		assert.NoError(t, err)
 		source := promProvider.GetMetricsSources()[0].(*prometheusMetricsSource)
@@ -480,7 +478,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 		leadership.SetLeading(true)
 		util.SetAgentType(options.AllAgentType)
 
-		promProvider, err := NewPrometheusProvider(cfg, noopLookupHostIP)
+		promProvider, err := NewPrometheusProvider(cfg, testhelper.NoopLookupHost)
 		assert.NoError(t, err)
 		source := promProvider.GetMetricsSources()[0].(*prometheusMetricsSource)
 		assert.Equal(t, "prom_source", source.source)
@@ -489,7 +487,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 	t.Run("default name to URL if not configured", func(t *testing.T) {
 		cfg := configuration.PrometheusSourceConfig{URL: "http://test-prometheus-url.com"}
 
-		prometheusProvider, err := NewPrometheusProvider(cfg, noopLookupHostIP)
+		prometheusProvider, err := NewPrometheusProvider(cfg, testhelper.NoopLookupHost)
 
 		assert.NoError(t, err)
 		assert.Equal(t, fmt.Sprintf("%s: http://test-prometheus-url.com", providerName), prometheusProvider.Name())
@@ -498,7 +496,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 	t.Run("uses configured provider name", func(t *testing.T) {
 		cfg := configuration.PrometheusSourceConfig{Name: "fake name", URL: "http://test-prometheus-url.com"}
 
-		prometheusProvider, err := NewPrometheusProvider(cfg, noopLookupHostIP)
+		prometheusProvider, err := NewPrometheusProvider(cfg, testhelper.NoopLookupHost)
 
 		assert.NoError(t, err)
 		assert.Equal(t, fmt.Sprintf("%s: fake name", providerName), prometheusProvider.Name())
@@ -509,7 +507,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 			URL: "http://test-prometheus-url.com",
 		}
 
-		promProvider, err := NewPrometheusProvider(cfg, noopLookupHostIP)
+		promProvider, err := NewPrometheusProvider(cfg, testhelper.NoopLookupHost)
 
 		assert.NoError(t, err)
 		source := promProvider.GetMetricsSources()[0].(*prometheusMetricsSource)
@@ -522,7 +520,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 			Discovered: "fake discovered",
 		}
 
-		promProvider, err := NewPrometheusProvider(cfg, noopLookupHostIP)
+		promProvider, err := NewPrometheusProvider(cfg, testhelper.NoopLookupHost)
 
 		assert.NoError(t, err)
 		source := promProvider.GetMetricsSources()[0].(*prometheusMetricsSource)
@@ -536,7 +534,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 		leadership.SetLeading(true)
 		util.SetAgentType(options.AllAgentType)
 
-		promProvider, _ := NewPrometheusProvider(cfg, noopLookupHostIP)
+		promProvider, _ := NewPrometheusProvider(cfg, testhelper.NoopLookupHost)
 
 		source := promProvider.GetMetricsSources()[0].(*prometheusMetricsSource)
 		assert.Equal(t, time.Second*30, source.client.Timeout)
@@ -555,7 +553,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 				Discovered:        "fake discovered",
 			}
 
-			promProvider, _ := NewPrometheusProvider(cfg, noopLookupHostIP)
+			promProvider, _ := NewPrometheusProvider(cfg, testhelper.NoopLookupHost)
 
 			assert.False(t, promProvider.(*prometheusProvider).useLeaderElection)
 		})
@@ -567,7 +565,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 				Discovered:        "fake discovered",
 			}
 
-			promProvider, err := NewPrometheusProvider(cfg, noopLookupHostIP)
+			promProvider, err := NewPrometheusProvider(cfg, testhelper.NoopLookupHost)
 
 			assert.NoError(t, err)
 			assert.True(t, promProvider.(*prometheusProvider).useLeaderElection)
@@ -582,7 +580,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 				Discovered:        "",
 			}
 
-			promProvider, _ := NewPrometheusProvider(cfg, noopLookupHostIP)
+			promProvider, _ := NewPrometheusProvider(cfg, testhelper.NoopLookupHost)
 
 			assert.True(t, promProvider.(*prometheusProvider).useLeaderElection)
 		})
@@ -594,7 +592,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 				Discovered:        "",
 			}
 
-			promProvider, _ := NewPrometheusProvider(cfg, noopLookupHostIP)
+			promProvider, _ := NewPrometheusProvider(cfg, testhelper.NoopLookupHost)
 
 			assert.True(t, promProvider.(*prometheusProvider).useLeaderElection)
 		})
