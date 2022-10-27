@@ -63,7 +63,7 @@ function main() {
 
   # Copy dashboard version from integration feature branch and increment it
   local VERSION=$(($(jq ".systemDashboardVersion" ${INTEGRATION_DIR}/kubernetes/dashboards/${DASHBOARD_URL}.json)+1))
-  jq ". += {"systemDashboardVersion":\"${VERSION}\"}" ${DASHBOARD_URL}.json > "tmp" && mv "tmp" ${DASHBOARD_URL}.json
+  jq ". += {"systemDashboardVersion":${VERSION}}" ${DASHBOARD_URL}.json > "tmp" && mv "tmp" ${DASHBOARD_URL}.json
 
   # Do the sorting here so our systemDashboardVersion gets bumped to the top of the file
   ../scripts/sort-dashboard.sh -i ${DASHBOARD_URL}.json -o 'tmp' && mv "tmp" ${DASHBOARD_URL}.json
