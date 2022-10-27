@@ -38,6 +38,7 @@ func TestMain(m *testing.M) {
 
 	<-ctx.Done()
 
+	fmt.Println("context done; attempting to shut down")
 	killServer.server.Shutdown(context.Background())
 }
 
@@ -67,6 +68,7 @@ func (s *killServer) Start() {
 func (s *killServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 
+	fmt.Println("receiving kill curl; attempting context cancel")
 	// cancel the context
 	s.cancel()
 }
