@@ -1,18 +1,18 @@
 # Integration development
 
 Changes to a dashboard are typically done in the following ways.
-- Updating an existing dashboard that is already in released
-- Creating a new dashboard to iterate in a feature branch
+- [Updating an existing dashboard that is already released](#updating-an-existing-dashboard-that-is-already-released)
+- [Creating a new dashboard to iterate in a feature branch](#creating-a-new-dashboard-to-iterate-in-a-feature-branch)
 
-
-## Updating an existing dashboard that is already in released
-1. From the current path in collector repo, run the below script to create a development copy of the dashboard from nimba API.
+## Updating an existing dashboard that is already released
+1. Run the below script to create a development copy of the dashboard from nimba API.
     ```
     cd ~/workspace/wavefront-collector-for-kubernetes/hack/integrations/
     ./scripts/start-dashboard-development.sh  -t $WAVEFRONT_TOKEN -d <dasboard-url>
     ```
    * `<dasboard-url>` should be the `url` value of the json file from [integration repo](https://github.com/sunnylabs/integrations/tree/master/kubernetes/dashboards) (For instance: `-d integration-kubernetes-control-plane`).
-   **Note:** This would output a link to a dashboard in nimba. Remember to login to nimba and switch to `k8s-saas-team` before accessing the dashboard link.
+   
+   **Note:** The script would output a link to a dashboard in nimba. Remember to login to nimba and switch to `k8s-saas-team` before accessing the dashboard link.
 2. PM or engineering team member iterate on dev dashboard returned from `start-dashboard-development.sh` (For instance: `kubernetes-control-plane-dev`)
 3. Create a new branch in integrations repo and push it upstream. For branch names use the format `k8po/kubernetes<-any-details-as-seen-fit>`. If the development effort spans multiple jira stories, do not use jira story numbers in branch name.
 4. Periodically push the changes from the dev dashboard to the integration repo branch by running the below script.
@@ -22,7 +22,11 @@ Changes to a dashboard are typically done in the following ways.
     ```
    * `<dev-dashboard-name>` is the development dashboard's url created in step 2 (For instance: `-d kubernetes-control-plane-dev`). 
    * `<integration-branch-name>` is the branch name created in the integrations repo in the previous step.
-5. Once the dev dashboard looks ready to merge, follow the steps under [Merge the dashboard](https://confluence.eng.vmware.com/display/CNA/Technical+References#TechnicalReferences-Mergethedashboard).
+5. Run the below dashboard validation script to fix any identified linting problems.
+   ```
+   ruby ~/workspace/integrations/tools/dashboards_validator.rb ~/workspace/integrations/kubernetes/dashboards/integration-kubernetes-<dashboard-name>.json`
+   ```
+7. Once the dev dashboard looks ready to merge, follow the steps under [Merge the dashboard](https://confluence.eng.vmware.com/display/CNA/Technical+References#TechnicalReferences-Mergethedashboard).
 
 ## Creating a new dashboard to iterate in a feature branch
 
@@ -55,4 +59,8 @@ Changes to a dashboard are typically done in the following ways.
     ```
     * `<dev-dashboard-name>` is the development dashboard's `URL` given in step 1 (For instance: `-d kubernetes-control-plane-dev`).
     * `<integration-branch-name>` is the branch name created in [Create a new dashboard in development branch](#create-a-new-dashboard-in-development-branch)
-4. Once the dev dashboard looks ready to merge, follow the steps under [Merge the dashboard](https://confluence.eng.vmware.com/display/CNA/Technical+References#TechnicalReferences-Mergethedashboard).
+4. Run the below dashboard validation script to fix any identified linting problems.
+    ```
+    ruby ~/workspace/integrations/tools/dashboards_validator.rb ~/workspace/integrations/kubernetes/dashboards/integration-kubernetes-<dashboard-name>.json`
+    ```
+5. Once the dev dashboard looks ready to merge, follow the steps under [Merge the dashboard](https://confluence.eng.vmware.com/display/CNA/Technical+References#TechnicalReferences-Mergethedashboard).
