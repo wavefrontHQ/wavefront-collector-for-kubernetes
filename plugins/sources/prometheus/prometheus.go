@@ -205,7 +205,7 @@ type prometheusProvider struct {
 	useLeaderElection bool
 	URL               *url.URL
 	lookupHost        LookupHost
-	buildSource       func(url string) (metrics.Source, error)
+	buildSource       func(url url.URL) (metrics.Source, error)
 	sources           []metrics.Source
 }
 
@@ -222,12 +222,12 @@ func (p *prometheusProvider) GetMetricsSources() []metrics.Source {
 	var sources []metrics.Source
 	metricsURL := *p.URL
 	for _, ip := range ips {
-		if len(metricsURL.Port()) > 0 {
-			metricsURL.Host = fmt.Sprintf("%s:%s", ip, metricsURL.Port())
-		} else {
-			metricsURL.Host = ip
-		}
-		metricsSource, err := p.buildSource(metricsURL.String())
+		//if len(metricsURL.Port()) > 0 {
+		//	metricsURL.Host = fmt.Sprintf("%s:%s", ip, metricsURL.Port())
+		//} else {
+		metricsURL.Host = ip
+		//}
+		metricsSource, err := p.buildSource(metricsURL)
 		if err == nil {
 			sources = append(sources, metricsSource)
 		} else {
@@ -270,13 +270,18 @@ func NewPrometheusProvider(cfg configuration.PrometheusSourceConfig, lookupHost 
 		useLeaderElection: cfg.UseLeaderElection || discovered == "",
 		URL:               metricsURL,
 		lookupHost:        lookupHost,
-		buildSource: func(url string) (metrics.Source, error) {
+		buildSource: func(url url.URL) (metrics.Source, error) {
+			copiedTags := map[string]string{}
+			for name, value := range cfg.Tags {
+				copiedTags[name] = value
+			}
+			copiedTags["addr"] = url.Hostname() // TODO test adding addr tag
 			return NewPrometheusMetricsSource(
-				url,
+				url.String(),
 				cfg.Prefix,
 				source,
 				discovered,
-				cfg.Tags,
+				copiedTags,
 				filters,
 				cfg.HTTPClientConfig,
 			)

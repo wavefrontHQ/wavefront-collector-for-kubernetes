@@ -18,12 +18,17 @@
 package sources
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"net"
 	"sort"
 	"sync"
 	"time"
+
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
 
@@ -79,6 +84,7 @@ type SourceManager interface {
 	GetPendingMetrics() []*metrics.Batch
 	SetDefaultCollectionInterval(time.Duration)
 	BuildProviders(config configuration.SourceConfig) error
+	SetClient(kubernetes.Interface)
 }
 
 type sourceManagerImpl struct {
@@ -92,6 +98,12 @@ type sourceManagerImpl struct {
 
 	responseMtx sync.Mutex
 	response    []*metrics.Batch
+
+	client kubernetes.Interface
+}
+
+func (sm *sourceManagerImpl) SetClient(client kubernetes.Interface) {
+	sm.client = client
 }
 
 // Manager return the SourceManager
@@ -122,7 +134,7 @@ func (sm *sourceManagerImpl) DiscoveryPluginConfigs() []discovery.PluginConfig {
 
 // BuildProviders creates a new source manager with the configured MetricsSourceProviders
 func (sm *sourceManagerImpl) BuildProviders(cfg configuration.SourceConfig) error {
-	sources := buildProviders(cfg)
+	sources := buildProviders(sm.client, cfg)
 	for _, runtime := range sources {
 		sm.AddProvider(runtime)
 	}
@@ -292,7 +304,7 @@ func (sm *sourceManagerImpl) GetPendingMetrics() []*metrics.Batch {
 	return response
 }
 
-func buildProviders(cfg configuration.SourceConfig) (result []metrics.SourceProvider) {
+func buildProviders(client kubernetes.Interface, cfg configuration.SourceConfig) (result []metrics.SourceProvider) {
 	if cfg.SummaryConfig != nil {
 		provider, err := summary.NewSummaryProvider(*cfg.SummaryConfig)
 		result = appendProvider(result, provider, err, cfg.SummaryConfig.Collection)
@@ -302,7 +314,9 @@ func buildProviders(cfg configuration.SourceConfig) (result []metrics.SourceProv
 			result = appendProvider(result, provider, err, cfg.CadvisorConfig.Collection)
 		}
 		if cfg.ControlPlaneConfig != nil {
-			provider, err = controlplane.NewProvider(*cfg.ControlPlaneConfig, *cfg.SummaryConfig, net.LookupHost)
+			provider, err = controlplane.NewProvider(*cfg.ControlPlaneConfig, *cfg.SummaryConfig, prometheus.LookupByEndpoints(func() (*v1.Endpoints, error) {
+				return client.CoreV1().Endpoints("default").Get(context.Background(), "kubernetes", metav1.GetOptions{})
+			}))
 			result = appendProvider(result, provider, err, cfg.ControlPlaneConfig.Collection)
 		}
 	}

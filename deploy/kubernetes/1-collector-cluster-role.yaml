@@ -21,6 +21,7 @@ rules:
   - replicationcontrollers
   - secrets
   - services
+  - endpoints
   verbs:
   - get
   - list

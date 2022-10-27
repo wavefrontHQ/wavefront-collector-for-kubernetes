@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	metricsURL    = "https://kubernetes.default.svc:443/metrics"
+	metricsURL    = "https://kubernetes.default.svc/metrics"
 	metricsSource = "control_plane_source"
 	jitterTime    = time.Second * 40
 	metricsPrefix = "kubernetes.controlplane."
