@@ -217,7 +217,9 @@ func (p *prometheusProvider) Name() string {
 
 const providerName = "prometheus_metrics_provider"
 
-func NewPrometheusProvider(cfg configuration.PrometheusSourceConfig) (metrics.SourceProvider, error) {
+type LookupHostIPs func(host string) (ips []string, err error)
+
+func NewPrometheusProvider(cfg configuration.PrometheusSourceConfig, _ LookupHostIPs) (metrics.SourceProvider, error) {
 	if len(cfg.URL) == 0 {
 		return nil, fmt.Errorf("missing prometheus url")
 	}

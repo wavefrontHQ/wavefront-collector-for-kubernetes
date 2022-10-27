@@ -17,7 +17,9 @@ func NewFactory() metrics.ProviderFactory {
 
 func (p factory) Build(cfg interface{}) (metrics.SourceProvider, error) {
 	c := cfg.(configuration.PrometheusSourceConfig)
-	provider, err := NewPrometheusProvider(c)
+	provider, err := NewPrometheusProvider(c, func(host string) (ips []string, err error) {
+		panic("TODO please implement")
+	})
 	if err == nil {
 		if i, ok := provider.(metrics.ConfigurableSourceProvider); ok {
 			i.Configure(c.Collection.Interval, c.Collection.Timeout)

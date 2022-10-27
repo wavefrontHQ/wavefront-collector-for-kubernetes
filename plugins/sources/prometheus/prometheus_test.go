@@ -344,12 +344,30 @@ func Test_prometheusProvider_GetMetricsSources(t *testing.T) {
 
 		assert.Equal(t, expectedSources, sources)
 	})
+
+	t.Run("returns one source per IP of the host url", func(t *testing.T) {
+		promProvider, _ := NewPrometheusProvider(configuration.PrometheusSourceConfig{
+			URL:        "http://example.local",
+			Discovered: "something",
+		}, func(_ string) (addrs []string, err error) {
+			return []string{"127.0.0.1", "127.0.0.2"}, nil
+		})
+		util.SetAgentType(options.AllAgentType)
+
+		sources := promProvider.GetMetricsSources()
+
+		assert.Len(t, sources, 2)
+	})
+}
+
+func noopLookupHostIP(host string) ([]string, error) {
+	return []string{host}, nil
 }
 
 func TestNewPrometheusProvider(t *testing.T) {
 	t.Run("errors if prometheus URL is missing", func(t *testing.T) {
 		cfg := configuration.PrometheusSourceConfig{}
-		prometheusProvider, err := NewPrometheusProvider(cfg)
+		prometheusProvider, err := NewPrometheusProvider(cfg, noopLookupHostIP)
 		assert.Nil(t, prometheusProvider)
 		assert.NotNil(t, err)
 	})
@@ -366,7 +384,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 		leadership.SetLeading(true)
 		util.SetAgentType(options.AllAgentType)
 
-		promProvider, err := NewPrometheusProvider(cfg)
+		promProvider, err := NewPrometheusProvider(cfg, noopLookupHostIP)
 		assert.NoError(t, err)
 		source := promProvider.GetMetricsSources()[0].(*prometheusMetricsSource)
 		assert.Equal(t, "fake source", source.source)
@@ -377,7 +395,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 		_ = os.Setenv(util.NodeNameEnvVar, "fake node name")
 		defer os.Unsetenv(util.NodeNameEnvVar)
 
-		promProvider, err := NewPrometheusProvider(cfg)
+		promProvider, err := NewPrometheusProvider(cfg, noopLookupHostIP)
 
 		assert.NoError(t, err)
 		source := promProvider.GetMetricsSources()[0].(*prometheusMetricsSource)
@@ -390,7 +408,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 		leadership.SetLeading(true)
 		util.SetAgentType(options.AllAgentType)
 
-		promProvider, err := NewPrometheusProvider(cfg)
+		promProvider, err := NewPrometheusProvider(cfg, noopLookupHostIP)
 		assert.NoError(t, err)
 		source := promProvider.GetMetricsSources()[0].(*prometheusMetricsSource)
 		assert.Equal(t, "prom_source", source.source)
@@ -399,7 +417,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 	t.Run("default name to URL if not configured", func(t *testing.T) {
 		cfg := configuration.PrometheusSourceConfig{URL: "http://test-prometheus-url.com"}
 
-		prometheusProvider, err := NewPrometheusProvider(cfg)
+		prometheusProvider, err := NewPrometheusProvider(cfg, noopLookupHostIP)
 
 		assert.NoError(t, err)
 		assert.Equal(t, fmt.Sprintf("%s: http://test-prometheus-url.com", providerName), prometheusProvider.Name())
@@ -408,7 +426,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 	t.Run("uses configured provider name", func(t *testing.T) {
 		cfg := configuration.PrometheusSourceConfig{Name: "fake name", URL: "http://test-prometheus-url.com"}
 
-		prometheusProvider, err := NewPrometheusProvider(cfg)
+		prometheusProvider, err := NewPrometheusProvider(cfg, noopLookupHostIP)
 
 		assert.NoError(t, err)
 		assert.Equal(t, fmt.Sprintf("%s: fake name", providerName), prometheusProvider.Name())
@@ -419,7 +437,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 			URL: "http://test-prometheus-url.com",
 		}
 
-		promProvider, err := NewPrometheusProvider(cfg)
+		promProvider, err := NewPrometheusProvider(cfg, noopLookupHostIP)
 
 		assert.NoError(t, err)
 		source := promProvider.GetMetricsSources()[0].(*prometheusMetricsSource)
@@ -432,7 +450,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 			Discovered: "fake discovered",
 		}
 
-		promProvider, err := NewPrometheusProvider(cfg)
+		promProvider, err := NewPrometheusProvider(cfg, noopLookupHostIP)
 
 		assert.NoError(t, err)
 		source := promProvider.GetMetricsSources()[0].(*prometheusMetricsSource)
@@ -446,7 +464,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 		leadership.SetLeading(true)
 		util.SetAgentType(options.AllAgentType)
 
-		promProvider, _ := NewPrometheusProvider(cfg)
+		promProvider, _ := NewPrometheusProvider(cfg, noopLookupHostIP)
 
 		source := promProvider.GetMetricsSources()[0].(*prometheusMetricsSource)
 		assert.Equal(t, time.Second*30, source.client.Timeout)
@@ -468,7 +486,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 			},
 		}
 
-		_, err := NewPrometheusProvider(cfg)
+		_, err := NewPrometheusProvider(cfg, noopLookupHostIP)
 
 		assert.NotNil(t, err)
 	})
@@ -486,7 +504,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 		}
 		util.SetAgentType(options.ClusterAgentType)
 
-		prometheusProvider, _ := NewPrometheusProvider(cfg)
+		prometheusProvider, _ := NewPrometheusProvider(cfg, noopLookupHostIP)
 
 		source := prometheusProvider.GetMetricsSources()[0].(*prometheusMetricsSource)
 		assert.Equal(t, "fake metrics source url", source.metricsURL)
@@ -502,7 +520,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 				Discovered:        "fake discovered",
 			}
 
-			promProvider, _ := NewPrometheusProvider(cfg)
+			promProvider, _ := NewPrometheusProvider(cfg, noopLookupHostIP)
 
 			assert.False(t, promProvider.(*prometheusProvider).useLeaderElection)
 		})
@@ -514,7 +532,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 				Discovered:        "fake discovered",
 			}
 
-			promProvider, err := NewPrometheusProvider(cfg)
+			promProvider, err := NewPrometheusProvider(cfg, noopLookupHostIP)
 
 			assert.NoError(t, err)
 			assert.True(t, promProvider.(*prometheusProvider).useLeaderElection)
@@ -529,7 +547,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 				Discovered:        "",
 			}
 
-			promProvider, _ := NewPrometheusProvider(cfg)
+			promProvider, _ := NewPrometheusProvider(cfg, noopLookupHostIP)
 
 			assert.True(t, promProvider.(*prometheusProvider).useLeaderElection)
 		})
@@ -541,7 +559,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 				Discovered:        "",
 			}
 
-			promProvider, _ := NewPrometheusProvider(cfg)
+			promProvider, _ := NewPrometheusProvider(cfg, noopLookupHostIP)
 
 			assert.True(t, promProvider.(*prometheusProvider).useLeaderElection)
 		})
