@@ -44,6 +44,8 @@ func init() {
 	collectErrors = gometrics.GetOrRegisterCounter(reporting.EncodeKey("source.collect.errors", pt), gometrics.DefaultRegistry)
 }
 
+type LookupHost func(host string) (addrs []string, err error)
+
 type prometheusMetricsSource struct {
 	metricsURL           string
 	prefix               string
@@ -201,6 +203,9 @@ type prometheusProvider struct {
 	metrics.DefaultSourceProvider
 	name              string
 	useLeaderElection bool
+	URL               *url.URL
+	lookupHost        LookupHost
+	buildSource       func(url string) (metrics.Source, error)
 	sources           []metrics.Source
 }
 
@@ -209,7 +214,27 @@ func (p *prometheusProvider) GetMetricsSources() []metrics.Source {
 		log.Infof("not scraping sources from: %s. current leader: %s", p.name, leadership.Leader())
 		return nil
 	}
-	return p.sources
+	ips, err := p.lookupHost(p.URL.Hostname())
+	if err != nil {
+		log.Errorf("error looking up host addrs: %v", err)
+		return nil
+	}
+	var sources []metrics.Source
+	metricsURL := *p.URL
+	for _, ip := range ips {
+		if len(metricsURL.Port()) > 0 {
+			metricsURL.Host = fmt.Sprintf("%s:%s", ip, metricsURL.Port())
+		} else {
+			metricsURL.Host = ip
+		}
+		metricsSource, err := p.buildSource(metricsURL.String())
+		if err == nil {
+			sources = append(sources, metricsSource)
+		} else {
+			log.Errorf("error creating source: %v", err)
+		}
+	}
+	return sources
 }
 
 func (p *prometheusProvider) Name() string {
@@ -218,13 +243,7 @@ func (p *prometheusProvider) Name() string {
 
 const providerName = "prometheus_metrics_provider"
 
-type LookupHostIPs func(host string) (ips []string, err error)
-
-func NewPrometheusProvider(cfg configuration.PrometheusSourceConfig, lookupHostIPs LookupHostIPs) (metrics.SourceProvider, error) {
-	if len(cfg.URL) == 0 {
-		return nil, fmt.Errorf("missing prometheus url")
-	}
-
+func NewPrometheusProvider(cfg configuration.PrometheusSourceConfig, lookupHost LookupHost) (metrics.SourceProvider, error) {
 	source := configuration.GetStringValue(cfg.Source, util.GetNodeName())
 	source = configuration.GetStringValue(source, "prom_source")
 
@@ -239,29 +258,28 @@ func NewPrometheusProvider(cfg configuration.PrometheusSourceConfig, lookupHostI
 	discovered := configuration.GetStringValue(cfg.Discovered, "")
 	log.Debugf("name: %s discovered: %s", name, discovered)
 
-	httpCfg := cfg.HTTPClientConfig
-	prefix := cfg.Prefix
-	tags := cfg.Tags
 	filters := filter.FromConfig(cfg.Filters)
 
-	var sources []metrics.Source
-	ips, _ := lookupHostIPs(cfg.URL) // TODO test error
-
-	metricsURL, _ := url.Parse(cfg.URL) // TODO test error
-	for _, ip := range ips {
-		// metricsURL.String() strips port >:L
-		sourceWithPort := fmt.Sprintf("%s://%s:%s%s", metricsURL.Scheme, ip, metricsURL.Port(), metricsURL.Path)
-		metricsSource, err := NewPrometheusMetricsSource(sourceWithPort, prefix, source, discovered, tags, filters, httpCfg)
-		if err == nil {
-			sources = append(sources, metricsSource)
-		} else {
-			return nil, fmt.Errorf("error creating source: %v", err)
-		}
+	metricsURL, err := url.ParseRequestURI(cfg.URL)
+	if err != nil {
+		return nil, err
 	}
 
 	return &prometheusProvider{
 		name:              name,
 		useLeaderElection: cfg.UseLeaderElection || discovered == "",
-		sources:           sources,
+		URL:               metricsURL,
+		lookupHost:        lookupHost,
+		buildSource: func(url string) (metrics.Source, error) {
+			return NewPrometheusMetricsSource(
+				url,
+				cfg.Prefix,
+				source,
+				discovered,
+				cfg.Tags,
+				filters,
+				cfg.HTTPClientConfig,
+			)
+		},
 	}, nil
 }

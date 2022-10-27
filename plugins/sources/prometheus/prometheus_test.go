@@ -5,6 +5,7 @@ package prometheus
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -17,12 +18,10 @@ import (
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
-
 	gm "github.com/rcrowley/go-metrics"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/httputil"
 )
@@ -298,30 +297,24 @@ fake_metric{} 1
 func Test_prometheusProvider_GetMetricsSources(t *testing.T) {
 	t.Run("when use leader election is enabled", func(t *testing.T) {
 		t.Run("returns sources when we are the leader", func(t *testing.T) {
-			expectedSources := []metrics.Source{&prometheusMetricsSource{
-				metricsURL: "fake metrics url",
-			}}
-			promProvider := prometheusProvider{
-				useLeaderElection: true,
-				sources:           expectedSources,
-			}
+			promProvider, _ := NewPrometheusProvider(configuration.PrometheusSourceConfig{
+				UseLeaderElection: true,
+				URL:               "https://example.local/metrics",
+			}, noopLookupHostIP)
 			util.SetAgentType(options.AllAgentType)
 			leadership.SetLeading(true)
 			defer leadership.SetLeading(false)
 
 			sources := promProvider.GetMetricsSources()
 
-			assert.Equal(t, expectedSources, sources)
+			assert.Len(t, sources, 1)
 		})
 
 		t.Run("does not return sources when we are not the leader", func(t *testing.T) {
-			expectedSources := []metrics.Source{&prometheusMetricsSource{
-				metricsURL: "fake metrics url",
-			}}
-			promProvider := prometheusProvider{
-				useLeaderElection: true,
-				sources:           expectedSources,
-			}
+			promProvider, _ := NewPrometheusProvider(configuration.PrometheusSourceConfig{
+				UseLeaderElection: true,
+				URL:               "https://example.local/metrics",
+			}, noopLookupHostIP)
 			util.SetAgentType(options.AllAgentType)
 
 			sources := promProvider.GetMetricsSources()
@@ -331,21 +324,20 @@ func Test_prometheusProvider_GetMetricsSources(t *testing.T) {
 	})
 
 	t.Run("returns sources when use leader election is disabled", func(t *testing.T) {
-		expectedSources := []metrics.Source{&prometheusMetricsSource{
-			metricsURL: "fake metrics url",
-		}}
-		promProvider := prometheusProvider{
-			useLeaderElection: false,
-			sources:           expectedSources,
-		}
+		promProvider, _ := NewPrometheusProvider(configuration.PrometheusSourceConfig{
+			UseLeaderElection: false,
+			Discovered:        "something",
+			URL:               "https://example.local/metrics",
+		}, noopLookupHostIP)
+
 		util.SetAgentType(options.AllAgentType)
 
 		sources := promProvider.GetMetricsSources()
 
-		assert.Equal(t, expectedSources, sources)
+		assert.Len(t, sources, 1)
 	})
 
-	t.Run("returns one source per IP of the host url", func(t *testing.T) {
+	t.Run("returns one source per address of the host url", func(t *testing.T) {
 		promProvider, _ := NewPrometheusProvider(configuration.PrometheusSourceConfig{
 			URL:        "http://example.local:2222/metrics",
 			Discovered: "something",
@@ -361,19 +353,72 @@ func Test_prometheusProvider_GetMetricsSources(t *testing.T) {
 		assert.Equal(t, "http://127.0.0.2:2222/metrics", sources[1].(*prometheusMetricsSource).metricsURL)
 	})
 
-	t.Run("supports https", func(t *testing.T) {
+	t.Run("recomputes the sources every time", func(t *testing.T) {
+		firstCall := true
 		promProvider, _ := NewPrometheusProvider(configuration.PrometheusSourceConfig{
-			URL:        "https://example.local:2222/metrics",
+			URL:        "http://example.local:2222/metrics",
 			Discovered: "something",
 		}, func(_ string) (addrs []string, err error) {
+			if firstCall {
+				firstCall = false
+				return []string{"127.0.0.1"}, nil
+			} else {
+				return []string{"127.0.0.2"}, nil
+			}
+
+		})
+		util.SetAgentType(options.AllAgentType)
+
+		promProvider.GetMetricsSources()
+		sources := promProvider.GetMetricsSources()
+
+		assert.Len(t, sources, 1)
+		assert.Equal(t, "http://127.0.0.2:2222/metrics", sources[0].(*prometheusMetricsSource).metricsURL)
+	})
+
+	t.Run("passes the hostname into lookupHost", func(t *testing.T) {
+		actualHost := ""
+		promProvider, _ := NewPrometheusProvider(configuration.PrometheusSourceConfig{
+			URL:        "http://example.local:2222/metrics",
+			Discovered: "something",
+		}, func(host string) (addrs []string, err error) {
+			actualHost = host
 			return []string{"127.0.0.1", "127.0.0.2"}, nil
+		})
+		util.SetAgentType(options.AllAgentType)
+
+		promProvider.GetMetricsSources()
+
+		assert.Equal(t, "example.local", actualHost)
+	})
+
+	t.Run("does not include port if the URL doesn't specify it", func(t *testing.T) {
+		promProvider, _ := NewPrometheusProvider(configuration.PrometheusSourceConfig{
+			URL:        "https://example.local/metrics",
+			Discovered: "something",
+		}, func(host string) (addrs []string, err error) {
+			return []string{"127.0.0.1"}, nil
 		})
 		util.SetAgentType(options.AllAgentType)
 
 		sources := promProvider.GetMetricsSources()
 
-		assert.Equal(t, "https://127.0.0.1:2222/metrics", sources[0].(*prometheusMetricsSource).metricsURL)
-		assert.Equal(t, "https://127.0.0.2:2222/metrics", sources[1].(*prometheusMetricsSource).metricsURL)
+		assert.Len(t, sources, 1)
+		assert.Equal(t, "https://127.0.0.1/metrics", sources[0].(*prometheusMetricsSource).metricsURL)
+	})
+
+	t.Run("returns empty when there is an error looking up addresses", func(t *testing.T) {
+		promProvider, _ := NewPrometheusProvider(configuration.PrometheusSourceConfig{
+			URL:        "https://example.local/metrics",
+			Discovered: "something",
+		}, func(host string) (addrs []string, err error) {
+			return nil, errors.New("some error")
+		})
+		util.SetAgentType(options.AllAgentType)
+
+		sources := promProvider.GetMetricsSources()
+
+		assert.Empty(t, sources)
 	})
 }
 
@@ -383,15 +428,25 @@ func noopLookupHostIP(host string) ([]string, error) {
 
 func TestNewPrometheusProvider(t *testing.T) {
 	t.Run("errors if prometheus URL is missing", func(t *testing.T) {
-		cfg := configuration.PrometheusSourceConfig{}
-		prometheusProvider, err := NewPrometheusProvider(cfg, noopLookupHostIP)
-		assert.Nil(t, prometheusProvider)
-		assert.NotNil(t, err)
+		_, err := NewPrometheusProvider(
+			configuration.PrometheusSourceConfig{},
+			noopLookupHostIP,
+		)
+
+		assert.Error(t, err)
+	})
+
+	t.Run("errors if prometheus URL is invalid", func(t *testing.T) {
+		_, err := NewPrometheusProvider(configuration.PrometheusSourceConfig{
+			URL: "\x00https://example.local/metrics",
+		}, noopLookupHostIP)
+
+		assert.Error(t, err)
 	})
 
 	t.Run("use configured source as source tag", func(t *testing.T) {
 		cfg := configuration.PrometheusSourceConfig{
-			URL: "fake url",
+			URL: "https://example.local",
 			Transforms: configuration.Transforms{
 				Source: "fake source",
 			},
@@ -408,7 +463,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 	})
 
 	t.Run("use node name as source tag", func(t *testing.T) {
-		cfg := configuration.PrometheusSourceConfig{URL: "fake url"}
+		cfg := configuration.PrometheusSourceConfig{URL: "https://example.local"}
 		_ = os.Setenv(util.NodeNameEnvVar, "fake node name")
 		defer os.Unsetenv(util.NodeNameEnvVar)
 
@@ -420,7 +475,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 	})
 
 	t.Run("use 'prom_source' as source tag", func(t *testing.T) {
-		cfg := configuration.PrometheusSourceConfig{URL: "fake url"}
+		cfg := configuration.PrometheusSourceConfig{URL: "https://example.local"}
 
 		leadership.SetLeading(true)
 		util.SetAgentType(options.AllAgentType)
@@ -490,43 +545,6 @@ func TestNewPrometheusProvider(t *testing.T) {
 		assert.Equal(t, map[string]string(nil), source.tags)
 		assert.Equal(t, nil, source.filters)
 		assert.Equal(t, "http://test-prometheus-url.com", source.metricsURL)
-	})
-
-	t.Run("returns an error if metrics source creation fails", func(t *testing.T) {
-		cfg := configuration.PrometheusSourceConfig{
-			URL: "http://test-prometheus-url.com",
-			HTTPClientConfig: httputil.ClientConfig{
-				TLSConfig: httputil.TLSConfig{
-					KeyFile:            "sldlfdldldfkjkjlfd",
-					InsecureSkipVerify: false,
-				},
-			},
-		}
-
-		_, err := NewPrometheusProvider(cfg, noopLookupHostIP)
-
-		assert.NotNil(t, err)
-	})
-
-	t.Run("prometheus provider sources contains whatever is returned by metrics source constructor", func(t *testing.T) {
-		cfg := configuration.PrometheusSourceConfig{
-			URL: "fake metrics source url",
-			Transforms: configuration.Transforms{
-				Source: "fake metrics source source",
-				Prefix: "fake metrics source prefix",
-			},
-
-			UseLeaderElection: false,
-			Discovered:        "fake discovered",
-		}
-		util.SetAgentType(options.ClusterAgentType)
-
-		prometheusProvider, _ := NewPrometheusProvider(cfg, noopLookupHostIP)
-
-		source := prometheusProvider.GetMetricsSources()[0].(*prometheusMetricsSource)
-		assert.Equal(t, "fake metrics source url", source.metricsURL)
-		assert.Equal(t, "fake metrics source prefix", source.prefix)
-		assert.Equal(t, "fake metrics source source", source.source)
 	})
 
 	t.Run("when Discovered is present", func(t *testing.T) {
