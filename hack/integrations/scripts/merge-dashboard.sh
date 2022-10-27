@@ -70,9 +70,10 @@ function main() {
   ../scripts/clean-partials.sh
 
   cat ${DASHBOARD_URL}.json > ${INTEGRATION_DIR}/kubernetes/dashboards/${DASHBOARD_URL}.json
-  git -C "$INTEGRATION_DIR" add ${INTEGRATION_DIR}/kubernetes/dashboards/${DASHBOARD_URL}.json
-  git -C "$INTEGRATION_DIR" commit -m"Updated from ${DASHBOARD_DEV_URL}"
-  git -C "$INTEGRATION_DIR" push  2>/dev/null || git -C "$INTEGRATION_DIR" push --set-upstream origin "$BRANCH_NAME"
+  echo Check your integration repo for changes.
+#  git -C "$INTEGRATION_DIR" add ${INTEGRATION_DIR}/kubernetes/dashboards/${DASHBOARD_URL}.json
+#  git -C "$INTEGRATION_DIR" commit -m"Updated from ${DASHBOARD_DEV_URL}"
+#  git -C "$INTEGRATION_DIR" push  2>/dev/null || git -C "$INTEGRATION_DIR" push --set-upstream origin "$BRANCH_NAME"
 }
 
 main $@

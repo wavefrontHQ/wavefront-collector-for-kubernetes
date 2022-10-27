@@ -22,9 +22,9 @@ Changes to a dashboard are typically done in the following ways.
     ```
    * `<dev-dashboard-name>` is the development dashboard's url created in step 2 (For instance: `-d kubernetes-control-plane-dev`). 
    * `<integration-branch-name>` is the branch name created in the integrations repo in the previous step.
-5. Run the below dashboard validation script to fix any identified linting problems.
+5. Run the below dashboard validation script and fix any identified linting problems.
    ```
-   ruby ~/workspace/integrations/tools/dashboards_validator.rb ~/workspace/integrations/kubernetes/dashboards/integration-kubernetes-<dashboard-name>.json`
+   ruby ~/workspace/integrations/tools/dashboards_validator.rb ~/workspace/integrations/kubernetes/dashboards/integration-kubernetes-<dashboard-name>.json
    ```
 7. Once the dev dashboard looks ready to merge, follow the steps under [Merge the dashboard](https://confluence.eng.vmware.com/display/CNA/Technical+References#TechnicalReferences-Mergethedashboard).
 
@@ -59,8 +59,8 @@ Changes to a dashboard are typically done in the following ways.
     ```
     * `<dev-dashboard-name>` is the development dashboard's `URL` given in step 1 (For instance: `-d kubernetes-control-plane-dev`).
     * `<integration-branch-name>` is the branch name created in [Create a new dashboard in development branch](#create-a-new-dashboard-in-development-branch)
-4. Run the below dashboard validation script to fix any identified linting problems.
+4. Run the below dashboard validation script and fix any identified linting problems.
     ```
-    ruby ~/workspace/integrations/tools/dashboards_validator.rb ~/workspace/integrations/kubernetes/dashboards/integration-kubernetes-<dashboard-name>.json`
+    ruby ~/workspace/integrations/tools/dashboards_validator.rb ~/workspace/integrations/kubernetes/dashboards/<dashboard-json-file-name>
     ```
 5. Once the dev dashboard looks ready to merge, follow the steps under [Merge the dashboard](https://confluence.eng.vmware.com/display/CNA/Technical+References#TechnicalReferences-Mergethedashboard).
