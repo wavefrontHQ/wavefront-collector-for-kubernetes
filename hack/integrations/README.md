@@ -15,7 +15,7 @@ Changes to a dashboard are typically done in the following ways.
    **Note:** The script would output a link to a dashboard in nimba. Remember to login to nimba and switch to `k8s-saas-team` before accessing the dashboard link.
 2. PM or engineering team member iterate on dev dashboard returned from `start-dashboard-development.sh` (For instance: `kubernetes-control-plane-dev`)
 3. Create a new branch in integrations repo and push it upstream. For branch names use the format `k8po/kubernetes<-any-details-as-seen-fit>`. If the development effort spans multiple jira stories, do not use jira story numbers in branch name.
-4. Periodically push the changes from the dev dashboard to the integration repo branch by running the below script.
+4. Periodically pull the changes from the dev dashboard to the integration repo branch by running the below script.
     ```
     cd ~/workspace/wavefront-collector-for-kubernetes/hack/integrations/
     ./scripts/merge-dashboard.sh  -t $WAVEFRONT_TOKEN -d <dev-dashboard-name> -b <integration-branch-name>
@@ -24,9 +24,10 @@ Changes to a dashboard are typically done in the following ways.
    * `<integration-branch-name>` is the branch name created in the integrations repo in the previous step.
 5. Run the below dashboard validation script and fix any identified linting problems.
    ```
-   ruby ~/workspace/integrations/tools/dashboards_validator.rb ~/workspace/integrations/kubernetes/dashboards/integration-kubernetes-<dashboard-name>.json
+   ruby ~/workspace/integrations/tools/dashboards_validator.rb ~/workspace/integrations/kubernetes/dashboards/<dashboard-json-file-name>
    ```
-7. Once the dev dashboard looks ready to merge, follow the steps under [Merge the dashboard](https://confluence.eng.vmware.com/display/CNA/Technical+References#TechnicalReferences-Mergethedashboard).
+6. Verify and commit the changes made to the dashboard in integrations repo.
+7. Once the dev dashboard looks ready, follow the steps under [Merge the dashboard](https://confluence.eng.vmware.com/display/CNA/Technical+References#TechnicalReferences-Mergethedashboard).
 
 ## Creating a new dashboard to iterate in a feature branch
 
@@ -52,7 +53,7 @@ Changes to a dashboard are typically done in the following ways.
     URL: kubernetes-<new-dashboard>-dev
    ```
 2. Make changes to the dev dashboard (`kubernetes-<new-dashboard>-dev`).
-3. Periodically push the changes from the dev dashboard to the integration repo branch by running the below script.
+3. Periodically pull the changes from the dev dashboard to the integration repo branch by running the below script.
     ```
     cd ~/workspace/wavefront-collector-for-kubernetes/hack/integrations/
     ./scripts/merge-dashboard.sh  -t $WAVEFRONT_TOKEN -d <dev-dashboard-name> -b <integration-branch-name>
@@ -63,4 +64,5 @@ Changes to a dashboard are typically done in the following ways.
     ```
     ruby ~/workspace/integrations/tools/dashboards_validator.rb ~/workspace/integrations/kubernetes/dashboards/<dashboard-json-file-name>
     ```
-5. Once the dev dashboard looks ready to merge, follow the steps under [Merge the dashboard](https://confluence.eng.vmware.com/display/CNA/Technical+References#TechnicalReferences-Mergethedashboard).
+5. Verify and commit the changes made to the dashboard in integrations repo.
+6. Once the dev dashboard looks ready, follow the steps under [Merge the dashboard](https://confluence.eng.vmware.com/display/CNA/Technical+References#TechnicalReferences-Mergethedashboard).
