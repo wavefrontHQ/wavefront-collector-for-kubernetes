@@ -63,16 +63,17 @@ function main() {
 
   # Copy dashboard version from integration feature branch and increment it
   local VERSION=$(($(jq ".systemDashboardVersion" ${INTEGRATION_DIR}/kubernetes/dashboards/${DASHBOARD_URL}.json)+1))
-  jq ". += {"systemDashboardVersion":\"${VERSION}\"}" ${DASHBOARD_URL}.json > "tmp" && mv "tmp" ${DASHBOARD_URL}.json
+  jq ". += {"systemDashboardVersion":${VERSION}}" ${DASHBOARD_URL}.json > "tmp" && mv "tmp" ${DASHBOARD_URL}.json
 
   # Do the sorting here so our systemDashboardVersion gets bumped to the top of the file
   ../scripts/sort-dashboard.sh -i ${DASHBOARD_URL}.json -o 'tmp' && mv "tmp" ${DASHBOARD_URL}.json
   ../scripts/clean-partials.sh
 
   cat ${DASHBOARD_URL}.json > ${INTEGRATION_DIR}/kubernetes/dashboards/${DASHBOARD_URL}.json
-  git -C "$INTEGRATION_DIR" add ${INTEGRATION_DIR}/kubernetes/dashboards/${DASHBOARD_URL}.json
-  git -C "$INTEGRATION_DIR" commit -m"Updated from ${DASHBOARD_DEV_URL}"
-  git -C "$INTEGRATION_DIR" push  2>/dev/null || git -C "$INTEGRATION_DIR" push --set-upstream origin "$BRANCH_NAME"
+  echo Check your integration repo for changes.
+#  git -C "$INTEGRATION_DIR" add ${INTEGRATION_DIR}/kubernetes/dashboards/${DASHBOARD_URL}.json
+#  git -C "$INTEGRATION_DIR" commit -m"Updated from ${DASHBOARD_DEV_URL}"
+#  git -C "$INTEGRATION_DIR" push  2>/dev/null || git -C "$INTEGRATION_DIR" push --set-upstream origin "$BRANCH_NAME"
 }
 
 main $@
