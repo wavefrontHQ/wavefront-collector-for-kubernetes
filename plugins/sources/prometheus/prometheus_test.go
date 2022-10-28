@@ -344,7 +344,7 @@ func Test_prometheusProvider_GetMetricsSources(t *testing.T) {
 			URL:        "http://example.local:2222/metrics",
 			Discovered: "something",
 		}, func(_ string) (addrs []string, err error) {
-			return []string{"127.0.0.1", "127.0.0.2"}, nil
+			return []string{"127.0.0.1:2222", "127.0.0.2:2222"}, nil
 		})
 		util.SetAgentType(options.AllAgentType)
 
@@ -363,9 +363,9 @@ func Test_prometheusProvider_GetMetricsSources(t *testing.T) {
 		}, func(_ string) (addrs []string, err error) {
 			if firstCall {
 				firstCall = false
-				return []string{"127.0.0.1"}, nil
+				return []string{"127.0.0.1:2222"}, nil
 			} else {
-				return []string{"127.0.0.2"}, nil
+				return []string{"127.0.0.2:2222"}, nil
 			}
 
 		})
@@ -385,7 +385,7 @@ func Test_prometheusProvider_GetMetricsSources(t *testing.T) {
 			Discovered: "something",
 		}, func(host string) (addrs []string, err error) {
 			actualHost = host
-			return []string{"127.0.0.1", "127.0.0.2"}, nil
+			return []string{"127.0.0.1:2222", "127.0.0.2:2222"}, nil
 		})
 		util.SetAgentType(options.AllAgentType)
 
@@ -540,7 +540,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 		assert.Equal(t, time.Second*30, source.client.Timeout)
 		assert.NotNil(t, source.client.Transport)
 		assert.Equal(t, "", source.prefix)
-		assert.Equal(t, map[string]string(nil), source.tags)
+		assert.Equal(t, map[string]string{"addr": "test-prometheus-url.com"}, source.tags)
 		assert.Equal(t, nil, source.filters)
 		assert.Equal(t, "http://test-prometheus-url.com", source.metricsURL)
 	})
