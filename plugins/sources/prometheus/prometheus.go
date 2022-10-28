@@ -281,7 +281,7 @@ func NewPrometheusProvider(cfg configuration.PrometheusSourceConfig, lookupHosts
 				copiedTags[name] = value
 			}
 			if lookupHosts != nil {
-				copiedTags["instance"] = url.Hostname() // TODO test adding addr tag
+				copiedTags["instance"] = url.Host
 			}
 			return NewPrometheusMetricsSource(
 				url.String(),

@@ -538,9 +538,25 @@ func TestNewPrometheusProvider(t *testing.T) {
 		assert.Equal(t, time.Second*30, source.client.Timeout)
 		assert.NotNil(t, source.client.Transport)
 		assert.Equal(t, "", source.prefix)
-		assert.Empty(t, source.tags)
+		assert.Empty(t, source.tags, "when lookup host is nil, does not add instance tag")
 		assert.Equal(t, nil, source.filters)
 		assert.Equal(t, "http://test-prometheus-url.com", source.metricsURL)
+	})
+
+	t.Run("when lookup host is present, adds host:port as instance tag", func(t *testing.T) {
+		cfg := configuration.PrometheusSourceConfig{
+			URL: "http://test-prometheus-url.com",
+		}
+
+		promProvider, err := NewPrometheusProvider(cfg, func(host string) (addrs []string, err error) {
+			return []string{"127.0.0.1:2222"}, nil
+		})
+
+		assert.NoError(t, err)
+		source := promProvider.GetMetricsSources()[0].(*prometheusMetricsSource)
+		assert.Equal(t, 1, len(source.tags))
+		assert.Contains(t, source.tags, "instance")
+		assert.Equal(t, "127.0.0.1:2222", source.tags["instance"])
 	})
 
 	t.Run("when Discovered is present", func(t *testing.T) {
