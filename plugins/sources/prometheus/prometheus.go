@@ -214,14 +214,19 @@ func (p *prometheusProvider) GetMetricsSources() []metrics.Source {
 		log.Infof("not scraping sources from: %s. current leader: %s", p.name, leadership.Leader())
 		return nil
 	}
-	ips, err := p.lookupHosts(p.URL.Hostname())
-	if err != nil {
-		log.Errorf("error looking up host addrs: %v", err)
-		return nil
+	metricsURL := *p.URL
+	var ips = []string{metricsURL.Host}
+	var err error
+	if p.lookupHosts != nil {
+		ips, err = p.lookupHosts(p.URL.Host)
+		if err != nil {
+			log.Errorf("error looking up host addrs: %v", err)
+			return nil
+		}
 	}
 	var sources []metrics.Source
-	metricsURL := *p.URL
 	for _, ip := range ips {
+		// TODO remove below in the end
 		//if len(metricsURL.Port()) > 0 {
 		//	metricsURL.Host = fmt.Sprintf("%s:%s", ip, metricsURL.Port())
 		//} else {
@@ -275,7 +280,9 @@ func NewPrometheusProvider(cfg configuration.PrometheusSourceConfig, lookupHosts
 			for name, value := range cfg.Tags {
 				copiedTags[name] = value
 			}
-			copiedTags["addr"] = url.Hostname() // TODO test adding addr tag
+			if lookupHosts != nil {
+				copiedTags["instance"] = url.Hostname() // TODO test adding addr tag
+			}
 			return NewPrometheusMetricsSource(
 				url.String(),
 				cfg.Prefix,

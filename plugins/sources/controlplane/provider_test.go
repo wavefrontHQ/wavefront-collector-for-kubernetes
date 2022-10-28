@@ -1,9 +1,8 @@
 package controlplane
 
 import (
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources/prometheus"
 	"testing"
-
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/testhelper"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/options"
 
@@ -20,25 +19,25 @@ func TestProvider(t *testing.T) {
 	util.SetAgentType(options.AllAgentType)
 
 	t.Run("is identified as the correct provider", func(t *testing.T) {
-		provider, _ := NewProvider(configuration.ControlPlaneSourceConfig{}, configuration.SummarySourceConfig{}, testhelper.NoopLookupHost)
+		provider, _ := NewProvider(configuration.ControlPlaneSourceConfig{}, configuration.SummarySourceConfig{}, prometheus.NoopLookupHost)
 
 		assert.Equal(t, "control_plane_source", provider.Name())
 	})
 
 	t.Run("has two prometheus sources", func(t *testing.T) {
-		provider, _ := NewProvider(configuration.ControlPlaneSourceConfig{}, configuration.SummarySourceConfig{URL: "https://kube", InClusterConfig: "false"}, testhelper.NoopLookupHost)
+		provider, _ := NewProvider(configuration.ControlPlaneSourceConfig{}, configuration.SummarySourceConfig{URL: "https://kube", InClusterConfig: "false"}, prometheus.NoopLookupHost)
 
 		assert.Equal(t, 2, len(provider.GetMetricsSources()))
 	})
 
 	t.Run("implements discovery.PluginProvider", func(t *testing.T) {
-		provider, _ := NewProvider(configuration.ControlPlaneSourceConfig{}, configuration.SummarySourceConfig{URL: "https://kube", InClusterConfig: "false"}, testhelper.NoopLookupHost)
+		provider, _ := NewProvider(configuration.ControlPlaneSourceConfig{}, configuration.SummarySourceConfig{URL: "https://kube", InClusterConfig: "false"}, prometheus.NoopLookupHost)
 
 		assert.Implements(t, (*discovery.PluginProvider)(nil), provider)
 	})
 
 	t.Run("provides one discovery plugin config for core dns", func(t *testing.T) {
-		provider, _ := NewProvider(configuration.ControlPlaneSourceConfig{}, configuration.SummarySourceConfig{URL: "https://kube", InClusterConfig: "false"}, testhelper.NoopLookupHost)
+		provider, _ := NewProvider(configuration.ControlPlaneSourceConfig{}, configuration.SummarySourceConfig{URL: "https://kube", InClusterConfig: "false"}, prometheus.NoopLookupHost)
 		pluginConfigProvider := provider.(discovery.PluginProvider)
 
 		if assert.Equal(t, 1, len(pluginConfigProvider.DiscoveryPluginConfigs())) {
