@@ -21,7 +21,7 @@ type Instance struct {
 
 type LookupInstances func(host string) ([]Instance, error)
 
-func LookupByEndpoints(client corev1.EndpointsGetter) LookupInstances {
+func InstancesFromEndpoints(client corev1.EndpointsGetter) LookupInstances {
 	return func(host string) ([]Instance, error) {
 		matches := matchNSName.FindStringSubmatch(host)
 		if len(matches) == 0 {
@@ -89,6 +89,6 @@ func choosePort(ports []apicorev1.EndpointPort) int32 {
 	return httpPort
 }
 
-func NoopLookupInstances(instance string) ([]Instance, error) {
+func InstanceFromHost(instance string) ([]Instance, error) {
 	return []Instance{{instance, nil}}, nil
 }

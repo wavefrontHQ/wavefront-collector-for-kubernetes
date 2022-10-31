@@ -15,13 +15,13 @@ const goodHost = "kubernetes.default.svc"
 func TestLookupByEndpoints(t *testing.T) {
 	t.Run("rejects hosts that do not match a k8s service dns name", func(t *testing.T) {
 		client := fake.NewSimpleClientset()
-		_, err := LookupByEndpoints(client.CoreV1())("not.a.k8s.host.local")
+		_, err := InstancesFromEndpoints(client.CoreV1())("not.a.k8s.host.local")
 		require.EqualError(t, err, "host is not a kubernetes service")
 	})
 
 	t.Run("returns an error if an endpoints is not found for the service", func(t *testing.T) {
 		client := fake.NewSimpleClientset()
-		_, err := LookupByEndpoints(client.CoreV1())(goodHost)
+		_, err := InstancesFromEndpoints(client.CoreV1())(goodHost)
 		require.ErrorContains(t, err, "not found")
 	})
 
@@ -32,7 +32,7 @@ func TestLookupByEndpoints(t *testing.T) {
 				Ports:     []corev1.EndpointPort{{Name: "http", Port: 8080}},
 			}}
 		}))
-		instances, _ := LookupByEndpoints(client.CoreV1())(goodHost)
+		instances, _ := InstancesFromEndpoints(client.CoreV1())(goodHost)
 
 		require.True(t, strings.HasSuffix(instances[0].Host, ":8080"), "address ends with :8080")
 	})
@@ -44,7 +44,7 @@ func TestLookupByEndpoints(t *testing.T) {
 				Ports:     []corev1.EndpointPort{{Name: "http", Port: 8080}, {Name: "https", Port: 6443}},
 			}}
 		}))
-		instances, _ := LookupByEndpoints(client.CoreV1())(goodHost)
+		instances, _ := InstancesFromEndpoints(client.CoreV1())(goodHost)
 
 		require.True(t, strings.HasSuffix(instances[0].Host, ":6443"), "address ends with :6443")
 	})
@@ -56,7 +56,7 @@ func TestLookupByEndpoints(t *testing.T) {
 				Ports:     []corev1.EndpointPort{{Name: "smtp", Port: 25}},
 			}}
 		}))
-		_, err := LookupByEndpoints(client.CoreV1())(goodHost)
+		_, err := InstancesFromEndpoints(client.CoreV1())(goodHost)
 
 		require.ErrorContains(t, err, "could not find either HTTP or HTTPS port")
 	})
@@ -68,21 +68,21 @@ func TestLookupByEndpoints(t *testing.T) {
 				Ports:     []corev1.EndpointPort{{Name: "https", Port: 6443}},
 			}}
 		}))
-		instances, _ := LookupByEndpoints(client.CoreV1())(goodHost)
+		instances, _ := InstancesFromEndpoints(client.CoreV1())(goodHost)
 
 		require.Len(t, instances, 2)
 	})
 
 	t.Run("returns an instance tag that matches the instance's Host", func(t *testing.T) {
 		client := fake.NewSimpleClientset(endpoints(defaultSubset))
-		instances, _ := LookupByEndpoints(client.CoreV1())(goodHost)
+		instances, _ := InstancesFromEndpoints(client.CoreV1())(goodHost)
 
 		require.Equal(t, instances[0].Host, instances[0].Tags["instance"])
 	})
 
 	t.Run("returns ip address of the endpoints in the instance's Host", func(t *testing.T) {
 		client := fake.NewSimpleClientset(endpoints(defaultSubset))
-		instances, _ := LookupByEndpoints(client.CoreV1())(goodHost)
+		instances, _ := InstancesFromEndpoints(client.CoreV1())(goodHost)
 
 		require.True(t, strings.HasPrefix(instances[0].Host, "127.0.0.1:"), "begins with 127.0.0.1:")
 	})
@@ -100,7 +100,7 @@ func TestLookupByEndpoints(t *testing.T) {
 				},
 			}
 		}))
-		instances, _ := LookupByEndpoints(client.CoreV1())(goodHost)
+		instances, _ := InstancesFromEndpoints(client.CoreV1())(goodHost)
 
 		require.Len(t, instances, 3)
 		instanceHosts := hosts(instances)

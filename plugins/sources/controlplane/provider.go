@@ -36,7 +36,7 @@ type provider struct {
 func NewProvider(cfg configuration.ControlPlaneSourceConfig, summaryCfg configuration.SummarySourceConfig, client corev1.EndpointsGetter) (metrics.SourceProvider, error) {
 	var providers []metrics.SourceProvider
 	for _, promCfg := range buildPromConfigs(cfg, summaryCfg) {
-		provider, err := prometheus.NewPrometheusProvider(promCfg, prometheus.LookupByEndpoints(client))
+		provider, err := prometheus.NewPrometheusProvider(promCfg, prometheus.InstancesFromEndpoints(client))
 		if err != nil {
 			return nil, fmt.Errorf("error building prometheus sources for control plane: %s", err.Error())
 		}
