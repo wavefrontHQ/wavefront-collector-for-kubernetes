@@ -1,7 +1,7 @@
 #!/bin/bash
 
 function sleepilyAssassinate() {
-    sleep 15
+    sleep $(( 60*5 ))
     curl 'localhost:19999'
 }
 
@@ -13,3 +13,5 @@ while true; do
     
     echo "Collector restarting..."
 done
+
+# TODO squash and merge

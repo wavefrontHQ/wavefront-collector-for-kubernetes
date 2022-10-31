@@ -10,7 +10,7 @@ import (
 
 // from Go 1.13, you'll get the following error if you use flag.Parse() in init()
 // https://stackoverflow.com/questions/27342973/custom-command-line-flags-in-gos-unit-tests
-func TestMain(m *testing.M) {
+func TestMain(m *testing.M) { // if it's not a TestMain, it won't accept command-line flags
 	ctx, cancel := context.WithCancel(context.Background())
 
 	fmt.Println(fmt.Sprintf("Args in TestMain '%+v'", os.Args))
@@ -37,6 +37,10 @@ func TestMain(m *testing.M) {
 	go main()
 
 	<-ctx.Done()
+
+	os.Args = []string{} // if I don't clear the args, it fails because it doesn't recognize --daemon in available -test.* flags
+	m.Run()              // if I run without args, it fails because it tries to rerun the main or main is still relying on flags
+	// final test for today: kill after 5 min. and see what happens to coverage report
 
 	fmt.Println("context done; attempting to shut down")
 	killServer.server.Shutdown(context.Background())
