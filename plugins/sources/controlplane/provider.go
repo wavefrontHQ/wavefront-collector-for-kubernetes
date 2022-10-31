@@ -2,6 +2,7 @@ package controlplane
 
 import (
 	"fmt"
+	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"time"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
@@ -31,10 +32,10 @@ type provider struct {
 	providers []metrics.SourceProvider
 }
 
-func NewProvider(cfg configuration.ControlPlaneSourceConfig, summaryCfg configuration.SummarySourceConfig, lookupInstances prometheus.LookupInstances) (metrics.SourceProvider, error) {
+func NewProvider(cfg configuration.ControlPlaneSourceConfig, summaryCfg configuration.SummarySourceConfig, client corev1.EndpointsGetter) (metrics.SourceProvider, error) {
 	var providers []metrics.SourceProvider
 	for _, promCfg := range buildPromConfigs(cfg, summaryCfg) {
-		provider, err := prometheus.NewPrometheusProvider(promCfg, lookupInstances)
+		provider, err := prometheus.NewPrometheusProvider(promCfg, prometheus.LookupByEndpoints(client))
 		if err != nil {
 			return nil, fmt.Errorf("error building prometheus sources for control plane: %s", err.Error())
 		}

@@ -36,6 +36,7 @@ require (
 	github.com/couchbase/gomemcached v0.0.0-20191004160342-7b5da2ec40b2 // indirect
 	github.com/couchbase/goutils v0.0.0-20191018232750-b49639060d85 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/evanphx/json-patch v4.9.0+incompatible // indirect
 	github.com/fatih/color v1.9.0 // indirect
 	github.com/go-logr/logr v1.2.0 // indirect
 	github.com/go-ole/go-ole v1.2.4 // indirect

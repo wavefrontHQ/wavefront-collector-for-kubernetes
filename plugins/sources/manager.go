@@ -310,7 +310,7 @@ func buildProviders(client kubernetes.Interface, cfg configuration.SourceConfig)
 			result = appendProvider(result, provider, err, cfg.CadvisorConfig.Collection)
 		}
 		if cfg.ControlPlaneConfig != nil {
-			provider, err = controlplane.NewProvider(*cfg.ControlPlaneConfig, *cfg.SummaryConfig, prometheus.LookupByEndpoints(client.CoreV1()))
+			provider, err = controlplane.NewProvider(*cfg.ControlPlaneConfig, *cfg.SummaryConfig, client.CoreV1())
 			result = appendProvider(result, provider, err, cfg.ControlPlaneConfig.Collection)
 		}
 	}

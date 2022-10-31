@@ -220,7 +220,7 @@ func (p *prometheusProvider) GetMetricsSources() []metrics.Source {
 	}
 	var sources []metrics.Source
 	for _, instance := range instances {
-		metricsURL.Host = instance.Address
+		metricsURL.Host = instance.Host
 		metricsSource, err := p.buildSource(metricsURL, instance.Tags)
 		if err == nil {
 			sources = append(sources, metricsSource)
