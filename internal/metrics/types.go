@@ -164,7 +164,7 @@ type ConfigurableSourceProvider interface {
 	Configure(interval, timeout time.Duration)
 }
 
-//DefaultSourceProvider handle the common providers configuration
+// DefaultSourceProvider handle the common providers configuration
 type DefaultSourceProvider struct {
 	collectionInterval time.Duration
 	timeout            time.Duration
