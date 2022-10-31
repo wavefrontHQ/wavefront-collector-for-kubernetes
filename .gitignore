@@ -4,3 +4,4 @@ _output
 osstp_golang.yml
 hack/test/base/kustomization.yaml
 callgrind.out*
+wavefront-collector.test
