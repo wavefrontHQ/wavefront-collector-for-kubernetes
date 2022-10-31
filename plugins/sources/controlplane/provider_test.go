@@ -1,10 +1,11 @@
 package controlplane
 
 import (
+	"testing"
+
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"testing"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/options"
 

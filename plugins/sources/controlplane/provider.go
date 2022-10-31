@@ -2,8 +2,9 @@ package controlplane
 
 import (
 	"fmt"
-	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"time"
+
+	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 
