@@ -108,6 +108,7 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 
 	// create sources manager
 	sourceManager := sources.Manager()
+	sourceManager.SetClient(kubeClient)
 	sourceManager.SetDefaultCollectionInterval(cfg.DefaultCollectionInterval)
 	err := sourceManager.BuildProviders(*cfg.Sources)
 	if err != nil {

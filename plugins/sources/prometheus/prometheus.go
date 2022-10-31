@@ -9,6 +9,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -200,6 +201,9 @@ type prometheusProvider struct {
 	metrics.DefaultSourceProvider
 	name              string
 	useLeaderElection bool
+	URL               *url.URL
+	lookupInstances   LookupInstances
+	buildSource       func(url url.URL, tags map[string]string) (metrics.Source, error)
 	sources           []metrics.Source
 }
 
@@ -208,7 +212,23 @@ func (p *prometheusProvider) GetMetricsSources() []metrics.Source {
 		log.Infof("not scraping sources from: %s. current leader: %s", p.name, leadership.Leader())
 		return nil
 	}
-	return p.sources
+	metricsURL := *p.URL
+	instances, err := p.lookupInstances(p.URL.Host)
+	if err != nil {
+		log.Errorf("error looking up host addrs: %v", err)
+		return nil
+	}
+	var sources []metrics.Source
+	for _, instance := range instances {
+		metricsURL.Host = instance.Host
+		metricsSource, err := p.buildSource(metricsURL, instance.Tags)
+		if err == nil {
+			sources = append(sources, metricsSource)
+		} else {
+			log.Errorf("error creating source: %v", err)
+		}
+	}
+	return sources
 }
 
 func (p *prometheusProvider) Name() string {
@@ -217,11 +237,7 @@ func (p *prometheusProvider) Name() string {
 
 const providerName = "prometheus_metrics_provider"
 
-func NewPrometheusProvider(cfg configuration.PrometheusSourceConfig) (metrics.SourceProvider, error) {
-	if len(cfg.URL) == 0 {
-		return nil, fmt.Errorf("missing prometheus url")
-	}
-
+func NewPrometheusProvider(cfg configuration.PrometheusSourceConfig, lookupInstances LookupInstances) (metrics.SourceProvider, error) {
 	source := configuration.GetStringValue(cfg.Source, util.GetNodeName())
 	source = configuration.GetStringValue(source, "prom_source")
 
@@ -236,22 +252,35 @@ func NewPrometheusProvider(cfg configuration.PrometheusSourceConfig) (metrics.So
 	discovered := configuration.GetStringValue(cfg.Discovered, "")
 	log.Debugf("name: %s discovered: %s", name, discovered)
 
-	httpCfg := cfg.HTTPClientConfig
-	prefix := cfg.Prefix
-	tags := cfg.Tags
 	filters := filter.FromConfig(cfg.Filters)
 
-	var sources []metrics.Source
-	metricsSource, err := NewPrometheusMetricsSource(cfg.URL, prefix, source, discovered, tags, filters, httpCfg)
-	if err == nil {
-		sources = append(sources, metricsSource)
-	} else {
-		return nil, fmt.Errorf("error creating source: %v", err)
+	metricsURL, err := url.ParseRequestURI(cfg.URL)
+	if err != nil {
+		return nil, err
 	}
 
 	return &prometheusProvider{
 		name:              name,
 		useLeaderElection: cfg.UseLeaderElection || discovered == "",
-		sources:           sources,
+		URL:               metricsURL,
+		lookupInstances:   lookupInstances,
+		buildSource: func(url url.URL, tags map[string]string) (metrics.Source, error) {
+			copiedTags := map[string]string{}
+			for name, value := range cfg.Tags {
+				copiedTags[name] = value
+			}
+			for name, value := range tags {
+				copiedTags[name] = value
+			}
+			return NewPrometheusMetricsSource(
+				url.String(),
+				cfg.Prefix,
+				source,
+				discovered,
+				copiedTags,
+				filters,
+				cfg.HTTPClientConfig,
+			)
+		},
 	}, nil
 }

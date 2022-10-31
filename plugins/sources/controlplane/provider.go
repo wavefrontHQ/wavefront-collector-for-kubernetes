@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
+
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
@@ -19,7 +21,7 @@ import (
 )
 
 const (
-	metricsURL    = "https://kubernetes.default.svc:443/metrics"
+	metricsURL    = "https://kubernetes.default.svc/metrics"
 	metricsSource = "control_plane_source"
 	jitterTime    = time.Second * 40
 	metricsPrefix = "kubernetes.controlplane."
@@ -31,10 +33,10 @@ type provider struct {
 	providers []metrics.SourceProvider
 }
 
-func NewProvider(cfg configuration.ControlPlaneSourceConfig, summaryCfg configuration.SummarySourceConfig) (metrics.SourceProvider, error) {
+func NewProvider(cfg configuration.ControlPlaneSourceConfig, summaryCfg configuration.SummarySourceConfig, client corev1.EndpointsGetter) (metrics.SourceProvider, error) {
 	var providers []metrics.SourceProvider
 	for _, promCfg := range buildPromConfigs(cfg, summaryCfg) {
-		provider, err := prometheus.NewPrometheusProvider(promCfg)
+		provider, err := prometheus.NewPrometheusProvider(promCfg, prometheus.InstancesFromEndpoints(client))
 		if err != nil {
 			return nil, fmt.Errorf("error building prometheus sources for control plane: %s", err.Error())
 		}
