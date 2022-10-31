@@ -113,4 +113,4 @@ fi
 
 env USE_TEST_PROXY=false ./deploy.sh -c "$WAVEFRONT_CLUSTER" -t "$API_TOKEN" -v "$VERSION"  -k "$K8S_ENV" -n "$WF_CLUSTER_NAME" -e "$EXPERIMENTAL_FEATURES" -y "$COLLECTOR_YAML"
 
-#exit "$EXIT_CODE"
+exit "$EXIT_CODE"
