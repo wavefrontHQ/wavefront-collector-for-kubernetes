@@ -331,7 +331,7 @@ func buildProviders(client kubernetes.Interface, cfg configuration.SourceConfig)
 		result = appendProvider(result, provider, err, srcCfg.Collection)
 	}
 	for _, srcCfg := range cfg.PrometheusConfigs {
-		provider, err := prometheus.NewPrometheusProvider(*srcCfg, nil)
+		provider, err := prometheus.NewPrometheusProvider(*srcCfg, prometheus.NoopLookupInstances)
 		result = appendProvider(result, provider, err, srcCfg.Collection)
 	}
 

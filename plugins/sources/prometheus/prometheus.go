@@ -44,8 +44,6 @@ func init() {
 	collectErrors = gometrics.GetOrRegisterCounter(reporting.EncodeKey("source.collect.errors", pt), gometrics.DefaultRegistry)
 }
 
-type LookupHosts func(host string) (addrs []string, err error)
-
 type prometheusMetricsSource struct {
 	metricsURL           string
 	prefix               string
@@ -204,8 +202,8 @@ type prometheusProvider struct {
 	name              string
 	useLeaderElection bool
 	URL               *url.URL
-	lookupHosts       LookupHosts
-	buildSource       func(url url.URL) (metrics.Source, error)
+	lookupInstances   LookupInstances
+	buildSource       func(url url.URL, tags map[string]string) (metrics.Source, error)
 	sources           []metrics.Source
 }
 
@@ -215,24 +213,15 @@ func (p *prometheusProvider) GetMetricsSources() []metrics.Source {
 		return nil
 	}
 	metricsURL := *p.URL
-	var ips = []string{metricsURL.Host}
-	var err error
-	if p.lookupHosts != nil {
-		ips, err = p.lookupHosts(p.URL.Host)
-		if err != nil {
-			log.Errorf("error looking up host addrs: %v", err)
-			return nil
-		}
+	instances, err := p.lookupInstances(p.URL.Host)
+	if err != nil {
+		log.Errorf("error looking up host addrs: %v", err)
+		return nil
 	}
 	var sources []metrics.Source
-	for _, ip := range ips {
-		// TODO remove below in the end
-		//if len(metricsURL.Port()) > 0 {
-		//	metricsURL.Host = fmt.Sprintf("%s:%s", ip, metricsURL.Port())
-		//} else {
-		metricsURL.Host = ip
-		//}
-		metricsSource, err := p.buildSource(metricsURL)
+	for _, instance := range instances {
+		metricsURL.Host = instance.Address
+		metricsSource, err := p.buildSource(metricsURL, instance.Tags)
 		if err == nil {
 			sources = append(sources, metricsSource)
 		} else {
@@ -248,7 +237,7 @@ func (p *prometheusProvider) Name() string {
 
 const providerName = "prometheus_metrics_provider"
 
-func NewPrometheusProvider(cfg configuration.PrometheusSourceConfig, lookupHosts LookupHosts) (metrics.SourceProvider, error) {
+func NewPrometheusProvider(cfg configuration.PrometheusSourceConfig, lookupInstances LookupInstances) (metrics.SourceProvider, error) {
 	source := configuration.GetStringValue(cfg.Source, util.GetNodeName())
 	source = configuration.GetStringValue(source, "prom_source")
 
@@ -274,14 +263,14 @@ func NewPrometheusProvider(cfg configuration.PrometheusSourceConfig, lookupHosts
 		name:              name,
 		useLeaderElection: cfg.UseLeaderElection || discovered == "",
 		URL:               metricsURL,
-		lookupHosts:       lookupHosts,
-		buildSource: func(url url.URL) (metrics.Source, error) {
+		lookupInstances:   lookupInstances,
+		buildSource: func(url url.URL, tags map[string]string) (metrics.Source, error) {
 			copiedTags := map[string]string{}
 			for name, value := range cfg.Tags {
 				copiedTags[name] = value
 			}
-			if lookupHosts != nil {
-				copiedTags["instance"] = url.Host
+			for name, value := range tags {
+				copiedTags[name] = value
 			}
 			return NewPrometheusMetricsSource(
 				url.String(),

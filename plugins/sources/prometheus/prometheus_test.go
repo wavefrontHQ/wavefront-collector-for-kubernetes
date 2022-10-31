@@ -300,7 +300,7 @@ func Test_prometheusProvider_GetMetricsSources(t *testing.T) {
 			promProvider, _ := NewPrometheusProvider(configuration.PrometheusSourceConfig{
 				UseLeaderElection: true,
 				URL:               "https://example.local/metrics",
-			}, nil)
+			}, NoopLookupInstances)
 			util.SetAgentType(options.AllAgentType)
 			leadership.SetLeading(true)
 			defer leadership.SetLeading(false)
@@ -314,7 +314,7 @@ func Test_prometheusProvider_GetMetricsSources(t *testing.T) {
 			promProvider, _ := NewPrometheusProvider(configuration.PrometheusSourceConfig{
 				UseLeaderElection: true,
 				URL:               "https://example.local/metrics",
-			}, nil)
+			}, NoopLookupInstances)
 			util.SetAgentType(options.AllAgentType)
 
 			sources := promProvider.GetMetricsSources()
@@ -328,7 +328,7 @@ func Test_prometheusProvider_GetMetricsSources(t *testing.T) {
 			UseLeaderElection: false,
 			Discovered:        "something",
 			URL:               "https://example.local/metrics",
-		}, nil)
+		}, NoopLookupInstances)
 
 		util.SetAgentType(options.AllAgentType)
 
@@ -341,8 +341,8 @@ func Test_prometheusProvider_GetMetricsSources(t *testing.T) {
 		promProvider, _ := NewPrometheusProvider(configuration.PrometheusSourceConfig{
 			URL:        "http://example.local:2222/metrics",
 			Discovered: "something",
-		}, func(_ string) (addrs []string, err error) {
-			return []string{"127.0.0.1:2222", "127.0.0.2:2222"}, nil
+		}, func(_ string) ([]Instance, error) {
+			return []Instance{{"127.0.0.1:2222", nil}, {"127.0.0.2:2222", nil}}, nil
 		})
 		util.SetAgentType(options.AllAgentType)
 
@@ -358,12 +358,12 @@ func Test_prometheusProvider_GetMetricsSources(t *testing.T) {
 		promProvider, _ := NewPrometheusProvider(configuration.PrometheusSourceConfig{
 			URL:        "http://example.local:2222/metrics",
 			Discovered: "something",
-		}, func(_ string) (addrs []string, err error) {
+		}, func(_ string) ([]Instance, error) {
 			if firstCall {
 				firstCall = false
-				return []string{"127.0.0.1:2222"}, nil
+				return []Instance{{"127.0.0.1:2222", nil}}, nil
 			} else {
-				return []string{"127.0.0.2:2222"}, nil
+				return []Instance{{"127.0.0.2:2222", nil}}, nil
 			}
 
 		})
@@ -376,14 +376,14 @@ func Test_prometheusProvider_GetMetricsSources(t *testing.T) {
 		assert.Equal(t, "http://127.0.0.2:2222/metrics", sources[0].(*prometheusMetricsSource).metricsURL)
 	})
 
-	t.Run("passes the hostname and port into lookupHosts", func(t *testing.T) {
+	t.Run("passes the hostname and port into lookupInstances", func(t *testing.T) {
 		actualHost := ""
 		promProvider, _ := NewPrometheusProvider(configuration.PrometheusSourceConfig{
 			URL:        "http://example.local:2222/metrics",
 			Discovered: "something",
-		}, func(host string) (addrs []string, err error) {
+		}, func(host string) ([]Instance, error) {
 			actualHost = host
-			return []string{"127.0.0.1:2222", "127.0.0.2:2222"}, nil
+			return []Instance{{"127.0.0.1:2222", nil}, {"127.0.0.2:2222", nil}}, nil
 		})
 		util.SetAgentType(options.AllAgentType)
 
@@ -396,8 +396,8 @@ func Test_prometheusProvider_GetMetricsSources(t *testing.T) {
 		promProvider, _ := NewPrometheusProvider(configuration.PrometheusSourceConfig{
 			URL:        "https://example.local/metrics",
 			Discovered: "something",
-		}, func(host string) (addrs []string, err error) {
-			return []string{"127.0.0.1"}, nil
+		}, func(host string) ([]Instance, error) {
+			return []Instance{{"127.0.0.1", nil}}, nil
 		})
 		util.SetAgentType(options.AllAgentType)
 
@@ -411,7 +411,7 @@ func Test_prometheusProvider_GetMetricsSources(t *testing.T) {
 		promProvider, _ := NewPrometheusProvider(configuration.PrometheusSourceConfig{
 			URL:        "https://example.local/metrics",
 			Discovered: "something",
-		}, func(host string) (addrs []string, err error) {
+		}, func(host string) ([]Instance, error) {
 			return nil, errors.New("some error")
 		})
 		util.SetAgentType(options.AllAgentType)
@@ -426,7 +426,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 	t.Run("errors if prometheus URL is missing", func(t *testing.T) {
 		_, err := NewPrometheusProvider(
 			configuration.PrometheusSourceConfig{},
-			nil,
+			NoopLookupInstances,
 		)
 
 		assert.Error(t, err)
@@ -435,7 +435,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 	t.Run("errors if prometheus URL is invalid", func(t *testing.T) {
 		_, err := NewPrometheusProvider(configuration.PrometheusSourceConfig{
 			URL: "\x00https://example.local/metrics",
-		}, nil)
+		}, NoopLookupInstances)
 
 		assert.Error(t, err)
 	})
@@ -452,7 +452,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 		leadership.SetLeading(true)
 		util.SetAgentType(options.AllAgentType)
 
-		promProvider, err := NewPrometheusProvider(cfg, nil)
+		promProvider, err := NewPrometheusProvider(cfg, NoopLookupInstances)
 		assert.NoError(t, err)
 		source := promProvider.GetMetricsSources()[0].(*prometheusMetricsSource)
 		assert.Equal(t, "fake source", source.source)
@@ -462,8 +462,9 @@ func TestNewPrometheusProvider(t *testing.T) {
 		cfg := configuration.PrometheusSourceConfig{URL: "https://example.local"}
 		_ = os.Setenv(util.NodeNameEnvVar, "fake node name")
 		defer os.Unsetenv(util.NodeNameEnvVar)
-
-		promProvider, err := NewPrometheusProvider(cfg, nil)
+		leadership.SetLeading(true)
+		util.SetAgentType(options.AllAgentType)
+		promProvider, err := NewPrometheusProvider(cfg, NoopLookupInstances)
 
 		assert.NoError(t, err)
 		source := promProvider.GetMetricsSources()[0].(*prometheusMetricsSource)
@@ -476,7 +477,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 		leadership.SetLeading(true)
 		util.SetAgentType(options.AllAgentType)
 
-		promProvider, err := NewPrometheusProvider(cfg, nil)
+		promProvider, err := NewPrometheusProvider(cfg, NoopLookupInstances)
 		assert.NoError(t, err)
 		source := promProvider.GetMetricsSources()[0].(*prometheusMetricsSource)
 		assert.Equal(t, "prom_source", source.source)
@@ -485,7 +486,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 	t.Run("default name to URL if not configured", func(t *testing.T) {
 		cfg := configuration.PrometheusSourceConfig{URL: "http://test-prometheus-url.com"}
 
-		prometheusProvider, err := NewPrometheusProvider(cfg, nil)
+		prometheusProvider, err := NewPrometheusProvider(cfg, NoopLookupInstances)
 
 		assert.NoError(t, err)
 		assert.Equal(t, fmt.Sprintf("%s: http://test-prometheus-url.com", providerName), prometheusProvider.Name())
@@ -494,7 +495,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 	t.Run("uses configured provider name", func(t *testing.T) {
 		cfg := configuration.PrometheusSourceConfig{Name: "fake name", URL: "http://test-prometheus-url.com"}
 
-		prometheusProvider, err := NewPrometheusProvider(cfg, nil)
+		prometheusProvider, err := NewPrometheusProvider(cfg, NoopLookupInstances)
 
 		assert.NoError(t, err)
 		assert.Equal(t, fmt.Sprintf("%s: fake name", providerName), prometheusProvider.Name())
@@ -504,8 +505,9 @@ func TestNewPrometheusProvider(t *testing.T) {
 		cfg := configuration.PrometheusSourceConfig{
 			URL: "http://test-prometheus-url.com",
 		}
-
-		promProvider, err := NewPrometheusProvider(cfg, nil)
+		leadership.SetLeading(true)
+		util.SetAgentType(options.AllAgentType)
+		promProvider, err := NewPrometheusProvider(cfg, NoopLookupInstances)
 
 		assert.NoError(t, err)
 		source := promProvider.GetMetricsSources()[0].(*prometheusMetricsSource)
@@ -518,7 +520,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 			Discovered: "fake discovered",
 		}
 
-		promProvider, err := NewPrometheusProvider(cfg, nil)
+		promProvider, err := NewPrometheusProvider(cfg, NoopLookupInstances)
 
 		assert.NoError(t, err)
 		source := promProvider.GetMetricsSources()[0].(*prometheusMetricsSource)
@@ -532,7 +534,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 		leadership.SetLeading(true)
 		util.SetAgentType(options.AllAgentType)
 
-		promProvider, _ := NewPrometheusProvider(cfg, nil)
+		promProvider, _ := NewPrometheusProvider(cfg, NoopLookupInstances)
 
 		source := promProvider.GetMetricsSources()[0].(*prometheusMetricsSource)
 		assert.Equal(t, time.Second*30, source.client.Timeout)
@@ -547,9 +549,10 @@ func TestNewPrometheusProvider(t *testing.T) {
 		cfg := configuration.PrometheusSourceConfig{
 			URL: "http://test-prometheus-url.com",
 		}
-
-		promProvider, err := NewPrometheusProvider(cfg, func(host string) (addrs []string, err error) {
-			return []string{"127.0.0.1:2222"}, nil
+		leadership.SetLeading(true)
+		util.SetAgentType(options.AllAgentType)
+		promProvider, err := NewPrometheusProvider(cfg, func(host string) ([]Instance, error) {
+			return []Instance{{"127.0.0.1:2222", map[string]string{"instance": "127.0.0.1:2222"}}}, nil
 		})
 
 		assert.NoError(t, err)
@@ -567,7 +570,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 				Discovered:        "fake discovered",
 			}
 
-			promProvider, _ := NewPrometheusProvider(cfg, nil)
+			promProvider, _ := NewPrometheusProvider(cfg, NoopLookupInstances)
 
 			assert.False(t, promProvider.(*prometheusProvider).useLeaderElection)
 		})
@@ -579,7 +582,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 				Discovered:        "fake discovered",
 			}
 
-			promProvider, err := NewPrometheusProvider(cfg, nil)
+			promProvider, err := NewPrometheusProvider(cfg, NoopLookupInstances)
 
 			assert.NoError(t, err)
 			assert.True(t, promProvider.(*prometheusProvider).useLeaderElection)
@@ -594,7 +597,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 				Discovered:        "",
 			}
 
-			promProvider, _ := NewPrometheusProvider(cfg, nil)
+			promProvider, _ := NewPrometheusProvider(cfg, NoopLookupInstances)
 
 			assert.True(t, promProvider.(*prometheusProvider).useLeaderElection)
 		})
@@ -606,7 +609,7 @@ func TestNewPrometheusProvider(t *testing.T) {
 				Discovered:        "",
 			}
 
-			promProvider, _ := NewPrometheusProvider(cfg, nil)
+			promProvider, _ := NewPrometheusProvider(cfg, NoopLookupInstances)
 
 			assert.True(t, promProvider.(*prometheusProvider).useLeaderElection)
 		})

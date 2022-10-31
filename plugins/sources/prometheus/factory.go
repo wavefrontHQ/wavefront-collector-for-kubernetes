@@ -4,8 +4,6 @@
 package prometheus
 
 import (
-	"net"
-
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
 )
@@ -19,7 +17,7 @@ func NewFactory() metrics.ProviderFactory {
 
 func (p factory) Build(cfg interface{}) (metrics.SourceProvider, error) {
 	c := cfg.(configuration.PrometheusSourceConfig)
-	provider, err := NewPrometheusProvider(c, net.LookupHost)
+	provider, err := NewPrometheusProvider(c, NoopLookupInstances)
 	if err == nil {
 		if i, ok := provider.(metrics.ConfigurableSourceProvider); ok {
 			i.Configure(c.Collection.Interval, c.Collection.Timeout)

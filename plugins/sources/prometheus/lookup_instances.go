@@ -12,8 +12,8 @@ import (
 
 var matchNSName = regexp.MustCompile("^([^\\.]+).([^\\.]+).svc")
 
-func LookupByEndpoints(client corev1.CoreV1Interface) LookupHosts {
-	return func(host string) (addrs []string, err error) {
+func LookupByEndpoints(client corev1.CoreV1Interface) LookupInstances {
+	return func(host string) (instances []Instance, err error) {
 		matches := matchNSName.FindStringSubmatch(host)
 		if len(matches) == 0 {
 			return nil, errors.New("does not match expected hostname format")
@@ -26,11 +26,26 @@ func LookupByEndpoints(client corev1.CoreV1Interface) LookupHosts {
 			for _, address := range subset.Addresses {
 				for _, port := range subset.Ports {
 					if (port.Name == "http" || port.Name == "https") && port.Protocol == "TCP" {
-						addrs = append(addrs, fmt.Sprintf("%s:%d", address.IP, port.Port))
+						instanceAddress := fmt.Sprintf("%s:%d", address.IP, port.Port)
+						instances = append(instances, Instance{
+							Address: instanceAddress,
+							Tags:    map[string]string{"instance": instanceAddress},
+						})
 					}
 				}
 			}
 		}
-		return addrs, nil
+		return instances, nil
 	}
 }
+
+func NoopLookupInstances(instance string) ([]Instance, error) {
+	return []Instance{{instance, nil}}, nil
+}
+
+type Instance struct {
+	Address string
+	Tags    map[string]string
+}
+
+type LookupInstances func(host string) ([]Instance, error)
