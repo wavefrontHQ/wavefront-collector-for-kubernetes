@@ -7,10 +7,9 @@ import (
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 	"net/http"
 	"os"
+	"strings"
 	"testing"
 )
-
-var collectorArgs []string
 
 func TestMain(m *testing.M) {
 	//testFS := pflag.NewFlagSet(fmt.Sprintf("%s.test", os.Args[0]), pflag.ContinueOnError)
@@ -26,19 +25,25 @@ func TestMain(m *testing.M) {
 
 	fmt.Println(fmt.Sprintf("attempting to run test collector for coverage data with version '%s' and commit '%s'", version, commit))
 
-	fmt.Println(fmt.Sprintf("arg stuff BEFORE shenanigans: collectorArgs '%+v' os.Args '%+v'", collectorArgs, os.Args))
-	collectorArgs = os.Args[2:]
-	os.Args = os.Args[:2]
-	fmt.Println(fmt.Sprintf("arg stuff AFTER shenanigans: collectorArgs '%+v' os.Args '%+v'", collectorArgs, os.Args))
-
 	os.Exit(m.Run())
 }
 
 func TestMainCoverage(t *testing.T) {
+	collectorCoverageArgs := os.Getenv("COLLECTOR_COVERAGE_ARGS")
+	if len(collectorCoverageArgs) == 0 {
+		t.Skip("skipping coverage test to run in unit test mode")
+	}
+
+	collectorArgs := strings.Split(collectorCoverageArgs, " ")
+
+	fmt.Println(fmt.Sprintf("collectorCoverageArgs '%s'", collectorCoverageArgs))
+	fmt.Println(fmt.Sprintf("collectorArgs '%+v'", collectorArgs))
+
 	ctx, cancel := context.WithCancel(context.Background())
 	ks := newKillServer(":19999", cancel)
 	go ks.Start()
 
+	fmt.Println(fmt.Sprintf("collectorArgs from env: %+v", collectorArgs))
 	os.Args = append([]string{"./wavefront-collector.test"}, collectorArgs...)
 	go main()
 

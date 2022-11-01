@@ -3,7 +3,7 @@
 while true; do
     echo 'Starting collector in coverage mode'
 
-    ./wavefront-collector.test -test.coverprofile=cover.out "$@" || exit 1
+    COLLECTOR_COVERAGE_ARGS="'$*'" go test ./... -cover -covermode=count -coverpkg=./... -coverprofile=cover.out || exit 1
     
     echo "Collector restarting..."
 done
