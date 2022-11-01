@@ -32,5 +32,4 @@ RUN apt-get update && apt-get install -y curl
 RUN mv ./collector-with-restart.sh wavefront-collector
 
 #   nobody:nobody
-USER 65534:65534
 ENTRYPOINT ["/wavefront-collector"]

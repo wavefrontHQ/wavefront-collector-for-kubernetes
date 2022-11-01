@@ -3,19 +3,16 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/options"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 	"net/http"
 	"os"
 	"testing"
 )
 
-// from Go 1.13, you'll get the following error if you use flag.Parse() in init()
-// https://stackoverflow.com/questions/27342973/custom-command-line-flags-in-gos-unit-tests
-func TestMain(m *testing.M) { // if it's not a TestMain, it won't accept command-line flags
-	ctx, cancel := context.WithCancel(context.Background())
+var collectorArgs []string
 
-	fmt.Println(fmt.Sprintf("Args in TestMain '%+v'", os.Args))
-
-	// This will be so cool when I know how to make Kubernetes not destroy my Dockerfile entrypoint
+func TestMain(m *testing.M) {
 	//testFS := pflag.NewFlagSet(fmt.Sprintf("%s.test", os.Args[0]), pflag.ContinueOnError)
 	//testFS.StringVar(&version, "test-version", "", "set version with flag for testing because ldflags don't work properly")
 	//testFS.StringVar(&commit, "test-commit", "", "set commit with flag for testing because ldflags don't work properly")
@@ -23,27 +20,34 @@ func TestMain(m *testing.M) { // if it's not a TestMain, it won't accept command
 	//	fmt.Println(err)
 	//	os.Exit(2)
 	//}
-	//
-	//newArgs := []string{os.Args[0]}
-	//newArgs = append(newArgs, os.Args[3:]...)
-	//os.Args = newArgs
 
 	version = "1.12.0"
 	commit = "4930b29"
 
 	fmt.Println(fmt.Sprintf("attempting to run test collector for coverage data with version '%s' and commit '%s'", version, commit))
-	killServer := newKillServer(":19999", cancel)
-	go killServer.Start()
+
+	fmt.Println(fmt.Sprintf("arg stuff BEFORE shenanigans: collectorArgs '%+v' os.Args '%+v'", collectorArgs, os.Args))
+	collectorArgs = os.Args[2:]
+	os.Args = os.Args[:2]
+	fmt.Println(fmt.Sprintf("arg stuff AFTER shenanigans: collectorArgs '%+v' os.Args '%+v'", collectorArgs, os.Args))
+
+	os.Exit(m.Run())
+}
+
+func TestMainCoverage(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	ks := newKillServer(":19999", cancel)
+	go ks.Start()
+
+	os.Args = append([]string{"./wavefront-collector.test"}, collectorArgs...)
 	go main()
+
+	util.SetAgentType(options.AllAgentType)
 
 	<-ctx.Done()
 
-	os.Args = []string{} // if I don't clear the args, it fails because it doesn't recognize --daemon in available -test.* flags
-	m.Run()              // if I run without args, it fails because it tries to rerun the main or main is still relying on flags
-	// final test for today: kill after 5 min. and see what happens to coverage report
-
 	fmt.Println("context done; attempting to shut down")
-	killServer.server.Shutdown(context.Background())
+	ks.server.Shutdown(context.Background())
 }
 
 type killServer struct {
