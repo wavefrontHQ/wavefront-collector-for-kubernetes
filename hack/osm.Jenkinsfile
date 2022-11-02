@@ -2,7 +2,9 @@ pipeline {
   agent {
     label 'nimbus-cloud'
   }
-
+  tools {
+    go 'Go 1.18'
+  }
   stages {
     stage('Clone another repository') {
         steps {
@@ -12,13 +14,11 @@ pipeline {
                 credentialsId: 'wf-jenkins-github',
                 url: 'https://github.com/wavefrontHQ/wavefront-operator-for-kubernetes.git'
                 sh 'pwd'
+                sh "./../hack/diff_dependencies.sh"
             }
         }
     }
     stage("Check for go.sum changed") {
-        tools {
-            go 'Go 1.18'
-        }
         steps {
             sh "./hack/diff_dependencies.sh"
         }
