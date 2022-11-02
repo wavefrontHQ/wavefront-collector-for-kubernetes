@@ -22,7 +22,7 @@ function main() {
   done
 
   if [[ -z ${REPO} ]]; then
-    print_msg_and_exit "repository name required"
+    print_usage_and_exit "repository name required"
   fi
   cd "$REPO_ROOT"
   TEMP_DIR=$(mktemp -d)
