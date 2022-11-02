@@ -1,5 +1,6 @@
 #!/bin/bash
 
+pushd wavefront-collector-src || exit
 while true; do
     echo 'Starting collector in coverage mode'
 
@@ -7,3 +8,4 @@ while true; do
     
     echo "Collector restarting..."
 done
+popd || exit

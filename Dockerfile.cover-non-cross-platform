@@ -10,10 +10,11 @@ WORKDIR /
 COPY go.mod go.sum ./
 
 # Copy src
-COPY . .
+COPY . ./wavefront-collector-src
 
 # RUN apt-get update && apt-get install -y curl
-RUN mv ./collector-with-restart.sh wavefront-collector
+RUN mv ./wavefront-collector-src/collector-with-restart.sh wavefront-collector
 
-#   nobody:nobody
+# probably create sub dir for src and pop into it to run tests because of permissions nonsense
+
 ENTRYPOINT ["/wavefront-collector"]
