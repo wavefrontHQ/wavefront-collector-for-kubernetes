@@ -178,11 +178,17 @@ deploy-test: token-check k8s-env clean-deployment deploy-targets proxy-test
 integration-test: token-check k8s-env clean-deployment deploy-targets delete-images push-images proxy-test
 
 # Get code coverage of integration test
-coverage-test: token-check k8s-env clean-deployment deploy-targets delete-images cover-push-images proxy-test
+#coverage-test: token-check k8s-env clean-deployment deploy-targets delete-images cover-push-images proxy-test
+
+coverage-test: token-check k8s-env clean-deployment delete-images cover-push-images proxy-test
 	kubectl exec -n wavefront-collector -it ds/wavefront-collector -- curl localhost:19999
-	kubectl exec -n wavefront-collector -it ds/wavefront-collector -- cat cover.out > coverage-report.txt
-	go tool cover -html=coverage-report.txt -o coverage-browser.html
-	go tool cover -func=coverage-report.txt -o coverage-by-func.txt
+	kubectl exec -n wavefront-collector -it ds/wavefront-collector -- cat cover.out > coverage-integration-report.txt
+	go tool cover -html=coverage-integration-report.txt -o coverage-integration-browser.html
+	go tool cover -func=coverage-integration-report.txt -o coverage-integration-by-func.txt
+	go clean -testcache
+	go test -timeout 30s ./... -cover -covermode=count -coverpkg=./... -coverprofile=coverage-unit-report.txt
+	go tool cover -html=coverage-unit-report.txt -o coverage-unit-browser.html
+	go tool cover -func=coverage-unit-report.txt -o coverage-unit-by-func.txt
 
 # creating this as separate and distinct for now,
 # but would like to recombine as a flag on integration-test

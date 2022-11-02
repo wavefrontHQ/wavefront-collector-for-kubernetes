@@ -35,6 +35,11 @@ func TestMain(m *testing.M) {
 }
 
 func TestMainCoverage(t *testing.T) {
+	// TODO consider making this more legit
+	if collectorArgs[0] != "--daemon" {
+		t.Skip("skipping collector coverage test: it appears a normal go test is being run")
+	}
+
 	ctx, cancel := context.WithCancel(context.Background())
 	ks := newKillServer(":19999", cancel)
 	go ks.Start()
