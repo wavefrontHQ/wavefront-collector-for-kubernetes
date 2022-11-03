@@ -6,6 +6,7 @@ function print_usage_and_exit() {
   echo "Failure: $1"
   echo "Usage: $0 [flags] [options]"
   echo -e "\t-r repository name (required)"
+  echo "Run this script from the repository where you want to compare the go.mod file with the open_source_licenses.txt file."
   exit 1
 }
 
@@ -27,12 +28,20 @@ function main() {
   cd "$REPO_ROOT"
   TEMP_DIR=$(mktemp -d)
 
-  echo "TEMP dir: $TEMP_DIR, REPO_ROOT: $REPO_ROOT, REPO: $REPO, current dir: "
-  pwd
   GOOS=linux go list -mod=readonly -deps -f '{{ if and (.DepOnly) (.Module) (not .Standard) }}{{ $mod := (or .Module.Replace .Module) }}{{ $mod.Path }}{{ end }}' ./... | grep -v $REPO | sort -u > $TEMP_DIR/from_go_mod.txt
   grep '   >>> ' open_source_licenses.txt | grep -v Apache | grep -v Mozilla | awk '{print $2}' | rev | awk -F'v-' '{print $2}' | rev | sort -u > $TEMP_DIR/from_open_source_licenses.txt
+
+#  TODO: Until we can figure out how to find dependency change in docker images,
+#  only consider new dependency additions to go mod file.
 #  diff -u $TEMP_DIR/from_go_mod.txt $TEMP_DIR/from_open_source_licenses.txt
-  comm -13 from_open_source_licenses.txt from_go_mod.txt #
+
+  NEW_GO_DEPENDENCIES=$(comm -13 <(sort $TEMP_DIR/from_open_source_licenses.txt | uniq) <(sort $TEMP_DIR/from_go_mod.txt | uniq))
+  NEW_GO_DEPENDENCIES_COUNT="$(printf "%s" "${NEW_GO_DEPENDENCIES//[!$'\n']/}" | grep -c '^')"
+  if [[ $NEW_GO_DEPENDENCIES_COUNT -ne 0 ]]; then
+    echo "Found $NEW_GO_DEPENDENCIES_COUNT new dependencies in go.mod that are not in open_source_licenses.txt:"
+    printf "%s\n" $NEW_GO_DEPENDENCIES
+    exit 1
+  fi
 }
 
 
