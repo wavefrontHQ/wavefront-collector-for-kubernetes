@@ -176,24 +176,23 @@ deploy-test: token-check k8s-env clean-deployment deploy-targets proxy-test
 
 #Testing code, configuration and deployment changes
 integration-test: token-check k8s-env clean-deployment deploy-targets delete-images push-images proxy-test
+	echo "Integration test finished. To generate code coverage reports, run 'make coverage-test'"
 
 # Get code coverage of integration test
-#coverage-test: token-check k8s-env clean-deployment deploy-targets delete-images cover-push-images proxy-test
-
-coverage-test: token-check k8s-env clean-deployment delete-images cover-push-images proxy-test
+coverage-test: token-check k8s-env clean-deployment deploy-targets delete-images cover-push-images proxy-test
 	kubectl exec -n wavefront-collector -it ds/wavefront-collector -- curl localhost:19999
-	kubectl exec -n wavefront-collector -it ds/wavefront-collector -- cat cover.out > coverage-integration-report.txt
-	go tool cover -html=coverage-integration-report.txt -o coverage-integration-browser.html
-	go tool cover -func=coverage-integration-report.txt -o coverage-integration-by-func.txt
+	kubectl exec -n wavefront-collector -it ds/wavefront-collector -- cat cover.out > coverage/integration-report.txt
+	go tool cover -html=coverage/integration-report.txt -o coverage/integration-browser.html
+	go tool cover -func=coverage/integration-report.txt -o coverage/integration-by-func.txt
 
 	go clean -testcache
-	go test -timeout 30s ./... -cover -covermode=count -coverpkg=./... -coverprofile=coverage-unit-report.txt
-	go tool cover -html=coverage-unit-report.txt -o coverage-unit-browser.html
-	go tool cover -func=coverage-unit-report.txt -o coverage-unit-by-func.txt
+	go test -timeout 30s ./... -cover -covermode=count -coverpkg=./... -coverprofile=coverage/unit-report.txt
+	go tool cover -html=coverage/unit-report.txt -o coverage/unit-browser.html
+	go tool cover -func=coverage/unit-report.txt -o coverage/unit-by-func.txt
 
-	echo "mode: set" > coverage-merged.out && cat *-report.txt | grep -v mode: | sort -r | awk '{if($1 != last) {print $0;last=$1}}' >> coverage-merged.out
-	go tool cover -html=coverage-merged.out -o coverage-merged-browser.html
-	go tool cover -func=coverage-merged.out -o coverage-merged-by-func.txt
+	echo "mode: set" > coverage/merged.out && cat *-report.txt | grep -v mode: | sort -r | awk '{if($1 != last) {print $0;last=$1}}' >> coverage/merged.out
+	go tool cover -html=coverage/merged.out -o coverage/merged-browser.html
+	go tool cover -func=coverage/merged.out -o coverage/merged-by-func.txt
 
 # creating this as separate and distinct for now,
 # but would like to recombine as a flag on integration-test
