@@ -13,13 +13,9 @@ import (
 var collectorArgs []string
 
 func TestMain(m *testing.M) {
-	//testFS := pflag.NewFlagSet(fmt.Sprintf("%s.test", os.Args[0]), pflag.ContinueOnError)
-	//testFS.StringVar(&version, "test-version", "", "set version with flag for testing because ldflags don't work properly")
-	//testFS.StringVar(&commit, "test-commit", "", "set commit with flag for testing because ldflags don't work properly")
-	//if err := testFS.Parse(os.Args[1:3]); err != nil {
-	//	fmt.Println(err)
-	//	os.Exit(2)
-	//}
+	// TODO should get these from env vars or flags
+	//version = os.Getenv("VERSION")
+	//commit = os.Getenv("GIT_COMMIT")
 
 	version = "1.12.0"
 	commit = "4930b29"
