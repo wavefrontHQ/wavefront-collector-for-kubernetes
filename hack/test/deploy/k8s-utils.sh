@@ -23,10 +23,20 @@ function popd_check() {
 
 function wait_for_cluster_ready() {
   echo "Waiting for all Pods to be 'Ready'"
-  while ! kubectl wait --for=condition=Ready pod --all -l exclude-me!=true --all-namespaces &> /dev/null; do
+  while ! kubectl wait --for=condition=Ready pod --all -l exclude-me!=true --all-namespaces --timeout=5s  &> /dev/null; do
     echo "Waiting for all Pods to be 'Ready'"
     sleep 5
   done
+}
+
+function wait_for_namespace_created() {
+	local namespace=$1
+  printf "Waiting for namespace \"$1\" to be created ..."
+  while ! kubectl create namespace collector-targets &> /dev/null; do
+    printf "."
+    sleep 2
+  done
+  echo " done."
 }
 
 function wait_for_namespaced_resource_created() {

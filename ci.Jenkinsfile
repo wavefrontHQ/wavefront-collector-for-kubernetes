@@ -75,6 +75,7 @@ pipeline {
               lock("integration-test-gke-collector") {
                 sh './hack/jenkins/setup-for-integration-test.sh -k gke'
                 sh 'make gke-connect-to-cluster'
+                sh 'make clean-cluster'
                 sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=cluster-metrics-only make deploy-test'
                 sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=node-metrics-only make deploy-test'
                 sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=combined make deploy-test'
@@ -107,6 +108,7 @@ pipeline {
               lock("integration-test-eks") {
                 sh './hack/jenkins/setup-for-integration-test.sh -k eks'
                 sh 'make target-eks'
+                sh 'make clean-cluster'
                 sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=single-deployment make deploy-test'
                 sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=combined make deploy-test'
                 sh 'VERSION_POSTFIX=$VERSION_POSTFIX make deploy-test'
@@ -121,26 +123,11 @@ pipeline {
   }
 
   post {
-    // Notify only on null->failure or success->failure or failure->success
-    failure {
-      script {
-        if(currentBuild.previousBuild == null) {
-          slackSend (channel: '#tobs-k8po-team', color: '#FF0000', message: "CI BUILD FAILED: <${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>")
-        }
-      }
-    }
     regression {
       slackSend (channel: '#tobs-k8po-team', color: '#FF0000', message: "CI BUILD FAILED: <${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>")
     }
     fixed {
       slackSend (channel: '#tobs-k8po-team', color: '#008000', message: "CI BUILD FIXED: <${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>")
-    }
-    success {
-      script {
-        if (env.BRANCH_NAME == 'main') {
-          sh './hack/jenkins/update_github_status.sh'
-        }
-      }
     }
   }
 }

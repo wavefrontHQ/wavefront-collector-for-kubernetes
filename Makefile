@@ -199,5 +199,25 @@ coverage-test: token-check k8s-env clean-deployment deploy-targets delete-images
 integration-test-rhel: token-check k8s-env clean-deployment deploy-targets
 	VERSION=$(VERSION)-rhel make container_rhel test-proxy-container delete-images push-images proxy-test
 
+# create a new branch from main
+# usage: make branch JIRA=XXXX OR make branch NAME=YYYY
+branch:
+	$(eval NAME := $(if $(JIRA),K8SAAS-$(JIRA),$(NAME)))
+	@if [ -z "$(NAME)" ]; then \
+		echo "usage: make branch JIRA=XXXX OR make branch NAME=YYYY"; \
+		exit 1; \
+	fi
+	git stash
+	git checkout main
+	git pull
+	git checkout -b $(NAME)
+
+git-rebase:
+	git fetch origin
+	git rebase origin/main
+	git log --oneline -n 10
+
+clean-cluster:
+	(cd $(TEST_DIR) && ./clean-cluster.sh)
 
 .PHONY: all fmt container clean release semver-cli
