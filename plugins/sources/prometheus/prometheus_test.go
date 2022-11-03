@@ -1,16 +1,15 @@
 // Copyright 2021 VMware, Inc. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-// TODO prometheus_test for true interface testing but it will break everything
 package prometheus
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"strings"
 	"testing"
 	"time"
 
@@ -19,12 +18,10 @@ import (
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
-
 	gm "github.com/rcrowley/go-metrics"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/httputil"
 )
@@ -176,37 +173,6 @@ func TestDiscoveredPrometheusMetricSource(t *testing.T) {
 	})
 }
 
-type ExpectScrapeErrorWithErrorCounts struct {
-	scrapeError    error
-	errCountBefore int64
-	errCountAfter  int64
-	promMetSource  *prometheusMetricsSource
-}
-
-func (e *ExpectScrapeErrorWithErrorCounts) runScrape(promMetSource *prometheusMetricsSource) {
-	e.promMetSource = promMetSource
-	e.promMetSource.eps = gm.NewCounter()
-	e.errCountBefore = collectErrors.Count()
-
-	_, e.scrapeError = e.promMetSource.Scrape()
-
-	e.errCountAfter = collectErrors.Count()
-}
-
-func (e *ExpectScrapeErrorWithErrorCounts) verifyErrorNotNil(t *testing.T) {
-	assert.NotNil(t, e.scrapeError)
-}
-
-func (e *ExpectScrapeErrorWithErrorCounts) verifyErrorEquals(t *testing.T, expectedError interface{}) {
-	assert.Equal(t, expectedError, e.scrapeError)
-}
-
-func (e *ExpectScrapeErrorWithErrorCounts) verifyErrorCountsIncreased(t *testing.T) {
-	assert.Equal(t, int64(1), e.errCountAfter-e.errCountBefore)
-	assert.Equal(t, int64(1), e.promMetSource.eps.Count())
-}
-
-// TODO actual Scrape tests
 func Test_prometheusMetricsSource_Scrape(t *testing.T) {
 	t.Run("returns a result with current timestamp", func(t *testing.T) {
 		nowTime := time.Now()
@@ -231,20 +197,21 @@ func Test_prometheusMetricsSource_Scrape(t *testing.T) {
 		promMetSource := &prometheusMetricsSource{
 			metricsURL: "fake metrics URL",
 			client:     &http.Client{},
+			eps:        gm.NewCounter(),
 		}
+		collectErrors.Clear()
 
-		e := ExpectScrapeErrorWithErrorCounts{}
-		e.runScrape(promMetSource)
-		e.verifyErrorNotNil(t)
-		e.verifyErrorCountsIncreased(t)
+		_, scrapeError := promMetSource.Scrape()
+
+		assert.NotNil(t, scrapeError)
+		assert.Equal(t, int64(1), collectErrors.Count())
+		assert.Equal(t, int64(1), promMetSource.eps.Count())
 	})
 
 	t.Run("gets the metrics URL", func(t *testing.T) {
+		requestedPath := ""
 		server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-			if request.URL.Path != "/fake/metrics/path" {
-				t.Errorf("expected request to '/fake/metrics/path', got '%s'", request.URL.Path)
-			}
-
+			requestedPath = request.URL.Path
 			writer.WriteHeader(http.StatusOK)
 		}))
 		defer server.Close()
@@ -257,52 +224,33 @@ func Test_prometheusMetricsSource_Scrape(t *testing.T) {
 
 		_, err := promMetSource.Scrape()
 		assert.NoError(t, err)
-	})
 
-	// TODO should I test response close?
-	// t.Run("closes response body at end of scrape to prevent leaking", func(t *testing.T) {}
+		assert.Equal(t, "/fake/metrics/path", requestedPath)
+	})
 
 	t.Run("returns an HTTPError and increments error counters on resp error status", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 			writer.WriteHeader(http.StatusBadRequest)
 		}))
 		defer server.Close()
-
 		promMetSource := &prometheusMetricsSource{
 			metricsURL: fmt.Sprintf("%s/fake/metrics/path", server.URL),
 			client:     &http.Client{},
+			eps:        gm.NewCounter(),
 		}
-
 		expectedErr := &HTTPError{
 			MetricsURL: fmt.Sprintf("%s/fake/metrics/path", server.URL),
 			Status:     "400 Bad Request",
 			StatusCode: http.StatusBadRequest,
 		}
+		collectErrors.Clear()
 
-		e := ExpectScrapeErrorWithErrorCounts{}
-		e.runScrape(promMetSource)
-		e.verifyErrorEquals(t, expectedErr)
-		e.verifyErrorCountsIncreased(t)
+		_, scrapeError := promMetSource.Scrape()
+
+		assert.Equal(t, expectedErr, scrapeError)
+		assert.Equal(t, int64(1), collectErrors.Count())
+		assert.Equal(t, int64(1), promMetSource.eps.Count())
 	})
-
-	// TODO find out how to reliably get parseMetrics to error or fix the err overwriting bug
-	//t.Run("returns an error and increments error counters if parseMetrics fails", func(t *testing.T) {
-	//	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-	//		writer.WriteHeader(http.StatusOK)
-	//		writer.Write([]byte("some whacky non-metric stuff"))
-	//	}))
-	//	defer server.Close()
-	//
-	//	promMetSource := &prometheusMetricsSource{
-	//		metricsURL: fmt.Sprintf("%s/fake/metrics/path", server.URL),
-	//		client:     &http.Client{},
-	//	}
-	//
-	//	e := ExpectScrapeErrorWithErrorCounts{}
-	//	e.runScrape(promMetSource)
-	//	e.verifyErrorNotNil(t)
-	//	e.verifyErrorCountsIncreased(t)
-	//})
 
 	t.Run("returns metrics based on response body and counts number of points", func(t *testing.T) {
 		startTimestamp := time.Now().Unix()
@@ -347,125 +295,235 @@ fake_metric{} 1
 }
 
 func Test_prometheusProvider_GetMetricsSources(t *testing.T) {
-	t.Run("returns sources dependent on leadership election and leading status", func(t *testing.T) {
-		promProvider := prometheusProvider{
-			useLeaderElection: false,
-			sources: []metrics.Source{&prometheusMetricsSource{
-				metricsURL: "fake metrics url",
-			}},
-		}
+	t.Run("when use leader election is enabled", func(t *testing.T) {
+		t.Run("returns sources when we are the leader", func(t *testing.T) {
+			promProvider, _ := NewPrometheusProvider(configuration.PrometheusSourceConfig{
+				UseLeaderElection: true,
+				URL:               "https://example.local/metrics",
+			}, InstanceFromHost)
+			util.SetAgentType(options.AllAgentType)
+			leadership.SetLeading(true)
+			defer leadership.SetLeading(false)
+
+			sources := promProvider.GetMetricsSources()
+
+			assert.Len(t, sources, 1)
+		})
+
+		t.Run("does not return sources when we are not the leader", func(t *testing.T) {
+			promProvider, _ := NewPrometheusProvider(configuration.PrometheusSourceConfig{
+				UseLeaderElection: true,
+				URL:               "https://example.local/metrics",
+			}, InstanceFromHost)
+			util.SetAgentType(options.AllAgentType)
+
+			sources := promProvider.GetMetricsSources()
+
+			assert.Empty(t, sources)
+		})
+	})
+
+	t.Run("returns sources when use leader election is disabled", func(t *testing.T) {
+		promProvider, _ := NewPrometheusProvider(configuration.PrometheusSourceConfig{
+			UseLeaderElection: false,
+			Discovered:        "something",
+			URL:               "https://example.local/metrics",
+		}, InstanceFromHost)
+
+		util.SetAgentType(options.AllAgentType)
 
 		sources := promProvider.GetMetricsSources()
-		assert.Equal(t, []metrics.Source{&prometheusMetricsSource{
-			metricsURL: "fake metrics url",
-		}}, sources)
 
-		promProvider.useLeaderElection = true
-		allAgentType, err := options.NewAgentType("all") // TODO I don't have to create this
-		assert.NoError(t, err)
-		util.SetAgentType(allAgentType)
-		sources = promProvider.GetMetricsSources()
-		assert.Nil(t, sources)
+		assert.Len(t, sources, 1)
+	})
 
-		promProvider.useLeaderElection = true
-		clusterAgentType, err := options.NewAgentType("cluster") // TODO I don't have to create this
-		assert.NoError(t, err)
-		util.SetAgentType(clusterAgentType)
-		sources = promProvider.GetMetricsSources()
-		assert.Nil(t, sources)
+	t.Run("returns one source per instance", func(t *testing.T) {
+		promProvider, _ := NewPrometheusProvider(configuration.PrometheusSourceConfig{
+			URL:        "http://example.local:2222/metrics",
+			Discovered: "something",
+		}, func(_ string) ([]Instance, error) {
+			return []Instance{{"127.0.0.1:2222", nil}, {"127.0.0.2:2222", nil}}, nil
+		})
+		util.SetAgentType(options.AllAgentType)
 
-		promProvider.useLeaderElection = false
-		nodeAgentType, err := options.NewAgentType("node") // TODO I don't have to create this
-		assert.NoError(t, err)
-		util.SetAgentType(nodeAgentType)
-		sources = promProvider.GetMetricsSources()
-		assert.Equal(t, []metrics.Source{&prometheusMetricsSource{
-			metricsURL: "fake metrics url",
-		}}, sources)
+		sources := promProvider.GetMetricsSources()
 
-		promProvider.useLeaderElection = true
-		legacyAgentType, err := options.NewAgentType("legacy") // TODO I don't have to create this
-		assert.NoError(t, err)
-		util.SetAgentType(legacyAgentType)
-		sources = promProvider.GetMetricsSources()
-		assert.Nil(t, sources)
+		assert.Len(t, sources, 2)
+		assert.Equal(t, "http://127.0.0.1:2222/metrics", sources[0].(*prometheusMetricsSource).metricsURL)
+		assert.Equal(t, "http://127.0.0.2:2222/metrics", sources[1].(*prometheusMetricsSource).metricsURL)
+	})
+
+	t.Run("recomputes the sources every time", func(t *testing.T) {
+		firstCall := true
+		promProvider, _ := NewPrometheusProvider(configuration.PrometheusSourceConfig{
+			URL:        "http://example.local:2222/metrics",
+			Discovered: "something",
+		}, func(_ string) ([]Instance, error) {
+			if firstCall {
+				firstCall = false
+				return []Instance{{"127.0.0.1:2222", nil}}, nil
+			} else {
+				return []Instance{{"127.0.0.2:2222", nil}}, nil
+			}
+
+		})
+		util.SetAgentType(options.AllAgentType)
+
+		promProvider.GetMetricsSources()
+		sources := promProvider.GetMetricsSources()
+
+		assert.Len(t, sources, 1)
+		assert.Contains(t, sources[0].Name(), "http://127.0.0.2:2222/metrics")
+	})
+
+	t.Run("sends url.Host into LookupInstances", func(t *testing.T) {
+		actualHost := ""
+		promProvider, _ := NewPrometheusProvider(configuration.PrometheusSourceConfig{
+			URL:        "http://example.local:2222/metrics",
+			Discovered: "something",
+		}, func(host string) ([]Instance, error) {
+			actualHost = host
+			return []Instance{{"127.0.0.1:2222", nil}, {"127.0.0.2:2222", nil}}, nil
+		})
+		util.SetAgentType(options.AllAgentType)
+
+		promProvider.GetMetricsSources()
+
+		assert.Equal(t, "example.local:2222", actualHost)
+	})
+
+	t.Run("does not include port if the instances doesn't specify it", func(t *testing.T) {
+		promProvider, _ := NewPrometheusProvider(configuration.PrometheusSourceConfig{
+			URL:        "https://example.local:8443/metrics",
+			Discovered: "something",
+		}, func(host string) ([]Instance, error) {
+			return []Instance{{"127.0.0.1", nil}}, nil
+		})
+		util.SetAgentType(options.AllAgentType)
+
+		sources := promProvider.GetMetricsSources()
+
+		assert.Len(t, sources, 1)
+		assert.Equal(t, "https://127.0.0.1/metrics", sources[0].(*prometheusMetricsSource).metricsURL)
+	})
+
+	t.Run("returns no sources when there is an error looking up instances", func(t *testing.T) {
+		promProvider, _ := NewPrometheusProvider(configuration.PrometheusSourceConfig{
+			URL:        "https://example.local/metrics",
+			Discovered: "something",
+		}, func(host string) ([]Instance, error) {
+			return nil, errors.New("some error")
+		})
+		util.SetAgentType(options.AllAgentType)
+
+		sources := promProvider.GetMetricsSources()
+
+		assert.Empty(t, sources)
 	})
 }
 
 func TestNewPrometheusProvider(t *testing.T) {
 	t.Run("errors if prometheus URL is missing", func(t *testing.T) {
-		cfg := configuration.PrometheusSourceConfig{}
-		prometheusProvider, err := NewPrometheusProvider(cfg)
-		assert.Nil(t, prometheusProvider)
-		assert.NotNil(t, err)
+		_, err := NewPrometheusProvider(
+			configuration.PrometheusSourceConfig{},
+			InstanceFromHost,
+		)
+
+		assert.Error(t, err)
 	})
 
-	t.Run("use configured source, node name, or 'prom_source' as source tag", func(t *testing.T) {
+	t.Run("errors if prometheus URL is invalid", func(t *testing.T) {
+		_, err := NewPrometheusProvider(configuration.PrometheusSourceConfig{
+			URL: "\x00https://example.local/metrics",
+		}, InstanceFromHost)
+
+		assert.Error(t, err)
+	})
+
+	t.Run("use configured source as source tag", func(t *testing.T) {
 		cfg := configuration.PrometheusSourceConfig{
-			URL: "fake url",
+			URL: "https://example.local",
 			Transforms: configuration.Transforms{
 				Source: "fake source",
 			},
 			UseLeaderElection: true,
 		}
 
-		// TODO somehow encapsulate the carnage that is about to unfold into a named test struct
 		leadership.SetLeading(true)
 		util.SetAgentType(options.AllAgentType)
 
-		promProvider, err := NewPrometheusProvider(cfg)
+		promProvider, err := NewPrometheusProvider(cfg, InstanceFromHost)
 		assert.NoError(t, err)
 		source := promProvider.GetMetricsSources()[0].(*prometheusMetricsSource)
 		assert.Equal(t, "fake source", source.source)
+	})
 
-		// TODO extract into test helper method or something. Also, 🤢
-		(func(t2 *testing.T) {
-			cfg = configuration.PrometheusSourceConfig{
-				URL: "fake url",
-			}
-			err = os.Setenv(util.NodeNameEnvVar, "fake node name")
-			defer os.Unsetenv(util.NodeNameEnvVar)
+	t.Run("use node name as source tag", func(t *testing.T) {
+		cfg := configuration.PrometheusSourceConfig{URL: "https://example.local"}
+		_ = os.Setenv(util.NodeNameEnvVar, "fake node name")
+		defer os.Unsetenv(util.NodeNameEnvVar)
+		leadership.SetLeading(true)
+		util.SetAgentType(options.AllAgentType)
+		promProvider, err := NewPrometheusProvider(cfg, InstanceFromHost)
 
-			assert.NoError(t, err)
-			promProvider, err = NewPrometheusProvider(cfg)
-			assert.NoError(t, err)
-			source = promProvider.GetMetricsSources()[0].(*prometheusMetricsSource)
-			assert.Equal(t, "fake node name", source.source)
-		})(t)
-
-		promProvider, err = NewPrometheusProvider(cfg)
 		assert.NoError(t, err)
-		source = promProvider.GetMetricsSources()[0].(*prometheusMetricsSource)
+		source := promProvider.GetMetricsSources()[0].(*prometheusMetricsSource)
+		assert.Equal(t, "fake node name", source.source)
+	})
+
+	t.Run("use 'prom_source' as source tag", func(t *testing.T) {
+		cfg := configuration.PrometheusSourceConfig{URL: "https://example.local"}
+
+		leadership.SetLeading(true)
+		util.SetAgentType(options.AllAgentType)
+
+		promProvider, err := NewPrometheusProvider(cfg, InstanceFromHost)
+		assert.NoError(t, err)
+		source := promProvider.GetMetricsSources()[0].(*prometheusMetricsSource)
 		assert.Equal(t, "prom_source", source.source)
 	})
 
 	t.Run("default name to URL if not configured", func(t *testing.T) {
-		cfg := configuration.PrometheusSourceConfig{
-			URL: "http://test-prometheus-url.com",
-		}
-		prometheusProvider, err := NewPrometheusProvider(cfg)
+		cfg := configuration.PrometheusSourceConfig{URL: "http://test-prometheus-url.com"}
+
+		prometheusProvider, err := NewPrometheusProvider(cfg, InstanceFromHost)
+
 		assert.NoError(t, err)
 		assert.Equal(t, fmt.Sprintf("%s: http://test-prometheus-url.com", providerName), prometheusProvider.Name())
+	})
 
-		cfg.Name = "fake name"
-		prometheusProvider, err = NewPrometheusProvider(cfg)
+	t.Run("uses configured provider name", func(t *testing.T) {
+		cfg := configuration.PrometheusSourceConfig{Name: "fake name", URL: "http://test-prometheus-url.com"}
+
+		prometheusProvider, err := NewPrometheusProvider(cfg, InstanceFromHost)
+
 		assert.NoError(t, err)
 		assert.Equal(t, fmt.Sprintf("%s: fake name", providerName), prometheusProvider.Name())
 	})
 
-	t.Run("default discovered to empty if not configured", func(t *testing.T) {
+	t.Run("sources default to not auto discovered", func(t *testing.T) {
 		cfg := configuration.PrometheusSourceConfig{
 			URL: "http://test-prometheus-url.com",
 		}
-		promProvider, err := NewPrometheusProvider(cfg)
+		leadership.SetLeading(true)
+		util.SetAgentType(options.AllAgentType)
+		promProvider, _ := NewPrometheusProvider(cfg, InstanceFromHost)
+
+		sources := promProvider.GetMetricsSources()
+
+		assert.False(t, sources[0].AutoDiscovered())
+	})
+
+	t.Run("configures sources to auto discovered", func(t *testing.T) {
+		cfg := configuration.PrometheusSourceConfig{
+			URL:        "http://test-prometheus-url.com",
+			Discovered: "fake discovered",
+		}
+
+		promProvider, err := NewPrometheusProvider(cfg, InstanceFromHost)
+
 		assert.NoError(t, err)
 		source := promProvider.GetMetricsSources()[0].(*prometheusMetricsSource)
-		assert.False(t, source.AutoDiscovered())
-
-		cfg.Discovered = "fake discovered"
-		promProvider, err = NewPrometheusProvider(cfg)
-		assert.NoError(t, err)
-		source = promProvider.GetMetricsSources()[0].(*prometheusMetricsSource)
 		assert.True(t, source.AutoDiscovered())
 	})
 
@@ -473,253 +531,87 @@ func TestNewPrometheusProvider(t *testing.T) {
 		cfg := configuration.PrometheusSourceConfig{
 			URL: "http://test-prometheus-url.com",
 		}
-		promProvider, err := NewPrometheusProvider(cfg)
-		assert.NoError(t, err)
-
 		leadership.SetLeading(true)
 		util.SetAgentType(options.AllAgentType)
+
+		promProvider, _ := NewPrometheusProvider(cfg, InstanceFromHost)
+
 		source := promProvider.GetMetricsSources()[0].(*prometheusMetricsSource)
-
-		expectedClient, err := httpClient("http://test-prometheus-url.com", httputil.ClientConfig{})
-		assert.NoError(t, err)
-
-		assert.Equal(t, expectedClient.Timeout, source.client.Timeout)
-		assert.NotNil(t, source.client.Transport) // TODO is this necessary to check?
+		assert.Equal(t, time.Second*30, source.client.Timeout)
+		assert.NotNil(t, source.client.Transport)
 		assert.Equal(t, "", source.prefix)
-		assert.Equal(t, map[string]string(nil), source.tags)
+		assert.Empty(t, source.tags, "when lookup host is nil, does not add instance tag")
 		assert.Equal(t, nil, source.filters)
-
 		assert.Equal(t, "http://test-prometheus-url.com", source.metricsURL)
 	})
 
-	t.Run("returns an error if metrics source creation fails", func(t *testing.T) {
+	t.Run("when lookup host is present, adds host:port as instance tag", func(t *testing.T) {
 		cfg := configuration.PrometheusSourceConfig{
 			URL: "http://test-prometheus-url.com",
-			HTTPClientConfig: httputil.ClientConfig{
-				TLSConfig: httputil.TLSConfig{
-					KeyFile:            "sldlfdldldfkjkjlfd",
-					InsecureSkipVerify: false,
-				},
-			},
 		}
-		_, err := NewPrometheusProvider(cfg)
-		assert.NotNil(t, err)
+		leadership.SetLeading(true)
+		util.SetAgentType(options.AllAgentType)
+		promProvider, err := NewPrometheusProvider(cfg, func(host string) ([]Instance, error) {
+			return []Instance{{"127.0.0.1:2222", map[string]string{"instance": "127.0.0.1:2222"}}}, nil
+		})
+
+		assert.NoError(t, err)
+		source := promProvider.GetMetricsSources()[0].(*prometheusMetricsSource)
+		assert.Equal(t, 1, len(source.tags))
+		assert.Contains(t, source.tags, "instance")
+		assert.Equal(t, "127.0.0.1:2222", source.tags["instance"])
 	})
 
-	t.Run("prometheus provider sources contains whatever is returned by metrics source constructor", func(t *testing.T) {
+	t.Run("when Discovered is present", func(t *testing.T) {
+		t.Run("does not use leader election UseLeaderElection is false", func(t *testing.T) {
+			cfg := configuration.PrometheusSourceConfig{
+				URL:               "http://test-prometheus-url.com",
+				UseLeaderElection: false,
+				Discovered:        "fake discovered",
+			}
 
-		// TODO Jackpot. Behold the calamity of code necessary to get this test to pass.
-		cfg := configuration.PrometheusSourceConfig{
-			URL: "fake metrics source url",
-			Transforms: configuration.Transforms{
-				Source: "fake metrics source source",
-				Prefix: "fake metrics source prefix",
-			},
+			promProvider, _ := NewPrometheusProvider(cfg, InstanceFromHost)
 
-			UseLeaderElection: false,
-			Discovered:        "fake discovered",
-		}
-		prometheusProvider, err := NewPrometheusProvider(cfg)
-		assert.NoError(t, err)
+			assert.False(t, promProvider.(*prometheusProvider).useLeaderElection)
+		})
 
-		mockAgentType, err := options.NewAgentType("cluster") // TODO I don't have to create this
-		assert.NoError(t, err)
-		util.SetAgentType(mockAgentType)
-		source := prometheusProvider.GetMetricsSources()[0].(*prometheusMetricsSource)
+		t.Run("uses leader election when UseLeaderElection is true", func(t *testing.T) {
+			cfg := configuration.PrometheusSourceConfig{
+				URL:               "http://test-prometheus-url.com",
+				UseLeaderElection: true,
+				Discovered:        "fake discovered",
+			}
 
-		// notes from Matt
-		// leader election is what makes this have to be global
-		// can't dependency inject agent type and still have leader election global
-		// lot of subtle implications not well covered by tests
-		// increasing test coverage may help rip out global leadership
-		// let needs of function drive order; do what feels most obvious
-		// first test -> PR -> then try to make the major refactors
-		// just the tests alone would be valuable
-		// test -> marinate -> see problems holistically -> refactor fearlessly
-		// providers are factories for sources; they could be a function that creates a scrape function--crazy refactor though
+			promProvider, err := NewPrometheusProvider(cfg, InstanceFromHost)
 
-		// new technique: comment THE WHOLE FUNCTION and TDD the uncommenting
-
-		// what if we used an Observer pattern for leadership election??
-
-		assert.Equal(t, "fake metrics source url", source.metricsURL)
-		assert.Equal(t, "fake metrics source prefix", source.prefix)
-		assert.Equal(t, "fake metrics source source", source.source)
+			assert.NoError(t, err)
+			assert.True(t, promProvider.(*prometheusProvider).useLeaderElection)
+		})
 	})
 
-	t.Run("creates a prometheus provider with leader election based on configured leader election or discovery", func(t *testing.T) {
-		cfg := configuration.PrometheusSourceConfig{
-			URL: "http://test-prometheus-url.com",
+	t.Run("when Discovered is empty", func(t *testing.T) {
+		t.Run("uses leader election even when UseLeaderElection is false", func(t *testing.T) {
+			cfg := configuration.PrometheusSourceConfig{
+				URL:               "http://test-prometheus-url.com",
+				UseLeaderElection: false,
+				Discovered:        "",
+			}
 
-			UseLeaderElection: false,
-			Discovered:        "fake discovered",
-		}
-		promProvider, err := NewPrometheusProvider(cfg)
-		assert.NoError(t, err)
+			promProvider, _ := NewPrometheusProvider(cfg, InstanceFromHost)
 
-		// TODO should not be testing internal fields, but for now this shines a light on
-		// questions I have about the design of this.
-		assert.False(t, promProvider.(*prometheusProvider).useLeaderElection)
+			assert.True(t, promProvider.(*prometheusProvider).useLeaderElection)
+		})
 
-		cfg = configuration.PrometheusSourceConfig{
-			URL: "http://test-prometheus-url.com",
+		t.Run("uses leader election even when UseLeaderElection is true", func(t *testing.T) {
+			cfg := configuration.PrometheusSourceConfig{
+				URL:               "http://test-prometheus-url.com",
+				UseLeaderElection: true,
+				Discovered:        "",
+			}
 
-			UseLeaderElection: true,
-			Discovered:        "fake discovered",
-		}
-		promProvider, err = NewPrometheusProvider(cfg)
-		assert.NoError(t, err)
-		assert.True(t, promProvider.(*prometheusProvider).useLeaderElection)
+			promProvider, _ := NewPrometheusProvider(cfg, InstanceFromHost)
 
-		cfg = configuration.PrometheusSourceConfig{
-			URL: "http://test-prometheus-url.com",
-
-			UseLeaderElection: false,
-			Discovered:        "",
-		}
-		promProvider, err = NewPrometheusProvider(cfg)
-		assert.NoError(t, err)
-		assert.True(t, promProvider.(*prometheusProvider).useLeaderElection)
+			assert.True(t, promProvider.(*prometheusProvider).useLeaderElection)
+		})
 	})
-
-	t.Run("creates a prometheus provider with sources based on config name or URL", func(t *testing.T) {
-		// TODO what is this? What did I intend with this test?
-	})
-}
-
-type mockPrometheusProviderDependencyInjector struct {
-	metricsURL string
-	prefix     string
-	source     string
-	discovered string
-	tags       map[string]string
-	filters    filter.Filter
-	httpCfg    httputil.ClientConfig
-
-	returnError         error
-	returnMetricsSource metrics.Source
-}
-
-func (pdi *mockPrometheusProviderDependencyInjector) newMetricsSource(
-	metricsURL,
-	prefix,
-	source,
-	discovered string,
-	tags map[string]string,
-	filters filter.Filter,
-	httpCfg httputil.ClientConfig,
-) (metrics.Source, error) {
-	pdi.metricsURL = metricsURL
-	pdi.prefix = prefix
-	pdi.source = source
-	pdi.discovered = discovered
-	pdi.tags = tags
-	pdi.filters = filters
-	pdi.httpCfg = httpCfg
-
-	if pdi.returnError != nil {
-		return nil, pdi.returnError
-	}
-
-	return pdi.returnMetricsSource, nil
-}
-
-//t.Run("sending own status", func(t *testing.T) {
-//    stubKM := test_helper.NewMockKubernetesManager()
-//    expectStatusSent := test_helper.NewExpectStatusSent(wf.WavefrontStatus{}, "testClusterName")
-//
-//    // TODO: so much setup for only one usage...
-//    r, wfCR, apiClient, _ := setup("testWavefrontUrl", "updatedToken", "testClusterName")
-//    r.KubernetesManager = stubKM
-//    r.StatusSender = expectStatusSent
-//
-//    err := apiClient.Delete(context.Background(), wfCR)
-//
-//    _, err = r.Reconcile(context.Background(), defaultRequest())
-//    assert.NoError(t, err)
-//
-//    expectStatusSent.Verify(t)
-//})
-
-//type MockStatusSender struct {
-//    lastStatus      wf.WavefrontStatus
-//    lastClusterName string
-//
-//    expectedStatus      wf.WavefrontStatus
-//    expectedClusterName string
-//}
-//
-//func NewMockStatusSender(expectedStatus wf.WavefrontStatus, expectedClusterName string) *MockStatusSender {
-//    return &MockStatusSender{
-//        expectedStatus:      expectedStatus,
-//        expectedClusterName: expectedClusterName,
-//    }
-//}
-//
-//func (m *MockStatusSender) SendStatus(status wf.WavefrontStatus, clusterName string) error {
-//    m.lastStatus = status
-//    m.lastClusterName = clusterName
-//    return nil
-//}
-//
-//func (m *MockStatusSender) Close() {
-//    panic("did not expect Close to be called on MockStatusSender")
-//}
-//
-//func (m *MockStatusSender) Verify(t *testing.T)  {
-//    require.Equal(t, m.expectedClusterName, m.lastClusterName)
-//    require.Equal(t, m.expectedStatus, m.lastStatus)
-//}
-
-func Test_prometheusMetricsSource_parseMetrics(t *testing.T) {
-	t.Run("returns points", func(t *testing.T) {
-		promMetSource := prometheusMetricsSource{}
-		var expectedMetrics []wf.Metric
-
-		stubReader := &strings.Reader{}
-		actualMetrics, err := promMetSource.parseMetrics(stubReader)
-		assert.NoError(t, err)
-
-		assert.Equal(t, expectedMetrics, actualMetrics)
-	})
-
-	// TODO GOAL: capture exact BEHAVIOR fully without any change to the code.
-	// when has a class or function ever been written in isolation? Never. So why are we struggling so much here with dependency injection?
-	t.Run("parses a metric in body of reader", func(t *testing.T) {
-		promMetSource := prometheusMetricsSource{}
-		var emptyTags map[string]string
-		expectedPoint := wf.NewPoint(
-			"fake.metric.value",
-			10.0,
-			time.Now().Unix(),
-			"",
-			emptyTags,
-		)
-		expectedLabelName := "fake_label"
-		expectedLabelValue := "fake label value"
-		expectedPoint.SetLabelPairs([]wf.LabelPair{{
-			Name:  &expectedLabelName,
-			Value: &expectedLabelValue,
-		}})
-
-		stubReader := strings.NewReader(`
-fake_metric{fake_label="fake label value"} 10
-`)
-		actualMetrics, err := promMetSource.parseMetrics(stubReader)
-		assert.NoError(t, err)
-
-		actualPoint := actualMetrics[0].(*wf.Point)
-		assert.Equal(t, expectedPoint.Metric, actualPoint.Metric)
-		assert.Equal(t, expectedPoint.Source, actualPoint.Source)
-		assert.Equal(t, expectedPoint.Value, actualPoint.Value)
-		assert.Equal(t, expectedPoint.Name(), actualPoint.Name())
-		assert.Equal(t, expectedPoint.Tags(), actualPoint.Tags())
-
-		assert.LessOrEqual(t, expectedPoint.Timestamp, actualPoint.Timestamp)
-	})
-
-	// TODO fix dashboard scripts to preserve preamble order
-	// TODO automate merge to nimba
-	// TODO dashboard linter auto-formatter "that would be amazing"
-	// TODO find how to get test coverage from integration tests: https://blog.manabie.io/2021/12/integration-test-code-coverage-in-go/
 }
