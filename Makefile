@@ -63,14 +63,6 @@ tests:
 build: clean fmt vet
 	GOARCH=$(ARCH) CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o $(OUT_DIR)/$(ARCH)/$(BINARY_NAME) ./cmd/wavefront-collector/
 
-# since this is just hack, I can switch base image and ssh to run the kill server or whatever
-# this coverage information will likely interest others; I should create a presentation or doc or something.
-# what does this mean to what we do?!
-# perfectly okay to just do in arch retro
-# line vs. branch coverage, where have we run into issues, etc.?
-build-test: clean fmt vet
-	GOARCH=$(ARCH) CGO_ENABLED=0 go test -c ./cmd/wavefront-collector/ -cover -covermode=count -coverpkg=./... -ldflags "$(LDFLAGS)" -a -o $(OUT_DIR)/$(ARCH)/$(BINARY_NAME)
-
 vet:
 	go vet -composites=false ./...
 
