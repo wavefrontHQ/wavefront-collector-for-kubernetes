@@ -27,6 +27,7 @@ function main() {
   fi
   cd "$REPO_ROOT"
   TEMP_DIR=$(mktemp -d)
+  SCRIPT_DIR=$(dirname "$0")
 
   if [[ ! -f "$HOME/.osspicli/osspi/osspi" ]]; then
     echo "installing osspi..."
@@ -65,7 +66,8 @@ EOF
   PREPARE="go mod vendor"
   echo "PREPARE: $PREPARE"
   pwd
-  . ./osspi/tasks/osspi/scan-source.sh
+  echo "./$SCRIPT_DIR/../osspi/tasks/osspi/"
+  . ./$SCRIPT_DIR/../osspi/tasks/osspi/scan-source.sh
 
 
   GOOS=linux go list -mod=readonly -deps -f '{{ if and (.DepOnly) (.Module) (not .Standard) }}{{ $mod := (or .Module.Replace .Module) }}{{ $mod.Path }}{{ end }}' ./... | grep -v $REPO | sort -u > $TEMP_DIR/from_go_mod.txt
