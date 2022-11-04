@@ -3,11 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/options"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 	"net/http"
 	"os"
 	"testing"
+
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/options"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
 )
 
 var collectorArgs []string
