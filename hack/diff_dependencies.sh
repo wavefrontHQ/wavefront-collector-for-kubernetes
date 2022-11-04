@@ -45,7 +45,6 @@ function main() {
   enable: true
   include_bomtools: "go_mod"
   search_depth: 5
-  go_mod.path: "/go/bin/go"
 
   # exclude for signature scans
   exclude_patterns:
