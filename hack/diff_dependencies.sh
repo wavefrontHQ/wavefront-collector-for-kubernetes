@@ -66,16 +66,16 @@ EOF
   echo "PREPARE: $PREPARE"
   pwd
   echo "./$SCRIPT_DIR/../osspi/tasks/osspi/"
-  . ./$SCRIPT_DIR/../osspi/tasks/osspi/scan-source.sh
+  . ./$SCRIPT_DIR/../osspi/tasks/osspi/scan-source.sh -o scan-report.yaml
 
-  echo did we get here
+
   GOOS=linux go list -mod=readonly -deps -f '{{ if and (.DepOnly) (.Module) (not .Standard) }}{{ $mod := (or .Module.Replace .Module) }}{{ $mod.Path }}{{ end }}' ./... | grep -v $REPO | sort -u > $TEMP_DIR/from_go_mod.txt
   grep '   >>> ' open_source_licenses.txt | grep -v Apache | grep -v Mozilla | awk '{print $2}' | rev | awk -F'v-' '{print $2}' | rev | sort -u > $TEMP_DIR/from_open_source_licenses.txt
 
 #  TODO: Until we can figure out how to find dependency change in docker images,
 #  only consider new dependency additions to go mod file.
 #  diff -u $TEMP_DIR/from_go_mod.txt $TEMP_DIR/from_open_source_licenses.txt
-
+  echo did we get here
   NEW_GO_DEPENDENCIES=$(comm -13 <(sort $TEMP_DIR/from_open_source_licenses.txt | uniq) <(sort $TEMP_DIR/from_go_mod.txt | uniq))
   NEW_GO_DEPENDENCIES_COUNT="$(printf "%s" "${NEW_GO_DEPENDENCIES//[!$'\n']/}" | grep -c '^')"
   if [[ $NEW_GO_DEPENDENCIES_COUNT -ne 0 ]]; then
