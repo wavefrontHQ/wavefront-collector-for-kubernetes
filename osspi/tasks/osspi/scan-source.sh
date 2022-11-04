@@ -65,6 +65,7 @@ function main() {
     input_bom_result_flag=('--input' "$REPO"_bom/osspi_bom_detect_result.json)
   fi
 
+  echo "output: $OUTPUT"
   $HOME/.osspicli/osspi/osspi merge \
     "${input_bom_result_flag[@]}" \
     --input "$REPO"_signature/osspi_signature_detect_result.json \
