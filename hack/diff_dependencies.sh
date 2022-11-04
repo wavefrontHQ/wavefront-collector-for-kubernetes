@@ -75,22 +75,27 @@ EOF
   grep '   >>> ' open_source_licenses.txt | grep -v Apache | grep -v Mozilla | awk '{print $2}' | rev | awk -F'v-' '{print $2}' | rev | sort -u > $TEMP_DIR/from_open_source_licenses.txt
   cat scan-report.json | jq '.packages' | jq '.[] | {name} | add' | cut -d '"' -f2 | sort -u > $TEMP_DIR/from_osspi_scan.txt
 
-  ADDED_DEP=${diff -u $TEMP_DIR/from_osspi_scan.txt $TEMP_DIR/from_open_source_licenses.txt | grep "^-[a-zA-Z]"}
-  REMOVED_DEP=${diff -u $TEMP_DIR/from_osspi_scan.txt $TEMP_DIR/from_open_source_licenses.txt | grep "^+[a-zA-Z]"}
+  echo "Found new dependencies from osspi scan that are not in open_source_licenses.txt:"
+  diff -u $TEMP_DIR/from_osspi_scan.txt $TEMP_DIR/from_open_source_licenses.txt | grep "^-[a-zA-Z]"
+  echo "Found old dependencies in open_source_licenses.txt that are not in osspi scan:"
+  diff -u $TEMP_DIR/from_osspi_scan.txt $TEMP_DIR/from_open_source_licenses.txt | grep "^+[a-zA-Z]"
 
-#  NEW_GO_DEPENDENCIES=$(comm -13 <(sort $TEMP_DIR/from_open_source_licenses.txt | uniq) <(sort $TEMP_DIR/from_osspi_scan.txt | uniq))
-  ADDED_DEP_COUNT="$(printf "%s" "${ADDED_DEP//[!$'\n']/}" | grep -c '^')"
-  if [[ $ADDED_DEP_COUNT -ne 0 ]]; then
-    echo "Found $NEW_GO_DEPENDENCIES_COUNT new dependencies from osspi scan that are not in open_source_licenses.txt:"
-    printf "%s\n" $ADDED_DEP
-    exit 1
-  fi
-  REMOVED_DEP_COUNT="$(printf "%s" "${REMOVED_DEP//[!$'\n']/}" | grep -c '^')"
-  if [[ $REMOVED_DEP_COUNT -ne 0 ]]; then
-    echo "Found $REMOVED_DEP_COUNT old dependencies in open_source_licenses.txt that are not in osspi scan:"
-    printf "%s\n" $REMOVED_DEP
-    exit 1
-  fi
+
+#  ADDED_DEP=${diff -u $TEMP_DIR/from_osspi_scan.txt $TEMP_DIR/from_open_source_licenses.txt | grep "^-[a-zA-Z]"}
+#  REMOVED_DEP=${diff -u $TEMP_DIR/from_osspi_scan.txt $TEMP_DIR/from_open_source_licenses.txt | grep "^+[a-zA-Z]"}
+#
+#  ADDED_DEP_COUNT="$(printf "%s" "${ADDED_DEP//[!$'\n']/}" | grep -c '^')"
+#  if [[ $ADDED_DEP_COUNT -ne 0 ]]; then
+#    echo "Found $NEW_GO_DEPENDENCIES_COUNT new dependencies from osspi scan that are not in open_source_licenses.txt:"
+#    printf "%s\n" $ADDED_DEP
+#    exit 1
+#  fi
+#  REMOVED_DEP_COUNT="$(printf "%s" "${REMOVED_DEP//[!$'\n']/}" | grep -c '^')"
+#  if [[ $REMOVED_DEP_COUNT -ne 0 ]]; then
+#    echo "Found $REMOVED_DEP_COUNT old dependencies in open_source_licenses.txt that are not in osspi scan:"
+#    printf "%s\n" $REMOVED_DEP
+#    exit 1
+#  fi
 }
 
 

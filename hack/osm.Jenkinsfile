@@ -6,7 +6,6 @@ pipeline {
     go 'Go 1.18'
   }
   stages {
-    parallel{
       stage('Clone another repository') {
         steps {
           sh 'rm operator -rf; mkdir operator'
@@ -23,7 +22,7 @@ pipeline {
           sh "./hack/diff_dependencies.sh -r wavefront-collector-for-kubernetes"
         }
       }
-    }
+
   }
 
 //   post {
