@@ -65,23 +65,30 @@ EOF
   PREPARE="go mod vendor"
   echo "PREPARE: $PREPARE"
 
-  OUTPUT="scan-report.yaml"
+  OUTPUT="scan-report.json"
 
+#
   . ./$SCRIPT_DIR/../osspi/tasks/osspi/scan-source.sh
 
 
-  GOOS=linux go list -mod=readonly -deps -f '{{ if and (.DepOnly) (.Module) (not .Standard) }}{{ $mod := (or .Module.Replace .Module) }}{{ $mod.Path }}{{ end }}' ./... | grep -v $REPO | sort -u > $TEMP_DIR/from_go_mod.txt
+#  GOOS=linux go list -mod=readonly -deps -f '{{ if and (.DepOnly) (.Module) (not .Standard) }}{{ $mod := (or .Module.Replace .Module) }}{{ $mod.Path }}{{ end }}' ./... | grep -v $REPO | sort -u > $TEMP_DIR/from_go_mod.txt
   grep '   >>> ' open_source_licenses.txt | grep -v Apache | grep -v Mozilla | awk '{print $2}' | rev | awk -F'v-' '{print $2}' | rev | sort -u > $TEMP_DIR/from_open_source_licenses.txt
+  cat scan-report.json | jq '.packages' | jq '.[] | {name} | add' | cut -d '"' -f2 | sort -u > $TEMP_DIR/from_osspi_scan.txt
 
-#  TODO: Until we can figure out how to find dependency change in docker images,
-#  only consider new dependency additions to go mod file.
-#  diff -u $TEMP_DIR/from_go_mod.txt $TEMP_DIR/from_open_source_licenses.txt
+  ADDED_DEP=${diff -u $TEMP_DIR/from_osspi_scan.txt $TEMP_DIR/from_open_source_licenses.txt | grep "^-[a-zA-Z]"}
+  REMOVED_DEP=${diff -u $TEMP_DIR/from_osspi_scan.txt $TEMP_DIR/from_open_source_licenses.txt | grep "^+[a-zA-Z]"}
 
-  NEW_GO_DEPENDENCIES=$(comm -13 <(sort $TEMP_DIR/from_open_source_licenses.txt | uniq) <(sort $TEMP_DIR/from_go_mod.txt | uniq))
-  NEW_GO_DEPENDENCIES_COUNT="$(printf "%s" "${NEW_GO_DEPENDENCIES//[!$'\n']/}" | grep -c '^')"
-  if [[ $NEW_GO_DEPENDENCIES_COUNT -ne 0 ]]; then
-    echo "Found $NEW_GO_DEPENDENCIES_COUNT new dependencies in go.mod that are not in open_source_licenses.txt:"
-    printf "%s\n" $NEW_GO_DEPENDENCIES
+#  NEW_GO_DEPENDENCIES=$(comm -13 <(sort $TEMP_DIR/from_open_source_licenses.txt | uniq) <(sort $TEMP_DIR/from_osspi_scan.txt | uniq))
+  ADDED_DEP_COUNT="$(printf "%s" "${ADDED_DEP//[!$'\n']/}" | grep -c '^')"
+  if [[ $ADDED_DEP_COUNT -ne 0 ]]; then
+    echo "Found $NEW_GO_DEPENDENCIES_COUNT new dependencies from osspi scan that are not in open_source_licenses.txt:"
+    printf "%s\n" $ADDED_DEP
+    exit 1
+  fi
+  REMOVED_DEP_COUNT="$(printf "%s" "${REMOVED_DEP//[!$'\n']/}" | grep -c '^')"
+  if [[ $REMOVED_DEP_COUNT -ne 0 ]]; then
+    echo "Found $REMOVED_DEP_COUNT old dependencies in open_source_licenses.txt that are not in osspi scan:"
+    printf "%s\n" $REMOVED_DEP
     exit 1
   fi
 }

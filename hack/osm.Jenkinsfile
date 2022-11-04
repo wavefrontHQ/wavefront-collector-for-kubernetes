@@ -6,22 +6,23 @@ pipeline {
     go 'Go 1.18'
   }
   stages {
-    stage('Clone another repository') {
+    parallel{
+      stage('Clone another repository') {
         steps {
-            sh 'rm operator -rf; mkdir operator'
-            dir ('operator') {
-                git branch: 'main',
-                credentialsId: 'wf-jenkins-github',
-                url: 'https://github.com/wavefrontHQ/wavefront-operator-for-kubernetes.git'
-                sh 'pwd'
-                sh "./../hack/diff_dependencies.sh -r wavefront-operator-for-kubernetes"
-            }
+          sh 'rm operator -rf; mkdir operator'
+          dir ('operator') {
+            git branch: 'main',
+            credentialsId: 'wf-jenkins-github',
+            url: 'https://github.com/wavefrontHQ/wavefront-operator-for-kubernetes.git'
+            sh "./../hack/diff_dependencies.sh -r wavefront-operator-for-kubernetes"
+          }
         }
-    }
-    stage("Check for go.sum changed") {
+      }
+      stage("Check for go.sum changed") {
         steps {
-            sh "./hack/diff_dependencies.sh -r wavefront-collector-for-kubernetes"
+          sh "./hack/diff_dependencies.sh -r wavefront-collector-for-kubernetes"
         }
+      }
     }
   }
 
