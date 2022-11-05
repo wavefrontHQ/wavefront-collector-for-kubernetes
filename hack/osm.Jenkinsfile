@@ -52,7 +52,7 @@ pipeline {
           steps {
             sh 'rm wavefront-kubernetes-adapter -rf; mkdir wavefront-kubernetes-adapter'
             dir ('wavefront-kubernetes-adapter') {
-              git branch: 'main',
+              git branch: 'master',
               credentialsId: 'wf-jenkins-github',
               url: 'https://github.com/wavefrontHQ/wavefront-kubernetes-adapter.git'
               script {
@@ -75,7 +75,7 @@ pipeline {
           steps {
             sh 'rm prometheus-storage-adapter -rf; mkdir prometheus-storage-adapter'
             dir ('prometheus-storage-adapter') {
-              git branch: 'main',
+              git branch: 'master',
               credentialsId: 'wf-jenkins-github',
               url: 'https://github.com/wavefrontHQ/prometheus-storage-adapter.git'
               script {
