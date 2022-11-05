@@ -17,10 +17,10 @@ pipeline {
           steps {
             script {
               try {
-                sh "./hack/diff_dependencies.sh -r wavefront-collector-for-kubernetes"
+                sh "./hack/diff-dependencies.sh -r wavefront-collector-for-kubernetes"
               } catch (err) {
                 echo "Caught: ${err}"
-                if (env.NEEDS_OSL == "") {
+                if (env.NEEDS_OSL == null) {
                   env.NEEDS_OSL = 'wavefront-collector-for-kubernetes'
                 } else {
                   env.NEEDS_OSL = env.NEEDS_OSL + ', wavefront-collector-for-kubernetes'
@@ -39,10 +39,10 @@ pipeline {
               url: 'https://github.com/wavefrontHQ/wavefront-operator-for-kubernetes.git'
               script {
                 try {
-                  sh "./../hack/diff_dependencies.sh -r wavefront-operator-for-kubernetes"
+                  sh "./../hack/diff-dependencies.sh -r wavefront-operator-for-kubernetes"
                 } catch (err) {
                   echo "Caught: ${err}"
-                  if (env.NEEDS_OSL == "") {
+                  if (env.NEEDS_OSL == null) {
                     env.NEEDS_OSL = 'wavefront-operator-for-kubernetes'
                   } else {
                     env.NEEDS_OSL = env.NEEDS_OSL + ', wavefront-operator-for-kubernetes'
@@ -62,10 +62,10 @@ pipeline {
               url: 'https://github.com/wavefrontHQ/wavefront-kubernetes-adapter.git'
               script {
                 try {
-                  sh "./../hack/diff_dependencies.sh -r wavefront-kubernetes-adapter"
+                  sh "./../hack/diff-dependencies.sh -r wavefront-kubernetes-adapter"
                 } catch (err) {
                   echo "Caught: ${err}"
-                  if (env.NEEDS_OSL == "") {
+                  if (env.NEEDS_OSL == null) {
                     env.NEEDS_OSL = 'wavefront-kubernetes-adapter'
                   } else {
                     env.NEEDS_OSL = env.NEEDS_OSL + ', wavefront-kubernetes-adapter'
@@ -85,10 +85,10 @@ pipeline {
               url: 'https://github.com/wavefrontHQ/prometheus-storage-adapter.git'
               script {
                 try {
-                  sh "./../hack/diff_dependencies.sh -r prometheus-storage-adapter"
+                  sh "./../hack/diff-dependencies.sh -r prometheus-storage-adapter"
                 } catch (err) {
                   echo "Caught: ${err}"
-                  if (env.NEEDS_OSL == "") {
+                  if (env.NEEDS_OSL == null) {
                     env.NEEDS_OSL = 'prometheus-storage-adapter'
                   } else {
                     env.NEEDS_OSL = env.NEEDS_OSL + ', prometheus-storage-adapter'

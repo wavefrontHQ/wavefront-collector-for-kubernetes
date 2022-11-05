@@ -63,13 +63,13 @@ EOF
   if [[ $ADDED_DEP_COUNT -ne 0 ]]; then
     echo "Found $ADDED_DEP_COUNT new dependencies from osspi scan that are not in open_source_licenses.txt:"
     printf "%s\n" $ADDED_DEP
-    EXIT_CODE=1
+    EXIT_CODE=8
   fi
   REMOVED_DEP_COUNT="$(printf "%s" "${REMOVED_DEP//[!$'\n']/}" | grep -c '^')"
   if [[ $REMOVED_DEP_COUNT -ne 0 ]]; then
     echo "Found $REMOVED_DEP_COUNT old dependencies in open_source_licenses.txt that are not in osspi scan:"
     printf "%s\n" $REMOVED_DEP
-    EXIT_CODE=1
+    EXIT_CODE=8
   fi
   exit "$EXIT_CODE"
 }
