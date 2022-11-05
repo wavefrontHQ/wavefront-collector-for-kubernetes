@@ -106,7 +106,7 @@ pipeline {
   post {
     always {
       script {
-        def isStartedByUser = currentBuild.rawBuild.getCause(hudson.model.Cause$UserIdCause) != null
+        def isStartedByUser = currentBuild.getBuildCauses('hudson.model.Cause$UserIdCause') != null
         if (hasAnyReposDepStatusChanged || isStartedByUser) {
            slackSend (channel: '#closed-channel', message: "Need OSL ${env.NEEDS_OSL} (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
         }
