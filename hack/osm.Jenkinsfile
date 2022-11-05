@@ -103,19 +103,35 @@ pipeline {
     }
   }
 
-//   post {
-//     failure {
-//       script {
-//         if(currentBuild.previousBuild == null) {
-//           slackSend (channel: '#tobs-k8po-team', message: "@k8po-eng-team Collector dependencies changed: remember to create a JIRA ticket for \"OSM Release\" in \"Selected For Development\" before next collector release, <https://confluence.eng.vmware.com/display/CNA/Release+Process|see \"Collector Repo Licensing\" for more information> (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
-//         }
-//       }
-//     }
-//     regression {
-//       slackSend (channel: '#tobs-k8po-team', message: "@k8po-eng-team Collector dependencies changed: remember to create a JIRA ticket for \"OSM Release\" in \"Selected For Development\" before next collector release, <https://confluence.eng.vmware.com/display/CNA/Release+Process|see \"Collector Repo Licensing\" for more information> (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
-//     }
-//     fixed {
-//       slackSend (channel: '#tobs-k8po-team', message: "@k8po-eng-team Collector OSL dependencies in-sync (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
-//     }
-//   }
+  post {
+    always {
+      script {
+        def isStartedByUser = currentBuild.rawBuild.getCause(hudson.model.Cause$UserIdCause) != null
+        if (hasAnyReposDepStatusChanged || isStartedByUser) {
+           slackSend (channel: '#closed-channel', message: "Need OSL ${env.NEEDS_OSL} (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
+        }
+      }
+    }
+    failure {
+      script {
+        if(currentBuild.previousBuild == null) {
+          slackSend (channel: '#closed-channel', message: "build failed (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
+        }
+      }
+    }
+    regression {
+      slackSend (channel: '#closed-channel', message: "build regressed (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
+    }
+    fixed {
+      slackSend (channel: '#closed-channel', message: "All of our repositories' open source licenses are latest and updated! (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
+    }
+
+  }
+}
+
+def hasAnyReposDepStatusChanged() {
+    prevBuildRepoStatus = ${currentBuild.previousBuild.buildVariables["NEEDS_OSL"]}
+    prevBuildResult = Arrays.asList(prevBuildRepoStatus.replaceAll("\\s","").split(","))
+    currentBuildResult = Arrays.asList(${env.NEEDS_OSL}.replaceAll("\\s","").split(","))
+    return prevBuildResult.equals(currentBuildResult)
 }
