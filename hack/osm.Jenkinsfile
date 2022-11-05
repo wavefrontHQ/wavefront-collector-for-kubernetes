@@ -6,88 +6,90 @@ pipeline {
     go 'Go 1.18'
   }
   stages {
-    parallel {
-      stage("wavefront-collector-for-kubernetes") {
-        steps {
-          script {
-            try {
-              sh "./hack/diff_dependencies.sh -r wavefront-collector-for-kubernetes"
-            } catch (err) {
-              echo "Caught: ${err}"
-              if (env.NEEDS_OSL == "") {
-                env.NEEDS_OSL = 'wavefront-collector-for-kubernetes'
-              } else {
-                env.NEEDS_OSL = env.NEEDS_OSL + ', wavefront-collector-for-kubernetes'
-              }
-              echo "NEEDS_OSL: ${env.NEEDS_OSL}"
-            }
-          }
-        }
-      }
-      stage('wavefront-operator-for-kubernetes') {
-        steps {
-          sh 'rm wavefront-operator-for-kubernetes -rf; mkdir wavefront-operator-for-kubernetes'
-          dir ('wavefront-operator-for-kubernetes') {
-            git branch: 'main',
-            credentialsId: 'wf-jenkins-github',
-            url: 'https://github.com/wavefrontHQ/wavefront-operator-for-kubernetes.git'
+    stage("Run OSSPI scan") {
+      parallel {
+        stage("wavefront-collector-for-kubernetes") {
+          steps {
             script {
               try {
-                sh "./../hack/diff_dependencies.sh -r wavefront-operator-for-kubernetes"
+                sh "./hack/diff_dependencies.sh -r wavefront-collector-for-kubernetes"
               } catch (err) {
                 echo "Caught: ${err}"
                 if (env.NEEDS_OSL == "") {
-                  env.NEEDS_OSL = 'wavefront-operator-for-kubernetes'
+                  env.NEEDS_OSL = 'wavefront-collector-for-kubernetes'
                 } else {
-                  env.NEEDS_OSL = env.NEEDS_OSL + ', wavefront-operator-for-kubernetes'
+                  env.NEEDS_OSL = env.NEEDS_OSL + ', wavefront-collector-for-kubernetes'
                 }
                 echo "NEEDS_OSL: ${env.NEEDS_OSL}"
               }
             }
           }
         }
-      }
-      stage('wavefront-kubernetes-adapter') {
-        steps {
-          sh 'rm wavefront-kubernetes-adapter -rf; mkdir wavefront-kubernetes-adapter'
-          dir ('wavefront-kubernetes-adapter') {
-            git branch: 'main',
-            credentialsId: 'wf-jenkins-github',
-            url: 'https://github.com/wavefrontHQ/wavefront-kubernetes-adapter.git'
-            script {
-              try {
-                sh "./../hack/diff_dependencies.sh -r wavefront-kubernetes-adapter"
-              } catch (err) {
-                echo "Caught: ${err}"
-                if (env.NEEDS_OSL == "") {
-                  env.NEEDS_OSL = 'wavefront-kubernetes-adapter'
-                } else {
-                  env.NEEDS_OSL = env.NEEDS_OSL + ', wavefront-kubernetes-adapter'
+        stage('wavefront-operator-for-kubernetes') {
+          steps {
+            sh 'rm wavefront-operator-for-kubernetes -rf; mkdir wavefront-operator-for-kubernetes'
+            dir ('wavefront-operator-for-kubernetes') {
+              git branch: 'main',
+              credentialsId: 'wf-jenkins-github',
+              url: 'https://github.com/wavefrontHQ/wavefront-operator-for-kubernetes.git'
+              script {
+                try {
+                  sh "./../hack/diff_dependencies.sh -r wavefront-operator-for-kubernetes"
+                } catch (err) {
+                  echo "Caught: ${err}"
+                  if (env.NEEDS_OSL == "") {
+                    env.NEEDS_OSL = 'wavefront-operator-for-kubernetes'
+                  } else {
+                    env.NEEDS_OSL = env.NEEDS_OSL + ', wavefront-operator-for-kubernetes'
+                  }
+                  echo "NEEDS_OSL: ${env.NEEDS_OSL}"
                 }
-                echo "NEEDS_OSL: ${env.NEEDS_OSL}"
               }
             }
           }
         }
-      }
-      stage('prometheus-storage-adapter') {
-        steps {
-          sh 'rm prometheus-storage-adapter -rf; mkdir prometheus-storage-adapter'
-          dir ('prometheus-storage-adapter') {
-            git branch: 'main',
-            credentialsId: 'wf-jenkins-github',
-            url: 'https://github.com/wavefrontHQ/prometheus-storage-adapter.git'
-            script {
-              try {
-                sh "./../hack/diff_dependencies.sh -r prometheus-storage-adapter"
-              } catch (err) {
-                echo "Caught: ${err}"
-                if (env.NEEDS_OSL == "") {
-                  env.NEEDS_OSL = 'prometheus-storage-adapter'
-                } else {
-                  env.NEEDS_OSL = env.NEEDS_OSL + ', prometheus-storage-adapter'
+        stage('wavefront-kubernetes-adapter') {
+          steps {
+            sh 'rm wavefront-kubernetes-adapter -rf; mkdir wavefront-kubernetes-adapter'
+            dir ('wavefront-kubernetes-adapter') {
+              git branch: 'main',
+              credentialsId: 'wf-jenkins-github',
+              url: 'https://github.com/wavefrontHQ/wavefront-kubernetes-adapter.git'
+              script {
+                try {
+                  sh "./../hack/diff_dependencies.sh -r wavefront-kubernetes-adapter"
+                } catch (err) {
+                  echo "Caught: ${err}"
+                  if (env.NEEDS_OSL == "") {
+                    env.NEEDS_OSL = 'wavefront-kubernetes-adapter'
+                  } else {
+                    env.NEEDS_OSL = env.NEEDS_OSL + ', wavefront-kubernetes-adapter'
+                  }
+                  echo "NEEDS_OSL: ${env.NEEDS_OSL}"
                 }
-                echo "NEEDS_OSL: ${env.NEEDS_OSL}"
+              }
+            }
+          }
+        }
+        stage('prometheus-storage-adapter') {
+          steps {
+            sh 'rm prometheus-storage-adapter -rf; mkdir prometheus-storage-adapter'
+            dir ('prometheus-storage-adapter') {
+              git branch: 'main',
+              credentialsId: 'wf-jenkins-github',
+              url: 'https://github.com/wavefrontHQ/prometheus-storage-adapter.git'
+              script {
+                try {
+                  sh "./../hack/diff_dependencies.sh -r prometheus-storage-adapter"
+                } catch (err) {
+                  echo "Caught: ${err}"
+                  if (env.NEEDS_OSL == "") {
+                    env.NEEDS_OSL = 'prometheus-storage-adapter'
+                  } else {
+                    env.NEEDS_OSL = env.NEEDS_OSL + ', prometheus-storage-adapter'
+                  }
+                  echo "NEEDS_OSL: ${env.NEEDS_OSL}"
+                }
               }
             }
           }
