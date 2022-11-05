@@ -51,8 +51,6 @@ function main() {
     - vendor
 EOF
   )
-  echo "OSSPI_SCANNING_PARAMS: $OSSPI_SCANNING_PARAMS"
-
   OSSPI_IGNORE_RULES=$(cat <<EOF
   - name_regex: onsi\/ginkgo
     version_regex: .*
@@ -60,42 +58,32 @@ EOF
     version_regex: .*
 EOF
   )
-  echo "OSSPI_IGNORE_RULES: $OSSPI_IGNORE_RULES"
-
   PREPARE="go mod vendor"
-  echo "PREPARE: $PREPARE"
-
   OUTPUT="scan-report.json"
 
-#
+  # source scan-source.sh in the current shell, so it can access variables set above like OSSPI_SCANNING_PARAMS, OSSPI_IGNORE_RULES, etc
   . ./$SCRIPT_DIR/../osspi/tasks/osspi/scan-source.sh
 
-
-#  GOOS=linux go list -mod=readonly -deps -f '{{ if and (.DepOnly) (.Module) (not .Standard) }}{{ $mod := (or .Module.Replace .Module) }}{{ $mod.Path }}{{ end }}' ./... | grep -v $REPO | sort -u > $TEMP_DIR/from_go_mod.txt
   grep '   >>> ' open_source_licenses.txt | grep -v Apache | grep -v Mozilla | awk '{print $2}' | rev | awk -F'v-' '{print $2}' | rev | sort -u > $TEMP_DIR/from_open_source_licenses.txt
   cat scan-report.json | jq '.packages' | jq '.[] | {name} | add' | cut -d '"' -f2 | sort -u > $TEMP_DIR/from_osspi_scan.txt
 
-  echo "Found new dependencies from osspi scan that are not in open_source_licenses.txt:"
-  diff -u $TEMP_DIR/from_osspi_scan.txt $TEMP_DIR/from_open_source_licenses.txt | grep "^-[a-zA-Z]"
-  echo "Found old dependencies in open_source_licenses.txt that are not in osspi scan:"
-  diff -u $TEMP_DIR/from_osspi_scan.txt $TEMP_DIR/from_open_source_licenses.txt | grep "^+[a-zA-Z]"
+  EXIT_CODE=0
+  ADDED_DEP=$(comm -13 <(sort $TEMP_DIR/from_open_source_licenses.txt | uniq) <(sort $TEMP_DIR/from_osspi_scan.txt | uniq))
+  REMOVED_DEP=$(comm -13 <(sort $TEMP_DIR/from_osspi_scan.txt | uniq) <(sort $TEMP_DIR/from_open_source_licenses.txt | uniq))
 
-
-#  ADDED_DEP=${diff -u $TEMP_DIR/from_osspi_scan.txt $TEMP_DIR/from_open_source_licenses.txt | grep "^-[a-zA-Z]"}
-#  REMOVED_DEP=${diff -u $TEMP_DIR/from_osspi_scan.txt $TEMP_DIR/from_open_source_licenses.txt | grep "^+[a-zA-Z]"}
-#
-#  ADDED_DEP_COUNT="$(printf "%s" "${ADDED_DEP//[!$'\n']/}" | grep -c '^')"
-#  if [[ $ADDED_DEP_COUNT -ne 0 ]]; then
-#    echo "Found $NEW_GO_DEPENDENCIES_COUNT new dependencies from osspi scan that are not in open_source_licenses.txt:"
-#    printf "%s\n" $ADDED_DEP
-#    exit 1
-#  fi
-#  REMOVED_DEP_COUNT="$(printf "%s" "${REMOVED_DEP//[!$'\n']/}" | grep -c '^')"
-#  if [[ $REMOVED_DEP_COUNT -ne 0 ]]; then
-#    echo "Found $REMOVED_DEP_COUNT old dependencies in open_source_licenses.txt that are not in osspi scan:"
-#    printf "%s\n" $REMOVED_DEP
-#    exit 1
-#  fi
+  ADDED_DEP_COUNT="$(printf "%s" "${ADDED_DEP//[!$'\n']/}" | grep -c '^')"
+  if [[ $ADDED_DEP_COUNT -ne 0 ]]; then
+    echo "Found $ADDED_DEP_COUNT new dependencies from osspi scan that are not in open_source_licenses.txt:"
+    printf "%s\n" $ADDED_DEP
+    EXIT_CODE=1
+  fi
+  REMOVED_DEP_COUNT="$(printf "%s" "${REMOVED_DEP//[!$'\n']/}" | grep -c '^')"
+  if [[ $REMOVED_DEP_COUNT -ne 0 ]]; then
+    echo "Found $REMOVED_DEP_COUNT old dependencies in open_source_licenses.txt that are not in osspi scan:"
+    printf "%s\n" $REMOVED_DEP
+    EXIT_CODE=1
+  fi
+  exit "$EXIT_CODE"
 }
 
 
