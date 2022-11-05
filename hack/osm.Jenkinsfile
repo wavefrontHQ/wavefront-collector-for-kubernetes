@@ -6,6 +6,11 @@ pipeline {
     go 'Go 1.18'
   }
   stages {
+    stage("Setup") {
+      steps {
+        sh "./hack/setup-diff-dependencies.sh"
+      }
+    }
     stage("Run OSSPI scan") {
       parallel {
         stage("wavefront-collector-for-kubernetes") {
