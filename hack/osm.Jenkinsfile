@@ -5,21 +5,45 @@ pipeline {
   tools {
     go 'Go 1.18'
   }
+  environment {
+    NEEDS_OSL = ""
+  }
   stages {
-      stage('Clone another repository') {
+      stage('wavefront-operator-for-kubernetes') {
         steps {
           sh 'rm operator -rf; mkdir operator'
           dir ('operator') {
             git branch: 'main',
             credentialsId: 'wf-jenkins-github',
             url: 'https://github.com/wavefrontHQ/wavefront-operator-for-kubernetes.git'
-            sh "./../hack/diff_dependencies.sh -r wavefront-operator-for-kubernetes"
+            script {
+              try {
+                sh "./../hack/diff_dependencies.sh -r wavefront-operator-for-kubernetes"
+              } catch (err) {
+                echo "Caught: ${err}"
+                eenv.NEEDS_OSL = 'wavefront-operator-for-kubernetes'
+                echo "NEEDS_OSL: ${env.NEEDS_OSL}"
+              }
+            }
           }
         }
       }
-      stage("Check for go.sum changed") {
+      stage("wavefront-collector-for-kubernetes") {
         steps {
-          sh "./hack/diff_dependencies.sh -r wavefront-collector-for-kubernetes"
+          script {
+            try {
+              sh "./hack/diff_dependencies.sh -r wavefront-collector-for-kubernetes"
+            } catch (err) {
+              echo "Caught: ${err}"
+              if (env.NEEDS_OSL == "") {
+                env.NEEDS_OSL = 'wavefront-collector-for-kubernetes'
+              } else {
+                env.NEEDS_OSL = env.NEEDS_OSL.concat(', wavefront-collector-for-kubernetes')
+              }
+              echo "NEEDS_OSL: ${env.NEEDS_OSL}"
+            }
+          }
+
         }
       }
 
