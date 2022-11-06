@@ -16,7 +16,7 @@ if [ "${OSSPI_IGNORE_RULES+defined}" = defined ] && [ -n "$OSSPI_IGNORE_RULES" ]
 fi
 
 if [ "${PREPARE+defined}" = defined ] && [ -n "$PREPARE" ]; then
-  bash -c "$PREPARE"
+  bash -c "$PREPARE" > /dev/null 2>&1
 fi
 
 set -x

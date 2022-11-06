@@ -31,6 +31,9 @@ pipeline {
                 try {
                   sh "./../hack/diff-dependencies.sh -r wavefront-collector-for-kubernetes"
                 } catch (err) {
+                  if (!err.contains("exit code 8") {
+                    error('Unexpected error code caught: ${err}')
+                  }
                   if (env.NEEDS_OSL == null) {
                     env.NEEDS_OSL = 'wavefront-collector-for-kubernetes'
                   } else {
@@ -52,6 +55,9 @@ pipeline {
                 try {
                   sh "./../hack/diff-dependencies.sh -r wavefront-operator-for-kubernetes"
                 } catch (err) {
+                  if (!err.contains("exit code 8") {
+                    error('Unexpected error code caught: ${err}')
+                  }
                   if (env.NEEDS_OSL == null) {
                     env.NEEDS_OSL = 'wavefront-operator-for-kubernetes'
                   } else {
@@ -73,6 +79,9 @@ pipeline {
                 try {
                   sh "./../hack/diff-dependencies.sh -r wavefront-kubernetes-adapter"
                 } catch (err) {
+                  if (!err.contains("exit code 8") {
+                    error('Unexpected error code caught: ${err}')
+                  }
                   if (env.NEEDS_OSL == null) {
                     env.NEEDS_OSL = 'wavefront-kubernetes-adapter'
                   } else {
@@ -94,6 +103,9 @@ pipeline {
                 try {
                   sh "./../hack/diff-dependencies.sh -r prometheus-storage-adapter"
                 } catch (err) {
+                  if (!err.contains("exit code 8") {
+                    error('Unexpected error code caught: ${err}')
+                  }
                   if (env.NEEDS_OSL == null) {
                     env.NEEDS_OSL = 'prometheus-storage-adapter'
                   } else {
