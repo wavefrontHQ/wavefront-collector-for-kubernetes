@@ -100,7 +100,7 @@ pipeline {
       script {
         if(needToSendDepStatus()) {
            echo "needToSendDepStatus is true"
-           slackSend (channel: '#open-channel', message: "Dependency change identified for these repositories: ${env.NEEDS_OSL} (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
+           slackSend (channel: '#open-channel', message: "These repositories need a new open source license: ${env.NEEDS_OSL} (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
         }
       }
     }
