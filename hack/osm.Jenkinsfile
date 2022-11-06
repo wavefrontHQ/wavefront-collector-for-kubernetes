@@ -19,13 +19,11 @@ pipeline {
               try {
                 sh "./hack/diff-dependencies.sh -r wavefront-collector-for-kubernetes"
               } catch (err) {
-                echo "Caught: ${err}"
                 if (env.NEEDS_OSL == null) {
                   env.NEEDS_OSL = 'wavefront-collector-for-kubernetes'
                 } else {
                   env.NEEDS_OSL = env.NEEDS_OSL + ', wavefront-collector-for-kubernetes'
                 }
-                echo "NEEDS_OSL: ${env.NEEDS_OSL}"
               }
             }
           }
@@ -41,13 +39,11 @@ pipeline {
                 try {
                   sh "./../hack/diff-dependencies.sh -r wavefront-operator-for-kubernetes"
                 } catch (err) {
-                  echo "Caught: ${err}"
                   if (env.NEEDS_OSL == null) {
                     env.NEEDS_OSL = 'wavefront-operator-for-kubernetes'
                   } else {
                     env.NEEDS_OSL = env.NEEDS_OSL + ', wavefront-operator-for-kubernetes'
                   }
-                  echo "NEEDS_OSL: ${env.NEEDS_OSL}"
                 }
               }
             }
@@ -64,13 +60,11 @@ pipeline {
                 try {
                   sh "./../hack/diff-dependencies.sh -r wavefront-kubernetes-adapter"
                 } catch (err) {
-                  echo "Caught: ${err}"
                   if (env.NEEDS_OSL == null) {
                     env.NEEDS_OSL = 'wavefront-kubernetes-adapter'
                   } else {
                     env.NEEDS_OSL = env.NEEDS_OSL + ', wavefront-kubernetes-adapter'
                   }
-                  echo "NEEDS_OSL: ${env.NEEDS_OSL}"
                 }
               }
             }
@@ -87,13 +81,11 @@ pipeline {
                 try {
                   sh "./../hack/diff-dependencies.sh -r prometheus-storage-adapter"
                 } catch (err) {
-                  echo "Caught: ${err}"
                   if (env.NEEDS_OSL == null) {
                     env.NEEDS_OSL = 'prometheus-storage-adapter'
                   } else {
                     env.NEEDS_OSL = env.NEEDS_OSL + ', prometheus-storage-adapter'
                   }
-                  echo "NEEDS_OSL: ${env.NEEDS_OSL}"
                 }
               }
             }
