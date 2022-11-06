@@ -48,7 +48,7 @@ EOF
   )
   PREPARE="go mod vendor"
   OUTPUT="scan-report.json"
-
+  rm -rf "$OUTPUT"
   # source scan-source.sh in the current shell, so it can access variables set above like OSSPI_SCANNING_PARAMS, OSSPI_IGNORE_RULES, etc
   . ./$SCRIPT_DIR/../osspi/tasks/osspi/scan-source.sh
 
