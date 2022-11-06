@@ -106,32 +106,36 @@ pipeline {
   post {
     always {
       script {
-        def isStartedByUser = currentBuild.getBuildCauses('hudson.model.Cause$UserIdCause') != null
-        if (hasAnyReposDepStatusChanged || isStartedByUser) {
-           slackSend (channel: '#closed-channel', message: "Need OSL ${env.NEEDS_OSL} (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
+        if(needToSendDepStatus()) {
+           echo "needToSendDepStatus is true"
+           slackSend (channel: '#open-channel', message: "Dependency change identified for these repositories: ${env.NEEDS_OSL} (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
         }
       }
     }
     failure {
       script {
         if(currentBuild.previousBuild == null) {
-          slackSend (channel: '#closed-channel', message: "build failed (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
+          slackSend (channel: '#open-channel', message: "Build failed (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
         }
       }
     }
     regression {
-      slackSend (channel: '#closed-channel', message: "build regressed (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
+      slackSend (channel: '#open-channel', message: "Build regressed (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
     }
     fixed {
-      slackSend (channel: '#closed-channel', message: "All of our repositories' open source licenses are latest and updated! (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
+      slackSend (channel: '#open-channel', message: "Build fixed (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
     }
 
   }
 }
 
-def hasAnyReposDepStatusChanged() {
-    prevBuildRepoStatus = ${currentBuild.previousBuild.buildVariables["NEEDS_OSL"]}
-    prevBuildResult = Arrays.asList(prevBuildRepoStatus.replaceAll("\\s","").split(","))
-    currentBuildResult = Arrays.asList(${env.NEEDS_OSL}.replaceAll("\\s","").split(","))
-    return prevBuildResult.equals(currentBuildResult)
+// Send dependency status when either a user triggered the job or if dependency status changed from previous build
+def needToSendDepStatus() {
+    if (currentBuild.getBuildCauses('hudson.model.Cause$UserIdCause') != null) {
+        return true
+    }
+    def prevBuildRepoStatus = currentBuild.previousBuild.buildVariables["NEEDS_OSL"]
+    def prevBuildResult = prevBuildRepoStatus.replaceAll("\\s","").split(',') as List
+    def currentBuildResult = env.NEEDS_OSL.replaceAll("\\s","").split(',') as List
+    return prevBuildResult.sort() != currentBuildResult.sort()
 }
