@@ -2,6 +2,13 @@ pipeline {
   agent {
     label 'nimbus-cloud'
   }
+  options {
+    buildDiscarder(logRotator(numToKeepStr: '10'))
+  }
+  triggers {
+    // Every weekday MST 9:00 PM converted to UTC
+    cron('0 4 * * 1-5')
+  }
   tools {
     go 'Go 1.18'
   }
@@ -15,14 +22,20 @@ pipeline {
       parallel {
         stage("wavefront-collector-for-kubernetes") {
           steps {
-            script {
-              try {
-                sh "./hack/diff-dependencies.sh -r wavefront-collector-for-kubernetes"
-              } catch (err) {
-                if (env.NEEDS_OSL == null) {
-                  env.NEEDS_OSL = 'wavefront-collector-for-kubernetes'
-                } else {
-                  env.NEEDS_OSL = env.NEEDS_OSL + ', wavefront-collector-for-kubernetes'
+            sh 'rm wavefront-collector-for-kubernetes -rf; mkdir wavefront-collector-for-kubernetes'
+            dir ('wavefront-collector-for-kubernetes') {
+              git branch: 'main',
+              credentialsId: 'wf-jenkins-github',
+              url: 'https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes.git'
+              script {
+                try {
+                  sh "./../hack/diff-dependencies.sh -r wavefront-collector-for-kubernetes"
+                } catch (err) {
+                  if (env.NEEDS_OSL == null) {
+                    env.NEEDS_OSL = 'wavefront-collector-for-kubernetes'
+                  } else {
+                    env.NEEDS_OSL = env.NEEDS_OSL + ', wavefront-collector-for-kubernetes'
+                  }
                 }
               }
             }
