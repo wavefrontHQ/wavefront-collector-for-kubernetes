@@ -31,8 +31,8 @@ pipeline {
                 try {
                   sh "./../hack/diff-dependencies.sh -r wavefront-collector-for-kubernetes"
                 } catch (err) {
-                  if (!err.contains("exit code 8") {
-                    error('Unexpected error code caught: ${err}')
+                  if (!err.getMessage().contains("exit code 8")) {
+                    error('Caught unexpected error code')
                   }
                   if (env.NEEDS_OSL == null) {
                     env.NEEDS_OSL = 'wavefront-collector-for-kubernetes'
@@ -55,8 +55,8 @@ pipeline {
                 try {
                   sh "./../hack/diff-dependencies.sh -r wavefront-operator-for-kubernetes"
                 } catch (err) {
-                  if (!err.contains("exit code 8") {
-                    error('Unexpected error code caught: ${err}')
+                  if (!err.getMessage().contains("exit code 8")) {
+                    error('Caught unexpected error code')
                   }
                   if (env.NEEDS_OSL == null) {
                     env.NEEDS_OSL = 'wavefront-operator-for-kubernetes'
@@ -79,8 +79,8 @@ pipeline {
                 try {
                   sh "./../hack/diff-dependencies.sh -r wavefront-kubernetes-adapter"
                 } catch (err) {
-                  if (!err.contains("exit code 8") {
-                    error('Unexpected error code caught: ${err}')
+                  if (!err.getMessage().contains("exit code 8")) {
+                    error('Caught unexpected error code')
                   }
                   if (env.NEEDS_OSL == null) {
                     env.NEEDS_OSL = 'wavefront-kubernetes-adapter'
@@ -103,8 +103,8 @@ pipeline {
                 try {
                   sh "./../hack/diff-dependencies.sh -r prometheus-storage-adapter"
                 } catch (err) {
-                  if (!err.contains("exit code 8") {
-                    error('Unexpected error code caught: ${err}')
+                  if (!err.getMessage().contains("exit code 8")) {
+                    error('Caught unexpected error code')
                   }
                   if (env.NEEDS_OSL == null) {
                     env.NEEDS_OSL = 'prometheus-storage-adapter'
@@ -124,23 +124,22 @@ pipeline {
     always {
       script {
         if(needToSendDepStatus()) {
-           echo "needToSendDepStatus is true"
-           slackSend (channel: '#open-channel', message: "These repositories need a new open source license: ${env.NEEDS_OSL} (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
+           slackSend (channel: '#tobs-k8po-team', message: "These repositories need a new open source license: ${env.NEEDS_OSL} (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
         }
       }
     }
     failure {
       script {
         if(currentBuild.previousBuild == null) {
-          slackSend (channel: '#open-channel', message: "Build failed (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
+          slackSend (channel: '#tobs-k8po-team', message: "Build failed (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
         }
       }
     }
     regression {
-      slackSend (channel: '#open-channel', message: "Build regressed (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
+      slackSend (channel: '#tobs-k8po-team', message: "Build regressed (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
     }
     fixed {
-      slackSend (channel: '#open-channel', message: "Build fixed (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
+      slackSend (channel: '#tobs-k8po-team', message: "Build fixed (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
     }
 
   }
