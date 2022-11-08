@@ -12,7 +12,7 @@ github.com/armon/go-metrics
 github.com/caio/go-tdigest
 # github.com/cockroachdb/apd v1.1.0
 ## explicit
-# github.com/coreos/go-systemd/v22 v22.4.0
+# github.com/coreos/go-systemd/v22 v22.5.0
 ## explicit; go 1.12
 github.com/coreos/go-systemd/v22/dbus
 # github.com/couchbase/go-couchbase v0.0.0-20191115001346-d9e5b3bd1ebc
