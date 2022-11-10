@@ -358,7 +358,9 @@ class ChartUnitChecker
       'Seconds',
       'Failures per Second',
       'millicores',
-      'bps'
+      'bps',
+      'pps',
+      'items'
     ].include?(item)
   end
 
@@ -374,12 +376,12 @@ class ChartUnitChecker
          next
       end
 
-#    if chart["chartSettings"] && (chart["chartSettings"]["showValue"] == false)
-#      unless unit == ""
-#        reporter.report(Reporter::Issue.new("Markdown charts should not have a unit defined", unit, "#{dashboard_name}: #{chart["name"]}"))
-#      end
-#       next
-#    end
+     if chart["chartSettings"] && (chart["chartSettings"]["showValueColumn"] == false)
+       unless unit == ""
+         reporter.report(Reporter::Issue.new("Charts with no value column should not have a unit defined", unit, "#{dashboard_name}: #{chart["name"]}"))
+       end
+        next
+     end
 
       if chart["chartSettings"] && ["sparkline", "gauge"].include?(chart["chartSettings"]["type"])
         unless valid_sparkline_unit?(unit)
@@ -507,9 +509,10 @@ if ARGV.empty?
 end
 
 Palette.print
-integration_dir = ARGV[0]
+integration_dir_or_file = ARGV[0]
+integration_file_glob = integration_dir_or_file.end_with?(".json") ? integration_dir_or_file : "#{integration_dir}/dashboards/*.json"
 
-dashboards = DashboardIterator.new("#{integration_dir}/dashboards/*.json")
+dashboards = DashboardIterator.new(integration_file_glob)
 reporter = Reporter.new
 ColorChecker.new(dashboards).run(reporter)
 ChartTitleChecker.new(dashboards).run(reporter)
