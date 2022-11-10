@@ -71,7 +71,12 @@ function main() {
   ../scripts/clean-partials.sh
 
   cat ${DASHBOARD_URL}.json > ${INTEGRATION_DIR}/kubernetes/dashboards/${DASHBOARD_URL}.json
-  echo Check your integration repo for changes.
+
+  green "\n===============Begin dashboard validation==============="
+  ruby ~/workspace/integrations/tools/dashboards_validator.rb ~/workspace/integrations/kubernetes/dashboards/${DASHBOARD_URL}.json
+  green "================End dashboard validation================\n"
+
+  green "Next steps: Fix any validation errors, if identified. Check your integration repo for changes and commit them."
 }
 
 main $@
