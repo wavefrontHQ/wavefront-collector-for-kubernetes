@@ -299,6 +299,9 @@ class DashboardIterator
   end
 
   def each_dashboard
+    if dashboard_files.size == 0
+      raise "No dashboard files found"
+    end
     dashboard_files.each do |file|
       yield JSON.load(File.read(file))
     end
