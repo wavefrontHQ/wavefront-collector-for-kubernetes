@@ -292,6 +292,9 @@ end
 class DashboardIterator
   def initialize(file_glob)
     @file_glob = file_glob
+    if dashboard_files.size == 0
+      raise "No dashboard files found in #{@file_glob} "
+    end
   end
 
   def dashboard_files
@@ -299,9 +302,6 @@ class DashboardIterator
   end
 
   def each_dashboard
-    if dashboard_files.size == 0
-      raise "No dashboard files found"
-    end
     dashboard_files.each do |file|
       yield JSON.load(File.read(file))
     end
@@ -511,11 +511,11 @@ if ARGV.empty?
   exit
 end
 
-Palette.print
 integration_dir_or_file = ARGV[0]
 integration_file_glob = integration_dir_or_file.end_with?(".json") ? integration_dir_or_file : "#{integration_dir_or_file}/dashboards/*.json"
 
 dashboards = DashboardIterator.new(integration_file_glob)
+Palette.print
 reporter = Reporter.new
 ColorChecker.new(dashboards).run(reporter)
 ChartTitleChecker.new(dashboards).run(reporter)
