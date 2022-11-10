@@ -510,7 +510,7 @@ end
 
 Palette.print
 integration_dir_or_file = ARGV[0]
-integration_file_glob = integration_dir_or_file.end_with?(".json") ? integration_dir_or_file : "#{integration_dir}/dashboards/*.json"
+integration_file_glob = integration_dir_or_file.end_with?(".json") ? integration_dir_or_file : "#{integration_dir_or_file}/dashboards/*.json"
 
 dashboards = DashboardIterator.new(integration_file_glob)
 reporter = Reporter.new
