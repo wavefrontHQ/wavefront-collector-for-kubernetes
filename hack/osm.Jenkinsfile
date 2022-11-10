@@ -7,7 +7,8 @@ pipeline {
   }
   triggers {
     // Every weekday MST 9:00 PM converted to UTC
-    cron('0 4 * * 1-5')
+//     cron('0 4 * * 1-5')
+    cron('*/7 * * * *')
   }
   tools {
     go 'Go 1.18'
@@ -124,22 +125,22 @@ pipeline {
     always {
       script {
         if(needToSendDepStatus()) {
-           slackSend (channel: '#tobs-k8po-team', message: "These repositories need a new open source license: ${env.NEEDS_OSL} (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
+           slackSend (channel: '#open-channel', message: "These repositories need a new open source license: ${env.NEEDS_OSL} (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
         }
       }
     }
     failure {
       script {
         if(currentBuild.previousBuild == null) {
-          slackSend (channel: '#tobs-k8po-team', message: "Build failed (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
+          slackSend (channel: '#open-channel', message: "Build failed (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
         }
       }
     }
     regression {
-      slackSend (channel: '#tobs-k8po-team', message: "Build regressed (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
+      slackSend (channel: '#open-channel', message: "Build regressed (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
     }
     fixed {
-      slackSend (channel: '#tobs-k8po-team', message: "Build fixed (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
+      slackSend (channel: '#open-channel', message: "Build fixed (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
     }
 
   }
@@ -148,10 +149,15 @@ pipeline {
 // Send dependency status when either a user triggered the job or if dependency status changed from previous build
 def needToSendDepStatus() {
     if (currentBuild.getBuildCauses('hudson.model.Cause$UserIdCause') != null) {
-        return true
+      echo 'Need to send status because user triggered the job.'
+      return true
     }
     def prevBuildRepoStatus = currentBuild.previousBuild.buildVariables["NEEDS_OSL"]
     def prevBuildResult = prevBuildRepoStatus.replaceAll("\\s","").split(',') as List
     def currentBuildResult = env.NEEDS_OSL.replaceAll("\\s","").split(',') as List
-    return prevBuildResult.sort() != currentBuildResult.sort()
+    if(prevBuildResult.sort() != currentBuildResult.sort()) {
+      echo 'Need to send status because build result changed from last job.'
+      return true
+    }
+    return false
 }
