@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-REPO_ROOT=$(git rev-parse --show-toplevel)
+REPO_ROOT=~/workspace/wavefront-collector-for-kubernetes
 source ${REPO_ROOT}/hack/test/deploy/k8s-utils.sh
 
 function print_usage_and_exit() {
@@ -45,11 +45,11 @@ function main() {
   done
 
   if [[ -z ${WAVEFRONT_TOKEN} ]]; then
-    print_msg_and_exit "wavefront token required"
+    print_usage_and_exit "wavefront token required"
   fi
 
   if [[ -z ${DASHBOARD_DEV_URL} ]]; then
-    print_msg_and_exit "dashboard url required"
+    print_usage_and_exit "dashboard url required"
   fi
 
   ../scripts/get-dashboard.sh -t ${WAVEFRONT_TOKEN} -d ${DASHBOARD_DEV_URL} -o ${DASHBOARD_DEV_URL}.json
@@ -61,9 +61,10 @@ function main() {
   local DASHBOARD_URL="integration-$(echo "${DASHBOARD_DEV_URL}" | sed 's/-dev//')"
   jq ".url = \"${DASHBOARD_URL}\"" ${DASHBOARD_DEV_URL}.json > ${DASHBOARD_URL}.json
 
-  # Copy dashboard version from integration feature branch and increment it
-  local VERSION=$(($(jq ".systemDashboardVersion" ${INTEGRATION_DIR}/kubernetes/dashboards/${DASHBOARD_URL}.json)+1))
-  jq ". += {"systemDashboardVersion":${VERSION}}" ${DASHBOARD_URL}.json > "tmp" && mv "tmp" ${DASHBOARD_URL}.json
+# TODO: Move dashboard version increment step to the script that copies feature branch changes to nimba branch.
+#  # Copy dashboard version from integration feature branch and increment it
+#  local VERSION=$(($(jq ".systemDashboardVersion" ${INTEGRATION_DIR}/kubernetes/dashboards/${DASHBOARD_URL}.json)+1))
+#  jq ". += {"systemDashboardVersion":${VERSION}}" ${DASHBOARD_URL}.json > "tmp" && mv "tmp" ${DASHBOARD_URL}.json
 
   # Do the sorting here so our systemDashboardVersion gets bumped to the top of the file
   ../scripts/sort-dashboard.sh -i ${DASHBOARD_URL}.json -o 'tmp' && mv "tmp" ${DASHBOARD_URL}.json
@@ -71,9 +72,6 @@ function main() {
 
   cat ${DASHBOARD_URL}.json > ${INTEGRATION_DIR}/kubernetes/dashboards/${DASHBOARD_URL}.json
   echo Check your integration repo for changes.
-#  git -C "$INTEGRATION_DIR" add ${INTEGRATION_DIR}/kubernetes/dashboards/${DASHBOARD_URL}.json
-#  git -C "$INTEGRATION_DIR" commit -m"Updated from ${DASHBOARD_DEV_URL}"
-#  git -C "$INTEGRATION_DIR" push  2>/dev/null || git -C "$INTEGRATION_DIR" push --set-upstream origin "$BRANCH_NAME"
 }
 
 main $@

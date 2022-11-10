@@ -17,8 +17,7 @@ Changes to a dashboard are typically done in the following ways.
 3. Create a new branch in integrations repo and push it upstream. For branch names use the format `k8po/kubernetes<-any-details-as-seen-fit>`. If the development effort spans multiple jira stories, do not use jira story numbers in branch name.
 4. Periodically pull the changes from the dev dashboard to the integration repo branch by running the below script.
     ```
-    cd ~/workspace/wavefront-collector-for-kubernetes/hack/integrations/
-    ./scripts/merge-dashboard.sh  -t $WAVEFRONT_TOKEN -d <dev-dashboard-name> -b <integration-branch-name>
+    cd ~/workspace/wavefront-collector-for-kubernetes/hack/integrations/scripts/merge-dashboard.sh  -t $WAVEFRONT_TOKEN -d <dev-dashboard-name> -b <integration-branch-name>
     ```
    * `<dev-dashboard-name>` is the development dashboard's url created in step 2 (For instance: `-d kubernetes-control-plane-dev`). 
    * `<integration-branch-name>` is the branch name created in the integrations repo in the previous step.
@@ -55,8 +54,7 @@ Changes to a dashboard are typically done in the following ways.
 2. Make changes to the dev dashboard (`kubernetes-<new-dashboard>-dev`).
 3. Periodically pull the changes from the dev dashboard to the integration repo branch by running the below script.
     ```
-    cd ~/workspace/wavefront-collector-for-kubernetes/hack/integrations/
-    ./scripts/merge-dashboard.sh  -t $WAVEFRONT_TOKEN -d <dev-dashboard-name> -b <integration-branch-name>
+    cd ~/workspace/wavefront-collector-for-kubernetes/hack/integrations/scripts/merge-dashboard.sh  -t $WAVEFRONT_TOKEN -d <dev-dashboard-name> -b <integration-branch-name>
     ```
     * `<dev-dashboard-name>` is the development dashboard's `URL` given in step 1 (For instance: `-d kubernetes-control-plane-dev`).
     * `<integration-branch-name>` is the branch name created in [Create a new dashboard in development branch](#create-a-new-dashboard-in-development-branch)
