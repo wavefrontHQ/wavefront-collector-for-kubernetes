@@ -61,10 +61,12 @@ function main() {
   local DASHBOARD_URL="integration-$(echo "${DASHBOARD_DEV_URL}" | sed 's/-dev//')"
   jq ".url = \"${DASHBOARD_URL}\"" ${DASHBOARD_DEV_URL}.json > ${DASHBOARD_URL}.json
 
-# TODO: Move dashboard version increment step to the script that copies feature branch changes to nimba branch.
-#  # Copy dashboard version from integration feature branch and increment it
-#  local VERSION=$(($(jq ".systemDashboardVersion" ${INTEGRATION_DIR}/kubernetes/dashboards/${DASHBOARD_URL}.json)+1))
-#  jq ". += {"systemDashboardVersion":${VERSION}}" ${DASHBOARD_URL}.json > "tmp" && mv "tmp" ${DASHBOARD_URL}.json
+  # Copy dashboard version from integration feature branch if it exists, else default to 1
+  local VERSION=$(($(jq ".systemDashboardVersion" ${INTEGRATION_DIR}/kubernetes/dashboards/${DASHBOARD_URL}.json)))
+  if [[ ${VERSION} -eq 0 ]]; then
+    VERSION=1
+  fi
+  jq ". += {"systemDashboardVersion":${VERSION}}" ${DASHBOARD_URL}.json > "tmp" && mv "tmp" ${DASHBOARD_URL}.json
 
   # Do the sorting here so our systemDashboardVersion gets bumped to the top of the file
   ../scripts/sort-dashboard.sh -i ${DASHBOARD_URL}.json -o 'tmp' && mv "tmp" ${DASHBOARD_URL}.json
