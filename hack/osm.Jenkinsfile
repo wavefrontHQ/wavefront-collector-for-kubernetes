@@ -149,7 +149,7 @@ pipeline {
 // Send dependency status when either a user triggered the job or if dependency status changed from previous build
 def needToSendDepStatus() {
     echo "${currentBuild.buildCauses}" // same as currentBuild.getBuildCauses()
-    echo "${currentBuild.getBuildCauses('hudson.model.Cause$UserCause')}"
+    echo "${currentBuild.getBuildCauses('hudson.model.Cause$UserIdCause')}"
     echo "${currentBuild.getBuildCauses('hudson.triggers.TimerTrigger$TimerTriggerCause')}"
     echo "${currentBuild.getBuildCauses('hudson.triggers.TimerTrigger$TimerTriggerCause').isEmpty()}"
     if (currentBuild.getBuildCauses('hudson.model.Cause$UserIdCause') != null) {
