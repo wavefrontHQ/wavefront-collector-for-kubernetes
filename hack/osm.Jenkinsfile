@@ -151,7 +151,7 @@ def needToSendDepStatus() {
     echo "${currentBuild.buildCauses}" // same as currentBuild.getBuildCauses()
 //     echo "${currentBuild.getBuildCauses('hudson.model.Cause$UserIdCause')}"
 //     echo "${currentBuild.getBuildCauses('hudson.triggers.TimerTrigger$TimerTriggerCause')}"
-    if (!currentBuild.getBuildCauses('hudson.triggers.TimerTrigger$TimerTriggerCause').isEmpty()){
+    if (currentBuild.getBuildCauses('hudson.triggers.TimerTrigger$TimerTriggerCause').isEmpty()){
       echo 'Need to send status because timer did not trigger the job.'
       return true
     }
