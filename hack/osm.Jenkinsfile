@@ -7,8 +7,8 @@ pipeline {
   }
   triggers {
     // Every weekday MST 9:00 PM converted to UTC
-//     cron('0 4 * * 1-5')
-    cron('*/7 * * * *')
+    cron('0 4 * * 1-5')
+//     cron('*/7 * * * *')
   }
   tools {
     go 'Go 1.18'
