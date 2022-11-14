@@ -8,8 +8,9 @@ function print_usage_and_exit() {
   echo "Usage: $0 [flags] [options]"
   echo -e "\t-c wavefront instance name (default: 'nimba')"
   echo -e "\t-t wavefront token (required)"
-  echo -e "\t-d dashboard url to clone from (optional, if not given assumed to be template dashboard)"
   echo -e "\t-n new dashboard url to create (required)"
+  echo -e "\t-d dashboard url to clone from (optional, if not given assumed to be template dashboard)"
+  echo -e "\t-b integration repo branch name to commit the new dashboard (required)"
   exit 1
 }
 
@@ -78,7 +79,11 @@ function main() {
     fi
   fi
 
+# TODO: Create branch and push
+
   green "Dashboard uploaded at https://${WF_CLUSTER}.wavefront.com/dashboards/${NEW_DASHBOARD}"
+  green "Run the below code to commit the new dashboard to the branch created"
+# TODO: Command to commit the new dashboard
 }
 
 main $@
