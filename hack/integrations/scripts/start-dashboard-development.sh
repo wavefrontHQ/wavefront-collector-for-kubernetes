@@ -5,12 +5,13 @@ source ${REPO_ROOT}/hack/test/deploy/k8s-utils.sh
 
 function print_usage_and_exit() {
   red "Failure: $1"
-  echo "Usage: $0 [flags] [options]"
-  echo -e "\t-c wavefront instance name (default: 'nimba')"
+  echo "Usage: $0 -t <WAVEFRONT_TOKEN> -n <NEW_DASHBOARD> -b <BRANCH_NAME_SUFFIX> -c [WF_CLUSTER] -d [DASHBOARD_TO_CLONE]"
   echo -e "\t-t wavefront token (required)"
   echo -e "\t-n new dashboard url to create (required)"
-  echo -e "\t-d dashboard url to clone from (optional, if not given assumed to be template dashboard)"
-  echo -e "\t-b integration repo branch name to commit the new dashboard (required)"
+  echo -e "\t-b sets the BRANCH_NAME_SUFFIX for the branch name to be created in the integrations repo"
+  echo -e "\t   with the format: 'k8po/kubernetes-<BRANCH_NAME_SUFFIX>' (required)"
+  echo -e "\t-c wavefront instance name (optional, default: 'nimba')"
+  echo -e "\t-d dashboard url to clone from (optional, default: 'integration-dashboard-template')"
   exit 1
 }
 
@@ -20,13 +21,14 @@ function main() {
   # REQUIRED
   local WAVEFRONT_TOKEN=
   local NEW_DASHBOARD=
+  local BRANCH_NAME_SUFFIX=
 
   # OPTIONAL
   local DASHBOARD_TO_CLONE=integration-dashboard-template
 
   local WF_CLUSTER=nimba
 
-  while getopts ":c:t:d:n:" opt; do
+  while getopts ":c:t:d:n:b:" opt; do
     case $opt in
     c)
       WF_CLUSTER="$OPTARG"
@@ -40,6 +42,9 @@ function main() {
     n)
       NEW_DASHBOARD="$OPTARG"
       ;;
+    b)
+      BRANCH_NAME_SUFFIX="$OPTARG"
+      ;;
     \?)
       print_usage_and_exit "Invalid option: -$OPTARG"
       ;;
@@ -47,11 +52,16 @@ function main() {
   done
 
   if [[ -z ${WAVEFRONT_TOKEN} ]]; then
-    print_usage_and_exit "wavefront token required"
+    print_usage_and_exit "-t wavefront token (required)"
   fi
 
   if [[ -z ${NEW_DASHBOARD} ]]; then
-    print_usage_and_exit "new dashboard url required"
+    print_usage_and_exit "-n new dashboard url to create (required)"
+  fi
+
+  if [[ -z ${BRANCH_NAME_SUFFIX} ]]; then
+    print_usage_and_exit "-b sets the BRANCH_NAME_SUFFIX for the branch name to be created \
+      in the integrations repo with the format: 'k8po/kubernetes-<BRANCH_NAME_SUFFIX>' (required)"
   fi
 
   ../scripts/get-dashboard.sh -c ${WF_CLUSTER} -t ${WAVEFRONT_TOKEN} -d ${DASHBOARD_TO_CLONE} -o ${DASHBOARD_TO_CLONE}-partial-base.json
@@ -79,10 +89,18 @@ function main() {
     fi
   fi
 
-# TODO: Create branch and push
+  local INTEGRATIONS_REPO="$HOME/workspace/integrations"
+  local BRANCH_NAME="k8po/kubernetes-${BRANCH_NAME_SUFFIX}"
+
+  pushd_check "$INTEGRATIONS_REPO"
+    git stash
+    git checkout master
+    git pull
+    git checkout -b "${BRANCH_NAME}"
+    git push --set-upstream origin "${BRANCH_NAME}"
+  popd_check "$INTEGRATIONS_REPO"
 
   green "Dashboard uploaded at https://${WF_CLUSTER}.wavefront.com/dashboards/${NEW_DASHBOARD}"
-  green "Run the below code to commit the new dashboard to the branch created"
 # TODO: Command to commit the new dashboard
 }
 
