@@ -7,8 +7,8 @@ pipeline {
   }
   triggers {
     // Every weekday MST 9:00 PM converted to UTC
-    cron('0 4 * * 1-5')
-//     cron('*/7 * * * *')
+//     cron('0 4 * * 1-5')
+    cron('*/7 * * * *')
   }
   tools {
     go 'Go 1.18'
@@ -148,15 +148,9 @@ pipeline {
 
 // Send dependency status when either a user triggered the job or if dependency status changed from previous build
 def needToSendDepStatus() {
-    echo "${currentBuild.buildCauses}" // same as currentBuild.getBuildCauses()
-//     echo "${currentBuild.getBuildCauses('hudson.model.Cause$UserIdCause')}"
-//     echo "${currentBuild.getBuildCauses('hudson.triggers.TimerTrigger$TimerTriggerCause')}"
-    if (currentBuild.getBuildCauses('hudson.triggers.TimerTrigger$TimerTriggerCause').isEmpty()){
+    def started_by_timer = currentBuild.getBuildCauses()[0]["shortDescription"].matches("Started by timer")
+    if (started_by_timer == false){
       echo 'Need to send status because timer did not trigger the job.'
-      return true
-    }
-    if (currentBuild.getBuildCauses('hudson.model.Cause$UserIdCause') != null) {
-      echo 'Need to send status because user triggered the job.'
       return true
     }
     def prevBuildRepoStatus = currentBuild.previousBuild.buildVariables["NEEDS_OSL"]
