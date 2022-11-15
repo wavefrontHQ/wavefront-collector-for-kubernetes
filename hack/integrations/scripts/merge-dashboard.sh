@@ -3,6 +3,8 @@
 REPO_ROOT=$(git rev-parse --show-toplevel)
 source ${REPO_ROOT}/hack/test/deploy/k8s-utils.sh
 
+function
+
 function print_usage_and_exit() {
   echo "Failure: $1"
   echo "Usage: $0 [flags] [options]"
@@ -55,7 +57,9 @@ function main() {
   ../scripts/get-dashboard.sh -t ${WAVEFRONT_TOKEN} -d ${DASHBOARD_DEV_URL} -o ${DASHBOARD_DEV_URL}.json
 
   local INTEGRATION_DIR=${REPO_ROOT}/../integrations
-  git -C "$INTEGRATION_DIR" checkout "$BRANCH_NAME" 2>/dev/null || git -C "$INTEGRATION_DIR" checkout -b "$BRANCH_NAME"
+  git stash
+  git fetch
+  git -C "$INTEGRATION_DIR" checkout "$BRANCH_NAME" 2>/dev/null
 
   # Change the url field to match the integration url instead of the dev dashboard url
   local DASHBOARD_URL="integration-$(echo "${DASHBOARD_DEV_URL}" | sed 's/-dev//')"
@@ -67,7 +71,6 @@ function main() {
 
   # Do the sorting here so our systemDashboardVersion gets bumped to the top of the file
   ../scripts/sort-dashboard.sh -i ${DASHBOARD_URL}.json -o 'tmp' && mv "tmp" ${DASHBOARD_URL}.json
-  ../scripts/clean-partials.sh
 
   cat ${DASHBOARD_URL}.json > ${INTEGRATION_DIR}/kubernetes/dashboards/${DASHBOARD_URL}.json
   echo Check your integration repo for changes.

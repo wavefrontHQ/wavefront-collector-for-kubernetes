@@ -55,6 +55,9 @@ function main() {
     ${DASHBOARD_INPUT_FILE}.partial-with-sections \
     ${DASHBOARD_INPUT_FILE}.partial-parameterDetails \
     > ${DASHBOARD_OUTPUT_FILE}
+
+  rm -f $REPO_ROOT/hack/integrations/working/*.partial*
+  rm -f $REPO_ROOT/hack/integrations/working/*-partial*
 }
 
 main $@
