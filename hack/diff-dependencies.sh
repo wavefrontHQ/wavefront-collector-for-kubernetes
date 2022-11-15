@@ -6,7 +6,7 @@ function print_usage_and_exit() {
   echo "Failure: $1"
   echo "Usage: $0 [flags] [options]"
   echo -e "\t-r repository name (required)"
-  echo "Run this script from the repository where you want to compare the go.mod file with the open_source_licenses.txt file."
+  echo "Run this script from the repository where you want to compare its osspi scan result with the open_source_licenses.txt file."
   exit 1
 }
 
