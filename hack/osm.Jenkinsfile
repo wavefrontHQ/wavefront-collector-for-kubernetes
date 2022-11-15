@@ -7,8 +7,7 @@ pipeline {
   }
   triggers {
     // Every weekday MST 9:00 PM converted to UTC
-//     cron('0 4 * * 1-5')
-    cron('*/7 * * * *')
+    cron('0 4 * * 1-5')
   }
   tools {
     go 'Go 1.18'
@@ -125,28 +124,28 @@ pipeline {
     always {
       script {
         if(needToSendDepStatus()) {
-           slackSend (channel: '#open-channel', message: "These repositories need a new open source license: ${env.NEEDS_OSL} (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
+           slackSend (channel: '#tobs-k8po-team', message: "These repositories need a new open source license: ${env.NEEDS_OSL} (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
         }
       }
     }
     failure {
       script {
         if(currentBuild.previousBuild == null) {
-          slackSend (channel: '#open-channel', message: "Build failed (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
+          slackSend (channel: '#tobs-k8po-team', message: "Build failed (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
         }
       }
     }
     regression {
-      slackSend (channel: '#open-channel', message: "Build regressed (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
+      slackSend (channel: '#tobs-k8po-team', message: "Build regressed (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
     }
     fixed {
-      slackSend (channel: '#open-channel', message: "Build fixed (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
+      slackSend (channel: '#tobs-k8po-team', message: "Build fixed (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
     }
 
   }
 }
 
-// Send dependency status when either a user triggered the job or if dependency status changed from previous build
+// Send dependency status when either a timer did not trigger the job or if dependency status changed from previous build
 def needToSendDepStatus() {
     def started_by_timer = currentBuild.getBuildCauses()[0]["shortDescription"].matches("Started by timer")
     if (started_by_timer == false){
