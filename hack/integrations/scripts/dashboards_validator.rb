@@ -260,7 +260,7 @@ class ChartDescriptionChecker
         next
       end
       if (description == "" or description.nil?)
-        reporter.report(Reporter::Issue.new("Description should be empty", chart["name"], dashboard_name))
+        reporter.report(Reporter::Issue.new("Description should not be empty", chart["name"], dashboard_name))
         next
       end
       unless ProseFormatting.capitalized?(description) && (ProseFormatting.ends_with_period?(description) || ProseFormatting.paragraphs?(description))
