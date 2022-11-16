@@ -23,13 +23,18 @@
 
 # get story about creating dashboard
 start-dashboard-development.sh # -create from template
-# work in UI
 create-or-update-wavefront-dashboard.sh
+# work in UI
 
 
 # about to leave for lunch or for the day and want to commit changes
 get-dashboard.sh -c nimba -t $WAVEFRONT_TOKEN -d test-put-verb \
   -o local-dashboard-copy.json
+sort-dashboard.sh # ...
+# git stuff
+cp local-dashboard-copy.json INTEGRATION_DIR/...
+
+download-and-sort-and-copy-dashboard-to-integrations.sh
 
 merge-dashboard-and-update-version.sh -i local-dashboard-copy.json \
   -o ~/workspace/integrations/kubernetes/dashboards/integration-test-put-verb.json

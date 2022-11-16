@@ -1,6 +1,7 @@
 #!/bin/bash -e
 
-REPO_ROOT=$(git rev-parse --show-toplevel)
+SCRIPT_DIR=$(dirname $0)
+REPO_ROOT=$(git -C "${SCRIPT_DIR}" rev-parse --show-toplevel)
 source ${REPO_ROOT}/hack/test/deploy/k8s-utils.sh
 
 function print_usage_and_exit() {
@@ -14,7 +15,7 @@ function print_usage_and_exit() {
 }
 
 function main() {
-  cd "$(dirname "$0")/../working"
+  cd "${REPO_ROOT}/hack/integrations/working"
 
   # REQUIRED
   local WAVEFRONT_TOKEN=

@@ -1,9 +1,8 @@
 #!/bin/bash -e
 
-REPO_ROOT=$(git rev-parse --show-toplevel)
+SCRIPT_DIR=$(dirname $0)
+REPO_ROOT=$(git -C "${SCRIPT_DIR}" rev-parse --show-toplevel)
 source ${REPO_ROOT}/hack/test/deploy/k8s-utils.sh
-
-function
 
 function print_usage_and_exit() {
   echo "Failure: $1"
@@ -19,12 +18,10 @@ function main() {
   cd "$(dirname "$0")/../working"
 
   # REQUIRED
+  local WF_CLUSTER=nimba
   local WAVEFRONT_TOKEN=
   local DASHBOARD_DEV_URL=
-
-  local BRANCH_NAME="k8po/kubernetes"
-  local WF_CLUSTER=nimba
-
+  local BRANCH_NAME=
 
   while getopts ":c:t:d:b:" opt; do
     case $opt in
@@ -47,19 +44,23 @@ function main() {
   done
 
   if [[ -z ${WAVEFRONT_TOKEN} ]]; then
-    print_msg_and_exit "wavefront token required"
+    print_usage_and_exit "wavefront token required"
   fi
 
   if [[ -z ${DASHBOARD_DEV_URL} ]]; then
-    print_msg_and_exit "dashboard url required"
+    print_usage_and_exit "dashboard url required"
+  fi
+
+  if [[ -z ${BRANCH_NAME} ]]; then
+    print_usage_and_exit "missing integrations branch"
   fi
 
   ../scripts/get-dashboard.sh -t ${WAVEFRONT_TOKEN} -d ${DASHBOARD_DEV_URL} -o ${DASHBOARD_DEV_URL}.json
 
   local INTEGRATION_DIR=${REPO_ROOT}/../integrations
-  git stash
-  git fetch
-  git -C "$INTEGRATION_DIR" checkout "$BRANCH_NAME" 2>/dev/null
+  git -C "$INTEGRATION_DIR" stash
+  git -C "$INTEGRATION_DIR" fetch
+  git -C "$INTEGRATION_DIR" switch -C "$BRANCH_NAME"
 
   # Change the url field to match the integration url instead of the dev dashboard url
   local DASHBOARD_URL="integration-$(echo "${DASHBOARD_DEV_URL}" | sed 's/-dev//')"
@@ -74,9 +75,6 @@ function main() {
 
   cat ${DASHBOARD_URL}.json > ${INTEGRATION_DIR}/kubernetes/dashboards/${DASHBOARD_URL}.json
   echo Check your integration repo for changes.
-#  git -C "$INTEGRATION_DIR" add ${INTEGRATION_DIR}/kubernetes/dashboards/${DASHBOARD_URL}.json
-#  git -C "$INTEGRATION_DIR" commit -m"Updated from ${DASHBOARD_DEV_URL}"
-#  git -C "$INTEGRATION_DIR" push  2>/dev/null || git -C "$INTEGRATION_DIR" push --set-upstream origin "$BRANCH_NAME"
 }
 
 main $@
