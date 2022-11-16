@@ -124,22 +124,22 @@ pipeline {
     always {
       script {
         if(needToSendDepStatus()) {
-           slackSend (channel: '#tobs-k8po-team', message: "These repositories need a new open source license: ${env.NEEDS_OSL} (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
+           slackSend (channel: '#open-channel', message: "These repositories need a new open source license: ${env.NEEDS_OSL} (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
         }
       }
     }
     failure {
       script {
         if(currentBuild.previousBuild == null) {
-          slackSend (channel: '#tobs-k8po-team', message: "Build failed (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
+          slackSend (channel: '#open-channel', message: "Build failed (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
         }
       }
     }
     regression {
-      slackSend (channel: '#tobs-k8po-team', message: "Build regressed (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
+      slackSend (channel: '#open-channel', message: "Build regressed (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
     }
     fixed {
-      slackSend (channel: '#tobs-k8po-team', message: "Build fixed (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
+      slackSend (channel: '#open-channel', message: "Build fixed (<${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>)")
     }
 
   }

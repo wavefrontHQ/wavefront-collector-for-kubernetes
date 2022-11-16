@@ -27,6 +27,7 @@ function main() {
   fi
   cd "$REPO_ROOT"
   TEMP_DIR=$(mktemp -d)
+  echo "TEMP_DIR: $TEMP_DIR"
   SCRIPT_DIR=$(dirname "$0")
 
   OSSPI_SCANNING_PARAMS=$(cat <<EOF
