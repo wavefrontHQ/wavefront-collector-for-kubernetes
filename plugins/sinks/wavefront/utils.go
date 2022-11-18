@@ -14,12 +14,10 @@ const (
 	emptyReason       = "they were empty"
 	excludeListReason = "they were on an exclude list"
 	dedupeReason      = "there were too many tags so we removed tags with duplicate tag values"
-	dashesReason      = "there were too many tags so we removed tags with only '-' as a value"
-	slashesReason     = "there were too many tags so we removed tags with only '/' as a value"
-	betaReason        = "there were too many tags so we removed tags with 'beta' in the name"
+	iaasReason        = "there were too many tags so we removed IaaS specific tags"
 )
 
-var betaRegex = regexp.MustCompile("^label.*beta*")
+var iaasNameRegex = regexp.MustCompile("^label.*gke*")
 
 // cleanTags removes empty, excluded tags, and tags with duplicate values (if there are too many tags) and returns a map
 // that lists removed tag names by their reason for removal
@@ -29,10 +27,12 @@ func cleanTags(tags map[string]string, maxCapacity int) map[string][]string {
 	removedReasons[excludeListReason] = excludeTags(tags)
 	if len(tags) > maxCapacity {
 		removedReasons[dedupeReason] = dedupeTagValues(tags)
-		removedReasons[dashesReason] = removeTagsWithValue(tags, "-")
-		removedReasons[slashesReason] = removeTagsWithValue(tags, "/")
-		removedReasons[betaReason] = removeTagsLabelsMatching(tags, betaRegex)
 	}
+
+	// remove IaaS label tags is over max capacity
+	//if len(tags) > maxCapacity {
+	//	removedReasons[iaasReason] = removeTagsLabelsMatching(tags, iaasNameRegex, len(tags)-maxCapacity)
+	//}
 	return removedReasons
 }
 
@@ -48,21 +48,7 @@ func logTagCleaningReasons(metricName string, reasons map[string][]string) {
 	}
 }
 
-func copyStringMap(dst map[string]string, src map[string]string) {
-	for k, v := range src {
-		dst[k] = v
-	}
-}
-
-func withReason(tagNames []string, reason string) map[string]string {
-	withReasons := map[string]string{}
-	for _, tagName := range tagNames {
-		withReasons[tagName] = reason
-	}
-	return withReasons
-}
-
-const minDedupeTagValueLen = 5
+const minDedupeTagValueLen = 10
 
 func dedupeTagValues(tags map[string]string) []string {
 	var removedTags []string
@@ -100,22 +86,18 @@ func removeEmptyTags(tags map[string]string) []string {
 	return removed
 }
 
-func removeTagsWithValue(tags map[string]string, tagValue string) []string {
+func removeTagsLabelsMatching(tags map[string]string, regexp *regexp.Regexp, numberToRemove int) []string {
 	var removed []string
-	for name, value := range tags {
-		if value == tagValue {
-			removed = append(removed, name)
-			delete(tags, name)
-		}
-	}
-	return removed
-}
-func removeTagsLabelsMatching(tags map[string]string, regexp *regexp.Regexp) []string {
-	var removed []string
-	for name, _ := range tags {
+	count := 0
+	tagNames := sortKeys(tags)
+	for _, name := range tagNames {
 		if regexp.MatchString(name) {
 			removed = append(removed, name)
 			delete(tags, name)
+			count++
+			if count >= numberToRemove {
+				break
+			}
 		}
 	}
 	return removed

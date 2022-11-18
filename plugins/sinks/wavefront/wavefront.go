@@ -34,7 +34,7 @@ const (
 	testClient   = 3
 )
 
-const maxWavefrontTags = 20 // the maximum numbers of tags allowed in a wavefront point
+const maxWavefrontTags = 19 // the maximum numbers of tags allowed in a wavefront point not including source
 
 var (
 	excludeTagList     = [...]string{"namespace_id", "host_id", "pod_id", "hostname"}
