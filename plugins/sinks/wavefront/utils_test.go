@@ -112,7 +112,6 @@ func TestCleanTags(t *testing.T) {
 				"internal_ip":     "10.40.56.17",
 				"kernel_version":  "5.10.127+",
 				"provider_id":     "gce://wavefront-gcp-dev/us-central1-c/gke-mamichael-cluster-5-default-pool-5592f664-mkrr",
-				"label.cloud.google.com/gke-cpu-scaling-level": "2",
 				"label.cloud.google.com/gke-max-pods-per-node": "110",
 				"label.cloud.google.com/gke-nodepool":          "default-pool",
 				"label.cloud.google.com/gke-os-distribution":   "cos",
@@ -133,6 +132,9 @@ func TestCleanTags(t *testing.T) {
 				"node_role":                              "worker",
 				"nodename":                               "aks-agentpool-33708643-vmss000000",
 				"type":                                   "node",
+				"pod_cidr":                               "10.96.2.0/24",
+				"internal_ip":                            "10.40.56.17",
+				"kernel_version":                         "5.10.127+",
 				"label.agentpool":                        "agentpool",
 				"label.beta.kubernetes.io/arch":          "amd64",
 				"label.beta.kubernetes.io/instance-type": "Standard_B4ms",
@@ -159,10 +161,40 @@ func TestCleanTags(t *testing.T) {
 				"resource_id":                                           "/",
 				"label.topology.disk.csi.azure.com/zone":                "",
 				"label.topology.kubernetes.io/region":                   "eastus",
-				"label.topology.kubernetes.io/zone":                     "0"}
+				"label.topology.kubernetes.io/zone":                     "0",
+			}
+
+			expected := map[string]string{
+				"cluster":         "mamichael-aks-221116",
+				"node_role":       "worker",
+				"nodename":        "aks-agentpool-33708643-vmss000000",
+				"type":            "node",
+				"pod_cidr":        "10.96.2.0/24",
+				"internal_ip":     "10.40.56.17",
+				"kernel_version":  "5.10.127+",
+				"label.agentpool": "agentpool",
+				"label.failure-domain.beta.kubernetes.io/zone":  "0",
+				"label.kubernetes.azure.com/node-image-version": "AKSUbuntu-1804gen2containerd-2022.08.10",
+				"label.kubernetes.azure.com/os-sku":             "Ubuntu",
+				"label.kubernetes.io/arch":                      "amd64",
+				"label.kubernetes.io/os":                        "linux",
+				"label.kubernetes.io/role":                      "agent",
+				"label.node.kubernetes.io/instance-type":        "Standard_B4ms",
+				"label.storageprofile":                          "managed",
+				"label.storagetier":                             "Premium_LRS",
+				"label.topology.kubernetes.io/region":           "eastus",
+				"label.topology.kubernetes.io/zone":             "0",
+			}
 
 			cleanTags(actual, maxWavefrontTags)
 			assert.Equal(t, maxWavefrontTags, len(actual))
+			assert.Equal(t, expected, actual)
 		})
 	})
+}
+
+func TestIsAnEmptyTag(t *testing.T) {
+	assert.True(t, isAnEmptyTag(""))
+	assert.True(t, isAnEmptyTag("/"))
+	assert.True(t, isAnEmptyTag("-"))
 }

@@ -17,7 +17,7 @@ const (
 	iaasReason        = "there were too many tags so we removed IaaS specific tags"
 )
 
-var iaasNameRegex = regexp.MustCompile("^label.*gke*")
+var iaasNameRegex = regexp.MustCompile("^label.*gke|azure*")
 
 // cleanTags removes empty, excluded tags, and tags with duplicate values (if there are too many tags) and returns a map
 // that lists removed tag names by their reason for removal
@@ -30,9 +30,9 @@ func cleanTags(tags map[string]string, maxCapacity int) map[string][]string {
 	}
 
 	// remove IaaS label tags is over max capacity
-	//if len(tags) > maxCapacity {
-	//	removedReasons[iaasReason] = removeTagsLabelsMatching(tags, iaasNameRegex, len(tags)-maxCapacity)
-	//}
+	if len(tags) > maxCapacity {
+		removedReasons[iaasReason] = removeTagsLabelsMatching(tags, iaasNameRegex, len(tags)-maxCapacity)
+	}
 	return removedReasons
 }
 
@@ -48,7 +48,7 @@ func logTagCleaningReasons(metricName string, reasons map[string][]string) {
 	}
 }
 
-const minDedupeTagValueLen = 10
+const minDedupeTagValueLen = 5
 
 func dedupeTagValues(tags map[string]string) []string {
 	var removedTags []string
@@ -75,10 +75,17 @@ func isWinningName(name string, prevWinner string) bool {
 	return len(name) < len(prevWinner) || (len(name) == len(prevWinner) && name < prevWinner)
 }
 
+func isAnEmptyTag(value string) bool {
+	if value == "" || value == "/" || value == "-" {
+		return true
+	}
+	return false
+}
+
 func removeEmptyTags(tags map[string]string) []string {
 	var removed []string
 	for name, value := range tags {
-		if len(value) == 0 {
+		if isAnEmptyTag(value) {
 			removed = append(removed, name)
 			delete(tags, name)
 		}
