@@ -21,12 +21,24 @@
 
 # collector DaemonSet logs
 (kubectl --namespace wavefront logs daemonset/wavefront-collector 2> /dev/null \
-  || echo "No wavefront-collector DaemonSet found in wavefront-collector namespace; this is either a failure or it was installed some other way.") \
+  || echo "No wavefront-collector DaemonSet found in wavefront namespace; this is either a failure or it was installed some other way.") \
   > k8s-assist-helm-wavefront-collector-legacy-daemonset.txt
 
 # Proxy Deployment logs
 (kubectl --namespace wavefront logs deployment/wavefront-proxy 2> /dev/null \
   || echo "No wavefront-proxy Deployment found in wavefront namespace; this may indicate a failure or it was installed some other way.") \
+  > k8s-assist-helm-wavefront-proxy.txt
+  
+### TMC ###
+
+# collector DaemonSet logs
+(kubectl --namespace tanzu-observability-saas logs daemonset/wavefront-collector 2> /dev/null \
+  || echo "No wavefront-collector DaemonSet found in tanzu-observability-saas namespace; this is either a failure or it was installed some other way.") \
+  > k8s-assist-helm-wavefront-collector-legacy-daemonset.txt
+
+# Proxy Deployment logs
+(kubectl --namespace tanzu-observability-saas logs deployment/wavefront-proxy 2> /dev/null \
+  || echo "No wavefront-proxy Deployment found in tanzu-observability-saas namespace; this may indicate a failure or it was installed some other way.") \
   > k8s-assist-helm-wavefront-proxy.txt
 
 ### Operator ###
