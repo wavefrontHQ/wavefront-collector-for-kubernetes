@@ -37,15 +37,14 @@ const (
 const maxWavefrontTags = 19 // the maximum numbers of tags allowed in a wavefront point not including source
 
 var (
-	excludeTagList     = [...]string{"namespace_id", "host_id", "pod_id", "hostname"}
-	excludeTagPrefixes = [...]string{"label.beta.", "label.alpha."}
-	sentPoints         gm.Counter
-	errPoints          gm.Counter
-	filteredPoints     gm.Counter
-	sentEvents         gm.Counter
-	errEvents          gm.Counter
-	clientType         gm.Gauge
-	sanitizedChars     = strings.NewReplacer("+", "-")
+	excludeTagList = [...]string{"namespace_id", "host_id", "pod_id", "hostname"}
+	sentPoints     gm.Counter
+	errPoints      gm.Counter
+	filteredPoints gm.Counter
+	sentEvents     gm.Counter
+	errEvents      gm.Counter
+	clientType     gm.Gauge
+	sanitizedChars = strings.NewReplacer("+", "-")
 )
 
 func init() {

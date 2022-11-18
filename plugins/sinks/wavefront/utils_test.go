@@ -3,6 +3,8 @@ package wavefront
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -10,14 +12,6 @@ func TestCleanTags(t *testing.T) {
 	t.Run("excludes tags in the exclude tag list", func(t *testing.T) {
 		for _, excludedTagName := range excludeTagList {
 			actual := map[string]string{excludedTagName: "some-value"}
-			cleanTags(actual, maxWavefrontTags)
-			assert.Equal(t, map[string]string{}, actual)
-		}
-	})
-
-	t.Run("excludes tags with given prefixes", func(t *testing.T) {
-		for _, excludedTagName := range excludeTagPrefixes {
-			actual := map[string]string{excludedTagName + "/something": "some-value"}
 			cleanTags(actual, maxWavefrontTags)
 			assert.Equal(t, map[string]string{}, actual)
 		}
@@ -173,8 +167,8 @@ func TestCleanTags(t *testing.T) {
 				"internal_ip":     "10.40.56.17",
 				"kernel_version":  "5.10.127+",
 				"label.agentpool": "agentpool",
-				"label.failure-domain.beta.kubernetes.io/zone":  "0",
 				"label.kubernetes.azure.com/node-image-version": "AKSUbuntu-1804gen2containerd-2022.08.10",
+				"label.kubernetes.azure.com/mode":               "system",
 				"label.kubernetes.azure.com/os-sku":             "Ubuntu",
 				"label.kubernetes.io/arch":                      "amd64",
 				"label.kubernetes.io/os":                        "linux",
@@ -188,6 +182,62 @@ func TestCleanTags(t *testing.T) {
 
 			cleanTags(actual, maxWavefrontTags)
 			assert.Equal(t, maxWavefrontTags, len(actual))
+			assert.Equal(t, expected, actual)
+		})
+		t.Run("EKS example", func(t *testing.T) {
+			actual := map[string]string{
+				"cluster":                                "mamichael-eks-221116",
+				"node_role":                              "worker",
+				"nodename":                               "ip-192-168-12-242.us-west-2.compute.internal",
+				"type":                                   "node",
+				"pod_cidr":                               "10.96.2.0/24",
+				"internal_ip":                            "10.40.56.17",
+				"kernel_version":                         "5.10.127+",
+				"foo":                                    "bar",
+				"test":                                   "tester",
+				"czar":                                   "aljkssljfdk",
+				"car":                                    "aljkfdk",
+				"label.alpha.eksctl.io/cluster-name":     "k8s-saas-team-dev",
+				"label.alpha.eksctl.io/instance-id":      "i-00ba63d14a98f141d",
+				"label.alpha.eksctl.io/nodegroup-name":   "arm-group",
+				"label.beta.kubernetes.io/arch":          "arm64",
+				"label.beta.kubernetes.io/instance-type": "m6g.medium",
+				"label.beta.kubernetes.io/os":            "linux",
+				"label.failure-domain.beta.kubernetes.io/region": "us-west-2",
+				"label.failure-domain.beta.kubernetes.io/zone":   "us-west-2c",
+				"label.kubernetes.io/arch":                       "arm64",
+				"label.kubernetes.io/hostname":                   "ip-192-168-12-242.us-west-2.compute.internal",
+				"label.kubernetes.io/os":                         "linux",
+				"label.node-lifecycle":                           "on-demand",
+				"label.node.kubernetes.io/instance-type":         "m6g.medium",
+				"label.topology.kubernetes.io/region":            "us-west-2",
+				"label.topology.kubernetes.io/zone":              "us-west-2c",
+			}
+
+			expected := map[string]string{
+				"cluster":                                "mamichael-eks-221116",
+				"node_role":                              "worker",
+				"nodename":                               "ip-192-168-12-242.us-west-2.compute.internal",
+				"type":                                   "node",
+				"pod_cidr":                               "10.96.2.0/24",
+				"internal_ip":                            "10.40.56.17",
+				"kernel_version":                         "5.10.127+",
+				"foo":                                    "bar",
+				"test":                                   "tester",
+				"czar":                                   "aljkssljfdk",
+				"car":                                    "aljkfdk",
+				"label.alpha.eksctl.io/instance-id":      "i-00ba63d14a98f141d",
+				"label.alpha.eksctl.io/nodegroup-name":   "arm-group",
+				"label.kubernetes.io/arch":               "arm64",
+				"label.kubernetes.io/os":                 "linux",
+				"label.node-lifecycle":                   "on-demand",
+				"label.node.kubernetes.io/instance-type": "m6g.medium",
+				"label.topology.kubernetes.io/region":    "us-west-2",
+				"label.topology.kubernetes.io/zone":      "us-west-2c",
+			}
+
+			cleanTags(actual, maxWavefrontTags)
+			require.Equal(t, maxWavefrontTags, len(actual))
 			assert.Equal(t, expected, actual)
 		})
 	})

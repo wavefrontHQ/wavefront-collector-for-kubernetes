@@ -15,8 +15,10 @@ const (
 	excludeListReason = "they were on an exclude list"
 	dedupeReason      = "there were too many tags so we removed tags with duplicate tag values"
 	iaasReason        = "there were too many tags so we removed IaaS specific tags"
+	alphaBetaReason   = "there were too many tags so we removed alpha and beta tags"
 )
 
+var alphaBetaRegex = regexp.MustCompile("^label.*beta|alpha*")
 var iaasNameRegex = regexp.MustCompile("^label.*gke|azure*")
 
 // cleanTags removes empty, excluded tags, and tags with duplicate values (if there are too many tags) and returns a map
@@ -31,6 +33,7 @@ func cleanTags(tags map[string]string, maxCapacity int) map[string][]string {
 
 	// remove IaaS label tags is over max capacity
 	if len(tags) > maxCapacity {
+		removedReasons[alphaBetaReason] = removeTagsLabelsMatching(tags, alphaBetaRegex, len(tags)-maxCapacity)
 		removedReasons[iaasReason] = removeTagsLabelsMatching(tags, iaasNameRegex, len(tags)-maxCapacity)
 	}
 	return removedReasons
@@ -72,6 +75,13 @@ func dedupeTagValues(tags map[string]string) []string {
 }
 
 func isWinningName(name string, prevWinner string) bool {
+	if alphaBetaRegex.MatchString(name) {
+		return false
+	}
+	if alphaBetaRegex.MatchString(prevWinner) {
+		return true
+	}
+
 	return len(name) < len(prevWinner) || (len(name) == len(prevWinner) && name < prevWinner)
 }
 
@@ -124,11 +134,6 @@ func excludeTags(tags map[string]string) []string {
 func excludeTag(name string) bool {
 	for _, excludeName := range excludeTagList {
 		if excludeName == name {
-			return true
-		}
-	}
-	for _, excludePrefix := range excludeTagPrefixes {
-		if strings.HasPrefix(name, excludePrefix) {
 			return true
 		}
 	}

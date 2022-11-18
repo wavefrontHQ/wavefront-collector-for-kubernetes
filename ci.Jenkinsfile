@@ -118,6 +118,32 @@ pipeline {
             }
           }
         }
+        stage("AKS Integration Test") {
+          agent {
+            label "aks"
+          }
+          options {
+            timeout(time: 30, unit: 'MINUTES')
+          }
+          environment {
+            GCP_CREDS = credentials("GCP_CREDS")
+            AKS_CLUSTER_NAME = "k8po-ci"
+          }
+          steps {
+            sh './hack/jenkins/setup-for-integration-test.sh'
+            sh './hack/jenkins/install_docker_buildx.sh'
+            sh 'make semver-cli'
+            lock("integration-test-aks") {
+              withCredentials([file(credentialsId: 'aks-kube-config', variable: 'KUBECONFIG')]) {
+                sh 'kubectl config use k8po-ci'
+                sh 'make clean-cluster'
+                sh 'VERSION_POSTFIX=$VERSION_POSTFIX make deploy-test'
+                sh './hack/test/test-wavefront-metrics.sh -t $WAVEFRONT_TOKEN'
+                sh 'make clean-cluster'
+              }
+            }
+          }
+        }
       }
     }
   }
