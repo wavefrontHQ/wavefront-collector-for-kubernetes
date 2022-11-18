@@ -130,7 +130,7 @@ pipeline {
             AKS_CLUSTER_NAME = "k8po-ci"
           }
           steps {
-            sh './hack/jenkins/setup-for-integration-test.sh'
+            sh './hack/jenkins/setup-for-integration-test.sh -k aks'
             sh './hack/jenkins/install_docker_buildx.sh'
             sh 'make semver-cli'
             lock("integration-test-aks") {
