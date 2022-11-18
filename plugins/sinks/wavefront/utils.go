@@ -4,6 +4,7 @@
 package wavefront
 
 import (
+	"regexp"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -13,7 +14,12 @@ const (
 	emptyReason       = "they were empty"
 	excludeListReason = "they were on an exclude list"
 	dedupeReason      = "there were too many tags so we removed tags with duplicate tag values"
+	dashesReason      = "there were too many tags so we removed tags with only '-' as a value"
+	slashesReason     = "there were too many tags so we removed tags with only '/' as a value"
+	betaReason        = "there were too many tags so we removed tags with 'beta' in the name"
 )
+
+var betaRegex = regexp.MustCompile("^label.*beta*")
 
 // cleanTags removes empty, excluded tags, and tags with duplicate values (if there are too many tags) and returns a map
 // that lists removed tag names by their reason for removal
@@ -23,6 +29,9 @@ func cleanTags(tags map[string]string, maxCapacity int) map[string][]string {
 	removedReasons[excludeListReason] = excludeTags(tags)
 	if len(tags) > maxCapacity {
 		removedReasons[dedupeReason] = dedupeTagValues(tags)
+		removedReasons[dashesReason] = removeTagsWithValue(tags, "-")
+		removedReasons[slashesReason] = removeTagsWithValue(tags, "/")
+		removedReasons[betaReason] = removeTagsLabelsMatching(tags, betaRegex)
 	}
 	return removedReasons
 }
@@ -53,7 +62,7 @@ func withReason(tagNames []string, reason string) map[string]string {
 	return withReasons
 }
 
-const minDedupeTagValueLen = 10
+const minDedupeTagValueLen = 5
 
 func dedupeTagValues(tags map[string]string) []string {
 	var removedTags []string
@@ -84,6 +93,27 @@ func removeEmptyTags(tags map[string]string) []string {
 	var removed []string
 	for name, value := range tags {
 		if len(value) == 0 {
+			removed = append(removed, name)
+			delete(tags, name)
+		}
+	}
+	return removed
+}
+
+func removeTagsWithValue(tags map[string]string, tagValue string) []string {
+	var removed []string
+	for name, value := range tags {
+		if value == tagValue {
+			removed = append(removed, name)
+			delete(tags, name)
+		}
+	}
+	return removed
+}
+func removeTagsLabelsMatching(tags map[string]string, regexp *regexp.Regexp) []string {
+	var removed []string
+	for name, _ := range tags {
+		if regexp.MatchString(name) {
 			removed = append(removed, name)
 			delete(tags, name)
 		}
