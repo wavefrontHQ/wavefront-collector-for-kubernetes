@@ -130,6 +130,10 @@ pipeline {
           }
           environment {
             AKS_CLUSTER_NAME = "k8po-ci"
+            VERSION_POSTFIX = "-alpha-${GIT_COMMIT.substring(0, 8)}"
+            PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
+            DOCKER_IMAGE = "kubernetes-collector-snapshot"
+            WAVEFRONT_TOKEN = credentials("WAVEFRONT_TOKEN_NIMBA")
           }
           steps {
             sh './hack/jenkins/setup-for-integration-test.sh -k aks'
