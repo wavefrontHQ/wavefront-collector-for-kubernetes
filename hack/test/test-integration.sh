@@ -47,10 +47,8 @@ echo "deploying configuration for additional targets"
 wait_for_cluster_resource_deleted namespace/$NS
 
 kubectl create namespace $NS
-kubectl config set-context --current --namespace="$NS"
 kubectl apply -f ./deploy/mysql-config.yaml
 kubectl apply -f ./deploy/memcached-config.yaml
-kubectl config set-context --current --namespace=default
 
 echo "deploying collector $IMAGE_NAME $VERSION"
 
