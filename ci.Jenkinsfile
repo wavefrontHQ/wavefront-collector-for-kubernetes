@@ -125,8 +125,10 @@ pipeline {
           options {
             timeout(time: 30, unit: 'MINUTES')
           }
+          tools {
+            go 'Go 1.18'
+          }
           environment {
-            GCP_CREDS = credentials("GCP_CREDS")
             AKS_CLUSTER_NAME = "k8po-ci"
           }
           steps {
