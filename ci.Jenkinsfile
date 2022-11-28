@@ -118,6 +118,38 @@ pipeline {
             }
           }
         }
+//         stage("AKS Integration Test") {
+//           agent {
+//             label "aks"
+//           }
+//           options {
+//             timeout(time: 30, unit: 'MINUTES')
+//           }
+//           tools {
+//             go 'Go 1.18'
+//           }
+//           environment {
+//             AKS_CLUSTER_NAME = "k8po-ci"
+//             VERSION_POSTFIX = "-alpha-${GIT_COMMIT.substring(0, 8)}"
+//             PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
+//             DOCKER_IMAGE = "kubernetes-collector-snapshot"
+//             WAVEFRONT_TOKEN = credentials("WAVEFRONT_TOKEN_NIMBA")
+//           }
+//           steps {
+//             withEnv(["PATH+GO=${HOME}/go/bin"]) {
+//               lock("integration-test-aks") {
+//                 withCredentials([file(credentialsId: 'aks-kube-config', variable: 'KUBECONFIG')]) {
+//                   sh './hack/jenkins/setup-for-integration-test.sh -k aks'
+//                   sh 'kubectl config use k8po-ci'
+//                   sh 'make clean-cluster'
+//                   sh 'VERSION_POSTFIX=$VERSION_POSTFIX make deploy-test'
+//                   sh './hack/test/test-wavefront-metrics.sh -t $WAVEFRONT_TOKEN'
+//                   sh 'make clean-cluster'
+//                 }
+//               }
+//             }
+//           }
+//         }
       }
     }
   }
