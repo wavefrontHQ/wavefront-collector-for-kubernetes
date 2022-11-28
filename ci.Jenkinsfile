@@ -136,14 +136,16 @@ pipeline {
             WAVEFRONT_TOKEN = credentials("WAVEFRONT_TOKEN_NIMBA")
           }
           steps {
-            lock("integration-test-aks") {
-              withCredentials([file(credentialsId: 'aks-kube-config', variable: 'KUBECONFIG')]) {
-                sh './hack/jenkins/setup-for-integration-test.sh -k aks'
-                sh 'kubectl config use k8po-ci'
-                sh 'make clean-cluster'
-                sh 'VERSION_POSTFIX=$VERSION_POSTFIX make deploy-test'
-                sh './hack/test/test-wavefront-metrics.sh -t $WAVEFRONT_TOKEN'
-                sh 'make clean-cluster'
+            withEnv(["PATH+GO=${HOME}/go/bin"]) {
+              lock("integration-test-aks") {
+                withCredentials([file(credentialsId: 'aks-kube-config', variable: 'KUBECONFIG')]) {
+                  sh './hack/jenkins/setup-for-integration-test.sh -k aks'
+                  sh 'kubectl config use k8po-ci'
+                  sh 'make clean-cluster'
+                  sh 'VERSION_POSTFIX=$VERSION_POSTFIX make deploy-test'
+                  sh './hack/test/test-wavefront-metrics.sh -t $WAVEFRONT_TOKEN'
+                  sh 'make clean-cluster'
+                }
               }
             }
           }
