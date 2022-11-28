@@ -136,11 +136,9 @@ pipeline {
             WAVEFRONT_TOKEN = credentials("WAVEFRONT_TOKEN_NIMBA")
           }
           steps {
-            sh './hack/jenkins/setup-for-integration-test.sh -k aks'
-            sh './hack/jenkins/install_docker_buildx.sh'
-            sh 'make semver-cli'
             lock("integration-test-aks") {
               withCredentials([file(credentialsId: 'aks-kube-config', variable: 'KUBECONFIG')]) {
+                sh './hack/jenkins/setup-for-integration-test.sh -k aks'
                 sh 'kubectl config use k8po-ci'
                 sh 'make clean-cluster'
                 sh 'VERSION_POSTFIX=$VERSION_POSTFIX make deploy-test'
