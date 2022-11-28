@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"flag"
+	"fmt"
 	"net"
 	"net/http"
 	"os"
@@ -77,6 +78,10 @@ func HandleIncomingMetrics(store *MetricStore, conn net.Conn) {
 			continue
 		}
 		if metric == nil { // we got a histogram
+			continue
+		}
+		if len(metric.Tags) > 20 {
+			log.Error(fmt.Sprintf("[WF-410: Too many point tags (%d, max 20):", len(metric.Tags)))
 			continue
 		}
 		log.Debugf("%#v", metric)

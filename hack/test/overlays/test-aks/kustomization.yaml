@@ -1,0 +1,10 @@
+bases:
+ - ../../base
+
+patches:
+  - path: patches.yaml
+    target:
+      kind: DaemonSet
+  - path: patches.yaml
+    target:
+      kind: Deployment

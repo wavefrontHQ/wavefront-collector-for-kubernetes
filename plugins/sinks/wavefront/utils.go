@@ -4,6 +4,7 @@
 package wavefront
 
 import (
+	"regexp"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -13,7 +14,12 @@ const (
 	emptyReason       = "they were empty"
 	excludeListReason = "they were on an exclude list"
 	dedupeReason      = "there were too many tags so we removed tags with duplicate tag values"
+	iaasReason        = "there were too many tags so we removed IaaS specific tags"
+	alphaBetaReason   = "there were too many tags so we removed alpha and beta tags"
 )
+
+var alphaBetaRegex = regexp.MustCompile("^label.*beta|alpha*")
+var iaasNameRegex = regexp.MustCompile("^label.*gke|azure*")
 
 // cleanTags removes empty, excluded tags, and tags with duplicate values (if there are too many tags) and returns a map
 // that lists removed tag names by their reason for removal
@@ -23,6 +29,12 @@ func cleanTags(tags map[string]string, maxCapacity int) map[string][]string {
 	removedReasons[excludeListReason] = excludeTags(tags)
 	if len(tags) > maxCapacity {
 		removedReasons[dedupeReason] = dedupeTagValues(tags)
+	}
+
+	// remove IaaS label tags is over max capacity
+	if len(tags) > maxCapacity {
+		removedReasons[alphaBetaReason] = removeTagsLabelsMatching(tags, alphaBetaRegex, len(tags)-maxCapacity)
+		removedReasons[iaasReason] = removeTagsLabelsMatching(tags, iaasNameRegex, len(tags)-maxCapacity)
 	}
 	return removedReasons
 }
@@ -39,21 +51,7 @@ func logTagCleaningReasons(metricName string, reasons map[string][]string) {
 	}
 }
 
-func copyStringMap(dst map[string]string, src map[string]string) {
-	for k, v := range src {
-		dst[k] = v
-	}
-}
-
-func withReason(tagNames []string, reason string) map[string]string {
-	withReasons := map[string]string{}
-	for _, tagName := range tagNames {
-		withReasons[tagName] = reason
-	}
-	return withReasons
-}
-
-const minDedupeTagValueLen = 10
+const minDedupeTagValueLen = 5
 
 func dedupeTagValues(tags map[string]string) []string {
 	var removedTags []string
@@ -77,15 +75,46 @@ func dedupeTagValues(tags map[string]string) []string {
 }
 
 func isWinningName(name string, prevWinner string) bool {
+	if alphaBetaRegex.MatchString(name) {
+		return false
+	}
+	if alphaBetaRegex.MatchString(prevWinner) {
+		return true
+	}
+
 	return len(name) < len(prevWinner) || (len(name) == len(prevWinner) && name < prevWinner)
+}
+
+func isAnEmptyTag(value string) bool {
+	if value == "" || value == "/" || value == "-" {
+		return true
+	}
+	return false
 }
 
 func removeEmptyTags(tags map[string]string) []string {
 	var removed []string
 	for name, value := range tags {
-		if len(value) == 0 {
+		if isAnEmptyTag(value) {
 			removed = append(removed, name)
 			delete(tags, name)
+		}
+	}
+	return removed
+}
+
+func removeTagsLabelsMatching(tags map[string]string, regexp *regexp.Regexp, numberToRemove int) []string {
+	var removed []string
+	count := 0
+	tagNames := sortKeys(tags)
+	for _, name := range tagNames {
+		if regexp.MatchString(name) {
+			removed = append(removed, name)
+			delete(tags, name)
+			count++
+			if count >= numberToRemove {
+				break
+			}
 		}
 	}
 	return removed
@@ -105,11 +134,6 @@ func excludeTags(tags map[string]string) []string {
 func excludeTag(name string) bool {
 	for _, excludeName := range excludeTagList {
 		if excludeName == name {
-			return true
-		}
-	}
-	for _, excludePrefix := range excludeTagPrefixes {
-		if strings.HasPrefix(name, excludePrefix) {
 			return true
 		}
 	}
