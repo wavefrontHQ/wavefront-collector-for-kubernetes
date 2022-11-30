@@ -182,6 +182,10 @@ deploy-test: token-check k8s-env clean-deployment deploy-targets proxy-test
 #Testing code, configuration and deployment changes
 .PHONY: integration-test
 integration-test: token-check k8s-env clean-deployment deploy-targets delete-images push-images proxy-test
+	INTEGRATION_TEST_TYPE=single-deployment make deploy-test
+	INTEGRATION_TEST_TYPE=combined make deploy-test
+	make deploy-test
+	(./hack/test/test-wavefront-metrics.sh -t $WAVEFRONT_TOKEN)
 
 # creating this as separate and distinct for now,
 # but would like to recombine as a flag on integration-test

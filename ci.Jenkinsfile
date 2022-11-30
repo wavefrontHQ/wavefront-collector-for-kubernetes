@@ -109,10 +109,7 @@ pipeline {
                 sh './hack/jenkins/setup-for-integration-test.sh -k eks'
                 sh 'make target-eks'
                 sh 'make clean-cluster'
-                sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=single-deployment make deploy-test'
-                sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=combined make deploy-test'
-                sh 'VERSION_POSTFIX=$VERSION_POSTFIX make deploy-test'
-                sh './hack/test/test-wavefront-metrics.sh -t $WAVEFRONT_TOKEN'
+                sh 'VERSION_POSTFIX=$VERSION_POSTFIX make integration-test'
                 sh 'make clean-cluster'
               }
             }
