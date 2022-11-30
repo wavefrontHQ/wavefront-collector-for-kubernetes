@@ -171,23 +171,23 @@ clean:
 token-check:
 	@if [ -z ${WAVEFRONT_TOKEN} ]; then echo "Need to set WAVEFRONT_TOKEN" && exit 1; fi
 
-.PHONY: proxy-test
 proxy-test: token-check $(SEMVER_CLI_BIN)
 	(cd $(TEST_DIR) && ./test-integration.sh $(WAVEFRONT_CLUSTER) $(WAVEFRONT_TOKEN) $(VERSION) $(INTEGRATION_TEST_TYPE))
 
 #Testing deployment and configuration changes, no code changes
-.PHONY: deploy-test
 deploy-test: token-check k8s-env clean-deployment deploy-targets proxy-test
 
 #Testing code, configuration and deployment changes
-.PHONY: integration-test
-integration-test: token-check k8s-env clean-deployment deploy-targets delete-images push-images
+.PHONY: setup-test
+setup-test: token-check k8s-env clean-deployment deploy-targets delete-images push-images $(SEMVER_CLI_BIN)
 
-	INTEGRATION_TEST_TYPE=single-deployment make proxy-test
-	INTEGRATION_TEST_TYPE=combined make proxy-test
-	INTEGRATION_TEST_TYPE=combined make proxy-test
-	make deploy-test
-	(./hack/test/test-wavefront-metrics.sh -t $WAVEFRONT_TOKEN)
+.PHONY: e2e-test
+e2e-test: setup-test
+	(cd $(TEST_DIR) && ./test-integration.sh -c $(WAVEFRONT_CLUSTER) -t $(WAVEFRONT_TOKEN) -v $(VERSION) -r real-proxy-metrics)
+
+.PHONY: integration-test
+integration-test: setup-test
+	(cd $(TEST_DIR) && ./test-integration.sh -c $(WAVEFRONT_CLUSTER) -t $(WAVEFRONT_TOKEN) -v $(VERSION))
 
 # creating this as separate and distinct for now,
 # but would like to recombine as a flag on integration-test

@@ -5,7 +5,6 @@ REPO_ROOT=$(git rev-parse --show-toplevel)
 
 cd "$(dirname "$0")" # hack/test
 
-DEFAULT_VERSION="1.10.0"
 USE_TEST_PROXY="${USE_TEST_PROXY:-false}"
 
 if [ "$USE_TEST_PROXY" = true ] ;
@@ -23,19 +22,23 @@ function print_usage_and_exit() {
     echo -e "\t-c wavefront instance name (required)"
     echo -e "\t-t wavefront token (required)"
     echo -e "\t-v collector docker image version"
-    echo -e "\t-k K8s ENV (required)"
+    echo -e "\t-k K8s ENV"
     echo -e "\t-n K8s Cluster name"
     echo -e "\t-e experimental features"
     echo -e "\t-y collector yaml"
     exit 1
 }
 
+# Required variables
 WF_CLUSTER=
 WAVEFRONT_TOKEN=
-VERSION=
+
+VERSION="1.10.0"
 K8S_ENV=gke
-COLLECTOR_YAML=
-WF_CLUSTER_NAME=
+COLLECTOR_YAML="${REPO_ROOT}/deploy/kubernetes/5-collector-daemonset.yaml"
+WF_CLUSTER_NAME=$(whoami)-${K8S_ENV}-$(date +"%y%m%d")
+
+# Optional variables
 EXPERIMENTAL_FEATURES=
 
 while getopts "c:t:v:d:k:n:e:y:" opt; do
@@ -84,7 +87,7 @@ fi
 if [[ -z ${WF_CLUSTER_NAME} ]] ; then
     WF_CLUSTER_NAME=$(whoami)-${K8S_ENV}-$(date +"%y%m%d")
 fi
-
+echo "before copying a bunch of deploys"
 cp "${REPO_ROOT}/deploy/kubernetes/0-collector-namespace.yaml" base/deploy/0-collector-namespace.yaml
 cp "${REPO_ROOT}/deploy/kubernetes/1-collector-cluster-role.yaml" base/deploy/1-collector-cluster-role.yaml
 cp "${REPO_ROOT}/deploy/kubernetes/2-collector-rbac.yaml" base/deploy/2-collector-rbac.yaml
@@ -96,7 +99,8 @@ cp "${REPO_ROOT}/deploy/kubernetes/alternate-collector-deployments/5-collector-c
 csplit base/deploy/collector-deployments/5-collector-combined.yaml '/^---$/' &>/dev/null
 mv xx00 base/deploy/collector-deployments/5-collector-node-metrics-only.yaml
 mv xx01 base/deploy/collector-deployments/5-collector-cluster-metrics-only.yaml
-
+echo "before copying our collectr_yaml selection"
+echo "COLLECTOR_YAML is ..... $COLLECTOR_YAML"
 cp "${COLLECTOR_YAML}" base/deploy/5-wavefront-collector.yaml
 
 

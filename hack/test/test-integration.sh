@@ -2,7 +2,7 @@
 source ./deploy/k8s-utils.sh
 # This script automates the functional testing of the collector
 
-function run_test() {
+function run_fake_proxy_test() {
   local METRICS_FILE_NAME=$1
   local COLLECTOR_YAML=$2
   local EXPERIMENTAL_FEATURES=$3
@@ -77,6 +77,11 @@ function run_test() {
   fi
 }
 
+function run_real_proxy_metrics_test () {
+  env USE_TEST_PROXY=false ./deploy.sh -c "$WAVEFRONT_CLUSTER" -t "$WAVEFRONT_TOKEN" -v "$VERSION" -k "$K8S_ENV" -n "$WF_CLUSTER_NAME" -e "$EXPERIMENTAL_FEATURES" -y "$COLLECTOR_YAML"
+  ./test-wavefront-metrics.sh -t $WAVEFRONT_TOKEN
+}
+
 function main() {
   local WAVEFRONT_CLUSTER=
   local WAVEFRONT_TOKEN=
@@ -112,33 +117,31 @@ function main() {
 
   if [[ ${#tests_to_run[@]} -eq 0 ]]; then
     tests_to_run=(
-      "metrics-test"
-      "cluster-metrics-only"
-      "node-metrics-only"
-      "combined"
-      "single-deployment"
-      "histogram-conversion"
+      "default"
     )
   fi
 
   if [[ "${tests_to_run[*]}" =~ "cluster-metrics-only" ]]; then
-    run_test "cluster-metrics-only" "base/deploy/collector-deployments/5-collector-cluster-metrics-only.yaml"
+    run_fake_proxy_test "cluster-metrics-only" "base/deploy/collector-deployments/5-collector-cluster-metrics-only.yaml"
   fi
   if [[ "${tests_to_run[*]}" =~ "node-metrics-only" ]]; then
-    run_test "node-metrics-only" "base/deploy/collector-deployments/5-collector-node-metrics-only.yaml"
+    run_fake_proxy_test "node-metrics-only" "base/deploy/collector-deployments/5-collector-node-metrics-only.yaml"
   fi
   if [[ "${tests_to_run[*]}" =~ "combined" ]]; then
-    run_test "all-metrics" "base/deploy/collector-deployments/5-collector-combined.yaml"
+    run_fake_proxy_test "all-metrics" "base/deploy/collector-deployments/5-collector-combined.yaml"
   fi
   if [[ "${tests_to_run[*]}" =~ "single-deployment" ]]; then
-    run_test "all-metrics" "base/deploy/collector-deployments/5-collector-single-deployment.yaml"
+    run_fake_proxy_test "all-metrics" "base/deploy/collector-deployments/5-collector-single-deployment.yaml"
   fi
   if [[ "${tests_to_run[*]}" =~ "histogram-conversion" ]]; then
-    run_test "all-metrics" "base/deploy/kubernetes/5-collector-daemonset.yaml" "histogram-conversion"
+    run_fake_proxy_test "all-metrics" "base/deploy/kubernetes/5-collector-daemonset.yaml" "histogram-conversion"
   fi
-
-  # TODO: Figure out if we need to use real proxy testing for experimental features
-  env USE_TEST_PROXY=false ./deploy.sh -c "$WAVEFRONT_CLUSTER" -t "$WAVEFRONT_TOKEN" -v "$VERSION" -k "$K8S_ENV" -n "$WF_CLUSTER_NAME" -e "$EXPERIMENTAL_FEATURES" -y "$COLLECTOR_YAML"
+  if [[ "${tests_to_run[*]}" =~ "real-proxy-metrics" ]]; then
+    run_real_proxy_metrics_test
+  fi
+  if [[ "${tests_to_run[*]}" =~ "default" ]]; then
+    run_fake_proxy_test "all-metrics" "base/deploy/kubernetes/5-collector-daemonset.yaml"
+  fi
 
   exit "$EXIT_CODE"
 }

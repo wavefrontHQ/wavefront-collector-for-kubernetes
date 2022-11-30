@@ -60,7 +60,7 @@ if [[ -z ${VERSION} ]] ; then
 fi
 
 NS=wavefront-collector
-
+echo "before calling generate"
 env USE_TEST_PROXY="$USE_TEST_PROXY" ./generate.sh -c "$WF_CLUSTER" -t "$WAVEFRONT_TOKEN" -v "$VERSION"  -k "$K8S_ENV" -n "$WF_CLUSTER_NAME" -e "$EXPERIMENTAL_FEATURES" -y "$COLLECTOR_YAML"
 
 kustomize build overlays/test-$K8S_ENV | kubectl apply -f -
