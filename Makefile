@@ -181,9 +181,11 @@ deploy-test: token-check k8s-env clean-deployment deploy-targets proxy-test
 
 #Testing code, configuration and deployment changes
 .PHONY: integration-test
-integration-test: token-check k8s-env clean-deployment deploy-targets delete-images push-images proxy-test
-	INTEGRATION_TEST_TYPE=single-deployment make deploy-test
-	INTEGRATION_TEST_TYPE=combined make deploy-test
+integration-test: token-check k8s-env clean-deployment deploy-targets delete-images push-images
+
+	INTEGRATION_TEST_TYPE=single-deployment make proxy-test
+	INTEGRATION_TEST_TYPE=combined make proxy-test
+	INTEGRATION_TEST_TYPE=combined make proxy-test
 	make deploy-test
 	(./hack/test/test-wavefront-metrics.sh -t $WAVEFRONT_TOKEN)
 

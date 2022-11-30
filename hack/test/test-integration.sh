@@ -19,7 +19,7 @@ function run_test() {
 
   echo "deploying collector $IMAGE_NAME $VERSION"
 
-  env USE_TEST_PROXY=true ./deploy.sh -c "$WAVEFRONT_CLUSTER" -t "$API_TOKEN" -v "$VERSION" -k "$K8S_ENV" -n "$WF_CLUSTER_NAME" -e "$EXPERIMENTAL_FEATURES" -y "$COLLECTOR_YAML"
+  env USE_TEST_PROXY=true ./deploy.sh -c "$WAVEFRONT_CLUSTER" -t "$WAVEFRONT_TOKEN" -v "$VERSION" -k "$K8S_ENV" -n "$WF_CLUSTER_NAME" -e "$EXPERIMENTAL_FEATURES" -y "$COLLECTOR_YAML"
 
   wait_for_cluster_ready
 
@@ -78,28 +78,41 @@ function run_test() {
 }
 
 function main() {
-  DEFAULT_VERSION=$(semver-cli inc patch "$(cat ../../release/VERSION)")
+  local WAVEFRONT_CLUSTER=
+  local WAVEFRONT_TOKEN=
+  local VERSION=$(semver-cli inc patch "$(cat ../../release/VERSION)")
+  local tests_to_run=()
 
-  WAVEFRONT_CLUSTER=$1
-  API_TOKEN=$2
-  VERSION=$3
-  INTEGRATION_TEST_TYPE=$4
+  local K8S_ENV=$(./deploy/get-k8s-cluster-env.sh | awk '{print tolower($0)}')
 
-  K8S_ENV=$(./deploy/get-k8s-cluster-env.sh | awk '{print tolower($0)}')
+  local NS=wavefront-collector
+  local SLEEP_TIME=70
+  local WF_CLUSTER_NAME=$(whoami)-${K8S_ENV}-$(date +"%y%m%d")
+  local EXPERIMENTAL_FEATURES=
 
-  if [[ -z ${VERSION} ]]; then
-    VERSION=${DEFAULT_VERSION}
-  fi
-
-  NS=wavefront-collector
-  METRICS_FILE_NAME=all-metrics
-  COLLECTOR_YAML="base/deploy/kubernetes/5-collector-daemonset.yaml"
-  SLEEP_TIME=70
-  WF_CLUSTER_NAME=$(whoami)-${K8S_ENV}-$(date +"%y%m%d")
-  EXPERIMENTAL_FEATURES=
+  while getopts ":c:t:v:r:" opt; do
+    case $opt in
+    c)
+      WAVEFRONT_CLUSTER="$OPTARG"
+      ;;
+    t)
+      WAVEFRONT_TOKEN="$OPTARG"
+      ;;
+    v)
+      VERSION="$OPTARG"
+      ;;
+    r)
+      tests_to_run+=("$OPTARG")
+      ;;
+    \?)
+      print_usage_and_exit "Invalid option: -$OPTARG"
+      ;;
+    esac
+  done
 
   if [[ ${#tests_to_run[@]} -eq 0 ]]; then
     tests_to_run=(
+      "metrics-test"
       "cluster-metrics-only"
       "node-metrics-only"
       "combined"
@@ -107,6 +120,7 @@ function main() {
       "histogram-conversion"
     )
   fi
+
   if [[ "${tests_to_run[*]}" =~ "cluster-metrics-only" ]]; then
     run_test "cluster-metrics-only" "base/deploy/collector-deployments/5-collector-cluster-metrics-only.yaml"
   fi
@@ -123,7 +137,8 @@ function main() {
     run_test "all-metrics" "base/deploy/kubernetes/5-collector-daemonset.yaml" "histogram-conversion"
   fi
 
-  env USE_TEST_PROXY=false ./deploy.sh -c "$WAVEFRONT_CLUSTER" -t "$API_TOKEN" -v "$VERSION" -k "$K8S_ENV" -n "$WF_CLUSTER_NAME" -e "$EXPERIMENTAL_FEATURES" -y "$COLLECTOR_YAML"
+  # TODO: Figure out if we need to use real proxy testing for experimental features
+  env USE_TEST_PROXY=false ./deploy.sh -c "$WAVEFRONT_CLUSTER" -t "$WAVEFRONT_TOKEN" -v "$VERSION" -k "$K8S_ENV" -n "$WF_CLUSTER_NAME" -e "$EXPERIMENTAL_FEATURES" -y "$COLLECTOR_YAML"
 
   exit "$EXIT_CODE"
 }
