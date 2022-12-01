@@ -139,7 +139,7 @@ pipeline {
 //                   sh './hack/jenkins/setup-for-integration-test.sh -k aks'
 //                   sh 'kubectl config use k8po-ci'
 //                   sh 'make clean-cluster'
-//                   sh 'VERSION_POSTFIX=$VERSION_POSTFIX make integration-test'
+//                   sh 'make integration-test'
 //                   sh './hack/test/test-wavefront-metrics.sh -t $WAVEFRONT_TOKEN'
 //                   sh 'make clean-cluster'
 //                 }

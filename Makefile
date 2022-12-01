@@ -172,7 +172,7 @@ token-check:
 	@if [ -z ${WAVEFRONT_TOKEN} ]; then echo "Need to set WAVEFRONT_TOKEN" && exit 1; fi
 
 proxy-test: token-check $(SEMVER_CLI_BIN)
-	(cd $(TEST_DIR) && ./test-integration.sh $(WAVEFRONT_CLUSTER) $(WAVEFRONT_TOKEN) $(VERSION) $(INTEGRATION_TEST_ARGS))
+	(cd $(TEST_DIR) && ./test-integration.sh -c $(WAVEFRONT_CLUSTER) -t $(WAVEFRONT_TOKEN) -v $(VERSION) -r $(INTEGRATION_TEST_ARGS))
 
 #Testing code, configuration and deployment changes
 .PHONY: setup-test
