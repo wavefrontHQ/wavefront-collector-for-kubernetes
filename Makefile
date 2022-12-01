@@ -172,10 +172,7 @@ token-check:
 	@if [ -z ${WAVEFRONT_TOKEN} ]; then echo "Need to set WAVEFRONT_TOKEN" && exit 1; fi
 
 proxy-test: token-check $(SEMVER_CLI_BIN)
-	(cd $(TEST_DIR) && ./test-integration.sh $(WAVEFRONT_CLUSTER) $(WAVEFRONT_TOKEN) $(VERSION) $(INTEGRATION_TEST_TYPE))
-
-#Testing deployment and configuration changes, no code changes
-deploy-test: token-check k8s-env clean-deployment deploy-targets proxy-test
+	(cd $(TEST_DIR) && ./test-integration.sh $(WAVEFRONT_CLUSTER) $(WAVEFRONT_TOKEN) $(VERSION) $(INTEGRATION_TEST_ARGS))
 
 #Testing code, configuration and deployment changes
 .PHONY: setup-test
@@ -185,10 +182,14 @@ setup-test: token-check k8s-env clean-deployment deploy-targets delete-images pu
 e2e-test: setup-test
 	(cd $(TEST_DIR) && ./test-integration.sh -c $(WAVEFRONT_CLUSTER) -t $(WAVEFRONT_TOKEN) -v $(VERSION) -r real-proxy-metrics)
 
+.PHONE: build-image
+build-image:
+ifneq ($(INTEGRATION_TEST_BUILD), ci)
+	make delete-image push-image
+endif
+
 .PHONY: integration-test
-integration-test: setup-test
-#    (echo $(INTEGRATION_TEST_ARGS))
-	(cd $(TEST_DIR) && ./test-integration.sh -c $(WAVEFRONT_CLUSTER) -t $(WAVEFRONT_TOKEN) -v $(VERSION) $(INTEGRATION_TEST_ARGS))
+integration-test: token-check k8s-env clean-deployment deploy-targets build-image proxy-test
 
 # creating this as separate and distinct for now,
 # but would like to recombine as a flag on integration-test

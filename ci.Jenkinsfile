@@ -70,6 +70,7 @@ pipeline {
             DOCKER_IMAGE = "kubernetes-collector-snapshot"
             WAVEFRONT_TOKEN = credentials("WAVEFRONT_TOKEN_NIMBA")
             INTEGRATION_TEST_ARGS="-r cluster-metrics-only node-metrics-only combined default real-proxy-metrics"
+            INTEGRATION_TEST_BUILD="ci"
           }
           steps {
             withEnv(["PATH+GO=${HOME}/go/bin", "PATH+GCLOUD=${HOME}/google-cloud-sdk/bin"]) {
@@ -78,10 +79,6 @@ pipeline {
                 sh 'make gke-connect-to-cluster'
                 sh 'make clean-cluster'
                 sh 'make integration-test'
-//                 sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=cluster-metrics-only make deploy-test'
-//                 sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=node-metrics-only make deploy-test'
-//                 sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=combined make deploy-test'
-//                 sh 'VERSION_POSTFIX=$VERSION_POSTFIX make deploy-test'
                 sh 'make clean-cluster'
               }
             }
@@ -104,6 +101,7 @@ pipeline {
             AWS_SHARED_CREDENTIALS_FILE = credentials("k8po-ci-aws-creds")
             AWS_CONFIG_FILE = credentials("k8po-ci-aws-profile")
             WAVEFRONT_TOKEN = credentials("WAVEFRONT_TOKEN_NIMBA")
+            INTEGRATION_TEST_BUILD="ci"
           }
           steps {
             withEnv(["PATH+GO=${HOME}/go/bin"]) {
@@ -141,7 +139,7 @@ pipeline {
 //                   sh './hack/jenkins/setup-for-integration-test.sh -k aks'
 //                   sh 'kubectl config use k8po-ci'
 //                   sh 'make clean-cluster'
-//                   sh 'VERSION_POSTFIX=$VERSION_POSTFIX make deploy-test'
+//                   sh 'VERSION_POSTFIX=$VERSION_POSTFIX make integration-test'
 //                   sh './hack/test/test-wavefront-metrics.sh -t $WAVEFRONT_TOKEN'
 //                   sh 'make clean-cluster'
 //                 }
