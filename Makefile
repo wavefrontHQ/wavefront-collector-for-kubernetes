@@ -174,10 +174,6 @@ token-check:
 proxy-test: token-check $(SEMVER_CLI_BIN)
 	(cd $(TEST_DIR) && ./test-integration.sh -c $(WAVEFRONT_CLUSTER) -t $(WAVEFRONT_TOKEN) -v $(VERSION) -r $(INTEGRATION_TEST_ARGS))
 
-#Testing code, configuration and deployment changes
-.PHONY: setup-test
-setup-test: token-check k8s-env clean-deployment deploy-targets delete-images push-images $(SEMVER_CLI_BIN)
-
 .PHONY: e2e-test
 e2e-test: setup-test
 	(cd $(TEST_DIR) && ./test-integration.sh -c $(WAVEFRONT_CLUSTER) -t $(WAVEFRONT_TOKEN) -v $(VERSION) -r real-proxy-metrics)
@@ -185,7 +181,7 @@ e2e-test: setup-test
 .PHONE: build-image
 build-image:
 ifneq ($(INTEGRATION_TEST_BUILD), ci)
-	make delete-image push-image
+	make delete-images push-images
 endif
 
 .PHONY: integration-test

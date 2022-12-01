@@ -69,7 +69,7 @@ pipeline {
             PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
             DOCKER_IMAGE = "kubernetes-collector-snapshot"
             WAVEFRONT_TOKEN = credentials("WAVEFRONT_TOKEN_NIMBA")
-            INTEGRATION_TEST_ARGS="-r cluster-metrics-only node-metrics-only combined default real-proxy-metrics"
+            INTEGRATION_TEST_ARGS="cluster-metrics-only node-metrics-only combined default real-proxy-metrics"
             INTEGRATION_TEST_BUILD="ci"
           }
           steps {
@@ -101,6 +101,7 @@ pipeline {
             AWS_SHARED_CREDENTIALS_FILE = credentials("k8po-ci-aws-creds")
             AWS_CONFIG_FILE = credentials("k8po-ci-aws-profile")
             WAVEFRONT_TOKEN = credentials("WAVEFRONT_TOKEN_NIMBA")
+            INTEGRATION_TEST_ARGS="cluster-metrics-only node-metrics-only combined default real-proxy-metrics"
             INTEGRATION_TEST_BUILD="ci"
           }
           steps {
@@ -115,38 +116,40 @@ pipeline {
             }
           }
         }
-//         stage("AKS Integration Test") {
-//           agent {
-//             label "aks"
-//           }
-//           options {
-//             timeout(time: 30, unit: 'MINUTES')
-//           }
-//           tools {
-//             go 'Go 1.18'
-//           }
-//           environment {
-//             AKS_CLUSTER_NAME = "k8po-ci"
-//             VERSION_POSTFIX = "-alpha-${GIT_COMMIT.substring(0, 8)}"
-//             PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
-//             DOCKER_IMAGE = "kubernetes-collector-snapshot"
-//             WAVEFRONT_TOKEN = credentials("WAVEFRONT_TOKEN_NIMBA")
-//           }
-//           steps {
-//             withEnv(["PATH+GO=${HOME}/go/bin"]) {
-//               lock("integration-test-aks") {
-//                 withCredentials([file(credentialsId: 'aks-kube-config', variable: 'KUBECONFIG')]) {
-//                   sh './hack/jenkins/setup-for-integration-test.sh -k aks'
-//                   sh 'kubectl config use k8po-ci'
-//                   sh 'make clean-cluster'
-//                   sh 'make integration-test'
-//                   sh './hack/test/test-wavefront-metrics.sh -t $WAVEFRONT_TOKEN'
-//                   sh 'make clean-cluster'
-//                 }
-//               }
-//             }
-//           }
-//         }
+        stage("AKS Integration Test") {
+          agent {
+            label "aks"
+          }
+          options {
+            timeout(time: 30, unit: 'MINUTES')
+          }
+          tools {
+            go 'Go 1.18'
+          }
+          environment {
+            AKS_CLUSTER_NAME = "k8po-ci"
+            VERSION_POSTFIX = "-alpha-${GIT_COMMIT.substring(0, 8)}"
+            PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
+            DOCKER_IMAGE = "kubernetes-collector-snapshot"
+            WAVEFRONT_TOKEN = credentials("WAVEFRONT_TOKEN_NIMBA")
+            INTEGRATION_TEST_ARGS="cluster-metrics-only node-metrics-only combined default real-proxy-metrics"
+            INTEGRATION_TEST_BUILD="ci"
+          }
+          steps {
+            withEnv(["PATH+GO=${HOME}/go/bin"]) {
+              lock("integration-test-aks") {
+                withCredentials([file(credentialsId: 'aks-kube-config', variable: 'KUBECONFIG')]) {
+                  sh './hack/jenkins/setup-for-integration-test.sh -k aks'
+                  sh 'kubectl config use k8po-ci'
+                  sh 'make clean-cluster'
+                  sh 'make integration-test'
+                  sh './hack/test/test-wavefront-metrics.sh -t $WAVEFRONT_TOKEN'
+                  sh 'make clean-cluster'
+                }
+              }
+            }
+          }
+        }
       }
     }
   }
