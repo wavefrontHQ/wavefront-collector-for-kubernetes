@@ -69,6 +69,7 @@ pipeline {
             PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
             DOCKER_IMAGE = "kubernetes-collector-snapshot"
             WAVEFRONT_TOKEN = credentials("WAVEFRONT_TOKEN_NIMBA")
+            INTEGRATION_TEST_ARGS="-r cluster-metrics-only node-metrics-only combined default real-proxy-metrics"
           }
           steps {
             withEnv(["PATH+GO=${HOME}/go/bin", "PATH+GCLOUD=${HOME}/google-cloud-sdk/bin"]) {
@@ -76,10 +77,11 @@ pipeline {
                 sh './hack/jenkins/setup-for-integration-test.sh -k gke'
                 sh 'make gke-connect-to-cluster'
                 sh 'make clean-cluster'
-                sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=cluster-metrics-only make deploy-test'
-                sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=node-metrics-only make deploy-test'
-                sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=combined make deploy-test'
-                sh 'VERSION_POSTFIX=$VERSION_POSTFIX make deploy-test'
+                sh 'make integration-test'
+//                 sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=cluster-metrics-only make deploy-test'
+//                 sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=node-metrics-only make deploy-test'
+//                 sh 'VERSION_POSTFIX=$VERSION_POSTFIX INTEGRATION_TEST_TYPE=combined make deploy-test'
+//                 sh 'VERSION_POSTFIX=$VERSION_POSTFIX make deploy-test'
                 sh 'make clean-cluster'
               }
             }
@@ -109,7 +111,7 @@ pipeline {
                 sh './hack/jenkins/setup-for-integration-test.sh -k eks'
                 sh 'make target-eks'
                 sh 'make clean-cluster'
-                sh 'VERSION_POSTFIX=$VERSION_POSTFIX make integration-test'
+                sh 'make integration-test'
                 sh 'make clean-cluster'
               }
             }

@@ -187,7 +187,8 @@ e2e-test: setup-test
 
 .PHONY: integration-test
 integration-test: setup-test
-	(cd $(TEST_DIR) && ./test-integration.sh -c $(WAVEFRONT_CLUSTER) -t $(WAVEFRONT_TOKEN) -v $(VERSION))
+#    (echo $(INTEGRATION_TEST_ARGS))
+	(cd $(TEST_DIR) && ./test-integration.sh -c $(WAVEFRONT_CLUSTER) -t $(WAVEFRONT_TOKEN) -v $(VERSION) $(INTEGRATION_TEST_ARGS))
 
 # creating this as separate and distinct for now,
 # but would like to recombine as a flag on integration-test

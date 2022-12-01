@@ -80,6 +80,7 @@ function run_fake_proxy_test() {
 function run_real_proxy_metrics_test () {
   env USE_TEST_PROXY=false ./deploy.sh -c "$WAVEFRONT_CLUSTER" -t "$WAVEFRONT_TOKEN" -v "$VERSION" -k "$K8S_ENV" -n "$WF_CLUSTER_NAME" -e "$EXPERIMENTAL_FEATURES" -y "$COLLECTOR_YAML"
   ./test-wavefront-metrics.sh -t $WAVEFRONT_TOKEN
+  green "SUCCEEDED"
 }
 
 function main() {
@@ -94,6 +95,7 @@ function main() {
   local SLEEP_TIME=70
   local WF_CLUSTER_NAME=$(whoami)-${K8S_ENV}-$(date +"%y%m%d")
   local EXPERIMENTAL_FEATURES=
+  local EXIT_CODE=0
 
   while getopts ":c:t:v:r:" opt; do
     case $opt in
@@ -114,7 +116,7 @@ function main() {
       ;;
     esac
   done
-
+  echo "tests_to_run is $tests_to_run"
   if [[ ${#tests_to_run[@]} -eq 0 ]]; then
     tests_to_run=(
       "default"
@@ -134,13 +136,13 @@ function main() {
     run_fake_proxy_test "all-metrics" "base/deploy/collector-deployments/5-collector-single-deployment.yaml"
   fi
   if [[ "${tests_to_run[*]}" =~ "histogram-conversion" ]]; then
-    run_fake_proxy_test "all-metrics" "base/deploy/kubernetes/5-collector-daemonset.yaml" "histogram-conversion"
+    run_fake_proxy_test "all-metrics" "../../deploy/kubernetes/5-collector-daemonset.yaml" "histogram-conversion"
   fi
   if [[ "${tests_to_run[*]}" =~ "real-proxy-metrics" ]]; then
     run_real_proxy_metrics_test
   fi
   if [[ "${tests_to_run[*]}" =~ "default" ]]; then
-    run_fake_proxy_test "all-metrics" "base/deploy/kubernetes/5-collector-daemonset.yaml"
+    run_fake_proxy_test "all-metrics" "../../deploy/kubernetes/5-collector-daemonset.yaml"
   fi
 
   exit "$EXIT_CODE"

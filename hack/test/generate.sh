@@ -101,6 +101,7 @@ mv xx00 base/deploy/collector-deployments/5-collector-node-metrics-only.yaml
 mv xx01 base/deploy/collector-deployments/5-collector-cluster-metrics-only.yaml
 echo "before copying our collectr_yaml selection"
 echo "COLLECTOR_YAML is ..... $COLLECTOR_YAML"
+pwd
 cp "${COLLECTOR_YAML}" base/deploy/5-wavefront-collector.yaml
 
 
