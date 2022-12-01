@@ -17,6 +17,9 @@ func NewWavefrontNoOpClient() (Sender, error) {
 	return defaultNoopClient, nil
 }
 
+func (sender *wavefrontNoOpSender) private() {
+}
+
 func (sender *wavefrontNoOpSender) Start() {
 	// no-op
 }

@@ -54,6 +54,9 @@ func NewMultiSender(senders ...Sender) MultiSender {
 	return ms
 }
 
+func (ms *multiSender) private() {
+}
+
 func (ms *multiSender) SendMetric(name string, value float64, ts int64, source string, tags map[string]string) error {
 	var errors multiError
 	for _, sender := range ms.senders {

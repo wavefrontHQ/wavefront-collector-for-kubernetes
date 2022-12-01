@@ -17,12 +17,10 @@ import (
 var /* const */ quotation = regexp.MustCompile("\"")
 var /* const */ lineBreak = regexp.MustCompile("\\n")
 
-// MetricLine is for internal use only.
-//
 // Gets a metric line in the Wavefront metrics data format:
 // <metricName> <metricValue> [<timestamp>] source=<source> [pointTags]
 // Example: "new-york.power.usage 42422.0 1533531013 source=localhost datacenter=dc1"
-func MetricLine(name string, value float64, ts int64, source string, tags map[string]string, defaultSource string) (string, error) {
+func metricLine(name string, value float64, ts int64, source string, tags map[string]string, defaultSource string) (string, error) {
 	if name == "" {
 		return "", errors.New("empty metric name")
 	}
@@ -59,12 +57,10 @@ func MetricLine(name string, value float64, ts int64, source string, tags map[st
 	return sb.String(), nil
 }
 
-// HistoLine is for internal use only.
-//
 // Gets a histogram line in the Wavefront histogram data format:
 // {!M | !H | !D} [<timestamp>] #<count> <mean> [centroids] <histogramName> source=<source> [pointTags]
 // Example: "!M 1533531013 #20 30.0 #10 5.1 request.latency source=appServer1 region=us-west"
-func HistoLine(name string, centroids histogram.Centroids, hgs map[histogram.Granularity]bool, ts int64, source string, tags map[string]string, defaultSource string) (string, error) {
+func histogramLine(name string, centroids histogram.Centroids, hgs map[histogram.Granularity]bool, ts int64, source string, tags map[string]string, defaultSource string) (string, error) {
 	if name == "" {
 		return "", errors.New("empty distribution name")
 	}
@@ -122,14 +118,13 @@ func HistoLine(name string, centroids histogram.Centroids, hgs map[histogram.Gra
 	return sbg.String(), nil
 }
 
-// SpanLine is for internal use only.
-//
 // Gets a span line in the Wavefront span data format:
 // <tracingSpanName> source=<source> [pointTags] <start_millis> <duration_milli_seconds>
 // Example:
 // "getAllUsers source=localhost traceId=7b3bf470-9456-11e8-9eb6-529269fb1459 spanId=0313bafe-9457-11e8-9eb6-529269fb1459
-//    parent=2f64e538-9457-11e8-9eb6-529269fb1459 application=Wavefront http.method=GET 1533531013 343500"
-func SpanLine(name string, startMillis, durationMillis int64, source, traceId, spanId string, parents, followsFrom []string, tags []SpanTag, spanLogs []SpanLog, defaultSource string) (string, error) {
+//
+//	parent=2f64e538-9457-11e8-9eb6-529269fb1459 application=Wavefront http.method=GET 1533531013 343500"
+func spanLine(name string, startMillis, durationMillis int64, source, traceId, spanId string, parents, followsFrom []string, tags []SpanTag, spanLogs []SpanLog, defaultSource string) (string, error) {
 	if name == "" {
 		return "", errors.New("span name cannot be empty")
 	}
@@ -194,8 +189,7 @@ func SpanLine(name string, startMillis, durationMillis int64, source, traceId, s
 	return sb.String(), nil
 }
 
-// SpanLogJSON is for internal use only.
-func SpanLogJSON(traceId, spanId string, spanLogs []SpanLog, span string) (string, error) {
+func spanLogJSON(traceId, spanId string, spanLogs []SpanLog, span string) (string, error) {
 	l := SpanLogs{
 		TraceId: traceId,
 		SpanId:  spanId,
@@ -209,11 +203,9 @@ func SpanLogJSON(traceId, spanId string, spanLogs []SpanLog, span string) (strin
 	return string(out[:]) + "\n", nil
 }
 
-// EventLine is for internal use only.
-//
-// EventLine encode the event to a wf proxy format
+// eventLine encode the event to a wf proxy format
 // set endMillis to 0 for a 'Instantaneous' event
-func EventLine(name string, startMillis, endMillis int64, source string, tags map[string]string, setters ...event.Option) (string, error) {
+func eventLine(name string, startMillis, endMillis int64, source string, tags map[string]string, setters ...event.Option) (string, error) {
 	sb := internal.GetBuffer()
 	defer internal.PutBuffer(sb)
 
@@ -258,8 +250,8 @@ func EventLine(name string, startMillis, endMillis int64, source string, tags ma
 	return sb.String(), nil
 }
 
-// EventLineJSON is for internal use only.
-func EventLineJSON(name string, startMillis, endMillis int64, source string, tags map[string]string, setters ...event.Option) (string, error) {
+// eventLineJSON encodes the event to a wf API format
+func eventLineJSON(name string, startMillis, endMillis int64, source string, tags map[string]string, setters ...event.Option) (string, error) {
 	annotations := map[string]string{}
 	l := map[string]interface{}{
 		"name":        name,
@@ -329,7 +321,7 @@ func isUUIDFormat(str string) bool {
 	return true
 }
 
-//Sanitize string of metric name, source and key of tags according to the rule of Wavefront proxy.
+// Sanitize string of metric name, source and key of tags according to the rule of Wavefront proxy.
 func sanitizeInternal(str string) string {
 	sb := internal.GetBuffer()
 	defer internal.PutBuffer(sb)
@@ -378,7 +370,7 @@ func sanitizeInternal(str string) string {
 	return sb.String()
 }
 
-//Sanitize string of tags value, etc.
+// Sanitize string of tags value, etc.
 func sanitizeValue(str string) string {
 	res := strings.TrimSpace(str)
 	if strings.Contains(str, "\"") || strings.Contains(str, "'") {

@@ -17,6 +17,7 @@ type Sender interface {
 	EventSender
 	internal.Flusher
 	Close()
+	private()
 }
 
 type wavefrontSender struct {
@@ -74,8 +75,11 @@ func (sender *wavefrontSender) Start() {
 	sender.eventHandler.Start()
 }
 
+func (sender *wavefrontSender) private() {
+}
+
 func (sender *wavefrontSender) SendMetric(name string, value float64, ts int64, source string, tags map[string]string) error {
-	line, err := MetricLine(name, value, ts, source, tags, sender.defaultSource)
+	line, err := metricLine(name, value, ts, source, tags, sender.defaultSource)
 	if err != nil {
 		sender.pointsInvalid.Inc()
 		return err
@@ -105,7 +109,7 @@ func (sender *wavefrontSender) SendDeltaCounter(name string, value float64, sour
 
 func (sender *wavefrontSender) SendDistribution(name string, centroids []histogram.Centroid,
 	hgs map[histogram.Granularity]bool, ts int64, source string, tags map[string]string) error {
-	line, err := HistoLine(name, centroids, hgs, ts, source, tags, sender.defaultSource)
+	line, err := histogramLine(name, centroids, hgs, ts, source, tags, sender.defaultSource)
 	if err != nil {
 		sender.histogramsInvalid.Inc()
 		return err
@@ -121,7 +125,7 @@ func (sender *wavefrontSender) SendDistribution(name string, centroids []histogr
 
 func (sender *wavefrontSender) SendSpan(name string, startMillis, durationMillis int64, source, traceId, spanId string,
 	parents, followsFrom []string, tags []SpanTag, spanLogs []SpanLog) error {
-	line, err := SpanLine(name, startMillis, durationMillis, source, traceId, spanId, parents, followsFrom, tags, spanLogs, sender.defaultSource)
+	line, err := spanLine(name, startMillis, durationMillis, source, traceId, spanId, parents, followsFrom, tags, spanLogs, sender.defaultSource)
 	if err != nil {
 		sender.spansInvalid.Inc()
 		return err
@@ -135,7 +139,7 @@ func (sender *wavefrontSender) SendSpan(name string, startMillis, durationMillis
 	}
 
 	if len(spanLogs) > 0 {
-		logs, err := SpanLogJSON(traceId, spanId, spanLogs, line)
+		logs, err := spanLogJSON(traceId, spanId, spanLogs, line)
 		if err != nil {
 			sender.spanLogsInvalid.Inc()
 			return err
@@ -155,9 +159,9 @@ func (sender *wavefrontSender) SendEvent(name string, startMillis, endMillis int
 	var line string
 	var err error
 	if sender.proxy {
-		line, err = EventLine(name, startMillis, endMillis, source, tags, setters...)
+		line, err = eventLine(name, startMillis, endMillis, source, tags, setters...)
 	} else {
-		line, err = EventLineJSON(name, startMillis, endMillis, source, tags, setters...)
+		line, err = eventLineJSON(name, startMillis, endMillis, source, tags, setters...)
 	}
 	if err != nil {
 		sender.eventsInvalid.Inc()
