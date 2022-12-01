@@ -9,5 +9,5 @@ curl 'https://www.random.org/lists/?mode=advanced' \
   -H 'sec-fetch-user: ?1' \
   -H 'sec-fetch-dest: document' \
   -H 'referer: https://www.random.org/lists/?mode=advanced' \
-  --data 'list=Anil%0D%0AMark%0D%0APriya%0D%0AMatt%0D%0AJohn%0D%0AYuqi%0D%0AJoe&format=plain&rnd=new' \
+  --data 'list=Anil%0D%0AMark%0D%0APriya%0D%0AGinwoo%0D%0AJohn%0D%0AJeremy%0D%0AJerry%0D%0AYuqi%0D%0AJoe&format=plain&rnd=new' \
   --compressed
