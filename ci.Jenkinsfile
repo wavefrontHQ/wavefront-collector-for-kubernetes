@@ -143,7 +143,6 @@ pipeline {
                   sh 'kubectl config use k8po-ci'
                   sh 'make clean-cluster'
                   sh 'make integration-test'
-                  sh './hack/test/test-wavefront-metrics.sh -t $WAVEFRONT_TOKEN'
                   sh 'make clean-cluster'
                 }
               }
