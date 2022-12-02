@@ -174,9 +174,9 @@ token-check:
 proxy-test: token-check $(SEMVER_CLI_BIN)
 	(cd $(TEST_DIR) && ./test-integration.sh -c $(WAVEFRONT_CLUSTER) -t $(WAVEFRONT_TOKEN) -v $(VERSION) -r $(INTEGRATION_TEST_ARGS))
 
-.PHONY: e2e-test
-e2e-test: setup-test
-	(cd $(TEST_DIR) && ./test-integration.sh -c $(WAVEFRONT_CLUSTER) -t $(WAVEFRONT_TOKEN) -v $(VERSION) -r real-proxy-metrics)
+#.PHONY: e2e-test
+#e2e-test: setup-test
+#	(cd $(TEST_DIR) && ./test-integration.sh -c $(WAVEFRONT_CLUSTER) -t $(WAVEFRONT_TOKEN) -v $(VERSION) -r real-proxy-metrics)
 
 .PHONE: build-image
 build-image:
