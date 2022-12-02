@@ -192,12 +192,12 @@ function main() {
   fi
   if [[ "${tests_to_run[*]}" =~ "histogram-conversion" ]]; then
     echo "==================== Running fake_proxy histogram-conversion test ===================="
-    run_fake_proxy_test "all-metrics" "../../deploy/kubernetes/5-collector-daemonset.yaml" "histogram-conversion"
+    run_fake_proxy_test "all-metrics" "${REPO_ROOT}/deploy/kubernetes/5-collector-daemonset.yaml" "histogram-conversion"
     ${SCRIPT_DIR}/clean-deploy.sh
   fi
   if [[ "${tests_to_run[*]}" =~ "default" ]]; then
     echo "==================== Running fake_proxy default test ===================="
-    run_fake_proxy_test "all-metrics" "../../deploy/kubernetes/5-collector-daemonset.yaml"
+    run_fake_proxy_test "all-metrics" "${REPO_ROOT}/deploy/kubernetes/5-collector-daemonset.yaml"
     ${SCRIPT_DIR}/clean-deploy.sh
   fi
   if [[ "${tests_to_run[*]}" =~ "real-proxy-metrics" ]]; then
