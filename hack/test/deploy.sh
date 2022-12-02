@@ -57,9 +57,12 @@ function main() {
   check_required_argument "$WAVEFRONT_TOKEN" "-t <WAVEFRONT_TOKEN> is required"
   check_required_argument "$K8S_ENV" "-k <K8S_ENV> is required"
 
-  local experimental_args=
-  if [[ -n ${EXPERIMENTAL_FEATURES} ]]; then
-    experimental_args="-e $EXPERIMENTAL_FEATURES"
+  local additional_args=""
+  if [[ -n "${COLLECTOR_YAML:-}" ]]; then
+    additional_args="$additional_args -y $COLLECTOR_YAML"
+  fi
+  if [[ -n "${EXPERIMENTAL_FEATURES:-}" ]]; then
+    additional_args="$additional_args -e $EXPERIMENTAL_FEATURES"
   fi
 
   "${SCRIPT_DIR}"/generate.sh \
@@ -68,9 +71,8 @@ function main() {
       -v "$VERSION" \
       -k "$K8S_ENV" \
       -n "$K8S_CLUSTER_NAME" \
-      -y "$COLLECTOR_YAML" \
       -p "$USE_TEST_PROXY" \
-      "$experimental_args"
+      $additional_args
 
   kustomize build "overlays/test-$K8S_ENV" | kubectl apply -f -
 }

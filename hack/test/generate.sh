@@ -6,6 +6,8 @@ SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 NS=wavefront-collector
 
 function copy_collector_deployment_files() {
+  echo "Copying collector deployment files"
+
   cp "${REPO_ROOT}/deploy/kubernetes/0-collector-namespace.yaml" base/deploy/0-collector-namespace.yaml
   cp "${REPO_ROOT}/deploy/kubernetes/1-collector-cluster-role.yaml" base/deploy/1-collector-cluster-role.yaml
   cp "${REPO_ROOT}/deploy/kubernetes/2-collector-rbac.yaml" base/deploy/2-collector-rbac.yaml
@@ -22,6 +24,7 @@ function copy_collector_deployment_files() {
 }
 
 function replace_placeholders_in_template_yaml() {
+  echo "Replacing placeholders in template yaml files"
   local FLUSH_INTERVAL=30
   local COLLECTION_INTERVAL=60
 

@@ -7,7 +7,7 @@ REPO_DIR=$(shell git rev-parse --show-toplevel)
 TEST_DIR=$(REPO_DIR)/hack/test
 DEPLOY_DIR=$(REPO_DIR)/hack/test/deploy
 OUT_DIR?=$(REPO_DIR)/_output
-INTEGRATION_TEST_TYPE?=default
+INTEGRATION_TEST_ARGS?=all
 
 BINARY_NAME=wavefront-collector
 
