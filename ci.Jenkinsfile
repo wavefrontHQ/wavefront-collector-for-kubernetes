@@ -132,7 +132,7 @@ pipeline {
             PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
             DOCKER_IMAGE = "kubernetes-collector-snapshot"
             WAVEFRONT_TOKEN = credentials("WAVEFRONT_TOKEN_NIMBA")
-            INTEGRATION_TEST_ARGS="-r real-proxy-metrics"
+            INTEGRATION_TEST_ARGS="real-proxy-metrics"
             INTEGRATION_TEST_BUILD="ci"
           }
           steps {

@@ -42,6 +42,7 @@ function run_fake_proxy_test() {
 
   wait_for_cluster_ready
 
+  kill $(jobs -p) &>/dev/null || true
   kubectl --namespace "$NS" port-forward deploy/wavefront-proxy 8888 &
   trap 'kill $(jobs -p)' EXIT
 
@@ -93,6 +94,8 @@ function run_fake_proxy_test() {
   else
     green "SUCCEEDED"
   fi
+
+  kill $(jobs -p) &>/dev/null || true
 }
 
 function run_real_proxy_metrics_test () {
