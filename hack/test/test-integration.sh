@@ -89,13 +89,10 @@ function run_fake_proxy_test() {
     if which pbcopy >/dev/null; then
       echo "$RES" | pbcopy
     fi
-    EXIT_CODE=1
+    exit 1
   else
     green "SUCCEEDED"
   fi
-
-  # kill port-forwarding to unbind the port and enable running the next proxy test
-  kill "$(jobs -p)" || true
 }
 
 function run_real_proxy_metrics_test () {
@@ -206,8 +203,6 @@ function main() {
     echo "==================== Running real-proxy-metrics test ===================="
     run_real_proxy_metrics_test
   fi
-
-  exit "$EXIT_CODE"
 }
 
 main $@
