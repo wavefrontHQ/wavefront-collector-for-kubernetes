@@ -171,12 +171,12 @@ clean:
 token-check:
 	@if [ -z ${WAVEFRONT_TOKEN} ]; then echo "Need to set WAVEFRONT_TOKEN" && exit 1; fi
 
+.PHONY: proxy-test
 proxy-test: token-check $(SEMVER_CLI_BIN)
-	(cd $(TEST_DIR) && ./test-integration.sh -c $(WAVEFRONT_CLUSTER) -t $(WAVEFRONT_TOKEN) -v $(VERSION) -r $(INTEGRATION_TEST_ARGS))
-
-#.PHONY: e2e-test
-#e2e-test: setup-test
-#	(cd $(TEST_DIR) && ./test-integration.sh -c $(WAVEFRONT_CLUSTER) -t $(WAVEFRONT_TOKEN) -v $(VERSION) -r real-proxy-metrics)
+ifeq ($(INTEGRATION_TEST_ARGS),all)
+	$(eval INTEGRATION_TEST_ARGS := -r cluster-metrics-only -r node-metrics-only -r combined -r default -r real-proxy-metrics)
+endif
+	(cd $(TEST_DIR) && ./test-integration.sh -c $(WAVEFRONT_CLUSTER) -t $(WAVEFRONT_TOKEN) -v $(VERSION) $(INTEGRATION_TEST_ARGS))
 
 .PHONE: build-image
 build-image:
