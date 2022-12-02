@@ -95,7 +95,7 @@ function run_fake_proxy_test() {
   fi
 
   # kill port-forwarding to unbind the port and enable running the next proxy test
-  kill "$(jobs -p)"
+  kill "$(jobs -p)" || true
 }
 
 function run_real_proxy_metrics_test () {
