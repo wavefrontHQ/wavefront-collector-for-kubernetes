@@ -44,7 +44,7 @@ function run_fake_proxy_test() {
 
   kill $(jobs -p) &>/dev/null || true
   kubectl --namespace "$NS" port-forward deploy/wavefront-proxy 8888 &
-  trap 'kill $(jobs -p)' EXIT
+  trap 'kill $(jobs -p) &>/dev/null || true' EXIT
 
   echo "waiting for logs..."
   sleep ${SLEEP_TIME}

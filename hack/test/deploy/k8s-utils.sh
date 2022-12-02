@@ -22,7 +22,7 @@ function popd_check() {
 }
 
 function wait_for_cluster_ready() {
-  echo "Waiting for all Pods to be 'Ready'"
+  printf "Waiting for all Pods to be 'Ready'"
   while ! kubectl wait --for=condition=Ready pod --all -l exclude-me!=true --all-namespaces --timeout=5s  &> /dev/null; do
     printf "."
     sleep 1
@@ -41,18 +41,22 @@ function wait_for_namespace_created() {
 }
 
 function wait_for_namespaced_resource_created() {
-    local namespace=$1
-    local resource=$2
-    while ! kubectl get --namespace $namespace $resource > /dev/null; do
-        echo "Waiting for $resource in $namespace to be created"
-        sleep 1
-    done
+  local namespace=$1
+  local resource=$2
+  printf "Waiting for $resource in $namespace to be created"
+  while ! kubectl get --namespace $namespace $resource > /dev/null; do
+    printf "."
+    sleep 1
+  done
+  echo " done."
 }
 
 function wait_for_cluster_resource_deleted() {
-    local resource=$1
-    while kubectl get $resource &> /dev/null; do
-        echo "Waiting for $resource to be deleted"
-        sleep 1
-    done
+  local resource=$1
+  printf "Waiting for $resource to be deleted"
+  while kubectl get $resource &> /dev/null; do
+    printf "."
+    sleep 1
+  done
+  echo " done."
 }
