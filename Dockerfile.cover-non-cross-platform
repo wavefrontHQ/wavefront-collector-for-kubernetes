@@ -1,0 +1,35 @@
+FROM harbor-repo.vmware.com/dockerhub-proxy-cache/bitnami/golang:1.18 as builder
+
+# Base Setup
+ARG BINARY_NAME
+# ARG RELEASE_VERSION
+# ARG GIT_COMMIT
+WORKDIR /workspace
+# Copy the Go Modules manifests
+
+# Copy `go.mod` for definitions and `go.sum` to invalidate the next layer
+# in case of a change in the dependencies
+COPY go.mod go.sum ./
+
+# Copy src
+COPY . .
+
+# Then build
+RUN CGO_ENABLED=0 GOOS=linux GO111MODULE=on go test -c ./cmd/wavefront-collector/ -cover -covermode=count -coverpkg=./... -a -o ${BINARY_NAME}.test
+
+# Copy main binary into a thin image
+FROM ubuntu
+ARG BINARY_NAME
+# ARG RELEASE_VERSION
+# ARG GIT_COMMIT
+WORKDIR /
+COPY --from=builder /workspace/${BINARY_NAME}.test .
+COPY --from=builder /workspace/collector-with-restart.sh .
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=builder /workspace/open_source_licenses.txt .
+
+RUN apt-get update && apt-get install -y curl
+RUN mv ./collector-with-restart.sh wavefront-collector
+
+#   nobody:nobody
+ENTRYPOINT ["/wavefront-collector"]
