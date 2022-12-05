@@ -25,7 +25,7 @@ function wait_for_query_match_exact() {
     loop_count=$((loop_count + 1))
 
     echo "===============BEGIN checking wavefront dashboard metrics for '$query_match_exact' - attempt $loop_count/$MAX_QUERY_TIMES"
-    actual=$(curl_query_to_wf_dashboard "${query_match_exact}")
+    actual=$(curl_query_to_wf_dashboard "${query_match_exact}" | awk '{printf "%.3f", $1}')
     echo "Actual is: '$actual'"
     echo "Expected is '${expected}'"
     echo "===============END checking wavefront dashboard metrics for $query_match_exact"
