@@ -191,6 +191,8 @@ func (src *prometheusMetricsSource) parseMetrics(reader io.Reader) ([]wf.Metric,
 		if err != nil {
 			log.Errorf("reading text format failed: %s", err)
 		}
+		// TODO bug: err is overwritten here and above for every metric,
+		// so whatever happens to be the last value of err is what is returned
 		pointsToAdd, err := pointBuilder.build(metricFamilies)
 		points = append(points, pointsToAdd...)
 	}
