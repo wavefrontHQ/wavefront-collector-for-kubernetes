@@ -1,7 +1,8 @@
 #!/bin/bash -e
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
-source ${REPO_ROOT}/hack/test/deploy/k8s-utils.sh
+source "${REPO_ROOT}"/hack/test/deploy/k8s-utils.sh
+SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 
 function curl_query_to_wf_dashboard() {
   local query=$1
@@ -19,8 +20,10 @@ function wait_for_query_match_exact() {
   local expected=$2
   local actual
   local loop_count=0
+
   while [[ $loop_count -lt $MAX_QUERY_TIMES ]]; do
     loop_count=$((loop_count + 1))
+
     echo "===============BEGIN checking wavefront dashboard metrics for '$query_match_exact' - attempt $loop_count/$MAX_QUERY_TIMES"
     actual=$(curl_query_to_wf_dashboard "${query_match_exact}")
     echo "Actual is: '$actual'"
@@ -28,7 +31,7 @@ function wait_for_query_match_exact() {
     echo "===============END checking wavefront dashboard metrics for $query_match_exact"
 
     if echo "$actual $expected" | awk '{exit ($1 > $2 || $1 < $2)}'; then
-        return 0
+      return 0
     fi
 
     sleep $CURL_WAIT
@@ -41,6 +44,7 @@ function wait_for_query_non_zero() {
   local query_non_zero=$1
   local actual=0
   local loop_count=0
+
   while [[ $actual == null || $actual == 0 ]] && [[ $loop_count -lt $MAX_QUERY_TIMES ]]; do
     loop_count=$((loop_count + 1))
 
@@ -59,12 +63,12 @@ function wait_for_query_non_zero() {
 }
 
 function print_usage_and_exit() {
-  echo "Failure: $1"
-  echo "Usage: $0 [flags] [options]"
-  echo -e "\t-c wavefront instance name (default: 'nimba')"
-  echo -e "\t-t wavefront token (required)"
-  echo -e "\t-n config cluster name for metric grouping (default: \$(whoami)-<default version from file>-release-test)"
-  echo -e "\t-v collector docker image version (default: load from 'release/VERSION')"
+  red "Failure: $1"
+  echo "Usage: $0 -c <WAVEFRONT_CLUSTER> -t <WAVEFRONT_TOKEN> -n [K8S_CLUSTER_NAME] -v [VERSION]"
+  echo "  -c wavefront instance name (default: 'nimba')"
+  echo "  -t wavefront token (required)"
+  echo "  -n config cluster name for metric grouping (default: \$(whoami)-<default version from file>-release-test)"
+  echo "  -v collector docker image version (default: load from 'release/VERSION')"
   exit 1
 }
 
@@ -78,7 +82,7 @@ function exit_on_fail() {
 }
 
 function main() {
-  cd "$(dirname "$0")" # hack/test
+  cd "${SCRIPT_DIR}" # hack/test
 
   local AFTER_UNIX_TS="$(date '+%s')000"
   local MAX_QUERY_TIMES=30
@@ -88,32 +92,22 @@ function main() {
   local WAVEFRONT_TOKEN=
 
   local WF_CLUSTER=nimba
-  local VERSION="$(cat ../../release/VERSION)"
-  local K8S_ENV=$(./deploy/get-k8s-cluster-env.sh | awk '{print tolower($0)}' )
-  local CONFIG_CLUSTER_NAME=$(whoami)-${K8S_ENV}-$(date +"%y%m%d")
+  local VERSION="$(cat "${REPO_ROOT}"/release/VERSION)"
+  local K8S_ENV=$("${SCRIPT_DIR}"/deploy/get-k8s-cluster-env.sh | awk '{print tolower($0)}' )
+  local K8S_CLUSTER_NAME=$(whoami)-${K8S_ENV}-$(date +"%y%m%d")
 
   while getopts ":c:t:n:v:" opt; do
     case $opt in
-    c)
-      WF_CLUSTER="$OPTARG"
-      ;;
-    t)
-      WAVEFRONT_TOKEN="$OPTARG"
-      ;;
-    n)
-      CONFIG_CLUSTER_NAME="$OPTARG"
-      ;;
-    v)
-      VERSION="$OPTARG"
-      ;;
-    \?)
-      print_usage_and_exit "Invalid option: -$OPTARG"
-      ;;
+      c)  WF_CLUSTER="$OPTARG" ;;
+      t)  WAVEFRONT_TOKEN="$OPTARG" ;;
+      n)  K8S_CLUSTER_NAME="$OPTARG" ;;
+      v)  VERSION="$OPTARG" ;;
+      \?) print_usage_and_exit "Invalid option: -$OPTARG" ;;
     esac
   done
 
   if [[ -z ${WAVEFRONT_TOKEN} ]]; then
-    print_msg_and_exit "wavefront token required"
+    print_msg_and_exit "-t <WAVEFRONT_TOKEN> is required"
   fi
 
   local VERSION_IN_DECIMAL="${VERSION%.*}"
@@ -122,12 +116,12 @@ function main() {
 
   wait_for_cluster_ready
 
-  exit_on_fail wait_for_query_match_exact "ts(kubernetes.collector.version%2C%20cluster%3D%22${CONFIG_CLUSTER_NAME}%22%20AND%20installation_method%3D%22manual%22)" "${VERSION_IN_DECIMAL}"
-  exit_on_fail wait_for_query_non_zero "ts(kubernetes.cluster.pod.count%2C%20cluster%3D%22${CONFIG_CLUSTER_NAME}%22)"
-  exit_on_fail wait_for_query_non_zero "ts(mysql.connections%2C%20cluster%3D%22${CONFIG_CLUSTER_NAME}%22)"
+  exit_on_fail wait_for_query_match_exact "ts(kubernetes.collector.version%2C%20cluster%3D%22${K8S_CLUSTER_NAME}%22%20AND%20installation_method%3D%22manual%22)" "${VERSION_IN_DECIMAL}"
+  exit_on_fail wait_for_query_non_zero "ts(kubernetes.cluster.pod.count%2C%20cluster%3D%22${K8S_CLUSTER_NAME}%22)"
+  exit_on_fail wait_for_query_non_zero "ts(mysql.connections%2C%20cluster%3D%22${K8S_CLUSTER_NAME}%22)"
 
   local PROM_EXAMPLE_EXPECTED_COUNT="3"
-  exit_on_fail wait_for_query_match_exact "ts(prom-example.schedule.activity.decision.counter%2C%20cluster%3D%22${CONFIG_CLUSTER_NAME}%22)" "${PROM_EXAMPLE_EXPECTED_COUNT}"
+  exit_on_fail wait_for_query_match_exact "ts(prom-example.schedule.activity.decision.counter%2C%20cluster%3D%22${K8S_CLUSTER_NAME}%22)" "${PROM_EXAMPLE_EXPECTED_COUNT}"
 }
 
 main $@
