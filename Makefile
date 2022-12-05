@@ -168,7 +168,6 @@ deploy-test: token-check k8s-env clean-deployment deploy-targets proxy-test
 
 #Testing code, configuration and deployment changes
 integration-test: token-check k8s-env clean-deployment deploy-targets delete-images push-images proxy-test
-	echo "Integration test finished. To generate code coverage reports, run 'make coverage-test'"
 
 # Get code coverage of integration test
 coverage-test: token-check k8s-env clean-deployment deploy-targets delete-images cover-push-images proxy-test
