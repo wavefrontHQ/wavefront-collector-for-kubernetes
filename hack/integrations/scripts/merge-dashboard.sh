@@ -1,15 +1,17 @@
 #!/bin/bash -e
 
-REPO_ROOT=~/workspace/wavefront-collector-for-kubernetes
+SCRIPT_DIR=$(dirname $0)
+REPO_ROOT=$(git -C "${SCRIPT_DIR}" rev-parse --show-toplevel)
 source ${REPO_ROOT}/hack/test/deploy/k8s-utils.sh
 
 function print_usage_and_exit() {
   echo "Failure: $1"
-  echo "Usage: $0 [flags] [options]"
-  echo -e "\t-c wavefront instance name (default: 'nimba')"
+  echo "Usage: $0 -t <WAVEFRONT_TOKEN> -s <SOURCE_DASHBOARD> -d <DEST_DASHBOARD> -b <BRANCH_NAME> -c [WF_CLUSTER]"
   echo -e "\t-t wavefront token (required)"
-  echo -e "\t-d dev dashboard url (required)"
-  echo -e "\t-b branch name for integration repo"
+  echo -e "\t-s source dashboard url (required)"
+  echo -e "\t-d destination dashboard url (required)"
+  echo -e "\t-b branch name for integration repo (required)"
+  echo -e "\t-c wavefront instance name (optional, default: 'nimba')"
   exit 1
 }
 
@@ -18,13 +20,14 @@ function main() {
 
   # REQUIRED
   local WAVEFRONT_TOKEN=
-  local DASHBOARD_DEV_URL=
+  local SOURCE_DASHBOARD=
+  local DEST_DASHBOARD=
+  local BRANCH_NAME=
 
-  local BRANCH_NAME="k8po/kubernetes"
+  # OPTIONAL
   local WF_CLUSTER=nimba
 
-
-  while getopts ":c:t:d:b:" opt; do
+  while getopts ":c:t:s:d:b:" opt; do
     case $opt in
     c)
       WF_CLUSTER="$OPTARG"
@@ -32,8 +35,11 @@ function main() {
     t)
       WAVEFRONT_TOKEN="$OPTARG"
       ;;
+    s)
+      SOURCE_DASHBOARD="$OPTARG"
+      ;;
     d)
-      DASHBOARD_DEV_URL="$OPTARG"
+      DEST_DASHBOARD="$OPTARG"
       ;;
     b)
       BRANCH_NAME="$OPTARG"
@@ -48,37 +54,45 @@ function main() {
     print_usage_and_exit "wavefront token required"
   fi
 
-  if [[ -z ${DASHBOARD_DEV_URL} ]]; then
-    print_usage_and_exit "dashboard url required"
+  if [[ -z ${SOURCE_DASHBOARD} ]]; then
+    print_usage_and_exit "source dashboard url required"
   fi
 
-  ../scripts/get-dashboard.sh -t ${WAVEFRONT_TOKEN} -d ${DASHBOARD_DEV_URL} -o ${DASHBOARD_DEV_URL}.json
+  if [[ -z ${DEST_DASHBOARD} ]]; then
+    print_usage_and_exit "destination dashboard url required"
+  fi
+
+  if [[ -z ${BRANCH_NAME} ]]; then
+    print_usage_and_exit "integrations branch required"
+  fi
+
+  ../scripts/get-dashboard.sh -t ${WAVEFRONT_TOKEN} -d ${SOURCE_DASHBOARD} -o ${SOURCE_DASHBOARD}.json
 
   local INTEGRATION_DIR=${REPO_ROOT}/../integrations
-  git -C "$INTEGRATION_DIR" checkout "$BRANCH_NAME" 2>/dev/null || git -C "$INTEGRATION_DIR" checkout -b "$BRANCH_NAME"
+  git -C "$INTEGRATION_DIR" stash
+  git -C "$INTEGRATION_DIR" fetch
+  git -C "$INTEGRATION_DIR" switch -C "$BRANCH_NAME"
 
   # Change the url field to match the integration url instead of the dev dashboard url
-  local DASHBOARD_URL="integration-$(echo "${DASHBOARD_DEV_URL}" | sed 's/-dev//')"
-  jq ".url = \"${DASHBOARD_URL}\"" ${DASHBOARD_DEV_URL}.json > ${DASHBOARD_URL}.json
+  jq ".url = \"${DEST_DASHBOARD}\"" ${SOURCE_DASHBOARD}.json > ${DEST_DASHBOARD}.json
 
-  # Copy dashboard version from integration feature branch if it exists, else default to 1
-  local VERSION=$(($(jq ".systemDashboardVersion" ${INTEGRATION_DIR}/kubernetes/dashboards/${DASHBOARD_URL}.json)))
+  # Copy dashboard version from integration feature branch and increment it
+  local VERSION=$(($(jq ".systemDashboardVersion" ${INTEGRATION_DIR}/kubernetes/dashboards/${DEST_DASHBOARD}.json)))
   if [[ ${VERSION} -eq 0 ]]; then
-    VERSION=1
-  fi
-  jq ". += {"systemDashboardVersion":${VERSION}}" ${DASHBOARD_URL}.json > "tmp" && mv "tmp" ${DASHBOARD_URL}.json
+   VERSION=1
+    fi
+   jq ". += {"systemDashboardVersion":${VERSION}}" ${DEST_DASHBOARD}.json > "tmp" && mv "tmp" ${DEST_DASHBOARD}.json
 
   # Do the sorting here so our systemDashboardVersion gets bumped to the top of the file
-  ../scripts/sort-dashboard.sh -i ${DASHBOARD_URL}.json -o 'tmp' && mv "tmp" ${DASHBOARD_URL}.json
-  ../scripts/clean-partials.sh
+  ../scripts/sort-dashboard.sh -i ${DEST_DASHBOARD}.json -o 'tmp' && mv "tmp" ${DEST_DASHBOARD}.json
 
-  cat ${DASHBOARD_URL}.json > ${INTEGRATION_DIR}/kubernetes/dashboards/${DASHBOARD_URL}.json
+  cat ${DEST_DASHBOARD}.json > ${INTEGRATION_DIR}/kubernetes/dashboards/${DEST_DASHBOARD}.json
 
   green "\n===============Begin dashboard validation==============="
-  ruby ~/workspace/integrations/tools/dashboards_validator.rb ~/workspace/integrations/kubernetes/dashboards/${DASHBOARD_URL}.json
+  ruby ../scripts/dashboards_validator.rb ${INTEGRATION_DIR}/kubernetes/dashboards/${DEST_DASHBOARD}.json
   green "================End dashboard validation================\n"
 
-  green "Next steps: Fix any validation errors, if identified. Check your integration repo for changes and commit them."
+  green "Next steps: Fix any validation errors, if identified. Check your integration repo for changes."
 }
 
 main $@
