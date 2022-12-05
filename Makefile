@@ -7,7 +7,7 @@ REPO_DIR=$(shell git rev-parse --show-toplevel)
 TEST_DIR=$(REPO_DIR)/hack/test
 DEPLOY_DIR=$(REPO_DIR)/hack/test/deploy
 OUT_DIR?=$(REPO_DIR)/_output
-INTEGRATION_TEST_TYPE?=default
+INTEGRATION_TEST_ARGS?=default -r real-proxy-metrics
 
 BINARY_NAME=wavefront-collector
 
@@ -37,18 +37,24 @@ LDFLAGS=-w -X main.version=$(RELEASE_VERSION) -X main.commit=$(GIT_COMMIT)
 
 include make/k8s-envs/*.mk
 
+.PHONY: release
+
+.PHONY: all
 all: container
 
+.PHONY: fmt
 fmt: $(GO_IMPORTS_BIN)
 	find . -type f -name "*.go" | grep -v "./vendor*" | xargs goimports -w
 
 # TODO: exclude certain keys from sorting
 # because we want them to be at the top and visible when we open the file!
+.PHONY: sort-integrations-keys
 sort-integrations-keys:
 	# TODO: uncomment to run this on all of our dashboards when we're comfortable
 	@#$(REPO_DIR)/hack/sort-json-keys-inplace.sh $(HOME)/workspace/integrations/kubernetes/dashboards/*.json
 	@$(REPO_DIR)/hack/sort-json-keys-inplace.sh $(HOME)/workspace/integrations/kubernetes/dashboards/integration-kubernetes-control-plane.json
 
+.PHONY: checkfmt
 checkfmt: $(GO_IMPORTS_BIN)
 	@if [ $$(goimports -d $$(find . -type f -name '*.go' -not -path "./vendor/*") | wc -l) -gt 0 ]; then \
 		echo $$'\e[31mgoimports FAILED!!!\e[0m'; \
@@ -56,22 +62,28 @@ checkfmt: $(GO_IMPORTS_BIN)
 		exit 1; \
 	fi
 
+.PHONY: tests
 tests:
 	go clean -testcache
 	go test -timeout 30s -race ./...
 
+.PHONY: build
 build: clean fmt vet
 	GOARCH=$(ARCH) CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o $(OUT_DIR)/$(ARCH)/$(BINARY_NAME) ./cmd/wavefront-collector/
 
+.PHONY: vet
 vet:
 	go vet -composites=false ./...
 
 # test driver for local development
+.PHONY: driver
 driver: clean fmt
 	GOARCH=$(ARCH) CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o $(OUT_DIR)/$(ARCH)/$(BINARY_NAME)-test ./cmd/test-driver/
 
+.PHONY: containers
 containers: container test-proxy-container
 
+.PHONY: container
 container: $(SEMVER_CLI_BIN)
 	# Run build in a container in order to have reproducible builds
 	docker build \
@@ -84,6 +96,7 @@ endif
 
 BUILDER_SUFFIX=$(shell echo $(PREFIX) | cut -d '/' -f1)
 
+.PHONY: publish
 publish:
 	docker buildx create --use --node wavefront_collector_builder_$(BUILDER_SUFFIX)
 ifeq ($(RELEASE_TYPE), release)
@@ -100,19 +113,23 @@ else
 	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) .
 endif
 
+.PHONY: test-proxy-container
 test-proxy-container: $(SEMVER_CLI_BIN)
 	docker build \
 	--build-arg BINARY_NAME=test-proxy --build-arg LDFLAGS="$(LDFLAGS)" \
 	--pull -f $(REPO_DIR)/Dockerfile.test-proxy \
 	-t $(PREFIX)/test-proxy:$(VERSION) -t $(PREFIX)/test-proxy:latest .
 
+.PHONY: publish-test-proxy
 publish-test-proxy:  test-proxy-container
 	docker push $(PREFIX)/test-proxy:latest
 	docker push $(PREFIX)/test-proxy:$(VERSION)
 
+.PHONY: test-proxy
 test-proxy: peg $(REPO_DIR)/cmd/test-proxy/metric_grammar.peg.go clean fmt vet
 	GOARCH=$(ARCH) CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o $(OUT_DIR)/$(ARCH)/test-proxy ./cmd/test-proxy/...
 
+.PHONY: peg
 peg:
 	@which peg > /dev/null || \
 		(cd $(REPO_DIR)/..; GOARCH=$(ARCH) CGO_ENABLED=0 go install github.com/pointlander/peg@latest)
@@ -120,6 +137,7 @@ peg:
 $(GO_IMPORTS_BIN):
 	@(cd $(REPO_DIR)/..; CGO_ENABLED=0 go install golang.org/x/tools/cmd/goimports@latest)
 
+.PHONY: semver-cli
 semver-cli: $(SEMVER_CLI_BIN)
 
 $(SEMVER_CLI_BIN):
@@ -128,6 +146,7 @@ $(SEMVER_CLI_BIN):
 %.peg.go: %.peg
 	peg -switch -inline $<
 
+.PHONY: container_rhel
 container_rhel: $(SEMVER_CLI_BIN)
 	docker build \
 		-f $(REPO_DIR)/deploy/docker/Dockerfile-rhel \
@@ -137,34 +156,46 @@ ifneq ($(OVERRIDE_IMAGE_NAME),)
 	sudo docker tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OVERRIDE_IMAGE_NAME)
 endif
 
+.PHONY: push_rhel_redhat_connect
 push_rhel_redhat_connect: container_rhel
 	docker tag  $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(PREFIX)/$(DOCKER_IMAGE):$(RELEASE_VERSION)-rc
 	docker push $(PREFIX)/$(DOCKER_IMAGE):$(RELEASE_VERSION)-rc
 
+.PHONY: clean
 clean:
 	@rm -f $(OUT_DIR)/$(ARCH)/$(BINARY_NAME)
 	@rm -f $(OUT_DIR)/$(ARCH)/$(BINARY_NAME)-test
 	@rm -f $(OUT_DIR)/$(ARCH)/test-proxy
 
+.PHONY: token-check
 token-check:
 	@if [ -z ${WAVEFRONT_TOKEN} ]; then echo "Need to set WAVEFRONT_TOKEN" && exit 1; fi
 
+.PHONY: proxy-test
 proxy-test: token-check $(SEMVER_CLI_BIN)
-	(cd $(TEST_DIR) && ./test-integration.sh $(WAVEFRONT_CLUSTER) $(WAVEFRONT_TOKEN) $(VERSION) $(INTEGRATION_TEST_TYPE))
+ifeq ($(INTEGRATION_TEST_ARGS),all)
+	$(eval INTEGRATION_TEST_ARGS := cluster-metrics-only -r node-metrics-only -r combined -r default -r real-proxy-metrics)
+endif
+	(cd $(TEST_DIR) && ./test-integration.sh -c $(WAVEFRONT_CLUSTER) -t $(WAVEFRONT_TOKEN) -v $(VERSION) -r $(INTEGRATION_TEST_ARGS))
 
-#Testing deployment and configuration changes, no code changes
-deploy-test: token-check k8s-env clean-deployment deploy-targets proxy-test
+.PHONE: build-image
+build-image:
+ifneq ($(INTEGRATION_TEST_BUILD), ci)
+	make delete-images push-images
+endif
 
-#Testing code, configuration and deployment changes
-integration-test: token-check k8s-env clean-deployment deploy-targets delete-images push-images proxy-test
+.PHONY: integration-test
+integration-test: token-check k8s-env clean-deployment deploy-targets build-image proxy-test
 
 # creating this as separate and distinct for now,
 # but would like to recombine as a flag on integration-test
+.PHONY: integration-test-rhel
 integration-test-rhel: token-check k8s-env clean-deployment deploy-targets
 	VERSION=$(VERSION)-rhel make container_rhel test-proxy-container delete-images push-images proxy-test
 
 # create a new branch from main
 # usage: make branch JIRA=XXXX OR make branch NAME=YYYY
+.PHONY: branch
 branch:
 	$(eval NAME := $(if $(JIRA),K8SAAS-$(JIRA),$(NAME)))
 	@if [ -z "$(NAME)" ]; then \
@@ -176,12 +207,17 @@ branch:
 	git pull
 	git checkout -b $(NAME)
 
+.PHONY: git-rebase
 git-rebase:
 	git fetch origin
 	git rebase origin/main
 	git log --oneline -n 10
 
+.PHONY: clean-cluster
 clean-cluster:
 	(cd $(TEST_DIR) && ./clean-cluster.sh)
 
-.PHONY: all fmt container clean release semver-cli
+# list the available makefile targets
+.PHONY: no_targets__ list
+list:
+	@sh -c "$(MAKE) -p no_targets__ | awk -F':' '/^[a-zA-Z0-9][^\$$#\/\\t=]*:([^=]|$$)/ {split(\$$1,A,/ /);for(i in A)print A[i]}' | grep -v '__\$$' | sort"

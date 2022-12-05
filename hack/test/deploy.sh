@@ -1,66 +1,80 @@
-#! /bin/bash -e
+#!/bin/bash -e
 
-# This script automates the deployment of the collector to a specific k8s cluster
-
-DEFAULT_VERSION=$(cat ../../release/VERSION)
-USE_TEST_PROXY="${USE_TEST_PROXY:-false}"
+REPO_ROOT=$(git rev-parse --show-toplevel)
+source "${REPO_ROOT}"/hack/test/deploy/k8s-utils.sh
+SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 
 function print_usage_and_exit() {
-    echo "Failure: $1"
-    echo "Usage: $0 [flags] [options]"
-    echo -e "\t-c wavefront instance name (required)"
-    echo -e "\t-t wavefront token (required)"
-    echo -e "\t-v collector docker image version"
-    echo -e "\t-k K8s ENV (required)"
-    echo -e "\t-n K8s Cluster name"
-    echo -e "\t-e experimental features"
-    echo -e "\t-y collector yaml"
-    exit 1
+  red "Failure: $1"
+  echo "Usage: $0 -c <WAVEFRONT_CLUSTER> -t <WAVEFRONT_TOKEN> -k <K8S_ENV> -v [VERSION] -n [K8S_CLUSTER_NAME] -y [COLLECTOR_YAML] -p [USE_TEST_PROXY]"
+  echo "  -c wavefront instance name (required)"
+  echo "  -t wavefront token (required)"
+  echo "  -k K8s ENV (required)"
+  echo "  -v collector docker image version (default: load from 'release/VERSION')"
+  echo "  -n K8s Cluster name"
+  echo "  -y collector yaml"
+  echo "  -p use test proxy (default: 'false')"
+  echo "  -e experimental features"
+  exit 1
 }
 
-WF_CLUSTER=
-WAVEFRONT_TOKEN=
-VERSION=
-K8S_ENV=
-COLLECTOR_YAML=
-WF_CLUSTER_NAME=
-EXPERIMENTAL_FEATURES=
+function check_required_argument() {
+  local required_arg=$1
+  local failure_msg=$2
+  if [[ -z ${required_arg} ]]; then
+    print_usage_and_exit "$failure_msg"
+  fi
+}
 
-while getopts "c:t:v:d:k:n:e:y:" opt; do
-  case $opt in
-    c)
-      WF_CLUSTER="$OPTARG"
-      ;;
-    t)
-      WAVEFRONT_TOKEN="$OPTARG"
-      ;;
-    v)
-      VERSION="$OPTARG"
-      ;;
-    k)
-      K8S_ENV="$OPTARG"
-      ;;
-    n)
-      WF_CLUSTER_NAME="$OPTARG"
-      ;;
-    e)
-      EXPERIMENTAL_FEATURES="$OPTARG"
-      ;;
-    y)
-      COLLECTOR_YAML="$OPTARG"
-      ;;
-    \?)
-      print_usage_and_exit "Invalid option: -$OPTARG"
-      ;;
-  esac
-done
+function main() {
+  # REQUIRED
+  local WF_CLUSTER=
+  local WAVEFRONT_TOKEN=
+  local K8S_ENV=
 
-if [[ -z ${VERSION} ]] ; then
-    VERSION=${DEFAULT_VERSION}
-fi
+  # OPTIONAL/DEFAULT
+  local VERSION="$(cat "${REPO_ROOT}"/release/VERSION)"
+  local K8S_CLUSTER_NAME=
+  local COLLECTOR_YAML=
+  local USE_TEST_PROXY="false"
+  local EXPERIMENTAL_FEATURES=
 
-NS=wavefront-collector
+  while getopts "c:t:v:k:n:e:y:p:" opt; do
+    case $opt in
+      c)  WF_CLUSTER="$OPTARG" ;;
+      t)  WAVEFRONT_TOKEN="$OPTARG" ;;
+      k)  K8S_ENV="$OPTARG" ;;
+      v)  VERSION="$OPTARG" ;;
+      n)  K8S_CLUSTER_NAME="$OPTARG" ;;
+      y)  COLLECTOR_YAML="$OPTARG" ;;
+      p)  USE_TEST_PROXY="$OPTARG" ;;
+      e)  EXPERIMENTAL_FEATURES="$OPTARG" ;;
+      \?) print_usage_and_exit "Invalid option: -$OPTARG" ;;
+    esac
+  done
 
-env USE_TEST_PROXY="$USE_TEST_PROXY" ./generate.sh -c "$WF_CLUSTER" -t "$WAVEFRONT_TOKEN" -v "$VERSION"  -k "$K8S_ENV" -n "$WF_CLUSTER_NAME" -e "$EXPERIMENTAL_FEATURES" -y "$COLLECTOR_YAML"
+  check_required_argument "$WF_CLUSTER" "-c <WAVEFRONT_CLUSTER> is required"
+  check_required_argument "$WAVEFRONT_TOKEN" "-t <WAVEFRONT_TOKEN> is required"
+  check_required_argument "$K8S_ENV" "-k <K8S_ENV> is required"
 
-kustomize build overlays/test-$K8S_ENV | kubectl apply -f -
+  local additional_args=""
+  if [[ -n "${COLLECTOR_YAML:-}" ]]; then
+    additional_args="$additional_args -y $COLLECTOR_YAML"
+  fi
+  if [[ -n "${EXPERIMENTAL_FEATURES:-}" ]]; then
+    additional_args="$additional_args -e $EXPERIMENTAL_FEATURES"
+  fi
+
+  "${SCRIPT_DIR}"/generate.sh \
+      -c "$WF_CLUSTER" \
+      -t "$WAVEFRONT_TOKEN" \
+      -v "$VERSION" \
+      -k "$K8S_ENV" \
+      -n "$K8S_CLUSTER_NAME" \
+      -p "$USE_TEST_PROXY" \
+      $additional_args
+
+  kustomize build "overlays/test-$K8S_ENV" | kubectl apply -f -
+}
+
+main $@

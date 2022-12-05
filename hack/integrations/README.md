@@ -17,5 +17,5 @@
    * `<SOURCE_DASHBOARD>` is the source dashboard's url in UI that you want to copy **from** (For instance: `-s kubernetes-K8SSAAS-123`). 
    * `<DEST_DASHBOARD>` is the destination dashboard's url in integrations repo to copy **to** (For instance: `-d integration-kubernetes-clusters`). 
    * `<BRANCH_NAME>` is the branch name to create or switch to in the integrations repo (For instance: `-b k8po/new-dashboard-work`).
-5. Fix any validation issues identified in previous step. Verify, commit and push the local changes made to the dashboard in integrations repo.
-6. Once the dev dashboard looks ready, follow the steps under [Merge the dashboard](https://confluence.eng.vmware.com/display/CNA/Technical+References#TechnicalReferences-Mergethedashboard).
+4. Fix any validation issues identified in previous step. Verify, commit and push the local changes made to the dashboard in integrations repo.
+5. Once the dev dashboard looks ready, follow the steps under [Merge the dashboard](https://confluence.eng.vmware.com/display/CNA/Technical+References#TechnicalReferences-Mergethedashboard).
