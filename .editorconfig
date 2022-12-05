@@ -9,6 +9,10 @@ insert_final_newline = false
 max_line_length = 120
 tab_width = 4
 
+[*.sh]
+indent_size = 2
+tab_width = 2
+
 [*.go]
 indent_style = tab
 
