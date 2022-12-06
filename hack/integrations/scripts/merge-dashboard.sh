@@ -77,22 +77,20 @@ function main() {
   jq ".url = \"${DEST_DASHBOARD}\"" ${SOURCE_DASHBOARD}.json > ${DEST_DASHBOARD}.json
 
   # Copy dashboard version from integration feature branch and increment it
-  local VERSION=$(($(jq ".systemDashboardVersion" ${INTEGRATION_DIR}/kubernetes/dashboards/${DEST_DASHBOARD}.json)))
-  if [[ ${VERSION} -eq 0 ]]; then
-   VERSION=1
-    fi
-   jq ". += {"systemDashboardVersion":${VERSION}}" ${DEST_DASHBOARD}.json > "tmp" && mv "tmp" ${DEST_DASHBOARD}.json
+  local VERSION=$(($(jq ".systemDashboardVersion" ${INTEGRATION_DIR}/kubernetes/dashboards/${DEST_DASHBOARD}.json 2> /dev/null)+1))
+  jq ". += {"systemDashboardVersion":${VERSION}}" ${DEST_DASHBOARD}.json > "tmp" && mv "tmp" ${DEST_DASHBOARD}.json
 
   # Do the sorting here so our systemDashboardVersion gets bumped to the top of the file
-  ../scripts/sort-dashboard.sh -i ${DEST_DASHBOARD}.json -o 'tmp' && mv "tmp" ${DEST_DASHBOARD}.json
+  ${SCRIPT_DIR}/sort-dashboard.sh -i ${DEST_DASHBOARD}.json -o 'tmp' && mv "tmp" ${DEST_DASHBOARD}.json
 
   cat ${DEST_DASHBOARD}.json > ${INTEGRATION_DIR}/kubernetes/dashboards/${DEST_DASHBOARD}.json
+  echo Check your integration repo for changes.
 
   green "\n===============Begin dashboard validation==============="
-  ruby ../scripts/dashboards_validator.rb ${INTEGRATION_DIR}/kubernetes/dashboards/${DEST_DASHBOARD}.json
+  ruby ${SCRIPT_DIR}/dashboards_validator.rb ${INTEGRATION_DIR}/kubernetes/dashboards/${DEST_DASHBOARD}.json
   green "================End dashboard validation================\n"
 
-  green "Next steps: Fix any validation errors, if identified. Check your integration repo for changes."
+  green "Next steps: Fix any validation errors, if identified. Check your integration repo for changes and commit them."
 }
 
 main $@

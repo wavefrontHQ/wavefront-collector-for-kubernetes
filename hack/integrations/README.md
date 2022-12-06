@@ -10,7 +10,7 @@
 
    **Note:** The script would output a link to a dashboard in nimba. Remember to login to nimba and switch to `k8s-saas-team` before accessing the dashboard link.
 2. PM or engineering team member iterate on dev dashboard created by `create-or-update-dashboard-in-ui.sh` (For instance: `kubernetes-K8SSAAS-123`).
-3. Periodically pull the changes from the dev dashboard to the local integration repo branch by running the below script.
+3. Periodically pull and validate the changes from the dev dashboard to the integration repo branch by running the below script.
     ```
     ~/workspace/wavefront-collector-for-kubernetes/hack/integrations/scripts/merge-dashboard.sh  -t $WAVEFRONT_TOKEN -s <SOURCE_DASHBOARD> -d <DEST_DASHBOARD> -b <BRANCH_NAME>
     ```
