@@ -81,10 +81,20 @@ function main() {
   jq ". += {"systemDashboardVersion":${VERSION}}" ${DEST_DASHBOARD}.json > "tmp" && mv "tmp" ${DEST_DASHBOARD}.json
 
   # Do the sorting here so our systemDashboardVersion gets bumped to the top of the file
-  ../scripts/sort-dashboard.sh -i ${DEST_DASHBOARD}.json -o 'tmp' && mv "tmp" ${DEST_DASHBOARD}.json
+  ${SCRIPT_DIR}/sort-dashboard.sh -i ${DEST_DASHBOARD}.json -o 'tmp' && mv "tmp" ${DEST_DASHBOARD}.json
 
   cat ${DEST_DASHBOARD}.json > ${INTEGRATION_DIR}/kubernetes/dashboards/${DEST_DASHBOARD}.json
-  echo Check your integration repo for changes.
+
+  local VALIDATION_EXIT_CODE=0
+  green "\n===============Begin dashboard validation==============="
+  ruby ${SCRIPT_DIR}/dashboards_validator.rb ${INTEGRATION_DIR}/kubernetes/dashboards/${DEST_DASHBOARD}.json || VALIDATION_EXIT_CODE=$?
+  green "================End dashboard validation================\n"
+  green "Next steps:"
+  if [ $VALIDATION_EXIT_CODE -ne 0 ]; then
+    green "- Fix identified validation errors."
+  fi
+
+  green "- Check your integration repo for local changes, verify and commit them."
 }
 
 main $@
