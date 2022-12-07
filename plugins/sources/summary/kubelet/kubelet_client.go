@@ -28,6 +28,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"strings"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/kubernetes"
 
@@ -84,8 +85,8 @@ func (kc *KubeletClient) postRequestAndGetValue(client *http.Client, req *http.R
 	}
 
 	log.WithFields(log.Fields{
-		"address":  kubeletAddr,
-		"response": string(body),
+		"address":  escapeString(kubeletAddr),
+		"response": escapeString(string(body)),
 	}).Trace("Raw response from kubelet")
 
 	err = jsoniter.ConfigFastest.Unmarshal(body, value)
@@ -93,6 +94,12 @@ func (kc *KubeletClient) postRequestAndGetValue(client *http.Client, req *http.R
 		return fmt.Errorf("failed to parse output. Response: %q. Error: %v", string(body), err)
 	}
 	return nil
+}
+
+func escapeString(input string) string {
+	escapedString := strings.Replace(input, "\n", "", -1)
+	escapedString = strings.Replace(escapedString, "\r", "", -1)
+	return escapedString
 }
 
 func (kc *KubeletClient) parseStat(containerInfo *cadvisor.ContainerInfo) *cadvisor.ContainerInfo {
