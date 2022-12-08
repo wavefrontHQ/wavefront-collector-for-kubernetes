@@ -5,7 +5,7 @@ metadata:
     app: wavefront-proxy
     name: wavefront-proxy
   name: wavefront-proxy
-  namespace: wavefront-collector
+  namespace: observability-system
 spec:
   replicas: 1
   selector:
@@ -28,7 +28,7 @@ spec:
                       - amd64
       containers:
       - name: wavefront-proxy
-        image: projects.registry.vmware.com/tanzu_observability_keights_saas/test-proxy:latest
+        image: projects.registry.vmware.com/tanzu_observability_keights_saas/test-proxy@sha256:eec06ea2dff37fd9513cdf0b641f6eaae0f83b704c5dc43abf184053ca38b2d5
         imagePullPolicy: Always
         command: [ "/test-proxy", "-proxy", ":2878", "-logLevel", "info" ]
         ports:
@@ -47,7 +47,7 @@ metadata:
   name: wavefront-proxy
   labels:
     app: wavefront-proxy
-  namespace: wavefront-collector
+  namespace: observability-system
 spec:
   ports:
   - name: wavefront

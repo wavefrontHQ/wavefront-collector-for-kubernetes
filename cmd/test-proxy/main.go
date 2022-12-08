@@ -15,10 +15,12 @@ import (
 var proxyAddr = ":7777"
 var controlAddr = ":8888"
 var logLevel = log.InfoLevel.String()
+var logsPath = "/logs/json_array"
 
 func init() {
 	flag.StringVar(&proxyAddr, "proxy", proxyAddr, "host and port for the test \"wavefront proxy\" to listen on")
 	flag.StringVar(&controlAddr, "control", controlAddr, "host and port for the http control server to listen on")
+	flag.StringVar(&logsPath, "logsPath", logsPath, "the URL path for the test \"wavefront proxy\" to listen on for logging data.")
 	flag.StringVar(&logLevel, "logLevel", logLevel, "change log level. Default is \"info\", use \"debug\" for metric logging")
 }
 
@@ -38,6 +40,8 @@ func main() {
 	go ServeProxy(store)
 	http.HandleFunc("/metrics", DumpMetricsHandler(store))
 	http.HandleFunc("/metrics/diff", DiffMetricsHandler(store))
+	log.Infof("http logs server listening on %s", proxyAddr)
+	http.HandleFunc(logsPath, LogDataHandler())
 
 	log.Infof("http control server listening on %s", controlAddr)
 	if err := http.ListenAndServe(controlAddr, nil); err != nil {
@@ -70,7 +74,10 @@ func HandleIncomingMetrics(store *MetricStore, conn net.Conn) {
 		if len(lines.Text()) == 0 {
 			continue
 		}
-		metric, err := ParseMetric(lines.Text())
+		str := lines.Text()
+		log.Infof(fmt.Sprintf("Print from tcp listener -- %s", str))
+
+		metric, err := ParseMetric(str)
 		if err != nil {
 			log.Error(err.Error())
 			log.Error(lines.Text())
@@ -91,6 +98,40 @@ func HandleIncomingMetrics(store *MetricStore, conn net.Conn) {
 		log.Error(err.Error())
 	}
 	return
+}
+
+func LogDataHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != logsPath {
+			http.NotFound(w, r)
+			return
+		}
+
+		// Read the incoming bytes
+		b := make([]byte, r.ContentLength)
+		_, err := r.Body.Read(b)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		// Verify that the input is in JSON array format
+		var data []interface{}
+		err = json.Unmarshal(b, &data)
+		if err != nil {
+			http.Error(w, "Input is not in JSON array format", http.StatusBadRequest)
+			return
+		}
+
+		// Print the input to the console
+		fmt.Println("Print from HTTP listener --" + string(b))
+
+		if r.Method != http.MethodPost {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			log.Errorf("expected method %s but got %s", http.MethodPost, r.Method)
+			return
+		}
+	}
 }
 
 func DumpMetricsHandler(store *MetricStore) http.HandlerFunc {
@@ -121,7 +162,7 @@ func DiffMetricsHandler(store *MetricStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		if req.Method != http.MethodPost {
 			w.WriteHeader(http.StatusMethodNotAllowed)
-			log.Errorf("expected method %s but got %s", http.MethodGet, req.Method)
+			log.Errorf("expected method %s but got %s", http.MethodPost, req.Method)
 			return
 		}
 		badMetrics := store.BadMetrics()
