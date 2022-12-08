@@ -1,2 +1,3 @@
 {"Name":"kubernetes.pod.status.phase","Value":"1","Tags":{"cluster":"","label.name":"pod-cannot-be-scheduled","message":"","namespace_name":"collector-targets","nodename":"none","phase":"Pending","pod_name":"pod-cannot-be-scheduled","reason":"Unschedulable","source":"","type":"pod"}}
 {"Name":"kubernetes.node.info","Tags":{"cluster":"","container_runtime_version":"","internal_ip":"","kernel_version":"","kubelet_version":"","label.kubernetes.io/os":"linux","nodename":"","os_image":"","provider_id":"","source":"","node_role":"worker"}}
+{"Name":"kubernetes.controlplane.apiserver.storage.objects.gauge","Tags":{"cluster":"","resource":"","source":""}}
