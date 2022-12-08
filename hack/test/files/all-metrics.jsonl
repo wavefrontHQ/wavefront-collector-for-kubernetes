@@ -37,6 +37,7 @@
 {"Name":"kernel.processes.forked","Tags":{"cluster":"","source":""}}
 {"Name":"kubernetes.controlplane.apiserver.request.duration.seconds.bucket","Tags":{"cluster":"","le":"","resource":"","scope":"","source":"","verb":""}}
 {"Name":"kubernetes.controlplane.apiserver.request.total.counter","Tags":{"cluster":"","code":"","group":"","resource":"","scope":"","source":"","verb":""}}
+{"Name":"kubernetes.controlplane.apiserver.storage.objects.gauge","Tags":{"cluster":"","resource":"","source":""}}
 {"Name":"kubernetes.controlplane.etcd.db.total.size.in.bytes.gauge","Tags":{"cluster":"","endpoint":"","source":""}}
 {"Name":"kubernetes.controlplane.etcd.request.duration.seconds.bucket","Tags":{"cluster":"","operation":"","source":"","type":""}}
 {"Name":"kubernetes.controlplane.workqueue.queue.duration.seconds.bucket","Tags":{"cluster":"","le":"","name":"","source":""}}
