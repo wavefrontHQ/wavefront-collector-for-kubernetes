@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"os"
@@ -13,15 +14,18 @@ import (
 )
 
 var proxyAddr = ":7777"
+var logsPort = ":9999"
 var controlAddr = ":8888"
 var logLevel = log.InfoLevel.String()
 var logsPath = "/logs/json_array"
 
 func init() {
 	flag.StringVar(&proxyAddr, "proxy", proxyAddr, "host and port for the test \"wavefront proxy\" to listen on")
+	flag.StringVar(&logsPort, "logsPort", logsPort, "port for the logs server to listen on")
 	flag.StringVar(&controlAddr, "control", controlAddr, "host and port for the http control server to listen on")
 	flag.StringVar(&logsPath, "logsPath", logsPath, "the URL path for the test \"wavefront proxy\" to listen on for logging data.")
 	flag.StringVar(&logLevel, "logLevel", logLevel, "change log level. Default is \"info\", use \"debug\" for metric logging")
+
 }
 
 func main() {
@@ -35,16 +39,21 @@ func main() {
 	}
 	log.SetOutput(os.Stdout)
 
-	store := NewMetricStore()
+	//store := NewMetricStore()
 
-	go ServeProxy(store)
-	http.HandleFunc("/metrics", DumpMetricsHandler(store))
-	http.HandleFunc("/metrics/diff", DiffMetricsHandler(store))
-	log.Infof("http logs server listening on %s", proxyAddr)
+	//go ServeProxy(store)
+	//http.HandleFunc("/metrics", DumpMetricsHandler(store))
+	//http.HandleFunc("/metrics/diff", DiffMetricsHandler(store))
+	log.Infof("logs port listening on %s", logsPort)
 	http.HandleFunc(logsPath, LogDataHandler())
 
-	log.Infof("http control server listening on %s", controlAddr)
-	if err := http.ListenAndServe(controlAddr, nil); err != nil {
+	//log.Infof("http control server listening on %s", controlAddr)
+	//if err := http.ListenAndServe(controlAddr, nil); err != nil {
+	//	log.Error(err.Error())
+	//	os.Exit(1)
+	//}
+
+	if err := http.ListenAndServe(logsPort, nil); err != nil {
 		log.Error(err.Error())
 		os.Exit(1)
 	}
@@ -101,36 +110,63 @@ func HandleIncomingMetrics(store *MetricStore, conn net.Conn) {
 }
 
 func LogDataHandler() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != logsPath {
-			http.NotFound(w, r)
+	return func(w http.ResponseWriter, req *http.Request) {
+		if req.URL.Path != logsPath {
+			http.NotFound(w, req)
 			return
 		}
 
-		// Read the incoming bytes
-		b := make([]byte, r.ContentLength)
-		_, err := r.Body.Read(b)
+		//lines := bufio.NewScanner(req.Body)
+		//defer req.Body.Close()
+		//for lines.Scan() {
+		//	if len(lines.Bytes()) == 0 {
+		//		continue
+		//	}
+		//	log.Info(lines.Text())
+		//
+		//}
+
+		b, err := io.ReadAll(req.Body)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
+			log.Fatal(err)
 		}
+		defer req.Body.Close()
 
+		log.Info(string(b))
 		// Verify that the input is in JSON array format
-		var data []interface{}
-		err = json.Unmarshal(b, &data)
-		if err != nil {
-			http.Error(w, "Input is not in JSON array format", http.StatusBadRequest)
+		if VerifyJsonArray(string(b)) {
+			log.Info("logs are in json_array format")
+		} else {
+			log.Info("logs are not in json_array format")
 			return
 		}
+
+		//linesErr := lines.Err()
+		//if linesErr != nil {
+		//	w.WriteHeader(http.StatusBadRequest)
+		//	ioErr := json.NewEncoder(w).Encode(linesErr.Error())
+		//	if ioErr != nil {
+		//		log.Error(ioErr.Error())
+		//	}
+		//	return
+		//}
+		w.WriteHeader(http.StatusOK)
+		// Read the incoming bytes
+		//b := make([]byte, req.ContentLength)
+		//_, err := r.Body.Read(b)
+		//if err != nil {
+		//	http.Error(w, err.Error(), http.StatusInternalServerError)
+		//	return
+		//}
 
 		// Print the input to the console
-		fmt.Println("Print from HTTP listener --" + string(b))
+		//fmt.Println("Print from HTTP listener --" + string(b))
 
-		if r.Method != http.MethodPost {
-			w.WriteHeader(http.StatusMethodNotAllowed)
-			log.Errorf("expected method %s but got %s", http.MethodPost, r.Method)
-			return
-		}
+		//if r.Method != http.MethodPost {
+		//	w.WriteHeader(http.StatusMethodNotAllowed)
+		//	log.Errorf("expected method %s but got %s", http.MethodPost, r.Method)
+		//	return
+		//}
 	}
 }
 

@@ -28,12 +28,12 @@ spec:
                       - amd64
       containers:
       - name: wavefront-proxy
-        image: projects.registry.vmware.com/tanzu_observability_keights_saas/test-proxy@sha256:eec06ea2dff37fd9513cdf0b641f6eaae0f83b704c5dc43abf184053ca38b2d5
+        image: projects.registry.vmware.com/tanzu_observability_keights_saas/test-proxy:1.13.1-dev-jyuqi
         imagePullPolicy: Always
         command: [ "/test-proxy", "-proxy", ":2878", "-logLevel", "info" ]
         ports:
         - name: proxy
-          containerPort: 2878
+          containerPort: 9999
           protocol: TCP
         - name: control
           containerPort: 8888
@@ -51,7 +51,7 @@ metadata:
 spec:
   ports:
   - name: wavefront
-    port: 2878
+    port: 9999
     protocol: TCP
   selector:
     app: wavefront-proxy
