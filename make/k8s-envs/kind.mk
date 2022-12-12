@@ -10,12 +10,7 @@ nuke-kind-ha:
 kind-connect-to-cluster:
 	kubectl config use kind-kind
 
-push-to-kind: container
-	echo $(PREFIX)/$(DOCKER_IMAGE):$(VERSION)
-
-	@kind load docker-image $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) --name kind
-
-cover-push-to-kind: cover-container
+push-to-kind: container$(IMAGE_MODE_POSTFIX)
 	echo $(PREFIX)/$(DOCKER_IMAGE):$(VERSION)
 
 	@kind load docker-image $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) --name kind

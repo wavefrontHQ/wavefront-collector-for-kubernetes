@@ -1,3 +1,16 @@
+DEBUG?=false
+COVER?=false
+IMAGE_MODE_POSTFIX?=
+
+ifeq ($(DEBUG), true)
+	IMAGE_MODE_POSTFIX=-debug
+	VERSION_POSTFIX=-debug
+else ifeq ($(COVER), true)
+	IMAGE_MODE_POSTFIX=-cover
+	VERSION_POSTFIX=-cover
+endif
+
+
 PREFIX?=projects.registry.vmware.com/tanzu_observability_keights_saas
 DOCKER_IMAGE?=kubernetes-collector-snapshot
 ARCH?=amd64
@@ -94,13 +107,27 @@ ifneq ($(OVERRIDE_IMAGE_NAME),)
 	docker tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OVERRIDE_IMAGE_NAME)
 endif
 
-cover-container: $(SEMVER_CLI_BIN)
+.PHONY: container-debug
+container-debug: $(SEMVER_CLI_BIN)
+	# Run build in a container in order to have reproducible builds
+	docker build \
+	-f $(REPO_DIR)/Dockerfile.debug-non-cross-platform \
+	--build-arg BINARY_NAME=$(BINARY_NAME) --build-arg LDFLAGS="$(LDFLAGS)" \
+	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) .
+	exit 1
+ifneq ($(OVERRIDE_IMAGE_NAME),)
+	docker tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OVERRIDE_IMAGE_NAME)
+endif
+
+.PHONY: container-cover
+container-cover: $(SEMVER_CLI_BIN)
 	# Run build in a container in order to have reproducible builds
 	docker build \
 	-f $(REPO_DIR)/Dockerfile.cover-non-cross-platform \
 	--build-arg BINARY_NAME=$(BINARY_NAME) \
 	--build-arg RELEASE_VERSION=$(RELEASE_VERSION) --build-arg GIT_COMMIT="$(GIT_COMMIT)" \
 	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) .
+	exit 1
 ifneq ($(OVERRIDE_IMAGE_NAME),)
 	docker tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OVERRIDE_IMAGE_NAME)
 endif
@@ -199,7 +226,10 @@ endif
 integration-test: token-check k8s-env clean-deployment deploy-targets build-image proxy-test
 
 # Get code coverage of integration test
-coverage-test: token-check k8s-env clean-deployment deploy-targets delete-images cover-push-images proxy-test
+.PHONY: coverage-test
+coverage-test:
+	COVER=true make token-check k8s-env clean-deployment deploy-targets delete-images push-images proxy-test
+
 	kubectl exec -n wavefront-collector -it ds/wavefront-collector -- curl localhost:19999
 	kubectl exec -n wavefront-collector -it ds/wavefront-collector -- cat cover.out > coverage/integration-report.txt
 	go tool cover -html=coverage/integration-report.txt -o coverage/integration-browser.html
