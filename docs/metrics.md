@@ -216,12 +216,12 @@ These are metrics for the health of the Kubernetes Control Plane.
 
 Metrics collected per type:
 
-| Metric Name                                              | Description                                                                                         | K8s environment exceptions      |
+| Metric Name                                                         | Description                                                                                         | K8s environment exceptions      |
 |---------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------|----------------------------------|
 | kubernetes.node.cpu.node_utilization (node_role="control-plane")    | CPU utilization as a share of the contol-plane node allocatable in millicores.                                               | Not available in AKS, EKS, GKE  |
 | kubernetes.node.memory.working_set (node_role="control-plane")      | Total working set usage of the control-plane node. Working set is the memory being used and not easily dropped by the kernel.| Not available in AKS, EKS, GKE  |
 | kubernetes.node.filesystem.usage (node_role="control-plane")        | Total number of bytes consumed on a filesyste of the control-plane node                                                      | Not available in AKS, EKS, GKE  |
-| kubernetes.controlplane.etcd.object.counts.gauge                    | etcd object counts                                                                                                           | Not available from kubernetes release version 1.23 onwards  |
+| kubernetes.controlplane.apiserver.storage.objects.gauge             | etcd object counts                                                                                                           | Not available from kubernetes release version 1.23 onwards  |
 | kubernetes.controlplane.etcd.db.total.size.in.bytes.gauge           | etcd database size                                                                                                           | -                               |
 | kubernetes.controlplane.apiserver.request.duration.seconds.bucket   | Histogram buckets for API server request latency                                                                             | -                               |
 | kubernetes.controlplane.apiserver.request.total.counter             | API server total request count                                                                                               | -                               |
