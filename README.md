@@ -21,7 +21,7 @@ The Wavefront Collector for Kubernetes is an agent that runs as a [DaemonSet](ht
 
 ## Installation
 
-Refer to the [installation instructions](https://docs.wavefront.com/kubernetes.html#kubernetes-setup).
+Refer to the [installation instructions](https://docs.wavefront.com/kubernetes.html#kubernetes-quick-install-using-the-kubernetes-operator).
 
 ## Configuration
 
