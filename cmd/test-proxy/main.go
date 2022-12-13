@@ -17,15 +17,12 @@ var proxyAddr = ":7777"
 var logsPort = ":9999"
 var controlAddr = ":8888"
 var logLevel = log.InfoLevel.String()
-var logsPath = "/logs/json_array"
 
 func init() {
 	flag.StringVar(&proxyAddr, "proxy", proxyAddr, "host and port for the test \"wavefront proxy\" to listen on")
 	flag.StringVar(&logsPort, "logsPort", logsPort, "port for the logs server to listen on")
 	flag.StringVar(&controlAddr, "control", controlAddr, "host and port for the http control server to listen on")
-	flag.StringVar(&logsPath, "logsPath", logsPath, "the URL path for the test \"wavefront proxy\" to listen on for logging data.")
 	flag.StringVar(&logLevel, "logLevel", logLevel, "change log level. Default is \"info\", use \"debug\" for metric logging")
-
 }
 
 func main() {
@@ -45,7 +42,8 @@ func main() {
 	//http.HandleFunc("/metrics", DumpMetricsHandler(store))
 	//http.HandleFunc("/metrics/diff", DiffMetricsHandler(store))
 	log.Infof("logs port listening on %s", logsPort)
-	http.HandleFunc(logsPath, LogDataHandler())
+	http.HandleFunc("/logs/json_array", LogJsonArrayHandler())
+	http.HandleFunc("/logs/json_lines", LogJsonLinesHandler())
 
 	//log.Infof("http control server listening on %s", controlAddr)
 	//if err := http.ListenAndServe(controlAddr, nil); err != nil {
@@ -109,12 +107,12 @@ func HandleIncomingMetrics(store *MetricStore, conn net.Conn) {
 	return
 }
 
-func LogDataHandler() http.HandlerFunc {
+func LogJsonArrayHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
-		if req.URL.Path != logsPath {
-			http.NotFound(w, req)
-			return
-		}
+		//if req.URL.Path != logsPath {
+		//	http.NotFound(w, req)
+		//	return
+		//}
 
 		//lines := bufio.NewScanner(req.Body)
 		//defer req.Body.Close()
@@ -134,39 +132,55 @@ func LogDataHandler() http.HandlerFunc {
 
 		log.Info(string(b))
 		// Verify that the input is in JSON array format
+
 		if VerifyJsonArray(string(b)) {
 			log.Info("logs are in json_array format")
 		} else {
+			w.WriteHeader(http.StatusUnprocessableEntity)
 			log.Info("logs are not in json_array format")
 			return
 		}
 
-		//linesErr := lines.Err()
-		//if linesErr != nil {
-		//	w.WriteHeader(http.StatusBadRequest)
-		//	ioErr := json.NewEncoder(w).Encode(linesErr.Error())
-		//	if ioErr != nil {
-		//		log.Error(ioErr.Error())
-		//	}
-		//	return
-		//}
 		w.WriteHeader(http.StatusOK)
-		// Read the incoming bytes
-		//b := make([]byte, req.ContentLength)
-		//_, err := r.Body.Read(b)
-		//if err != nil {
-		//	http.Error(w, err.Error(), http.StatusInternalServerError)
+
+	}
+}
+
+func LogJsonLinesHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		//if req.URL.Path != logsPath {
+		//	http.NotFound(w, req)
 		//	return
 		//}
 
-		// Print the input to the console
-		//fmt.Println("Print from HTTP listener --" + string(b))
-
-		//if r.Method != http.MethodPost {
-		//	w.WriteHeader(http.StatusMethodNotAllowed)
-		//	log.Errorf("expected method %s but got %s", http.MethodPost, r.Method)
-		//	return
+		//lines := bufio.NewScanner(req.Body)
+		//defer req.Body.Close()
+		//for lines.Scan() {
+		//	if len(lines.Bytes()) == 0 {
+		//		continue
+		//	}
+		//	log.Info(lines.Text())
+		//
 		//}
+
+		b, err := io.ReadAll(req.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer req.Body.Close()
+
+		log.Info(string(b))
+
+		if VerifyJsonLines(string(b)) {
+			log.Info("logs are in json_lines format")
+		} else {
+			w.WriteHeader(http.StatusUnprocessableEntity)
+			log.Info("logs are not in json_lines format")
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+
 	}
 }
 
