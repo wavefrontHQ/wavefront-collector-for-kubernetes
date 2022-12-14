@@ -5,22 +5,19 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"io"
 	"net"
 	"net/http"
 	"os"
-
-	log "github.com/sirupsen/logrus"
 )
 
 var proxyAddr = ":7777"
-var logsPort = ":9999"
 var controlAddr = ":8888"
 var logLevel = log.InfoLevel.String()
 
 func init() {
 	flag.StringVar(&proxyAddr, "proxy", proxyAddr, "host and port for the test \"wavefront proxy\" to listen on")
-	flag.StringVar(&logsPort, "logsPort", logsPort, "port for the logs server to listen on")
 	flag.StringVar(&controlAddr, "control", controlAddr, "host and port for the http control server to listen on")
 	flag.StringVar(&logLevel, "logLevel", logLevel, "change log level. Default is \"info\", use \"debug\" for metric logging")
 }
@@ -36,22 +33,16 @@ func main() {
 	}
 	log.SetOutput(os.Stdout)
 
-	//store := NewMetricStore()
+	store := NewMetricStore()
 
-	//go ServeProxy(store)
-	//http.HandleFunc("/metrics", DumpMetricsHandler(store))
-	//http.HandleFunc("/metrics/diff", DiffMetricsHandler(store))
-	log.Infof("logs port listening on %s", logsPort)
-	http.HandleFunc("/logs/json_array", LogJsonArrayHandler())
-	http.HandleFunc("/logs/json_lines", LogJsonLinesHandler())
+	go ServeProxy(store)
 
-	//log.Infof("http control server listening on %s", controlAddr)
-	//if err := http.ListenAndServe(controlAddr, nil); err != nil {
-	//	log.Error(err.Error())
-	//	os.Exit(1)
-	//}
+	http.HandleFunc("/metrics", DumpMetricsHandler(store))
+	http.HandleFunc("/metrics/diff", DiffMetricsHandler(store))
+	http.HandleFunc("/logs/assert", LogAssertionHandler())
 
-	if err := http.ListenAndServe(logsPort, nil); err != nil {
+	log.Infof("http control server listening on %s", controlAddr)
+	if err := http.ListenAndServe(controlAddr, nil); err != nil {
 		log.Error(err.Error())
 		os.Exit(1)
 	}
@@ -74,20 +65,70 @@ func ServeProxy(store *MetricStore) {
 	}
 }
 
+func getLineType(string2 string) {
+
+}
+
 func HandleIncomingMetrics(store *MetricStore, conn net.Conn) {
 	defer conn.Close()
 	lines := bufio.NewScanner(conn)
+
+	var b = make([]byte, 1024)
+	_, err := conn.Read(b)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Infof("******* string(b) in HandleIncomingMetrics: %s", string(b))
+
+	// METRICS:
+	// \"~wavefront.kubernetes.collector.version\" 1.13 source=\"kind-control-plane\" \"cluste │
+	//│ r\"=\"test-if-can-have-no-proxy\" \"stats_prefix\"=\"kubernetes.\" \"installation_method\"=\"operator\"\n\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x │
+	//│ 00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\ │
+	//│ x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00 │
+	//│ \x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0 │
+	//│ 0\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x │
+	//│ 00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\ │
+	//│ x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00 │
+	//│ \x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0 │
+	//│ 0\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x │
+	//│ 00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\ │
+	//│ x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00 │
+	//│ \x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0 │
+	//│ 0\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x │
+	//│ 00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\ │
+	//│ x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00 │
+	//│ \x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0 │
+	//│ 0\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x │
+	//│ 00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\ │
+	//│ x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00 │
+	//│ \x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0 │
+	//│ 0"
+
+	// LOGS:
+	// ******* string(b) in HandleIncomingMetrics: POST /logs/json_array?f=logs_json_arr HTTP/1.1\r\nAccept-Encoding: gzip;q=1.0,deflate;q │
+	// │ =0.6,identity;q=0.3\r\nAccept: */*\r\nUser-Agent: Ruby\r\nContent-Type: application/json\r\nHost: test-proxy.observability-fake-proxy.svc.cluster.local:2878\r\nContent-Length: │
+	// │  33804\r\n\r\n[{\"stream\":\"stderr\",\"character\":\"F\",\"message\":\"I1214 22:05:17.574634       1 main.go:223] Handling node with IPs: map[172.18.0.2:{}]\",\"service\":\"n │
+	// │ one\",\"application\":\"none\",\"source\":\"kind-control-plane\",\"cluster\":\"test-if-can-have-no-proxy\",\"timestamp\":1671055517575,\"pod_name\":\"kindnet-gzsvn\",\"contain │
+	// │ er_name\":\"kindnet-cni\",\"namespace_name\":\"kube-system\",\"pod_id\":\"2de6a61a-6eab-46f1-ba31-47d5fd835fe5\",\"container_id\":\"e36566a15fe7a20cbe5e96686d18961b35fd5b4259a │
+	// │ 6e2bf46a2ba5ff463c676\"}\n,{\"stream\":\"stderr\",\"character\":\"F\",\"message\":\"I1214 22:05:17.574727       1 main.go:227] handling current node\",\"service\":\"none\",\"a │
+	// │ pplication\":\"none\",\"source\":\"kind-control-plane\",\"cluster\":\"test-if-can-have-no-proxy\",\"timestamp\":1671055517575,\"pod_name\":\"kindnet-gzsvn\",\"conta"
+
 	for lines.Scan() {
 		if len(lines.Text()) == 0 {
 			continue
 		}
 		str := lines.Text()
-		log.Infof(fmt.Sprintf("Print from tcp listener -- %s", str))
+		//log.Infof("*********** str = %s", str)
+		//if strings.Contains(str, "[") {
+		//	log.Infof("**************** supposedly a JSON array: %s", str)
+		//	break
+		//}
 
 		metric, err := ParseMetric(str)
 		if err != nil {
-			log.Error(err.Error())
-			log.Error(lines.Text())
+			//log.Error(err.Error())
+			//log.Error(lines.Text())
 			store.LogBadMetric(lines.Text())
 			continue
 		}
@@ -98,17 +139,19 @@ func HandleIncomingMetrics(store *MetricStore, conn net.Conn) {
 			log.Error(fmt.Sprintf("[WF-410: Too many point tags (%d, max 20):", len(metric.Tags)))
 			continue
 		}
-		log.Debugf("%#v", metric)
+		//log.Debugf("%#v", metric)
 		store.LogMetric(metric)
 	}
 	if err := lines.Err(); err != nil {
-		log.Error(err.Error())
+		//log.Error(err.Error())
 	}
 	return
 }
 
 func LogJsonArrayHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
+		log.Infof("******* req received in LogJsonArrayHandler: '%+v'", req)
+
 		//if req.URL.Path != logsPath {
 		//	http.NotFound(w, req)
 		//	return
@@ -130,11 +173,11 @@ func LogJsonArrayHandler() http.HandlerFunc {
 		}
 		defer req.Body.Close()
 
-		log.Info(string(b))
+		log.Infof("******* string(b): %s", string(b))
 		// Verify that the input is in JSON array format
 
 		if VerifyJsonArray(string(b)) {
-			log.Info("logs are in json_array format")
+			log.Info("******* logs are in json_array format")
 		} else {
 			w.WriteHeader(http.StatusUnprocessableEntity)
 			log.Info("logs are not in json_array format")
@@ -142,7 +185,46 @@ func LogJsonArrayHandler() http.HandlerFunc {
 		}
 
 		w.WriteHeader(http.StatusOK)
+	}
+}
 
+func LogAssertionHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		log.Infof("******* req received in LogAssertionHandler: '%+v'", req)
+
+		//if req.URL.Path != logsPath {
+		//	http.NotFound(w, req)
+		//	return
+		//}
+
+		//lines := bufio.NewScanner(req.Body)
+		//defer req.Body.Close()
+		//for lines.Scan() {
+		//	if len(lines.Bytes()) == 0 {
+		//		continue
+		//	}
+		//	log.Info(lines.Text())
+		//
+		//}
+
+		b, err := io.ReadAll(req.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer req.Body.Close()
+
+		log.Infof("******* string(b): %s", string(b))
+		// Verify that the input is in JSON array format
+
+		if VerifyJsonArray(string(b)) {
+			log.Info("******* logs are in json_array format")
+		} else {
+			w.WriteHeader(http.StatusUnprocessableEntity)
+			log.Info("logs are not in json_array format")
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
 	}
 }
 
@@ -186,6 +268,7 @@ func LogJsonLinesHandler() http.HandlerFunc {
 
 func DumpMetricsHandler(store *MetricStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
+		log.Infof("******* req received in DumpMetricsHandler: '%+v'", req)
 		if req.Method != http.MethodGet {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			log.Errorf("expected method %s but got %s", http.MethodGet, req.Method)
