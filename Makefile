@@ -4,10 +4,8 @@ IMAGE_MODE_POSTFIX?=
 
 ifeq ($(DEBUG), true)
 	IMAGE_MODE_POSTFIX=-debug
-	VERSION_POSTFIX=-debug
 else ifeq ($(COVER), true)
 	IMAGE_MODE_POSTFIX=-cover
-	VERSION_POSTFIX=-cover
 endif
 
 
@@ -38,7 +36,7 @@ endif
 GO_IMPORTS_BIN:=$(if $(which goimports),$(which goimports),$(GOPATH)/bin/goimports)
 SEMVER_CLI_BIN:=$(if $(which semver-cli),$(which semver-cli),$(GOPATH)/bin/semver-cli)
 
-VERSION_POSTFIX?=-dev-$(shell whoami)-$(shell git rev-parse --short HEAD)
+VERSION_POSTFIX?=$(IMAGE_MODE_POSTFIX)-dev-$(shell whoami)-$(shell git rev-parse --short HEAD)
 RELEASE_VERSION?=$(shell cat ./release/VERSION)
 VERSION?=$(shell semver-cli inc patch $(RELEASE_VERSION))$(VERSION_POSTFIX)
 GIT_COMMIT:=$(shell git rev-parse --short HEAD)
@@ -100,34 +98,9 @@ containers: container test-proxy-container
 container: $(SEMVER_CLI_BIN)
 	# Run build in a container in order to have reproducible builds
 	docker build \
-	-f $(REPO_DIR)/Dockerfile.non-cross-platform \
+	-f $(REPO_DIR)/Dockerfile.non-cross-platform$(IMAGE_MODE_POSTFIX) \
 	--build-arg BINARY_NAME=$(BINARY_NAME) --build-arg LDFLAGS="$(LDFLAGS)" \
 	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) .
-ifneq ($(OVERRIDE_IMAGE_NAME),)
-	docker tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OVERRIDE_IMAGE_NAME)
-endif
-
-.PHONY: container-debug
-container-debug: $(SEMVER_CLI_BIN)
-	# Run build in a container in order to have reproducible builds
-	docker build \
-	-f $(REPO_DIR)/Dockerfile.debug-non-cross-platform \
-	--build-arg BINARY_NAME=$(BINARY_NAME) --build-arg LDFLAGS="$(LDFLAGS)" \
-	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) .
-	exit 1
-ifneq ($(OVERRIDE_IMAGE_NAME),)
-	docker tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OVERRIDE_IMAGE_NAME)
-endif
-
-.PHONY: container-cover
-container-cover: $(SEMVER_CLI_BIN)
-	# Run build in a container in order to have reproducible builds
-	docker build \
-	-f $(REPO_DIR)/Dockerfile.cover-non-cross-platform \
-	--build-arg BINARY_NAME=$(BINARY_NAME) \
-	--build-arg RELEASE_VERSION=$(RELEASE_VERSION) --build-arg GIT_COMMIT="$(GIT_COMMIT)" \
-	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) .
-	exit 1
 ifneq ($(OVERRIDE_IMAGE_NAME),)
 	docker tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OVERRIDE_IMAGE_NAME)
 endif
@@ -278,3 +251,10 @@ clean-cluster:
 .PHONY: no_targets__ list
 list:
 	@sh -c "$(MAKE) -p no_targets__ | awk -F':' '/^[a-zA-Z0-9][^\$$#\/\\t=]*:([^=]|$$)/ {split(\$$1,A,/ /);for(i in A)print A[i]}' | grep -v '__\$$' | sort"
+
+
+ssh-collector:
+	# I would LOVE to have this broken up into variables but freakin' Makefile variable assignment has dumbfounded me...
+	kubectl --namespace wavefront-collector exec --stdin --tty \
+		$(shell kubectl get pods --namespace wavefront-collector | grep wavefront-collector | head -n1 | awk '{print $$1}') \
+		-- /bin/bash

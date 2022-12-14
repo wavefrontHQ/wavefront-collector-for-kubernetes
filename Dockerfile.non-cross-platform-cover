@@ -2,8 +2,6 @@ FROM harbor-repo.vmware.com/dockerhub-proxy-cache/bitnami/golang:1.18 as builder
 
 # Base Setup
 ARG BINARY_NAME
-# ARG RELEASE_VERSION
-# ARG GIT_COMMIT
 WORKDIR /workspace
 # Copy the Go Modules manifests
 
@@ -20,8 +18,6 @@ RUN CGO_ENABLED=0 GOOS=linux GO111MODULE=on go test -c ./cmd/wavefront-collector
 # Copy main binary into a thin image
 FROM ubuntu
 ARG BINARY_NAME
-# ARG RELEASE_VERSION
-# ARG GIT_COMMIT
 WORKDIR /
 COPY --from=builder /workspace/${BINARY_NAME}.test .
 COPY --from=builder /workspace/collector-with-restart.sh .
