@@ -24,11 +24,11 @@ VERSION=$(cat release/VERSION)
 TAG_VERSION=${VERSION}-rc${RC_NUMBER}
 
 podman login ${PREFIX} -u ${REDHAT_CREDS_USR} -p ${REDHAT_CREDS_PSW}
-podman build -f deploy/docker/Dockerfile-rhel --build-arg=COLLECTOR_VERSION=${VERSION} -t ${PREFIX}/wavefront:${TAG_VERSION} .
-podman push ${PREFIX}/wavefront:${TAG_VERSION}
+podman build -f deploy/docker/Dockerfile-rhel --build-arg=COLLECTOR_VERSION=${VERSION} -t ${PREFIX}:${TAG_VERSION} .
+podman push ${PREFIX}:${TAG_VERSION}
 export PFLT_DOCKERCONFIG=${XDG_RUNTIME_DIR}/containers/auth.json
-preflight check container ${PREFIX}/wavefront:${TAG_VERSION} --pyxis-api-token=${REDHAT_API_KEY}
-preflight check container ${PREFIX}/wavefront:${TAG_VERSION} --pyxis-api-token=${REDHAT_API_KEY} --submit --certification-project-id=${REDHAT_PROJECT_ID}
+preflight check container ${PREFIX}:${TAG_VERSION} --pyxis-api-token=${REDHAT_API_KEY}
+preflight check container ${PREFIX}:${TAG_VERSION} --pyxis-api-token=${REDHAT_API_KEY} --submit --certification-project-id=${REDHAT_PROJECT_ID}
 
 # At wrap up, delete local bump branch to keep Openshift VM clean
 git checkout main
