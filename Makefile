@@ -254,7 +254,7 @@ list:
 
 
 ssh-collector:
-	# I would LOVE to have this broken up into variables but freakin' Makefile variable assignment has dumbfounded me...
-	kubectl --namespace wavefront-collector exec --stdin --tty \
+	@# I would LOVE to have this broken up into variables but freakin' Makefile variable assignment has dumbfounded me...
+	@kubectl --namespace wavefront-collector exec --stdin --tty \
 		$(shell kubectl get pods --namespace wavefront-collector | grep wavefront-collector | head -n1 | awk '{print $$1}') \
 		-- /bin/bash
