@@ -39,7 +39,10 @@ func main() {
 
 	http.HandleFunc("/metrics", DumpMetricsHandler(store))
 	http.HandleFunc("/metrics/diff", DiffMetricsHandler(store))
+	// Based on logs already sent, perform checks on store logs
+	// Start by supporting POST parameter expected_log_format
 	http.HandleFunc("/logs/assert", LogAssertionHandler())
+	// NOTE: these handler functions attach to the control HTTP server, NOT the TCP server that actually receives data
 
 	log.Infof("http control server listening on %s", controlAddr)
 	if err := http.ListenAndServe(controlAddr, nil); err != nil {
@@ -73,12 +76,15 @@ func HandleIncomingMetrics(store *MetricStore, conn net.Conn) {
 	defer conn.Close()
 	lines := bufio.NewScanner(conn)
 
+	// TODO: Read entire http/tcp request
+	// TODO: Parse the body between metric and log, using POST prefix: POST /logs/json_array?f=logs_json_arr or POST /logs/json_lines?f=logs_json_lines <- (maybe?)
+	// NOTE start with POST /logs/json_array?f=logs_json_arr just to get it working
 	var b = make([]byte, 1024)
 	_, err := conn.Read(b)
 	if err != nil {
 		log.Fatal(err)
 	}
-
+	// NOTE  store logs request body in order of how we receive them, then later we can perform verification on the rest of them
 	log.Infof("******* string(b) in HandleIncomingMetrics: %s", string(b))
 
 	// METRICS:
@@ -114,6 +120,7 @@ func HandleIncomingMetrics(store *MetricStore, conn net.Conn) {
 	// │ 6e2bf46a2ba5ff463c676\"}\n,{\"stream\":\"stderr\",\"character\":\"F\",\"message\":\"I1214 22:05:17.574727       1 main.go:227] handling current node\",\"service\":\"none\",\"a │
 	// │ pplication\":\"none\",\"source\":\"kind-control-plane\",\"cluster\":\"test-if-can-have-no-proxy\",\"timestamp\":1671055517575,\"pod_name\":\"kindnet-gzsvn\",\"conta"
 
+	// We might filter logs first with "POST /logs/json_array?f=logs_json_arr" at first and parse the rest incoming traffic with lines.Scan as Metric
 	for lines.Scan() {
 		if len(lines.Text()) == 0 {
 			continue
@@ -175,6 +182,7 @@ func LogJsonArrayHandler() http.HandlerFunc {
 
 		log.Infof("******* string(b): %s", string(b))
 		// Verify that the input is in JSON array format
+		// TODO: use VerifyJsonArray on the body of the tcp request and store
 
 		if VerifyJsonArray(string(b)) {
 			log.Info("******* logs are in json_array format")
