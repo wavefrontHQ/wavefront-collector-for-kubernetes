@@ -8,6 +8,12 @@ else ifeq ($(COVER), true)
 	IMAGE_MODE_POSTFIX=-cover
 endif
 
+ssh-collector:
+	@# I would LOVE to have this broken up into variables but freakin' Makefile variable assignment has dumbfounded me...
+	@kubectl --namespace wavefront-collector exec --stdin --tty \
+		$(shell kubectl get pods --namespace wavefront-collector | grep wavefront-collector | head -n1 | awk '{print $$1}') \
+		-- /bin/bash
+
 
 PREFIX?=projects.registry.vmware.com/tanzu_observability_keights_saas
 DOCKER_IMAGE?=kubernetes-collector-snapshot
@@ -251,10 +257,3 @@ clean-cluster:
 .PHONY: no_targets__ list
 list:
 	@sh -c "$(MAKE) -p no_targets__ | awk -F':' '/^[a-zA-Z0-9][^\$$#\/\\t=]*:([^=]|$$)/ {split(\$$1,A,/ /);for(i in A)print A[i]}' | grep -v '__\$$' | sort"
-
-
-ssh-collector:
-	@# I would LOVE to have this broken up into variables but freakin' Makefile variable assignment has dumbfounded me...
-	@kubectl --namespace wavefront-collector exec --stdin --tty \
-		$(shell kubectl get pods --namespace wavefront-collector | grep wavefront-collector | head -n1 | awk '{print $$1}') \
-		-- /bin/bash
