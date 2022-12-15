@@ -468,6 +468,41 @@ class ParameterQueryChecker
   end
 end
 
+class IndexChecker
+  def initialize(iterator, index_json_file)
+    @iterator = iterator
+    @index_json_file = index_json_file
+    @dashboard_files_in_index = []
+  end
+
+  def index_json
+    return JSON.load(File.read(@index_json_file))
+  end
+
+  def run(reporter)
+    if @index_json_file.nil?
+      puts "Skipping index check because index file is nil"
+      return
+    end
+
+    if !File.exists?(@index_json_file)
+      reporter.report "Did not find index.json at #{@index_json_file}"
+      return
+    end
+
+    self.index_json["dashboards"].each do |dashboard_def|
+      @dashboard_files_in_index << File.basename(dashboard_def["url"])
+    end
+
+    @iterator.dashboard_files.each do |dashboard_file_in_glob|
+      dashboard_basename = File.basename(dashboard_file_in_glob)
+      if not @dashboard_files_in_index.include? dashboard_basename
+        reporter.report "Did not find dashboard #{dashboard_basename} in #{@index_json_file} (#{@dashboard_files_in_index})"
+      end
+    end
+  end
+end
+
 class Reporter
 
   Issue = Struct.new(:summary, :snippet, :dashboard) do
@@ -513,6 +548,7 @@ end
 
 integration_dir_or_file = ARGV[0]
 integration_file_glob = integration_dir_or_file.end_with?(".json") ? integration_dir_or_file : "#{integration_dir_or_file}/dashboards/*.json"
+integration_index_json = integration_dir_or_file.end_with?(".json") ? nil : "#{integration_dir_or_file}/index.json"
 
 dashboards = DashboardIterator.new(integration_file_glob)
 Palette.print
@@ -526,6 +562,7 @@ ChartUnitChecker.new(dashboards).run(reporter)
 DashboardLinkChecker.new(dashboards).run(reporter)
 ChartQueryChecker.new(dashboards).run(reporter)
 ParameterQueryChecker.new(dashboards).run(reporter)
+IndexChecker.new(dashboards, integration_index_json).run(reporter)
 
 reporter.summarize
 reporter.exit
