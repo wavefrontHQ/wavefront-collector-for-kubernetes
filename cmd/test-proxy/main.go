@@ -73,8 +73,17 @@ func getLineType(string2 string) {
 }
 
 func HandleIncomingMetrics(store *MetricStore, conn net.Conn) {
-	defer conn.Close()
+	//b, err := io.ReadAll(conn)
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
+	//
+	//log.Infof("******* string(b): %s", string(b))
+
+	//defer conn.Close()
 	lines := bufio.NewScanner(conn)
+	lb := lines.Bytes()
+	log.Infof("******* string(lb) in lines.Bytes: %s", string(lb))
 
 	// TODO: Read entire http/tcp request
 	// TODO: Parse the body between metric and log, using POST prefix: POST /logs/json_array?f=logs_json_arr or POST /logs/json_lines?f=logs_json_lines <- (maybe?)
