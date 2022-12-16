@@ -109,7 +109,7 @@ pipeline {
       }
       steps {
         script {
-          env.PREFIX = "scan.connect.redhat.com/${env.REDHAT_OSPID}"
+          env.PREFIX = "quay.io/redhat-isv-containers/${env.REDHAT_PROJECT_ID}"
         }
         sh """
         sshpass -p "${OPENSHIFT_CREDS_PSW}" ssh -o StrictHostKeyChecking=no root@${OPENSHIFT_VM} "bash -s" < hack/jenkins/release-openshift-container.sh \
