@@ -1,4 +1,5 @@
 require 'json'
+require 'optparse'
 
 class Palette
   BACKGROUND_COLORS = [
@@ -106,12 +107,22 @@ class ColorChecker
     @non_matches = []
   end
 
-  def run(reporter)
+  def run(reporter, autofix)
     @iterator.dashboard_files.each do |file_path|
+      lines = []
       File.open(file_path) do |file|
         file.each_line do |line|
           check_hex(file_path, file, line)
           check_rgba(file_path, file, line)
+
+          lines << line
+        end
+      end
+
+      next unless autofix
+      File.open(file_path, 'w') do |file|
+        lines.each do |line|
+          file.puts fix_hex_and_rgba(line)
         end
       end
     end
@@ -121,6 +132,64 @@ class ColorChecker
     end
 
     print_results
+  end
+
+  def line_with_closest_hex(line, hex_to_replace)
+#     all_colors.select { |color| }
+#
+#
+#     def matches_any_hex?(hex_color)
+#         !all_colors.select { |color| !!color.casecmp?(hex_color) }.none?
+#       end
+#
+#       def matches_any_rgba?(rgba_color)
+#         !all_colors.map { |hex| rgba(hex) }.select { |color| !!color.casecmp?(rgba_color) }.none?
+#       end
+
+  end
+
+  def line_with_closest_rgba(line, rgba_str_to_replace)
+    rgba_to_replace = Color.from_string(rgba_str_to_replace)
+    color_diffs = all_colors.map do |hex|
+      converted_color = Color.from_string(hex)
+
+      r_diff = (rgba_to_replace.r.to_f - converted_color.r.to_f).abs
+      g_diff = (rgba_to_replace.g.to_f - converted_color.g.to_f).abs
+      b_diff = (rgba_to_replace.b.to_f - converted_color.b.to_f).abs
+
+      [converted_color, r_diff + g_diff + b_diff]
+    end
+
+    closest_rgba_match = color_diffs.min_by(&:last)[0]
+    line[rgba_str_to_replace] = closest_rgba_match.rgba
+    return line
+  end
+
+  def fix_hex_and_rgba(line)
+#     begin
+#       HEX_PATTERN.match(line).tap do |match|
+#         if match
+#           if matches_any_hex?(match.to_s)
+#             return line
+#           else
+#             return line_with_closest_hex(line, match.to_s)
+#           end
+#         end
+#       end
+
+      RGBA_PATTERN.match(line).tap do |match|
+        if match
+          unless matches_any_rgba?(match.to_s)
+            # TODO: use color palette to show how the color changed
+            return line_with_closest_rgba(line, match.to_s)
+          end
+        end
+      end
+#     rescue
+#       puts 'Encountered an error matching regex in hex and rgba fixer, assuming this was not a color'
+#     end
+
+    return line
   end
 
   def print_results
@@ -546,6 +615,17 @@ if ARGV.empty?
   exit
 end
 
+options = {
+  autofix: false
+}
+OptionParser.new do |opts|
+  opts.banner = "Usage: dashboards_validator.rb [-f/--autofix] <integration dir or file>"
+
+  opts.on("-f", "--autofix") do |f|
+    options[:autofix] = f
+  end
+end.parse!
+
 integration_dir_or_file = ARGV[0]
 integration_file_glob = integration_dir_or_file.end_with?(".json") ? integration_dir_or_file : "#{integration_dir_or_file}/dashboards/*.json"
 integration_index_json = integration_dir_or_file.end_with?(".json") ? nil : "#{integration_dir_or_file}/index.json"
@@ -553,7 +633,7 @@ integration_index_json = integration_dir_or_file.end_with?(".json") ? nil : "#{i
 dashboards = DashboardIterator.new(integration_file_glob)
 Palette.print
 reporter = Reporter.new
-ColorChecker.new(dashboards).run(reporter)
+ColorChecker.new(dashboards).run(reporter, options[:autofix])
 ChartTitleChecker.new(dashboards).run(reporter)
 SparklineSublabelChecker.new(dashboards).run(reporter)
 SparklineFontSizeChecker.new(dashboards).run(reporter)
