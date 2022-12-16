@@ -23,80 +23,80 @@ pipeline {
         }
       }
     }
-//     stage("Create Bump Version Branch") {
-//       steps {
-//         withEnv(["PATH+EXTRA=${HOME}/go/bin"]){
-//           sh 'git config --global user.email "svc.wf-jenkins@vmware.com"'
-//           sh 'git config --global user.name "svc.wf-jenkins"'
-//           sh 'git remote set-url origin https://${TOKEN}@github.com/wavefronthq/wavefront-collector-for-kubernetes.git'
-//           sh './hack/jenkins/create-bump-version-branch.sh "${BUMP_COMPONENT}"'
-//         }
-//       }
-//     }
-//     stage("Publish RC Release") {
-//       environment {
-//         HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability-robot")
-//         PREFIX = 'projects.registry.vmware.com/tanzu_observability'
-//         DOCKER_IMAGE = 'kubernetes-collector'
-//         RELEASE_TYPE = 'rc'
-//       }
-//       steps {
-//         sh 'echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
-//         sh 'HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') make publish'
-//       }
-//     }
+    stage("Create Bump Version Branch") {
+      steps {
+        withEnv(["PATH+EXTRA=${HOME}/go/bin"]){
+          sh 'git config --global user.email "svc.wf-jenkins@vmware.com"'
+          sh 'git config --global user.name "svc.wf-jenkins"'
+          sh 'git remote set-url origin https://${TOKEN}@github.com/wavefronthq/wavefront-collector-for-kubernetes.git'
+          sh './hack/jenkins/create-bump-version-branch.sh "${BUMP_COMPONENT}"'
+        }
+      }
+    }
+    stage("Publish RC Release") {
+      environment {
+        HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability-robot")
+        PREFIX = 'projects.registry.vmware.com/tanzu_observability'
+        DOCKER_IMAGE = 'kubernetes-collector'
+        RELEASE_TYPE = 'rc'
+      }
+      steps {
+        sh 'echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
+        sh 'HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') make publish'
+      }
+    }
     // deploy to GKE and run manual tests
     // now we have confidence in the validity of our RC release
-//     stage("Deploy and Test") {
-//       environment {
-//         GCP_CREDS = credentials("GCP_CREDS")
-//         GKE_CLUSTER_NAME = "k8po-jenkins-rc-testing"
-//         WAVEFRONT_TOKEN = credentials("WAVEFRONT_TOKEN_NIMBA")
-//         WF_CLUSTER = 'nimba'
-//         RELEASE_TYPE = 'rc'
-//       }
-//       steps {
-//         script {
-//           env.VERSION = readFile('./release/VERSION').trim()
-//           env.CURRENT_VERSION = "${env.VERSION}-rc-${env.RC_NUMBER}"
-//           env.CONFIG_CLUSTER_NAME = "jenkins-${env.CURRENT_VERSION}-test"
-//         }
-//         withCredentials([string(credentialsId: 'nimba-wavefront-token', variable: 'WAVEFRONT_TOKEN')]) {
-//           withEnv(["PATH+GCLOUD=${HOME}/google-cloud-sdk/bin"]) {
-//             sh './hack/jenkins/setup-for-integration-test.sh -k gke'
-//             sh 'make gke-connect-to-cluster'
-//             sh 'make clean-cluster'
-//             sh './hack/test/deploy/deploy-local-linux.sh'
-//             sh './hack/test/test-wavefront-metrics.sh -c ${WF_CLUSTER} -t ${WAVEFRONT_TOKEN} -n ${CONFIG_CLUSTER_NAME} -v ${VERSION}'
-//             sh 'make clean-cluster'
-//           }
-//         }
-//       }
-//     }
-//     stage("Publish GA Harbor Image") {
-//       environment {
-//         HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability-robot")
-//         RELEASE_TYPE = 'release'
-//         PREFIX = 'projects.registry.vmware.com/tanzu_observability'
-//         DOCKER_IMAGE = 'kubernetes-collector'
-//       }
-//       steps {
-//         sh 'echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
-//         sh 'HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') make publish'
-//       }
-//     }
-//     stage("Publish GA Docker Hub") {
-//       environment {
-//         DOCKERHUB_CREDS=credentials('Dockerhub_svcwfjenkins')
-//         RELEASE_TYPE = 'release'
-//         PREFIX = 'wavefronthq'
-//         DOCKER_IMAGE = 'wavefront-kubernetes-collector'
-//       }
-//       steps {
-//         sh 'echo $DOCKERHUB_CREDS_PSW | docker login -u $DOCKERHUB_CREDS_USR --password-stdin'
-//         sh 'make publish'
-//       }
-//     }
+    stage("Deploy and Test") {
+      environment {
+        GCP_CREDS = credentials("GCP_CREDS")
+        GKE_CLUSTER_NAME = "k8po-jenkins-rc-testing"
+        WAVEFRONT_TOKEN = credentials("WAVEFRONT_TOKEN_NIMBA")
+        WF_CLUSTER = 'nimba'
+        RELEASE_TYPE = 'rc'
+      }
+      steps {
+        script {
+          env.VERSION = readFile('./release/VERSION').trim()
+          env.CURRENT_VERSION = "${env.VERSION}-rc-${env.RC_NUMBER}"
+          env.CONFIG_CLUSTER_NAME = "jenkins-${env.CURRENT_VERSION}-test"
+        }
+        withCredentials([string(credentialsId: 'nimba-wavefront-token', variable: 'WAVEFRONT_TOKEN')]) {
+          withEnv(["PATH+GCLOUD=${HOME}/google-cloud-sdk/bin"]) {
+            sh './hack/jenkins/setup-for-integration-test.sh -k gke'
+            sh 'make gke-connect-to-cluster'
+            sh 'make clean-cluster'
+            sh './hack/test/deploy/deploy-local-linux.sh'
+            sh './hack/test/test-wavefront-metrics.sh -c ${WF_CLUSTER} -t ${WAVEFRONT_TOKEN} -n ${CONFIG_CLUSTER_NAME} -v ${VERSION}'
+            sh 'make clean-cluster'
+          }
+        }
+      }
+    }
+    stage("Publish GA Harbor Image") {
+      environment {
+        HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability-robot")
+        RELEASE_TYPE = 'release'
+        PREFIX = 'projects.registry.vmware.com/tanzu_observability'
+        DOCKER_IMAGE = 'kubernetes-collector'
+      }
+      steps {
+        sh 'echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
+        sh 'HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') make publish'
+      }
+    }
+    stage("Publish GA Docker Hub") {
+      environment {
+        DOCKERHUB_CREDS=credentials('Dockerhub_svcwfjenkins')
+        RELEASE_TYPE = 'release'
+        PREFIX = 'wavefronthq'
+        DOCKER_IMAGE = 'wavefront-kubernetes-collector'
+      }
+      steps {
+        sh 'echo $DOCKERHUB_CREDS_PSW | docker login -u $DOCKERHUB_CREDS_USR --password-stdin'
+        sh 'make publish'
+      }
+    }
     stage("Push Openshift Image to RedHat Connect") {
       environment {
         REDHAT_CREDS=credentials('redhat-connect-wf-collector-creds')
@@ -123,19 +123,19 @@ pipeline {
         """
       }
     }
-//     stage("Create and Merge Bump Version Pull Request") {
-//       steps {
-//         sh './hack/jenkins/create-and-merge-pull-request.sh'
-//       }
-//     }
-//     stage("Github Release") {
-//       environment {
-//         GITHUB_CREDS_PSW = credentials("GITHUB_TOKEN")
-//       }
-//       steps {
-//         sh './hack/jenkins/generate_github_release.sh'
-//       }
-//     }
+    stage("Create and Merge Bump Version Pull Request") {
+      steps {
+        sh './hack/jenkins/create-and-merge-pull-request.sh'
+      }
+    }
+    stage("Github Release") {
+      environment {
+        GITHUB_CREDS_PSW = credentials("GITHUB_TOKEN")
+      }
+      steps {
+        sh './hack/jenkins/generate_github_release.sh'
+      }
+    }
   }
 
   post {
