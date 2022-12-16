@@ -1,7 +1,7 @@
 package metrics_test
 
 import (
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/test-proxy/metrics"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/testproxy/metrics"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

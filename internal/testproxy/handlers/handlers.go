@@ -5,129 +5,51 @@ import (
 	"encoding/json"
 	"fmt"
 	log "github.com/sirupsen/logrus"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/test-proxy/logs"
-	metrics2 "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/test-proxy/metrics"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/testproxy/logs"
+	metrics2 "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/testproxy/metrics"
 	"io"
 	"net"
 	"net/http"
 )
 
-func LogJsonArrayHandler() http.HandlerFunc {
+func LogJsonArrayHandler(store *logs.LogStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
-		//log.Infof("******* req received in LogJsonArrayHandler: '%+v'", req)
-
-		//if req.URL.Path != logsPath {
-		//	http.NotFound(w, req)
-		//	return
-		//}
-
-		//lines := bufio.NewScanner(req.Body)
-		//defer req.Body.Close()
-		//for lines.Scan() {
-		//	if len(lines.Bytes()) == 0 {
-		//		continue
-		//	}
-		//	log.Info(lines.Text())
-		//
-		//}
-
 		b, err := io.ReadAll(req.Body)
 		if err != nil {
 			log.Fatal(err)
 		}
 		defer req.Body.Close()
 
-		log.Infof("******* string(b): %s", string(b))
-		// Verify that the input is in JSON array format
-		// TODO: use VerifyJsonArray on the body of the tcp request and store
-
-		if logs.VerifyJsonArray(string(b)) {
-			log.Info("******* logs are in json_array format")
-		} else {
-			w.WriteHeader(http.StatusUnprocessableEntity)
-			log.Info("logs are not in json_array format")
-			return
-		}
+		store.SetReceivedWithValidFormat(logs.VerifyJsonArray(string(b)))
 
 		w.WriteHeader(http.StatusOK)
 	}
 }
 
-func LogAssertionHandler() http.HandlerFunc {
+func LogJsonLinesHandler(store *logs.LogStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
-		log.Infof("******* req received in LogAssertionHandler: '%+v'", req)
-
-		//if req.URL.Path != logsPath {
-		//	http.NotFound(w, req)
-		//	return
-		//}
-
-		//lines := bufio.NewScanner(req.Body)
-		//defer req.Body.Close()
-		//for lines.Scan() {
-		//	if len(lines.Bytes()) == 0 {
-		//		continue
-		//	}
-		//	log.Info(lines.Text())
-		//
-		//}
-
 		b, err := io.ReadAll(req.Body)
 		if err != nil {
 			log.Fatal(err)
 		}
 		defer req.Body.Close()
 
-		log.Infof("******* string(b): %s", string(b))
-		// Verify that the input is in JSON array format
-
-		if logs.VerifyJsonArray(string(b)) {
-			log.Info("******* logs are in json_array format")
-		} else {
-			w.WriteHeader(http.StatusUnprocessableEntity)
-			log.Info("logs are not in json_array format")
-			return
-		}
+		store.SetReceivedWithValidFormat(logs.VerifyJsonLines(string(b)))
 
 		w.WriteHeader(http.StatusOK)
 	}
 }
 
-func LogJsonLinesHandler() http.HandlerFunc {
+func LogAssertionHandler(store *logs.LogStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
-		//if req.URL.Path != logsPath {
-		//	http.NotFound(w, req)
-		//	return
-		//}
-
-		//lines := bufio.NewScanner(req.Body)
-		//defer req.Body.Close()
-		//for lines.Scan() {
-		//	if len(lines.Bytes()) == 0 {
-		//		continue
-		//	}
-		//	log.Info(lines.Text())
-		//
-		//}
-
-		b, err := io.ReadAll(req.Body)
+		output, err := store.ToJSON()
 		if err != nil {
-			log.Fatal(err)
-		}
-		defer req.Body.Close()
-
-		log.Info(string(b))
-
-		if logs.VerifyJsonLines(string(b)) {
-			log.Info("logs are in json_lines format")
-		} else {
-			w.WriteHeader(http.StatusUnprocessableEntity)
-			log.Info("logs are not in json_lines format")
-			return
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(fmt.Sprintf("Unable to marshal log test store object: %s", err.Error())))
 		}
 
 		w.WriteHeader(http.StatusOK)
-
+		w.Write(output)
 	}
 }
 

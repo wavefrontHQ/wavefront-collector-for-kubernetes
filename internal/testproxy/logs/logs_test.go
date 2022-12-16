@@ -1,7 +1,7 @@
 package logs_test
 
 import (
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/test-proxy/logs"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/testproxy/logs"
 	"testing"
 )
 
