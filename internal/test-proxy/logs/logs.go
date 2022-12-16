@@ -1,11 +1,11 @@
-package main
+package logs
 
 import (
 	"encoding/json"
 	"fmt"
 )
 
-func VerifyJsonArray(line string) bool{
+func VerifyJsonArray(line string) bool {
 	var jsonarray []interface{}
 	err := json.Unmarshal([]byte(line), &jsonarray)
 	if err != nil {
@@ -16,13 +16,13 @@ func VerifyJsonArray(line string) bool{
 	return true
 }
 
-func VerifyJsonLines(line string) bool{
+func VerifyJsonLines(line string) bool {
 	var jsonlines []interface{}
 	err := json.Unmarshal([]byte(line), &jsonlines)
 	if err == nil {
 		fmt.Println("Data is not in json lines format :", err)
 		return false
 	}
-	fmt.Println(err)
+
 	return true
 }

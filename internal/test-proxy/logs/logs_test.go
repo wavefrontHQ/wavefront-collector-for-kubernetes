@@ -1,6 +1,7 @@
-package main
+package logs_test
 
 import (
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/test-proxy/logs"
 	"testing"
 )
 
@@ -10,14 +11,12 @@ func TestLogFormat(t *testing.T) {
 					{"cluster":"testk8scluster","message":"testlogmessage","service":"none"},
 					{"cluster":"testk8scluster","message":"testlogmessage","service":"none"}
 					]`
-		VerifyJsonArray(jsonArray)
+		logs.VerifyJsonArray(jsonArray)
 	})
 
 	t.Run("logs are in json lines format", func(t *testing.T) {
 		jsonLines := `{"cluster":"testk8scluster","message":"testlogmessage","service":"none"}
 					{"cluster":"testk8scluster","message":"testlogmessage","service":"none"}`
-		VerifyJsonLines(jsonLines)
+		logs.VerifyJsonLines(jsonLines)
 	})
 }
-
-
