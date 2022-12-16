@@ -7,7 +7,7 @@ pipeline {
 
   environment {
     RELEASE_TYPE = 'release'
-    RC_NUMBER = "3"
+    RC_NUMBER = "1"
     BUMP_COMPONENT = "${params.BUMP_COMPONENT}"
     GIT_BRANCH = getCurrentBranchName()
     GIT_CREDENTIAL_ID = 'wf-jenkins-github'
