@@ -3,10 +3,10 @@ require 'optparse'
 
 class Palette
   BACKGROUND_COLORS = [
-    "#f54f47", # Red
-    "#f57600", # Orange
-    "#85c81a", # Green
-    "#49afd9", # neutral Blue
+    "#f54f47", # Red           rgba(245,79,71,1)
+    "#f57600", # Orange        rgba(245,118,0,1)
+    "#85c81a", # Green         rgba(133,200,26,1)
+    "#49afd9", # neutral Blue  rgba(73,175,217,1)
   ]
 
   OTHER_COLORS = [
@@ -610,39 +610,45 @@ class Reporter
   end
 end
 
-if ARGV.empty?
-  puts "Please enter integration directory. Ex: ../tomcat"
-  exit
+def main
+  if ARGV.empty?
+    puts "Please enter integration directory. Ex: ../tomcat"
+    exit
+  end
+
+  options = {
+    autofix: false
+  }
+  OptionParser.new do |opts|
+    opts.banner = "Usage: dashboards_validator.rb [-f/--autofix] <integration dir or file>"
+
+    opts.on("-f", "--autofix") do |f|
+      options[:autofix] = f
+    end
+  end.parse!
+
+  integration_dir_or_file = ARGV[0]
+  integration_file_glob = integration_dir_or_file.end_with?(".json") ? integration_dir_or_file : "#{integration_dir_or_file}/dashboards/*.json"
+  integration_index_json = integration_dir_or_file.end_with?(".json") ? nil : "#{integration_dir_or_file}/index.json"
+
+  dashboards = DashboardIterator.new(integration_file_glob)
+  Palette.print
+  reporter = Reporter.new
+  ColorChecker.new(dashboards).run(reporter, options[:autofix])
+  ChartTitleChecker.new(dashboards).run(reporter)
+  SparklineSublabelChecker.new(dashboards).run(reporter)
+  SparklineFontSizeChecker.new(dashboards).run(reporter)
+  ChartDescriptionChecker.new(dashboards).run(reporter)
+  ChartUnitChecker.new(dashboards).run(reporter)
+  DashboardLinkChecker.new(dashboards).run(reporter)
+  ChartQueryChecker.new(dashboards).run(reporter)
+  ParameterQueryChecker.new(dashboards).run(reporter)
+  IndexChecker.new(dashboards, integration_index_json).run(reporter)
+
+  reporter.summarize
+  reporter.exit
 end
 
-options = {
-  autofix: false
-}
-OptionParser.new do |opts|
-  opts.banner = "Usage: dashboards_validator.rb [-f/--autofix] <integration dir or file>"
-
-  opts.on("-f", "--autofix") do |f|
-    options[:autofix] = f
-  end
-end.parse!
-
-integration_dir_or_file = ARGV[0]
-integration_file_glob = integration_dir_or_file.end_with?(".json") ? integration_dir_or_file : "#{integration_dir_or_file}/dashboards/*.json"
-integration_index_json = integration_dir_or_file.end_with?(".json") ? nil : "#{integration_dir_or_file}/index.json"
-
-dashboards = DashboardIterator.new(integration_file_glob)
-Palette.print
-reporter = Reporter.new
-ColorChecker.new(dashboards).run(reporter, options[:autofix])
-ChartTitleChecker.new(dashboards).run(reporter)
-SparklineSublabelChecker.new(dashboards).run(reporter)
-SparklineFontSizeChecker.new(dashboards).run(reporter)
-ChartDescriptionChecker.new(dashboards).run(reporter)
-ChartUnitChecker.new(dashboards).run(reporter)
-DashboardLinkChecker.new(dashboards).run(reporter)
-ChartQueryChecker.new(dashboards).run(reporter)
-ParameterQueryChecker.new(dashboards).run(reporter)
-IndexChecker.new(dashboards, integration_index_json).run(reporter)
-
-reporter.summarize
-reporter.exit
+if __FILE__ == $0
+  main
+end
