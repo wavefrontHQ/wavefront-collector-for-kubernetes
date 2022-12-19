@@ -7,7 +7,7 @@ REPO_DIR=$(shell git rev-parse --show-toplevel)
 TEST_DIR=$(REPO_DIR)/hack/test
 DEPLOY_DIR=$(REPO_DIR)/hack/test/deploy
 OUT_DIR?=$(REPO_DIR)/_output
-INTEGRATION_TEST_ARGS?=default -r real-proxy-metrics
+INTEGRATION_TEST_ARGS?=default -r real-proxy
 
 BINARY_NAME=wavefront-collector
 
@@ -25,8 +25,7 @@ endif
 GO_IMPORTS_BIN:=$(if $(which goimports),$(which goimports),$(GOPATH)/bin/goimports)
 SEMVER_CLI_BIN:=$(if $(which semver-cli),$(which semver-cli),$(GOPATH)/bin/semver-cli)
 
-VERSION_POSTFIX?=-dev-$(shell whoami)
-#-$(shell git rev-parse --short HEAD)
+VERSION_POSTFIX?=-dev-$(shell whoami)-$(shell git rev-parse --short HEAD)
 RELEASE_VERSION?=$(shell cat ./release/VERSION)
 VERSION?=$(shell semver-cli inc patch $(RELEASE_VERSION))$(VERSION_POSTFIX)
 GIT_COMMIT:=$(shell git rev-parse --short HEAD)
@@ -130,12 +129,11 @@ test-proxy-container: $(SEMVER_CLI_BIN)
 	docker build \
 	--build-arg BINARY_NAME=test-proxy --build-arg LDFLAGS="$(LDFLAGS)" \
 	--pull -f $(REPO_DIR)/Dockerfile.test-proxy \
-	-t $(PREFIX)/test-proxy:$(VERSION) .
-	-#t $(PREFIX)/test-proxy:latest
+	-t $(PREFIX)/test-proxy:$(VERSION) -t $(PREFIX)/test-proxy:latest .
 
 .PHONY: publish-test-proxy
 publish-test-proxy:  test-proxy-container
-	#docker push $(PREFIX)/test-proxy:latest
+	docker push $(PREFIX)/test-proxy:latest
 	docker push $(PREFIX)/test-proxy:$(VERSION)
 
 .PHONY: test-proxy

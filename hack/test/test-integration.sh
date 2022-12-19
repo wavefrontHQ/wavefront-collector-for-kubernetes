@@ -98,7 +98,13 @@ function run_fake_proxy_test() {
   kill $(jobs -p) &>/dev/null || true
 }
 
-function run_real_proxy_metrics_test () {
+function run_real_proxy_metrics_test() {
+	run_real_proxy
+
+  "${SCRIPT_DIR}"/test-wavefront-metrics.sh -t "$WAVEFRONT_TOKEN"
+  green "SUCCEEDED"
+}
+function run_real_proxy() {
   local USE_TEST_PROXY="false"
   local additional_args="-p $USE_TEST_PROXY"
   if [[ -n "${EXPERIMENTAL_FEATURES:-}" ]]; then
@@ -115,7 +121,6 @@ function run_real_proxy_metrics_test () {
       -n "$K8S_CLUSTER_NAME" \
       $additional_args
 
-  "${SCRIPT_DIR}"/test-wavefront-metrics.sh -t "$WAVEFRONT_TOKEN"
   green "SUCCEEDED"
 }
 
@@ -205,6 +210,10 @@ function main() {
   if [[ "${tests_to_run[*]}" =~ "real-proxy-metrics" ]]; then
     echo "==================== Running real-proxy-metrics test ===================="
     run_real_proxy_metrics_test
+  fi
+  if [[ "${tests_to_run[*]}" =~ "real-proxy" ]]; then
+    echo "==================== Starting real proxy ===================="
+    run_real_proxy
   fi
 }
 

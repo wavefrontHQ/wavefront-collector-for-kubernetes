@@ -5,7 +5,7 @@ metadata:
     app: wavefront-proxy
     name: wavefront-proxy
   name: wavefront-proxy
-  namespace: observability-system
+  namespace: wavefront-collector
 spec:
   replicas: 1
   selector:
@@ -28,12 +28,12 @@ spec:
                       - amd64
       containers:
       - name: wavefront-proxy
-        image: projects.registry.vmware.com/tanzu_observability_keights_saas/test-proxy:1.13.1-dev-jyuqi
+        image: projects.registry.vmware.com/tanzu_observability_keights_saas/test-proxy:latest
         imagePullPolicy: Always
         command: [ "/test-proxy", "-proxy", ":2878", "-logLevel", "info" ]
         ports:
         - name: proxy
-          containerPort: 9999
+          containerPort: 2878
           protocol: TCP
         - name: control
           containerPort: 8888
@@ -47,11 +47,11 @@ metadata:
   name: wavefront-proxy
   labels:
     app: wavefront-proxy
-  namespace: observability-system
+  namespace: wavefront-collector
 spec:
   ports:
   - name: wavefront
-    port: 9999
+    port: 2878
     protocol: TCP
   selector:
     app: wavefront-proxy
