@@ -143,47 +143,27 @@ class ColorChecker
     print_results
   end
 
-  def line_with_closest_hex(line, hex_str_to_replace)
-#     all_colors.select { |color| }
-#
-#
-#     def matches_any_hex?(hex_color)
-#         !all_colors.select { |color| !!color.casecmp?(hex_color) }.none?
-#       end
-#
-#       def matches_any_rgba?(rgba_color)
-#         !all_colors.map { |hex| rgba(hex) }.select { |color| !!color.casecmp?(rgba_color) }.none?
-#       end
-    hex_to_replace = Color.from_string(hex_str_to_replace)
-    color_diffs = all_colors.map do |hex|
+  def get_rgb_color_diffs(color_to_replace)
+    return color_diffs = all_colors.map do |hex|
       converted_color = Color.from_string(hex)
 
-      r_diff = (hex_to_replace.r.to_f - converted_color.r.to_f).abs
-      g_diff = (hex_to_replace.g.to_f - converted_color.g.to_f).abs
-      b_diff = (hex_to_replace.b.to_f - converted_color.b.to_f).abs
+      r_diff = (color_to_replace.r.to_f - converted_color.r.to_f).abs
+      g_diff = (color_to_replace.g.to_f - converted_color.g.to_f).abs
+      b_diff = (color_to_replace.b.to_f - converted_color.b.to_f).abs
 
       [converted_color, r_diff + g_diff + b_diff]
     end
+  end
 
-    closest_hex_match = color_diffs.min_by(&:last)[0]
-    line[hex_str_to_replace] = closest_hex_match.hex
+  def line_with_closest_hex(line, hex_str_to_replace)
+    color_diffs = get_rgb_color_diffs(Color.from_string(hex_str_to_replace))
+    line[hex_str_to_replace] = color_diffs.min_by(&:last)[0].hex
     return line
   end
 
   def line_with_closest_rgba(line, rgba_str_to_replace)
-    rgba_to_replace = Color.from_string(rgba_str_to_replace)
-    color_diffs = all_colors.map do |hex|
-      converted_color = Color.from_string(hex)
-
-      r_diff = (rgba_to_replace.r.to_f - converted_color.r.to_f).abs
-      g_diff = (rgba_to_replace.g.to_f - converted_color.g.to_f).abs
-      b_diff = (rgba_to_replace.b.to_f - converted_color.b.to_f).abs
-
-      [converted_color, r_diff + g_diff + b_diff]
-    end
-
-    closest_rgba_match = color_diffs.min_by(&:last)[0]
-    line[rgba_str_to_replace] = closest_rgba_match.rgba
+    color_diffs = get_rgb_color_diffs(Color.from_string(rgba_str_to_replace))
+    line[rgba_str_to_replace] = color_diffs.min_by(&:last)[0].rgba
     return line
   end
 
