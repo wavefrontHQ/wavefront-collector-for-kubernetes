@@ -1,8 +1,9 @@
 package logs_test
 
 import (
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/testproxy/logs"
 	"testing"
+
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/testproxy/logs"
 )
 
 func TestLogFormat(t *testing.T) {

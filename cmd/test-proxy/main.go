@@ -3,13 +3,14 @@ package main
 import (
 	"flag"
 	"fmt"
+	"net"
+	"net/http"
+	"os"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/testproxy/handlers"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/testproxy/logs"
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/testproxy/metrics"
-	"net"
-	"net/http"
-	"os"
 )
 
 var proxyAddr = ":7777"

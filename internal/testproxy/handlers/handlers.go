@@ -4,12 +4,13 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	log "github.com/sirupsen/logrus"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/testproxy/logs"
-	metrics2 "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/testproxy/metrics"
 	"io"
 	"net"
 	"net/http"
+
+	log "github.com/sirupsen/logrus"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/testproxy/logs"
+	metrics2 "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/testproxy/metrics"
 )
 
 func LogJsonArrayHandler(store *logs.LogStore) http.HandlerFunc {
