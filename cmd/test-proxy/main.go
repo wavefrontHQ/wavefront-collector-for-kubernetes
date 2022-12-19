@@ -1,8 +1,6 @@
 package main
 
 import (
-	"bufio"
-	"encoding/json"
 	"flag"
 	"fmt"
 	"net"
@@ -10,15 +8,22 @@ import (
 	"os"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/testproxy/handlers"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/testproxy/logs"
+	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/testproxy/metrics"
 )
 
 var proxyAddr = ":7777"
 var controlAddr = ":8888"
+var runMode = "metrics"
+var logFilePath string
 var logLevel = log.InfoLevel.String()
 
 func init() {
 	flag.StringVar(&proxyAddr, "proxy", proxyAddr, "host and port for the test \"wavefront proxy\" to listen on")
 	flag.StringVar(&controlAddr, "control", controlAddr, "host and port for the http control server to listen on")
+	flag.StringVar(&runMode, "mode", runMode, "which mode to run in. Valid options are \"metrics\", and \"logs\"")
+	flag.StringVar(&logFilePath, "logFilePath", logFilePath, "the full path to output logs to instead of using stdout")
 	flag.StringVar(&logLevel, "logLevel", logLevel, "change log level. Default is \"info\", use \"debug\" for metric logging")
 }
 
@@ -31,154 +36,79 @@ func main() {
 	} else {
 		log.SetLevel(log.InfoLevel)
 	}
-	log.SetOutput(os.Stdout)
 
-	store := NewMetricStore()
+	metricStore := metrics.NewMetricStore()
+	logStore := logs.NewLogStore()
 
-	go ServeProxy(store)
-	http.HandleFunc("/metrics", DumpMetricsHandler(store))
-	http.HandleFunc("/metrics/diff", DiffMetricsHandler(store))
+	if logFilePath != "" {
+		// Set log output to file to prevent our logging component from picking up stdout/stderr logs
+		// and sending them back to us over and over.
+		file, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+		if err != nil {
+			fmt.Println("Could not create log output file: ", err)
+			os.Exit(1)
+		}
 
-	log.Infof("http control server listening on %s", controlAddr)
-	if err := http.ListenAndServe(controlAddr, nil); err != nil {
-		log.Error(err.Error())
+		log.SetOutput(file)
+	}
+
+	switch runMode {
+	case "metrics":
+		go serveMetrics(metricStore)
+	case "logs":
+		go serveLogs(logStore)
+	default:
+		log.Error("\"mode\" flag must be set to: \"metrics\" or \"logs\"")
 		os.Exit(1)
 	}
+
+	// Blocking call to start up the control server
+	serveControl(metricStore, logStore)
 }
 
-func ServeProxy(store *MetricStore) {
+func serveMetrics(store *metrics.MetricStore) {
 	log.Infof("tcp metrics server listening on %s", proxyAddr)
 	listener, err := net.Listen("tcp", proxyAddr)
 	if err != nil {
 		log.Error(err.Error())
 		os.Exit(1)
 	}
+
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
 			log.Error(err.Error())
 			continue
 		}
-		go HandleIncomingMetrics(store, conn)
+		go handlers.HandleIncomingMetrics(store, conn)
 	}
 }
 
-func HandleIncomingMetrics(store *MetricStore, conn net.Conn) {
-	defer conn.Close()
-	lines := bufio.NewScanner(conn)
-	for lines.Scan() {
-		if len(lines.Text()) == 0 {
-			continue
-		}
-		metric, err := ParseMetric(lines.Text())
-		if err != nil {
-			log.Error(err.Error())
-			log.Error(lines.Text())
-			store.LogBadMetric(lines.Text())
-			continue
-		}
-		if metric == nil { // we got a histogram
-			continue
-		}
-		if len(metric.Tags) > 20 {
-			log.Error(fmt.Sprintf("[WF-410: Too many point tags (%d, max 20):", len(metric.Tags)))
-			continue
-		}
-		log.Debugf("%#v", metric)
-		store.LogMetric(metric)
-	}
-	if err := lines.Err(); err != nil {
+func serveLogs(store *logs.LogStore) {
+	logsServeMux := http.NewServeMux()
+	logsServeMux.HandleFunc("/logs/json_array", handlers.LogJsonArrayHandler(store))
+	logsServeMux.HandleFunc("/logs/json_lines", handlers.LogJsonLinesHandler(store))
+
+	log.Infof("http logs server listening on %s", proxyAddr)
+	if err := http.ListenAndServe(proxyAddr, logsServeMux); err != nil {
 		log.Error(err.Error())
-	}
-	return
-}
-
-func DumpMetricsHandler(store *MetricStore) http.HandlerFunc {
-	return func(w http.ResponseWriter, req *http.Request) {
-		if req.Method != http.MethodGet {
-			w.WriteHeader(http.StatusMethodNotAllowed)
-			log.Errorf("expected method %s but got %s", http.MethodGet, req.Method)
-			return
-		}
-		badMetrics := store.BadMetrics()
-		if len(badMetrics) > 0 {
-			w.WriteHeader(http.StatusUnprocessableEntity)
-			err := json.NewEncoder(w).Encode(badMetrics)
-			if err != nil {
-				log.Error(err.Error())
-			}
-			return
-		}
-		w.WriteHeader(http.StatusOK)
-		err := json.NewEncoder(w).Encode(store.Metrics())
-		if err != nil {
-			log.Error(err.Error())
-		}
+		os.Exit(1)
 	}
 }
 
-func DiffMetricsHandler(store *MetricStore) http.HandlerFunc {
-	return func(w http.ResponseWriter, req *http.Request) {
-		if req.Method != http.MethodPost {
-			w.WriteHeader(http.StatusMethodNotAllowed)
-			log.Errorf("expected method %s but got %s", http.MethodGet, req.Method)
-			return
-		}
-		badMetrics := store.BadMetrics()
-		if len(badMetrics) > 0 {
-			w.WriteHeader(http.StatusUnprocessableEntity)
-			err := json.NewEncoder(w).Encode(badMetrics)
-			if err != nil {
-				log.Error(err.Error())
-			}
-			return
-		}
-		var expectedMetrics []*Metric
-		var excludedMetrics []*Metric
-		lines := bufio.NewScanner(req.Body)
-		defer req.Body.Close()
-		for lines.Scan() {
-			if len(lines.Bytes()) == 0 {
-				continue
-			}
-			var err error
-			if lines.Bytes()[0] == '~' {
-				var excludedMetric *Metric
-				excludedMetric, err = decodeMetric(lines.Bytes()[1:])
-				excludedMetrics = append(excludedMetrics, excludedMetric)
-			} else {
-				var expectedMetric *Metric
-				expectedMetric, err = decodeMetric(lines.Bytes())
-				expectedMetrics = append(expectedMetrics, expectedMetric)
-			}
-			if err != nil {
-				w.WriteHeader(http.StatusBadRequest)
-				err = json.NewEncoder(w).Encode(err.Error())
-				if err != nil {
-					log.Error(err.Error())
-				}
-				return
-			}
-		}
-		linesErr := lines.Err()
-		if linesErr != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			ioErr := json.NewEncoder(w).Encode(linesErr.Error())
-			if ioErr != nil {
-				log.Error(ioErr.Error())
-			}
-			return
-		}
-		w.WriteHeader(http.StatusOK)
-		linesErr = json.NewEncoder(w).Encode(DiffMetrics(expectedMetrics, excludedMetrics, store.Metrics()))
-		if linesErr != nil {
-			log.Error(linesErr.Error())
-		}
-	}
-}
+func serveControl(metricStore *metrics.MetricStore, logStore *logs.LogStore) {
+	controlServeMux := http.NewServeMux()
 
-func decodeMetric(bytes []byte) (*Metric, error) {
-	var metric *Metric
-	err := json.Unmarshal(bytes, &metric)
-	return metric, err
+	controlServeMux.HandleFunc("/metrics", handlers.DumpMetricsHandler(metricStore))
+	controlServeMux.HandleFunc("/metrics/diff", handlers.DiffMetricsHandler(metricStore))
+	// Based on logs already sent, perform checks on store logs
+	// Start by supporting POST parameter expected_log_format
+	controlServeMux.HandleFunc("/logs/assert", handlers.LogAssertionHandler(logStore))
+	// NOTE: these handler functions attach to the control HTTP server, NOT the TCP server that actually receives data
+
+	log.Infof("http control server listening on %s", controlAddr)
+	if err := http.ListenAndServe(controlAddr, controlServeMux); err != nil {
+		log.Error(err.Error())
+		os.Exit(1)
+	}
 }

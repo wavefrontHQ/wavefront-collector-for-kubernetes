@@ -1,4 +1,4 @@
-package main
+package metrics
 
 type Metric struct {
 	Name      string
