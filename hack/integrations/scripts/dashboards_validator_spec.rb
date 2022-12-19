@@ -7,6 +7,8 @@ describe ColorChecker do
   describe '.line_with_closest_rgba' do
     it 'returns the RGBA value closest to a valid one in the Palette' do
       cc = ColorChecker.new FakeDashboardIterator.new
+
+      # Colors
       expect(cc.line_with_closest_rgba('                "sparklineLineColor": "rgba(0,0,0,0.3)",', 'rgba(0,0,0,0.3)'))
                                           .to eq('                "sparklineLineColor": "rgba(0,0,0,1)",')
       expect(cc.line_with_closest_rgba('                "sparklineLineColor": "rgba(255,50,50,1)",', 'rgba(255,50,50,1)'))
@@ -15,6 +17,16 @@ describe ColorChecker do
                                           .to eq('                "sparklineLineColor": "rgba(133,200,26,1)",')
       expect(cc.line_with_closest_rgba('                "sparklineLineColor": "rgba(50,50,255,1)",', 'rgba(50,50,255,1)'))
                                           .to eq('                "sparklineLineColor": "rgba(73,175,217,1)",')
+
+      # Black and white
+      expect(cc.line_with_closest_rgba('                "sparklineLineColor": "rgba(200,200,200,1)",', 'rgba(200,200,200,1)'))
+                                          .to eq('                "sparklineLineColor": "rgba(255,255,255,1)",')
+      expect(cc.line_with_closest_rgba('                "sparklineLineColor": "rgba(50,50,50,1)",', 'rgba(50,50,50,1)'))
+                                          .to eq('                "sparklineLineColor": "rgba(0,0,0,1)",')
+      expect(cc.line_with_closest_rgba('                "sparklineLineColor": "rgba(200,200,200,0.5)",', 'rgba(200,200,200,0.5)'))
+                                          .to eq('                "sparklineLineColor": "rgba(255,255,255,1)",')
+      expect(cc.line_with_closest_rgba('                "sparklineLineColor": "rgba(50,50,50,0.5)",', 'rgba(50,50,50,0.5)'))
+                                          .to eq('                "sparklineLineColor": "rgba(0,0,0,1)",')
     end
   end
 end
