@@ -10,6 +10,8 @@ if [[ ! -z "$CLUSTER_ROLES" ]] ; then
 	  kubectl delete --wait=false clusterrolebindings ${CLUSTER_ROLES} || true
 fi
 
+kubectl delete --wait=false deployment/wavefront-proxy &>/dev/null  || true
+
 NS=$(kubectl get namespaces | awk '/wavefront-collector|wavefront|collector-targets|observability-system/ {print $1}')
 
 if [[ ! -z "$NS" ]] ; then

@@ -16,16 +16,10 @@ spec:
       labels:
         app: wavefront-proxy
     spec:
-      affinity:
-        nodeAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-            - weight: 1
-              preference:
-                matchExpressions:
-                  - key: kubernetes.io/arch
-                    operator: In
-                    values:
-                      - amd64
+      tolerations:
+      - effect: NoSchedule
+        key: kubernetes.io/arch
+        value: arm64
       containers:
       - name: wavefront-proxy
         image: projects.registry.vmware.com/tanzu_observability/proxy:11.3

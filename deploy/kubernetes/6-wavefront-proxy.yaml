@@ -17,6 +17,10 @@ spec:
       labels:
         app: wavefront-proxy
     spec:
+      tolerations:
+      - effect: NoSchedule
+        key: kubernetes.io/arch
+        value: arm64
       containers:
         - name: wavefront-proxy
           image: projects.registry.vmware.com/tanzu_observability/proxy:11.3

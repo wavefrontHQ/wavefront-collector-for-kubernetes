@@ -64,7 +64,8 @@ pipeline {
           }
           environment {
             GCP_CREDS = credentials("GCP_CREDS")
-            GKE_CLUSTER_NAME = "k8po-jenkins-ci-collector"
+            GKE_CLUSTER_NAME = "k8po-jenkins-ci-zone-a"
+            GCP_ZONE="a"
             VERSION_POSTFIX = "-alpha-${GIT_COMMIT.substring(0, 8)}"
             PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
             DOCKER_IMAGE = "kubernetes-collector-snapshot"
@@ -74,7 +75,7 @@ pipeline {
           }
           steps {
             withEnv(["PATH+GO=${HOME}/go/bin", "PATH+GCLOUD=${HOME}/google-cloud-sdk/bin"]) {
-              lock("integration-test-gke-collector") {
+              lock("integration-test-gke") {
                 sh './hack/jenkins/setup-for-integration-test.sh -k gke'
                 sh 'make gke-connect-to-cluster'
                 sh 'make clean-cluster'
