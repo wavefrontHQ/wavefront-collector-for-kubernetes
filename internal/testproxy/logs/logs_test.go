@@ -9,7 +9,7 @@ import (
 )
 
 func TestLogFormat(t *testing.T) {
-	t.Run("logs are in json_array format", func(t *testing.T) {
+	t.Run("logs are in json_array format with expected tags", func(t *testing.T) {
 		require.True(t, logs.VerifyJsonArray(validJsonArray()))
 	})
 
@@ -19,23 +19,14 @@ func TestLogFormat(t *testing.T) {
 		require.False(t, logs.VerifyJsonArray(jsonArray))
 	})
 
-	t.Run("logs are in json lines format", func(t *testing.T) {
-		jsonLines := `{"cluster":"testk8scluster","message":"testlogmessage","service":"none"}
-                      {"cluster":"testk8scluster","message":"testlogmessage","service":"none"}`
+	t.Run("logs are in json lines format with expected tags", func(t *testing.T) {
+		jsonLines := strings.Join([]string{validLogLine(), validLogLine()}, "\n")
 		require.True(t, logs.VerifyJsonLines(jsonLines))
 	})
 
 	t.Run("logs are not in json lines format", func(t *testing.T) {
-		jsonLines := `{"cluster":"testk8scluster","message":"testlogmessage","service":"none"},
-                      {"cluster":"testk8scluster","message":"testlogmessage","service":"none"}`
+		jsonLines := strings.Join([]string{validLogLine(), validLogLine()}, ",\n")
 		require.False(t, logs.VerifyJsonLines(jsonLines))
-	})
-}
-
-func TestLogTags(t *testing.T) {
-	t.Run("logs have required tags", func(t *testing.T) {
-		jsonArray := "[" + validLogLine() + "]"
-		require.True(t, logs.VerifyJsonArray(jsonArray))
 	})
 }
 
@@ -44,5 +35,6 @@ func validJsonArray() string {
 }
 
 func validLogLine() string {
-	return "{\"cluster\":\"testk8scluster\",\"message\":\"testlogmessage\",\"service\":\"none\"}"
+	return "{\"cluster\":\"testk8scluster\",\"message\":\"testlogmessage\",\"service\":\"none\", \"application\":\"none\", \"source\":\"none\"," +
+		"\"timestamp\":\"none\",\"pod_name\":\"none\",\"container_name\":\"none\",\"namespace_name\":\"none\",\"pod_id\":\"none\",\"container_id\":\"none\"}"
 }

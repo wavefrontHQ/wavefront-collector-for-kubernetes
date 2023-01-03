@@ -19,7 +19,7 @@ func VerifyJsonArray(line string) bool {
 	}
 
 	for _, logLine := range logLines {
-		if validateLogLine(logLine) != true {
+		if !validateLogLine(logLine) {
 			return false
 		}
 	}
@@ -34,14 +34,18 @@ func VerifyJsonLines(line string) bool {
 			fmt.Println("Data is not in json line format:", err)
 			return false
 		}
+
+		if !validateLogLine(jsonLine) {
+			return false
+		}
 	}
 
 	return true
 }
 
 func validateLogLine(logLine interface{}) bool {
-	//return validateTags(logLine)
-	return true
+	return validateTags(logLine)
+	//return true
 }
 
 func validateTags(logLine interface{}) bool {
