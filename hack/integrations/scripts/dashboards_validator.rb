@@ -144,6 +144,17 @@ class ColorChecker
   end
 
   def get_rgb_color_diffs(color_to_replace)
+    color_sum = color_to_replace.r.to_f + color_to_replace.g.to_f + color_to_replace.b.to_f
+    case color_sum
+    when 0.0 # do nothing and move on to original color fix
+    when color_to_replace.r.to_f
+      return [[Color.from_string("#f54f47"), 0]]
+    when color_to_replace.g.to_f
+      return [[Color.from_string("#85c81a"), 0]]
+    when color_to_replace.b.to_f
+      return [[Color.from_string("#49afd9"), 0]]
+    end
+
     return color_diffs = all_colors.map do |hex|
       converted_color = Color.from_string(hex)
 

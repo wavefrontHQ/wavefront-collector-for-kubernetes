@@ -39,9 +39,25 @@ describe ColorChecker do
       expect(cc.fix_hex_and_rgba('"colors": ["#ffbf00"]'))
                           .to eq('"colors": ["#f57600"]')
     end
+  end
 
+  describe '.get_rgb_color_diffs' do
     it 'should fix raw r, g, or b, not convert it to closest other color' do
-      # TODO please implement
+      cc = ColorChecker.new FakeDashboardIterator.new
+
+      expect(cc.get_rgb_color_diffs(Color.from_string('#700000'))[0][0].hex)
+        .to eq('#f54f47')
+      expect(cc.get_rgb_color_diffs(Color.from_string('#007000'))[0][0].hex)
+        .to eq('#85c81a')
+      expect(cc.get_rgb_color_diffs(Color.from_string('#000070'))[0][0].hex)
+        .to eq('#49afd9')
+
+      expect(cc.get_rgb_color_diffs(Color.from_string('#700000'))[0][1])
+        .to eq(0.0)
+      expect(cc.get_rgb_color_diffs(Color.from_string('#007000'))[0][1])
+        .to eq(0.0)
+      expect(cc.get_rgb_color_diffs(Color.from_string('#000070'))[0][1])
+        .to eq(0.0)
     end
   end
 end
