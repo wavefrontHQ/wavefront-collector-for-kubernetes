@@ -15,6 +15,8 @@ import (
 
 func LogJsonArrayHandler(store *logs.LogStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
+		store.SetHasReceivedLogs(true)
+
 		b, err := io.ReadAll(req.Body)
 		if err != nil {
 			log.Fatal(err)
@@ -22,14 +24,11 @@ func LogJsonArrayHandler(store *logs.LogStore) http.HandlerFunc {
 		defer req.Body.Close()
 
 		formatResult, logLines := logs.VerifyJsonArrayFormat(string(b))
-		store.SetReceivedWithValidFormat(formatResult)
+		store.SetHasValidFormat(formatResult)
 
 		tagsResult, missingTags := logs.ValidateTags(logLines)
-		store.SetReceivedWithValidTags(tagsResult)
-
-		for _, missingTag := range missingTags {
-			store.AddMissingTag(missingTag)
-		}
+		store.SetHasValidTags(tagsResult)
+		store.SetMissingTags(missingTags)
 
 		w.WriteHeader(http.StatusOK)
 	}
@@ -37,6 +36,8 @@ func LogJsonArrayHandler(store *logs.LogStore) http.HandlerFunc {
 
 func LogJsonLinesHandler(store *logs.LogStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
+		store.SetHasReceivedLogs(true)
+
 		b, err := io.ReadAll(req.Body)
 		if err != nil {
 			log.Fatal(err)
@@ -44,14 +45,11 @@ func LogJsonLinesHandler(store *logs.LogStore) http.HandlerFunc {
 		defer req.Body.Close()
 
 		formatResult, logLines := logs.VerifyJsonLinesFormat(string(b))
-		store.SetReceivedWithValidFormat(formatResult)
+		store.SetHasValidFormat(formatResult)
 
 		tagsResult, missingTags := logs.ValidateTags(logLines)
-		store.SetReceivedWithValidTags(tagsResult)
-
-		for _, missingTag := range missingTags {
-			store.AddMissingTag(missingTag)
-		}
+		store.SetHasValidTags(tagsResult)
+		store.SetMissingTags(missingTags)
 
 		w.WriteHeader(http.StatusOK)
 	}
@@ -59,6 +57,11 @@ func LogJsonLinesHandler(store *logs.LogStore) http.HandlerFunc {
 
 func LogAssertionHandler(store *logs.LogStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
+		if !store.HasReceivedLogs {
+			w.WriteHeader(http.StatusNoContent)
+			w.Write([]byte("No logs have been received"))
+		}
+
 		output, err := store.ToJSON()
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
