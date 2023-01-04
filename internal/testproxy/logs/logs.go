@@ -56,7 +56,6 @@ func ValidateTags(logLines []interface{}) (bool, []string) {
 				valid = false
 				missing[expectedTag] = nil
 			}
-
 		}
 	}
 

@@ -7,39 +7,39 @@ import (
 
 // Storing MissingTags as a map instead of a list for ease of lookup and adding
 type LogStore struct {
-	ReceivedWithValidFormat bool                   `json:"receivedWithValidFormat"`
-	ReceivedWithValidTags   bool                   `json:"receivedWithValidTags"`
-	MissingTags             []string               `json:"missingTags"`
-	missingTagsMap          map[string]interface{} `json:"-"`
-	mu                      *sync.Mutex            `json:"-"`
+	HasValidFormat bool                   `json:"hasValidFormat"`
+	HasValidTags   bool                   `json:"hasValidTags"`
+	MissingTags    []string               `json:"missingTags"`
+	missingTagsMap map[string]interface{} `json:"-"`
+	mu             *sync.Mutex            `json:"-"`
 }
 
 func NewLogStore() *LogStore {
 	return &LogStore{
-		ReceivedWithValidFormat: false,
-		missingTagsMap:          make(map[string]interface{}),
-		mu:                      &sync.Mutex{},
+		HasValidFormat: false,
+		missingTagsMap: make(map[string]interface{}),
+		mu:             &sync.Mutex{},
 	}
 }
 
 func (l *LogStore) SetReceivedWithValidFormat(value bool) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	if l.ReceivedWithValidFormat == value {
+	if l.HasValidFormat == value {
 		return
 	}
 
-	l.ReceivedWithValidFormat = value
+	l.HasValidFormat = value
 }
 
 func (l *LogStore) SetReceivedWithValidTags(value bool) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	if l.ReceivedWithValidTags == value {
+	if l.HasValidTags == value {
 		return
 	}
 
-	l.ReceivedWithValidTags = value
+	l.HasValidTags = value
 }
 
 func (l *LogStore) AddMissingTag(value string) {
