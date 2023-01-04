@@ -21,11 +21,7 @@ class Palette
   def self.print
     puts "Palette"
     self.all_colors.sort.each do |color_string|
-      color = Color.from_string(color_string)
-      printf("\x1b[48;2;#{color.r};#{color.g};#{color.b}m #{" " * 20}")
-      printf("\033[0m")
-
-      puts(color_string + "\t" + color.rgba)
+      color = Color.print(color_string)
     end
   end
 end
@@ -62,6 +58,14 @@ class Color
     #rgba(255,0,0,1)
     m = /rgba\((?<r>\d+),(?<g>\d+),(?<b>\d+)/.match(rgba_string.gsub(" ", ""))
     new(m[:r], m[:g], m[:b])
+  end
+
+  def self.print(color_string)
+    color = Color.from_string(color_string)
+    printf("\x1b[48;2;#{color.r};#{color.g};#{color.b}m #{" " * 20}")
+    printf("\033[0m")
+
+    puts(color_string + "\t" + color.rgba)
   end
 
   def rgba
@@ -166,15 +170,34 @@ class ColorChecker
     end
   end
 
+  def self.announce_color_fix(from_color_str, to_color_str, tail_msg)
+    color = Color.from_string(from_color_str)
+    fixed_color = Color.from_string(to_color_str)
+    printf("autofix-ing from \x1b[48;2;#{color.r};#{color.g};#{color.b}m #{" " * 10}")
+    printf("\033[0m")
+    printf(" to \x1b[48;2;#{fixed_color.r};#{fixed_color.g};#{fixed_color.b}m #{" " * 10}")
+    printf("\033[0m")
+
+    puts " #{tail_msg}"
+  end
+
   def line_with_closest_hex(line, hex_str_to_replace)
     color_diffs = get_rgb_color_diffs(Color.from_string(hex_str_to_replace))
-    line[hex_str_to_replace] = color_diffs.min_by(&:last)[0].hex
+
+    fixed_hex_str = color_diffs.min_by(&:last)[0].hex
+    ColorChecker.announce_color_fix hex_str_to_replace, fixed_hex_str, "in '#{line.strip}'"
+    line[hex_str_to_replace] = fixed_hex_str
+
     return line
   end
 
   def line_with_closest_rgba(line, rgba_str_to_replace)
     color_diffs = get_rgb_color_diffs(Color.from_string(rgba_str_to_replace))
-    line[rgba_str_to_replace] = color_diffs.min_by(&:last)[0].rgba
+
+    fixed_rgba_str = color_diffs.min_by(&:last)[0].rgba
+    ColorChecker.announce_color_fix rgba_str_to_replace, fixed_rgba_str, "in '#{line.strip}'"
+    line[rgba_str_to_replace] = fixed_rgba_str
+
     return line
   end
 
