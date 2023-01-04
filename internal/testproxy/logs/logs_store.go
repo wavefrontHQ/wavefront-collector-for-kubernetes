@@ -5,14 +5,19 @@ import (
 	"sync"
 )
 
+// Storing MissingTags as a map instead of a list for ease of lookup and adding
 type LogStore struct {
-	ReceivedWithValidFormat bool        `json:"receivedWithValidFormat"`
-	mu                      *sync.Mutex `json:"-"`
+	ReceivedWithValidFormat bool                   `json:"receivedWithValidFormat"`
+	ReceivedWithValidTags   bool                   `json:"receivedWithValidTags"`
+	MissingTags             []string               `json:"missingTags"`
+	missingTagsMap          map[string]interface{} `json:"-"`
+	mu                      *sync.Mutex            `json:"-"`
 }
 
 func NewLogStore() *LogStore {
 	return &LogStore{
 		ReceivedWithValidFormat: false,
+		missingTagsMap:          make(map[string]interface{}),
 		mu:                      &sync.Mutex{},
 	}
 }
@@ -27,6 +32,40 @@ func (l *LogStore) SetReceivedWithValidFormat(value bool) {
 	l.ReceivedWithValidFormat = value
 }
 
+func (l *LogStore) SetReceivedWithValidTags(value bool) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	if l.ReceivedWithValidTags == value {
+		return
+	}
+
+	l.ReceivedWithValidTags = value
+}
+
+func (l *LogStore) AddMissingTag(value string) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	if _, ok := l.missingTagsMap[value]; ok {
+		return
+	}
+
+	l.missingTagsMap[value] = ""
+}
+
 func (l *LogStore) ToJSON() (output []byte, err error) {
+	l.updateMissingTagsForMarshalling()
+
 	return json.Marshal(l)
+}
+
+func (l *LogStore) updateMissingTagsForMarshalling() {
+	var missingTags []string
+
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	for k := range l.missingTagsMap {
+		missingTags = append(missingTags, k)
+	}
+
+	l.MissingTags = missingTags
 }

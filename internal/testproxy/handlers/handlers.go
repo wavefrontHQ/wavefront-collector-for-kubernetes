@@ -21,7 +21,15 @@ func LogJsonArrayHandler(store *logs.LogStore) http.HandlerFunc {
 		}
 		defer req.Body.Close()
 
-		store.SetReceivedWithValidFormat(logs.VerifyJsonArray(string(b)))
+		formatResult, logLines := logs.VerifyJsonArrayFormat(string(b))
+		store.SetReceivedWithValidFormat(formatResult)
+
+		tagsResult, missingTags := logs.ValidateTags(logLines)
+		store.SetReceivedWithValidTags(tagsResult)
+
+		for _, missingTag := range missingTags {
+			store.AddMissingTag(missingTag)
+		}
 
 		w.WriteHeader(http.StatusOK)
 	}
@@ -35,7 +43,15 @@ func LogJsonLinesHandler(store *logs.LogStore) http.HandlerFunc {
 		}
 		defer req.Body.Close()
 
-		store.SetReceivedWithValidFormat(logs.VerifyJsonLines(string(b)))
+		formatResult, logLines := logs.VerifyJsonLinesFormat(string(b))
+		store.SetReceivedWithValidFormat(formatResult)
+
+		tagsResult, missingTags := logs.ValidateTags(logLines)
+		store.SetReceivedWithValidTags(tagsResult)
+
+		for _, missingTag := range missingTags {
+			store.AddMissingTag(missingTag)
+		}
 
 		w.WriteHeader(http.StatusOK)
 	}
