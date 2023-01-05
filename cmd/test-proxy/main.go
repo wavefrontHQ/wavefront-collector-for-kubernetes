@@ -13,11 +13,32 @@ import (
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/testproxy/metrics"
 )
 
-var proxyAddr = ":7777"
-var controlAddr = ":8888"
-var runMode = "metrics"
-var logFilePath string
-var logLevel = log.InfoLevel.String()
+var (
+	proxyAddr   = ":7777"
+	controlAddr = ":8888"
+	runMode     = "metrics"
+	logFilePath string
+	logLevel    = log.InfoLevel.String()
+
+	expectedTags = []string{"user_defined_tag",
+		"service",
+		"application",
+		"source",
+		"cluster",
+		"timestamp",
+		"pod_name",
+		"container_name",
+		"namespace_name",
+		"pod_id",
+		"container_id",
+	}
+	allowListFilteredTags = map[string]string{
+		"namespace_name": "kube-system",
+	}
+	denyListFilteredTags = map[string]string{
+		"container_name": "kube-apiserver",
+	}
+)
 
 func init() {
 	flag.StringVar(&proxyAddr, "proxy", proxyAddr, "host and port for the test \"wavefront proxy\" to listen on")
@@ -85,9 +106,11 @@ func serveMetrics(store *metrics.MetricStore) {
 }
 
 func serveLogs(store *logs.LogStore) {
+	logVerifier := logs.NewLogVerifier(expectedTags, allowListFilteredTags, denyListFilteredTags)
+
 	logsServeMux := http.NewServeMux()
-	logsServeMux.HandleFunc("/logs/json_array", handlers.LogJsonArrayHandler(store))
-	logsServeMux.HandleFunc("/logs/json_lines", handlers.LogJsonLinesHandler(store))
+	logsServeMux.HandleFunc("/logs/json_array", handlers.LogJsonArrayHandler(logVerifier, store))
+	logsServeMux.HandleFunc("/logs/json_lines", handlers.LogJsonLinesHandler(logVerifier, store))
 
 	log.Infof("http logs server listening on %s", proxyAddr)
 	if err := http.ListenAndServe(proxyAddr, logsServeMux); err != nil {

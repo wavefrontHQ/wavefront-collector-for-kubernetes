@@ -13,20 +13,25 @@ import (
 	metrics2 "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/testproxy/metrics"
 )
 
-func LogJsonArrayHandler(store *logs.LogStore) http.HandlerFunc {
+func LogJsonArrayHandler(logVerifier *logs.LogVerifier, store *logs.LogStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
-		store.SetHasReceivedLogs(true)
-
 		b, err := io.ReadAll(req.Body)
 		if err != nil {
 			log.Fatal(err)
 		}
 		defer req.Body.Close()
 
-		formatResult, logLines := logs.VerifyJsonArrayFormat(string(b))
+		fmt.Println(string(b))
+
+		formatResult, logLines := logVerifier.VerifyJsonArrayFormat(b)
+
+		if formatResult {
+			store.SetHasReceivedLogs(true)
+		}
+
 		store.SetHasValidFormat(formatResult)
 
-		tagsResult, missingTags := logs.ValidateTags(logLines)
+		tagsResult, missingTags, _, _ := logVerifier.ValidateTags(logLines)
 		store.SetHasValidTags(tagsResult)
 		store.SetMissingTags(missingTags)
 
@@ -34,20 +39,23 @@ func LogJsonArrayHandler(store *logs.LogStore) http.HandlerFunc {
 	}
 }
 
-func LogJsonLinesHandler(store *logs.LogStore) http.HandlerFunc {
+func LogJsonLinesHandler(logVerifier *logs.LogVerifier, store *logs.LogStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
-		store.SetHasReceivedLogs(true)
-
 		b, err := io.ReadAll(req.Body)
 		if err != nil {
 			log.Fatal(err)
 		}
 		defer req.Body.Close()
 
-		formatResult, logLines := logs.VerifyJsonLinesFormat(string(b))
+		formatResult, logLines := logVerifier.VerifyJsonLinesFormat(b)
+
+		if formatResult {
+			store.SetHasReceivedLogs(true)
+		}
+
 		store.SetHasValidFormat(formatResult)
 
-		tagsResult, missingTags := logs.ValidateTags(logLines)
+		tagsResult, missingTags, _, _ := logVerifier.ValidateTags(logLines)
 		store.SetHasValidTags(tagsResult)
 		store.SetMissingTags(missingTags)
 
