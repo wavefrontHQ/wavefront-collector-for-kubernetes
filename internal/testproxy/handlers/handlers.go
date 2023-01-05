@@ -13,7 +13,7 @@ import (
 	metrics2 "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/testproxy/metrics"
 )
 
-func LogJsonArrayHandler(logVerifier *logs.LogVerifier, store *logs.LogStore) http.HandlerFunc {
+func LogJsonArrayHandler(logVerifier *logs.LogVerifier, store *logs.Results) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		b, err := io.ReadAll(req.Body)
 		if err != nil {
@@ -39,7 +39,7 @@ func LogJsonArrayHandler(logVerifier *logs.LogVerifier, store *logs.LogStore) ht
 	}
 }
 
-func LogJsonLinesHandler(logVerifier *logs.LogVerifier, store *logs.LogStore) http.HandlerFunc {
+func LogJsonLinesHandler(logVerifier *logs.LogVerifier, store *logs.Results) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		b, err := io.ReadAll(req.Body)
 		if err != nil {
@@ -63,7 +63,7 @@ func LogJsonLinesHandler(logVerifier *logs.LogVerifier, store *logs.LogStore) ht
 	}
 }
 
-func LogAssertionHandler(store *logs.LogStore) http.HandlerFunc {
+func LogAssertionHandler(store *logs.Results) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		if !store.HasReceivedLogs {
 			w.WriteHeader(http.StatusNoContent)

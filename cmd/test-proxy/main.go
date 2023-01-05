@@ -105,7 +105,7 @@ func serveMetrics(store *metrics.MetricStore) {
 	}
 }
 
-func serveLogs(store *logs.LogStore) {
+func serveLogs(store *logs.Results) {
 	logVerifier := logs.NewLogVerifier(expectedTags, allowListFilteredTags, denyListFilteredTags)
 
 	logsServeMux := http.NewServeMux()
@@ -119,7 +119,7 @@ func serveLogs(store *logs.LogStore) {
 	}
 }
 
-func serveControl(metricStore *metrics.MetricStore, logStore *logs.LogStore) {
+func serveControl(metricStore *metrics.MetricStore, logStore *logs.Results) {
 	controlServeMux := http.NewServeMux()
 
 	controlServeMux.HandleFunc("/metrics", handlers.DumpMetricsHandler(metricStore))

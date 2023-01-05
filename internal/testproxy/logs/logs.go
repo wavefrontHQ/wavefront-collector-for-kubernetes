@@ -99,6 +99,12 @@ func (l *LogVerifier) ValidateTags(logLines []interface{}) (bool, []string, map[
 				missing[expectedTag] = nil
 			}
 		}
+		// if
+		for allowListKey, allowListVal := range l.allowListFilteredTags {
+			if val, ok := myMap[allowListKey]; ok {
+				if val !=
+			}
+		}
 	}
 
 	var missingTags []string
@@ -108,3 +114,6 @@ func (l *LogVerifier) ValidateTags(logLines []interface{}) (bool, []string, map[
 
 	return valid, missingTags, missingAllowListTags, extraDenyListTags
 }
+
+// TODO: add logic for missingAllowListTags, extraDenyListTags
+
