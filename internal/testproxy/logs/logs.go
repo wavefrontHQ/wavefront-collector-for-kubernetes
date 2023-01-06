@@ -77,43 +77,40 @@ func (l *LogVerifier) VerifyJsonLinesFormat(line []byte) (bool, []interface{}) {
 	return true, logLines
 }
 
-func (l *LogVerifier) ValidateTags(logLines []interface{}) (bool, []string, map[string]string, map[string]string) {
+func (l *LogVerifier) ValidateExpectedTags(logLines []interface{}) (bool, []string, []string) {
 	valid := true
-	missing := make(map[string]interface{})
-	missingAllowListTags := make(map[string]string)
-	extraDenyListTags := make(map[string]string)
+	missingTags := make(map[string]interface{})
+	emptyExpectedTags := make(map[string]interface{})
 
 	for _, logLine := range logLines {
-		myMap := logLine.(map[string]interface{})
+		logTags := logLine.(map[string]interface{})
 
 		for _, expectedTag := range l.expectedTags {
-			if val, ok := myMap[expectedTag]; ok {
-				if val == nil {
+			if tagVal, ok := logTags[expectedTag]; ok {
+				if tagVal == nil {
 					fmt.Printf("Empty expected tag: %s\n", expectedTag)
 					valid = false
-					missing[expectedTag] = nil
+					emptyExpectedTags[expectedTag] = nil
 				}
 			} else {
 				fmt.Printf("Missing expected tag: %s\n", expectedTag)
 				valid = false
-				missing[expectedTag] = nil
-			}
-		}
-		// if
-		for allowListKey, allowListVal := range l.allowListFilteredTags {
-			if val, ok := myMap[allowListKey]; ok {
-				if val !=
+				missingTags[expectedTag] = nil
 			}
 		}
 	}
 
-	var missingTags []string
-	for k := range missing {
-		missingTags = append(missingTags, k)
+	var missingTagsList []string
+	for k := range missingTags {
+		missingTagsList = append(missingTagsList, k)
 	}
 
-	return valid, missingTags, missingAllowListTags, extraDenyListTags
+	var emptyTagsList []string
+	for k := range emptyExpectedTags {
+		emptyTagsList = append(emptyTagsList, k)
+	}
+
+	return valid, missingTagsList, emptyTagsList
 }
 
 // TODO: add logic for missingAllowListTags, extraDenyListTags
-

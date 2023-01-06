@@ -31,9 +31,10 @@ func LogJsonArrayHandler(logVerifier *logs.LogVerifier, store *logs.Results) htt
 
 		store.SetHasValidFormat(formatResult)
 
-		tagsResult, missingTags, _, _ := logVerifier.ValidateTags(logLines)
+		tagsResult, missingTags, emptyTags := logVerifier.ValidateExpectedTags(logLines)
 		store.SetHasValidTags(tagsResult)
-		store.SetMissingTags(missingTags)
+		store.SetMissingExpectedTags(missingTags)
+		store.SetEmptyExpectedTags(emptyTags)
 
 		w.WriteHeader(http.StatusOK)
 	}
@@ -55,9 +56,10 @@ func LogJsonLinesHandler(logVerifier *logs.LogVerifier, store *logs.Results) htt
 
 		store.SetHasValidFormat(formatResult)
 
-		tagsResult, missingTags, _, _ := logVerifier.ValidateTags(logLines)
+		tagsResult, missingTags, emptyTags := logVerifier.ValidateExpectedTags(logLines)
 		store.SetHasValidTags(tagsResult)
-		store.SetMissingTags(missingTags)
+		store.SetMissingExpectedTags(missingTags)
+		store.SetEmptyExpectedTags(emptyTags)
 
 		w.WriteHeader(http.StatusOK)
 	}

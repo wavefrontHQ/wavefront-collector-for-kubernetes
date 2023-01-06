@@ -1,7 +1,6 @@
 package logs_test
 
 import (
-	"encoding/json"
 	"github.com/stretchr/testify/require"
 	"testing"
 
@@ -101,11 +100,22 @@ func TestVerifyJsonLinesFormat(t *testing.T) {
 	})
 }
 
-func convertMapToJSON(input map[string]interface{}) (string, error) {
-	output, err := json.Marshal(input)
-	if err != nil {
-		return "", err
-	}
+func TestValidateExpectedTags(t *testing.T) {
+	t.Run("all expected tags are found and are not empty", func(t *testing.T) {
+		expectedTag := []string{"some-expected-tag"}
+		logMap := map[string]interface{}{
+			"some-expected-tag": "some-value",
+		}
+		var logLines []interface{}
+		logLines = append(logLines, logMap)
 
-	return string(output), nil
+		logVerifier := logs.NewLogVerifier(expectedTag, nil, nil)
+		tagsValid, missingTags, emptyTags := logVerifier.ValidateExpectedTags(logLines)
+
+		require.True(t, tagsValid)
+		require.Nil(t, missingTags)
+		require.Nil(t, emptyTags)
+	})
+	// TODO: if expected tags are not found
+	// TODO: if expected tags are found and the value is empty
 }
