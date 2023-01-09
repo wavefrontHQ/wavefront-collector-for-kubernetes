@@ -17,25 +17,40 @@ func LogJsonArrayHandler(logVerifier *logs.LogVerifier, store *logs.Results) htt
 	return func(w http.ResponseWriter, req *http.Request) {
 		b, err := io.ReadAll(req.Body)
 		if err != nil {
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			log.Fatal(err)
 		}
 		defer req.Body.Close()
 
+		// Validate log format
 		fmt.Println(string(b))
-
 		formatResult, logLines := logVerifier.VerifyJsonArrayFormat(b)
 
 		if formatResult {
 			store.SetHasReceivedLogs(true)
 		}
-
 		store.SetHasValidFormat(formatResult)
 
+		// Validate expected tags
 		tagsResult, missingTags, emptyTags := logVerifier.ValidateExpectedTags(logLines)
-		store.SetHasValidTags(tagsResult)
+		store.SetHasValidExpectedTags(tagsResult)
 		store.SetMissingExpectedTags(missingTags)
 		store.SetEmptyExpectedTags(emptyTags)
 
+		// Validate filtering allowed tags
+		allowedTagsResult, unexpectedLogs := logVerifier.ValidateAllowedTags(logLines)
+		store.SetHasValidAllowedTags(allowedTagsResult)
+		store.SetUnexpectedAllowedLogs(unexpectedLogs)
+
+		// Validate filtering denied tags
+		deniedTagsResult, unexpectedTags := logVerifier.ValidateDeniedTags(logLines)
+		store.SetHasValidDeniedTags(deniedTagsResult)
+		store.SetUnexpectedDeniedTags(unexpectedTags)
+
+		filteredTagsResult := allowedTagsResult && deniedTagsResult
+		if tagsResult && filteredTagsResult {
+			store.SetHasValidTags(true)
+		}
 		w.WriteHeader(http.StatusOK)
 	}
 }
@@ -44,42 +59,90 @@ func LogJsonLinesHandler(logVerifier *logs.LogVerifier, store *logs.Results) htt
 	return func(w http.ResponseWriter, req *http.Request) {
 		b, err := io.ReadAll(req.Body)
 		if err != nil {
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			log.Fatal(err)
 		}
 		defer req.Body.Close()
 
+		// Validate log format
+		fmt.Println(string(b))
 		formatResult, logLines := logVerifier.VerifyJsonLinesFormat(b)
 
 		if formatResult {
 			store.SetHasReceivedLogs(true)
 		}
-
 		store.SetHasValidFormat(formatResult)
 
+		// Validate expected tags
 		tagsResult, missingTags, emptyTags := logVerifier.ValidateExpectedTags(logLines)
-		store.SetHasValidTags(tagsResult)
+		store.SetHasValidExpectedTags(tagsResult)
 		store.SetMissingExpectedTags(missingTags)
 		store.SetEmptyExpectedTags(emptyTags)
 
+		// Validate filtering allowed tags
+		allowedTagsResult, unexpectedLogs := logVerifier.ValidateAllowedTags(logLines)
+		store.SetHasValidAllowedTags(allowedTagsResult)
+		store.SetUnexpectedAllowedLogs(unexpectedLogs)
+
+		// Validate filtering denied tags
+		deniedTagsResult, unexpectedTags := logVerifier.ValidateDeniedTags(logLines)
+		store.SetHasValidDeniedTags(deniedTagsResult)
+		store.SetUnexpectedDeniedTags(unexpectedTags)
+
+		filteredTagsResult := allowedTagsResult && deniedTagsResult
+		if tagsResult && filteredTagsResult {
+			store.SetHasValidTags(true)
+		}
 		w.WriteHeader(http.StatusOK)
 	}
 }
 
 func LogAssertionHandler(store *logs.Results) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
+		if req.Method != http.MethodGet {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			log.Errorf("expected method %s but got %s", http.MethodGet, req.Method)
+			return
+		}
+
 		if !store.HasReceivedLogs {
 			w.WriteHeader(http.StatusNoContent)
-			w.Write([]byte("No logs have been received"))
+			_, _ = w.Write([]byte("No logs have been received"))
+			return
+		}
+
+		if !store.HasValidFormat {
+			w.WriteHeader(http.StatusUnprocessableEntity)
+			_, _ = w.Write([]byte("Logs format is not valid"))
+			return
+		}
+
+		if !store.HasValidTags {
+			w.WriteHeader(http.StatusExpectationFailed)
+			_, _ = w.Write([]byte("Log tags are not valid"))
+
+			if !store.HasValidExpectedTags {
+				_, _ = w.Write([]byte(fmt.Sprintf("Log tags assertion failure: %s", "expected tags")))
+			}
+			if !store.HasValidAllowedTags {
+				_, _ = w.Write([]byte(fmt.Sprintf("Log tags assertion failure: %s", "allowed tags")))
+			}
+			if !store.HasValidDeniedTags {
+				_, _ = w.Write([]byte(fmt.Sprintf("Log tags assertion failure: %s", "denied tags")))
+			}
+
+			return
 		}
 
 		output, err := store.ToJSON()
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("Unable to marshal log test store object: %s", err.Error())))
+			_, _ = w.Write([]byte(fmt.Sprintf("Unable to marshal log test store object: %s", err.Error())))
+			return
 		}
 
 		w.WriteHeader(http.StatusOK)
-		w.Write(output)
+		_, _ = w.Write(output)
 	}
 }
 

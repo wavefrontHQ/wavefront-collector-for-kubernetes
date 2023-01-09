@@ -32,11 +32,11 @@ var (
 		"pod_id",
 		"container_id",
 	}
-	allowListFilteredTags = map[string]string{
-		"namespace_name": "kube-system",
+	allowListFilteredTags = map[string][]string{
+		"namespace_name": {"kube-system", "observability-system"},
 	}
-	denyListFilteredTags = map[string]string{
-		"container_name": "kube-apiserver",
+	denyListFilteredTags = map[string][]string{
+		"namespace_name": {"kube-system"},
 	}
 )
 
@@ -85,6 +85,7 @@ func main() {
 
 	// Blocking call to start up the control server
 	serveControl(metricStore, logStore)
+	log.Println("Server gracefully shutdown")
 }
 
 func serveMetrics(store *metrics.MetricStore) {

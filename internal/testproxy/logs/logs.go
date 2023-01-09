@@ -4,15 +4,16 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"reflect"
 )
 
 type LogVerifier struct {
 	expectedTags          []string
-	allowListFilteredTags map[string]string
-	denyListFilteredTags  map[string]string
+	allowListFilteredTags map[string][]string
+	denyListFilteredTags  map[string][]string
 }
 
-func NewLogVerifier(expectedTags []string, allowListFilteredTags map[string]string, denyListFilteredTags map[string]string) *LogVerifier {
+func NewLogVerifier(expectedTags []string, allowListFilteredTags map[string][]string, denyListFilteredTags map[string][]string) *LogVerifier {
 	return &LogVerifier{
 		expectedTags:          expectedTags,
 		allowListFilteredTags: allowListFilteredTags,
@@ -91,6 +92,10 @@ func (l *LogVerifier) ValidateExpectedTags(logLines []interface{}) (bool, []stri
 					fmt.Printf("Empty expected tag: %s\n", expectedTag)
 					valid = false
 					emptyExpectedTags[expectedTag] = nil
+				} else if reflect.TypeOf(tagVal).String() == "string" && len(tagVal.(string)) == 0 {
+					fmt.Printf("Empty expected tag: %s\n", expectedTag)
+					valid = false
+					emptyExpectedTags[expectedTag] = nil
 				}
 			} else {
 				fmt.Printf("Missing expected tag: %s\n", expectedTag)
@@ -113,4 +118,73 @@ func (l *LogVerifier) ValidateExpectedTags(logLines []interface{}) (bool, []stri
 	return valid, missingTagsList, emptyTagsList
 }
 
-// TODO: add logic for missingAllowListTags, extraDenyListTags
+func (l *LogVerifier) ValidateAllowedTags(logLines []interface{}) (bool, []interface{}) {
+	valid := true
+	var unexpectedLogs []interface{}
+
+	for _, logLine := range logLines {
+		logTags := logLine.(map[string]interface{})
+
+		foundAllowedTag := false
+		for tagKey, tagVal := range logTags {
+			if foundAllowedTag {
+				break
+			}
+
+			tagAllowValList, tagKeyInAllowList := l.allowListFilteredTags[tagKey]
+
+			if tagKeyInAllowList && tagAllowValList != nil {
+				for _, tagAllowVal := range tagAllowValList {
+					if tagVal == tagAllowVal {
+						foundAllowedTag = true
+						break
+					}
+				}
+
+				if len(tagAllowValList) == 0 {
+					foundAllowedTag = true
+				}
+			}
+		}
+
+		if !foundAllowedTag {
+			fmt.Println("Expected to find a tag from the allowed list")
+			unexpectedLogs = append(unexpectedLogs, logLine)
+		}
+		valid = valid && foundAllowedTag
+	}
+
+	return valid, unexpectedLogs
+}
+
+func (l *LogVerifier) ValidateDeniedTags(logLines []interface{}) (bool, map[string]interface{}) {
+	valid := true
+	unexpectedTags := make(map[string]interface{})
+
+	for _, logLine := range logLines {
+		logTags := logLine.(map[string]interface{})
+
+		for tagDenyKey, tagDenyValList := range l.denyListFilteredTags {
+			tagVal, logHasDeniedTagKey := logTags[tagDenyKey]
+			if !logHasDeniedTagKey {
+				continue
+			}
+
+			for _, tagDenyVal := range tagDenyValList {
+				if tagVal == tagDenyVal {
+					fmt.Printf("Unexpected deny list tag: key=\"%s\", value=\"%s\"\n", tagDenyKey, tagVal)
+					valid = false
+					unexpectedTags[tagDenyKey] = tagVal
+				}
+			}
+
+			if logHasDeniedTagKey && len(tagDenyValList) == 0 {
+				fmt.Printf("Unexpected deny list tag: key=\"%s\", value=\"%s\"\n", tagDenyKey, tagVal)
+				valid = false
+				unexpectedTags[tagDenyKey] = tagVal
+			}
+		}
+	}
+
+	return valid, unexpectedTags
+}
