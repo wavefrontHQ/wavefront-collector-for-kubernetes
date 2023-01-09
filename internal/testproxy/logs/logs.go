@@ -78,7 +78,7 @@ func (l *LogVerifier) VerifyJsonLinesFormat(line []byte) (bool, []interface{}) {
 	return true, logLines
 }
 
-func (l *LogVerifier) ValidateExpectedTags(logLines []interface{}) (bool, []string, []string) {
+func (l *LogVerifier) ValidateExpectedTags(logLines []interface{}) (bool, map[string]interface{}, map[string]interface{}) {
 	valid := true
 	missingTags := make(map[string]interface{})
 	emptyExpectedTags := make(map[string]interface{})
@@ -88,11 +88,7 @@ func (l *LogVerifier) ValidateExpectedTags(logLines []interface{}) (bool, []stri
 
 		for _, expectedTag := range l.expectedTags {
 			if tagVal, ok := logTags[expectedTag]; ok {
-				if tagVal == nil {
-					fmt.Printf("Empty expected tag: %s\n", expectedTag)
-					valid = false
-					emptyExpectedTags[expectedTag] = nil
-				} else if reflect.TypeOf(tagVal).String() == "string" && len(tagVal.(string)) == 0 {
+				if tagVal == nil || (reflect.TypeOf(tagVal).String() == "string" && len(tagVal.(string)) == 0) {
 					fmt.Printf("Empty expected tag: %s\n", expectedTag)
 					valid = false
 					emptyExpectedTags[expectedTag] = nil
@@ -105,17 +101,7 @@ func (l *LogVerifier) ValidateExpectedTags(logLines []interface{}) (bool, []stri
 		}
 	}
 
-	var missingTagsList []string
-	for k := range missingTags {
-		missingTagsList = append(missingTagsList, k)
-	}
-
-	var emptyTagsList []string
-	for k := range emptyExpectedTags {
-		emptyTagsList = append(emptyTagsList, k)
-	}
-
-	return valid, missingTagsList, emptyTagsList
+	return valid, missingTags, emptyExpectedTags
 }
 
 func (l *LogVerifier) ValidateAllowedTags(logLines []interface{}) (bool, []interface{}) {
@@ -131,18 +117,12 @@ func (l *LogVerifier) ValidateAllowedTags(logLines []interface{}) (bool, []inter
 				break
 			}
 
-			tagAllowValList, tagKeyInAllowList := l.allowListFilteredTags[tagKey]
-
-			if tagKeyInAllowList && tagAllowValList != nil {
-				for _, tagAllowVal := range tagAllowValList {
-					if tagVal == tagAllowVal {
+			if allowedValsForKey, ok := l.allowListFilteredTags[tagKey]; ok && allowedValsForKey != nil {
+				for _, allowedVal := range allowedValsForKey {
+					if tagVal == allowedVal {
 						foundAllowedTag = true
 						break
 					}
-				}
-
-				if len(tagAllowValList) == 0 {
-					foundAllowedTag = true
 				}
 			}
 		}
@@ -165,23 +145,14 @@ func (l *LogVerifier) ValidateDeniedTags(logLines []interface{}) (bool, map[stri
 		logTags := logLine.(map[string]interface{})
 
 		for tagDenyKey, tagDenyValList := range l.denyListFilteredTags {
-			tagVal, logHasDeniedTagKey := logTags[tagDenyKey]
-			if !logHasDeniedTagKey {
-				continue
-			}
-
-			for _, tagDenyVal := range tagDenyValList {
-				if tagVal == tagDenyVal {
-					fmt.Printf("Unexpected deny list tag: key=\"%s\", value=\"%s\"\n", tagDenyKey, tagVal)
-					valid = false
-					unexpectedTags[tagDenyKey] = tagVal
+			if tagVal, ok := logTags[tagDenyKey]; ok {
+				for _, tagDenyVal := range tagDenyValList {
+					if tagVal == tagDenyVal {
+						fmt.Printf("Unexpected deny list tag: key=\"%s\", value=\"%s\"\n", tagDenyKey, tagVal)
+						valid = false
+						unexpectedTags[tagDenyKey] = tagVal
+					}
 				}
-			}
-
-			if logHasDeniedTagKey && len(tagDenyValList) == 0 {
-				fmt.Printf("Unexpected deny list tag: key=\"%s\", value=\"%s\"\n", tagDenyKey, tagVal)
-				valid = false
-				unexpectedTags[tagDenyKey] = tagVal
 			}
 		}
 	}

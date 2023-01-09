@@ -2,102 +2,142 @@ package logs
 
 import (
 	"encoding/json"
+	"fmt"
 	"sync"
 )
 
 type Results struct {
-	HasValidFormat       bool `json:"hasValidFormat"`
-	HasValidTags         bool `json:"hasValidTags"`
-	HasValidExpectedTags bool `json:"hasValidExpectedTags"`
-	HasValidAllowedTags  bool `json:"hasValidAllowedTags"`
-	HasValidDeniedTags   bool `json:"hasValidDeniedTags"`
+	// bool has no unset state
+	HasValidFormat int `json:"hasValidFormat"`
+	HasValidTags   int `json:"hasValidTags"`
 
-	MissingExpectedTags []string `json:"missingExpectedTags"`
-	EmptyExpectedTags   []string `json:"emptyExpectedTags"`
+	// TODO build this up over time, don't set every time
+	missingExpectedTagsMap map[string]interface{} `json:"-"`
+	MissingExpectedTags    []string               `json:"missingExpectedTags"`
+	MissingExpectedCount   int                    `json:"missingExpectedCount"`
 
-	UnexpectedAllowedLogs []interface{}          `json:"unexpectedAllowedLogs"`
-	UnexpectedDeniedTags  map[string]interface{} `json:"unexpectedDeniedTags"`
+	emptyExpectedTagsMap map[string]interface{} `json:"-"`
+	EmptyExpectedTags    []string               `json:"emptyExpectedTags"`
+	EmptyExpectedCount   int                    `json:"emptyExpectedCount"`
 
-	HasReceivedLogs bool `json:"-"`
-	mu              *sync.Mutex
+	// TODO expect that we've never had a denied or missed an expected
+	UnexpectedAllowedLogs  []interface{} `json:"unexpectedAllowedLogs"`
+	UnexpectedAllowedCount int           `json:"unexpectedAllowedCount"`
+
+	unexpectedDeniedTagsMap map[string]interface{} `json:"-"`
+	UnexpectedDeniedTags    []string               `json:"unexpectedDeniedTags"`
+	UnexpectedDeniedCount   int                    `json:"unexpectedDeniedCount"`
+
+	ReceivedLogsCount int `json:"-"` // TODO export JSON and rebuild
+	mu                *sync.Mutex
 }
 
 func NewLogStore() *Results {
 	return &Results{
-		mu: &sync.Mutex{},
+		HasValidFormat:          -1,
+		HasValidTags:            -1,
+		missingExpectedTagsMap:  make(map[string]interface{}),
+		emptyExpectedTagsMap:    make(map[string]interface{}),
+		unexpectedDeniedTagsMap: make(map[string]interface{}),
+		mu:                      &sync.Mutex{},
 	}
 }
 
-func (l *Results) SetHasValidFormat(value bool) {
+func (l *Results) SetHasValidFormat(isValid bool) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
+	if l.HasValidFormat == 0 {
+		return
+	}
 
-	l.HasValidFormat = value
+	if isValid {
+		l.HasValidFormat = 1
+	} else {
+		l.HasValidFormat = 0
+	}
 }
 
-func (l *Results) SetHasValidTags(value bool) {
+func (l *Results) SetHasValidTags(isValid bool) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
+	if l.HasValidTags == 0 {
+		return
+	}
 
-	l.HasValidTags = value
+	if isValid {
+		l.HasValidTags = 1
+	} else {
+		l.HasValidTags = 0
+	}
 }
 
-func (l *Results) SetHasValidExpectedTags(value bool) {
+func (l *Results) AddMissingExpectedTags(missingTags map[string]interface{}) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
+	if len(missingTags) > 0 {
+		l.MissingExpectedCount++
+	}
 
-	l.HasValidExpectedTags = value
+	for tag := range missingTags {
+		l.missingExpectedTagsMap[tag] = nil
+	}
 }
 
-func (l *Results) SetMissingExpectedTags(value []string) {
+func (l *Results) AddEmptyExpectedTags(emptyTags map[string]interface{}) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
+	if len(emptyTags) > 0 {
+		l.EmptyExpectedCount++
+	}
 
-	l.MissingExpectedTags = value
+	for tag := range emptyTags {
+		l.emptyExpectedTagsMap[tag] = nil
+	}
 }
 
-func (l *Results) SetEmptyExpectedTags(value []string) {
+func (l *Results) AddUnexpectedAllowedLogs(unexpectedLogs []interface{}) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
+	if len(unexpectedLogs) > 0 {
+		l.UnexpectedAllowedCount++
+	}
 
-	l.EmptyExpectedTags = value
+	l.UnexpectedAllowedLogs = append(l.UnexpectedAllowedLogs, unexpectedLogs...)
 }
 
-func (l *Results) SetHasValidAllowedTags(value bool) {
+func (l *Results) AddUnexpectedDeniedTags(unexpectedDeniedTags map[string]interface{}) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
+	if len(unexpectedDeniedTags) > 0 {
+		l.UnexpectedDeniedCount++
+	}
 
-	l.HasValidAllowedTags = value
+	for k, v := range unexpectedDeniedTags {
+		tagKey := fmt.Sprintf("%s:%s", k, v)
+		l.unexpectedDeniedTagsMap[tagKey] = nil
+	}
 }
 
-func (l *Results) SetUnexpectedAllowedLogs(value []interface{}) {
+func (l *Results) IncrementReceivedLogsCount() {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
-	l.UnexpectedAllowedLogs = value
-}
-
-func (l *Results) SetHasValidDeniedTags(value bool) {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-
-	l.HasValidDeniedTags = value
-}
-
-func (l *Results) SetUnexpectedDeniedTags(value map[string]interface{}) {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-
-	l.UnexpectedDeniedTags = value
-}
-
-func (l *Results) SetHasReceivedLogs(value bool) {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-
-	l.HasReceivedLogs = value
+	l.ReceivedLogsCount++
 }
 
 func (l *Results) ToJSON() (output []byte, err error) {
+	l.MissingExpectedTags = mapKeysToSlice(l.missingExpectedTagsMap)
+	l.EmptyExpectedTags = mapKeysToSlice(l.emptyExpectedTagsMap)
+	l.UnexpectedDeniedTags = mapKeysToSlice(l.unexpectedDeniedTagsMap)
+
 	return json.Marshal(l)
+}
+
+func mapKeysToSlice(m map[string]interface{}) []string {
+	var output []string
+	for k := range m {
+		output = append(output, k)
+	}
+
+	return output
 }

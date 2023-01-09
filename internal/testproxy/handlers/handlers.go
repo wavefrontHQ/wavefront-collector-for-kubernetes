@@ -26,31 +26,25 @@ func LogJsonArrayHandler(logVerifier *logs.LogVerifier, store *logs.Results) htt
 		fmt.Println(string(b))
 		formatResult, logLines := logVerifier.VerifyJsonArrayFormat(b)
 
-		if formatResult {
-			store.SetHasReceivedLogs(true)
-		}
+		store.IncrementReceivedLogsCount()
 		store.SetHasValidFormat(formatResult)
 
 		// Validate expected tags
 		tagsResult, missingTags, emptyTags := logVerifier.ValidateExpectedTags(logLines)
-		store.SetHasValidExpectedTags(tagsResult)
-		store.SetMissingExpectedTags(missingTags)
-		store.SetEmptyExpectedTags(emptyTags)
+		store.SetHasValidTags(tagsResult)
+		store.AddMissingExpectedTags(missingTags)
+		store.AddEmptyExpectedTags(emptyTags)
 
 		// Validate filtering allowed tags
 		allowedTagsResult, unexpectedLogs := logVerifier.ValidateAllowedTags(logLines)
-		store.SetHasValidAllowedTags(allowedTagsResult)
-		store.SetUnexpectedAllowedLogs(unexpectedLogs)
+		store.SetHasValidTags(allowedTagsResult)
+		store.AddUnexpectedAllowedLogs(unexpectedLogs)
 
 		// Validate filtering denied tags
 		deniedTagsResult, unexpectedTags := logVerifier.ValidateDeniedTags(logLines)
-		store.SetHasValidDeniedTags(deniedTagsResult)
-		store.SetUnexpectedDeniedTags(unexpectedTags)
+		store.SetHasValidTags(deniedTagsResult)
+		store.AddUnexpectedDeniedTags(unexpectedTags)
 
-		filteredTagsResult := allowedTagsResult && deniedTagsResult
-		if tagsResult && filteredTagsResult {
-			store.SetHasValidTags(true)
-		}
 		w.WriteHeader(http.StatusOK)
 	}
 }
@@ -68,31 +62,25 @@ func LogJsonLinesHandler(logVerifier *logs.LogVerifier, store *logs.Results) htt
 		fmt.Println(string(b))
 		formatResult, logLines := logVerifier.VerifyJsonLinesFormat(b)
 
-		if formatResult {
-			store.SetHasReceivedLogs(true)
-		}
+		store.IncrementReceivedLogsCount()
 		store.SetHasValidFormat(formatResult)
 
 		// Validate expected tags
 		tagsResult, missingTags, emptyTags := logVerifier.ValidateExpectedTags(logLines)
-		store.SetHasValidExpectedTags(tagsResult)
-		store.SetMissingExpectedTags(missingTags)
-		store.SetEmptyExpectedTags(emptyTags)
+		store.SetHasValidTags(tagsResult)
+		store.AddMissingExpectedTags(missingTags)
+		store.AddEmptyExpectedTags(emptyTags)
 
 		// Validate filtering allowed tags
 		allowedTagsResult, unexpectedLogs := logVerifier.ValidateAllowedTags(logLines)
-		store.SetHasValidAllowedTags(allowedTagsResult)
-		store.SetUnexpectedAllowedLogs(unexpectedLogs)
+		store.SetHasValidTags(allowedTagsResult)
+		store.AddUnexpectedAllowedLogs(unexpectedLogs)
 
 		// Validate filtering denied tags
 		deniedTagsResult, unexpectedTags := logVerifier.ValidateDeniedTags(logLines)
-		store.SetHasValidDeniedTags(deniedTagsResult)
-		store.SetUnexpectedDeniedTags(unexpectedTags)
+		store.SetHasValidTags(deniedTagsResult)
+		store.AddUnexpectedDeniedTags(unexpectedTags)
 
-		filteredTagsResult := allowedTagsResult && deniedTagsResult
-		if tagsResult && filteredTagsResult {
-			store.SetHasValidTags(true)
-		}
 		w.WriteHeader(http.StatusOK)
 	}
 }
@@ -105,32 +93,9 @@ func LogAssertionHandler(store *logs.Results) http.HandlerFunc {
 			return
 		}
 
-		if !store.HasReceivedLogs {
+		if store.ReceivedLogsCount == 0 {
 			w.WriteHeader(http.StatusNoContent)
 			_, _ = w.Write([]byte("No logs have been received"))
-			return
-		}
-
-		if !store.HasValidFormat {
-			w.WriteHeader(http.StatusUnprocessableEntity)
-			_, _ = w.Write([]byte("Logs format is not valid"))
-			return
-		}
-
-		if !store.HasValidTags {
-			w.WriteHeader(http.StatusExpectationFailed)
-			_, _ = w.Write([]byte("Log tags are not valid"))
-
-			if !store.HasValidExpectedTags {
-				_, _ = w.Write([]byte(fmt.Sprintf("Log tags assertion failure: %s", "expected tags")))
-			}
-			if !store.HasValidAllowedTags {
-				_, _ = w.Write([]byte(fmt.Sprintf("Log tags assertion failure: %s", "allowed tags")))
-			}
-			if !store.HasValidDeniedTags {
-				_, _ = w.Write([]byte(fmt.Sprintf("Log tags assertion failure: %s", "denied tags")))
-			}
-
 			return
 		}
 

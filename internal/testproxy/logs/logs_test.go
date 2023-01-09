@@ -112,8 +112,8 @@ func TestValidateExpectedTags(t *testing.T) {
 		tagsValid, missingTags, emptyTags := logVerifier.ValidateExpectedTags(logLines)
 
 		require.True(t, tagsValid)
-		require.Nil(t, missingTags)
-		require.Nil(t, emptyTags)
+		require.Empty(t, missingTags)
+		require.Empty(t, emptyTags)
 	})
 
 	t.Run("expected tags are not found", func(t *testing.T) {
@@ -128,7 +128,7 @@ func TestValidateExpectedTags(t *testing.T) {
 
 		require.False(t, tagsValid)
 		require.Contains(t, missingTags, "some-expected-tag")
-		require.Nil(t, emptyTags)
+		require.Empty(t, emptyTags)
 	})
 
 	t.Run("expected tags are found but the value is nil", func(t *testing.T) {
@@ -142,7 +142,7 @@ func TestValidateExpectedTags(t *testing.T) {
 		tagsValid, missingTags, emptyTags := logVerifier.ValidateExpectedTags(logLines)
 
 		require.False(t, tagsValid)
-		require.Nil(t, missingTags)
+		require.Empty(t, missingTags)
 		require.Contains(t, emptyTags, "some-expected-tag")
 	})
 
@@ -157,7 +157,7 @@ func TestValidateExpectedTags(t *testing.T) {
 		tagsValid, missingTags, emptyTags := logVerifier.ValidateExpectedTags(logLines)
 
 		require.False(t, tagsValid)
-		require.Nil(t, missingTags)
+		require.Empty(t, missingTags)
 		require.Contains(t, emptyTags, "some-expected-tag")
 	})
 
@@ -172,8 +172,8 @@ func TestValidateExpectedTags(t *testing.T) {
 		tagsValid, missingTags, emptyTags := logVerifier.ValidateExpectedTags(logLines)
 
 		require.True(t, tagsValid)
-		require.Nil(t, missingTags)
-		require.Nil(t, emptyTags)
+		require.Empty(t, missingTags)
+		require.Empty(t, emptyTags)
 	})
 }
 
@@ -268,20 +268,6 @@ func TestValidateAllowedTags(t *testing.T) {
 		require.False(t, tagsAreValid)
 		require.Equal(t, invalidLog, unexpectedLogs[0])
 	})
-
-	t.Run("validate allow list filter tags when the allowed list tag value is an empty list", func(t *testing.T) {
-		tagMap := map[string]interface{}{"tag-to-allow": "some-value"}
-		tagAllowList := map[string][]string{"tag-to-allow": {}}
-
-		var logLines []interface{}
-		logLines = append(logLines, tagMap)
-
-		logVerifier := logs.NewLogVerifier(nil, tagAllowList, nil)
-		tagsAreValid, unexpectedTags := logVerifier.ValidateAllowedTags(logLines)
-
-		require.True(t, tagsAreValid)
-		require.Empty(t, unexpectedTags)
-	})
 }
 
 func TestValidateDeniedTags(t *testing.T) {
@@ -375,19 +361,5 @@ func TestValidateDeniedTags(t *testing.T) {
 
 		require.False(t, tagsAreValid)
 		require.Equal(t, invalidTagMap, unexpectedTags)
-	})
-
-	t.Run("validate deny list filter tags when the deny list tag value is an empty list", func(t *testing.T) {
-		tagMap := map[string]interface{}{"tag-to-deny": "some-value"}
-		tagDenyList := map[string][]string{"tag-to-deny": {}}
-
-		var logLines []interface{}
-		logLines = append(logLines, tagMap)
-
-		logVerifier := logs.NewLogVerifier(nil, nil, tagDenyList)
-		tagsAreValid, unexpectedTags := logVerifier.ValidateDeniedTags(logLines)
-
-		require.False(t, tagsAreValid)
-		require.Equal(t, tagMap, unexpectedTags)
 	})
 }
