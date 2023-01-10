@@ -1,8 +1,9 @@
 package logs_test
 
 import (
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/testproxy/logs"
 )
