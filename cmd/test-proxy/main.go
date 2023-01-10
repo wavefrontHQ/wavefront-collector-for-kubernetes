@@ -20,6 +20,7 @@ var (
 	logFilePath string
 	logLevel    = log.InfoLevel.String()
 
+	// Needs to match what is set up in log sender
 	expectedTags = []string{"user_defined_tag",
 		"service",
 		"application",
@@ -32,9 +33,11 @@ var (
 		"pod_id",
 		"container_id",
 	}
+	// Needs to match what is set up in log sender
 	allowListFilteredTags = map[string][]string{
 		"namespace_name": {"kube-system", "observability-system"},
 	}
+	// Needs to match what is set up in log sender
 	denyListFilteredTags = map[string][]string{
 		"namespace_name": {"kube-system"},
 	}

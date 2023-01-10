@@ -23,10 +23,9 @@ func LogJsonArrayHandler(logVerifier *logs.LogVerifier, store *logs.Results) htt
 		defer req.Body.Close()
 
 		// Validate log format
-		fmt.Println(string(b))
 		formatResult, logLines := logVerifier.VerifyJsonArrayFormat(b)
 
-		store.IncrementReceivedLogsCount()
+		store.SetHasReceivedLogs()
 		store.SetHasValidFormat(formatResult)
 
 		// Validate expected tags
@@ -59,10 +58,9 @@ func LogJsonLinesHandler(logVerifier *logs.LogVerifier, store *logs.Results) htt
 		defer req.Body.Close()
 
 		// Validate log format
-		fmt.Println(string(b))
 		formatResult, logLines := logVerifier.VerifyJsonLinesFormat(b)
 
-		store.IncrementReceivedLogsCount()
+		store.SetHasReceivedLogs()
 		store.SetHasValidFormat(formatResult)
 
 		// Validate expected tags
@@ -93,7 +91,7 @@ func LogAssertionHandler(store *logs.Results) http.HandlerFunc {
 			return
 		}
 
-		if store.ReceivedLogsCount == 0 {
+		if !store.HasReceivedLogs {
 			w.WriteHeader(http.StatusNoContent)
 			_, _ = w.Write([]byte("No logs have been received"))
 			return

@@ -3,7 +3,7 @@ package logs
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
+	log "github.com/sirupsen/logrus"
 	"reflect"
 )
 
@@ -23,24 +23,24 @@ func NewLogVerifier(expectedTags []string, allowListFilteredTags map[string][]st
 
 func (l *LogVerifier) VerifyJsonArrayFormat(line []byte) (bool, []interface{}) {
 	if len(line) == 0 {
-		fmt.Println("Data for verifying json array format is empty")
+		log.Println("Data for verifying json array format is empty")
 		return false, nil
 	}
 
 	if line[0] != '[' {
-		fmt.Printf("Data is not in json array format, first character was '%s'\n", string(line[0]))
+		log.Printf("Data is not in json array format, first character was '%s'\n", string(line[0]))
 		return false, nil
 	}
 
 	var logLines []interface{}
 	err := json.Unmarshal(line, &logLines)
 	if err != nil {
-		fmt.Println("Data is not in json array format:", err)
+		log.Println("Data is not in json array format:", err)
 		return false, nil
 	}
 
 	if len(logLines) == 0 {
-		fmt.Println("Json array was empty")
+		log.Println("Json array was empty")
 		return false, nil
 	}
 
@@ -49,12 +49,12 @@ func (l *LogVerifier) VerifyJsonArrayFormat(line []byte) (bool, []interface{}) {
 
 func (l *LogVerifier) VerifyJsonLinesFormat(line []byte) (bool, []interface{}) {
 	if len(line) == 0 {
-		fmt.Println("Data for verifying json lines format is empty")
+		log.Println("Data for verifying json lines format is empty")
 		return false, nil
 	}
 
 	if line[0] != '{' {
-		fmt.Printf("Data is not in json line format, first character was '%s'\n", string(line[0]))
+		log.Printf("Data is not in json line format, first character was '%s'\n", string(line[0]))
 		return false, nil
 	}
 
@@ -63,12 +63,12 @@ func (l *LogVerifier) VerifyJsonLinesFormat(line []byte) (bool, []interface{}) {
 	for decoder.More() {
 		var jsonLine interface{}
 		if err := decoder.Decode(&jsonLine); err != nil {
-			fmt.Println("Data is not in json line format:", err)
+			log.Println("Data is not in json line format:", err)
 			return false, nil
 		}
 
 		if len(jsonLine.(map[string]interface{})) == 0 {
-			fmt.Println("Json line was empty")
+			log.Println("Json line was empty")
 			return false, nil
 		}
 
@@ -89,12 +89,12 @@ func (l *LogVerifier) ValidateExpectedTags(logLines []interface{}) (bool, map[st
 		for _, expectedTag := range l.expectedTags {
 			if tagVal, ok := logTags[expectedTag]; ok {
 				if tagVal == nil || (reflect.TypeOf(tagVal).String() == "string" && len(tagVal.(string)) == 0) {
-					fmt.Printf("Empty expected tag: %s\n", expectedTag)
+					log.Printf("Empty expected tag: %s\n", expectedTag)
 					valid = false
 					emptyExpectedTags[expectedTag] = nil
 				}
 			} else {
-				fmt.Printf("Missing expected tag: %s\n", expectedTag)
+				log.Printf("Missing expected tag: %s\n", expectedTag)
 				valid = false
 				missingTags[expectedTag] = nil
 			}
@@ -128,7 +128,7 @@ func (l *LogVerifier) ValidateAllowedTags(logLines []interface{}) (bool, []inter
 		}
 
 		if !foundAllowedTag {
-			fmt.Println("Expected to find a tag from the allowed list")
+			log.Println("Expected to find a tag from the allowed list")
 			unexpectedLogs = append(unexpectedLogs, logLine)
 		}
 		valid = valid && foundAllowedTag
@@ -148,7 +148,7 @@ func (l *LogVerifier) ValidateDeniedTags(logLines []interface{}) (bool, map[stri
 			if tagVal, ok := logTags[tagDenyKey]; ok {
 				for _, tagDenyVal := range tagDenyValList {
 					if tagVal == tagDenyVal {
-						fmt.Printf("Unexpected deny list tag: key=\"%s\", value=\"%s\"\n", tagDenyKey, tagVal)
+						log.Printf("Unexpected deny list tag: key=\"%s\", value=\"%s\"\n", tagDenyKey, tagVal)
 						valid = false
 						unexpectedTags[tagDenyKey] = tagVal
 					}

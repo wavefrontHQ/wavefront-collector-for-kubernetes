@@ -16,7 +16,7 @@ COPY . .
 # Then build
 RUN CGO_ENABLED=0 GOOS=linux GO111MODULE=on go build -ldflags "${LDFLAGS}" -a -o ${BINARY_NAME} ./cmd/test-proxy/...
 
-FROM scratch
+FROM ubuntu
 WORKDIR /
 COPY --from=builder /workspace/test-proxy .
 
