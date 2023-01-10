@@ -133,7 +133,7 @@ test-proxy-container: $(SEMVER_CLI_BIN)
 
 .PHONY: publish-test-proxy
 publish-test-proxy:  test-proxy-container
-#	docker push $(PREFIX)/test-proxy:latest
+	docker push $(PREFIX)/test-proxy:latest
 	docker push $(PREFIX)/test-proxy:$(VERSION)
 
 .PHONY: test-proxy
