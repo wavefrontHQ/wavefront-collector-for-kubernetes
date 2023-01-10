@@ -10,45 +10,54 @@ import (
 func TestVerifyJsonArrayFormat(t *testing.T) {
 	t.Run("valid when json array is in expected format", func(t *testing.T) {
 		jsonArray := `[{"key1":"value1","key2":"value2"},{"key3":"value3","key4":"value4"}]`
-		logVerifier := logs.NewLogVerifier(nil, nil, nil)
+		results := logs.NewLogResults()
+		logVerifier := logs.NewLogVerifier(results, nil, nil, nil)
 
-		formatValid, _ := logVerifier.VerifyJsonArrayFormat([]byte(jsonArray))
+		logVerifier.VerifyJsonArrayFormat([]byte(jsonArray))
 
-		require.True(t, formatValid)
+		require.Equal(t, 1, results.HasValidFormat)
+		require.Equal(t, 2, results.ReceivedLogCount)
 	})
 
 	t.Run("invalid when json array is empty brackets", func(t *testing.T) {
-		logVerifier := logs.NewLogVerifier(nil, nil, nil)
+		results := logs.NewLogResults()
+		logVerifier := logs.NewLogVerifier(results, nil, nil, nil)
+		logVerifier.VerifyJsonArrayFormat([]byte("[]"))
 
-		formatValid, _ := logVerifier.VerifyJsonArrayFormat([]byte("[]"))
-
-		require.False(t, formatValid)
+		require.Equal(t, 0, results.HasValidFormat)
+		require.Equal(t, 0, results.ReceivedLogCount)
 	})
 
 	t.Run("invalid when json array is json lines format", func(t *testing.T) {
 		jsonLines := `{"key1":"value1", "key2":"value2"}
 					{"key3":"value3", "key4":"value4"}`
-		logVerifier := logs.NewLogVerifier(nil, nil, nil)
+		results := logs.NewLogResults()
+		logVerifier := logs.NewLogVerifier(results, nil, nil, nil)
 
-		formatValid, _ := logVerifier.VerifyJsonArrayFormat([]byte(jsonLines))
+		logVerifier.VerifyJsonArrayFormat([]byte(jsonLines))
 
-		require.False(t, formatValid)
+		require.Equal(t, 0, results.HasValidFormat)
+		require.Equal(t, 0, results.ReceivedLogCount)
 	})
 
 	t.Run("invalid when json array is empty", func(t *testing.T) {
-		logVerifier := logs.NewLogVerifier(nil, nil, nil)
+		results := logs.NewLogResults()
+		logVerifier := logs.NewLogVerifier(results, nil, nil, nil)
 
-		formatValid, _ := logVerifier.VerifyJsonArrayFormat([]byte{})
+		logVerifier.VerifyJsonArrayFormat([]byte{})
 
-		require.False(t, formatValid)
+		require.Equal(t, 0, results.HasValidFormat)
+		require.Equal(t, 0, results.ReceivedLogCount)
 	})
 
 	t.Run("invalid when json array is not a json array", func(t *testing.T) {
-		logVerifier := logs.NewLogVerifier(nil, nil, nil)
+		results := logs.NewLogResults()
+		logVerifier := logs.NewLogVerifier(results, nil, nil, nil)
 
-		formatValid, _ := logVerifier.VerifyJsonArrayFormat([]byte("{}"))
+		logVerifier.VerifyJsonArrayFormat([]byte("{}"))
 
-		require.False(t, formatValid)
+		require.Equal(t, 0, results.HasValidFormat)
+		require.Equal(t, 0, results.ReceivedLogCount)
 	})
 }
 
@@ -56,47 +65,58 @@ func TestVerifyJsonLinesFormat(t *testing.T) {
 	t.Run("valid when json lines is in expected format", func(t *testing.T) {
 		jsonLines := `{"key1":"value1", "key2":"value2"}
 					{"key3":"value3", "key4":"value4"}`
-		logVerifier := logs.NewLogVerifier(nil, nil, nil)
 
-		formatValid, _ := logVerifier.VerifyJsonLinesFormat([]byte(jsonLines))
+		results := logs.NewLogResults()
+		logVerifier := logs.NewLogVerifier(results, nil, nil, nil)
 
-		require.True(t, formatValid)
+		logVerifier.VerifyJsonLinesFormat([]byte(jsonLines))
+
+		require.Equal(t, 1, results.HasValidFormat)
+		require.Equal(t, 2, results.ReceivedLogCount)
 	})
 
 	t.Run("invalid when json lines is in invalid json lines format with comma between elements", func(t *testing.T) {
 		jsonArray := `{"key1":"value1","key2":"value2"},
 						{"key3":"value3","key4":"value4"}`
-		logVerifier := logs.NewLogVerifier(nil, nil, nil)
+		results := logs.NewLogResults()
+		logVerifier := logs.NewLogVerifier(results, nil, nil, nil)
 
-		formatValid, _ := logVerifier.VerifyJsonLinesFormat([]byte(jsonArray))
+		logVerifier.VerifyJsonLinesFormat([]byte(jsonArray))
 
-		require.False(t, formatValid)
+		require.Equal(t, 0, results.HasValidFormat)
+		require.Equal(t, 0, results.ReceivedLogCount)
 	})
 
 	t.Run("invalid when json lines is in json array format", func(t *testing.T) {
 		jsonArray := `[{"key1":"value1","key2":"value2"},
 						{"key3":"value3","key4":"value4"}]`
-		logVerifier := logs.NewLogVerifier(nil, nil, nil)
+		results := logs.NewLogResults()
+		logVerifier := logs.NewLogVerifier(results, nil, nil, nil)
 
-		formatValid, _ := logVerifier.VerifyJsonLinesFormat([]byte(jsonArray))
+		logVerifier.VerifyJsonLinesFormat([]byte(jsonArray))
 
-		require.False(t, formatValid)
+		require.Equal(t, 0, results.HasValidFormat)
+		require.Equal(t, 0, results.ReceivedLogCount)
 	})
 
 	t.Run("invalid when json lines data is empty", func(t *testing.T) {
-		logVerifier := logs.NewLogVerifier(nil, nil, nil)
+		results := logs.NewLogResults()
+		logVerifier := logs.NewLogVerifier(results, nil, nil, nil)
 
-		formatValid, _ := logVerifier.VerifyJsonLinesFormat([]byte{})
+		logVerifier.VerifyJsonLinesFormat([]byte{})
 
-		require.False(t, formatValid)
+		require.Equal(t, 0, results.HasValidFormat)
+		require.Equal(t, 0, results.ReceivedLogCount)
 	})
 
 	t.Run("invalid when json lines are empty", func(t *testing.T) {
-		logVerifier := logs.NewLogVerifier(nil, nil, nil)
+		results := logs.NewLogResults()
+		logVerifier := logs.NewLogVerifier(results, nil, nil, nil)
 
-		formatValid, _ := logVerifier.VerifyJsonLinesFormat([]byte("{}"))
+		logVerifier.VerifyJsonLinesFormat([]byte("{}"))
 
-		require.False(t, formatValid)
+		require.Equal(t, 0, results.HasValidFormat)
+		require.Equal(t, 0, results.ReceivedLogCount)
 	})
 }
 
@@ -108,12 +128,15 @@ func TestValidateExpectedTags(t *testing.T) {
 		var logLines []interface{}
 		logLines = append(logLines, logMap)
 
-		logVerifier := logs.NewLogVerifier(expectedTag, nil, nil)
-		tagsValid, missingTags, emptyTags := logVerifier.ValidateExpectedTags(logLines)
+		results := logs.NewLogResults()
+		logVerifier := logs.NewLogVerifier(results, expectedTag, nil, nil)
+		logVerifier.ValidateExpectedTags(logLines)
 
-		require.True(t, tagsValid)
-		require.Empty(t, missingTags)
-		require.Empty(t, emptyTags)
+		require.Equal(t, 1, results.HasValidTags)
+		require.Empty(t, results.MissingExpectedTagsMap)
+		require.Equal(t, 0, results.MissingExpectedTagsCount)
+		require.Empty(t, results.EmptyExpectedTagsMap)
+		require.Equal(t, 0, results.MissingExpectedTagsCount)
 	})
 
 	t.Run("expected tags are not found", func(t *testing.T) {
@@ -123,12 +146,15 @@ func TestValidateExpectedTags(t *testing.T) {
 		var logLines []interface{}
 		logLines = append(logLines, logMap)
 
-		logVerifier := logs.NewLogVerifier(expectedTag, nil, nil)
-		tagsValid, missingTags, emptyTags := logVerifier.ValidateExpectedTags(logLines)
+		results := logs.NewLogResults()
+		logVerifier := logs.NewLogVerifier(results, expectedTag, nil, nil)
+		logVerifier.ValidateExpectedTags(logLines)
 
-		require.False(t, tagsValid)
-		require.Contains(t, missingTags, "some-expected-tag")
-		require.Empty(t, emptyTags)
+		require.Equal(t, 0, results.HasValidTags)
+		require.Contains(t, results.MissingExpectedTagsMap, "some-expected-tag")
+		require.Equal(t, 1, results.MissingExpectedTagsCount)
+		require.Empty(t, results.EmptyExpectedTagsMap)
+		require.Equal(t, 0, results.EmptyExpectedTagsCount)
 	})
 
 	t.Run("expected tags are found but the value is nil", func(t *testing.T) {
@@ -138,12 +164,15 @@ func TestValidateExpectedTags(t *testing.T) {
 		var logLines []interface{}
 		logLines = append(logLines, logMap)
 
-		logVerifier := logs.NewLogVerifier(expectedTag, nil, nil)
-		tagsValid, missingTags, emptyTags := logVerifier.ValidateExpectedTags(logLines)
+		results := logs.NewLogResults()
+		logVerifier := logs.NewLogVerifier(results, expectedTag, nil, nil)
+		logVerifier.ValidateExpectedTags(logLines)
 
-		require.False(t, tagsValid)
-		require.Empty(t, missingTags)
-		require.Contains(t, emptyTags, "some-expected-tag")
+		require.Equal(t, 0, results.HasValidTags)
+		require.Empty(t, results.MissingExpectedTagsMap)
+		require.Equal(t, 0, results.MissingExpectedTagsCount)
+		require.Contains(t, results.EmptyExpectedTagsMap, "some-expected-tag")
+		require.Equal(t, 1, results.EmptyExpectedTagsCount)
 	})
 
 	t.Run("expected tags are found but the value is empty", func(t *testing.T) {
@@ -153,12 +182,15 @@ func TestValidateExpectedTags(t *testing.T) {
 		var logLines []interface{}
 		logLines = append(logLines, logMap)
 
-		logVerifier := logs.NewLogVerifier(expectedTag, nil, nil)
-		tagsValid, missingTags, emptyTags := logVerifier.ValidateExpectedTags(logLines)
+		results := logs.NewLogResults()
+		logVerifier := logs.NewLogVerifier(results, expectedTag, nil, nil)
+		logVerifier.ValidateExpectedTags(logLines)
 
-		require.False(t, tagsValid)
-		require.Empty(t, missingTags)
-		require.Contains(t, emptyTags, "some-expected-tag")
+		require.Equal(t, 0, results.HasValidTags)
+		require.Empty(t, results.MissingExpectedTagsMap)
+		require.Equal(t, 0, results.MissingExpectedTagsCount)
+		require.Contains(t, results.EmptyExpectedTagsMap, "some-expected-tag")
+		require.Equal(t, 1, results.EmptyExpectedTagsCount)
 	})
 
 	t.Run("expected tags are found but the value is not nil or an empty string", func(t *testing.T) {
@@ -168,12 +200,15 @@ func TestValidateExpectedTags(t *testing.T) {
 		var logLines []interface{}
 		logLines = append(logLines, logMap)
 
-		logVerifier := logs.NewLogVerifier(expectedTag, nil, nil)
-		tagsValid, missingTags, emptyTags := logVerifier.ValidateExpectedTags(logLines)
+		results := logs.NewLogResults()
+		logVerifier := logs.NewLogVerifier(results, expectedTag, nil, nil)
+		logVerifier.ValidateExpectedTags(logLines)
 
-		require.True(t, tagsValid)
-		require.Empty(t, missingTags)
-		require.Empty(t, emptyTags)
+		require.Equal(t, 1, results.HasValidTags)
+		require.Empty(t, results.MissingExpectedTagsMap)
+		require.Equal(t, 0, results.MissingExpectedTagsCount)
+		require.Empty(t, results.EmptyExpectedTagsMap)
+		require.Equal(t, 0, results.EmptyExpectedTagsCount)
 	})
 }
 
@@ -185,11 +220,13 @@ func TestValidateAllowedTags(t *testing.T) {
 		var logLines []interface{}
 		logLines = append(logLines, tagMap)
 
-		logVerifier := logs.NewLogVerifier(nil, tagAllowList, nil)
-		tagsAreValid, unexpectedTags := logVerifier.ValidateAllowedTags(logLines)
+		results := logs.NewLogResults()
+		logVerifier := logs.NewLogVerifier(results, nil, tagAllowList, nil)
+		logVerifier.ValidateAllowedTags(logLines)
 
-		require.True(t, tagsAreValid)
-		require.Empty(t, unexpectedTags)
+		require.Equal(t, 1, results.HasValidTags)
+		require.Empty(t, results.UnexpectedAllowedLogs)
+		require.Equal(t, 0, results.UnexpectedAllowedLogsCount)
 	})
 
 	t.Run("invalid if there are no tags from the allowed list", func(t *testing.T) {
@@ -199,11 +236,13 @@ func TestValidateAllowedTags(t *testing.T) {
 		var logLines []interface{}
 		logLines = append(logLines, tagMap)
 
-		logVerifier := logs.NewLogVerifier(nil, tagAllowList, nil)
-		tagsAreValid, unexpectedLogs := logVerifier.ValidateAllowedTags(logLines)
+		results := logs.NewLogResults()
+		logVerifier := logs.NewLogVerifier(results, nil, tagAllowList, nil)
+		logVerifier.ValidateAllowedTags(logLines)
 
-		require.False(t, tagsAreValid)
-		require.Equal(t, logLines, unexpectedLogs)
+		require.Equal(t, 0, results.HasValidTags)
+		require.Equal(t, logLines, results.UnexpectedAllowedLogs)
+		require.Equal(t, 1, results.UnexpectedAllowedLogsCount)
 	})
 
 	t.Run("invalid if the tag key is allowed but the tag value is not allowed", func(t *testing.T) {
@@ -213,11 +252,13 @@ func TestValidateAllowedTags(t *testing.T) {
 		var logLines []interface{}
 		logLines = append(logLines, tagMap)
 
-		logVerifier := logs.NewLogVerifier(nil, tagAllowList, nil)
-		tagsAreValid, unexpectedLogs := logVerifier.ValidateAllowedTags(logLines)
+		results := logs.NewLogResults()
+		logVerifier := logs.NewLogVerifier(results, nil, tagAllowList, nil)
+		logVerifier.ValidateAllowedTags(logLines)
 
-		require.False(t, tagsAreValid)
-		require.Equal(t, logLines, unexpectedLogs)
+		require.Equal(t, 0, results.HasValidTags)
+		require.Equal(t, logLines, results.UnexpectedAllowedLogs)
+		require.Equal(t, 1, results.UnexpectedAllowedLogsCount)
 	})
 
 	t.Run("invalid if the tag value is allowed but the tag key is not allowed", func(t *testing.T) {
@@ -227,11 +268,13 @@ func TestValidateAllowedTags(t *testing.T) {
 		var logLines []interface{}
 		logLines = append(logLines, tagMap)
 
-		logVerifier := logs.NewLogVerifier(nil, tagAllowList, nil)
-		tagsAreValid, unexpectedLogs := logVerifier.ValidateAllowedTags(logLines)
+		results := logs.NewLogResults()
+		logVerifier := logs.NewLogVerifier(results, nil, tagAllowList, nil)
+		logVerifier.ValidateAllowedTags(logLines)
 
-		require.False(t, tagsAreValid)
-		require.Equal(t, logLines, unexpectedLogs)
+		require.Equal(t, 0, results.HasValidTags)
+		require.Equal(t, logLines, results.UnexpectedAllowedLogs)
+		require.Equal(t, 1, results.UnexpectedAllowedLogsCount)
 	})
 
 	t.Run("valid when all logs have a tag from the allow list", func(t *testing.T) {
@@ -246,11 +289,13 @@ func TestValidateAllowedTags(t *testing.T) {
 		logLines = append(logLines, validLog1)
 		logLines = append(logLines, validLog2)
 
-		logVerifier := logs.NewLogVerifier(nil, tagAllowList, nil)
-		tagsAreValid, unexpectedLogs := logVerifier.ValidateAllowedTags(logLines)
+		results := logs.NewLogResults()
+		logVerifier := logs.NewLogVerifier(results, nil, tagAllowList, nil)
+		logVerifier.ValidateAllowedTags(logLines)
 
-		require.True(t, tagsAreValid)
-		require.Empty(t, unexpectedLogs)
+		require.Equal(t, 1, results.HasValidTags)
+		require.Empty(t, results.UnexpectedAllowedLogs)
+		require.Equal(t, 0, results.UnexpectedAllowedLogsCount)
 	})
 
 	t.Run("invalid if there is one log in the list that does not have any allowed tags", func(t *testing.T) {
@@ -262,11 +307,13 @@ func TestValidateAllowedTags(t *testing.T) {
 		logLines = append(logLines, invalidLog)
 		logLines = append(logLines, validLog)
 
-		logVerifier := logs.NewLogVerifier(nil, tagAllowList, nil)
-		tagsAreValid, unexpectedLogs := logVerifier.ValidateAllowedTags(logLines)
+		results := logs.NewLogResults()
+		logVerifier := logs.NewLogVerifier(results, nil, tagAllowList, nil)
+		logVerifier.ValidateAllowedTags(logLines)
 
-		require.False(t, tagsAreValid)
-		require.Equal(t, invalidLog, unexpectedLogs[0])
+		require.Equal(t, 0, results.HasValidTags)
+		require.Equal(t, invalidLog, results.UnexpectedAllowedLogs[0])
+		require.Equal(t, 1, results.UnexpectedAllowedLogsCount)
 	})
 }
 
@@ -278,26 +325,30 @@ func TestValidateDeniedTags(t *testing.T) {
 		var logLines []interface{}
 		logLines = append(logLines, tagMap)
 
-		logVerifier := logs.NewLogVerifier(nil, nil, tagDenyList)
-		tagsAreValid, unexpectedTags := logVerifier.ValidateDeniedTags(logLines)
+		results := logs.NewLogResults()
+		logVerifier := logs.NewLogVerifier(results, nil, nil, tagDenyList)
+		logVerifier.ValidateDeniedTags(logLines)
 
-		require.True(t, tagsAreValid)
-		require.Empty(t, unexpectedTags)
+		require.Equal(t, 1, results.HasValidTags)
+		require.Empty(t, results.UnexpectedDeniedTagsMap)
+		require.Equal(t, 0, results.UnexpectedDeniedTagsCount)
 	})
 
 	t.Run("invalid if denied tags are present and returns which ones were unexpected", func(t *testing.T) {
 		tagMap := map[string]interface{}{"tag-to-deny": "some-value", "tag-to-allow": "some-value"}
 		tagDenyList := map[string][]string{"tag-to-deny": {"some-value"}}
-		unexpectedTag := map[string]interface{}{"tag-to-deny": "some-value"}
+		unexpectedTag := map[string]interface{}{"tag-to-deny:some-value": nil}
 
 		var logLines []interface{}
 		logLines = append(logLines, tagMap)
 
-		logVerifier := logs.NewLogVerifier(nil, nil, tagDenyList)
-		tagsAreValid, unexpectedTags := logVerifier.ValidateDeniedTags(logLines)
+		results := logs.NewLogResults()
+		logVerifier := logs.NewLogVerifier(results, nil, nil, tagDenyList)
+		logVerifier.ValidateDeniedTags(logLines)
 
-		require.False(t, tagsAreValid)
-		require.Equal(t, unexpectedTags, unexpectedTag)
+		require.Equal(t, 0, results.HasValidTags)
+		require.Equal(t, unexpectedTag, results.UnexpectedDeniedTagsMap)
+		require.Equal(t, 1, results.UnexpectedDeniedTagsCount)
 	})
 
 	t.Run("valid if the tag key is on the deny list but the tag value is not", func(t *testing.T) {
@@ -307,11 +358,13 @@ func TestValidateDeniedTags(t *testing.T) {
 		var logLines []interface{}
 		logLines = append(logLines, tagMap)
 
-		logVerifier := logs.NewLogVerifier(nil, nil, tagDenyList)
-		tagsAreValid, unexpectedTags := logVerifier.ValidateDeniedTags(logLines)
+		results := logs.NewLogResults()
+		logVerifier := logs.NewLogVerifier(results, nil, nil, tagDenyList)
+		logVerifier.ValidateDeniedTags(logLines)
 
-		require.True(t, tagsAreValid)
-		require.Empty(t, unexpectedTags)
+		require.Equal(t, 1, results.HasValidTags)
+		require.Empty(t, results.UnexpectedDeniedTagsMap)
+		require.Equal(t, 0, results.UnexpectedDeniedTagsCount)
 	})
 
 	t.Run("valid if the tag value is on the deny list but the tag key is not", func(t *testing.T) {
@@ -321,11 +374,13 @@ func TestValidateDeniedTags(t *testing.T) {
 		var logLines []interface{}
 		logLines = append(logLines, tagMap)
 
-		logVerifier := logs.NewLogVerifier(nil, nil, tagDenyList)
-		tagsAreValid, unexpectedTags := logVerifier.ValidateDeniedTags(logLines)
+		results := logs.NewLogResults()
+		logVerifier := logs.NewLogVerifier(results, nil, nil, tagDenyList)
+		logVerifier.ValidateDeniedTags(logLines)
 
-		require.True(t, tagsAreValid)
-		require.Empty(t, unexpectedTags)
+		require.Equal(t, 1, results.HasValidTags)
+		require.Empty(t, results.UnexpectedDeniedTagsMap)
+		require.Equal(t, 0, results.UnexpectedDeniedTagsCount)
 	})
 
 	t.Run("valid when all logs have tags that are not in the deny list", func(t *testing.T) {
@@ -340,26 +395,31 @@ func TestValidateDeniedTags(t *testing.T) {
 		logLines = append(logLines, validLog1)
 		logLines = append(logLines, validLog2)
 
-		logVerifier := logs.NewLogVerifier(nil, nil, tagDenyList)
-		tagsAreValid, unexpectedTags := logVerifier.ValidateDeniedTags(logLines)
+		results := logs.NewLogResults()
+		logVerifier := logs.NewLogVerifier(results, nil, nil, tagDenyList)
+		logVerifier.ValidateDeniedTags(logLines)
 
-		require.True(t, tagsAreValid)
-		require.Empty(t, unexpectedTags)
+		require.Equal(t, 1, results.HasValidTags)
+		require.Empty(t, results.UnexpectedDeniedTagsMap)
+		require.Equal(t, 0, results.UnexpectedDeniedTagsCount)
 	})
 
 	t.Run("invalid if at least one log has a tag in the deny list", func(t *testing.T) {
 		invalidTagMap := map[string]interface{}{"tag-key-to-deny": "tag-value-to-deny"}
 		validTagMap := map[string]interface{}{"tag-key-to-allow": "tag-value-to-allow"}
 		tagDenyList := map[string][]string{"tag-key-to-deny": {"tag-value-to-deny"}}
+		unexpectedDeniedTagsMap := map[string]interface{}{"tag-key-to-deny:tag-value-to-deny": nil}
 
 		var logLines []interface{}
 		logLines = append(logLines, invalidTagMap)
 		logLines = append(logLines, validTagMap)
 
-		logVerifier := logs.NewLogVerifier(nil, nil, tagDenyList)
-		tagsAreValid, unexpectedTags := logVerifier.ValidateDeniedTags(logLines)
+		results := logs.NewLogResults()
+		logVerifier := logs.NewLogVerifier(results, nil, nil, tagDenyList)
+		logVerifier.ValidateDeniedTags(logLines)
 
-		require.False(t, tagsAreValid)
-		require.Equal(t, invalidTagMap, unexpectedTags)
+		require.Equal(t, 0, results.HasValidTags)
+		require.Equal(t, unexpectedDeniedTagsMap, results.UnexpectedDeniedTagsMap)
+		require.Equal(t, 1, results.UnexpectedDeniedTagsCount)
 	})
 }

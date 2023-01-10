@@ -2,44 +2,45 @@ package logs
 
 import (
 	"encoding/json"
-	"fmt"
 	"sync"
 )
 
 type Results struct {
-	HasReceivedLogs bool `json:"hasReceivedLogs"`
-	HasValidFormat  int  `json:"hasValidFormat"`
-	HasValidTags    int  `json:"hasValidTags"`
+	HasValidFormat int `json:"hasValidFormat"`
+	HasValidTags   int `json:"hasValidTags"`
 
-	missingExpectedTagsMap map[string]interface{} `json:"-"`
-	MissingExpectedTags    []string               `json:"missingExpectedTags"`
+	MissingExpectedTagsMap   map[string]interface{} `json:"-"`
+	MissingExpectedTags      []string               `json:"missingExpectedTags"`
+	MissingExpectedTagsCount int                    `json:"missingExpectedTagsCount"`
 
-	emptyExpectedTagsMap map[string]interface{} `json:"-"`
-	EmptyExpectedTags    []string               `json:"emptyExpectedTags"`
+	EmptyExpectedTagsMap   map[string]interface{} `json:"-"`
+	EmptyExpectedTags      []string               `json:"emptyExpectedTags"`
+	EmptyExpectedTagsCount int                    `json:"emptyExpectedTagsCount"`
 
-	UnexpectedAllowedLogs []interface{} `json:"unexpectedAllowedLogs"`
+	UnexpectedAllowedLogs      []interface{} `json:"unexpectedAllowedLogs"`
+	UnexpectedAllowedLogsCount int           `json:"unexpectedAllowedLogsCount"`
 
-	unexpectedDeniedTagsMap map[string]interface{} `json:"-"`
-	UnexpectedDeniedTags    []string               `json:"unexpectedDeniedTags"`
-	mu                      *sync.Mutex
+	UnexpectedDeniedTagsMap   map[string]interface{} `json:"-"`
+	UnexpectedDeniedTags      []string               `json:"unexpectedDeniedTags"`
+	UnexpectedDeniedTagsCount int                    `json:"unexpectedDeniedTagsCount"`
+
+	ReceivedLogCount int `json:"receivedLogCount"`
+	mu               *sync.Mutex
 }
 
-func NewLogStore() *Results {
+// When using this, only modify struct fields through the receiver methods
+//
+// They need to be exposed for converting to JSON and we use
+// the fact that they are exposed for ease of testing.
+func NewLogResults() *Results {
 	return &Results{
 		HasValidFormat:          -1,
 		HasValidTags:            -1,
-		missingExpectedTagsMap:  make(map[string]interface{}),
-		emptyExpectedTagsMap:    make(map[string]interface{}),
-		unexpectedDeniedTagsMap: make(map[string]interface{}),
+		MissingExpectedTagsMap:  make(map[string]interface{}),
+		EmptyExpectedTagsMap:    make(map[string]interface{}),
+		UnexpectedDeniedTagsMap: make(map[string]interface{}),
 		mu:                      &sync.Mutex{},
 	}
-}
-
-func (l *Results) SetHasReceivedLogs() {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-
-	l.HasReceivedLogs = true
 }
 
 func (l *Results) SetHasValidFormat(isValid bool) {
@@ -70,45 +71,73 @@ func (l *Results) SetHasValidTags(isValid bool) {
 	}
 }
 
-func (l *Results) AddMissingExpectedTags(missingTags map[string]interface{}) {
+func (l *Results) AddMissingExpectedTag(missingTag string) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
-	for tag := range missingTags {
-		l.missingExpectedTagsMap[tag] = nil
-	}
+	l.MissingExpectedTagsMap[missingTag] = nil
 }
 
-func (l *Results) AddEmptyExpectedTags(emptyTags map[string]interface{}) {
+func (l *Results) AddEmptyExpectedTag(emptyTag string) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
-	for tag := range emptyTags {
-		l.emptyExpectedTagsMap[tag] = nil
-	}
+	l.EmptyExpectedTagsMap[emptyTag] = nil
 }
 
-func (l *Results) AddUnexpectedAllowedLogs(unexpectedLogs []interface{}) {
+func (l *Results) AddUnexpectedAllowedLog(unexpectedLog interface{}) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
-	l.UnexpectedAllowedLogs = append(l.UnexpectedAllowedLogs, unexpectedLogs...)
+	l.UnexpectedAllowedLogs = append(l.UnexpectedAllowedLogs, unexpectedLog)
 }
 
-func (l *Results) AddUnexpectedDeniedTags(unexpectedDeniedTags map[string]interface{}) {
+func (l *Results) AddUnexpectedDeniedTag(unexpectedDeniedTag string) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
-	for k, v := range unexpectedDeniedTags {
-		tagKey := fmt.Sprintf("%s:%s", k, v)
-		l.unexpectedDeniedTagsMap[tagKey] = nil
-	}
+	l.UnexpectedDeniedTagsMap[unexpectedDeniedTag] = nil
+}
+
+func (l *Results) IncrementMissingExpectedTagsCount() {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	l.MissingExpectedTagsCount++
+}
+
+func (l *Results) IncrementEmptyExpectedTagsCount() {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	l.EmptyExpectedTagsCount++
+}
+
+func (l *Results) IncrementUnexpectedAllowedLogsCount() {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	l.UnexpectedAllowedLogsCount++
+}
+
+func (l *Results) IncrementUnexpectedDeniedTagsCount() {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	l.UnexpectedDeniedTagsCount++
+}
+
+func (l *Results) AddReceivedCount(count int) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	l.ReceivedLogCount += count
 }
 
 func (l *Results) ToJSON() (output []byte, err error) {
-	l.MissingExpectedTags = mapKeysToSlice(l.missingExpectedTagsMap)
-	l.EmptyExpectedTags = mapKeysToSlice(l.emptyExpectedTagsMap)
-	l.UnexpectedDeniedTags = mapKeysToSlice(l.unexpectedDeniedTagsMap)
+	l.MissingExpectedTags = mapKeysToSlice(l.MissingExpectedTagsMap)
+	l.EmptyExpectedTags = mapKeysToSlice(l.EmptyExpectedTagsMap)
+	l.UnexpectedDeniedTags = mapKeysToSlice(l.UnexpectedDeniedTagsMap)
 
 	return json.Marshal(l)
 }

@@ -13,42 +13,37 @@ import (
 	metrics2 "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/testproxy/metrics"
 )
 
-func LogJsonArrayHandler(logVerifier *logs.LogVerifier, store *logs.Results) http.HandlerFunc {
+func LogJsonArrayHandler(logVerifier *logs.LogVerifier) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		b, err := io.ReadAll(req.Body)
 		if err != nil {
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			log.Fatal(err)
+			return
 		}
 		defer req.Body.Close()
 
 		// Validate log format
-		formatResult, logLines := logVerifier.VerifyJsonArrayFormat(b)
-
-		store.SetHasReceivedLogs()
-		store.SetHasValidFormat(formatResult)
+		logLines := logVerifier.VerifyJsonArrayFormat(b)
+		if len(logLines) == 0 {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
 
 		// Validate expected tags
-		tagsResult, missingTags, emptyTags := logVerifier.ValidateExpectedTags(logLines)
-		store.SetHasValidTags(tagsResult)
-		store.AddMissingExpectedTags(missingTags)
-		store.AddEmptyExpectedTags(emptyTags)
+		logVerifier.ValidateExpectedTags(logLines)
 
 		// Validate filtering allowed tags
-		allowedTagsResult, unexpectedLogs := logVerifier.ValidateAllowedTags(logLines)
-		store.SetHasValidTags(allowedTagsResult)
-		store.AddUnexpectedAllowedLogs(unexpectedLogs)
+		logVerifier.ValidateAllowedTags(logLines)
 
 		// Validate filtering denied tags
-		deniedTagsResult, unexpectedTags := logVerifier.ValidateDeniedTags(logLines)
-		store.SetHasValidTags(deniedTagsResult)
-		store.AddUnexpectedDeniedTags(unexpectedTags)
+		logVerifier.ValidateDeniedTags(logLines)
 
 		w.WriteHeader(http.StatusOK)
 	}
 }
 
-func LogJsonLinesHandler(logVerifier *logs.LogVerifier, store *logs.Results) http.HandlerFunc {
+func LogJsonLinesHandler(logVerifier *logs.LogVerifier) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		b, err := io.ReadAll(req.Body)
 		if err != nil {
@@ -58,26 +53,20 @@ func LogJsonLinesHandler(logVerifier *logs.LogVerifier, store *logs.Results) htt
 		defer req.Body.Close()
 
 		// Validate log format
-		formatResult, logLines := logVerifier.VerifyJsonLinesFormat(b)
-
-		store.SetHasReceivedLogs()
-		store.SetHasValidFormat(formatResult)
+		logLines := logVerifier.VerifyJsonLinesFormat(b)
+		if len(logLines) == 0 {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
 
 		// Validate expected tags
-		tagsResult, missingTags, emptyTags := logVerifier.ValidateExpectedTags(logLines)
-		store.SetHasValidTags(tagsResult)
-		store.AddMissingExpectedTags(missingTags)
-		store.AddEmptyExpectedTags(emptyTags)
+		logVerifier.ValidateExpectedTags(logLines)
 
 		// Validate filtering allowed tags
-		allowedTagsResult, unexpectedLogs := logVerifier.ValidateAllowedTags(logLines)
-		store.SetHasValidTags(allowedTagsResult)
-		store.AddUnexpectedAllowedLogs(unexpectedLogs)
+		logVerifier.ValidateAllowedTags(logLines)
 
 		// Validate filtering denied tags
-		deniedTagsResult, unexpectedTags := logVerifier.ValidateDeniedTags(logLines)
-		store.SetHasValidTags(deniedTagsResult)
-		store.AddUnexpectedDeniedTags(unexpectedTags)
+		logVerifier.ValidateDeniedTags(logLines)
 
 		w.WriteHeader(http.StatusOK)
 	}
@@ -91,7 +80,7 @@ func LogAssertionHandler(store *logs.Results) http.HandlerFunc {
 			return
 		}
 
-		if !store.HasReceivedLogs {
+		if store.ReceivedLogCount == 0 {
 			w.WriteHeader(http.StatusNoContent)
 			_, _ = w.Write([]byte("No logs have been received"))
 			return

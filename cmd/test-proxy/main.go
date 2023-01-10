@@ -21,7 +21,8 @@ var (
 	logLevel    = log.InfoLevel.String()
 
 	// Needs to match what is set up in log sender
-	expectedTags = []string{"user_defined_tag",
+	expectedTags = []string{
+		"user_defined_tag",
 		"service",
 		"application",
 		"source",
@@ -39,7 +40,7 @@ var (
 	}
 	// Needs to match what is set up in log sender
 	denyListFilteredTags = map[string][]string{
-		"namespace_name": {"kube-system"},
+		"container_name": {"kube-apiserver"},
 	}
 )
 
@@ -62,7 +63,7 @@ func main() {
 	}
 
 	metricStore := metrics.NewMetricStore()
-	logStore := logs.NewLogStore()
+	logStore := logs.NewLogResults()
 
 	if logFilePath != "" {
 		// Set log output to file to prevent our logging component from picking up stdout/stderr logs
@@ -110,11 +111,11 @@ func serveMetrics(store *metrics.MetricStore) {
 }
 
 func serveLogs(store *logs.Results) {
-	logVerifier := logs.NewLogVerifier(expectedTags, allowListFilteredTags, denyListFilteredTags)
+	logVerifier := logs.NewLogVerifier(store, expectedTags, allowListFilteredTags, denyListFilteredTags)
 
 	logsServeMux := http.NewServeMux()
-	logsServeMux.HandleFunc("/logs/json_array", handlers.LogJsonArrayHandler(logVerifier, store))
-	logsServeMux.HandleFunc("/logs/json_lines", handlers.LogJsonLinesHandler(logVerifier, store))
+	logsServeMux.HandleFunc("/logs/json_array", handlers.LogJsonArrayHandler(logVerifier))
+	logsServeMux.HandleFunc("/logs/json_lines", handlers.LogJsonLinesHandler(logVerifier))
 
 	log.Infof("http logs server listening on %s", proxyAddr)
 	if err := http.ListenAndServe(proxyAddr, logsServeMux); err != nil {
