@@ -1,11 +1,12 @@
 require 'json'
+require 'optparse'
 
 class Palette
   BACKGROUND_COLORS = [
-    "#f54f47", # Red
-    "#f57600", # Orange
-    "#85c81a", # Green
-    "#49afd9", # neutral Blue
+    "#f54f47", # Red           rgba(245,79,71,1)
+    "#f57600", # Orange        rgba(245,118,0,1)
+    "#85c81a", # Green         rgba(133,200,26,1)
+    "#49afd9", # neutral Blue  rgba(73,175,217,1)
   ]
 
   OTHER_COLORS = [
@@ -20,11 +21,7 @@ class Palette
   def self.print
     puts "Palette"
     self.all_colors.sort.each do |color_string|
-      color = Color.from_string(color_string)
-      printf("\x1b[48;2;#{color.r};#{color.g};#{color.b}m #{" " * 20}")
-      printf("\033[0m")
-
-      puts(color_string + "\t" + color.rgba)
+      color = Color.print(color_string)
     end
   end
 end
@@ -63,8 +60,24 @@ class Color
     new(m[:r], m[:g], m[:b])
   end
 
+  def self.print(color_string)
+    color = Color.from_string(color_string)
+    printf("\x1b[48;2;#{color.r};#{color.g};#{color.b}m #{" " * 20}")
+    printf("\033[0m")
+
+    puts(color_string + "\t" + color.rgba)
+  end
+
   def rgba
     "rgba(#{r},#{g},#{b},1)"
+  end
+
+  def hex
+    r_hex = r.to_s(16).ljust(2, "0")
+    g_hex = g.to_s(16).ljust(2, "0")
+    b_hex = b.to_s(16).ljust(2, "0")
+
+    "##{r_hex}#{g_hex}#{b_hex}"
   end
 end
 
@@ -106,12 +119,23 @@ class ColorChecker
     @non_matches = []
   end
 
-  def run(reporter)
+  def run(reporter, autofix)
     @iterator.dashboard_files.each do |file_path|
+      lines = []
       File.open(file_path) do |file|
         file.each_line do |line|
           check_hex(file_path, file, line)
           check_rgba(file_path, file, line)
+
+          lines << line
+        end
+      end
+
+      next unless autofix
+      File.open(file_path, 'w') do |file|
+        lines.each do |line|
+          # TODO: use color palette to show how the color changed
+          file.puts fix_hex_and_rgba(line)
         end
       end
     end
@@ -121,6 +145,80 @@ class ColorChecker
     end
 
     print_results
+  end
+
+  def get_rgb_color_diffs(color_to_replace)
+    color_sum = color_to_replace.r.to_f + color_to_replace.g.to_f + color_to_replace.b.to_f
+    case color_sum
+    when 0.0 # do nothing and move on to original color fix
+    when color_to_replace.r.to_f
+      return [[Color.from_string("#f54f47"), 0]]
+    when color_to_replace.g.to_f
+      return [[Color.from_string("#85c81a"), 0]]
+    when color_to_replace.b.to_f
+      return [[Color.from_string("#49afd9"), 0]]
+    end
+
+    return color_diffs = all_colors.map do |hex|
+      converted_color = Color.from_string(hex)
+
+      r_diff = (color_to_replace.r.to_f - converted_color.r.to_f).abs
+      g_diff = (color_to_replace.g.to_f - converted_color.g.to_f).abs
+      b_diff = (color_to_replace.b.to_f - converted_color.b.to_f).abs
+
+      [converted_color, r_diff + g_diff + b_diff]
+    end
+  end
+
+  def self.announce_color_fix(from_color_str, to_color_str, tail_msg)
+    color = Color.from_string(from_color_str)
+    fixed_color = Color.from_string(to_color_str)
+    printf("autofix-ing from \x1b[48;2;#{color.r};#{color.g};#{color.b}m #{" " * 10}")
+    printf("\033[0m")
+    printf(" to \x1b[48;2;#{fixed_color.r};#{fixed_color.g};#{fixed_color.b}m #{" " * 10}")
+    printf("\033[0m")
+
+    puts " #{tail_msg}"
+  end
+
+  def line_with_closest_hex(line, hex_str_to_replace)
+    color_diffs = get_rgb_color_diffs(Color.from_string(hex_str_to_replace))
+
+    fixed_hex_str = color_diffs.min_by(&:last)[0].hex
+    ColorChecker.announce_color_fix hex_str_to_replace, fixed_hex_str, "in '#{line.strip}'"
+    line[hex_str_to_replace] = fixed_hex_str
+
+    return line
+  end
+
+  def line_with_closest_rgba(line, rgba_str_to_replace)
+    color_diffs = get_rgb_color_diffs(Color.from_string(rgba_str_to_replace))
+
+    fixed_rgba_str = color_diffs.min_by(&:last)[0].rgba
+    ColorChecker.announce_color_fix rgba_str_to_replace, fixed_rgba_str, "in '#{line.strip}'"
+    line[rgba_str_to_replace] = fixed_rgba_str
+
+    return line
+  end
+
+  def fix_hex_and_rgba(line)
+    HEX_PATTERN.match(line).tap do |match|
+      if match
+        unless matches_any_hex?(match.to_s)
+          return line_with_closest_hex(line, match.to_s)
+        end
+      end
+    end
+
+    RGBA_PATTERN.match(line).tap do |match|
+      if match
+        unless matches_any_rgba?(match.to_s)
+          return line_with_closest_rgba(line, match.to_s)
+        end
+      end
+    end
+
+    return line
   end
 
   def print_results
@@ -468,6 +566,41 @@ class ParameterQueryChecker
   end
 end
 
+class IndexChecker
+  def initialize(iterator, index_json_file)
+    @iterator = iterator
+    @index_json_file = index_json_file
+    @dashboard_files_in_index = []
+  end
+
+  def index_json
+    return JSON.load(File.read(@index_json_file))
+  end
+
+  def run(reporter)
+    if @index_json_file.nil?
+      puts "Skipping index check because index file is nil"
+      return
+    end
+
+    if !File.exists?(@index_json_file)
+      reporter.report "Did not find index.json at #{@index_json_file}"
+      return
+    end
+
+    self.index_json["dashboards"].each do |dashboard_def|
+      @dashboard_files_in_index << File.basename(dashboard_def["url"])
+    end
+
+    @iterator.dashboard_files.each do |dashboard_file_in_glob|
+      dashboard_basename = File.basename(dashboard_file_in_glob)
+      if not @dashboard_files_in_index.include? dashboard_basename
+        reporter.report "Did not find dashboard #{dashboard_basename} in #{@index_json_file} (#{@dashboard_files_in_index})"
+      end
+    end
+  end
+end
+
 class Reporter
 
   Issue = Struct.new(:summary, :snippet, :dashboard) do
@@ -506,26 +639,45 @@ class Reporter
   end
 end
 
-if ARGV.empty?
-  puts "Please enter integration directory. Ex: ../tomcat"
-  exit
+def main
+  if ARGV.empty?
+    puts "Please enter integration directory. Ex: ../tomcat"
+    exit
+  end
+
+  options = {
+    autofix: false
+  }
+  OptionParser.new do |opts|
+    opts.banner = "Usage: dashboards_validator.rb [-f/--autofix] <integration dir or file>"
+
+    opts.on("-f", "--autofix") do |f|
+      options[:autofix] = f
+    end
+  end.parse!
+
+  integration_dir_or_file = ARGV[0]
+  integration_file_glob = integration_dir_or_file.end_with?(".json") ? integration_dir_or_file : "#{integration_dir_or_file}/dashboards/*.json"
+  integration_index_json = integration_dir_or_file.end_with?(".json") ? nil : "#{integration_dir_or_file}/index.json"
+
+  dashboards = DashboardIterator.new(integration_file_glob)
+  Palette.print
+  reporter = Reporter.new
+  ColorChecker.new(dashboards).run(reporter, options[:autofix])
+  ChartTitleChecker.new(dashboards).run(reporter)
+  SparklineSublabelChecker.new(dashboards).run(reporter)
+  SparklineFontSizeChecker.new(dashboards).run(reporter)
+  ChartDescriptionChecker.new(dashboards).run(reporter)
+  ChartUnitChecker.new(dashboards).run(reporter)
+  DashboardLinkChecker.new(dashboards).run(reporter)
+  ChartQueryChecker.new(dashboards).run(reporter)
+  ParameterQueryChecker.new(dashboards).run(reporter)
+  IndexChecker.new(dashboards, integration_index_json).run(reporter)
+
+  reporter.summarize
+  reporter.exit
 end
 
-integration_dir_or_file = ARGV[0]
-integration_file_glob = integration_dir_or_file.end_with?(".json") ? integration_dir_or_file : "#{integration_dir_or_file}/dashboards/*.json"
-
-dashboards = DashboardIterator.new(integration_file_glob)
-Palette.print
-reporter = Reporter.new
-ColorChecker.new(dashboards).run(reporter)
-ChartTitleChecker.new(dashboards).run(reporter)
-SparklineSublabelChecker.new(dashboards).run(reporter)
-SparklineFontSizeChecker.new(dashboards).run(reporter)
-ChartDescriptionChecker.new(dashboards).run(reporter)
-ChartUnitChecker.new(dashboards).run(reporter)
-DashboardLinkChecker.new(dashboards).run(reporter)
-ChartQueryChecker.new(dashboards).run(reporter)
-ParameterQueryChecker.new(dashboards).run(reporter)
-
-reporter.summarize
-reporter.exit
+if __FILE__ == $0
+  main
+end
