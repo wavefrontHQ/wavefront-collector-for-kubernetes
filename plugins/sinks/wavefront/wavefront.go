@@ -4,8 +4,10 @@
 package wavefront
 
 import (
+	"bytes"
 	"fmt"
 	"math/rand"
+	"net/http"
 	"os"
 	"runtime/debug"
 	"strconv"
@@ -89,7 +91,13 @@ func NewWavefrontSink(cfg configuration.WavefrontSinkConfig) (WavefrontSink, err
 		logPercent:  0.01,
 	}
 
-	if cfg.TestMode {
+	if cfg.EventsEnabled && cfg.ExternalEventsEndpoint != "" {
+		//set events only to the externalEventsEndpoint (no event metrics will be reported to wavefront).
+		log.Info("Sending Events to ExternalEventsEndpoint:" + cfg.ExternalEventsEndpoint)
+		util.SetExternalEventEndpoint(cfg.ExternalEventsEndpoint)
+		util.SetToken(cfg.Token)
+		storage.WavefrontClient, _ = senders.NewWavefrontNoOpClient()
+	} else if cfg.TestMode {
 		storage.WavefrontClient = NewTestSender()
 		clientType.Update(testClient)
 	} else if cfg.ProxyAddress != "" {
@@ -127,7 +135,7 @@ func NewWavefrontSink(cfg configuration.WavefrontSinkConfig) (WavefrontSink, err
 		clientType.Update(directClient)
 	}
 	if storage.WavefrontClient == nil {
-		return nil, fmt.Errorf("proxyAddress or server property required for Wavefront sink")
+		return nil, fmt.Errorf("proxyAddress or server property or externalEventsEndpoint required for sinks")
 	}
 
 	storage.globalTags = cfg.Tags
@@ -222,21 +230,45 @@ func (sink *wavefrontSink) ExportEvent(ev *events.Event) {
 	ev.Options = append(ev.Options, event.Annotate("cluster", sink.ClusterName))
 	host := sink.ClusterName
 
-	err := sink.WavefrontClient.SendEvent(
-		ev.Message,
-		ev.Ts.Unix(), 0,
-		host,
-		ev.Tags,
-		ev.Options...,
-	)
-	if err != nil {
-		sink.logVerboseError(log.Fields{
-			"message": ev.Message,
-			"error":   err,
-		}, "error sending event")
-		errEvents.Inc(1)
+	if util.GetExternalEventEndpoint() != "" {
+		line, _ := senders.EventLineJSON(
+			ev.Message,
+			ev.Ts.Unix(), 0,
+			host,
+			ev.Tags,
+			ev.Options...,
+			)
+
+		req, _ := http.NewRequest("POST", util.GetExternalEventEndpoint(), bytes.NewBuffer([]byte(line)))
+		req.Header.Set("Content-Type", "text/plain")
+		fmt.Printf("TEST:: token: " + util.GetToken())
+		req.Header.Set("Authorization", "Bearer " + util.GetToken())
+
+		client := &http.Client{}
+		_, err := client.Do(req)
+		if err != nil {
+			sink.logVerboseError(log.Fields{
+				"message": ev.Message,
+				"error":   err,
+			}, "error sending event to external event endpoint")
+		}
 	} else {
-		sentEvents.Inc(1)
+		err := sink.WavefrontClient.SendEvent(
+			ev.Message,
+			ev.Ts.Unix(), 0,
+			host,
+			ev.Tags,
+			ev.Options...,
+		)
+		if err != nil {
+			sink.logVerboseError(log.Fields{
+				"message": ev.Message,
+				"error":   err,
+			}, "error sending event")
+			errEvents.Inc(1)
+		} else {
+			sentEvents.Inc(1)
+		}
 	}
 }
 

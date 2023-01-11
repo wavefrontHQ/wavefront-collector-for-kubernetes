@@ -9,7 +9,7 @@ data:
     enableEvents: false
     enableDiscovery: true
     flushInterval: 30s
-    
+
     # Metric collection interval for wavefront collector, set to "60s" by default
     # defaultCollectionInterval: 120s
 
@@ -102,7 +102,7 @@ data:
       #     - 'kube.apiserver.etcd.*'
       #     - 'kube.apiserver.process.*'
       #     - 'kube.apiserver.etcd.request.duration.seconds.bucket'
-      #     - 'kube.apiserver.apiserver.storage.objects.gauge'
+      #     - 'kube.apiserver.etcd.object.counts.gauge'
       #     - 'kube.apiserver.etcd.db.total.size.in.bytes.gauge'
       #     - 'kube.apiserver.apiserver.request.duration.seconds.bucket'
       #     - 'kube.apiserver.apiserver.request.total.counter'

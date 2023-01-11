@@ -23,6 +23,22 @@ The Wavefront Collector for Kubernetes is an agent that runs as a [DaemonSet](ht
 
 Refer to the [installation instructions](https://docs.wavefront.com/kubernetes.html#kubernetes-quick-install-using-the-kubernetes-operator).
 
+## Installation with an External Events Endpoint
+
+1. Configure the collector configmap with `YOUR_K8S_CLUSTER_NAME` and `YOUR_EXTERNAL_EVENTS_ENDPOINT` by modifying `deploy/kubernetes/external-events-endpoint-scenario/4-collector-config.yaml` 
+
+2. Deploy the Wavefront Collector with your configuration
+
+```
+kubectl apply -f deploy/kubernetes/external-events-endpoint-scenario/
+```
+
+3. To Uninstall and stop sending data
+
+```
+kubectl delete -f deploy/kubernetes/external-events-endpoint-scenario/
+```
+
 ## Configuration
 
 The installation instructions use a default configuration suitable for most use cases. Refer to the [documentation](https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes/tree/main/docs) for details on all the configuration options.

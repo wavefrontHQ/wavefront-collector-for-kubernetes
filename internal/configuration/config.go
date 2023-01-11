@@ -139,6 +139,9 @@ type WavefrontSinkConfig struct {
 
 	// Internal: Whether event collection has been enabled
 	EventsEnabled bool `yaml:"-"`
+
+	// An External event endpoint to send k8s Events. Ex: http://external-events-endpoint.com/events (No event metrics will be reported to wavefront)
+	ExternalEventsEndpoint string `yaml:"externalEventsEndpoint"`
 }
 
 type CollectionConfig struct {

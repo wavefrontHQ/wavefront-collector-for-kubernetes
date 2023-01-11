@@ -50,6 +50,8 @@ var (
 	podLister  v1listers.PodLister
 	nsStore    cache.Store
 	agentType  AgentType
+	externalEventsEndpoint string
+	token string
 )
 
 type AgentType interface {
@@ -305,4 +307,20 @@ func ConvertPodPhase(phase kube_api.PodPhase) int64 {
 	default:
 		return POD_PHASE_UNKNOWN
 	}
+}
+
+func SetExternalEventEndpoint(endpointEnabled string) {
+	externalEventsEndpoint = endpointEnabled
+}
+
+func GetExternalEventEndpoint() string {
+	return externalEventsEndpoint
+}
+
+func SetToken(t string) {
+	token = t
+}
+
+func GetToken() string {
+	return token
 }
