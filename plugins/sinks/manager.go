@@ -78,7 +78,7 @@ func NewSinkManager(sinks []wavefront.WavefrontSink, exportDataTimeout, stopTime
 				case data := <-sh.dataBatchChannel:
 					sh.sink.Export(data)
 				case event := <-sh.eventBatchChannel:
-						sh.sink.ExportEvent(event)
+					sh.sink.ExportEvent(event)
 				case isStop := <-sh.stopChannel:
 					log.WithField("name", sh.sink.Name()).Info("Sink stop received")
 					if isStop {
