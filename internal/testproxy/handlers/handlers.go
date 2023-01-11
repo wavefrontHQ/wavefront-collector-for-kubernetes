@@ -13,44 +13,88 @@ import (
 	metrics2 "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/testproxy/metrics"
 )
 
-func LogJsonArrayHandler(store *logs.LogStore) http.HandlerFunc {
+func LogJsonArrayHandler(logVerifier *logs.LogVerifier) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		b, err := io.ReadAll(req.Body)
 		if err != nil {
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			log.Fatal(err)
+			return
 		}
 		defer req.Body.Close()
 
-		store.SetReceivedWithValidFormat(logs.VerifyJsonArray(string(b)))
+		// Validate log format
+		logLines := logVerifier.VerifyJsonArrayFormat(b)
+		if len(logLines) == 0 {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		// Validate expected tags
+		logVerifier.ValidateExpectedTags(logLines)
+
+		// Validate filtering allowed tags
+		logVerifier.ValidateAllowedTags(logLines)
+
+		// Validate filtering denied tags
+		logVerifier.ValidateDeniedTags(logLines)
 
 		w.WriteHeader(http.StatusOK)
 	}
 }
 
-func LogJsonLinesHandler(store *logs.LogStore) http.HandlerFunc {
+func LogJsonLinesHandler(logVerifier *logs.LogVerifier) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		b, err := io.ReadAll(req.Body)
 		if err != nil {
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			log.Fatal(err)
 		}
 		defer req.Body.Close()
 
-		store.SetReceivedWithValidFormat(logs.VerifyJsonLines(string(b)))
+		// Validate log format
+		logLines := logVerifier.VerifyJsonLinesFormat(b)
+		if len(logLines) == 0 {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		// Validate expected tags
+		logVerifier.ValidateExpectedTags(logLines)
+
+		// Validate filtering allowed tags
+		logVerifier.ValidateAllowedTags(logLines)
+
+		// Validate filtering denied tags
+		logVerifier.ValidateDeniedTags(logLines)
 
 		w.WriteHeader(http.StatusOK)
 	}
 }
 
-func LogAssertionHandler(store *logs.LogStore) http.HandlerFunc {
+func LogAssertionHandler(store *logs.Results) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
+		if req.Method != http.MethodGet {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			log.Errorf("expected method %s but got %s", http.MethodGet, req.Method)
+			return
+		}
+
+		if store.ReceivedLogCount == 0 {
+			w.WriteHeader(http.StatusNoContent)
+			_, _ = w.Write([]byte("No logs have been received"))
+			return
+		}
+
 		output, err := store.ToJSON()
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("Unable to marshal log test store object: %s", err.Error())))
+			_, _ = w.Write([]byte(fmt.Sprintf("Unable to marshal log test store object: %s", err.Error())))
+			return
 		}
 
 		w.WriteHeader(http.StatusOK)
-		w.Write(output)
+		_, _ = w.Write(output)
 	}
 }
 
