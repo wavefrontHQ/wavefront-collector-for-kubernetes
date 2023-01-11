@@ -6,13 +6,13 @@ metadata:
   namespace: wavefront-collector
 data:
   collector.yaml: |
-    clusterName: Anil_Final_test
+    clusterName: YOUR_K8S_CLUSTER_NAME
     enableEvents: true
     enableDiscovery: true
 
     # An External event endpoint to send k8s Events. Ex: http://external-events-endpoint.com/events (No event metrics will be reported to wavefront)
     sinks:
-    - externalEventsEndpoint: http://10.0.0.184:9090
+    - externalEventsEndpoint: YOUR_EXTERNAL_EVENTS_ENDPOINT
 
     sources:
       # The Wavefront Kubernetes dashboards rely on the "kubernetes." prefix by default. See https://docs.wavefront.com/wf_kubernetes_troubleshooting.html for more details.

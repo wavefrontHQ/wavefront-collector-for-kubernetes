@@ -25,7 +25,7 @@ Refer to the [installation instructions](https://docs.wavefront.com/kubernetes.h
 
 ## Installation with an External Events Endpoint
 
-1. Configure the collector configmap with `YOUR_K8S_CLUSTER_NAME` and `YOUR_EXTERNAL_EVENTS_ENDPOINT` by modifying `deploy/kubernetes/external-events-endpoint-scenario/4-collector-config.yaml` 
+1. Configure the collector configmap with `YOUR_K8S_CLUSTER_NAME` and `YOUR_EXTERNAL_EVENTS_ENDPOINT` by modifying [deploy/kubernetes/external-events-endpoint-scenario/4-collector-config.yaml](./deploy/kubernetes/external-events-endpoint-scenario/4-collector-config.yaml)
 
 2. Deploy the Wavefront Collector with your configuration
 
