@@ -18,7 +18,7 @@ RUN CGO_ENABLED=0 GOOS=linux GO111MODULE=on go build -ldflags "${LDFLAGS}" -a -o
 
 # Uncomment below to be able to ssh and debug.
 # FROM ubuntu
-FROM scratch
+FROM busybox
 WORKDIR /
 COPY --from=builder /workspace/test-proxy .
 
