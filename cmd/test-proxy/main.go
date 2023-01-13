@@ -33,6 +33,7 @@ var (
 		"namespace_name",
 		"pod_id",
 		"container_id",
+		"integration",
 	}
 	// Needs to match what is set up in log sender
 	allowListFilteredTags = map[string][]string{
