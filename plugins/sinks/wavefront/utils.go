@@ -23,12 +23,15 @@ var iaasNameRegex = regexp.MustCompile("^label.*gke|azure*")
 
 // cleanTags removes empty, excluded tags, and tags with duplicate values (if there are too many tags) and returns a map
 // that lists removed tag names by their reason for removal
-func cleanTags(tags map[string]string, maxCapacity int) map[string][]string {
+func cleanTags(tags map[string]string, tagInclude []string, maxCapacity int) map[string][]string {
 	removedReasons := map[string][]string{}
 	removedReasons[emptyReason] = removeEmptyTags(tags)
 	removedReasons[excludeListReason] = excludeTags(tags)
-	if len(tags) > maxCapacity {
-		removedReasons[dedupeReason] = dedupeTagValues(tags)
+
+	// Split include tags and adjust maxCapacity
+	tagsToInclude, tagToIncludeSize := splitIncludedTags(tags, tagInclude)
+	if len(tags) > maxCapacity - tagToIncludeSize {
+		removedReasons[dedupeReason] = dedupeTagValues(tags, []string{})
 	}
 
 	// remove IaaS label tags is over max capacity
@@ -36,7 +39,21 @@ func cleanTags(tags map[string]string, maxCapacity int) map[string][]string {
 		removedReasons[alphaBetaReason] = removeTagsLabelsMatching(tags, alphaBetaRegex, len(tags)-maxCapacity)
 		removedReasons[iaasReason] = removeTagsLabelsMatching(tags, iaasNameRegex, len(tags)-maxCapacity)
 	}
+	combineTags(tagsToInclude, tags)
 	return removedReasons
+}
+
+func combineTags(include map[string]string, tags map[string]string) {
+	//TODO
+}
+
+func splitIncludedTags(tags map[string]string, tagInclude []string) (map[string]string, int){
+	var included map[string]string
+	for _, tagKey := range tagInclude {
+		included[tagKey] = tags[tagKey]
+		delete(tags, tagKey)
+	}
+	return included, len(included)
 }
 
 func logTagCleaningReasons(metricName string, reasons map[string][]string) {
@@ -53,7 +70,7 @@ func logTagCleaningReasons(metricName string, reasons map[string][]string) {
 
 const minDedupeTagValueLen = 5
 
-func dedupeTagValues(tags map[string]string) []string {
+func dedupeTagValues(tags map[string]string, tagInclude []string) []string {
 	var removedTags []string
 	invertedTags := map[string]string{} // tag value -> tag name
 	for name, value := range tags {
@@ -63,10 +80,12 @@ func dedupeTagValues(tags map[string]string) []string {
 		if len(invertedTags[value]) == 0 {
 			invertedTags[value] = name
 		} else if isWinningName(name, invertedTags[value]) {
+			// Do below only if not present in tagInclude
 			removedTags = append(removedTags, invertedTags[value])
 			delete(tags, invertedTags[value])
 			invertedTags[value] = name
 		} else {
+			// Do below only if not present in tagInclude
 			removedTags = append(removedTags, name)
 			delete(tags, name)
 		}
