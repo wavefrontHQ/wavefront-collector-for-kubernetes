@@ -1,3 +1,6 @@
+## ⚠️ REPO MIGRATION NOTICE ⚠️
+Development of the Wavefront Collector for Kubernetes has moved to https://github.com/wavefrontHQ/observability-for-kubernetes/. This repo is no longer maintained.
+
 # Wavefront Collector for Kubernetes
 [![Go Report Card][go-report-img]][go-report] [![Docker Pulls][docker-pull-img]][docker-img]
 
