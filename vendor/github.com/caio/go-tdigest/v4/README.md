@@ -16,19 +16,13 @@ and issues if/when they arrive.
 
 ## Installation
 
-Our releases are tagged and signed following the [Semantic Versioning][semver]
-scheme. If you are using a dependency manager such as [dep][], the recommended
-way to is go about your business normally:
+This package uses go modules. Our releases are tagged and signed following
+the [Semantic Versioning][semver] scheme.
 
-    go get github.com/caio/go-tdigest
+    go get github.com/caio/go-tdigest/v4
 
-Otherwise we recommend to use the following so that you don't risk breaking
-your build because of an API change:
-
-    go get gopkg.in/caio/go-tdigest.v2
 
 [semver]: http://semver.org/
-[dep]: https://github.com/golang/dep
 
 ## Example Usage
 
@@ -39,7 +33,7 @@ import (
 	"fmt"
 	"math/rand"
 
-	"github.com/caio/go-tdigest"
+	"github.com/caio/go-tdigest/v4"
 )
 
 func main() {
@@ -69,18 +63,6 @@ digest, _ := tdigest.New(
         tdigest.LocalRandomNumberGenerator(0xCA10),
 )
 ```
-
-## Porting Existing Code to the v2 API
-
-It's very easy to migrate to the new API:
-
-- Replace `tdigest.New(100)` with `tdigest.New()`
-- Replace `tdigest.New(number)` with `tdigest.New(tdigest.Compression(number))`
-- Replace `Add(x,1)` with `Add(x)`
-- Replace `Add(x, weight)` with `AddWeighted(x, weight)`
-- Remove any use of `tdigest.Len()` (or [open an issue][issues])
-
-[issues]: https://github.com/caio/go-tdigest/issues/new
 
 ## References
 

@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	tdigest "github.com/caio/go-tdigest"
+	"github.com/caio/go-tdigest/v4"
 )
 
 // Histogram a quantile approximation data structure

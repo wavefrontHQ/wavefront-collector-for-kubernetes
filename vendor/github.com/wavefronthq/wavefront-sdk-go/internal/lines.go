@@ -3,6 +3,8 @@ package internal
 import (
 	"errors"
 	"fmt"
+	"github.com/wavefronthq/wavefront-sdk-go/internal/auth"
+	"github.com/wavefronthq/wavefront-sdk-go/internal/sdkmetrics"
 	"log"
 	"net/http"
 	"strings"
@@ -19,7 +21,7 @@ const (
 	EventFormat     = "event"
 )
 
-type LineHandler struct {
+type RealLineHandler struct {
 	// keep these two fields as first element of struct
 	// to guarantee 64-bit alignment on 32-bit machines.
 	// atomic.* functions crash if operands are not 64-bit aligned.
@@ -33,7 +35,7 @@ type LineHandler struct {
 	Format        string
 	flushTicker   *time.Ticker
 
-	internalRegistry *MetricRegistry
+	internalRegistry sdkmetrics.Registry
 	prefix           string
 
 	mtx                sync.Mutex
@@ -46,28 +48,28 @@ type LineHandler struct {
 var throttledSleepDuration = time.Second * 30
 var errThrottled = errors.New("error: throttled event creation")
 
-type LineHandlerOption func(*LineHandler)
+type LineHandlerOption func(*RealLineHandler)
 
-func SetRegistry(registry *MetricRegistry) LineHandlerOption {
-	return func(handler *LineHandler) {
+func SetRegistry(registry sdkmetrics.Registry) LineHandlerOption {
+	return func(handler *RealLineHandler) {
 		handler.internalRegistry = registry
 	}
 }
 
 func SetHandlerPrefix(prefix string) LineHandlerOption {
-	return func(handler *LineHandler) {
+	return func(handler *RealLineHandler) {
 		handler.prefix = prefix
 	}
 }
 
 func SetLockOnThrottledError(lock bool) LineHandlerOption {
-	return func(handler *LineHandler) {
+	return func(handler *RealLineHandler) {
 		handler.lockOnErrThrottled = lock
 	}
 }
 
-func NewLineHandler(reporter Reporter, format string, flushInterval time.Duration, batchSize, maxBufferSize int, setters ...LineHandlerOption) *LineHandler {
-	lh := &LineHandler{
+func NewLineHandler(reporter Reporter, format string, flushInterval time.Duration, batchSize, maxBufferSize int, setters ...LineHandlerOption) *RealLineHandler {
+	lh := &RealLineHandler{
 		Reporter:           reporter,
 		BatchSize:          batchSize,
 		MaxBufferSize:      maxBufferSize,
@@ -91,7 +93,7 @@ func NewLineHandler(reporter Reporter, format string, flushInterval time.Duratio
 	return lh
 }
 
-func (lh *LineHandler) Start() {
+func (lh *RealLineHandler) Start() {
 	lh.buffer = make(chan string, lh.MaxBufferSize)
 	lh.done = make(chan struct{})
 
@@ -119,7 +121,7 @@ func (lh *LineHandler) Start() {
 	}()
 }
 
-func (lh *LineHandler) HandleLine(line string) error {
+func (lh *RealLineHandler) HandleLine(line string) error {
 	select {
 	case lh.buffer <- line:
 		return nil
@@ -129,7 +131,7 @@ func (lh *LineHandler) HandleLine(line string) error {
 	}
 }
 
-func (lh *LineHandler) Flush() error {
+func (lh *RealLineHandler) Flush() error {
 	lh.mtx.Lock()
 	defer lh.mtx.Unlock()
 	bufLen := len(lh.buffer)
@@ -144,7 +146,7 @@ func (lh *LineHandler) Flush() error {
 	return nil
 }
 
-func (lh *LineHandler) FlushAll() error {
+func (lh *RealLineHandler) FlushAll() error {
 	lh.mtx.Lock()
 	defer lh.mtx.Unlock()
 	bufLen := len(lh.buffer)
@@ -168,7 +170,7 @@ func (lh *LineHandler) FlushAll() error {
 	return nil
 }
 
-func (lh *LineHandler) report(lines []string) error {
+func (lh *RealLineHandler) report(lines []string) error {
 	strLines := strings.Join(lines, "")
 	var resp *http.Response
 	var err error
@@ -180,7 +182,9 @@ func (lh *LineHandler) report(lines []string) error {
 	}
 
 	if err != nil {
-		lh.bufferLines(lines)
+		if shouldRetry(err) {
+			lh.bufferLines(lines)
+		}
 		return fmt.Errorf("error reporting %s format data to Wavefront: %q", lh.Format, err)
 	}
 
@@ -195,23 +199,31 @@ func (lh *LineHandler) report(lines []string) error {
 	return nil
 }
 
-func (lh *LineHandler) bufferLines(batch []string) {
+func shouldRetry(err error) bool {
+	switch err.(type) {
+	case *auth.Err:
+		return false
+	}
+	return true
+}
+
+func (lh *RealLineHandler) bufferLines(batch []string) {
 	log.Println("error reporting to Wavefront. buffering lines.")
 	for _, line := range batch {
-		lh.HandleLine(line)
+		_ = lh.HandleLine(line)
 	}
 }
 
-func (lh *LineHandler) GetFailureCount() int64 {
+func (lh *RealLineHandler) GetFailureCount() int64 {
 	return atomic.LoadInt64(&lh.failures)
 }
 
 // GetThrottledCount returns the number of Throttled errors received.
-func (lh *LineHandler) GetThrottledCount() int64 {
+func (lh *RealLineHandler) GetThrottledCount() int64 {
 	return atomic.LoadInt64(&lh.throttled)
 }
 
-func (lh *LineHandler) Stop() {
+func (lh *RealLineHandler) Stop() {
 	lh.flushTicker.Stop()
 	lh.done <- struct{}{} // block until goroutine exits
 	if err := lh.FlushAll(); err != nil {
