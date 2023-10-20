@@ -15,11 +15,7 @@ type Centroids []Centroid
 func (centroids Centroids) Compact() Centroids {
 	tmp := make(map[float64]int)
 	for _, c := range centroids {
-		if _, ok := tmp[c.Value]; ok {
-			tmp[c.Value] += c.Count
-		} else {
-			tmp[c.Value] = c.Count
-		}
+		tmp[c.Value] += c.Count
 	}
 	res := make(Centroids, len(tmp))
 	idx := 0

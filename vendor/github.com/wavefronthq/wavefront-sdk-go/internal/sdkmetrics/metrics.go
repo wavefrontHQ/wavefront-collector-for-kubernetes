@@ -1,4 +1,4 @@
-package internal
+package sdkmetrics
 
 import "sync/atomic"
 
