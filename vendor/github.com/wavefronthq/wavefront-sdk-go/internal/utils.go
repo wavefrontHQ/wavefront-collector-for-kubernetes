@@ -7,7 +7,7 @@ import (
 	"strconv"
 )
 
-var semVerRegex = regexp.MustCompile("([0-9]\\d*)\\.(\\d+)\\.(\\d+)(?:-([a-zA-Z0-9]+))?")
+var semVerRegex = regexp.MustCompile(`([0-9]\d*)\.(\d+)\.(\d+)(?:-([a-zA-Z0-9]+))?`)
 
 func GetHostname(defaultVal string) string {
 	hostname, err := os.Hostname()
@@ -15,13 +15,6 @@ func GetHostname(defaultVal string) string {
 		return defaultVal
 	}
 	return hostname
-}
-
-func min(x, y int) int {
-	if x < y {
-		return x
-	}
-	return y
 }
 
 func GetSemVer(version string) (float64, error) {

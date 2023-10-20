@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	tdigest "github.com/caio/go-tdigest"
+	"github.com/caio/go-tdigest/v4"
 )
 
 // Histogram a quantile approximation data structure
@@ -101,7 +101,7 @@ func (h *histogramImpl) Update(v float64) {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
 
-	h.currentTimedBin.tdigest.Add(v)
+	_ = h.currentTimedBin.tdigest.Add(v)
 }
 
 // Count returns the total number of samples on this histogram.
@@ -131,7 +131,7 @@ func (h *histogramImpl) Quantile(q float64) float64 {
 	tempTdigest, _ := tdigest.New()
 	for _, bin := range h.priorTimedBinsList {
 		bin.tdigest.ForEachCentroid(func(mean float64, count uint64) bool {
-			tempTdigest.Add(mean)
+			_ = tempTdigest.Add(mean)
 			return true
 		})
 	}

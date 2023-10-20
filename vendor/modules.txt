@@ -7,9 +7,9 @@ github.com/alecthomas/units
 # github.com/armon/go-metrics v0.3.0
 ## explicit; go 1.12
 github.com/armon/go-metrics
-# github.com/caio/go-tdigest v3.1.0+incompatible
-## explicit
-github.com/caio/go-tdigest
+# github.com/caio/go-tdigest/v4 v4.0.1
+## explicit; go 1.18
+github.com/caio/go-tdigest/v4
 # github.com/cockroachdb/apd v1.1.0
 ## explicit
 # github.com/coreos/go-systemd/v22 v22.4.0
@@ -253,8 +253,8 @@ github.com/spf13/pflag
 # github.com/stretchr/objx v0.5.0
 ## explicit; go 1.12
 github.com/stretchr/objx
-# github.com/stretchr/testify v1.8.1
-## explicit; go 1.13
+# github.com/stretchr/testify v1.8.4
+## explicit; go 1.20
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/mock
 github.com/stretchr/testify/require
@@ -276,12 +276,19 @@ github.com/tklauser/numcpus
 # github.com/wavefronthq/go-metrics-wavefront v1.0.3
 ## explicit; go 1.13
 github.com/wavefronthq/go-metrics-wavefront/reporting
-# github.com/wavefronthq/wavefront-sdk-go v0.10.4
-## explicit; go 1.17
+# github.com/wavefronthq/wavefront-sdk-go v0.15.0
+## explicit; go 1.19
 github.com/wavefronthq/wavefront-sdk-go/application
 github.com/wavefronthq/wavefront-sdk-go/event
 github.com/wavefronthq/wavefront-sdk-go/histogram
 github.com/wavefronthq/wavefront-sdk-go/internal
+github.com/wavefronthq/wavefront-sdk-go/internal/auth
+github.com/wavefronthq/wavefront-sdk-go/internal/auth/csp
+github.com/wavefronthq/wavefront-sdk-go/internal/event
+github.com/wavefronthq/wavefront-sdk-go/internal/histogram
+github.com/wavefronthq/wavefront-sdk-go/internal/metric
+github.com/wavefronthq/wavefront-sdk-go/internal/sdkmetrics
+github.com/wavefronthq/wavefront-sdk-go/internal/span
 github.com/wavefronthq/wavefront-sdk-go/senders
 github.com/wavefronthq/wavefront-sdk-go/version
 # golang.org/x/crypto v0.14.0
